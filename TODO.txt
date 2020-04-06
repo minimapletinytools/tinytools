@@ -1,0 +1,24 @@
+::DESIGN::
+
+::mouse states::
+-active
+  -in active state, an action is staged and continuously do/undo a it's being updated
+  -once leaving active state, action is moved onto stack and executed
+
+::manipulator::
+
+::elements + layers::
+-do empty elt (like unity) or layers as separate object
+  -empty elt approach disadvantage is folders do not care about position and have no manipulators etc
+
+::main events::
+eltList :: Dynamic Elt -- top level elements
+
+::elt events::
+-listening
+  destroyed :: Event ()
+  updated :: Event ()
+
+::trigger events::
+save :: () -> IO ()
+load :: Text -> IO ()
