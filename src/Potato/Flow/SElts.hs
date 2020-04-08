@@ -5,7 +5,7 @@ module Potato.Flow.SElts (
   , SLine(..)
   , SText(..)
   , SElt(..)
-  , SEltNode(..)
+  , SEltTree
 ) where
 
 import           Relude
@@ -14,6 +14,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Types
 
 import           Data.Aeson
+import           Data.Tree
 
 
 data SLineStyle = SLineStyle {
@@ -66,7 +67,9 @@ data SElt = SEltNone | SEltBox SBox | SEltLine SLine | SEltText SText deriving (
 instance FromJSON SElt
 instance ToJSON SElt
 
-data SEltNode = SEltNode SElt [SEltNode] deriving (Generic, Show)
+-- TODO rename to SEltTree
+type SEltTree = Tree SElt
 
-instance FromJSON SEltNode
-instance ToJSON SEltNode
+-- these exsits in aeson package, cool
+--instance FromJSON SEltTree
+--instance ToJSON SEltTree

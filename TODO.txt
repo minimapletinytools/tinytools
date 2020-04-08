@@ -1,14 +1,20 @@
+
 ::MAJOR QUESTIONS::
 -need some sort of zipper or map into nodes
-  -e.g. `Event t (REltNode t, REltZipper)`
+  -e.g. `Event t (REltNode t, REltZipper)` -- (parent, children)
+  -- implement something like http://hackage.haskell.org/package/rosezipper-0.2/docs/Data-Tree-Zipper.html
+
 -manipulators
+  -
+
 -actions
+  -each manipulator is connected to elt params and has events to update it
+    -e.g. boxEvent :: SBoxManipulator -> (Event t LPoint, Event t LSize)
+  -front-end connects to behavior and events
+    -e.g. elt behaviors => front-end =interaction=> manipulator events => elt behaviors
   -SBoxManipulator will create events of the following type:
     Event t (Action )
-  -ActionStack :: []
-
-  -onUndo :: Event t ()
-  -
+  -undo/redo :: Event t () -> Dynamic (Stack Action) -> Event Action
 
 ::DESIGN::
 
