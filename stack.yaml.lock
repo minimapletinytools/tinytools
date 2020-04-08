@@ -3,7 +3,70 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: reflex-0.7.0.0@sha256:b7c00263a97925045d9c05c47979b46850935f7ba01b775d728cf357b373e611,11192
+    pantry-tree:
+      size: 4463
+      sha256: 03e0d44b78c799daee330fbbcc6a0d89c4166619070cc3f524122c81b31ac157
+  original:
+    hackage: reflex-0.7.0.0@sha256:b7c00263a97925045d9c05c47979b46850935f7ba01b775d728cf357b373e611,11192
+- completed:
+    hackage: constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b,1784
+    pantry-tree:
+      size: 594
+      sha256: b0bcc96d375ee11b1972a2e9e8e42039b3f420b0e1c46e9c70652470445a6505
+  original:
+    hackage: constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b,1784
+- completed:
+    hackage: dependent-map-0.3.1.0@sha256:f33391e51264aab38b11d581bb8d2f7c6fc9fcf012bdbb6122708c23b3360b2a,1657
+    pantry-tree:
+      size: 551
+      sha256: e49230ff3bb1ddc9bef79c22b080ec04a5bb7829808d52df910f734d1cffdddc
+  original:
+    hackage: dependent-map-0.3.1.0@sha256:f33391e51264aab38b11d581bb8d2f7c6fc9fcf012bdbb6122708c23b3360b2a,1657
+- completed:
+    hackage: dependent-sum-0.6.2.0@sha256:bff37c85b38e768b942f9d81c2465b63a96076f1ba006e35612aa357770807b6,1856
+    pantry-tree:
+      size: 474
+      sha256: ad3fbed5104f9ee9c8082c9dcc8ade847674e3053572533e8d26ad1a866f1107
+  original:
+    hackage: dependent-sum-0.6.2.0@sha256:bff37c85b38e768b942f9d81c2465b63a96076f1ba006e35612aa357770807b6,1856
+- completed:
+    hackage: monoidal-containers-0.6.0.1@sha256:7d776942659eb4d70d8b8da5d734396374a6eda8b4622df9e61e26b24e9c8e40,2501
+    pantry-tree:
+      size: 569
+      sha256: c354e916cb3aa9a0728a60f08440dc589a9e6d8275f047dbe9ab73f168247561
+  original:
+    hackage: monoidal-containers-0.6.0.1@sha256:7d776942659eb4d70d8b8da5d734396374a6eda8b4622df9e61e26b24e9c8e40,2501
+- completed:
+    hackage: patch-0.0.3.1@sha256:f14acf2eea8c83be57398106cec549c476577a947a7f856e6aa71dc561d58ca9,2308
+    pantry-tree:
+      size: 977
+      sha256: d959d6d59fa8b46876c0eaa4f2736017b3e2d4dbbc5ee6a6bdd7635c7d4c1510
+  original:
+    hackage: patch-0.0.3.1@sha256:f14acf2eea8c83be57398106cec549c476577a947a7f856e6aa71dc561d58ca9,2308
+- completed:
+    hackage: prim-uniq-0.1.0.1@sha256:23f15867b381b49e3f09f69fba318b0ee0e505d5fe0df82f3fcdf3f5c2886291,1201
+    pantry-tree:
+      size: 363
+      sha256: c20e37eff29b7d5986c4f25ce50a0aa7805d9fa7c3dca8a898f092488d618d9e
+  original:
+    hackage: prim-uniq-0.1.0.1@sha256:23f15867b381b49e3f09f69fba318b0ee0e505d5fe0df82f3fcdf3f5c2886291,1201
+- completed:
+    hackage: ref-tf-0.4.0.2@sha256:69de3550250e0cd69f45d080359cb314a9487c915024349c75b78732bbee9332,1134
+    pantry-tree:
+      size: 211
+      sha256: fc5a4a35b4c782a33f452c1dc66ffa8ddbf321e2db369bd8823c796f0d4d8c7f
+  original:
+    hackage: ref-tf-0.4.0.2@sha256:69de3550250e0cd69f45d080359cb314a9487c915024349c75b78732bbee9332,1134
+- completed:
+    hackage: witherable-0.3.1@sha256:ed3d5bc9eb1c08fa9704d9e143cdf622e1bd80b847cd5ede8c07da7bc7981ab9,1313
+    pantry-tree:
+      size: 271
+      sha256: 7077f6c0e9e973af2c7f4429bcc3af6d345c19554c1335733faccec35d4c1708
+  original:
+    hackage: witherable-0.3.1@sha256:ed3d5bc9eb1c08fa9704d9e143cdf622e1bd80b847cd5ede8c07da7bc7981ab9,1313
 snapshots:
 - completed:
     size: 491389

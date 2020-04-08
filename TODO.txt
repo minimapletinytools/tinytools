@@ -1,4 +1,18 @@
+::MAJOR QUESTIONS::
+-need some sort of zipper or map into nodes
+  -e.g. `Event t (REltNode t, REltZipper)`
+-manipulators
+-actions
+  -SBoxManipulator will create events of the following type:
+    Event t (Action )
+  -ActionStack :: []
+
+  -onUndo :: Event t ()
+  -
+
 ::DESIGN::
+
+
 
 ::mouse states::
 -active
@@ -8,7 +22,7 @@
 ::manipulator::
 
 ::elements + layers::
--do empty elt (like unity) or layers as separate object
+-empty elt (like unity)
   -empty elt approach disadvantage is folders do not care about position and have no manipulators etc
 
 ::main events::
@@ -16,8 +30,7 @@ eltList :: Dynamic Elt -- top level elements
 
 ::elt events::
 -listening
-  destroyed :: Event ()
-  updated :: Event ()
+  destroyed :: Event () <- is this even needed?
 
 ::trigger events::
 save :: () -> IO ()
