@@ -5,13 +5,13 @@ module Potato.Flow.Reflex.RElts (
 import           Relude
 
 import           Potato.Flow.Math
-import qualified Potato.Flow.Reflex.Tree as RT
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import qualified Data.Tree               as T
+import qualified Data.Tree         as T
 
 import           Reflex
+import qualified Reflex.Tree       as RT
 
 data RElt t = REltNone | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
 

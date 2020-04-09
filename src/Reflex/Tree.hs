@@ -1,4 +1,4 @@
-module Potato.Flow.Reflex.Tree (
+module Reflex.Tree (
   Tree(..)
   , Forest
 ) where
