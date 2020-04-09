@@ -36,6 +36,23 @@ data REltLabel t = REltLabel {
 
 type REltTree t = RT.Tree t (REltLabel t)
 
+-- TODO
+type REltNodeRef t = ()
+
+
+-- | events related to changing topology of REltTree
+data REltTopologyEvents t = REltTopologyEvents {
+
+  -- this is a little weird, we only want to trigger this event when we want to GC
+  -- e.g. if we are pruning old elements in our action stack
+  -- only need this if we are using map approach and not zipper approach
+  trash         :: Event t () -- event to gc self and children (not responsible for parent)
+
+  , deleteChild :: Event t (REltNodeRef t) -- event to delete child of this node
+
+  -- TODO signature needs work
+  , addChild    :: Event t (REltNodeRef t, Int) -- event to add a child to this node
+}
 
 
 -- TODO need to pass in add/remove child events throughtout the tree
@@ -60,7 +77,8 @@ deserialize (T.Node selt children) = do
         re_elt = relt
         , re_reflex = rreflex
       }
-    node = RT.Node label rchildren
+    -- TODO need to setup zipper D:
+    node = RT.Node label rchildren undefined
   return node
 
 
