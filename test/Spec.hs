@@ -1,5 +1,2 @@
-
-import           Relude
-
-main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+-- hspec auto-discovery stuff
+{-# OPTIONS_GHC -F -pgmF hspec-discover #-}

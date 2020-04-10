@@ -90,3 +90,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - potato-flow
+    - HUnit
+    - hspec
