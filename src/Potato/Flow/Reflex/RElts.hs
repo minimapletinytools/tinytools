@@ -1,5 +1,6 @@
+{-# LANGUAGE RecursiveDo #-}
 module Potato.Flow.Reflex.RElts (
-
+  REltTree(..)
 ) where
 
 import           Relude
@@ -8,6 +9,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
+import           Control.Monad.Fix
 import qualified Data.Tree         as T
 
 import           Reflex
@@ -40,6 +42,7 @@ type REltTree t = RT.Tree t (REltLabel t)
 type REltNodeRef t = ()
 
 
+-- TODO finish
 -- | events related to changing topology of REltTree
 data REltTopologyEvents t = REltTopologyEvents {
 
@@ -54,11 +57,22 @@ data REltTopologyEvents t = REltTopologyEvents {
   , addChild    :: Event t (REltNodeRef t, Int) -- event to add a child to this node
 }
 
+{-
+-actions
+  -each manipulator is connected to elt params and has events to update it
+    -e.g. boxEvent :: SBoxManipulator -> (Event t LPoint, Event t LSize)
+  -front-end connects to behavior and events
+    -e.g. elt behaviors => front-end =interaction=> manipulator events => elt behaviors
+  -SBoxManipulator will create events of the following type:
+    Event t (Action )
+  -undo/redo :: Event t () -> Dynamic (Stack Action) -> Event Action
+-}
 
+-- TODO remove parent as it breaks our fmap
 -- TODO need to pass in add/remove child events throughtout the tree
 -- TODO need to pass in elt update events throughout the tree
-deserialize :: (Reflex t, MonadHold t m) => SEltTree -> m (REltTree t)
-deserialize (T.Node selt children) = do
+deserialize :: (Reflex t, MonadHold t m, MonadFix m) => Maybe (REltTree t) -> SEltTree -> m (REltTree t)
+deserialize parent (T.Node selt children) = mdo
 
 
   -- TODO implement for each type
@@ -69,7 +83,7 @@ deserialize (T.Node selt children) = do
 
   -- TODO
   treeUpdate <- undefined
-  rchildren' <- mapM deserialize children
+  rchildren' <- mapM (deserialize (Just node)) children
   rchildren <- holdDyn rchildren' treeUpdate
   let
     label =
@@ -78,7 +92,7 @@ deserialize (T.Node selt children) = do
         , re_reflex = rreflex
       }
     -- TODO need to setup zipper D:
-    node = RT.Node label rchildren undefined
+    node = RT.Node label rchildren parent
   return node
 
 

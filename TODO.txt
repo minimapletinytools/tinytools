@@ -1,10 +1,31 @@
+I did a little research myself and found no pure reactive data structure libraries out there. The closest thing I found was: https://hackage.haskell.org/package/reflex-dom-retractable which is a reactive stack. However events are routed through performEvent in the IO monad.
 
+I simplified the problem at hand a little for myself and decided a dynamic list should be sufficient.
+
+I went ahead and implemented + tested this:
+
+For zippers, static indices are sufficient. They are partial and very execution order dependent (i.e. because indices change after each update)
+
+I think one could make dynamic indices into the list if you need execution order independence.
+
+Or, I can add (Eq a) constraint to uniquely identify elements in the list to solve this problem.
+I found this library which sorta solves this problem http://hackage.haskell.org/package/reflex-transformers-0.2.1/docs/Reflex-Monad-Supply.html
+
+------
 ::MAJOR QUESTIONS::
-NO-need some sort of zipper or map into nodes
-  -how to do zipper over dynamic lists?
--another option is to give each node a UUID upon creation, and then store a map to existing nodes
-  -this would be simpler
--maybe there is a simpler way just to hold refs to the RElts
+-elt tree
+  NO-need some sort of zipper or map into nodes
+    -how to do zipper over dynamic lists?
+      -doable, but each zipper is O(n)
+    -another way to have static zippers that get destroyed each time the tree changes
+      -[REltTree t] list of parents leading up to the node
+      -prob still need UUID in each node to do comparison
+      -not so great for our selection system
+  -another option is to give each node a UUID upon creation, and then store a map to existing nodes
+    -this would be simpler
+  -maybe there is a simpler way just to hold refs to the RElts
+-groupable elt list then?
+  -groups can be defined by start and end elt
 
 -manipulators
   -
@@ -25,9 +46,6 @@ NO-need some sort of zipper or map into nodes
     `addEvent :: Event t (EltRef, ??)` -- need to figure out how to create new elts
   -pass through
     `selection :: Dynamic [EltRef]`
-
-
-
   -on constructing children of elt x
     -children hooks into delete/move events
     -each node also has its own delete self event which is called for GC purposes

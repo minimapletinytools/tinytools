@@ -73,6 +73,9 @@ dependencies:
 - reflex
 - aeson
 - containers
+- bytestring
+- ilist
+- dependent-sum
 
 library:
   source-dirs: src
