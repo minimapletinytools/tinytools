@@ -92,3 +92,4 @@ tests:
     - potato-flow
     - HUnit
     - hspec
+    - hspec-contrib
