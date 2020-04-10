@@ -15,7 +15,7 @@ basic_run = playReflex network where
   network ev = return (fmap (const "meow") ev)
 
 basic_test :: Test
-basic_test = TestLabel "basic" $ TestCase $ do
+basic_test = TestLabel "cat goes meow" $ TestCase $ do
   v <- liftIO basic_run
   Just "meow" @?= v
 
