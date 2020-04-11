@@ -67,7 +67,7 @@ push_enqueue_pop_dequeue_test = TestLabel "push/enqueue/pop/dequeue" $ TestCase 
   v <- liftIO run
   let
     expected = Just [0,0,0,1,1]
-  expected @?= L.last v
+  L.last v @?= expected
 
 -- basic test case, add to list on each event tick
 add_test :: Test
@@ -85,7 +85,7 @@ add_test = TestLabel "add" $ TestCase $ do
   v <- liftIO run
   let
     expected = fmap Just . L.tail . scanl (\acc x -> x:acc) [] $ bs
-  expected @?= v
+  v @?= expected
 
 spec :: Spec
 spec = do

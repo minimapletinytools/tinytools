@@ -82,6 +82,7 @@ library:
   source-dirs: src
   exposed-modules:
     - Reflex.List
+    - Reflex.Stack
 
 tests:
   potato-flow-test:

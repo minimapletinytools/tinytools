@@ -3,7 +3,7 @@
 
 module Reflex.Stack (
   DynamicStack(..)
-  , DynamicStack(..)
+  , ModifyDynamicStack(..)
   , defaultModifyDynamicStack
   , holdDynamicStack
 ) where
@@ -20,17 +20,20 @@ import           Data.Wedge
 
 
 data DynamicStack t a = DynamicStack {
-  ds_pushed   :: Event t a
-  , ds_popped :: Event t a
+  ds_pushed     :: Event t a
+  , ds_popped   :: Event t a
+  , ds_contents :: Dynamic t [a]
 }
 
 data ModifyDynamicStack t a = ModifyDynamicStack {
   -- first tuple is method producing element to add from an event of when the element is removed
   --mds_push_rec :: (Reflex t) => (Event t () -> PushM t a, Event t ())
-  mds_push_rec :: (Reflex t) => (Event t (Event t () -> PushM t a))
+  mds_push_rec :: Event t (Event t () -> PushM t a)
   , mds_pop    :: Event t ()
 }
 
+-- I can't seem to instantiate from this without getting a could not deduce Reflex t0 error
+-- it can't seem to match the t inside and the t outside? I don't understand
 defaultModifyDynamicStack :: (Reflex t) => ModifyDynamicStack t a
 defaultModifyDynamicStack = ModifyDynamicStack {
     mds_push_rec = never
@@ -44,7 +47,7 @@ type EvType t a = Either (Event t () -> PushM t a) ()
 
 -- | create a dynamic list
 holdDynamicStack ::
-  forall t m a. (Reflex t, MonadHold t m, MonadFix m)
+  forall t m a. (Reflex t, MonadHold t m, MonadFix m, Show a)
   => [a]
   -> ModifyDynamicStack t a
   -> m (DynamicStack t a)
@@ -52,6 +55,7 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
   let
     -- left is add, right is remove
     changeEvent :: Event t (NonEmpty (EvType t a))
+    --changeEvent = traceEventWith (\x -> show (isRight (head x))) $ mergeList [fmap Left $ mds_push_rec, fmap Right mds_pop]
     changeEvent = mergeList [fmap Left $ mds_push_rec, fmap Right mds_pop]
 
     -- wedge types:
@@ -61,7 +65,8 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
     foldfn :: (EvType t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfn (Left makeEltCb) (_, xs) = do
       let
-        removeEltEvent = fmapMaybe (\n-> if n == length xs - 1 then Just () else Nothing) popAtEvent
+        removeEltEvent = fmapMaybe
+          (\n-> if n == length xs - 1 then Just () else Nothing) popAtEvent
       x <- makeEltCb removeEltEvent
       return (Here x, x:xs)
     foldfn (Right ()) (_, []) = return (Nowhere, [])
@@ -90,4 +95,5 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
   return $ DynamicStack {
       ds_pushed = fmapMaybe evPushSelect evInt
       , ds_popped = popEvent
+      , ds_contents = fmap snd dynInt
     }
