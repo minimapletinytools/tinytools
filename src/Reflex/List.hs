@@ -1,6 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 module Reflex.List (
-  DynamicList
+  DynamicList(..)
+  , ModifyDynamicList(..)
+  , holdDynamicList
 ) where
 
 import           Relude

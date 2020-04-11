@@ -79,6 +79,8 @@ dependencies:
 
 library:
   source-dirs: src
+  exposed-modules:
+    - Reflex.List
 
 tests:
   potato-flow-test:

@@ -16,6 +16,7 @@ import           Data.Dependent.Sum
 import qualified Data.Traversable   as T
 
 
+--PerformEvent t m, MonadIO (Performable m)
 type TestApp t m b a =
   (Reflex t, MonadHold t m, MonadFix m)
   => Event t b -- ^ input event, triggered in sequence
