@@ -54,8 +54,10 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
     changeEvent :: Event t (NonEmpty (EvType t a))
     changeEvent = mergeList [fmap Left $ mds_push_rec, fmap Right mds_pop]
 
-    -- here is add
-    -- there is remove
+    -- wedge types:
+    -- Here is element that was just added
+    -- There is element that was just removed
+    -- Nowhere is initial state or just popped an empty stack
     foldfn :: (EvType t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfn (Left makeEltCb) (_, xs) = do
       let
