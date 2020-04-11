@@ -1,7 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo     #-}
 module Reflex.List (
   DynamicList(..)
   , ModifyDynamicList(..)
+  , defaultModifyDynamicList
   , holdDynamicList
 ) where
 
@@ -25,13 +27,30 @@ data DynamicList t a = DynamicList {
 }
 
 data ModifyDynamicList t a = ModifyDynamicList {
-  mdl_add      :: Event t (Int, a)
-  , mdl_remove :: Event t Int
-  , mdl_move   :: Event t (Int,Int)
-  -- TODO hook these up
-  --, mdl_push   :: Event t a
-  --, mdl_pop    :: Event t ()
+  mdl_add       :: Event t (Int, a)
+  , mdl_remove  :: Event t Int
+
+  -- this is slightly different than removing then adding as it can be done in 1 frame
+  , mdl_move    :: Event t (Int,Int)
+
+  -- these attach index and follow same code path as add/remove
+  , mdl_push    :: Event t a
+  , mdl_pop     :: Event t ()
+  , mdl_enqueue :: Event t a
+  , mdl_dequeue :: Event t ()
 }
+
+defaultModifyDynamicList :: (Reflex t) => ModifyDynamicList t a
+defaultModifyDynamicList = ModifyDynamicList {
+    mdl_add = never
+    , mdl_remove = never
+    , mdl_move = never
+    , mdl_push = never
+    , mdl_pop = never
+    , mdl_enqueue = never
+    , mdl_dequeue = never
+  }
+
 
 data Either3 a b c = E1 a | E2 b | E3 c
 
@@ -47,13 +66,16 @@ holdDynamicList ::
   => [a]
   -> ModifyDynamicList t a
   -> m (DynamicList t a)
-holdDynamicList initial (ModifyDynamicList {..}) = do
-
-
+holdDynamicList initial (ModifyDynamicList {..}) = mdo
   let
+    mdl_push' = fmap (\x -> (0,x)) mdl_push
+    mdl_pop' = fmap (const 0) mdl_pop
+    mdl_enqueue' = attach (fmap length (current dlc)) mdl_enqueue
+    mdl_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) mdl_dequeue
     mdlAdd :: Event t (DSum (MDL a) Identity)
-    mdlAdd = (MDL_add ==> ) <$> mdl_add
-    mdlRemove = (MDL_remove ==> ) <$> mdl_remove
+    mdlAdd = (MDL_add ==> ) <$> leftmost [mdl_add, mdl_push', mdl_enqueue']
+
+    mdlRemove = (MDL_remove ==> ) <$> leftmost [mdl_remove, mdl_pop', mdl_dequeue']
     mdlMove = (MDL_move ==> ) <$> mdl_move
 
     -- ensure these events never fire simultaneously as the indexing may be off
@@ -114,9 +136,11 @@ holdDynamicList initial (ModifyDynamicList {..}) = do
        Just (E3 x) -> Just x
        _           -> Nothing
 
+    dlc = fmap snd dynInt
+
   return $ DynamicList {
       dl_add = fmapMaybe evAddSelect evInt
       , dl_remove = fmapMaybe evRemoveSelect evInt
       , dl_move = fmapMaybe evMoveSelect evInt
-      , dl_contents = fmap snd dynInt
+      , dl_contents = dlc
     }
