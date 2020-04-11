@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo     #-}
+
 module Potato.Flow.Reflex.ActionStack (
 
 ) where
@@ -6,11 +8,10 @@ module Potato.Flow.Reflex.ActionStack (
 import           Relude
 
 import           Reflex
+import           Reflex.List
 
 {-
-data Action = Action {
 
-}
 data ModifyActionStack t a = ModifyActionStack {
   mas_do     :: Event t a
   , mas_undo :: Event t ()
@@ -24,17 +25,38 @@ data ActionStack t a = ActionStack {
   , as_undoStack :: Dynamic t [a] -- ^ stack of actions we've undone
 }
 
-[H]   holdDyn       ::                             a -> Event a -> m (Dynamic a)
-[H]   foldDyn       :: (a -> b ->           b ) -> b -> Event a -> m (Dynamic b)
-[H]   foldDynMaybe  :: (a -> b ->     Maybe b ) -> b -> Event a -> m (Dynamic b)
-[H]   foldDynM      :: (a -> b -> m'        b ) -> b -> Event a -> m (Dynamic b)
-[H]   foldDynMaybeM :: (a -> b -> m' (Maybe b)) -> b -> Event a -> m (Dynamic b)
-
-mkActionStack ::
+holdActionStack ::
   forall t a. (Reflex t, MonadHold t m)
   => ModifyActionStack t a
   -> m (ActionStack t a)
-mkActionStack (ModifyActionStack { .. }) = do
+holdActionStack (ModifyActionStack { .. }) = mdo
+
+data ModifyActionStack t a = ModifyActionStack {
+  mas_do     :: Event t a
+  , mas_undo :: Event t ()
+  , mas_redo :: Event t ()
+}
+
+data DynamicList t a = DynamicList {
+  dl_add        :: Event t (Int, a)
+  , dl_remove   :: Event t a
+  , dl_move     :: Event t (Int, a)
+  , dl_contents :: Dynamic t [a]
+}
+  let
+    undoElt :: dl_remove dynDoneInt
+
+    mdlDone = defaultModifyDynamicList {
+        mdl_push = undefined
+        , mdl_pop = undefined
+      }
+    mdlUndone = defaultModifyDynamicList {
+        mdl_push = undefined
+        , mdl_pop = undefined
+      }
+
+  dynDoneInt <- holdDynamicList [] mdlDone
+  dynUndoneInt <- holdDynamicList [] mdlUndone
 
   r_as_doStack =
   r_as_undoStack =

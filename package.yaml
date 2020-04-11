@@ -76,6 +76,7 @@ dependencies:
 - bytestring
 - ilist
 - dependent-sum
+- smash
 
 library:
   source-dirs: src
