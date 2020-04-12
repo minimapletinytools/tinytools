@@ -41,7 +41,7 @@ simple_state_network fdo fundo initial ev = do
       TCClear -> Just ()
       _ -> Nothing
 
-    mas = ModifyActionStack {
+    mas = ActionStackConfig {
         mas_do = doEv
         , mas_undo = undoEv
         , mas_redo = redoEv

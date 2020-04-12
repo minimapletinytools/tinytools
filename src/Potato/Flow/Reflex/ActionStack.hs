@@ -2,7 +2,7 @@
 --{-# LANGUAGE RecursiveDo     #-}
 module Potato.Flow.Reflex.ActionStack (
   ActionStack(..)
-  , ModifyActionStack(..)
+  , ActionStackConfig(..)
   , holdActionStack
 ) where
 
@@ -36,7 +36,7 @@ data ActionStack t a = ActionStack {
   , as_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
 }
 
-data ModifyActionStack t a = ModifyActionStack {
+data ActionStackConfig t a = ActionStackConfig {
   mas_do      :: Event t a -- ^ event to add an element to the stack
   , mas_undo  :: Event t () -- ^ event to undo top action of do stack
   , mas_redo  :: Event t () -- ^ event to redo top action of undo stack
@@ -49,9 +49,9 @@ data ASCmd t a = ASCDo a | ASCUndo | ASCRedo | ASCClear
 
 holdActionStack ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
-  => ModifyActionStack t a
+  => ActionStackConfig t a
   -> m (ActionStack t a)
-holdActionStack (ModifyActionStack { .. }) = do
+holdActionStack (ActionStackConfig { .. }) = do
   let
     changeEvent :: Event t (ASCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple ActionStack events firing at once" [
