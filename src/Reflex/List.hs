@@ -21,10 +21,10 @@ import           Data.List.Index
 -- TODO considering changing indexing to something that doesn't have execution ordering issues / partial
 -- TODO this needs to be modified to support adding/removing/moving several elements at once
 data DynamicList t a = DynamicList {
-  dl_add        :: Event t (Int, a)
-  , dl_remove   :: Event t a
-  , dl_move     :: Event t (Int, a)
-  , dl_contents :: Dynamic t [a]
+  _dynamicList_add        :: Event t (Int, a)
+  , _dynamicList_remove   :: Event t a
+  , _dynamicList_move     :: Event t (Int, a)
+  , _dynamicList_contents :: Dynamic t [a]
 }
 
 data DynamicListConfig t a = DynamicListConfig {
@@ -134,8 +134,8 @@ holdDynamicList initial (DynamicListConfig {..}) = mdo
     dlc = fmap snd dynInt
 
   return $ DynamicList {
-      dl_add = fmapMaybe evAddSelect evInt
-      , dl_remove = fmapMaybe evRemoveSelect evInt
-      , dl_move = fmapMaybe evMoveSelect evInt
-      , dl_contents = dlc
+      _dynamicList_add = fmapMaybe evAddSelect evInt
+      , _dynamicList_remove = fmapMaybe evRemoveSelect evInt
+      , _dynamicList_move = fmapMaybe evMoveSelect evInt
+      , _dynamicList_contents = dlc
     }

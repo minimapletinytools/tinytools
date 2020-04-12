@@ -19,7 +19,7 @@ import           Reflex.TestHarness
 queue_network :: TestApp t m Int [Int]
 queue_network ev = mdo
   let
-    changed = updated (dl_contents dl)
+    changed = updated (_dynamicList_contents dl)
     -- add from beginning
     addEvent = fmap (\x -> (0,x)) ev
     -- remove from end, this kind of knot tying does not work in reflex
@@ -31,7 +31,7 @@ queue_network ev = mdo
         , _dynamicListConfig_remove = removeEvent
       }
   dl <- holdDynamicList [] mdl
-  --_ <- performEvent $ fmap (const (print "hi")) (updated $ dl_contents dl)
+  --_ <- performEvent $ fmap (const (print "hi")) (updated $ _dynamicList_contents dl)
   return changed
 
 
@@ -63,7 +63,7 @@ push_enqueue_pop_dequeue_test = TestLabel "push/enqueue/pop/dequeue" $ TestCase 
             , _dynamicListConfig_dequeue = fmapMaybe (\x -> if x `mod` 4 == 3 then Just () else Nothing) ev
           }
       dl <- holdDynamicList [] mdl
-      return $ updated (dl_contents dl)
+      return $ updated (_dynamicList_contents dl)
     run = playReflexSeq bs network
   v <- liftIO run
   let
@@ -81,7 +81,7 @@ add_test = TestLabel "add" $ TestCase $ do
             _dynamicListConfig_add = (fmap (\x -> (0,x)) ev)
           }
       dl <- holdDynamicList [] mdl
-      return $ updated (dl_contents dl)
+      return $ updated (_dynamicList_contents dl)
     run = playReflexSeq bs network
   v <- liftIO run
   let
