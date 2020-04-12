@@ -22,6 +22,7 @@ import           Data.Wedge
 data DynamicStack t a = DynamicStack {
   ds_pushed     :: Event t a
   , ds_popped   :: Event t a
+  , ds_poppedAt :: Event t (Int, a) -- ^ same as ds_popped but contains size of stack AFTER popping
   , ds_contents :: Dynamic t [a]
 }
 
@@ -69,10 +70,10 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
     foldfn :: (DSCmd t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfn (DSCPush makeEltCb) (_, xs) = do
       let
-        -- n is length of stack BEFORE popping
+        -- n is length of stack AFTER popping
         -- xs is stack BEFORE adding elt
-        -- hence if (n == length xs + 1), x matches index of element that got popped
-        removeEltEvent = fmapMaybe (\n-> if n == length xs + 1 then Just () else Nothing) popAtEvent
+        -- hence if (n == length xs), x matches index of element that got popped
+        removeEltEvent = fmapMaybe (\n-> if n == length xs then Just () else Nothing) (fmap fst popAtEvent)
         --removeEltEvent = fmapMaybe (const (Just ())) (traceEvent (show (length xs)) popAtEvent)
       x <- makeEltCb removeEltEvent
       return (Here x, x:xs)
@@ -100,11 +101,12 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
 
     popEvent :: Event t a
     popEvent = fmapMaybe evPopSelect evInt
-    popAtEvent :: Event t Int
-    popAtEvent = tag (fmap (length . snd) (current dynInt)) popEvent
+    popAtEvent :: Event t (Int, a)
+    popAtEvent = attach (fmap ((+ (-1)) . length . snd) (current dynInt)) popEvent
 
   return $ DynamicStack {
       ds_pushed = fmapMaybe evPushSelect evInt
       , ds_popped = popEvent
+      , ds_poppedAt = popAtEvent
       , ds_contents = fmap snd dynInt
     }
