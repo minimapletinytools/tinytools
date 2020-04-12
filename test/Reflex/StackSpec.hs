@@ -13,6 +13,7 @@ import           Test.HUnit
 import qualified Data.List                as L (last)
 
 import           Reflex
+import           Reflex.Potato
 import           Reflex.Stack
 import           Reflex.TestHarness
 
@@ -24,77 +25,44 @@ getRight :: Either a b -> Maybe b
 getRight (Right x) = Just x
 getRight _         = Nothing
 
-{-
 
-adder_network :: forall t m. TestApp t m (Either Int ()) Int
-adder_network ev = mdo
+
+data TestCmd a = TCPush a | TCPop | TCClear deriving (Eq, Show)
+
+simple_state_network ::
+  forall t a s m.
+  (a -> s -> s) -- ^ do method to transform state
+  -> (a -> s -> s) -- ^ undo method to transform state
+  -> s -- ^ initial state
+  -> TestApp t m (TestCmd a) s -- ^ test app producing final state
+simple_state_network fdo fundo initial ev = do
   let
-    elFactory :: Int -> Event t () -> PushM t (Int, Event t ())
-    --elFactory n popped = return (traceEvent "pop" $ (fmap (const n) popped))
-    elFactory n popped = return (n, popped)
-
-    pushEv = fmapMaybe getLeft ev
-    popEv = fmapMaybe getRight ev
+    pushEv = flip fmapMaybe ev $ \case
+      TCPush n -> Just n
+      _ -> Nothing
+    popEv = flip fmapMaybe ev $ \case
+      TCPop -> Just ()
+      _ -> Nothing
+    clearEv = flip fmapMaybe ev $ \case
+      TCClear -> Just ()
+      _ -> Nothing
 
     mds = ModifyDynamicStack {
-        mds_push_rec = fmap elFactory pushEv
+        mds_push = pushEv
         , mds_pop = popEv
-        , mds_clear = never
+        , mds_clear = clearEv
       }
-    removeEv :: Event t Int
-    removeEv = coincidence $ fmap (\(v,e) -> fmap (const v) e) $ ds_popped ds
-    addEv :: Event t Int
-    addEv = fmap fst $ ds_pushed ds
-  ds :: DynamicStack t (Int, Event t ()) <- holdDynamicStack [] mds
-  adder :: Dynamic t Int <- foldDyn (+) 0 $ mergeWith (+) [addEv, (fmap negate removeEv)]
+  ds :: DynamicStack t a <- holdDynamicStack [] mds
+  adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (ds_pushed ds), fmap fundo (ds_popped ds)]
   return $ updated adder
 
 adder_test :: Test
 adder_test = TestLabel "adder app" $ TestCase $ do
   let
-    bs = fmap Left [1,2,3,4] <> fmap Right [(),(),()] <> fmap Left [10] <> fmap Right [()]  :: [Either Int ()]
-    run = playReflexSeq bs adder_network
+    bs = fmap TCPush [1..4] <> fmap (const TCPop) [(),(),(),()] <> fmap TCPush [100]
+    run = playReflexSeq bs (simple_state_network (+) (flip (-)) 0)
   v <- liftIO run
-  --print v
-  -- TODO check results
-  --fmap isNothing v @?= fmap isLeft bs
-  return ()
-
-
-dynamic_test_network :: forall t m. TestApp t m (Either Int ()) Int
-dynamic_test_network ev = mdo
-  let
-    -- this element is an event that fire when it's popped
-    elFactory :: Int -> Event t () -> PushM t (Event t Int)
-    --elFactory n popped = return (traceEvent "pop" $ (fmap (const n) popped))
-    elFactory n popped = return $ fmap (const n) popped
-
-    pushEv = fmapMaybe getLeft ev
-    popEv = fmapMaybe getRight ev
-
-    mds = ModifyDynamicStack {
-        mds_push_rec = fmap elFactory pushEv
-        , mds_pop = popEv
-        , mds_clear = never
-      }
-    -- this tracks the event of the element that was just popped
-    removeEv = coincidence $ ds_popped ds
-  ds :: DynamicStack t (Event t Int) <- holdDynamicStack [] mds
-  --removeEv <- switchHoldPromptly never $ ds_popped ds
-  return $ removeEv
-
-dynamic_test :: Test
-dynamic_test = TestLabel "dynamic" $ TestCase $ do
-  let
-    bs = fmap Left [1..13] <> fmap Right [(),(),()] <> fmap Left [14] <> fmap Right [()]  :: [Either Int ()]
-    run = playReflexSeq bs dynamic_test_network
-  v <- liftIO run
-  --print v
-  fmap isNothing v @?= fmap isLeft bs
-
--}
-
-data TestCmd a = TCPush a | TCPop | TCClear deriving (Eq, Show)
+  L.last v @?= Just 100
 
 clear_test_network :: forall t m. TestApp t m (TestCmd Int) [Int]
 clear_test_network ev = do
@@ -149,5 +117,4 @@ spec = do
   describe "Stack" $ do
     fromHUnitTest basic_test
     fromHUnitTest clear_test
-    --fromHUnitTest dynamic_test
-    --fromHUnitTest adder_test
+    fromHUnitTest adder_test

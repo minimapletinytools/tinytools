@@ -83,6 +83,7 @@ library:
   exposed-modules:
     - Reflex.List
     - Reflex.Stack
+    - Reflex.Potato
 
 tests:
   potato-flow-test:
