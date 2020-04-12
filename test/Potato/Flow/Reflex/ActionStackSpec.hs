@@ -48,7 +48,7 @@ simple_state_network fdo fundo initial ev = do
         , _actionStackConfig_clear = clearEv
       }
   as :: ActionStack t a <- holdActionStack mas
-  adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (as_do as), fmap fundo (as_undo as)]
+  adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (_actionStack_do as), fmap fundo (_actionStack_undo as)]
   return $ updated adder
 
 adder_test :: Test

@@ -30,10 +30,10 @@ getThere c = case c of
 
 
 data ActionStack t a = ActionStack {
-  as_do            :: Event t a -- ^ fires when element is added to do stack
-  , as_undo        :: Event t a -- ^ fires when element is added to undo stack
-  , as_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
-  , as_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
+  _actionStack_do            :: Event t a -- ^ fires when element is added to do stack
+  , _actionStack_undo        :: Event t a -- ^ fires when element is added to undo stack
+  , _actionStack_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
+  , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
 }
 
 data ActionStackConfig t a = ActionStackConfig {
@@ -82,8 +82,8 @@ holdActionStack (ActionStackConfig { .. }) = do
 
   return $
     ActionStack {
-      as_do = fmapMaybe getHere changedEv
-      , as_undo   = fmapMaybe getThere changedEv
-      , as_doneStack = fmap (\(_,x,_)->x) asdyn
-      , as_undoneStack = fmap (\(_,_,x)->x) asdyn
+      _actionStack_do = fmapMaybe getHere changedEv
+      , _actionStack_undo   = fmapMaybe getThere changedEv
+      , _actionStack_doneStack = fmap (\(_,x,_)->x) asdyn
+      , _actionStack_undoneStack = fmap (\(_,_,x)->x) asdyn
     }
