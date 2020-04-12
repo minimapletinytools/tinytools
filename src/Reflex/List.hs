@@ -28,28 +28,28 @@ data DynamicList t a = DynamicList {
 }
 
 data DynamicListConfig t a = DynamicListConfig {
-  mdl_add       :: Event t (Int, a)
-  , mdl_remove  :: Event t Int
+  _dynamicListConfig_add       :: Event t (Int, a)
+  , _dynamicListConfig_remove  :: Event t Int
 
   -- this is slightly different than removing then adding as it can be done in 1 frame
-  , mdl_move    :: Event t (Int,Int)
+  , _dynamicListConfig_move    :: Event t (Int,Int)
 
   -- these attach index and follow same code path as add/remove
-  , mdl_push    :: Event t a
-  , mdl_pop     :: Event t ()
-  , mdl_enqueue :: Event t a
-  , mdl_dequeue :: Event t ()
+  , _dynamicListConfig_push    :: Event t a
+  , _dynamicListConfig_pop     :: Event t ()
+  , _dynamicListConfig_enqueue :: Event t a
+  , _dynamicListConfig_dequeue :: Event t ()
 }
 
 defaultDynamicListConfig :: (Reflex t) => DynamicListConfig t a
 defaultDynamicListConfig = DynamicListConfig {
-    mdl_add = never
-    , mdl_remove = never
-    , mdl_move = never
-    , mdl_push = never
-    , mdl_pop = never
-    , mdl_enqueue = never
-    , mdl_dequeue = never
+    _dynamicListConfig_add = never
+    , _dynamicListConfig_remove = never
+    , _dynamicListConfig_move = never
+    , _dynamicListConfig_push = never
+    , _dynamicListConfig_pop = never
+    , _dynamicListConfig_enqueue = never
+    , _dynamicListConfig_dequeue = never
   }
 
 
@@ -70,14 +70,14 @@ holdDynamicList ::
   -> m (DynamicList t a)
 holdDynamicList initial (DynamicListConfig {..}) = mdo
   let
-    mdl_push' = fmap (\x -> (0,x)) mdl_push
-    mdl_pop' = fmap (const 0) mdl_pop
-    mdl_enqueue' = attach (fmap length (current dlc)) mdl_enqueue
-    mdl_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) mdl_dequeue
+    _dynamicListConfig_push' = fmap (\x -> (0,x)) _dynamicListConfig_push
+    _dynamicListConfig_pop' = fmap (const 0) _dynamicListConfig_pop
+    _dynamicListConfig_enqueue' = attach (fmap length (current dlc)) _dynamicListConfig_enqueue
+    _dynamicListConfig_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) _dynamicListConfig_dequeue
     mdlAdd :: Event t (DSum (MDL a) Identity)
-    mdlAdd = (MDL_add ==> ) <$> leftmost [mdl_add, mdl_push', mdl_enqueue']
-    mdlRemove = (MDL_remove ==> ) <$> leftmost [mdl_remove, mdl_pop', mdl_dequeue']
-    mdlMove = (MDL_move ==> ) <$> mdl_move
+    mdlAdd = (MDL_add ==> ) <$> leftmost [_dynamicListConfig_add, _dynamicListConfig_push', _dynamicListConfig_enqueue']
+    mdlRemove = (MDL_remove ==> ) <$> leftmost [_dynamicListConfig_remove, _dynamicListConfig_pop', _dynamicListConfig_dequeue']
+    mdlMove = (MDL_move ==> ) <$> _dynamicListConfig_move
 
     -- TODO change to leftmost
     -- ensure these events never fire simultaneously as the indexing may be off

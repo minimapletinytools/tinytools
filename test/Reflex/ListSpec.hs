@@ -27,8 +27,8 @@ queue_network ev = mdo
     --removeEvent = fmapMaybe changedMap changed
     removeEvent = never
     mdl = defaultDynamicListConfig {
-        mdl_add = addEvent
-        , mdl_remove = removeEvent
+        _dynamicListConfig_add = addEvent
+        , _dynamicListConfig_remove = removeEvent
       }
   dl <- holdDynamicList [] mdl
   --_ <- performEvent $ fmap (const (print "hi")) (updated $ dl_contents dl)
@@ -57,10 +57,10 @@ push_enqueue_pop_dequeue_test = TestLabel "push/enqueue/pop/dequeue" $ TestCase 
     network ev = do
       let
         mdl = defaultDynamicListConfig {
-            mdl_push = fmapMaybe (\x -> if x `mod` 4 == 0 then Just x else Nothing) ev
-            , mdl_enqueue = fmapMaybe (\x -> if x `mod` 4 == 1 then Just x else Nothing) ev
-            , mdl_pop = fmapMaybe (\x -> if x `mod` 4 == 2 then Just () else Nothing) ev
-            , mdl_dequeue = fmapMaybe (\x -> if x `mod` 4 == 3 then Just () else Nothing) ev
+            _dynamicListConfig_push = fmapMaybe (\x -> if x `mod` 4 == 0 then Just x else Nothing) ev
+            , _dynamicListConfig_enqueue = fmapMaybe (\x -> if x `mod` 4 == 1 then Just x else Nothing) ev
+            , _dynamicListConfig_pop = fmapMaybe (\x -> if x `mod` 4 == 2 then Just () else Nothing) ev
+            , _dynamicListConfig_dequeue = fmapMaybe (\x -> if x `mod` 4 == 3 then Just () else Nothing) ev
           }
       dl <- holdDynamicList [] mdl
       return $ updated (dl_contents dl)
@@ -78,7 +78,7 @@ add_test = TestLabel "add" $ TestCase $ do
     network ev = do
       let
         mdl = defaultDynamicListConfig {
-            mdl_add = (fmap (\x -> (0,x)) ev)
+            _dynamicListConfig_add = (fmap (\x -> (0,x)) ev)
           }
       dl <- holdDynamicList [] mdl
       return $ updated (dl_contents dl)
