@@ -55,7 +55,7 @@ adder_test :: Test
 adder_test = TestLabel "adder app" $ TestCase $ do
   let
     bs = [TCDo 1, TCDo 2, TCDo 3, TCUndo, TCUndo, TCRedo, TCDo 100]
-    run = playReflexSeq bs (simple_state_network (+) (flip (-)) 0)
+    run = playReflexSeq bs (simple_state_network (+) (flip (-)) (0 :: Int))
   v <- liftIO run
   L.last v @?= Just 103
 

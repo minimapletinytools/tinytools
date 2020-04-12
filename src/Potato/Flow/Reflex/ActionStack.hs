@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
---{-# LANGUAGE RecursiveDo     #-}
+
 module Potato.Flow.Reflex.ActionStack (
   ActionStack(..)
   , ActionStackConfig(..)
@@ -10,7 +10,6 @@ import           Relude
 
 import           Reflex
 import           Reflex.Potato
-import           Reflex.Stack
 
 import           Control.Monad.Fix
 
