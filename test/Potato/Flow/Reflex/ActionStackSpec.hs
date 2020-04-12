@@ -42,10 +42,10 @@ simple_state_network fdo fundo initial ev = do
       _ -> Nothing
 
     mas = ActionStackConfig {
-        mas_do = doEv
-        , mas_undo = undoEv
-        , mas_redo = redoEv
-        , mas_clear = clearEv
+        _actionStackConfig_do = doEv
+        , _actionStackConfig_undo = undoEv
+        , _actionStackConfig_redo = redoEv
+        , _actionStackConfig_clear = clearEv
       }
   as :: ActionStack t a <- holdActionStack mas
   adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (as_do as), fmap fundo (as_undo as)]

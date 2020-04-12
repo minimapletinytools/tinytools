@@ -37,10 +37,10 @@ data ActionStack t a = ActionStack {
 }
 
 data ActionStackConfig t a = ActionStackConfig {
-  mas_do      :: Event t a -- ^ event to add an element to the stack
-  , mas_undo  :: Event t () -- ^ event to undo top action of do stack
-  , mas_redo  :: Event t () -- ^ event to redo top action of undo stack
-  , mas_clear :: Event t () -- ^ clears both do/undo stack without firing any events
+  _actionStackConfig_do      :: Event t a -- ^ event to add an element to the stack
+  , _actionStackConfig_undo  :: Event t () -- ^ event to undo top action of do stack
+  , _actionStackConfig_redo  :: Event t () -- ^ event to redo top action of undo stack
+  , _actionStackConfig_clear :: Event t () -- ^ clears both do/undo stack without firing any events
 }
 
 -- helper type for holdActionStack
@@ -55,10 +55,10 @@ holdActionStack (ActionStackConfig { .. }) = do
   let
     changeEvent :: Event t (ASCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple ActionStack events firing at once" [
-        fmap ASCDo mas_do
-        , fmap (const ASCUndo) mas_undo
-        , fmap (const ASCRedo) mas_redo
-        , fmap (const ASCClear) mas_clear
+        fmap ASCDo _actionStackConfig_do
+        , fmap (const ASCUndo) _actionStackConfig_undo
+        , fmap (const ASCRedo) _actionStackConfig_redo
+        , fmap (const ASCClear) _actionStackConfig_clear
       ]
 
     -- Wedge values:
