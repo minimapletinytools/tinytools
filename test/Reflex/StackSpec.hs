@@ -24,6 +24,40 @@ getRight :: Either a b -> Maybe b
 getRight (Right x) = Just x
 getRight _         = Nothing
 
+adder_network :: forall t m. TestApp t m (Either Int ()) Int
+adder_network ev = mdo
+  let
+    elFactory :: Int -> Event t () -> PushM t (Int, Event t ())
+    --elFactory n popped = return (traceEvent "pop" $ (fmap (const n) popped))
+    elFactory n popped = return (n, popped)
+
+    pushEv = fmapMaybe getLeft ev
+    popEv = fmapMaybe getRight ev
+
+    mds = ModifyDynamicStack {
+        mds_push_rec = fmap elFactory pushEv
+        , mds_pop = popEv
+      }
+    removeEv :: Event t Int
+    removeEv = coincidence $ fmap (\(v,e) -> fmap (const v) e) $ ds_popped ds
+    addEv :: Event t Int
+    addEv = fmap fst $ ds_pushed ds
+  ds :: DynamicStack t (Int, Event t ()) <- holdDynamicStack [] mds
+  adder :: Dynamic t Int <- foldDyn (+) 0 $ mergeWith (+) [addEv, (fmap negate removeEv)]
+  return $ updated adder
+
+adder_test :: Test
+adder_test = TestLabel "adder app" $ TestCase $ do
+  let
+    bs = fmap Left [1,2,3,4] <> fmap Right [(),(),()] <> fmap Left [10] <> fmap Right [()]  :: [Either Int ()]
+    run = playReflexSeq bs adder_network
+  v <- liftIO run
+  --print v
+  -- TODO check results
+  --fmap isNothing v @?= fmap isLeft bs
+  return ()
+
+
 dynamic_test_network :: forall t m. TestApp t m (Either Int ()) Int
 dynamic_test_network ev = mdo
   let
@@ -80,3 +114,4 @@ spec = do
   describe "Stack" $ do
     fromHUnitTest basic_test
     fromHUnitTest dynamic_test
+    fromHUnitTest adder_test
