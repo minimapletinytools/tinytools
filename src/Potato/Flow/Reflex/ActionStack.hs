@@ -14,6 +14,7 @@ import           Reflex.Stack
 import           Control.Monad.Fix
 import           Data.Kind
 
+{-
 data ActionEvents t = ActionEvents {
   a_do     :: Event t ()
   , a_undo :: Event t ()
@@ -93,3 +94,4 @@ holdActionStack (ModifyActionStack { .. }) = mdo
       , as_doStack   = doneStack
       , as_undoStack = undoneStack
     }
+-}
