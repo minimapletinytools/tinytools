@@ -59,7 +59,7 @@ simple_state_network fdo fundo initial ev = do
 adder_test :: Test
 adder_test = TestLabel "adder app" $ TestCase $ do
   let
-    bs = fmap TCPush [1..4] <> fmap (const TCPop) [(),(),(),()] <> fmap TCPush [100]
+    bs = fmap TCPush [1..4] <> fmap (const TCPop) [(),(),(),(),(),(),()] <> fmap TCPush [100]
     run = playReflexSeq bs (simple_state_network (+) (flip (-)) 0)
   v <- liftIO run
   L.last v @?= Just 100
