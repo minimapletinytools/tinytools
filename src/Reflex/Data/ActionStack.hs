@@ -43,6 +43,7 @@ data ActionStackConfig t a = ActionStackConfig {
 }
 
 -- helper type for holdActionStack
+-- TODO remove type var t
 data ASCmd t a = ASCDo a | ASCUndo | ASCRedo | ASCClear
 
 

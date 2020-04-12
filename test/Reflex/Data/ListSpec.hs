@@ -7,46 +7,52 @@ module Reflex.Data.ListSpec (
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                as L (last, tail)
+import qualified Data.List                 as L (last, tail)
 
 import           Reflex
 import           Reflex.Data.List
 import           Reflex.Potato.TestHarness
 
-queue_network :: TestApp t m Int [Int]
-queue_network ev = mdo
+addm_network :: forall t m. TestApp t m Int [Int]
+addm_network ev = mdo
   let
-    changed = updated (_dynamicList_contents dl)
-    -- add from beginning
-    addEvent = fmap (\x -> (0,x)) ev
-    -- remove from end, this kind of knot tying does not work in reflex
-    --changedMap xs = if length xs > 10 then Just 10 else Nothing
-    --removeEvent = fmapMaybe changedMap changed
-    removeEvent = never
+    -- element in the list is a dynamic int that adds to itself each new element added to the list
+    -- this includes the element itself!
+    addEventMap :: Int -> PushM t (Int, Dynamic t Int)
+    addEventMap n = do
+      -- this causes an RTE, maybe a bug?
+      --addedEvExcludeSelf <- tailE addedEv
+      addedEvExcludeSelf <- return addedEv
+      let
+        foldfn :: (Int, Dynamic t Int) -> Int -> PushM t (Maybe Int)
+        foldfn (_, justAdded) old = do
+          addme <- sample . current $ justAdded
+          return $ Just (old + addme)
+      dyn <- foldDynMaybeM foldfn n addedEvExcludeSelf
+      return (0, dyn)
     mdl = defaultDynamicListConfig {
-        _dynamicListConfig_add = addEvent
-        , _dynamicListConfig_remove = removeEvent
+        _dynamicListConfig_addM = fmap addEventMap ev
+        , _dynamicListConfig_remove = never
       }
+    addedEv = _dynamicList_add dl
   dl <- holdDynamicList [] mdl
-  --_ <- performEvent $ fmap (const (print "hi")) (updated $ _dynamicList_contents dl)
-  return changed
+  return . updated . join . fmap sequence $ _dynamicList_contents dl
 
 
 -- use list as a queue of fixed size
-queue_test :: Test
-queue_test = TestLabel "queue" $ TestCase $ do
+addm_test :: Test
+addm_test = TestLabel "addm" $ TestCase $ do
   let
-    bs = [1..10] :: [Int]
-    run = playReflexSeq bs queue_network
+    bs = [1,1,1,1,1] :: [Int]
+    run = playReflexSeq bs addm_network
   v <- liftIO run
   --print v
-  return ()
-  {-let
-    expected = fmap Just . L.tail . scanl (\acc x -> x:acc) [] $ bs
-  expected @?= v-}
+  let
+    expected = [2,3,4,5,6]
+  L.last v @?= Just expected
 
 
 -- basic test case, add to list on each event tick
@@ -92,5 +98,5 @@ spec :: Spec
 spec = do
   describe "List" $ do
     fromHUnitTest add_test
-    fromHUnitTest queue_test
     fromHUnitTest push_enqueue_pop_dequeue_test
+    fromHUnitTest addm_test

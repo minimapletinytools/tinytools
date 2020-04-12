@@ -29,6 +29,8 @@ data DynamicList t a = DynamicList {
 
 data DynamicListConfig t a = DynamicListConfig {
   _dynamicListConfig_add       :: Event t (Int, a)
+  , _dynamicListConfig_addM    :: Event t (PushM t (Int, a))
+
   , _dynamicListConfig_remove  :: Event t Int
 
   -- this is slightly different than removing then adding as it can be done in 1 frame
@@ -44,6 +46,7 @@ data DynamicListConfig t a = DynamicListConfig {
 defaultDynamicListConfig :: (Reflex t) => DynamicListConfig t a
 defaultDynamicListConfig = DynamicListConfig {
     _dynamicListConfig_add = never
+    , _dynamicListConfig_addM = never
     , _dynamicListConfig_remove = never
     , _dynamicListConfig_move = never
     , _dynamicListConfig_push = never
@@ -55,12 +58,7 @@ defaultDynamicListConfig = DynamicListConfig {
 
 data LState a = LSInserted (Int, a) | LSRemoved a | LSMoved (Int, a) | LSNothing
 
--- modify DynamicList event tag
--- TODO switch to normal ADT for consistency
-data MDL x a where
-  MDL_add :: MDL x (Int, x)
-  MDL_remove :: MDL x Int
-  MDL_move :: MDL x (Int, Int) -- move (from, to), to index is after removal
+data DLCmd t a = DLCAdd (PushM t (Int, a)) | DLCRemove Int | DLCMove (Int, Int)
 
 -- | create a dynamic list
 holdDynamicList ::
@@ -70,53 +68,56 @@ holdDynamicList ::
   -> m (DynamicList t a)
 holdDynamicList initial (DynamicListConfig {..}) = mdo
   let
-    _dynamicListConfig_push' = fmap (\x -> (0,x)) _dynamicListConfig_push
-    _dynamicListConfig_pop' = fmap (const 0) _dynamicListConfig_pop
-    _dynamicListConfig_enqueue' = attach (fmap length (current dlc)) _dynamicListConfig_enqueue
+    _dynamicListConfig_add' = fmap return _dynamicListConfig_add
+    _dynamicListConfig_push' = fmap return $ fmap (\x -> (0,x)) _dynamicListConfig_push
+    _dynamicListConfig_pop' = fmap  (const 0) _dynamicListConfig_pop
+    _dynamicListConfig_enqueue' = fmap return $ attach (fmap length (current dlc)) _dynamicListConfig_enqueue
     _dynamicListConfig_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) _dynamicListConfig_dequeue
-    mdlAdd :: Event t (DSum (MDL a) Identity)
-    mdlAdd = (MDL_add ==> ) <$> leftmost [_dynamicListConfig_add, _dynamicListConfig_push', _dynamicListConfig_enqueue']
-    mdlRemove = (MDL_remove ==> ) <$> leftmost [_dynamicListConfig_remove, _dynamicListConfig_pop', _dynamicListConfig_dequeue']
-    mdlMove = (MDL_move ==> ) <$> _dynamicListConfig_move
+
+    dlAdd = leftmost $ DLCAdd <<$>> [_dynamicListConfig_add', _dynamicListConfig_addM, _dynamicListConfig_push', _dynamicListConfig_enqueue']
+    dlRemove = leftmost $ DLCRemove <<$>> [_dynamicListConfig_remove, _dynamicListConfig_pop', _dynamicListConfig_dequeue']
+    dlMove = DLCMove <$> _dynamicListConfig_move
 
     -- TODO change to leftmost
     -- ensure these events never fire simultaneously as the indexing may be off
-    changeEvent :: Event t (DSum (MDL a) Identity)
-    changeEvent = leftmostwarn "WARNING: multiple List events firing at once" [mdlMove, mdlRemove, mdlAdd]
+    changeEvent :: Event t (DLCmd t a)
+    changeEvent = leftmostwarn "WARNING: multiple List events firing at once" [dlMove, dlRemove, dlAdd]
 
     foldfn ::
-      DSum (MDL a) Identity
+      DLCmd t a
       -> (LState a, [a])
-      -> Maybe (LState a, [a])
+      -> PushM t (Maybe (LState a, [a]))
     foldfn op (_, xs) =
       let
         add' (index, x) xs' = do
           guard $ index >= 0 && index <= length xs'
           return $ insertAt index x xs'
-        add :: (Int, a) -> Maybe (LState a, [a])
-        add (index, x) = do
-          xs' <- add' (index, x) xs
-          return $ (LSInserted (index, x), xs')
+        add :: PushM t (Int, a) -> PushM t (Maybe (LState a, [a]))
+        add m = do
+          (index, x) <- m
+          return $ do
+            xs' <- add' (index, x) xs
+            return $ (LSInserted (index, x), xs')
         remove' index = do
           x <- xs !!? index
           return $ (x, deleteAt index xs)
-        remove :: Int -> Maybe (LState a, [a])
-        remove index = do
+        remove :: Int -> PushM t (Maybe (LState a, [a]))
+        remove index = return $ do
           (x, xs') <- remove' index
           return $ (LSRemoved x, xs')
-        move :: (Int, Int) -> Maybe (LState a, [a])
-        move (i1, i2) = do
+        move :: (Int, Int) -> PushM t (Maybe (LState a, [a]))
+        move (i1, i2) = return $ do
           (x, xs') <- remove' i1
           xs'' <- add' (i2, x) xs'
           return $ (LSMoved (i2, x), xs'')
       in
         case op of
-          (MDL_add :=> Identity (index, x)) -> add (index, x)
-          (MDL_remove :=> Identity index)   -> remove index
-          (MDL_move :=> Identity (i1, i2))  -> move (i1, i2)
+          DLCAdd m         -> add m
+          DLCRemove index  -> remove index
+          DLCMove (i1, i2) -> move (i1, i2)
 
   dynInt :: Dynamic t (LState a, [a]) <-
-    foldDynMaybe foldfn (LSNothing, initial) changeEvent
+    foldDynMaybeM foldfn (LSNothing, initial) changeEvent
 
   let
     evInt = fmap fst (updated dynInt)
