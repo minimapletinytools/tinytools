@@ -24,6 +24,8 @@ getRight :: Either a b -> Maybe b
 getRight (Right x) = Just x
 getRight _         = Nothing
 
+
+
 adder_network :: forall t m. TestApp t m (Either Int ()) Int
 adder_network ev = mdo
   let
@@ -37,6 +39,7 @@ adder_network ev = mdo
     mds = ModifyDynamicStack {
         mds_push_rec = fmap elFactory pushEv
         , mds_pop = popEv
+        , mds_clear = never
       }
     removeEv :: Event t Int
     removeEv = coincidence $ fmap (\(v,e) -> fmap (const v) e) $ ds_popped ds
@@ -72,6 +75,7 @@ dynamic_test_network ev = mdo
     mds = ModifyDynamicStack {
         mds_push_rec = fmap elFactory pushEv
         , mds_pop = popEv
+        , mds_clear = never
       }
     -- this tracks the event of the element that was just popped
     removeEv = coincidence $ ds_popped ds
@@ -89,14 +93,45 @@ dynamic_test = TestLabel "dynamic" $ TestCase $ do
   fmap isNothing v @?= fmap isLeft bs
 
 
+
+data TestCmd a = TCPush a | TCPop | TCClear deriving (Eq, Show)
+
+clear_test_network :: forall t m. TestApp t m (TestCmd Int) [Int]
+clear_test_network ev = do
+  let
+    pushEv = flip fmapMaybe ev $ \case
+      TCPush n -> Just n
+      _ -> Nothing
+    popEv = fmapMaybe (\x -> if x == TCPop then Just () else Nothing) ev
+    clearEv = fmapMaybe (\x -> if x == TCClear then Just () else Nothing) ev
+
+    mds = ModifyDynamicStack {
+        mds_push_rec = fmap (\n -> const (return n)) pushEv
+        , mds_pop = popEv
+        , mds_clear = clearEv
+      }
+  ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: ModifyDynamicStack t Int)
+  return $ updated (ds_contents ds)
+
+clear_test :: Test
+clear_test = TestLabel "clear" $ TestCase $ do
+  let
+    bs = fmap TCPush [1..13] <> fmap (const TCPop) [(),(),()] <> [TCClear] <> fmap TCPush [100]
+    run = playReflexSeq bs clear_test_network
+  v <- liftIO run
+  L.last v @?= Just [100]
+
+
 basic_test_network :: forall t m. TestApp t m (Either Int ()) [Int]
 basic_test_network ev = do
   let
+    pushEv = fmapMaybe getLeft ev
+    popEv = fmapMaybe getRight ev
+
     mds = ModifyDynamicStack {
-        mds_push_rec = fmapMaybe
-          (either (\n -> Just $ const (return n)) (const Nothing)) ev
-        , mds_pop = fmapMaybe
-          (either (const Nothing) (const $ Just ())) ev
+        mds_push_rec = fmap (\n -> const (return n)) pushEv
+        , mds_pop = popEv
+        , mds_clear = never
       }
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: ModifyDynamicStack t Int)
   return $ updated (ds_contents ds)
@@ -113,5 +148,6 @@ spec :: Spec
 spec = do
   describe "Stack" $ do
     fromHUnitTest basic_test
+    fromHUnitTest clear_test
     fromHUnitTest dynamic_test
     fromHUnitTest adder_test

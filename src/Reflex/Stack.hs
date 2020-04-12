@@ -29,7 +29,8 @@ data ModifyDynamicStack t a = ModifyDynamicStack {
   -- first tuple is method producing element to add from an event of when the element is removed
   --mds_push_rec :: (Reflex t) => (Event t () -> PushM t a, Event t ())
   mds_push_rec :: Event t (Event t () -> PushM t a)
-  , mds_pop    :: Event t ()
+  , mds_pop    :: Event t () -- ^ event to pop an elt from the stack
+  , mds_clear  :: Event t () -- ^ event to clear the stack, this does NOT trigger any pop events!!
 }
 
 -- I can't seem to instantiate from this without getting a could not deduce Reflex t0 error
@@ -38,12 +39,11 @@ defaultModifyDynamicStack :: (Reflex t) => ModifyDynamicStack t a
 defaultModifyDynamicStack = ModifyDynamicStack {
     mds_push_rec = never
     , mds_pop = never
+    , mds_clear = never
   }
 
--- | helper type for holdDynamicStack
--- left event output type is a callback for constructing the element to be added
--- right event output type is unit and is the pop command
-type EvType t a = Either (Event t () -> PushM t a) ()
+-- helper type for holdDynamicStack
+data DSCmd t a = DSCPush (Event t () -> PushM t a) | DSCPop | DSCClear
 
 -- | create a dynamic list
 holdDynamicStack ::
@@ -53,17 +53,21 @@ holdDynamicStack ::
   -> m (DynamicStack t a)
 holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
   let
-    -- left is add, right is remove
-    changeEvent :: Event t (NonEmpty (EvType t a))
-    --changeEvent = traceEventWith (\x -> show (isRight (head x))) $ mergeList [fmap Left $ mds_push_rec, fmap Right mds_pop]
-    changeEvent = mergeList [fmap Left $ mds_push_rec, fmap Right mds_pop]
 
-    -- wedge types:
+    -- switch to leftmost? These events should never trigger at the same time
+    changeEvent :: Event t (NonEmpty (DSCmd t a))
+    changeEvent = mergeList [
+        fmap DSCPush $ mds_push_rec
+        , fmap (const DSCPop) mds_pop
+        , fmap (const DSCClear) mds_clear
+      ]
+
+    -- Wedge values:
     -- Here is element that was just added
     -- There is element that was just removed
-    -- Nowhere is initial state or just popped an empty stack
-    foldfn :: (EvType t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
-    foldfn (Left makeEltCb) (_, xs) = do
+    -- Nowhere is initial state or just popped an empty stack or after a clear
+    foldfn :: (DSCmd t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
+    foldfn (DSCPush makeEltCb) (_, xs) = do
       let
         -- n is length of stack BEFORE popping
         -- xs is stack BEFORE adding elt
@@ -72,11 +76,12 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
         --removeEltEvent = fmapMaybe (const (Just ())) (traceEvent (show (length xs)) popAtEvent)
       x <- makeEltCb removeEltEvent
       return (Here x, x:xs)
-    foldfn (Right ()) (_, []) = return (Nowhere, [])
-    foldfn (Right ()) (_, (x:xs)) = return (There x, xs)
+    foldfn DSCPop (_, []) = return (Nowhere, [])
+    foldfn DSCPop (_, (x:xs)) = return (There x, xs)
+    foldfn DSCClear (_, _) = return (Nowhere, [])
 
     -- this is prob something like flip (foldM (flip foldfn))
-    foldfoldfn :: [(EvType t a)] -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
+    foldfoldfn :: [(DSCmd t a)] -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfoldfn [] b     = return b
     foldfoldfn (a:as) b = foldfn a b >>= foldfoldfn as
 
