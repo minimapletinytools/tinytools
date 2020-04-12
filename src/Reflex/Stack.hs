@@ -29,11 +29,10 @@ getThere c = case c of
   There x -> Just x
   _       -> Nothing
 
-
 data DynamicStack t a = DynamicStack {
-  ds_pushed     :: Event t a
-  , ds_popped   :: Event t a
-  , ds_contents :: Dynamic t [a]
+  _dynamicStack_pushed     :: Event t a
+  , _dynamicStack_popped   :: Event t a
+  , _dynamicStack_contents :: Dynamic t [a]
 }
 
 data DynamicStackConfig t a = DynamicStackConfig {
@@ -88,7 +87,7 @@ holdDynamicStack initial (DynamicStackConfig {..}) = do
     changedEv = fmap fst (updated sdyn)
 
   return $ DynamicStack {
-      ds_pushed = fmapMaybe getHere changedEv
-      , ds_popped = fmapMaybe getThere changedEv
-      , ds_contents = fmap snd sdyn
+      _dynamicStack_pushed = fmapMaybe getHere changedEv
+      , _dynamicStack_popped = fmapMaybe getThere changedEv
+      , _dynamicStack_contents = fmap snd sdyn
     }

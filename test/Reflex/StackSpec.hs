@@ -53,7 +53,7 @@ simple_state_network fdo fundo initial ev = do
         , _dynamicStackConfig_clear = clearEv
       }
   ds :: DynamicStack t a <- holdDynamicStack [] mds
-  adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (ds_pushed ds), fmap fundo (ds_popped ds)]
+  adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (_dynamicStack_pushed ds), fmap fundo (_dynamicStack_popped ds)]
   return $ updated adder
 
 adder_test :: Test
@@ -79,7 +79,7 @@ clear_test_network ev = do
         , _dynamicStackConfig_clear = clearEv
       }
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
-  return $ updated (ds_contents ds)
+  return $ updated (_dynamicStack_contents ds)
 
 clear_test :: Test
 clear_test = TestLabel "clear" $ TestCase $ do
@@ -102,7 +102,7 @@ basic_test_network ev = do
         , _dynamicStackConfig_clear = never
       }
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
-  return $ updated (ds_contents ds)
+  return $ updated (_dynamicStack_contents ds)
 
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
