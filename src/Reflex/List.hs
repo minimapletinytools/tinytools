@@ -52,8 +52,7 @@ defaultModifyDynamicList = ModifyDynamicList {
   }
 
 
--- TODO rename to DLCmd
-data Either3 a b c = E1 a | E2 b | E3 c
+data LState a = LSInserted (Int, a) | LSRemoved a | LSMoved (Int, a) | LSNothing
 
 -- modify DynamicList event tag
 data MDL x a where
@@ -75,39 +74,39 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
     mdl_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) mdl_dequeue
     mdlAdd :: Event t (DSum (MDL a) Identity)
     mdlAdd = (MDL_add ==> ) <$> leftmost [mdl_add, mdl_push', mdl_enqueue']
-
     mdlRemove = (MDL_remove ==> ) <$> leftmost [mdl_remove, mdl_pop', mdl_dequeue']
     mdlMove = (MDL_move ==> ) <$> mdl_move
 
+    -- TODO change to leftmost
     -- ensure these events never fire simultaneously as the indexing may be off
     changeEvent :: Event t (NonEmpty (DSum (MDL a) Identity))
     changeEvent = mergeList [mdlMove, mdlRemove, mdlAdd]
 
     foldfn ::
       DSum (MDL a) Identity
-      -> (Maybe (Either3 (Int, a) a (Int, a)), [a])
-      -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
+      -> (LState a, [a])
+      -> Maybe (LState a, [a])
     foldfn op (_, xs) =
       let
         add' (index, x) xs' = do
           guard $ index >= 0 && index <= length xs'
           return $ insertAt index x xs'
-        add :: (Int, a) -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
+        add :: (Int, a) -> Maybe (LState a, [a])
         add (index, x) = do
           xs' <- add' (index, x) xs
-          return $ (Just (E1 (index, x)), xs')
+          return $ (LSInserted (index, x), xs')
         remove' index = do
           x <- xs !!? index
           return $ (x, deleteAt index xs)
-        remove :: Int -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
+        remove :: Int -> Maybe (LState a, [a])
         remove index = do
           (x, xs') <- remove' index
-          return $ (Just (E2 x), xs')
-        move :: (Int, Int) -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
+          return $ (LSRemoved x, xs')
+        move :: (Int, Int) -> Maybe (LState a, [a])
         move (i1, i2) = do
           (x, xs') <- remove' i1
           xs'' <- add' (i2, x) xs'
-          return $ (Just (E3 (i2, x)), xs'')
+          return $ (LSMoved (i2, x), xs'')
       in
         case op of
           (MDL_add :=> Identity (index, x)) -> add (index, x)
@@ -121,21 +120,21 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
       Just b' -> foldfoldfn as b'
       Nothing -> foldfoldfn as b
 
-  --dynInt :: Dynamic t (Maybe (Either3 (Int, a) a (Int, a)), [a])
-  dynInt <- foldDynMaybe foldfoldfn (Nothing, initial) (fmap toList changeEvent)
+  dynInt :: Dynamic t (LState a, [a]) <-
+    foldDynMaybe foldfoldfn (LSNothing, initial) (fmap toList changeEvent)
 
   let
     evInt = fmap fst (updated dynInt)
 
     evAddSelect c = case c of
-      Just (E1 x) -> Just x
-      _           -> Nothing
+      LSInserted x -> Just x
+      _            -> Nothing
     evRemoveSelect c = case c of
-      Just (E2 x) -> Just x
+      LSRemoved x -> Just x
       _           -> Nothing
     evMoveSelect c = case c of
-       Just (E3 x) -> Just x
-       _           -> Nothing
+      LSMoved x -> Just x
+      _         -> Nothing
 
     dlc = fmap snd dynInt
 
