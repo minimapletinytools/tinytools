@@ -8,76 +8,88 @@ module Potato.Flow.Reflex.ActionStack (
 import           Relude
 
 import           Reflex
-import           Reflex.List
+import           Reflex.Potato
+import           Reflex.Stack
 
-{-
+import           Control.Monad.Fix
+import           Data.Kind
 
-data ModifyActionStack t a = ModifyActionStack {
-  mas_do     :: Event t a
-  , mas_undo :: Event t ()
-  , mas_redo :: Event t ()
+data ActionEvents t = ActionEvents {
+  a_do     :: Event t ()
+  , a_undo :: Event t ()
 }
 
+-- TODO figure out this nonsense
+class Action t a where
+  --type doInfo t a :: Type
+  --type undoInfo t a :: Type
+  makeAction :: ActionEvents t -> PushM t a
+  --doAction :: Event t (doInfo t a)
+  --undoAction :: Event t (undoInfo t a)
+
+
+
 data ActionStack t a = ActionStack {
-  as_do     :: Event t a
-  , as_undo :: Event t a
-  , as_doStack :: Dynamic t [a] -- ^ stack of actions we've done
-  , as_undoStack :: Dynamic t [a] -- ^ stack of actions we've undone
+  as_do          :: Event t a -- ^ fires when element is added to do stack
+  , as_undo      :: Event t a -- ^ fires when element is added to undo stack
+  , as_doStack   :: DynamicStack t a -- ^ stack of actions we've done
+  , as_undoStack :: DynamicStack t a -- ^ stack of actions we've undone
+}
+
+data ModifyActionStack t a = ModifyActionStack {
+  mas_do      :: Event t (ActionEvents t -> PushM t a) -- ^ event to add an element to the stack. Takes a function that produces the element in the PushM monad
+  , mas_undo  :: Event t () -- ^ event to undo top action of do stack
+  , mas_redo  :: Event t () -- ^ event to redo top action of undo stack
+  , mas_clear :: Event t () -- ^ clears both do/undo stack without firing any events
 }
 
 holdActionStack ::
-  forall t a. (Reflex t, MonadHold t m)
+  forall t m a. (Reflex t, MonadHold t m, MonadFix m)
   => ModifyActionStack t a
   -> m (ActionStack t a)
 holdActionStack (ModifyActionStack { .. }) = mdo
 
-data ModifyActionStack t a = ModifyActionStack {
-  mas_do     :: Event t a
-  , mas_undo :: Event t ()
-  , mas_redo :: Event t ()
-}
 
-data DynamicList t a = DynamicList {
-  dl_add        :: Event t (Int, a)
-  , dl_remove   :: Event t a
-  , dl_move     :: Event t (Int, a)
-  , dl_contents :: Dynamic t [a]
-}
   let
-    undoElt :: dl_remove dynDoneInt
+    inputDoEvFn :: (ActionEvents t -> PushM t a) -> (Event t () -> PushM t a)
+    inputDoEvFn f ev = f aev where
+      --[ ]  push       :: (a -> PushM t (Maybe b)) -> Event a -> Event b
+      magicIndexTracking :: Event t Int -> PushM t (Maybe ())
+      magicIndexTracking = undefined
 
-    mdlDone = defaultModifyDynamicList {
-        mdl_push = undefined
-        , mdl_pop = undefined
+      aev = ActionEvents {
+          a_do = ev
+          , a_undo = push magicIndexTracking undoIndexEv
+        }
+
+
+    mds_done = ModifyDynamicStack {
+        -- TODO also needs to track redoEv :scream:
+        mds_push_rec = fmap inputDoEvFn mas_do
+        , mds_pop = mas_undo
+        , mds_clear = mas_clear
       }
-    mdlUndone = defaultModifyDynamicList {
-        mdl_push = undefined
-        , mdl_pop = undefined
+    mds_undone = ModifyDynamicStack {
+        -- we can ignore pop event value in our ctor function because magicIndexTracking above keeps the reference from when we pushed it on the do stack
+        mds_push_rec = fmap (const . return) $ ds_popped doneStack
+        , mds_pop = mas_redo
+        , mds_clear = mas_clear
       }
 
-  dynDoneInt <- holdDynamicList [] mdlDone
-  dynUndoneInt <- holdDynamicList [] mdlUndone
+    undoIndexEv = fmap fst $ ds_poppedAt undoneStack
 
-  r_as_doStack =
-  r_as_undoStack =
-  r_as_undo =
-  r_as_redo =
-  return
+    doEv = ds_pushed doneStack
+    redoEv = ds_popped undoneStack
+    undoEv = ds_pushed undoneStack
+
+  -- TODO just internally store an ID for each element added so we can track it. EZ
+  doneStack <- holdDynamicStack [] mds_done
+  undoneStack <- holdDynamicStack [] mds_undone
+
+  return $
     ActionStack {
-      as_do = leftmost [mas_do, r_as_redo]
-      , as_undo = r_as_undo
-      , as_doStack = r_as_doStack
-      , as_undoStack = r_as_undoStack
+      as_do = leftmostwarn "do and redo happened at the same time" [doEv, redoEv]
+      , as_undo   = undoEv
+      , as_doStack   = doneStack
+      , as_undoStack = undoneStack
     }
-
-
-
--- Note, these sigs prob won't work due to not being able to access previous value of a dyn after it changes
-
--- | element added to stack
-pushEv :: Dynamic t [a] -> Event t a
-pushEv = undefined
-
-popEv :: Dynamic t [a] -> Event t a
-popEv = undefined
--}

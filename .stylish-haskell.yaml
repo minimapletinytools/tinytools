@@ -233,3 +233,4 @@ language_extensions:
   - MultiWayIf
   - TupleSections
   - MultiParamTypeClasses
+  - DataKinds
