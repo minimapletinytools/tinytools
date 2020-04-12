@@ -16,40 +16,45 @@ import           Reflex
 import           Reflex.Stack
 import           Reflex.TestHarness
 
-{-
-queue_network :: TestApp t m Int [Int]
-queue_network ev = mdo
+getLeft :: Either a b -> Maybe a
+getLeft (Left x) = Just x
+getLeft _        = Nothing
+
+getRight :: Either a b -> Maybe b
+getRight (Right x) = Just x
+getRight _         = Nothing
+
+dynamic_test_network :: forall t m. TestApp t m (Either Int ()) Int
+dynamic_test_network ev = mdo
   let
-    changed = updated (dl_contents dl)
-    -- add from beginning
-    addEvent = fmap (\x -> (0,x)) ev
-    -- remove from end, this kind of knot tying does not work in reflex
-    --changedMap xs = if length xs > 10 then Just 10 else Nothing
-    --removeEvent = fmapMaybe changedMap changed
-    removeEvent = never
-    mdl = defaultModifyDynamicList {
-        mdl_add = addEvent
-        , mdl_remove = removeEvent
+    -- this element is an event that fire when it's popped
+    elFactory :: Int -> Event t () -> PushM t (Event t Int)
+    --elFactory n popped = return (traceEvent "pop" $ (fmap (const n) popped))
+    elFactory n popped = return $ fmap (const n) popped
+
+    pushEv = fmapMaybe getLeft ev
+    popEv = fmapMaybe getRight ev
+
+    mds = ModifyDynamicStack {
+        mds_push_rec = fmap elFactory pushEv
+        , mds_pop = popEv
       }
-  dl <- holdDynamicList [] mdl
-  --_ <- performEvent $ fmap (const (print "hi")) (updated $ dl_contents dl)
-  return changed
+    -- this tracks the event of the element that was just popped
+    removeEv = coincidence $ ds_popped ds
+  ds :: DynamicStack t (Event t Int) <- holdDynamicStack [] mds
+  --removeEv <- switchHoldPromptly never $ ds_popped ds
+  return $ removeEv
 
-
--- use list as a queue of fixed size
-queue_test :: Test
-queue_test = TestLabel "queue" $ TestCase $ do
+dynamic_test :: Test
+dynamic_test = TestLabel "dynamic" $ TestCase $ do
   let
-    bs = [1..10] :: [Int]
-    run = playReflexSeq bs queue_network
+    bs = fmap Left [1..13] <> fmap Right [(),(),()] <> fmap Left [14] <> fmap Right [()]  :: [Either Int ()]
+    run = playReflexSeq bs dynamic_test_network
   v <- liftIO run
-  print v
-  {-let
-    expected = fmap Just . L.tail . scanl (\acc x -> x:acc) [] $ bs
-  expected @?= v-}
--}
+  --print v
+  fmap isNothing v @?= fmap isLeft bs
 
---
+
 basic_test_network :: forall t m. TestApp t m (Either Int ()) [Int]
 basic_test_network ev = do
   let
@@ -62,7 +67,6 @@ basic_test_network ev = do
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: ModifyDynamicStack t Int)
   return $ updated (ds_contents ds)
 
-
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
   let
@@ -71,8 +75,8 @@ basic_test = TestLabel "basic" $ TestCase $ do
   v <- liftIO run
   L.last v @?= Just (drop (length (rights bs)) . reverse $ lefts bs)
 
-
 spec :: Spec
 spec = do
   describe "Stack" $ do
     fromHUnitTest basic_test
+    fromHUnitTest dynamic_test

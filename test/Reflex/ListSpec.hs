@@ -42,7 +42,8 @@ queue_test = TestLabel "queue" $ TestCase $ do
     bs = [1..10] :: [Int]
     run = playReflexSeq bs queue_network
   v <- liftIO run
-  print v
+  --print v
+  return ()
   {-let
     expected = fmap Just . L.tail . scanl (\acc x -> x:acc) [] $ bs
   expected @?= v-}

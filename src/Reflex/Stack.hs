@@ -47,7 +47,7 @@ type EvType t a = Either (Event t () -> PushM t a) ()
 
 -- | create a dynamic list
 holdDynamicStack ::
-  forall t m a. (Reflex t, MonadHold t m, MonadFix m, Show a)
+  forall t m a. (Reflex t, MonadHold t m, MonadFix m)
   => [a]
   -> ModifyDynamicStack t a
   -> m (DynamicStack t a)
@@ -65,8 +65,11 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
     foldfn :: (EvType t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfn (Left makeEltCb) (_, xs) = do
       let
-        removeEltEvent = fmapMaybe
-          (\n-> if n == length xs - 1 then Just () else Nothing) popAtEvent
+        -- n is length of stack BEFORE popping
+        -- xs is stack BEFORE adding elt
+        -- hence if (n == length xs + 1), x matches index of element that got popped
+        removeEltEvent = fmapMaybe (\n-> if n == length xs + 1 then Just () else Nothing) popAtEvent
+        --removeEltEvent = fmapMaybe (const (Just ())) (traceEvent (show (length xs)) popAtEvent)
       x <- makeEltCb removeEltEvent
       return (Here x, x:xs)
     foldfn (Right ()) (_, []) = return (Nowhere, [])
@@ -80,6 +83,7 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
   dynInt :: Dynamic t (Wedge a a, [a]) <- foldDynM foldfoldfn (Nowhere, []) (fmap toList changeEvent)
 
   let
+    evInt :: Event t (Wedge a a)
     evInt = fmap fst (updated dynInt)
 
     evPushSelect c = case c of
@@ -89,7 +93,9 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
       There x -> Just x
       _       -> Nothing
 
+    popEvent :: Event t a
     popEvent = fmapMaybe evPopSelect evInt
+    popAtEvent :: Event t Int
     popAtEvent = tag (fmap (length . snd) (current dynInt)) popEvent
 
   return $ DynamicStack {
