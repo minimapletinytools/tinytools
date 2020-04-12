@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
+--{-# LANGUAGE RecursiveDo     #-}
 
 module Reflex.Stack (
   DynamicStack(..)
@@ -18,6 +18,18 @@ import           Control.Monad.Fix
 import           Data.Dependent.Sum
 import           Data.List.Index
 import           Data.Wedge
+
+
+
+getHere :: Wedge a b -> Maybe a
+getHere c = case c of
+  Here x -> Just x
+  _      -> Nothing
+
+getThere :: Wedge a b -> Maybe b
+getThere c = case c of
+  There x -> Just x
+  _       -> Nothing
 
 
 data DynamicStack t a = DynamicStack {
@@ -50,10 +62,8 @@ holdDynamicStack ::
   => [a]
   -> ModifyDynamicStack t a
   -> m (DynamicStack t a)
-holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
+holdDynamicStack initial (ModifyDynamicStack {..}) = do
   let
-
-    -- switch to leftmost? These events should never trigger at the same time
     changeEvent :: Event t (DSCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple stack events firing at once" [
         fmap DSCPush mds_push
@@ -71,21 +81,15 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
     foldfn DSCPop (_, (x:xs))  = return (There x, xs)
     foldfn DSCClear (_, _)     = return (Nowhere, [])
 
-  dynInt :: Dynamic t (Wedge a a, [a]) <- foldDynM foldfn (Nowhere, []) changeEvent
+  sdyn :: Dynamic t (Wedge a a, [a]) <-
+    foldDynM foldfn (Nowhere, initial) changeEvent
 
   let
-    evInt :: Event t (Wedge a a)
-    evInt = fmap fst (updated dynInt)
-
-    getHere c = case c of
-      Here x -> Just x
-      _      -> Nothing
-    getThere c = case c of
-      There x -> Just x
-      _       -> Nothing
+    changedEv :: Event t (Wedge a a)
+    changedEv = fmap fst (updated sdyn)
 
   return $ DynamicStack {
-      ds_pushed = fmapMaybe getHere evInt
-      , ds_popped = fmapMaybe getThere evInt
-      , ds_contents = fmap snd dynInt
+      ds_pushed = fmapMaybe getHere changedEv
+      , ds_popped = fmapMaybe getThere changedEv
+      , ds_contents = fmap snd sdyn
     }

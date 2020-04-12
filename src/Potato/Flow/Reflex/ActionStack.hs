@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
+--{-# LANGUAGE RecursiveDo     #-}
 module Potato.Flow.Reflex.ActionStack (
   ActionStack(..)
   , ModifyActionStack(..)
@@ -14,14 +14,26 @@ import           Reflex.Stack
 
 import           Control.Monad.Fix
 
+import           Data.Wedge
 
+
+
+getHere :: Wedge a b -> Maybe a
+getHere c = case c of
+  Here x -> Just x
+  _      -> Nothing
+
+getThere :: Wedge a b -> Maybe b
+getThere c = case c of
+  There x -> Just x
+  _       -> Nothing
 
 
 data ActionStack t a = ActionStack {
-  as_do          :: Event t a -- ^ fires when element is added to do stack
-  , as_undo      :: Event t a -- ^ fires when element is added to undo stack
-  , as_doStack   :: DynamicStack t a -- ^ stack of actions we've done
-  , as_undoStack :: DynamicStack t a -- ^ stack of actions we've undone
+  as_do            :: Event t a -- ^ fires when element is added to do stack
+  , as_undo        :: Event t a -- ^ fires when element is added to undo stack
+  , as_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
+  , as_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
 }
 
 data ModifyActionStack t a = ModifyActionStack {
@@ -31,35 +43,47 @@ data ModifyActionStack t a = ModifyActionStack {
   , mas_clear :: Event t () -- ^ clears both do/undo stack without firing any events
 }
 
+-- helper type for holdActionStack
+data ASCmd t a = ASCDo a | ASCUndo | ASCRedo | ASCClear
+
+
 holdActionStack ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
   => ModifyActionStack t a
   -> m (ActionStack t a)
-holdActionStack (ModifyActionStack { .. }) = mdo
+holdActionStack (ModifyActionStack { .. }) = do
   let
-    mds_done = ModifyDynamicStack {
-        mds_push = leftmostwarn "WARNING: simultaneous do and redo" [mas_do, ds_popped undoneStack]
-        , mds_pop = mas_undo
-        , mds_clear = mas_clear
-      }
-    mds_undone = ModifyDynamicStack {
-        mds_push = ds_popped doneStack
-        , mds_pop = mas_redo
-        -- a new do event clears the undo stack
-        , mds_clear = leftmostwarn "WARNING: simultaneous clear and do" [mas_clear, const () <$> mas_do]
-      }
+    changeEvent :: Event t (ASCmd t a)
+    changeEvent = leftmostwarn "WARNING: multiple ActionStack events firing at once" [
+        fmap ASCDo mas_do
+        , fmap (const ASCUndo) mas_undo
+        , fmap (const ASCRedo) mas_redo
+        , fmap (const ASCClear) mas_clear
+      ]
 
-    doEv = ds_pushed doneStack
-    redoEv = ds_popped undoneStack
-    undoEv = ds_pushed undoneStack
+    -- Wedge values:
+    -- Here is element that was just added to do stack
+    -- There is element that was just added to undo stack
+    -- Nowhere is everything else
+    foldfn :: (ASCmd t a) -> (Wedge a a, [a],[a]) -> PushM t (Wedge a a, [a],[a])
+    foldfn (ASCDo x) (_, xs, ys) = return (Here x, x:xs, []) -- clear undo stack on each new do
+    foldfn ASCUndo (_, [], ys)   = return (Nowhere, [], ys)
+    foldfn ASCUndo (_, x:xs, ys) = return (There x, xs, x:ys)
+    foldfn ASCRedo (_, xs, [])   = return (Nowhere, xs, [])
+    foldfn ASCRedo (_, xs, y:ys) = return (Here y, y:xs, ys)
+    foldfn ASCClear (_, _, _)    = return (Nowhere, [], [])
 
-  doneStack <- holdDynamicStack [] mds_done
-  undoneStack <- holdDynamicStack [] mds_undone
+  asdyn :: Dynamic t (Wedge a a, [a], [a]) <-
+    foldDynM foldfn (Nowhere, [], []) changeEvent
+
+  let
+    changedEv :: Event t (Wedge a a)
+    changedEv = fmap (\(x,_,_)->x) (updated asdyn)
 
   return $
     ActionStack {
-      as_do = leftmostwarn "WARNING: do and redo happened at the same time" [doEv, redoEv]
-      , as_undo   = undoEv
-      , as_doStack   = doneStack
-      , as_undoStack = undoneStack
+      as_do = fmapMaybe getHere changedEv
+      , as_undo   = fmapMaybe getThere changedEv
+      , as_doneStack = fmap (\(_,x,_)->x) asdyn
+      , as_undoneStack = fmap (\(_,_,x)->x) asdyn
     }

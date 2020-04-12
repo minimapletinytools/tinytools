@@ -1,5 +1,6 @@
 -- various potato helpers
 module Reflex.Potato (
+  -- reflex helpers
   leftmostwarn
   , foldDynMergeWith
   , foldDynMerge
@@ -10,6 +11,8 @@ import           Relude
 import           Reflex
 
 import           Control.Monad.Fix
+
+import           Data.Wedge
 
 
 -- | same as leftmost but outputs a warning if more than one event fires at once
