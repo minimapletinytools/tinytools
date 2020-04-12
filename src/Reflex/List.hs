@@ -2,8 +2,8 @@
 {-# LANGUAGE RecursiveDo     #-}
 module Reflex.List (
   DynamicList(..)
-  , ModifyDynamicList(..)
-  , defaultModifyDynamicList
+  , DynamicListConfig(..)
+  , defaultDynamicListConfig
   , holdDynamicList
 ) where
 
@@ -27,7 +27,7 @@ data DynamicList t a = DynamicList {
   , dl_contents :: Dynamic t [a]
 }
 
-data ModifyDynamicList t a = ModifyDynamicList {
+data DynamicListConfig t a = DynamicListConfig {
   mdl_add       :: Event t (Int, a)
   , mdl_remove  :: Event t Int
 
@@ -41,8 +41,8 @@ data ModifyDynamicList t a = ModifyDynamicList {
   , mdl_dequeue :: Event t ()
 }
 
-defaultModifyDynamicList :: (Reflex t) => ModifyDynamicList t a
-defaultModifyDynamicList = ModifyDynamicList {
+defaultDynamicListConfig :: (Reflex t) => DynamicListConfig t a
+defaultDynamicListConfig = DynamicListConfig {
     mdl_add = never
     , mdl_remove = never
     , mdl_move = never
@@ -66,9 +66,9 @@ data MDL x a where
 holdDynamicList ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
   => [a]
-  -> ModifyDynamicList t a
+  -> DynamicListConfig t a
   -> m (DynamicList t a)
-holdDynamicList initial (ModifyDynamicList {..}) = mdo
+holdDynamicList initial (DynamicListConfig {..}) = mdo
   let
     mdl_push' = fmap (\x -> (0,x)) mdl_push
     mdl_pop' = fmap (const 0) mdl_pop

@@ -26,7 +26,7 @@ queue_network ev = mdo
     --changedMap xs = if length xs > 10 then Just 10 else Nothing
     --removeEvent = fmapMaybe changedMap changed
     removeEvent = never
-    mdl = defaultModifyDynamicList {
+    mdl = defaultDynamicListConfig {
         mdl_add = addEvent
         , mdl_remove = removeEvent
       }
@@ -56,7 +56,7 @@ push_enqueue_pop_dequeue_test = TestLabel "push/enqueue/pop/dequeue" $ TestCase 
     bs = [0,1,0,1,0,1,0,1,2,3,3] :: [Int]
     network ev = do
       let
-        mdl = defaultModifyDynamicList {
+        mdl = defaultDynamicListConfig {
             mdl_push = fmapMaybe (\x -> if x `mod` 4 == 0 then Just x else Nothing) ev
             , mdl_enqueue = fmapMaybe (\x -> if x `mod` 4 == 1 then Just x else Nothing) ev
             , mdl_pop = fmapMaybe (\x -> if x `mod` 4 == 2 then Just () else Nothing) ev
@@ -77,7 +77,7 @@ add_test = TestLabel "add" $ TestCase $ do
     bs = [1..10] :: [Int]
     network ev = do
       let
-        mdl = defaultModifyDynamicList {
+        mdl = defaultDynamicListConfig {
             mdl_add = (fmap (\x -> (0,x)) ev)
           }
       dl <- holdDynamicList [] mdl
