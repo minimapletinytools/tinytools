@@ -52,6 +52,7 @@ defaultModifyDynamicList = ModifyDynamicList {
   }
 
 
+-- TODO rename to DLCmd
 data Either3 a b c = E1 a | E2 b | E3 c
 
 -- modify DynamicList event tag
@@ -88,12 +89,12 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
       -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
     foldfn op (_, xs) =
       let
-        add' (index, x) = do
-          guard $ index >= 0 && index <= length xs
-          return $ insertAt index x xs
+        add' (index, x) xs' = do
+          guard $ index >= 0 && index <= length xs'
+          return $ insertAt index x xs'
         add :: (Int, a) -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
         add (index, x) = do
-          xs' <- add' (index, x)
+          xs' <- add' (index, x) xs
           return $ (Just (E1 (index, x)), xs')
         remove' index = do
           x <- xs !!? index
@@ -105,7 +106,7 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
         move :: (Int, Int) -> Maybe (Maybe (Either3 (Int, a) a (Int, a)), [a])
         move (i1, i2) = do
           (x, xs') <- remove' i1
-          xs'' <- add' (i2, x)
+          xs'' <- add' (i2, x) xs'
           return $ (Just (E3 (i2, x)), xs'')
       in
         case op of
@@ -121,7 +122,7 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
       Nothing -> foldfoldfn as b
 
   --dynInt :: Dynamic t (Maybe (Either3 (Int, a) a (Int, a)), [a])
-  dynInt <- foldDynMaybe foldfoldfn (Nothing, []) (fmap toList changeEvent)
+  dynInt <- foldDynMaybe foldfoldfn (Nothing, initial) (fmap toList changeEvent)
 
   let
     evInt = fmap fst (updated dynInt)
