@@ -10,6 +10,7 @@ module Reflex.List (
 import           Relude
 
 import           Reflex
+import           Reflex.Potato
 
 import           Control.Monad.Fix
 
@@ -55,6 +56,7 @@ defaultModifyDynamicList = ModifyDynamicList {
 data LState a = LSInserted (Int, a) | LSRemoved a | LSMoved (Int, a) | LSNothing
 
 -- modify DynamicList event tag
+-- TODO switch to normal ADT for consistency
 data MDL x a where
   MDL_add :: MDL x (Int, x)
   MDL_remove :: MDL x Int
@@ -79,8 +81,8 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
 
     -- TODO change to leftmost
     -- ensure these events never fire simultaneously as the indexing may be off
-    changeEvent :: Event t (NonEmpty (DSum (MDL a) Identity))
-    changeEvent = mergeList [mdlMove, mdlRemove, mdlAdd]
+    changeEvent :: Event t (DSum (MDL a) Identity)
+    changeEvent = leftmostwarn "WARNING: multiple List events firing at once" [mdlMove, mdlRemove, mdlAdd]
 
     foldfn ::
       DSum (MDL a) Identity
@@ -113,15 +115,8 @@ holdDynamicList initial (ModifyDynamicList {..}) = mdo
           (MDL_remove :=> Identity index)   -> remove index
           (MDL_move :=> Identity (i1, i2))  -> move (i1, i2)
 
-
-    --foldfoldfn :: [a0] -> b0 -> Maybe b0
-    foldfoldfn [] b = Just b
-    foldfoldfn (a:as) b = case foldfn a b of
-      Just b' -> foldfoldfn as b'
-      Nothing -> foldfoldfn as b
-
   dynInt :: Dynamic t (LState a, [a]) <-
-    foldDynMaybe foldfoldfn (LSNothing, initial) (fmap toList changeEvent)
+    foldDynMaybe foldfn (LSNothing, initial) changeEvent
 
   let
     evInt = fmap fst (updated dynInt)
