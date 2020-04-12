@@ -66,7 +66,7 @@ holdActionStack (ModifyActionStack { .. }) = do
     -- There is element that was just added to undo stack
     -- Nowhere is everything else
     foldfn :: (ASCmd t a) -> (Wedge a a, [a],[a]) -> PushM t (Wedge a a, [a],[a])
-    foldfn (ASCDo x) (_, xs, ys) = return (Here x, x:xs, []) -- clear undo stack on each new do
+    foldfn (ASCDo x) (_, xs, _)  = return (Here x, x:xs, []) -- clear undo stack on each new do
     foldfn ASCUndo (_, [], ys)   = return (Nowhere, [], ys)
     foldfn ASCUndo (_, x:xs, ys) = return (There x, xs, x:ys)
     foldfn ASCRedo (_, xs, [])   = return (Nowhere, xs, [])

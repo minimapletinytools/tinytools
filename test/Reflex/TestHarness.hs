@@ -9,7 +9,6 @@ import           Relude
 
 import           Reflex
 import           Reflex.Host.Class
-import           Reflex.Spider
 
 import           Control.Monad.Fix
 import           Data.Dependent.Sum
@@ -41,7 +40,7 @@ playReflexSeq ::
 playReflexSeq bs network =
   runSpiderHost $ do
     (tickEvent,  tickTriggerRef)  <- newEventWithTriggerRef
-    tickEventHandle <- subscribeEvent tickEvent
+    --tickEventHandle <- subscribeEvent tickEvent
 
     finalEvent <- runHostFrame $ network tickEvent
     finalEventHandle <- subscribeEvent finalEvent
@@ -52,7 +51,7 @@ playReflexSeq bs network =
       --fireEventRef
       trig <- readIORef tickTriggerRef
       let
-        eventValue :: (MonadReadEvent t m, Show a) => EventHandle t a -> m (Maybe a)
+        eventValue :: (MonadReadEvent t m) => EventHandle t a -> m (Maybe a)
         eventValue = readEvent >=> T.sequenceA
       final <- case trig of
         Nothing -> error "no trigger ref"

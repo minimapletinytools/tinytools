@@ -15,8 +15,6 @@ import           Reflex.Potato
 
 import           Control.Monad.Fix
 
-import           Data.Dependent.Sum
-import           Data.List.Index
 import           Data.Wedge
 
 
