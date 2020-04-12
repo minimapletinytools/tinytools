@@ -62,8 +62,8 @@ holdDynamicStack initial (ModifyDynamicStack {..}) = mdo
       ]
 
     -- Wedge values:
-    -- Here is element that was just added
-    -- There is element that was just removed
+    -- Here is element that was just pushed
+    -- There is element that was just popped
     -- Nowhere is initial state or just popped an empty stack or after a clear
     foldfn :: (DSCmd t a) -> (Wedge a a, [a]) -> PushM t (Wedge a a, [a])
     foldfn (DSCPush x) (_, xs) = return (Here x, x:xs)

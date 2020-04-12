@@ -84,6 +84,7 @@ library:
     - Reflex.List
     - Reflex.Stack
     - Reflex.Potato
+    - Potato.Flow.Reflex.ActionStack
 
 tests:
   potato-flow-test:

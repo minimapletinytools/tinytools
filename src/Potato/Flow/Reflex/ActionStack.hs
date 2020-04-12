@@ -37,7 +37,6 @@ holdActionStack ::
   -> m (ActionStack t a)
 holdActionStack (ModifyActionStack { .. }) = mdo
   let
-
     mds_done = ModifyDynamicStack {
         mds_push = leftmostwarn "WARNING: simultaneous do and redo" [mas_do, ds_popped undoneStack]
         , mds_pop = mas_undo
@@ -46,7 +45,7 @@ holdActionStack (ModifyActionStack { .. }) = mdo
     mds_undone = ModifyDynamicStack {
         mds_push = ds_popped doneStack
         , mds_pop = mas_redo
-        -- a new do event clears the undo stack sorry :(
+        -- a new do event clears the undo stack
         , mds_clear = leftmostwarn "WARNING: simultaneous clear and do" [mas_clear, const () <$> mas_do]
       }
 
