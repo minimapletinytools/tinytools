@@ -37,23 +37,24 @@ data DynamicStack t a = DynamicStack {
 }
 
 data DynamicStackConfig t a = DynamicStackConfig {
-  mds_push    :: Event t a
-  , mds_pop   :: Event t () -- ^ event to pop an elt from the stack
-  , mds_clear :: Event t () -- ^ event to clear the stack, this does NOT trigger any pop events!!
+  _dynamicStackConfig_push    :: Event t a
+  , _dynamicStackConfig_pop   :: Event t () -- ^ event to pop an elt from the stack
+  , _dynamicStackConfig_clear :: Event t () -- ^ event to clear the stack, this does NOT trigger any pop events!!
 }
 
 -- I can't seem to instantiate from this without getting a could not deduce Reflex t0 error
 -- it can't seem to match the t inside and the t outside? I don't understand
 defaultDynamicStackConfig :: (Reflex t) => DynamicStackConfig t a
 defaultDynamicStackConfig = DynamicStackConfig {
-    mds_push = never
-    , mds_pop = never
-    , mds_clear = never
+    _dynamicStackConfig_push = never
+    , _dynamicStackConfig_pop = never
+    , _dynamicStackConfig_clear = never
   }
 
 -- helper type for holdDynamicStack
 data DSCmd t a = DSCPush a | DSCPop | DSCClear
 
+-- TODO implement this using DynamicList
 -- | create a dynamic list
 holdDynamicStack ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
@@ -64,9 +65,9 @@ holdDynamicStack initial (DynamicStackConfig {..}) = do
   let
     changeEvent :: Event t (DSCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple stack events firing at once" [
-        fmap DSCPush mds_push
-        , fmap (const DSCPop) mds_pop
-        , fmap (const DSCClear) mds_clear
+        fmap DSCPush _dynamicStackConfig_push
+        , fmap (const DSCPop) _dynamicStackConfig_pop
+        , fmap (const DSCClear) _dynamicStackConfig_clear
       ]
 
     -- Wedge values:

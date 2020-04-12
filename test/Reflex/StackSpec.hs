@@ -48,9 +48,9 @@ simple_state_network fdo fundo initial ev = do
       _ -> Nothing
 
     mds = DynamicStackConfig {
-        mds_push = pushEv
-        , mds_pop = popEv
-        , mds_clear = clearEv
+        _dynamicStackConfig_push = pushEv
+        , _dynamicStackConfig_pop = popEv
+        , _dynamicStackConfig_clear = clearEv
       }
   ds :: DynamicStack t a <- holdDynamicStack [] mds
   adder :: Dynamic t s <- foldDynMergeWith initial [fmap fdo (ds_pushed ds), fmap fundo (ds_popped ds)]
@@ -74,9 +74,9 @@ clear_test_network ev = do
     clearEv = fmapMaybe (\x -> if x == TCClear then Just () else Nothing) ev
 
     mds = DynamicStackConfig {
-        mds_push = pushEv
-        , mds_pop = popEv
-        , mds_clear = clearEv
+        _dynamicStackConfig_push = pushEv
+        , _dynamicStackConfig_pop = popEv
+        , _dynamicStackConfig_clear = clearEv
       }
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
   return $ updated (ds_contents ds)
@@ -97,9 +97,9 @@ basic_test_network ev = do
     popEv = fmapMaybe getRight ev
 
     mds = DynamicStackConfig {
-        mds_push = pushEv
-        , mds_pop = popEv
-        , mds_clear = never
+        _dynamicStackConfig_push = pushEv
+        , _dynamicStackConfig_pop = popEv
+        , _dynamicStackConfig_clear = never
       }
   ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
   return $ updated (ds_contents ds)
