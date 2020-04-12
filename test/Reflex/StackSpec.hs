@@ -47,7 +47,7 @@ simple_state_network fdo fundo initial ev = do
       TCClear -> Just ()
       _ -> Nothing
 
-    mds = ModifyDynamicStack {
+    mds = DynamicStackConfig {
         mds_push = pushEv
         , mds_pop = popEv
         , mds_clear = clearEv
@@ -73,12 +73,12 @@ clear_test_network ev = do
     popEv = fmapMaybe (\x -> if x == TCPop then Just () else Nothing) ev
     clearEv = fmapMaybe (\x -> if x == TCClear then Just () else Nothing) ev
 
-    mds = ModifyDynamicStack {
+    mds = DynamicStackConfig {
         mds_push = pushEv
         , mds_pop = popEv
         , mds_clear = clearEv
       }
-  ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: ModifyDynamicStack t Int)
+  ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
   return $ updated (ds_contents ds)
 
 clear_test :: Test
@@ -96,12 +96,12 @@ basic_test_network ev = do
     pushEv = fmapMaybe getLeft ev
     popEv = fmapMaybe getRight ev
 
-    mds = ModifyDynamicStack {
+    mds = DynamicStackConfig {
         mds_push = pushEv
         , mds_pop = popEv
         , mds_clear = never
       }
-  ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: ModifyDynamicStack t Int)
+  ds :: DynamicStack t Int <- holdDynamicStack [] (mds :: DynamicStackConfig t Int)
   return $ updated (ds_contents ds)
 
 basic_test :: Test
