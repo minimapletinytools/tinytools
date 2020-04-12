@@ -14,7 +14,7 @@ import qualified Data.List                as L (last, tail)
 
 import           Reflex
 import           Reflex.Data.List
-import           Reflex.TestHarness
+import           Reflex.Potato.TestHarness
 
 queue_network :: TestApp t m Int [Int]
 queue_network ev = mdo

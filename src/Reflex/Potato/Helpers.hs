@@ -1,5 +1,5 @@
 -- various potato helpers
-module Reflex.Potato (
+module Reflex.Potato.Helpers (
   -- reflex helpers
   leftmostwarn
   , foldDynMergeWith

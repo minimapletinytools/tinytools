@@ -14,8 +14,8 @@ import qualified Data.List                as L (last)
 
 import           Reflex
 import           Reflex.Data.Stack
-import           Reflex.Potato
-import           Reflex.TestHarness
+import           Reflex.Potato.Helpers
+import           Reflex.Potato.TestHarness
 
 getLeft :: Either a b -> Maybe a
 getLeft (Left x) = Just x

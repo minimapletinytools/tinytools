@@ -84,7 +84,8 @@ library:
     - Reflex.Data.ActionStack
     - Reflex.Data.List
     - Reflex.Data.Stack
-    - Reflex.Potato
+    - Reflex.Potato.Helpers
+    - Reflex.Potato.TestHarness
 
 
 tests:

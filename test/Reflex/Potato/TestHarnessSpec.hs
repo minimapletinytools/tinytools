@@ -1,4 +1,4 @@
-module Reflex.TestHarnessSpec (
+module Reflex.Potato.TestHarnessSpec (
   spec
 ) where
 
@@ -8,7 +8,7 @@ import           Test.Hspec
 import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
-import           Reflex.TestHarness
+import           Reflex.Potato.TestHarness
 
 
 basic_test :: Test

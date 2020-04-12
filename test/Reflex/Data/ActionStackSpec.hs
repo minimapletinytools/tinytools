@@ -14,8 +14,8 @@ import qualified Data.List                as L (last)
 
 import           Reflex
 import           Reflex.Data.ActionStack
-import           Reflex.Potato
-import           Reflex.TestHarness
+import           Reflex.Potato.Helpers
+import           Reflex.Potato.TestHarness
 
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
 

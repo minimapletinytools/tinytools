@@ -11,7 +11,7 @@ module Reflex.Data.Stack (
 import           Relude
 
 import           Reflex
-import           Reflex.Potato
+import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
 

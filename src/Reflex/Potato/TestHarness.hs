@@ -1,4 +1,4 @@
-module Reflex.TestHarness (
+module Reflex.Potato.TestHarness (
   TestApp
   , playReflex
   , playReflexSeq
