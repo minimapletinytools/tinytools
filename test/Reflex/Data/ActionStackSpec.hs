@@ -1,20 +1,19 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Potato.Flow.Reflex.ActionStackSpec (
+module Reflex.Data.ActionStackSpec (
   spec
 ) where
 
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit       (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                      as L (last)
-
-import           Potato.Flow.Reflex.ActionStack
+import qualified Data.List                as L (last)
 
 import           Reflex
+import           Reflex.Data.ActionStack
 import           Reflex.Potato
 import           Reflex.TestHarness
 

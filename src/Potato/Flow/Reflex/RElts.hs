@@ -13,7 +13,7 @@ import           Control.Monad.Fix
 import qualified Data.Tree         as T
 
 import           Reflex
-import qualified Reflex.Tree       as RT
+import qualified Reflex.Data.Tree  as RT
 
 data RElt t = REltNone | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
 

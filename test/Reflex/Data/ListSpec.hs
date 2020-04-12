@@ -1,6 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Reflex.ListSpec (
+module Reflex.Data.ListSpec (
   spec
 ) where
 
@@ -13,7 +13,7 @@ import           Test.HUnit
 import qualified Data.List                as L (last, tail)
 
 import           Reflex
-import           Reflex.List
+import           Reflex.Data.List
 import           Reflex.TestHarness
 
 queue_network :: TestApp t m Int [Int]

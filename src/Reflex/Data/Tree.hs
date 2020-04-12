@@ -1,4 +1,4 @@
-module Reflex.Tree (
+module Reflex.Data.Tree (
   Tree(..)
   , Forest
 ) where

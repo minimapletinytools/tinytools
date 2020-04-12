@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
-module Reflex.List (
+module Reflex.Data.List (
   DynamicList(..)
   , DynamicListConfig(..)
   , defaultDynamicListConfig

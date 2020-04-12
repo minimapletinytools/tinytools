@@ -81,10 +81,11 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-    - Reflex.List
-    - Reflex.Stack
+    - Reflex.Data.ActionStack
+    - Reflex.Data.List
+    - Reflex.Data.Stack
     - Reflex.Potato
-    - Potato.Flow.Reflex.ActionStack
+
 
 tests:
   potato-flow-test:

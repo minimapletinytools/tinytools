@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 --{-# LANGUAGE RecursiveDo     #-}
 
-module Reflex.Stack (
+module Reflex.Data.Stack (
   DynamicStack(..)
   , DynamicStackConfig(..)
   , defaultDynamicStackConfig

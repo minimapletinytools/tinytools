@@ -1,6 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Reflex.StackSpec (
+module Reflex.Data.StackSpec (
   spec
 ) where
 
@@ -13,8 +13,8 @@ import           Test.HUnit
 import qualified Data.List                as L (last)
 
 import           Reflex
+import           Reflex.Data.Stack
 import           Reflex.Potato
-import           Reflex.Stack
 import           Reflex.TestHarness
 
 getLeft :: Either a b -> Maybe a

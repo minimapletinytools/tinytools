@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Reflex.ActionStack (
+module Reflex.Data.ActionStack (
   ActionStack(..)
   , ActionStackConfig(..)
   , holdActionStack
