@@ -29,8 +29,6 @@ data DynamicList t a = DynamicList {
 
 data DynamicListConfig t a = DynamicListConfig {
   _dynamicListConfig_add       :: Event t (Int, a)
-  , _dynamicListConfig_addM    :: Event t (PushM t (Int, a))
-
   , _dynamicListConfig_remove  :: Event t Int
 
   -- this is slightly different than removing then adding as it can be done in 1 frame
@@ -46,7 +44,6 @@ data DynamicListConfig t a = DynamicListConfig {
 defaultDynamicListConfig :: (Reflex t) => DynamicListConfig t a
 defaultDynamicListConfig = DynamicListConfig {
     _dynamicListConfig_add = never
-    , _dynamicListConfig_addM = never
     , _dynamicListConfig_remove = never
     , _dynamicListConfig_move = never
     , _dynamicListConfig_push = never
@@ -58,7 +55,7 @@ defaultDynamicListConfig = DynamicListConfig {
 
 data LState a = LSInserted (Int, a) | LSRemoved a | LSMoved (Int, a) | LSNothing
 
-data DLCmd t a = DLCAdd (PushM t (Int, a)) | DLCRemove Int | DLCMove (Int, Int)
+data DLCmd t a = DLCAdd (Int, a) | DLCRemove Int | DLCMove (Int, Int)
 
 -- | create a dynamic list
 holdDynamicList ::
@@ -68,13 +65,13 @@ holdDynamicList ::
   -> m (DynamicList t a)
 holdDynamicList initial (DynamicListConfig {..}) = mdo
   let
-    _dynamicListConfig_add' = fmap return _dynamicListConfig_add
-    _dynamicListConfig_push' = fmap return $ fmap (\x -> (0,x)) _dynamicListConfig_push
+    _dynamicListConfig_add' = _dynamicListConfig_add
+    _dynamicListConfig_push' =fmap (\x -> (0,x)) _dynamicListConfig_push
     _dynamicListConfig_pop' = fmap  (const 0) _dynamicListConfig_pop
-    _dynamicListConfig_enqueue' = fmap return $ attach (fmap length (current dlc)) _dynamicListConfig_enqueue
+    _dynamicListConfig_enqueue' = attach (fmap length (current dlc)) _dynamicListConfig_enqueue
     _dynamicListConfig_dequeue' = tag (fmap ((+ (-1)) . length) (current dlc)) _dynamicListConfig_dequeue
 
-    dlAdd = leftmost $ DLCAdd <<$>> [_dynamicListConfig_add', _dynamicListConfig_addM, _dynamicListConfig_push', _dynamicListConfig_enqueue']
+    dlAdd = leftmost $ DLCAdd <<$>> [_dynamicListConfig_add', _dynamicListConfig_push', _dynamicListConfig_enqueue']
     dlRemove = leftmost $ DLCRemove <<$>> [_dynamicListConfig_remove, _dynamicListConfig_pop', _dynamicListConfig_dequeue']
     dlMove = DLCMove <$> _dynamicListConfig_move
 
@@ -86,38 +83,36 @@ holdDynamicList initial (DynamicListConfig {..}) = mdo
     foldfn ::
       DLCmd t a
       -> (LState a, [a])
-      -> PushM t (Maybe (LState a, [a]))
+      -> Maybe (LState a, [a])
     foldfn op (_, xs) =
       let
         add' (index, x) xs' = do
           guard $ index >= 0 && index <= length xs'
           return $ insertAt index x xs'
-        add :: PushM t (Int, a) -> PushM t (Maybe (LState a, [a]))
-        add m = do
-          (index, x) <- m
-          return $ do
-            xs' <- add' (index, x) xs
-            return $ (LSInserted (index, x), xs')
+        add :: (Int, a) -> Maybe (LState a, [a])
+        add (index, x) = do
+          xs' <- add' (index, x) xs
+          return $ (LSInserted (index, x), xs')
         remove' index = do
           x <- xs !!? index
           return $ (x, deleteAt index xs)
-        remove :: Int -> PushM t (Maybe (LState a, [a]))
-        remove index = return $ do
+        remove :: Int -> Maybe (LState a, [a])
+        remove index = do
           (x, xs') <- remove' index
           return $ (LSRemoved x, xs')
-        move :: (Int, Int) -> PushM t (Maybe (LState a, [a]))
-        move (i1, i2) = return $ do
+        move :: (Int, Int) -> Maybe (LState a, [a])
+        move (i1, i2) = do
           (x, xs') <- remove' i1
           xs'' <- add' (i2, x) xs'
           return $ (LSMoved (i2, x), xs'')
       in
         case op of
-          DLCAdd m         -> add m
-          DLCRemove index  -> remove index
-          DLCMove (i1, i2) -> move (i1, i2)
+          DLCAdd x    -> add x
+          DLCRemove x -> remove x
+          DLCMove x   -> move x
 
   dynInt :: Dynamic t (LState a, [a]) <-
-    foldDynMaybeM foldfn (LSNothing, initial) changeEvent
+    foldDynMaybe foldfn (LSNothing, initial) changeEvent
 
   let
     evInt = fmap fst (updated dynInt)

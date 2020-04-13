@@ -16,13 +16,13 @@ import           Reflex
 import           Reflex.Data.List
 import           Reflex.Potato.TestHarness
 
-addm_network :: forall t m. TestApp t m Int [Int]
-addm_network ev = mdo
+pushAdd_network :: forall t m. TestApp t m Int [Int]
+pushAdd_network ev = mdo
   let
     -- element in the list is a dynamic int that adds to itself each new element added to the list
     -- this includes the element itself!
-    addEventMap :: Int -> PushM t (Int, Dynamic t Int)
-    addEventMap n = do
+    pushAddEvent :: Int -> PushM t (Int, Dynamic t Int)
+    pushAddEvent n = do
       -- this causes an RTE, maybe a bug?
       --addedEvExcludeSelf <- tailE addedEv
       addedEvExcludeSelf <- return addedEv
@@ -34,7 +34,7 @@ addm_network ev = mdo
       dyn <- foldDynMaybeM foldfn n addedEvExcludeSelf
       return (0, dyn)
     mdl = defaultDynamicListConfig {
-        _dynamicListConfig_addM = fmap addEventMap ev
+        _dynamicListConfig_add = pushAlways pushAddEvent ev
         , _dynamicListConfig_remove = never
       }
     addedEv = _dynamicList_add dl
@@ -43,11 +43,11 @@ addm_network ev = mdo
 
 
 -- use list as a queue of fixed size
-addm_test :: Test
-addm_test = TestLabel "addm" $ TestCase $ do
+pushAdd_test :: Test
+pushAdd_test = TestLabel "pushAdd" $ TestCase $ do
   let
     bs = [1,1,1,1,1] :: [Int]
-    run = playReflexSeq bs addm_network
+    run = playReflexSeq bs pushAdd_network
   v <- liftIO run
   --print v
   let
@@ -99,4 +99,4 @@ spec = do
   describe "List" $ do
     fromHUnitTest add_test
     fromHUnitTest push_enqueue_pop_dequeue_test
-    fromHUnitTest addm_test
+    fromHUnitTest pushAdd_test
