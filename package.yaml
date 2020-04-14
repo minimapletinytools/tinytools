@@ -76,6 +76,7 @@ dependencies:
 - bytestring
 - ilist
 - dependent-sum
+- dependent-map
 - smash
 
 library:

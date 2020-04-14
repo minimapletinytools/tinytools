@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo     #-}
 
 module Reflex.Data.ActionStack (
   ActionStack(..)
@@ -13,6 +14,8 @@ import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
 
+import qualified Data.Dependent.Map    as DMap
+import           Data.Functor.Misc
 import           Data.Wedge
 
 
@@ -27,35 +30,46 @@ getThere c = case c of
   There x -> Just x
   _       -> Nothing
 
-
 data ActionStack t a = ActionStack {
-  _actionStack_do            :: Event t a -- ^ fires when element is added to do stack
-  , _actionStack_undo        :: Event t a -- ^ fires when element is added to undo stack
-  , _actionStack_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
-  , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
+  -- | fires when element is added to do stack
+  _actionStack_do                      :: Event t a
+  -- | fires when element is added to undo stack
+  , _actionStack_undo                  :: Event t a
+  -- | contains the do/undo event of the next action that is added to the ActionStack
+  -- attach this to event that ultimately triggers _actionStackConfig_do to create a dynamic Action that is responsible for its own do/undo
+  , _actionStack_eventsForNextDoAction :: Behavior t (Event t (), Event t ())
 }
 
 data ActionStackConfig t a = ActionStackConfig {
-  _actionStackConfig_do      :: Event t a -- ^ event to add an element to the stack
-  , _actionStackConfig_undo  :: Event t () -- ^ event to undo top action of do stack
-  , _actionStackConfig_redo  :: Event t () -- ^ event to redo top action of undo stack
-  , _actionStackConfig_clear :: Event t () -- ^ clears both do/undo stack without firing any events
+  -- | event to add an element to the stack
+  _actionStackConfig_do      :: Event t a
+  -- | event to undo top action of do stack
+  , _actionStackConfig_undo  :: Event t ()
+  -- | event to redo top action of undo stack
+  , _actionStackConfig_redo  :: Event t ()
+  -- | clears both do/undo stack without firing any events
+  , _actionStackConfig_clear :: Event t ()
 }
 
--- helper type for holdActionStack
--- TODO remove type var t
-data ASCmd t a = ASCDo a | ASCUndo | ASCRedo | ASCClear
+-- | optional class cont
+--class HigherOrderAction where
 
+
+-- helper types for holdActionStack
+data ASCmd a = ASCDo (Int, a) | ASCUndo | ASCRedo | ASCClear
+type UID = Int
+type IDAct a = (UID,a)
+type InternalStack a = (Wedge (IDAct a) (IDAct a), [IDAct a], [IDAct a])
 
 holdActionStack ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
   => ActionStackConfig t a
   -> m (ActionStack t a)
-holdActionStack (ActionStackConfig { .. }) = do
+holdActionStack (ActionStackConfig { .. }) = mdo
   let
-    changeEvent :: Event t (ASCmd t a)
+    changeEvent :: Event t (ASCmd a)
     changeEvent = leftmostwarn "WARNING: multiple ActionStack events firing at once" [
-        fmap ASCDo _actionStackConfig_do
+        fmap ASCDo $ attach (current uid) $ _actionStackConfig_do
         , fmap (const ASCUndo) _actionStackConfig_undo
         , fmap (const ASCRedo) _actionStackConfig_redo
         , fmap (const ASCClear) _actionStackConfig_clear
@@ -65,7 +79,7 @@ holdActionStack (ActionStackConfig { .. }) = do
     -- Here is element that was just added to do stack
     -- There is element that was just added to undo stack
     -- Nowhere is everything else
-    foldfn :: (ASCmd t a) -> (Wedge a a, [a],[a]) -> PushM t (Wedge a a, [a],[a])
+    foldfn :: (ASCmd a) -> InternalStack a -> PushM t (InternalStack a)
     foldfn (ASCDo x) (_, xs, _)  = return (Here x, x:xs, []) -- clear undo stack on each new do
     foldfn ASCUndo (_, [], ys)   = return (Nowhere, [], ys)
     foldfn ASCUndo (_, x:xs, ys) = return (There x, xs, x:ys)
@@ -73,17 +87,38 @@ holdActionStack (ActionStackConfig { .. }) = do
     foldfn ASCRedo (_, xs, y:ys) = return (Here y, y:xs, ys)
     foldfn ASCClear (_, _, _)    = return (Nowhere, [], [])
 
-  asdyn :: Dynamic t (Wedge a a, [a], [a]) <-
+  -- internal stack state
+  asdyn :: Dynamic t (InternalStack a) <-
     foldDynM foldfn (Nowhere, [], []) changeEvent
 
+  -- internal id state to track each new action added to the ActionStack
   let
-    changedEv :: Event t (Wedge a a)
+    firstId = 0
+  uid :: Dynamic t UID <-
+    foldDyn (const (+1)) firstId _actionStackConfig_do
+
+  let
+    changedEv :: Event t (Wedge (IDAct a) (IDAct a))
     changedEv = fmap (\(x,_,_)->x) (updated asdyn)
 
-  return $
+    doEv = fmapMaybe getHere changedEv
+    undoEv = fmapMaybe getThere changedEv
+
+    doIdEv :: Event t (DMap.DMap (Const2 UID ()) Identity)
+    doIdEv = fmap (\x -> DMap.singleton (Const2 $ fst x) mempty) doEv
+    undoIdEv :: Event t (DMap.DMap (Const2 UID ()) Identity)
+    undoIdEv = fmap (\x -> DMap.singleton (Const2 $ fst x) mempty) undoEv
+
+    selectDoAction :: UID -> (Event t (), Event t ())
+    selectDoAction i = (select (fan doIdEv) (Const2 i), select (fan undoIdEv) (Const2 i))
+
+  -- this efficiently generates the do and undo events for the next action that will be added to the list
+  nextDoAction <- foldDyn (\i _ -> selectDoAction i) (selectDoAction firstId) $ updated uid
+
+  return
     ActionStack {
-      _actionStack_do = fmapMaybe getHere changedEv
-      , _actionStack_undo   = fmapMaybe getThere changedEv
-      , _actionStack_doneStack = fmap (\(_,x,_)->x) asdyn
-      , _actionStack_undoneStack = fmap (\(_,_,x)->x) asdyn
+      _actionStack_do = fmap snd doEv
+      , _actionStack_undo   = fmap snd undoEv
+      , _actionStack_eventsForNextDoAction = current nextDoAction
+
     }
