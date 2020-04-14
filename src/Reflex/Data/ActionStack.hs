@@ -51,10 +51,6 @@ data ActionStackConfig t a = ActionStackConfig {
   , _actionStackConfig_clear :: Event t ()
 }
 
--- | optional class cont
---class HigherOrderAction where
-
-
 -- helper types for holdActionStack
 data ASCmd a = ASCDo (Int, a) | ASCUndo | ASCRedo | ASCClear
 type UID = Int

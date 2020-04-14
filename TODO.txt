@@ -1,3 +1,12 @@
+TODO
+
+-action stack
+  -_actionStack_eventsForJustAdded :: Behavior t (Event t (), Event t ())
+-make trigger variation of action stack
+  -I think you can make holdActionStackTrigger which has PerformEvent/TriggerEvent t m constraints
+
+--------
+
 I did a little research myself and found no pure reactive data structure libraries out there. The closest thing I found was: https://hackage.haskell.org/package/reflex-dom-retractable which is a reactive stack. However events are routed through performEvent in the IO monad.
 
 I simplified the problem at hand a little for myself and decided a dynamic list should be sufficient.
@@ -10,6 +19,8 @@ I think one could make dynamic indices into the list if you need execution order
 
 Or, I can add (Eq a) constraint to uniquely identify elements in the list to solve this problem.
 I found this library which sorta solves this problem http://hackage.haskell.org/package/reflex-transformers-0.2.1/docs/Reflex-Monad-Supply.html
+
+--
 
 ------
 ::MAJOR QUESTIONS::

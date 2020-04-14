@@ -7,10 +7,10 @@ module Reflex.Data.ActionStackSpec (
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                as L (last)
+import qualified Data.List                 as L (last)
 
 import           Reflex
 import           Reflex.Data.ActionStack
@@ -18,6 +18,53 @@ import           Reflex.Potato.Helpers
 import           Reflex.Potato.TestHarness
 
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
+
+{-
+-- network to test _actionStack_eventsForNextDoAction
+-- and HigherOrderActionStack
+-- TODO finish
+dynamic_state_network :: TestApp t m (TestCmd Int) s
+dynamic_state_network ev = mdo
+
+  let
+    statefoldfn = \case
+      Left x -> (+ x)  -- do
+      Right x -> (+ (-x)) -- undo
+  state :: Dynamic t Int
+    <- foldDynM statefoldfn 0 actionEv
+
+
+
+
+  let
+    doEv = flip fmapMaybe ev $ \case
+      TCDo a -> Just $ do
+        (doa, undoa) <- sample $ _actionStack_eventsForNextDoAction astack
+
+      _ -> Nothing
+    undoEv = flip fmapMaybe ev $ \case
+      TCUndo -> Just ()
+      _ -> Nothing
+    redoEv = flip fmapMaybe ev $ \case
+      TCRedo -> Just ()
+      _ -> Nothing
+    clearEv = flip fmapMaybe ev $ \case
+      TCClear -> Just ()
+      _ -> Nothing
+
+    mas = ActionStackConfig {
+        _actionStackConfig_do = doEv
+        , _actionStackConfig_undo = undoEv
+        , _actionStackConfig_redo = redoEv
+        , _actionStackConfig_clear = clearEv
+      }
+
+  astack :: ActionStack t a <- holdActionStack mas
+
+
+  return $ updated state
+
+-}
 
 simple_state_network ::
   forall t a s m.
