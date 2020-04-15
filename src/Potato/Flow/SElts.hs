@@ -61,7 +61,6 @@ data SText = SText {
 instance FromJSON SText
 instance ToJSON SText
 
--- TODO switch this to DSum
 data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Generic, Show)
 
 instance FromJSON SElt

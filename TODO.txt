@@ -1,3 +1,9 @@
+::NEW QUESTIONS::
+-do I use repeatEvent trick to move multiple elements or support interface that does it directly?
+
+-all actions to change RElts go through manipulator
+
+---------
 I did a little research myself and found no pure reactive data structure libraries out there. The closest thing I found was: https://hackage.haskell.org/package/reflex-dom-retractable which is a reactive stack. However events are routed through performEvent in the IO monad.
 
 I simplified the problem at hand a little for myself and decided a dynamic list should be sufficient.

@@ -7,6 +7,8 @@ module Reflex.Potato.Helpers (
   , foldDynMergeWith
   , foldDynMerge
 
+  , fanDSum
+
   , repeatEvent
 ) where
 
@@ -15,6 +17,9 @@ import           Relude
 import           Reflex
 
 import           Control.Monad.Fix
+
+import qualified Data.Dependent.Map as DM
+import qualified Data.Dependent.Sum as DS
 
 -- | same as leftmost but outputs a warning if more than one event fires at once
 leftmostwarn :: (Reflex t) => String -> [Event t a] -> Event t a
@@ -37,6 +42,10 @@ foldDynMerge :: (Reflex t, MonadHold t m, MonadFix m)
   -> m (Dynamic t b) -- ^ final output
 foldDynMerge f acc evs = foldDynMergeWith acc (f <<$>> evs)
 
+fanDSum :: forall t k. (Reflex t, DM.GCompare k)
+  => Event t (DS.DSum k Identity)
+  -> EventSelector t k
+fanDSum ds = fan $ DM.fromAscList . (:[]) <$> ds
 
 
 -- TODO figure out how to actually use this...

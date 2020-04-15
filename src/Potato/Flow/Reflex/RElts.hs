@@ -1,6 +1,8 @@
 {-# LANGUAGE RecursiveDo #-}
 module Potato.Flow.Reflex.RElts (
-  REltTree(..)
+  REltId
+  , RElt(..)
+  , REltTree(..)
 ) where
 
 import           Relude
@@ -14,6 +16,7 @@ import           Control.Monad.Fix
 import           Reflex
 
 
+type REltId = Int
 
 -- TODO node names
 data RElt t = REltNone | REltFolderStart | REltFolderEnd | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
