@@ -3,8 +3,6 @@ module Potato.Flow.Math (
   , zeroXY
   , LSize(..)
   , LPoint(..)
-  , VPoint(..)
-  , PFTrans(..)
   , LBox(..)
 ) where
 
@@ -24,16 +22,8 @@ newtype LSize = LSize { unLSize :: XY } deriving (Generic, Show, FromJSON, ToJSO
 newtype LPoint = LPoint { unLPoint :: XY } deriving (Generic, Show, FromJSON, ToJSON)
 
 -- | a point in screen space
-newtype VPoint = VPoint (Int, Int) deriving (Generic, Show, FromJSON, ToJSON)
-
--- | a point in work space
-data PFTrans = PFTrans {
-  logical   :: LPoint
-  , virtual :: VPoint
-} deriving (Generic, Show)
-
-instance FromJSON PFTrans
-instance ToJSON PFTrans
+-- should only be used by VC, so does not belong here
+--newtype VPoint = VPoint (Int, Int) deriving (Generic, Show, FromJSON, ToJSON)
 
 -- | a box in logical space
 data LBox = LBox {
