@@ -16,7 +16,7 @@ import           Reflex.Potato.Helpers
 import           Reflex.Host.Basic
 
 repeatEvent_network :: forall t m. BasicGuestConstraints t m => Event t [Int] -> BasicGuest t m (Event t Int)
-repeatEvent_network = repeatEvent
+repeatEvent_network = undefined --repeatEvent
 
 test_repeatEvent :: Test
 test_repeatEvent = TestLabel "basic" $ TestCase $ do

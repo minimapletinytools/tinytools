@@ -40,10 +40,12 @@ foldDynMerge f acc evs = foldDynMergeWith acc (f <<$>> evs)
 
 
 -- TODO figure out how to actually use this...
+-- need to remove the `Request m ~ Identity` constraint
+--
 -- | triggers output event once for each input event
 -- each output event runs in a different consecutive frame
 -- if these events trigger the input event, they get appended to the end of events to be triggered
-repeatEvent :: (Response m ~ Identity, Request m ~ Identity, Reflex t, Requester t m) => Event t [a] -> m (Event t a)
+repeatEvent :: (Response m ~ Identity, Request m ~ Identity, Reflex t, Requester t m, MonadFix m) => Event t [a] -> m (Event t a)
 repeatEvent evin = mdo
   let
     -- if input event fires in subsequent ticks, append to end
