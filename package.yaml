@@ -77,6 +77,7 @@ dependencies:
 - ilist
 - dependent-sum
 - smash
+- reflex-basic-host
 
 library:
   source-dirs: src

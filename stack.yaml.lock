@@ -74,6 +74,20 @@ packages:
       sha256: deb2b8b5b3d3c9f9e130eb115c108abdc233f14662d95e1c7de66beb6a32f3dd
   original:
     hackage: smash-0.1.1.0
+- completed:
+    size: 11789
+    url: https://github.com/pdlla/reflex-basic-host/archive/9500e9322d7b179f9aa4b08ae2e8bb3b7faf0c6a.tar.gz
+    cabal-file:
+      size: 3247
+      sha256: 2567b8137651c7c2663f69a6bee280dab5b6fbb211552662b948dfdb1cb48579
+    name: reflex-basic-host
+    version: 0.2.0.1
+    sha256: 0cdc2b6b6a373d3b8ba6edb65fe669e8fd70c7172dbeadbc5f06ffa230958e8f
+    pantry-tree:
+      size: 992
+      sha256: a47e7fae7ae5bcdff1acc0e856cb8c81cb9e273bdcdebdac562f0b603b30131a
+  original:
+    url: https://github.com/pdlla/reflex-basic-host/archive/9500e9322d7b179f9aa4b08ae2e8bb3b7faf0c6a.tar.gz
 snapshots:
 - completed:
     size: 491389
