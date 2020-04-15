@@ -10,12 +10,13 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
 import           Control.Monad.Fix
-import qualified Data.Tree         as T
 
 import           Reflex
-import qualified Reflex.Data.Tree  as RT
 
-data RElt t = REltNone | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
+
+
+-- TODO node names
+data RElt t = REltNone | REltFolderStart | REltFolderEnd | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
 
 -- reflex vars for an RElt
 data REltReflex t = REltReflex {
@@ -30,13 +31,15 @@ nilReflex = REltReflex {
     , re_draw = constant (Renderer (LBox (LPoint zeroXY) (LSize zeroXY)) (const Nothing))
   }
 
+-- TODO sheould contain hot node id (not serialized)
 -- | reflex element nodes
 data REltLabel t = REltLabel {
   re_elt      :: RElt t
   , re_reflex :: REltReflex t
 }
 
-type REltTree t = RT.Tree t (REltLabel t)
+
+type REltTree t = [REltLabel t]
 
 -- TODO
 type REltNodeRef t = ()
@@ -71,40 +74,36 @@ data REltTopologyEvents t = REltTopologyEvents {
 -- TODO remove parent as it breaks our fmap
 -- TODO need to pass in add/remove child events throughtout the tree
 -- TODO need to pass in elt update events throughout the tree
-deserialize :: (Reflex t, MonadHold t m, MonadFix m) => Maybe (REltTree t) -> SEltTree -> m (REltTree t)
-deserialize parent (T.Node selt children) = mdo
+deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltTree -> m (REltTree t)
+deserialize [] = return []
+deserialize (selt:rest) = mdo
 
 
   -- TODO implement for each type
-  (relt, rreflex) <- case selt of
-    SEltNone -> return (REltNone, nilReflex)
-    _        -> undefined
+  relt <- case selt of
+    SEltNone        -> return (REltNone, nilReflex)
+    SEltFolderStart -> return (REltFolderStart, nilReflex)
+    SEltFolderEnd   -> return (REltFolderEnd, nilReflex)
+    _               -> undefined
     --SEltBox x -> hold
 
-  -- TODO
-  treeUpdate <- undefined
-  rchildren' <- mapM (deserialize (Just node)) children
-  rchildren <- holdDyn rchildren' treeUpdate
-  let
-    label =
-      REltLabel {
-        re_elt = relt
-        , re_reflex = rreflex
-      }
-    -- TODO need to setup zipper D:
-    node = RT.Node label rchildren parent
-  return node
+  -- TODO generate node id
+
+  reltRest <- deserialize rest
+  return $ uncurry REltLabel relt : reltRest
 
 
 serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
-serialize rnode = do
+serialize [] = return []
+serialize (relt:rest) = do
   let
     sampleDyn = sample . current
-  rslabel <- case (re_elt . RT.rootLabel) rnode of
-    REltNone   -> return SEltNone
-    REltBox x  -> SEltBox <$> sampleDyn x
-    REltLine x -> SEltLine <$> sampleDyn x
-    REltText x -> SEltText <$> sampleDyn x
-  children' :: [REltTree t] <- sampleDyn $ RT.subForest rnode
-  rschildren :: [SEltTree] <- mapM serialize children'
-  return $ T.Node rslabel rschildren
+  selt <- case re_elt relt of
+    REltNone        -> return SEltNone
+    REltFolderStart -> return SEltFolderStart
+    REltFolderEnd   -> return SEltFolderEnd
+    REltBox x       -> SEltBox <$> sampleDyn x
+    REltLine x      -> SEltLine <$> sampleDyn x
+    REltText x      -> SEltText <$> sampleDyn x
+  seltRest <- serialize rest
+  return $ selt : seltRest

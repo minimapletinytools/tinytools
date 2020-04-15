@@ -14,7 +14,6 @@ import           Potato.Flow.Math
 import           Potato.Flow.Types
 
 import           Data.Aeson
-import           Data.Tree
 
 
 data SLineStyle = SLineStyle {
@@ -62,14 +61,9 @@ instance FromJSON SText
 instance ToJSON SText
 
 -- TODO switch this to DSum
-data SElt = SEltNone | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Generic, Show)
+data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Generic, Show)
 
 instance FromJSON SElt
 instance ToJSON SElt
 
--- TODO rename to SEltTree
-type SEltTree = Tree SElt
-
--- these exsits in aeson package, cool
---instance FromJSON SEltTree
---instance ToJSON SEltTree
+type SEltTree = [SElt]
