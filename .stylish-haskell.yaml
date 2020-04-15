@@ -234,3 +234,4 @@ language_extensions:
   - TupleSections
   - MultiParamTypeClasses
   - DataKinds
+  - TypeFamilies

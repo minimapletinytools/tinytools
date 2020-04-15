@@ -8,6 +8,7 @@ module Potato.Flow.Reflex.RElts (
 import           Relude
 
 import           Potato.Flow.Math
+import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
@@ -15,11 +16,12 @@ import           Control.Monad.Fix
 
 import           Reflex
 
-
+-- TODO move to layers I guess
 type REltId = Int
 
 -- TODO node names
 data RElt t = REltNone | REltFolderStart | REltFolderEnd | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
+
 
 -- reflex vars for an RElt
 data REltReflex t = REltReflex {
@@ -34,7 +36,6 @@ nilReflex = REltReflex {
     , re_draw = constant (Renderer (LBox (LPoint zeroXY) (LSize zeroXY)) (const Nothing))
   }
 
--- TODO sheould contain hot node id (not serialized)
 -- | reflex element nodes
 data REltLabel t = REltLabel {
   re_name     :: Text
@@ -42,38 +43,18 @@ data REltLabel t = REltLabel {
   , re_reflex :: REltReflex t
 }
 
+instance LayerElt (REltLabel t) where
+  type LayerEltId (REltLabel t) = REltId
+  isFolderStart rel = case re_elt rel of
+    REltFolderStart -> True
+    _               -> False
+  isFolderEnd rel = case re_elt rel of
+    REltFolderEnd -> True
+    _             -> False
+
 
 type REltTree t = [REltLabel t]
 
--- TODO
-type REltNodeRef t = ()
-
-
--- TODO finish
--- | events related to changing topology of REltTree
-data REltTopologyEvents t = REltTopologyEvents {
-
-  -- this is a little weird, we only want to trigger this event when we want to GC
-  -- e.g. if we are pruning old elements in our action stack
-  -- only need this if we are using map approach and not zipper approach
-  trash         :: Event t () -- event to gc self and children (not responsible for parent)
-
-  , deleteChild :: Event t (REltNodeRef t) -- event to delete child of this node
-
-  -- TODO signature needs work
-  , addChild    :: Event t (REltNodeRef t, Int) -- event to add a child to this node
-}
-
-{-
--actions
-  -each manipulator is connected to elt params and has events to update it
-    -e.g. boxEvent :: SBoxManipulator -> (Event t LPoint, Event t LSize)
-  -front-end connects to behavior and events
-    -e.g. elt behaviors => front-end =interaction=> manipulator events => elt behaviors
-  -SBoxManipulator will create events of the following type:
-    Event t (Action )
-  -undo/redo :: Event t () -> Dynamic (Stack Action) -> Event Action
--}
 
 -- TODO remove parent as it breaks our fmap
 -- TODO need to pass in add/remove child events throughtout the tree
