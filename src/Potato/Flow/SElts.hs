@@ -5,6 +5,7 @@ module Potato.Flow.SElts (
   , SLine(..)
   , SText(..)
   , SElt(..)
+  , SEltLabel(..)
   , SEltTree
 ) where
 
@@ -66,4 +67,12 @@ data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine
 instance FromJSON SElt
 instance ToJSON SElt
 
-type SEltTree = [SElt]
+data SEltLabel = SEltLabel {
+ selt_name  :: Text
+ , selt_elt :: SElt
+} deriving (Generic, Show)
+
+instance FromJSON SEltLabel
+instance ToJSON SEltLabel
+
+type SEltTree = [SEltLabel]

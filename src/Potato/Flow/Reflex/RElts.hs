@@ -34,7 +34,8 @@ nilReflex = REltReflex {
 -- TODO sheould contain hot node id (not serialized)
 -- | reflex element nodes
 data REltLabel t = REltLabel {
-  re_elt      :: RElt t
+  re_name     :: Text
+  , re_elt    :: RElt t
   , re_reflex :: REltReflex t
 }
 
@@ -76,11 +77,11 @@ data REltTopologyEvents t = REltTopologyEvents {
 -- TODO need to pass in elt update events throughout the tree
 deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltTree -> m (REltTree t)
 deserialize [] = return []
-deserialize (selt:rest) = mdo
+deserialize (SEltLabel sname selt:rest) = mdo
 
 
   -- TODO implement for each type
-  relt <- case selt of
+  (relt, rreflex) <- case selt of
     SEltNone        -> return (REltNone, nilReflex)
     SEltFolderStart -> return (REltFolderStart, nilReflex)
     SEltFolderEnd   -> return (REltFolderEnd, nilReflex)
@@ -90,7 +91,7 @@ deserialize (selt:rest) = mdo
   -- TODO generate node id
 
   reltRest <- deserialize rest
-  return $ uncurry REltLabel relt : reltRest
+  return $ (REltLabel sname relt rreflex) : reltRest
 
 
 serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
@@ -106,4 +107,4 @@ serialize (relt:rest) = do
     REltLine x      -> SEltLine <$> sampleDyn x
     REltText x      -> SEltText <$> sampleDyn x
   seltRest <- serialize rest
-  return $ selt : seltRest
+  return $ (SEltLabel (re_name relt) selt) : seltRest
