@@ -88,8 +88,10 @@ library:
     - Reflex.Data.ActionStack
     - Reflex.Data.List
     - Reflex.Data.Stack
+    - Reflex.Data.DirectoryMap
     - Reflex.Potato.Helpers
     - Reflex.Potato.TestHarness
+
 
 
 tests:

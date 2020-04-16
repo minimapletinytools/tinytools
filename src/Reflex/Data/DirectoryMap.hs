@@ -1,23 +1,19 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.DirectoryMap (
+module Reflex.Data.DirectoryMap (
   DirId
   , DirectoryMap(..)
   , DirectoryMapConfig(..)
+  , holdDirectoryMap
 ) where
 
 import           Relude
 
-import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Layers
-import           Potato.Flow.Reflex.RElts
-import           Potato.Flow.Types
-
 import           Control.Monad.Fix
 
-import qualified Data.List.NonEmpty        as NE
-import qualified Data.Map                  as M
+import qualified Data.List.NonEmpty as NE
+import qualified Data.Map           as M
 import           Data.These
 
 import           Reflex
