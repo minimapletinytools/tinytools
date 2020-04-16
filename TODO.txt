@@ -2,6 +2,8 @@
 DONE-clean up DirectoryIdAssigner interface and tests
 DONE-action input distributor
 DONE-action output collector
+-layers
+  -decide move semantics (indexing is before or after)
 
 ::NEW QUESTIONS::
 -do I use repeatEvent trick to move multiple elements or support interface that does it directly?

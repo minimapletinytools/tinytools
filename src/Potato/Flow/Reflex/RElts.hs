@@ -45,14 +45,17 @@ data REltLabel t = REltLabel {
   , re_reflex :: REltReflex t
 }
 
-instance LayerElt (REltLabel t) where
-  type LayerEltId (REltLabel t) = REltId
-  isFolderStart rel = case re_elt rel of
+type REltLabelWithId t = (REltId, REltLabel t)
+
+instance LayerElt (REltLabelWithId t) where
+  type LayerEltId (REltLabelWithId t) = REltId
+  isFolderStart (_,rel) = case re_elt rel of
     REltFolderStart -> True
     _               -> False
-  isFolderEnd rel = case re_elt rel of
+  isFolderEnd (_,rel) = case re_elt rel of
     REltFolderEnd -> True
     _             -> False
+  getId = fst
 
 
 -- expected to satisfy scoping invariant
