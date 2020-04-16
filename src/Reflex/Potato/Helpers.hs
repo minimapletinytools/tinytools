@@ -48,17 +48,15 @@ fanDSum :: forall t k. (Reflex t, DM.GCompare k)
   -> EventSelector t k
 fanDSum ds = fan $ DM.fromAscList . (:[]) <$> ds
 
--- TODO figure out how to actually use this...
--- need to remove the `Request m ~ Identity` constraint
---
 -- | triggers output event once for each input event
 -- each output event runs in a different consecutive frame
 -- if these events trigger the input event, they get appended to the end of events to be triggered
-repeatEvent :: (Response m ~ Identity, Request m ~ Identity, Reflex t, Requester t m, MonadFix m) => Event t [a] -> m (Event t a)
+repeatEvent :: forall t m a. (Reflex t, Adjustable t m, MonadFix m) => Event t [a] -> m (Event t a)
 repeatEvent evin = mdo
   let
     -- if input event fires in subsequent ticks, append to end
     -- obviously, be mindful of infinite loops
+    evin' :: Event t [a]
     evin' = mergeWith (\rev' ev' -> rev' <> ev') [rev, evin]
     selectNext []    = Nothing
     selectNext (x:_) = Just x
@@ -67,6 +65,10 @@ repeatEvent evin = mdo
     selectRest (_:xs) = Just xs
     next = fmapMaybe selectNext evin'
     rest = fmapMaybe selectRest evin'
-  -- does this mess with keys in DSum when multiple of these trigger?
-  rev <- requestingIdentity (Identity <$> rest)
-  requestingIdentity (Identity <$> next)
+
+  -- TODO this implementation is better but I can't figure out how to properly wrap request and response types
+  --rev <- requestingIdentity (Identity <$> rest)
+  --requestingIdentity (Identity <$> next)
+
+  (_, rev) <- runWithReplace (return ()) (return <$> rest)
+  return next

@@ -80,6 +80,7 @@ dependencies:
 - smash
 - reflex-basic-host
 - these
+- containers
 
 
 library:

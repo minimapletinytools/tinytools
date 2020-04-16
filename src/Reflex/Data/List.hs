@@ -16,9 +16,12 @@ import           Control.Monad.Fix
 
 import           Data.Dependent.Sum
 import           Data.List.Index
+--import           Data.Sequence
 
 
--- TODO considering changing indexing to something that doesn't have execution ordering issues / partial
+
+-- TODO rename to DynamicSeq
+-- TODO switch internal representation to Data.Sequence
 -- TODO this needs to be modified to support adding/removing/moving several elements at once
 data DynamicList t a = DynamicList {
   _dynamicList_add        :: Event t (Int, a)
