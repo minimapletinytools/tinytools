@@ -25,13 +25,16 @@ data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
 basic_network :: forall t m. BasicGuestConstraints t m => Event t Int -> BasicGuest t m (Event t (Int,Int))
 basic_network ev = do
   let
+    diac = DirectoryIdAssignerConfig {
+        _directoryIdAssignerConfig_assign = fmap (:| []) ev
+      }
+  dia <- holdDirectoryIdAssigner diac
+  let
     -- TODO test more stuff
     dmc = DirectoryMapConfig {
-        _directoryMapConfig_addNew = fmap (:| []) ev
-        , _directoryMapConfig_addExisting = never
+        _directoryMapConfig_add = _directoryIdAssigner_assigned dia
         , _directoryMapConfig_remove = never
       }
-
   dm <- holdDirectoryMap dmc
 
   return $ fmap head $ _directoryMap_added dm
@@ -39,13 +42,13 @@ basic_network ev = do
 test_basic_network :: Test
 test_basic_network = TestLabel "basic" $ TestCase $ do
   let
-    bs = [1..10] :: [Int]
+    bs = [0..10] :: [Int]
     run :: IO [[Maybe (Int,Int)]]
     run = basicHostWithStaticEvents bs basic_network
   v <- liftIO run
   --print v
   return ()
-  --L.last v @?= Just 103
+  L.last (join v) @?= Just (10,10)
 
 spec :: Spec
 spec = do

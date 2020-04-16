@@ -3,8 +3,9 @@
 
 module Reflex.Data.DirectoryMap (
   DirId
-  , DirectoryIdAssigner
-  , DirectoryIdAssignerConfig
+  , DirectoryIdAssigner(..)
+  , DirectoryIdAssignerConfig(..)
+  , holdDirectoryIdAssigner
   , DirectoryMap(..)
   , DirectoryMapConfig(..)
   , holdDirectoryMap
@@ -22,6 +23,7 @@ import           Reflex
 
 
 
+-- TODO you could add a type parameter to lhs to ensure directories never get mixed up I guess
 type DirId = Int
 
 -- TODO
@@ -57,12 +59,11 @@ data DirectoryMap t v = DirectoryMap {
 }
 
 data DirectoryMapConfig t v = DirectoryMapConfig {
-  -- | add a new element to the directory
-  _directoryMapConfig_addNew        :: Event t (NonEmpty v)
-  -- | add a element to the directory that was previously removed
-  , _directoryMapConfig_addExisting :: Event t (NonEmpty (DirId, v))
+  -- | add a element to the directory
+  -- ensure the DirId was assigned from the same instance of DirectoryIdAssigner
+  _directoryMapConfig_add      :: Event t (NonEmpty (DirId, v))
   -- | remove an element from the map
-  , _directoryMapConfig_remove      :: Event t (NonEmpty DirId)
+  , _directoryMapConfig_remove :: Event t (NonEmpty DirId)
 }
 
 holdDirectoryMap ::
@@ -70,12 +71,9 @@ holdDirectoryMap ::
   => DirectoryMapConfig t v
   -> m (DirectoryMap t v)
 holdDirectoryMap DirectoryMapConfig {..} = mdo
-  uid <- foldDyn (\x -> (+ length x)) 0 _directoryMapConfig_addNew
   let
-    newElts = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryMapConfig_addNew
-    -- we merge because it works, but really these two events should never fire at the same time
     add :: Event t (NonEmpty (DirId, v))
-    add = mergeWith (<>) [newElts, _directoryMapConfig_addExisting]
+    add = _directoryMapConfig_add
     -- lookup each element we are about to remove
     removed = fmap (\(m, els) -> catMaybes . toList . fmap (\i -> (\x -> (i,x)) <$> M.lookup i m) $ els) (attach bDirectory _directoryMapConfig_remove)
     -- setup the directory
