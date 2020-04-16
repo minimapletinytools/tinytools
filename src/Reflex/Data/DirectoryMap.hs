@@ -3,6 +3,8 @@
 
 module Reflex.Data.DirectoryMap (
   DirId
+  , DirectoryIdAssigner
+  , DirectoryIdAssignerConfig
   , DirectoryMap(..)
   , DirectoryMapConfig(..)
   , holdDirectoryMap
@@ -18,7 +20,36 @@ import           Data.These
 
 import           Reflex
 
+
+
 type DirId = Int
+
+-- TODO
+-- resposible only for assigning Ids and not for inserting elements
+data DirectoryIdAssigner t v  = DirectoryIdAssigner {
+  _directoryIdAssigner_assigned :: Event t (NonEmpty (DirId, v))
+}
+
+data DirectoryIdAssignerConfig t v  = DirectoryIdAssignerConfig {
+  _directoryIdAssignerConfig_assign :: Event t (NonEmpty v)
+}
+
+holdDirectoryIdAssigner ::
+  forall t m v. (Reflex t, MonadHold t m, MonadFix m)
+  => DirectoryIdAssignerConfig t v
+  -> m (DirectoryIdAssigner t v)
+holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = mdo
+  uid <- foldDyn (\x -> (+ length x)) 0 _directoryIdAssignerConfig_assign
+  let
+    assigned = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
+  return
+    DirectoryIdAssigner {
+        _directoryIdAssigner_assigned = assigned
+      }
+
+
+
+-- TODO just rename to Directory
 data DirectoryMap t v = DirectoryMap {
   _directoryMap_contents  :: Behavior t (Map DirId v)
   , _directoryMap_added   :: Event t (NonEmpty (DirId, v))
