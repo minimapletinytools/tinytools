@@ -21,6 +21,7 @@ import           Control.Monad.Fix
 import qualified Data.Dependent.Map as DM
 import qualified Data.Dependent.Sum as DS
 
+
 -- | same as leftmost but outputs a warning if more than one event fires at once
 leftmostwarn :: (Reflex t) => String -> [Event t a] -> Event t a
 leftmostwarn warning evs = r where

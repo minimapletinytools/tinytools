@@ -3,6 +3,8 @@ module Potato.Flow.Reflex.RElts (
   REltId
   , RElt(..)
   , REltTree(..)
+  , serialize
+  , deserialize
 ) where
 
 import           Relude
