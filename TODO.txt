@@ -1,3 +1,6 @@
+::TODO::
+-clean up DirectoryIdAssigner interface and tests
+
 ::NEW QUESTIONS::
 -do I use repeatEvent trick to move multiple elements or support interface that does it directly?
   -probably do it with repeatEvent first and switch later for performance or if you can't figure out repeatEvent nonsense

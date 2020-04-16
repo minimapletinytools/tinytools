@@ -26,13 +26,13 @@ import           Reflex
 -- TODO you could add a type parameter to lhs to ensure directories never get mixed up I guess
 type DirId = Int
 
--- TODO
--- resposible only for assigning Ids and not for inserting elements
+-- TODO remove v from this, the expected use pattern is attachPromptly
 data DirectoryIdAssigner t v  = DirectoryIdAssigner {
-  _directoryIdAssigner_assigned :: Event t (NonEmpty (DirId, v))
+  _directoryIdAssigner_assigned :: Dynamic t (NonEmpty (DirId, v))
 }
 
 data DirectoryIdAssignerConfig t v  = DirectoryIdAssignerConfig {
+  -- TODO maybe this just needs to take an int instead
   _directoryIdAssignerConfig_assign :: Event t (NonEmpty v)
 }
 
@@ -44,9 +44,11 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = mdo
   uid <- foldDyn (\x -> (+ length x)) 0 _directoryIdAssignerConfig_assign
   let
     assigned = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
+  -- haha is it safe to do this? IDK?
+  dAssigned <- holdDyn ((-1,undefined) :| []) assigned
   return
     DirectoryIdAssigner {
-        _directoryIdAssigner_assigned = assigned
+        _directoryIdAssigner_assigned = dAssigned
       }
 
 

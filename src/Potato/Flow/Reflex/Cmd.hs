@@ -30,7 +30,7 @@ import qualified Data.Dependent.Sum              as DS
 
 
 data PFCmdTag t a where
-  PFCNewElt :: PFCmdTag t (RElt t)
+  PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
   PFCDeleteElt :: PFCmdTag t REltId
   PFCReorder :: PFCmdTag t (REltId, LayerPos)
   PFCPaste :: PFCmdTag t ([RElt t], LayerPos) -- change to SElt if you want to paste from other workspaces

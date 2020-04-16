@@ -86,6 +86,10 @@ holdPF PFConfig {..} = mdo
       }
   directoryIdAssigner <- holdDirectoryIdAssigner directoryIdAssignerConfig
 
+  -- TODO attache _directoryIdAssigner_assigned to _rEltFactory_rEltTree
+  -- then map it to CMD and send to ActionStack
+  --PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
+
 
 
   -- set up Directory

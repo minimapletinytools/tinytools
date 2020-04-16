@@ -29,10 +29,13 @@ basic_network ev = do
         _directoryIdAssignerConfig_assign = fmap (:| []) ev
       }
   dia <- holdDirectoryIdAssigner diac
+
+  -- TODO
+  --attachPromptlyDyn (_directoryIdAssigner_assigned dia) ev
   let
     -- TODO test more stuff
     dmc = DirectoryConfig {
-        _directoryMapConfig_add = _directoryIdAssigner_assigned dia
+        _directoryMapConfig_add = updated (_directoryIdAssigner_assigned dia)
         , _directoryMapConfig_remove = never
       }
   dm <- holdDirectory dmc
