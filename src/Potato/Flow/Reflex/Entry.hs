@@ -9,12 +9,15 @@ import           Relude
 
 import           Reflex
 import           Reflex.Data.ActionStack
+import           Reflex.Data.Directory
 
 import           Data.Aeson
-import qualified Data.ByteString.Lazy      as LBS
+import qualified Data.ByteString.Lazy           as LBS
+import qualified Data.List.NonEmpty             as NE
 
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.Layers
+import           Potato.Flow.Reflex.REltFactory
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.SElts
 
@@ -29,7 +32,7 @@ loadWSFromFile = fmapMaybe decode
 
 data PFConfig t = PFConfig {
   _pfc_setWorkspace :: SetWSEvent t
-  , _pfc_addElt     :: Event t SElt
+  , _pfc_addElt     :: Event t SEltLabel
   , _pfc_removeElt  :: Event t REltId
   , _pfc_moveElt    :: Event t (REltId, LayerPos) -- new layer position (before or after removal?)
   , _pfc_copy       :: Event t [REltId]
@@ -69,6 +72,30 @@ holdPF PFConfig {..} = mdo
     , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
   }
 -}
+  -- TODO prepared fanned outputs from ActionStack
+
+  -- set up REltFactory and connect to DirectoryIdAssigner
+  let
+    rEltFactoryConfig = REltFactoryConfig {
+        _rEltFactoryConfig_sEltTree = fmap (:[]) _pfc_addElt
+      }
+  rEltFactory <- holdREltFactory rEltFactoryConfig
+  let
+    directoryIdAssignerConfig = DirectoryIdAssignerConfig {
+        _directoryIdAssignerConfig_assign = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
+      }
+  directoryIdAssigner <- holdDirectoryIdAssigner directoryIdAssignerConfig
+
+
+
+  -- set up Directory
+  let
+    directoryConfig = DirectoryConfig {
+        -- TODO hook up to fanned outputs from actionStack
+        _directoryMapConfig_add = never
+        , _directoryMapConfig_remove = never
+      }
+  directory <- holdDirectory directoryConfig
 
 
   undefined
