@@ -11,6 +11,7 @@ DONE-fan out/in actions for actionstack in entry
   -design
 
 -feature creep 0
+  -save/load workspace
   -multi select
     -multi delete
     -multi manipulate

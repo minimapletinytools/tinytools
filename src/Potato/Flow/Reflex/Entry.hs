@@ -33,21 +33,24 @@ loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
 
 data PFConfig t = PFConfig {
-  _pfc_setWorkspace :: SetWSEvent t
-  , _pfc_addElt     :: Event t SEltLabel
+  --_pfc_setWorkspace :: SetWSEvent t
+  _pfc_addElt       :: Event t SEltLabel
   , _pfc_removeElt  :: Event t REltId
-  , _pfc_moveElt    :: Event t (REltId, LayerPos) -- new layer position (before or after removal?)
-  , _pfc_copy       :: Event t [REltId]
-  , _pfc_paste      :: Event t ([SElt], LayerPos)
-  , _pfc_duplicate  :: Event t [REltId]
+  --, _pfc_moveElt    :: Event t (REltId, LayerPos) -- new layer position (before or after removal?)
+  --, _pfc_copy       :: Event t [REltId]
+  --, _pfc_paste      :: Event t ([SElt], LayerPos)
+  --, _pfc_duplicate  :: Event t [REltId]
+  , _pfc_manipulate :: Event t ()
 }
 
 data PFOutput t = PFOutput {
-  _pfo_allElts     :: Behavior t (Map REltId (RElt t))
-
+  -- elements
+  _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
   -- or maybe just expose layer interface directly?
   , _pfo_layerView :: Dynamic t [REltId]
-  , _pfo_changView :: Dynamic t (PatchMap REltId (RElt t)) -- only elements that were added, moved, or deleted
+  , _pfo_changView :: Dynamic t (PatchMap REltId (REltLabel t)) -- only elements that were added, moved, or deleted
+
+  -- manipulators
 }
 
 holdPF ::
