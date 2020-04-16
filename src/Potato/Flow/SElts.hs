@@ -74,4 +74,5 @@ data SEltLabel = SEltLabel {
 instance FromJSON SEltLabel
 instance ToJSON SEltLabel
 
+-- expected to satisfy scoping invariant
 type SEltTree = [SEltLabel]

@@ -4,6 +4,11 @@
 
 -all actions to change RElts go through manipulator
 
+-REltDirectory needs to prune old RElts to trigger GC on them
+  -removed RElts might get added back in and we want them to have the same ID
+    -we could either require remove operation to carry RElt reference
+    -or we could add prune operation to actions that get removed from action stack
+
 ---------
 I did a little research myself and found no pure reactive data structure libraries out there. The closest thing I found was: https://hackage.haskell.org/package/reflex-dom-retractable which is a reactive stack. However events are routed through performEvent in the IO monad.
 

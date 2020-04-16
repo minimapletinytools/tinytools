@@ -79,6 +79,7 @@ dependencies:
 - dependent-map
 - smash
 - reflex-basic-host
+- these
 
 
 library:

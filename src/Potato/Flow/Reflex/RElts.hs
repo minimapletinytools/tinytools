@@ -16,7 +16,7 @@ import           Control.Monad.Fix
 
 import           Reflex
 
--- TODO move to layers I guess
+-- TODO move to reltfactory
 type REltId = Int
 
 -- TODO node names
@@ -53,12 +53,10 @@ instance LayerElt (REltLabel t) where
     _             -> False
 
 
+-- expected to satisfy scoping invariant
 type REltTree t = [REltLabel t]
 
 
--- TODO remove parent as it breaks our fmap
--- TODO need to pass in add/remove child events throughtout the tree
--- TODO need to pass in elt update events throughout the tree
 deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltTree -> m (REltTree t)
 deserialize [] = return []
 deserialize (SEltLabel sname selt:rest) = mdo

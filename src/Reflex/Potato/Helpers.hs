@@ -47,7 +47,6 @@ fanDSum :: forall t k. (Reflex t, DM.GCompare k)
   -> EventSelector t k
 fanDSum ds = fan $ DM.fromAscList . (:[]) <$> ds
 
-
 -- TODO figure out how to actually use this...
 -- need to remove the `Request m ~ Identity` constraint
 --
