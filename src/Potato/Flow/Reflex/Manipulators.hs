@@ -17,10 +17,9 @@ import           Relude
 import           Reflex
 
 import           Potato.Flow.Math
+import           Potato.Flow.Reflex.Manipulators.Tags
 
-import qualified Data.Dependent.Map as DM
-import qualified Data.Dependent.Sum as DS
-import qualified Data.GADT.Compare
+import qualified Data.Dependent.Sum                   as DS
 
 -- pattern for piping manipulator back into PFC
 -- start with: _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
@@ -36,7 +35,7 @@ import qualified Data.GADT.Compare
 -- rec _pfc_manipulate = manipEv
 
 
-data MBox
+
 data MBoxView t = MBoxView {
   boxView :: Dynamic t LBox
 }
@@ -44,7 +43,7 @@ data MBoxView t = MBoxView {
 data MBoxControl t = MBoxControl {
   boxControl :: Event t LBox
 }
-data MLine
+
 data MLineView t = MLineView {
   lineStartView :: Dynamic t LPoint
   , lineEndView :: Dynamic t LPoint
@@ -62,11 +61,6 @@ type family PFMControl a :: Type -> Type where
   PFMControl MBox = MBoxControl
   PFMControl MLine = MLineControl
 
-data PFMTag a where
-  PFMTagBox :: PFMTag MBox
-  deriving anyclass Data.GADT.Compare.GEq
-  deriving anyclass DM.GCompare
 
-
-type PFMViewSum t = DS.DSum PFMTag (PFMView t)
-type PFMControlCmd t = DS.DSum PFMTag (PFMControl t)
+type PFMViewSum t = DS.DSum MTag (PFMView t)
+type PFMControlCmd t = DS.DSum MTag (PFMControl t)
