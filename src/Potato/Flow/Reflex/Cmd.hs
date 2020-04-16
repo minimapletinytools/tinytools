@@ -1,7 +1,7 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
-{-# LANGUAGE DerivingStrategies     #-}
-{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE RecursiveDo        #-}
 
 module Potato.Flow.Reflex.Cmd (
   PFCmdTag(..)
@@ -24,9 +24,9 @@ import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.SElts
 
 
-import qualified Data.GADT.Compare
 import qualified Data.Dependent.Map              as DM
 import qualified Data.Dependent.Sum              as DS
+import qualified Data.GADT.Compare
 
 
 data PFCmdTag t a where

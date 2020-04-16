@@ -1,26 +1,26 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
-{-# LANGUAGE DerivingStrategies     #-}
-{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE RecursiveDo        #-}
 
 module Potato.Flow.Reflex.Manipulators (
   MBoxView(..)
   , MBoxControl(..)
   , MLineView(..)
   , MLineControl(..)
-  , PFMViewCmd
+  , PFMViewSum
   , PFMControlCmd
 ) where
 
 import           Relude
 
-import Reflex
+import           Reflex
 
-import Potato.Flow.Math
+import           Potato.Flow.Math
 
+import qualified Data.Dependent.Map as DM
+import qualified Data.Dependent.Sum as DS
 import qualified Data.GADT.Compare
-import qualified Data.Dependent.Map              as DM
-import qualified Data.Dependent.Sum              as DS
 
 -- pattern for piping manipulator back into PFC
 -- start with: _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
@@ -68,5 +68,5 @@ data PFMTag a where
   deriving anyclass DM.GCompare
 
 
-type PFMViewCmd t = DS.DSum PFMTag (PFMView t)
+type PFMViewSum t = DS.DSum PFMTag (PFMView t)
 type PFMControlCmd t = DS.DSum PFMTag (PFMControl t)
