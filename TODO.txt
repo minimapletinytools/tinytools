@@ -2,8 +2,24 @@
 DONE-clean up DirectoryIdAssigner interface and tests
 DONE-action input distributor
 DONE-action output collector
--layers
+-layertree
+  -implement
   -decide move semantics (indexing is before or after)
+DONE-connect layer tree in entry
+DONE-fan out/in actions for actionstack in entry
+-manipulators
+  -design
+
+-feature creep 0
+  -multi select
+    -multi delete
+    -multi manipulate
+-feature creep 1
+  -PFCReorder :: PFCmdTag t (REltId, LayerPos)
+-feature creep 2
+  -copy pasta
+  -PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
+  -PFCDuplicate :: PFCmdTag t [REltId]
 
 ::NEW QUESTIONS::
 -do I use repeatEvent trick to move multiple elements or support interface that does it directly?

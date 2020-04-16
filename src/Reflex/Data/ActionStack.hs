@@ -56,7 +56,7 @@ data ActionStackConfig t a = ActionStackConfig {
 -- alternatively, you could do the repeatEvent trick here
 actionStackConfig_setCollector :: (Reflex t) => [Event t a] -> ActionStackConfig t a -> ActionStackConfig t a
 actionStackConfig_setCollector evs asc =
-  asc { _actionStackConfig_do = leftmostwarn "WARNING: multiple ActionStack do events firing at once" evs }
+  asc { _actionStackConfig_do = leftmostwarn "_actionStackConfig_do" evs }
 
 
 -- helper type for holdActionStack

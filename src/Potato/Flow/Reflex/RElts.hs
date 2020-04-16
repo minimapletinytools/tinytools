@@ -2,6 +2,8 @@
 module Potato.Flow.Reflex.RElts (
   REltId
   , RElt(..)
+  , REltLabel(..)
+  , REltLabelWithId
   , REltTree(..)
   , serialize
   , deserialize

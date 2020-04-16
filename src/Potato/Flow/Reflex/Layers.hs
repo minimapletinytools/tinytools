@@ -9,11 +9,15 @@ module Potato.Flow.Reflex.Layers (
   , LayerElt(..)
   , LayerTree(..)
   , LayerTreeConfig(..)
+  , layerTree_attachEndPos
+  , holdLayerTree
 ) where
 
 import           Relude
 
 import           Reflex
+
+import           Control.Monad.Fix
 
 type LayerPos = Int
 
@@ -44,6 +48,11 @@ data LayerTree t a = LayerTree {
   , _layerTree_copied     :: Dynamic t (LayerView a)
 }
 
+-- TODO implement without using 'length' lol
+-- | use for inserting at end of list
+layerTree_attachEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t (LayerPos,b)
+layerTree_attachEndPos LayerTree {..} = attach (length <$> current _layerTree_view)
+
 data LayerTreeConfig t a = LayerTreeConfig {
   -- | ensure input 'LayerView' satsifies scoping property
   -- if 'LayerPos' is out of range, results in error
@@ -59,5 +68,10 @@ data LayerTreeConfig t a = LayerTreeConfig {
 
   -- TODO make this work with many elements
   --, _layerTreeConfig_move      :: Event t (LayerPos, LayerPos) -- (from, to)
-
 }
+
+holdLayerTree :: forall t m a. (Reflex t, MonadHold t m, MonadFix m)
+  => LayerTreeConfig t a
+  -> m (LayerTree t a)
+holdLayerTree LayerTreeConfig {..} = mdo
+  undefined

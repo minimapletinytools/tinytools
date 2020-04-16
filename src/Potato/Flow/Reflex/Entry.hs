@@ -10,6 +10,7 @@ import           Relude
 import           Reflex
 import           Reflex.Data.ActionStack
 import           Reflex.Data.Directory
+import           Reflex.Potato.Helpers
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy           as LBS
@@ -20,6 +21,7 @@ import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.REltFactory
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.SElts
+
 
 import           Control.Monad.Fix
 
@@ -63,35 +65,27 @@ holdPF PFConfig {..} = mdo
       , _actionStackConfig_redo  = undefined
       , _actionStackConfig_clear = never
     }
-  actionStack <- holdActionStack actionStackConfig
-{-
-  data ActionStack t a = ActionStack {
-    _actionStack_do            :: Event t a -- ^ fires when element is added to do stack
-    , _actionStack_undo        :: Event t a -- ^ fires when element is added to undo stack
-    , _actionStack_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
-    , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
-  }
--}
-  -- TODO prepared fanned outputs from ActionStack
+  actionStack :: ActionStack t (PFCmd t)
+    <- holdActionStack actionStackConfig
 
   -- set up REltFactory and connect to DirectoryIdAssigner
   let
     rEltFactoryConfig = REltFactoryConfig {
         _rEltFactoryConfig_sEltTree = fmap (:[]) _pfc_addElt
       }
-  rEltFactory <- holdREltFactory rEltFactoryConfig
+  rEltFactory :: rEltFactory t
+    <- holdREltFactory rEltFactoryConfig
   let
     rEltsCreatedEv = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
         _directoryIdAssignerConfig_assign = rEltsCreatedEv
       }
-  directoryIdAssigner <- holdDirectoryIdAssigner directoryIdAssignerConfig
+  directoryIdAssigner :: DirectoryIdAssigner t (REltLabel t)
+    <- holdDirectoryIdAssigner directoryIdAssignerConfig
   let
     rEltsWithIdCreatedEv = _directoryIdAssignerConfig_attach directoryIdAssigner rEltsCreatedEv
   -- TODO map rEltsWithIdCreatedEv to CMD and send to ActionStack
   --PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
-
-
 
   -- set up Directory
   let
@@ -100,7 +94,21 @@ holdPF PFConfig {..} = mdo
         _directoryMapConfig_add = never
         , _directoryMapConfig_remove = never
       }
-  directory <- holdDirectory directoryConfig
+  directory :: Directory t (REltLabel t)
+    <- holdDirectory directoryConfig
 
+  -- set up LayerTree
+  let
+    ltc_add_do_PFCNewElts = layerTree_attachEndPos layerTree $ fmap toList $ selectDo actionStack PFCNewElts
+    ltc_add_undo_PFCDeleteElt = fmap (\(i,e) -> (i,[e])) $ selectUndo actionStack PFCDeleteElt
+    ltc_remove_undo_PFCNewElts = getId <<$>> selectUndo actionStack PFCNewElts
+    ltc_remove_do_PFCDeleteElt = fmap (\(i,e) -> getId e :| []) $ selectDo actionStack PFCDeleteElt
+    layerTreeConfig = LayerTreeConfig {
+        _layerTreeConfig_add = leftmostwarn "_layerTreeConfig_add" [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
+        , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $ toList <<$>> [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]
+        , _layerTreeConfig_copy = never
+      }
+  layerTree :: LayerTree t (REltLabelWithId t)
+    <- holdLayerTree layerTreeConfig
 
   undefined

@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
+
 module Reflex.Data.List (
   DynamicList(..)
   , DynamicListConfig(..)
@@ -81,7 +82,7 @@ holdDynamicList initial (DynamicListConfig {..}) = mdo
     -- TODO change to leftmost
     -- ensure these events never fire simultaneously as the indexing may be off
     changeEvent :: Event t (DLCmd t a)
-    changeEvent = leftmostwarn "WARNING: multiple List events firing at once" [dlMove, dlRemove, dlAdd]
+    changeEvent = leftmostwarn "List" [dlMove, dlRemove, dlAdd]
 
     foldfn ::
       DLCmd t a

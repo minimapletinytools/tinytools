@@ -30,11 +30,11 @@ import qualified Data.Dependent.Sum              as DS
 
 
 data PFCmdTag t a where
-  PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
-  PFCDeleteElt :: PFCmdTag t REltId
-  PFCReorder :: PFCmdTag t (REltId, LayerPos)
-  PFCPaste :: PFCmdTag t ([RElt t], LayerPos) -- change to SElt if you want to paste from other workspaces
-  PFCDuplicate :: PFCmdTag t [REltId]
+  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabelWithId t)) -- TODO needs LayerPos
+  PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabelWithId t)
+  --PFCReorder :: PFCmdTag t (REltId, LayerPos)
+  --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
+  --PFCDuplicate :: PFCmdTag t [REltId]
   PFCManipulate :: PFCmdTag t (ManipulatorCmd t)
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare

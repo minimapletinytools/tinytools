@@ -63,7 +63,7 @@ holdDynamicStack ::
 holdDynamicStack initial (DynamicStackConfig {..}) = do
   let
     changeEvent :: Event t (DSCmd t a)
-    changeEvent = leftmostwarn "WARNING: multiple stack events firing at once" [
+    changeEvent = leftmostwarn "Stack" [
         fmap DSCPush _dynamicStackConfig_push
         , fmap (const DSCPop) _dynamicStackConfig_pop
         , fmap (const DSCClear) _dynamicStackConfig_clear
