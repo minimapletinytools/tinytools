@@ -48,10 +48,10 @@ selectDo :: forall t a. (Reflex t)
   => PFCmdStack t
   -> PFCmdTag t a
   -> Event t a
-selectDo as tag = select (fanDSum $ _actionStack_do as) tag
+selectDo = actionStack_makeDoSelector
 
 selectUndo :: forall t a. (Reflex t)
   => PFCmdStack t
   -> PFCmdTag t a
   -> Event t a
-selectUndo as tag = select (fanDSum $ _actionStack_undo as) tag
+selectUndo = actionStack_makeUndoSelector

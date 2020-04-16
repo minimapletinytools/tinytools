@@ -2,7 +2,10 @@
 
 module Reflex.Data.ActionStack (
   ActionStack(..)
+  , actionStack_makeDoSelector
+  , actionStack_makeUndoSelector
   , ActionStackConfig(..)
+  , actionStackConfig_setCollector
   , holdActionStack
 ) where
 
@@ -13,8 +16,9 @@ import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
 
+import qualified Data.Dependent.Sum    as DS
+import qualified Data.GADT.Compare
 import           Data.Wedge
-
 
 
 getHere :: Wedge a b -> Maybe a
@@ -31,9 +35,16 @@ getThere c = case c of
 data ActionStack t a = ActionStack {
   _actionStack_do            :: Event t a -- ^ fires when element is added to do stack
   , _actionStack_undo        :: Event t a -- ^ fires when element is added to undo stack
+  -- probably don't want to expose these?
   , _actionStack_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
   , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
 }
+
+actionStack_makeDoSelector :: (Data.GADT.Compare.GCompare k, Reflex t) => ActionStack t (DS.DSum k Identity) -> (k a -> Event t a)
+actionStack_makeDoSelector as = select (fanDSum $ _actionStack_do as)
+
+actionStack_makeUndoSelector :: (Data.GADT.Compare.GCompare k, Reflex t) => ActionStack t (DS.DSum k Identity) -> (k a -> Event t a)
+actionStack_makeUndoSelector as = select (fanDSum $ _actionStack_undo as)
 
 data ActionStackConfig t a = ActionStackConfig {
   _actionStackConfig_do      :: Event t a -- ^ event to add an element to the stack
@@ -41,6 +52,12 @@ data ActionStackConfig t a = ActionStackConfig {
   , _actionStackConfig_redo  :: Event t () -- ^ event to redo top action of undo stack
   , _actionStackConfig_clear :: Event t () -- ^ clears both do/undo stack without firing any events
 }
+
+-- alternatively, you could do the repeatEvent trick here
+actionStackConfig_setCollector :: (Reflex t) => [Event t a] -> ActionStackConfig t a -> ActionStackConfig t a
+actionStackConfig_setCollector evs asc =
+  asc { _actionStackConfig_do = leftmostwarn "WARNING: multiple ActionStack do events firing at once" evs }
+
 
 -- helper type for holdActionStack
 -- TODO remove type var t
