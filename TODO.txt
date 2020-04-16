@@ -1,5 +1,5 @@
 ::TODO::
--clean up DirectoryIdAssigner interface and tests
+DONE-clean up DirectoryIdAssigner interface and tests
 
 ::NEW QUESTIONS::
 -do I use repeatEvent trick to move multiple elements or support interface that does it directly?

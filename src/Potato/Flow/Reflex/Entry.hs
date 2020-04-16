@@ -81,13 +81,14 @@ holdPF PFConfig {..} = mdo
       }
   rEltFactory <- holdREltFactory rEltFactoryConfig
   let
+    rEltsCreatedEv = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
+        _directoryIdAssignerConfig_assign = rEltsCreatedEv
       }
   directoryIdAssigner <- holdDirectoryIdAssigner directoryIdAssignerConfig
-
-  -- TODO attache _directoryIdAssigner_assigned to _rEltFactory_rEltTree
-  -- then map it to CMD and send to ActionStack
+  let
+    rEltsWithIdCreatedEv = _directoryIdAssignerConfig_attach directoryIdAssigner rEltsCreatedEv
+  -- TODO map rEltsWithIdCreatedEv to CMD and send to ActionStack
   --PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
 
 

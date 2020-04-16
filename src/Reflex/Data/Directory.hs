@@ -22,17 +22,18 @@ import           Data.These
 import           Reflex
 
 
-
--- TODO you could add a type parameter to lhs to ensure directories never get mixed up I guess
 type DirId = Int
 
--- TODO remove v from this, the expected use pattern is attachPromptly
 data DirectoryIdAssigner t v  = DirectoryIdAssigner {
-  _directoryIdAssigner_assigned :: Dynamic t (NonEmpty (DirId, v))
+  -- DELETE
+  --_directoryIdAssigner_assigned :: Dynamic t (NonEmpty (DirId, v))
+
+  -- | generate a callback event with DirIds attached
+  -- please ensure the input event is assigned ONLY to this Directory
+  _directoryIdAssignerConfig_attach :: Event t (NonEmpty v) -> Event t (NonEmpty (DirId, v))
 }
 
 data DirectoryIdAssignerConfig t v  = DirectoryIdAssignerConfig {
-  -- TODO maybe this just needs to take an int instead
   _directoryIdAssignerConfig_assign :: Event t (NonEmpty v)
 }
 
@@ -40,15 +41,16 @@ holdDirectoryIdAssigner ::
   forall t m v. (Reflex t, MonadHold t m, MonadFix m)
   => DirectoryIdAssignerConfig t v
   -> m (DirectoryIdAssigner t v)
-holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = mdo
+holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = do
   uid <- foldDyn (\x -> (+ length x)) 0 _directoryIdAssignerConfig_assign
+  --let assigned = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
+  --dAssigned <- holdDyn ((-1,undefined) :| []) assigned
   let
-    assigned = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
-  -- haha is it safe to do this? IDK?
-  dAssigned <- holdDyn ((-1,undefined) :| []) assigned
+    attachId ev = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) ev
   return
     DirectoryIdAssigner {
-        _directoryIdAssigner_assigned = dAssigned
+        --_directoryIdAssigner_assigned = dAssigned
+        _directoryIdAssignerConfig_attach = attachId
       }
 
 

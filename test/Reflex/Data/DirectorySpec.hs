@@ -22,36 +22,36 @@ import           Reflex.Host.Basic
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
 
 
-basic_network :: forall t m. BasicGuestConstraints t m => Event t Int -> BasicGuest t m (Event t (Int,Int))
+basic_network :: forall t m. BasicGuestConstraints t m => Event t [Int] -> BasicGuest t m (Event t (Int,Int))
 basic_network ev = do
   let
+    neEv = fmap fromList ev
     diac = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = fmap (:| []) ev
+        _directoryIdAssignerConfig_assign = neEv
       }
   dia <- holdDirectoryIdAssigner diac
 
-  -- TODO
-  --attachPromptlyDyn (_directoryIdAssigner_assigned dia) ev
   let
+    idAssignedEv = _directoryIdAssignerConfig_attach dia neEv
     -- TODO test more stuff
     dmc = DirectoryConfig {
-        _directoryMapConfig_add = updated (_directoryIdAssigner_assigned dia)
+        _directoryMapConfig_add = idAssignedEv
         , _directoryMapConfig_remove = never
       }
   dm <- holdDirectory dmc
 
-  return $ fmap head $ _directoryMap_added dm
+  return $ fmap last $ _directoryMap_added dm
 
 test_basic_network :: Test
 test_basic_network = TestLabel "basic" $ TestCase $ do
   let
-    bs = [0..10] :: [Int]
+    bs = [[0..100],[0],[123,3,4],[1],[3],[1..10]] :: [[Int]]
     run :: IO [[Maybe (Int,Int)]]
     run = basicHostWithStaticEvents bs basic_network
   v <- liftIO run
   --print v
   return ()
-  L.last (join v) @?= Just (10,10)
+  L.last (join v) @?= Just (length (join bs) - 1,10)
 
 spec :: Spec
 spec = do
