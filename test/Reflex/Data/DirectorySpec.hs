@@ -1,6 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Reflex.Data.DirectoryMapSpec (
+module Reflex.Data.DirectorySpec (
   spec
 ) where
 
@@ -13,7 +13,7 @@ import           Test.HUnit
 import qualified Data.List                 as L (last)
 
 import           Reflex
-import           Reflex.Data.DirectoryMap
+import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 import           Reflex.Potato.TestHarness
 
@@ -31,11 +31,11 @@ basic_network ev = do
   dia <- holdDirectoryIdAssigner diac
   let
     -- TODO test more stuff
-    dmc = DirectoryMapConfig {
+    dmc = DirectoryConfig {
         _directoryMapConfig_add = _directoryIdAssigner_assigned dia
         , _directoryMapConfig_remove = never
       }
-  dm <- holdDirectoryMap dmc
+  dm <- holdDirectory dmc
 
   return $ fmap head $ _directoryMap_added dm
 

@@ -1,14 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Reflex.Data.DirectoryMap (
+module Reflex.Data.Directory (
   DirId
   , DirectoryIdAssigner(..)
   , DirectoryIdAssignerConfig(..)
   , holdDirectoryIdAssigner
-  , DirectoryMap(..)
-  , DirectoryMapConfig(..)
-  , holdDirectoryMap
+  , Directory(..)
+  , DirectoryConfig(..)
+  , holdDirectory
 ) where
 
 import           Relude
@@ -52,13 +52,13 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = mdo
 
 
 -- TODO just rename to Directory
-data DirectoryMap t v = DirectoryMap {
+data Directory t v = Directory {
   _directoryMap_contents  :: Behavior t (Map DirId v)
   , _directoryMap_added   :: Event t (NonEmpty (DirId, v))
   , _directoryMap_removed :: Event t (NonEmpty (DirId, v))
 }
 
-data DirectoryMapConfig t v = DirectoryMapConfig {
+data DirectoryConfig t v = DirectoryConfig {
   -- | add a element to the directory
   -- ensure the DirId was assigned from the same instance of DirectoryIdAssigner
   _directoryMapConfig_add      :: Event t (NonEmpty (DirId, v))
@@ -66,11 +66,11 @@ data DirectoryMapConfig t v = DirectoryMapConfig {
   , _directoryMapConfig_remove :: Event t (NonEmpty DirId)
 }
 
-holdDirectoryMap ::
+holdDirectory ::
   forall t m v. (Reflex t, MonadHold t m, MonadFix m)
-  => DirectoryMapConfig t v
-  -> m (DirectoryMap t v)
-holdDirectoryMap DirectoryMapConfig {..} = mdo
+  => DirectoryConfig t v
+  -> m (Directory t v)
+holdDirectory DirectoryConfig {..} = mdo
   let
     add :: Event t (NonEmpty (DirId, v))
     add = _directoryMapConfig_add
@@ -89,7 +89,7 @@ holdDirectoryMap DirectoryMapConfig {..} = mdo
   directory :: Dynamic t (Map DirId v) <-
     foldDyn foldfn M.empty addAndRemove
   return
-    DirectoryMap {
+    Directory {
         _directoryMap_contents = bDirectory
         , _directoryMap_added = add
         , _directoryMap_removed = fmapMaybe nonEmpty removed
