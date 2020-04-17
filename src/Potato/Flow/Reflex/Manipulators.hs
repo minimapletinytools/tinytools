@@ -35,7 +35,7 @@ import qualified Data.GADT.Compare
 -- convert to
 -- manipulator :: Dynamic t ManipulatorWidget
 -- render (reflex-dom)
--- manipEv = dyn manipulator :: m (Event t (ManipulatorAction t))
+-- manipEv = dyn manipulator :: m (Event t (Controllers t))
 -- pass pack to PFC
 -- rec _pfc_manipulate = manipEv
 

@@ -1,9 +1,15 @@
+{-# LANGUAGE RecordWildCards      #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Potato.Flow.Math (
   XY(..), X(..), Y(..)
   , zeroXY
   , LSize(..)
   , LPoint(..)
   , LBox(..)
+
+  , Delta(..)
+  , DeltaLBox(..)
 ) where
 
 import           Relude
@@ -33,3 +39,44 @@ data LBox = LBox {
 
 instance FromJSON LBox
 instance ToJSON LBox
+
+class Delta x where
+  type DeltaType x :: Type
+  plusDelta :: x -> DeltaType x -> x
+  minusDelta :: x -> DeltaType x -> x
+
+instance Delta Int where
+  type DeltaType Int = Int
+  plusDelta = (+)
+  minusDelta = (-)
+
+instance (Delta a, Delta b) => Delta (a,b) where
+  type DeltaType (a,b) = (DeltaType a, DeltaType b)
+  plusDelta (a,b) (c,d) = (plusDelta a c, plusDelta b d)
+  minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
+
+deriving instance Delta X
+deriving instance Delta Y
+
+instance Delta XY where
+  type DeltaType XY = XY
+  plusDelta xy d = XY $ plusDelta (unXY xy) (unXY d)
+  minusDelta xy d = XY $ minusDelta (unXY xy) (unXY d)
+
+deriving instance Delta LPoint
+deriving instance Delta LSize
+
+data DeltaLBox = DeltaLBox {
+  deltaLBox_translate  :: XY
+  , deltaLBox_resizeBy :: XY
+}
+instance Delta LBox where
+  type DeltaType LBox = DeltaLBox
+  plusDelta LBox {..} DeltaLBox {..} = LBox {
+      ul = plusDelta ul deltaLBox_translate
+      , size = plusDelta size deltaLBox_resizeBy
+    }
+  minusDelta LBox {..} DeltaLBox {..} =  LBox {
+      ul = minusDelta ul deltaLBox_translate
+      , size = minusDelta size deltaLBox_resizeBy
+    }
