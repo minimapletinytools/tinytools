@@ -10,11 +10,14 @@ module Potato.Flow.Math (
 
   , Delta(..)
   , DeltaLBox(..)
+  , DeltaText
 ) where
 
 import           Relude
 
 import           Data.Aeson
+
+import           Control.Exception (assert)
 
 -- TODO switch to math library
 newtype XY = XY { unXY :: (Int, Int) } deriving (Generic, Show, FromJSON, ToJSON)
@@ -70,6 +73,7 @@ data DeltaLBox = DeltaLBox {
   deltaLBox_translate  :: XY
   , deltaLBox_resizeBy :: XY
 }
+
 instance Delta LBox where
   type DeltaType LBox = DeltaLBox
   plusDelta LBox {..} DeltaLBox {..} = LBox {
@@ -80,3 +84,11 @@ instance Delta LBox where
       ul = minusDelta ul deltaLBox_translate
       , size = minusDelta size deltaLBox_resizeBy
     }
+
+type DeltaText = (Text,Text)
+-- TODO more efficient to do this with zippers prob?
+-- is there a way to make this more generic?
+instance Delta Text where
+  type DeltaType Text = DeltaText
+  plusDelta s (b, a) = assert (b == s) a
+  minusDelta s (b, a) = assert (a == s) b

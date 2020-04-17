@@ -59,17 +59,31 @@ data MLine t = MLine {
 }
 
 data MText t = MText {
-  mText_box    :: Dynamic t LBox
-  , mText_text :: Dynamic t Text
+  _mText_box    :: Dynamic t LBox
+  , _mText_text :: Dynamic t Text
 }
 
 type Manipulators t = DS.DSum (MTag t) Identity
 
+data CBox = CBox {
+  _cBox_box :: DeltaLBox
+}
+
+data CLine = CLine {
+  _cLine_start :: XY
+  , _cLine_end :: XY
+}
+
+data CText = CText {
+  _cText_box    :: DeltaLBox
+  , _cText_text :: DeltaText
+}
+
 
 data CTag a where
-  CTagBox :: CTag ()
-  CTagLine :: CTag ()
-  CTagText :: CTag ()
+  CTagBox :: CTag DeltaLBox
+  CTagLine :: CTag CLine
+  CTagText :: CTag CText
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 
