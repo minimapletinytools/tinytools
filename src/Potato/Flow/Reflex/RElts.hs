@@ -32,20 +32,20 @@ data RElt t =
   REltNone
   | REltFolderStart
   | REltFolderEnd
-  | REltBox (MBoxView t)
-  | REltLine (MLineView t)
-  | REltText (MTextView t)
+  | REltBox (MBox t)
+  | REltLine (MLine t)
+  | REltText (MText t)
 
-getREltView :: RElt t -> MViewSum t
-getREltView relt = case relt of
+getREltManipulator :: RElt t -> Manipulators t
+getREltManipulator relt = case relt of
   REltNone        -> none
   REltFolderStart -> none
   REltFolderEnd   -> none
-  REltBox x       -> MViewTagBox ==> x
-  REltLine x      -> MViewTagLine ==> x
-  REltText x      -> MViewTagText ==> x
+  REltBox x       -> MTagBox ==> x
+  REltLine x      -> MTagLine ==> x
+  REltText x      -> MTagText ==> x
   where
-    none = MViewTagNone ==> ()
+    none = MTagNone ==> ()
 
 
 -- reflex vars for an RElt

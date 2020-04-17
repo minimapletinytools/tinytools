@@ -4,12 +4,12 @@
 {-# LANGUAGE RecursiveDo        #-}
 
 module Potato.Flow.Reflex.Manipulators (
-  MNoneView
-  , MBoxView(..)
-  , MLineView(..)
-  , MTextView(..)
-  , MViewTag(..)
-  , MViewSum
+  MNone
+  , MBox(..)
+  , MLine(..)
+  , MText(..)
+  , MTag(..)
+  , Manipulators
 ) where
 
 import           Relude
@@ -37,29 +37,29 @@ import qualified Data.GADT.Compare
 -- pass pack to PFC
 -- rec _pfc_manipulate = manipEv
 
-data MViewTag t a where
-  MViewTagNone :: MViewTag t MNoneView
-  MViewTagBox :: MViewTag t (MBoxView t)
-  MViewTagLine :: MViewTag t (MLineView t)
-  MViewTagText :: MViewTag t (MTextView t)
+data MTag t a where
+  MTagNone :: MTag t MNone
+  MTagBox :: MTag t (MBox t)
+  MTagLine :: MTag t (MLine t)
+  MTagText :: MTag t (MText t)
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 
 
-type MNoneView = ()
+type MNone = ()
 
-data MBoxView t = MBoxView {
-  _mBoxView_box :: Dynamic t LBox
+data MBox t = MBox {
+  _mBox_box :: Dynamic t LBox
 }
 
-data MLineView t = MLineView {
-  _mLineView_start :: Dynamic t LPoint
-  , _mLineView_end :: Dynamic t LPoint
+data MLine t = MLine {
+  _mLine_start :: Dynamic t LPoint
+  , _mLine_end :: Dynamic t LPoint
 }
 
-data MTextView t = MTextView {
-  mTextView_box    :: Dynamic t LBox
-  , mTextView_text :: Dynamic t Text
+data MText t = MText {
+  mText_box    :: Dynamic t LBox
+  , mText_text :: Dynamic t Text
 }
 
-type MViewSum t = DS.DSum (MViewTag t) Identity
+type Manipulators t = DS.DSum (MTag t) Identity
