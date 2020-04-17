@@ -18,6 +18,7 @@ import           Reflex
 import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
 
+import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.Reflex.RElts
@@ -28,7 +29,6 @@ import qualified Data.Dependent.Map              as DM
 import qualified Data.Dependent.Sum              as DS
 import qualified Data.GADT.Compare
 
-
 data PFCmdTag t a where
   PFCNewElts :: PFCmdTag t (NonEmpty (REltLabel t)) -- TODO needs LayerPos
   PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabel t)
@@ -36,6 +36,8 @@ data PFCmdTag t a where
   --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
   --PFCDuplicate :: PFCmdTag t [REltId]
   PFCManipulate :: PFCmdTag t (ControllerWithId)
+  -- TODO maybe there is better type that can make use of Delta type class for scaling many
+  PFCManipulateMany :: PFCmdTag t ([REltId], (LBox, LBox)) -- ^ (before, after)
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 

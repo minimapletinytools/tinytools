@@ -54,6 +54,18 @@ getREltManipulator relt = case relt of
   where
     none = MTagNone ==> ()
 
+-- | gets an 'LBox' that contains the entire RElt
+getREltBox :: (Reflex t) => RElt t -> Maybe (Dynamic t LBox)
+getREltBox relt = case relt of
+  REltNone        -> Nothing
+  REltFolderStart -> Nothing
+  REltFolderEnd   -> Nothing
+  REltBox x       -> Just $ _mBox_box x
+  REltLine x      -> Just
+    $ fmap (\l -> make_LBox_from_LPoints (fst l) (snd l))
+    $ ffor2 (_mLine_start x) (_mLine_end x) (,)
+  REltText x      -> Just $ _mText_box x
+
 -- TODO rename this
 data REltDrawer t = REltDrawer {
   -- Behaviors
@@ -77,14 +89,12 @@ getDrawer relt = case relt of
   REltLine x      -> nilDrawer
   REltText x      -> nilDrawer
 
-
 -- | reflex element nodes
 data REltLabel t = REltLabel {
   re_id     :: REltId
   , re_name :: Text
   , re_elt  :: RElt t
 }
-
 
 instance LayerElt (REltLabel t) where
   type LayerEltId (REltLabel t) = REltId
@@ -96,7 +106,6 @@ instance LayerElt (REltLabel t) where
     _             -> False
   getId = re_id
 
-
 -- expected to satisfy scoping invariant
 type REltTree t = [REltLabel t]
 type NonEmptyREltTree t = NonEmpty (REltLabel t)
@@ -104,7 +113,6 @@ type NonEmptyREltTree t = NonEmpty (REltLabel t)
 -- IDs must be assigned first before we can deserialize
 type SEltLabelWithId = (REltId, SEltLabel)
 type SEltWithIdTree = [SEltLabelWithId]
-
 
 deserializeRElt ::
   (Reflex t, MonadHold t m, MonadFix m)
@@ -129,7 +137,6 @@ deserialize ::
   -> SEltWithIdTree
   -> m (REltTree t)
 deserialize doev undoev = mapM (deserializeRElt doev undoev)
-
 
 serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
 serializeRElt relt = do

@@ -7,6 +7,7 @@ module Potato.Flow.Math (
   , LSize(..)
   , LPoint(..)
   , LBox(..)
+  , make_LBox_from_LPoints
 
   , Delta(..)
   , DeltaLBox(..)
@@ -18,6 +19,15 @@ import           Relude
 import           Data.Aeson
 
 import           Control.Exception (assert)
+
+{-
+ CORDINATE SYSTEM
+ UPPER LEFT CORNER is 0 0
+ (0,0)--- +x
+  |
+  |
+  +y
+-}
 
 -- TODO switch to math library
 newtype XY = XY { unXY :: (Int, Int) } deriving (Generic, Show, FromJSON, ToJSON)
@@ -39,6 +49,14 @@ data LBox = LBox {
   ul     :: LPoint
   , size :: LSize
 } deriving (Generic, Show)
+
+make_LBox_from_LPoints :: LPoint -> LPoint -> LBox
+make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
+  LBox {
+    ul = LPoint $ XY (min x1 x2, min y1 y2)
+    , size = LSize $ XY (abs (x1 - x2), abs (y1 - y2))
+  }
+
 
 instance FromJSON LBox
 instance ToJSON LBox

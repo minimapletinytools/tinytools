@@ -10,6 +10,9 @@ module Potato.Flow.Reflex.Manipulators (
   , MText(..)
   , MTag(..)
   , Manipulators
+  , CBox(..)
+  , CLine(..)
+  , CText(..)
   , CTag(..)
   , Controllers
 ) where
