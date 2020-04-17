@@ -8,14 +8,13 @@ module Reflex.Data.Seq (
   , holdDynamicSeq
 ) where
 
-import           Relude
+import           Relude                hiding (empty, splitAt)
 
 import           Reflex
 import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
 
-import           Data.Dependent.Sum
 import           Data.Sequence
 import           Data.Wedge
 
@@ -53,6 +52,7 @@ defaultDynamicSeqConfig :: (Reflex t) => DynamicSeqConfig t a
 defaultDynamicSeqConfig = DynamicSeqConfig {
     _dynamicSeqConfig_add = never
     , _dynamicSeqConfig_remove = never
+    , _dynamicSeqConfig_clear = never
   }
 
 
@@ -80,14 +80,16 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     -- Nowhere is everything else
     foldfn :: (DSCmd t a) -> DSState a -> PushM t (DSState a)
     foldfn (DSCAdd (i, ys)) (_, xs)  = return (Here (i, ys), newSeq) where
-      newSeq = undefined
+      (l, r) = splitAt i xs
+      newSeq = l >< xs >< r
     foldfn (DSCRemove (i, n)) (_, xs) = return (There (i, removed), newSeq) where
-      removed = undefined
-      newSeq = undefined
-    foldfn DSCClear (_, xs) = return (There (0, xs), Data.Sequence.empty)
+      (keepl, rs) = splitAt i xs
+      (removed, keepr) = splitAt n rs
+      newSeq = keepl >< keepr
+    foldfn DSCClear (_, xs) = return (There (0, xs), empty)
 
   asdyn :: Dynamic t (DSState a) <-
-    foldDynM foldfn (Nowhere, Data.Sequence.empty) changeEvent
+    foldDynM foldfn (Nowhere, initial) changeEvent
 
   return $ DynamicSeq {
       _dynamicSeq_added = never
