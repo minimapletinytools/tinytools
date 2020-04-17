@@ -10,6 +10,8 @@ module Potato.Flow.Reflex.Manipulators (
   , MText(..)
   , MTag(..)
   , Manipulators
+  , CTag(..)
+  , Controllers
 ) where
 
 import           Relude
@@ -45,7 +47,6 @@ data MTag t a where
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 
-
 type MNone = ()
 
 data MBox t = MBox {
@@ -63,3 +64,13 @@ data MText t = MText {
 }
 
 type Manipulators t = DS.DSum (MTag t) Identity
+
+
+data CTag a where
+  CTagBox :: CTag ()
+  CTagLine :: CTag ()
+  CTagText :: CTag ()
+  deriving anyclass Data.GADT.Compare.GEq
+  deriving anyclass DM.GCompare
+
+type Controllers = DS.DSum CTag Identity

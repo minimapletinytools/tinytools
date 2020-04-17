@@ -31,8 +31,8 @@ data REltFactoryConfig t = REltFactoryConfig {
   -- connects to _pfc_addElt
   -- does not do any checking if the SEltTree is valid
   _rEltFactoryConfig_sEltTree         :: Event t SEltWithIdTree
-  , _rEltFactoryConfig_doManipulate   :: Event t (ManipulatorWithId t)
-  , _rEltFactoryConfig_undoManipulate :: Event t (ManipulatorWithId t)
+  , _rEltFactoryConfig_doManipulate   :: Event t (ControllerWithId)
+  , _rEltFactoryConfig_undoManipulate :: Event t (ControllerWithId)
 }
 
 holdREltFactory ::

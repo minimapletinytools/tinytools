@@ -2,6 +2,7 @@
 module Potato.Flow.Reflex.RElts (
   REltId
   , ManipulatorWithId
+  , ControllerWithId
   , RElt(..)
   , REltLabel(..)
   , REltTree
@@ -32,6 +33,7 @@ import           Reflex
 type REltId = Int
 
 type ManipulatorWithId t = DS.DSum (Const2 REltId (Manipulators t)) Identity
+type ControllerWithId = DS.DSum (Const2 REltId Controllers) Identity
 
 data RElt t =
   REltNone
@@ -99,8 +101,8 @@ type SEltWithIdTree = [SEltLabelWithId]
 
 deserializeRElt ::
   (Reflex t, MonadHold t m, MonadFix m)
-  => Event t (ManipulatorWithId t) -- ^ selected do action
-  -> Event t (ManipulatorWithId t) -- ^ selected undo action
+  => Event t (ControllerWithId) -- ^ selected do action
+  -> Event t (ControllerWithId) -- ^ selected undo action
   -> SEltLabelWithId
   -> m (REltLabel t)
 deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
@@ -115,8 +117,8 @@ deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
 
 deserialize ::
   (Reflex t, MonadHold t m, MonadFix m)
-  => Event t (ManipulatorWithId t) -- ^ selected do action
-  -> Event t (ManipulatorWithId t) -- ^ selected undo action
+  => Event t (ControllerWithId) -- ^ selected do action
+  -> Event t (ControllerWithId) -- ^ selected undo action
   -> SEltWithIdTree
   -> m (REltTree t)
 deserialize doev undoev = mapM (deserializeRElt doev undoev)
