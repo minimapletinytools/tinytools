@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Reflex.Data.Seq (
+module Reflex.Data.Sequence (
   DynamicSeq(..)
   , DynamicSeqConfig(..)
   , defaultDynamicSeqConfig
