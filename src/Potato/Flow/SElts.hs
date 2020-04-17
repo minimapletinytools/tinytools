@@ -1,5 +1,6 @@
 module Potato.Flow.SElts (
-  SLineStyle(..)
+  PChar
+  , SLineStyle(..)
   , STextStyle(..)
   , SBox(..)
   , SLine(..)
@@ -12,10 +13,10 @@ module Potato.Flow.SElts (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Types
 
 import           Data.Aeson
 
+type PChar = Char
 
 data SLineStyle = SLineStyle {
   sbs_corners      :: PChar

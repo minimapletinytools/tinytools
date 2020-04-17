@@ -19,13 +19,13 @@ import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 
 import           Data.Dependent.Sum              (DSum ((:=>)), (==>))
 import qualified Data.Dependent.Sum              as DS
 import           Data.Functor.Misc
+import           Data.Maybe                      (fromJust)
 
 import           Reflex
 
@@ -66,28 +66,37 @@ getREltBox relt = case relt of
     <$> ffor2 (_mLine_start x) (_mLine_end x) (,)
   REltText x      -> Just $ _mText_box x
 
--- TODO rename this
+data Renderer = Renderer LBox (LPoint -> Maybe PChar)
+
+makePotatoRenderer :: LBox -> Renderer
+makePotatoRenderer lbox = Renderer lbox $ \p -> if does_LBox_contains_LPoint lbox p
+  then Just '#'
+  else Nothing
+
 data REltDrawer t = REltDrawer {
-  -- Behaviors
-  re_raycast :: Behavior t LRaycast
-  , re_draw  :: Behavior t Renderer -- switch to [Renderer] for better performance
+  _rEltDrawer_box        :: Behavior t LBox
+  , _rEltDrawer_renderer :: Behavior t Renderer -- switch to [Renderer] for better performance
 }
 
 nilDrawer :: (Reflex t) => REltDrawer t
 nilDrawer = REltDrawer {
-    re_raycast = constant (const False)
-    , re_draw = constant (Renderer (LBox (LPoint zeroXY) (LSize zeroXY)) (const Nothing))
+    _rEltDrawer_box = constant nilLBox
+    , _rEltDrawer_renderer = constant (Renderer nilLBox (const Nothing))
   }
 
--- TODO finish
 getDrawer :: (Reflex t) => RElt t -> REltDrawer t
 getDrawer relt = case relt of
   REltNone        -> nilDrawer
   REltFolderStart -> nilDrawer
   REltFolderEnd   -> nilDrawer
-  REltBox x       -> nilDrawer
-  REltLine x      -> nilDrawer
-  REltText x      -> nilDrawer
+  REltBox x       -> potatoDrawer
+  REltLine x      -> potatoDrawer
+  REltText x      -> potatoDrawer
+  where
+    potatoDrawer = REltDrawer {
+        _rEltDrawer_box = current $ fromJust (getREltBox relt)
+        , _rEltDrawer_renderer = current $ makePotatoRenderer <$> fromJust (getREltBox relt)
+      }
 
 -- | reflex element nodes
 data REltLabel t = REltLabel {

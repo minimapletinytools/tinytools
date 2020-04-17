@@ -15,7 +15,6 @@ import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 

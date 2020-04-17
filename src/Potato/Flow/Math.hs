@@ -3,12 +3,13 @@
 
 module Potato.Flow.Math (
   XY(..), X(..), Y(..)
-  , zeroXY
+  , nilXY
   , LSize(..)
   , LPoint(..)
   , LBox(..)
+  , nilLBox
   , make_LBox_from_LPoints
-
+  , does_LBox_contains_LPoint
   , Delta(..)
   , DeltaLBox(..)
   , DeltaText
@@ -34,8 +35,8 @@ newtype XY = XY { unXY :: (Int, Int) } deriving (Generic, Show, FromJSON, ToJSON
 newtype X = X { unX :: Int } deriving (Generic, Show, FromJSON, ToJSON)
 newtype Y = Y { unY :: Int } deriving (Generic, Show, FromJSON, ToJSON)
 
-zeroXY :: XY
-zeroXY = XY (0,0)
+nilXY :: XY
+nilXY = XY (0,0)
 
 newtype LSize = LSize { unLSize :: XY } deriving (Generic, Show, FromJSON, ToJSON)
 newtype LPoint = LPoint { unLPoint :: XY } deriving (Generic, Show, FromJSON, ToJSON)
@@ -44,11 +45,19 @@ newtype LPoint = LPoint { unLPoint :: XY } deriving (Generic, Show, FromJSON, To
 -- should only be used by VC, so does not belong here
 --newtype VPoint = VPoint (Int, Int) deriving (Generic, Show, FromJSON, ToJSON)
 
+-- TODO rename params maybe?
 -- | a box in logical space
+-- note size is non inclusive
+-- e.g. an LBox with size (1,1) is exactly 1 point at ul
+-- e.g. an LBox with size (0,0) contains nothing
+
 data LBox = LBox {
   ul     :: LPoint
   , size :: LSize
 } deriving (Generic, Show)
+
+nilLBox :: LBox
+nilLBox = LBox (LPoint nilXY) (LSize nilXY)
 
 make_LBox_from_LPoints :: LPoint -> LPoint -> LBox
 make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
@@ -57,6 +66,9 @@ make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
     , size = LSize $ XY (abs (x1 - x2), abs (y1 - y2))
   }
 
+does_LBox_contains_LPoint :: LBox -> LPoint -> Bool
+does_LBox_contains_LPoint (LBox (LPoint (XY (bx,by))) (LSize (XY (bw,bh)))) (LPoint (XY (px,py))) =
+  px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
 instance FromJSON LBox
 instance ToJSON LBox
