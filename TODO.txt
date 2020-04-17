@@ -1,5 +1,6 @@
 ::TODO::
--get rid of REltFactory
+-actually you do need a separate MControl type
+IGNORE-get rid of REltFactory
 -write Reflex.Data.Seq
 -helpers to create fine grained manipulators
 -relt serializers
@@ -28,6 +29,17 @@ DONE-fan out/in actions for actionstack in entry
   -copy pasta
   -PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
   -PFCDuplicate :: PFCmdTag t [REltId]
+-feature creep 3
+  -connected elts
+  -RElt manipulators now require readonly hooks into existing RElts
+    -connected :: Dynamic t REltId
+    -reltUpdateds :: Dynamic t (DMap (Const2 REltId REltLabel) Identity)
+    -connectedUpdates' :: fmap (\i -> select i . fan reltUpdates) connected :: Event t [Event t REltLabel]
+    -connectedUpdateds :: sequence . switch $ ConnectedUpdates' :: Event t [REltLabel t]
+    -now you can set manipulators based on new relt positions
+      -be sure the set operations are reversible
+        -this way if we undo an action on a connected element state is still as expected
+        -don't forget about delete events!
 
 ::NEW QUESTIONS::
 -do I use repeatEvent trick to move multiple elements or support interface that does it directly?

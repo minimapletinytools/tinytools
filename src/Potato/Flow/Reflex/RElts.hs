@@ -53,6 +53,7 @@ getREltManipulator relt = case relt of
     none = MTagNone ==> ()
 
 
+
 -- reflex vars for an RElt
 data REltReflex t = REltReflex {
   -- Behaviors
@@ -71,6 +72,7 @@ data REltLabel t = REltLabel {
   re_id       :: REltId
   , re_name   :: Text
   , re_elt    :: RElt t
+  -- TODO delete this
   , re_reflex :: REltReflex t
 }
 
@@ -110,6 +112,7 @@ deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
     _               -> undefined
     --SEltBox x -> hold
   return $ REltLabel reltid sname relt rreflex
+
 deserialize ::
   (Reflex t, MonadHold t m, MonadFix m)
   => Event t (ManipulatorWithId t) -- ^ selected do action
