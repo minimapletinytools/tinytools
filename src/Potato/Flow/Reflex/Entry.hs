@@ -81,11 +81,12 @@ holdPF PFConfig {..} = mdo
   directoryIdAssigner :: DirectoryIdAssigner t (SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
 
-  -- TODO get rid of rEltFactory
   -- set up rEltFactory
   let
     rEltFactoryConfig = REltFactoryConfig {
         _rEltFactoryConfig_sEltTree = toList <$> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+        , _rEltFactoryConfig_doManipulate = selectDo actionStack PFCManipulate
+        , _rEltFactoryConfig_undoManipulate = selectUndo actionStack PFCManipulate
       }
     rEltFactory_action_newRElt :: Event t (PFCmd t)
     rEltFactory_action_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory

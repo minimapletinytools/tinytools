@@ -1,6 +1,7 @@
 {-# LANGUAGE RecursiveDo #-}
 module Potato.Flow.Reflex.RElts (
   REltId
+  , ManipulatorWithId
   , RElt(..)
   , REltLabel(..)
   , REltTree
@@ -22,11 +23,15 @@ import           Potato.Flow.Types
 import           Control.Monad.Fix
 
 import           Data.Dependent.Sum              (DSum ((:=>)), (==>))
+import qualified Data.Dependent.Sum              as DS
+import           Data.Functor.Misc
 
 import           Reflex
 
 -- TODO move to reltfactory
 type REltId = Int
+
+type ManipulatorWithId t = DS.DSum (Const2 REltId (Manipulators t)) Identity
 
 data RElt t =
   REltNone
@@ -90,8 +95,13 @@ type SEltLabelWithId = (REltId, SEltLabel)
 type SEltWithIdTree = [SEltLabelWithId]
 
 
-deserializeRElt :: (Reflex t, MonadHold t m, MonadFix m) => SEltLabelWithId -> m (REltLabel t)
-deserializeRElt (reltid, SEltLabel sname selt) = do
+deserializeRElt ::
+  (Reflex t, MonadHold t m, MonadFix m)
+  => Event t (ManipulatorWithId t) -- ^ selected do action
+  -> Event t (ManipulatorWithId t) -- ^ selected undo action
+  -> SEltLabelWithId
+  -> m (REltLabel t)
+deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
   -- TODO implement for each type
   (relt, rreflex) <- case selt of
     SEltNone        -> return (REltNone, nilReflex)
@@ -100,8 +110,13 @@ deserializeRElt (reltid, SEltLabel sname selt) = do
     _               -> undefined
     --SEltBox x -> hold
   return $ REltLabel reltid sname relt rreflex
-deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltWithIdTree -> m (REltTree t)
-deserialize = mapM deserializeRElt
+deserialize ::
+  (Reflex t, MonadHold t m, MonadFix m)
+  => Event t (ManipulatorWithId t) -- ^ selected do action
+  -> Event t (ManipulatorWithId t) -- ^ selected undo action
+  -> SEltWithIdTree
+  -> m (REltTree t)
+deserialize doev undoev = mapM (deserializeRElt doev undoev)
 
 
 serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
