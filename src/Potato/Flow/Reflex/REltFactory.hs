@@ -9,6 +9,7 @@ module Potato.Flow.Reflex.REltFactory (
 import           Relude
 
 import           Reflex
+import           Reflex.Data.Directory
 
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
@@ -21,6 +22,7 @@ import           Control.Monad.Fix
 
 
 
+
 data REltFactory t = REltFactor {
   _rEltFactory_rEltTree :: Event t (REltTree t)
 }
@@ -28,7 +30,7 @@ data REltFactory t = REltFactor {
 data REltFactoryConfig t = REltFactoryConfig {
   -- connects to _pfc_addElt
   -- does not do any checking if the SEltTree is valid
-  _rEltFactoryConfig_sEltTree :: Event t SEltTree
+  _rEltFactoryConfig_sEltTree :: Event t SEltWithIdTree
 }
 
 holdREltFactory ::
@@ -36,15 +38,7 @@ holdREltFactory ::
   => REltFactoryConfig t
   -> m (REltFactory t)
 holdREltFactory REltFactoryConfig {..} = do
-  let
-    foldfn :: SEltTree -> REltTree t -> PushM t (Maybe (REltTree t))
-    foldfn selttree _ = case selttree of
-      [] -> return Nothing
-      x  -> Just <$> deserialize x
-  -- so there's no fmapMaybeM for events?
-  rtree :: Dynamic t (REltTree t) <-
-    foldDynMaybeM foldfn [] _rEltFactoryConfig_sEltTree
   return
     REltFactor {
-        _rEltFactory_rEltTree = updated rtree
+        _rEltFactory_rEltTree = pushAlways deserialize _rEltFactoryConfig_sEltTree
       }

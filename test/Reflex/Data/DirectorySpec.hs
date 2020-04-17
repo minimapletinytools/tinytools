@@ -32,7 +32,7 @@ basic_network ev = do
   dia <- holdDirectoryIdAssigner diac
 
   let
-    idAssignedEv = _directoryIdAssignerConfig_attach dia neEv
+    idAssignedEv = _directoryIdAssigner_tag dia neEv
     -- TODO test more stuff
     dmc = DirectoryConfig {
         _directoryMapConfig_add = idAssignedEv

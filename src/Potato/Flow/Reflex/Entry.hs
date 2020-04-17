@@ -14,6 +14,7 @@ import           Reflex.Potato.Helpers
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy           as LBS
+import           Data.Dependent.Sum             ((==>))
 import qualified Data.List.NonEmpty             as NE
 
 import           Potato.Flow.Reflex.Cmd
@@ -71,22 +72,26 @@ holdPF PFConfig {..} = mdo
   actionStack :: ActionStack t (PFCmd t)
     <- holdActionStack actionStackConfig
 
-  -- set up REltFactory and connect to DirectoryIdAssigner
-  let
-    rEltFactoryConfig = REltFactoryConfig {
-        _rEltFactoryConfig_sEltTree = fmap (:[]) _pfc_addElt
-      }
-  rEltFactory :: rEltFactory t
-    <- holdREltFactory rEltFactoryConfig
+  -- set up DirectoryIdAssigner
   let
     rEltsCreatedEv = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = rEltsCreatedEv
+        _directoryIdAssignerConfig_assign = fmap (:|[]) _pfc_addElt
       }
-  directoryIdAssigner :: DirectoryIdAssigner t (REltLabel t)
+  directoryIdAssigner :: DirectoryIdAssigner t (SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
+
+  -- TODO get rid of rEltFactory
+  -- set up rEltFactory
   let
-    rEltsWithIdCreatedEv = _directoryIdAssignerConfig_attach directoryIdAssigner rEltsCreatedEv
+    rEltFactoryConfig = REltFactoryConfig {
+        _rEltFactoryConfig_sEltTree = toList <$> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+      }
+    rEltFactory_action_newRElt :: Event t (PFCmd t)
+    rEltFactory_action_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
+  rEltFactory :: rEltFactory t
+    <- holdREltFactory rEltFactoryConfig
+
   -- TODO map rEltsWithIdCreatedEv to CMD and send to ActionStack
   --PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
 
@@ -111,7 +116,7 @@ holdPF PFConfig {..} = mdo
         , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $ toList <<$>> [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]
         , _layerTreeConfig_copy = never
       }
-  layerTree :: LayerTree t (REltLabelWithId t)
+  layerTree :: LayerTree t (REltLabel t)
     <- holdLayerTree layerTreeConfig
 
   undefined

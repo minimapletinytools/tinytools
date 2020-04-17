@@ -30,8 +30,8 @@ import qualified Data.GADT.Compare
 
 
 data PFCmdTag t a where
-  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabelWithId t)) -- TODO needs LayerPos
-  PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabelWithId t)
+  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabel t)) -- TODO needs LayerPos
+  PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabel t)
   --PFCReorder :: PFCmdTag t (REltId, LayerPos)
   --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
   --PFCDuplicate :: PFCmdTag t [REltId]

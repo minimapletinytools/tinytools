@@ -22,15 +22,16 @@ import           Data.These
 import           Reflex
 
 
+-- TODO change this to enum type class
 type DirId = Int
 
 data DirectoryIdAssigner t v  = DirectoryIdAssigner {
   -- DELETE
   --_directoryIdAssigner_assigned :: Dynamic t (NonEmpty (DirId, v))
 
-  -- | generate a callback event with DirIds attached
-  -- please ensure the input event is assigned ONLY to this Directory
-  _directoryIdAssignerConfig_attach :: Event t (NonEmpty v) -> Event t (NonEmpty (DirId, v))
+  -- | tag an event with ided elements that got generate by the event
+  -- the input event must be assigned to this directory
+  _directoryIdAssigner_tag :: forall a. Event t a -> Event t (NonEmpty (DirId, v))
 }
 
 data DirectoryIdAssignerConfig t v  = DirectoryIdAssignerConfig {
@@ -46,11 +47,17 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = do
   --let assigned = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
   --dAssigned <- holdDyn ((-1,undefined) :| []) assigned
   let
-    attachId ev = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) ev
+    attached :: Event t (NonEmpty (DirId, v))
+    attached = attachWith (\firstid -> NE.zip (NE.fromList [firstid..])) (current uid) _directoryIdAssignerConfig_assign
+    alignfn = \case
+      These a _ -> Just a
+      _ -> Nothing
+    maketag :: forall a. Event t a -> Event t (NonEmpty (DirId, v))
+    maketag = alignEventWithMaybe alignfn attached
   return
     DirectoryIdAssigner {
         --_directoryIdAssigner_assigned = dAssigned
-        _directoryIdAssignerConfig_attach = attachId
+        _directoryIdAssigner_tag = maketag
       }
 
 

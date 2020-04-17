@@ -3,8 +3,10 @@ module Potato.Flow.Reflex.RElts (
   REltId
   , RElt(..)
   , REltLabel(..)
-  , REltLabelWithId
-  , REltTree(..)
+  , REltTree
+  , NonEmptyREltTree
+  , SEltLabelWithId
+  , SEltWithIdTree
   , serialize
   , deserialize
 ) where
@@ -13,6 +15,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
+import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
@@ -23,9 +26,17 @@ import           Reflex
 -- TODO move to reltfactory
 type REltId = Int
 
--- TODO node names
-data RElt t = REltNone | REltFolderStart | REltFolderEnd | REltBox (Dynamic t SBox) | REltLine (Dynamic t SLine) | REltText (Dynamic t SText)
+data RElt t =
+  REltNone
+  | REltFolderStart
+  | REltFolderEnd
+  | REltBox (Dynamic t SBox)
+  | REltLine (Dynamic t SLine)
+  | REltText (Dynamic t SText)
 
+
+getView :: RElt t -> PFMViewSum t
+getView relt = undefined
 
 -- reflex vars for an RElt
 data REltReflex t = REltReflex {
@@ -42,33 +53,35 @@ nilReflex = REltReflex {
 
 -- | reflex element nodes
 data REltLabel t = REltLabel {
-  re_name     :: Text
+  re_id       :: REltId
+  , re_name   :: Text
   , re_elt    :: RElt t
   , re_reflex :: REltReflex t
 }
 
-type REltLabelWithId t = (REltId, REltLabel t)
 
-instance LayerElt (REltLabelWithId t) where
-  type LayerEltId (REltLabelWithId t) = REltId
-  isFolderStart (_,rel) = case re_elt rel of
+instance LayerElt (REltLabel t) where
+  type LayerEltId (REltLabel t) = REltId
+  isFolderStart rel = case re_elt rel of
     REltFolderStart -> True
     _               -> False
-  isFolderEnd (_,rel) = case re_elt rel of
+  isFolderEnd rel = case re_elt rel of
     REltFolderEnd -> True
     _             -> False
-  getId = fst
+  getId = re_id
 
 
 -- expected to satisfy scoping invariant
 type REltTree t = [REltLabel t]
+type NonEmptyREltTree t = NonEmpty (REltLabel t)
+
+-- IDs must be assigned first before we can deserialize
+type SEltLabelWithId = (REltId, SEltLabel)
+type SEltWithIdTree = [SEltLabelWithId]
 
 
-deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltTree -> m (REltTree t)
-deserialize [] = return []
-deserialize (SEltLabel sname selt:rest) = mdo
-
-
+deserializeRElt :: (Reflex t, MonadHold t m, MonadFix m) => SEltLabelWithId -> m (REltLabel t)
+deserializeRElt (reltid, SEltLabel sname selt) = do
   -- TODO implement for each type
   (relt, rreflex) <- case selt of
     SEltNone        -> return (REltNone, nilReflex)
@@ -76,16 +89,13 @@ deserialize (SEltLabel sname selt:rest) = mdo
     SEltFolderEnd   -> return (REltFolderEnd, nilReflex)
     _               -> undefined
     --SEltBox x -> hold
-
-  -- TODO generate node id
-
-  reltRest <- deserialize rest
-  return $ (REltLabel sname relt rreflex) : reltRest
+  return $ REltLabel reltid sname relt rreflex
+deserialize :: (Reflex t, MonadHold t m, MonadFix m) => SEltWithIdTree -> m (REltTree t)
+deserialize = mapM deserializeRElt
 
 
-serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
-serialize [] = return []
-serialize (relt:rest) = do
+serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
+serializeRElt relt = do
   let
     sampleDyn = sample . current
   selt <- case re_elt relt of
@@ -95,5 +105,6 @@ serialize (relt:rest) = do
     REltBox x       -> SEltBox <$> sampleDyn x
     REltLine x      -> SEltLine <$> sampleDyn x
     REltText x      -> SEltText <$> sampleDyn x
-  seltRest <- serialize rest
-  return $ (SEltLabel (re_name relt) selt) : seltRest
+  return $ SEltLabel (re_name relt) selt
+serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
+serialize = mapM serializeRElt

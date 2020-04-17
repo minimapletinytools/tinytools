@@ -1,4 +1,7 @@
 ::TODO::
+-get rid of REltFactory
+DONE-id assigner
+  -ids need to be obtained first before relt is created as relt needs to know its id to select its events
 DONE-clean up DirectoryIdAssigner interface and tests
 DONE-action input distributor
 DONE-action output collector
@@ -8,7 +11,8 @@ DONE-action output collector
 DONE-connect layer tree in entry
 DONE-fan out/in actions for actionstack in entry
 -manipulators
-  -design
+  DONE-design
+
 
 -feature creep 0
   -save/load workspace
