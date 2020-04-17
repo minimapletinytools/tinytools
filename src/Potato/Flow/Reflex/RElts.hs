@@ -54,28 +54,35 @@ getREltManipulator relt = case relt of
   where
     none = MTagNone ==> ()
 
-
-
--- reflex vars for an RElt
-data REltReflex t = REltReflex {
+-- TODO rename this
+data REltDrawer t = REltDrawer {
   -- Behaviors
   re_raycast :: Behavior t LRaycast
   , re_draw  :: Behavior t Renderer -- switch to [Renderer] for better performance
 }
 
-nilReflex :: (Reflex t) => REltReflex t
-nilReflex = REltReflex {
+nilDrawer :: (Reflex t) => REltDrawer t
+nilDrawer = REltDrawer {
     re_raycast = constant (const False)
     , re_draw = constant (Renderer (LBox (LPoint zeroXY) (LSize zeroXY)) (const Nothing))
   }
 
+-- TODO finish
+getDrawer :: (Reflex t) => RElt t -> REltDrawer t
+getDrawer relt = case relt of
+  REltNone        -> nilDrawer
+  REltFolderStart -> nilDrawer
+  REltFolderEnd   -> nilDrawer
+  REltBox x       -> nilDrawer
+  REltLine x      -> nilDrawer
+  REltText x      -> nilDrawer
+
+
 -- | reflex element nodes
 data REltLabel t = REltLabel {
-  re_id       :: REltId
-  , re_name   :: Text
-  , re_elt    :: RElt t
-  -- TODO delete this
-  , re_reflex :: REltReflex t
+  re_id     :: REltId
+  , re_name :: Text
+  , re_elt  :: RElt t
 }
 
 
@@ -107,13 +114,13 @@ deserializeRElt ::
   -> m (REltLabel t)
 deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
   -- TODO implement for each type
-  (relt, rreflex) <- case selt of
-    SEltNone        -> return (REltNone, nilReflex)
-    SEltFolderStart -> return (REltFolderStart, nilReflex)
-    SEltFolderEnd   -> return (REltFolderEnd, nilReflex)
+  relt <- case selt of
+    SEltNone        -> return REltNone
+    SEltFolderStart -> return REltFolderStart
+    SEltFolderEnd   -> return REltFolderEnd
     _               -> undefined
     --SEltBox x -> hold
-  return $ REltLabel reltid sname relt rreflex
+  return $ REltLabel reltid sname relt
 
 deserialize ::
   (Reflex t, MonadHold t m, MonadFix m)
