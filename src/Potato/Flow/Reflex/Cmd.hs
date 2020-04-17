@@ -35,7 +35,7 @@ data PFCmdTag t a where
   --PFCReorder :: PFCmdTag t (REltId, LayerPos)
   --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
   --PFCDuplicate :: PFCmdTag t [REltId]
-  PFCManipulate :: PFCmdTag t (PFMControlCmd t)
+  PFCManipulate :: PFCmdTag t (REltId, MViewSum t)
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 

@@ -1,5 +1,7 @@
 ::TODO::
 -get rid of REltFactory
+-write Reflex.Data.Seq
+-helpers to create M___Control from M___View
 DONE-id assigner
   -ids need to be obtained first before relt is created as relt needs to know its id to select its events
 DONE-clean up DirectoryIdAssigner interface and tests

@@ -21,6 +21,8 @@ import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 
+import           Data.Dependent.Sum              (DSum ((:=>)), (==>))
+
 import           Reflex
 
 -- TODO move to reltfactory
@@ -30,13 +32,21 @@ data RElt t =
   REltNone
   | REltFolderStart
   | REltFolderEnd
-  | REltBox (Dynamic t SBox)
-  | REltLine (Dynamic t SLine)
-  | REltText (Dynamic t SText)
+  | REltBox (MBoxView t)
+  | REltLine (MLineView t)
+  | REltText (MTextView t)
 
+getREltView :: RElt t -> MViewSum t
+getREltView relt = case relt of
+  REltNone        -> none
+  REltFolderStart -> none
+  REltFolderEnd   -> none
+  REltBox x       -> MViewTagBox ==> x
+  REltLine x      -> MViewTagLine ==> x
+  REltText x      -> MViewTagText ==> x
+  where
+    none = MViewTagNone ==> ()
 
-getView :: RElt t -> PFMViewSum t
-getView relt = undefined
 
 -- reflex vars for an RElt
 data REltReflex t = REltReflex {
@@ -96,15 +106,15 @@ deserialize = mapM deserializeRElt
 
 serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
 serializeRElt relt = do
-  let
-    sampleDyn = sample . current
+  --let
+    --sampleDyn = sample . current
   selt <- case re_elt relt of
     REltNone        -> return SEltNone
     REltFolderStart -> return SEltFolderStart
     REltFolderEnd   -> return SEltFolderEnd
-    REltBox x       -> SEltBox <$> sampleDyn x
-    REltLine x      -> SEltLine <$> sampleDyn x
-    REltText x      -> SEltText <$> sampleDyn x
+    REltBox x       -> undefined --SEltBox <$> sampleDyn x
+    REltLine x      -> undefined --SEltLine <$> sampleDyn x
+    REltText x      -> undefined --SEltText <$> sampleDyn x
   return $ SEltLabel (re_name relt) selt
 serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
 serialize = mapM serializeRElt

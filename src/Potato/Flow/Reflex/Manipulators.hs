@@ -4,12 +4,20 @@
 {-# LANGUAGE RecursiveDo        #-}
 
 module Potato.Flow.Reflex.Manipulators (
-  MBoxView(..)
-  , MBoxControl(..)
+  MNoneView
+  , MBoxView(..)
   , MLineView(..)
+  , MTextView(..)
+  , MViewTag(..)
+  , MViewSum
+
+  {-
+  , MNoneControl
+  , MBoxControl(..)
   , MLineControl(..)
-  , PFMViewSum
-  , PFMControlCmd
+  , MControlTag(..)
+  , MControlCmd
+  -}
 ) where
 
 import           Relude
@@ -17,9 +25,12 @@ import           Relude
 import           Reflex
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Manipulators.Tags
+import           Potato.Flow.SElts
 
-import qualified Data.Dependent.Sum                   as DS
+import qualified Data.Dependent.Map as DM
+import qualified Data.Dependent.Sum as DS
+import qualified Data.GADT.Compare
+
 
 -- pattern for piping manipulator back into PFC
 -- start with: _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
@@ -36,31 +47,57 @@ import qualified Data.Dependent.Sum                   as DS
 
 
 
+--types
+--REltLabelt -> (REltId, DSum MViewTag Identity)
+-- lib must know to map DSum MViewTag Identity to DSum MControlTag Identity
+
+
+data MViewTag t a where
+  MViewTagNone :: MViewTag t MNoneView
+  MViewTagBox :: MViewTag t (MBoxView t)
+  MViewTagLine :: MViewTag t (MLineView t)
+  MViewTagText :: MViewTag t (MTextView t)
+  deriving anyclass Data.GADT.Compare.GEq
+  deriving anyclass DM.GCompare
+
+
+type MNoneView = ()
+
+
 data MBoxView t = MBoxView {
-  boxView :: Dynamic t LBox
+  _mBoxView_box :: Dynamic t LBox
+}
+
+data MLineView t = MLineView {
+  _mLineView_start :: Dynamic t LPoint
+  , _mLineView_end :: Dynamic t LPoint
+}
+
+
+data MTextView t = MTextView {
+  mTextView_box    :: Dynamic t LBox
+  , mTextView_text :: Dynamic t Text
+}
+
+type MViewSum t = DS.DSum (MViewTag t) Identity
+
+{-
+
+data MControlTag t a where
+  MControlTagNone :: MControlTag t MNoneView
+  MControlTagBox :: MControlTag t (MBoxView t)
+  MControlTagLine :: MControlTag t (MLineView t)
+  deriving anyclass Data.GADT.Compare.GEq
+  deriving anyclass DM.GCompare
+
+data MLineControl t = MLineControl {
+  lineStartControl :: Dynamic t LPoint
+  , lineEndControl :: Dynamic t LPoint
 }
 -- TODO helper to create MBoxControl from dragging various parts of the manipulator
 data MBoxControl t = MBoxControl {
   boxControl :: Event t LBox
 }
-
-data MLineView t = MLineView {
-  lineStartView :: Dynamic t LPoint
-  , lineEndView :: Dynamic t LPoint
-}
-data MLineControl t = MLineControl {
-  lineStartControl :: Dynamic t LPoint
-  , lineEndControl :: Dynamic t LPoint
-}
-
-type family PFMView a :: Type -> Type where
-  PFMView MBox = MBoxView
-  PFMView MLine = MLineView
-
-type family PFMControl a :: Type -> Type where
-  PFMControl MBox = MBoxControl
-  PFMControl MLine = MLineControl
-
-
-type PFMViewSum t = DS.DSum MTag (PFMView t)
-type PFMControlCmd t = DS.DSum MTag (PFMControl t)
+type MNoneControl = ()
+type MControlCmd t = DS.DSum (MControlTag t) Identity
+-}

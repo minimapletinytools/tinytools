@@ -92,9 +92,6 @@ holdPF PFConfig {..} = mdo
   rEltFactory :: rEltFactory t
     <- holdREltFactory rEltFactoryConfig
 
-  -- TODO map rEltsWithIdCreatedEv to CMD and send to ActionStack
-  --PFCNewElts :: PFCmdTag t (NonEmpty (REltId, RElt t)) -- TODO needs LayerPos
-
   -- set up Directory
   let
     directoryConfig = DirectoryConfig {

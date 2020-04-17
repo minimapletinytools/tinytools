@@ -55,6 +55,7 @@ instance ToJSON SLine
 -- | abitrary text confined to a box
 data SText = SText {
   st_box     :: LBox
+  , st_text  :: Text
   , st_style :: STextStyle
 } deriving (Generic, Show)
 
