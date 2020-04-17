@@ -62,8 +62,8 @@ getREltBox relt = case relt of
   REltFolderEnd   -> Nothing
   REltBox x       -> Just $ _mBox_box x
   REltLine x      -> Just
-    $ fmap (\l -> make_LBox_from_LPoints (fst l) (snd l))
-    $ ffor2 (_mLine_start x) (_mLine_end x) (,)
+    $ uncurry make_LBox_from_LPoints
+    <$> ffor2 (_mLine_start x) (_mLine_end x) (,)
   REltText x      -> Just $ _mText_box x
 
 -- TODO rename this
