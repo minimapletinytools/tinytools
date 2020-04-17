@@ -1,21 +1,28 @@
 ::TODO::
 DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory
--write Reflex.Data.Seq
--helpers to create fine grained manipulators
--relt serializers
--drawers
+-high priority
+  -write Reflex.Data.Seq
+  -layertree
+    -implement
+    -decide move semantics (indexing is before or after)
+  -create simple test app!!
+
+-mid priority
+  -helpers to create fine grained manipulators
+
+-low priority
+  -relt serializers
+  -refine drawers
+
 DONE-id assigner
   -ids need to be obtained first before relt is created as relt needs to know its id to select its events
 DONE-clean up DirectoryIdAssigner interface and tests
 DONE-action input distributor
 DONE-action output collector
--layertree
-  -implement
-  -decide move semantics (indexing is before or after)
 DONE-connect layer tree in entry
 DONE-fan out/in actions for actionstack in entry
--manipulators
+DONE-manipulators
   DONE-design
 
 
@@ -30,6 +37,7 @@ DONE-fan out/in actions for actionstack in entry
   -copy pasta
   -PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
   -PFCDuplicate :: PFCmdTag t [REltId]
+  -deleting/moving layer elts that are not in order
 -feature creep 3
   -connected elts
   -RElt manipulators now require readonly hooks into existing RElts
