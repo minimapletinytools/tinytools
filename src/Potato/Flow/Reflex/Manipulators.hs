@@ -10,14 +10,6 @@ module Potato.Flow.Reflex.Manipulators (
   , MTextView(..)
   , MViewTag(..)
   , MViewSum
-
-  {-
-  , MNoneControl
-  , MBoxControl(..)
-  , MLineControl(..)
-  , MControlTag(..)
-  , MControlCmd
-  -}
 ) where
 
 import           Relude
@@ -45,13 +37,6 @@ import qualified Data.GADT.Compare
 -- pass pack to PFC
 -- rec _pfc_manipulate = manipEv
 
-
-
---types
---REltLabelt -> (REltId, DSum MViewTag Identity)
--- lib must know to map DSum MViewTag Identity to DSum MControlTag Identity
-
-
 data MViewTag t a where
   MViewTagNone :: MViewTag t MNoneView
   MViewTagBox :: MViewTag t (MBoxView t)
@@ -63,7 +48,6 @@ data MViewTag t a where
 
 type MNoneView = ()
 
-
 data MBoxView t = MBoxView {
   _mBoxView_box :: Dynamic t LBox
 }
@@ -73,31 +57,9 @@ data MLineView t = MLineView {
   , _mLineView_end :: Dynamic t LPoint
 }
 
-
 data MTextView t = MTextView {
   mTextView_box    :: Dynamic t LBox
   , mTextView_text :: Dynamic t Text
 }
 
 type MViewSum t = DS.DSum (MViewTag t) Identity
-
-{-
-
-data MControlTag t a where
-  MControlTagNone :: MControlTag t MNoneView
-  MControlTagBox :: MControlTag t (MBoxView t)
-  MControlTagLine :: MControlTag t (MLineView t)
-  deriving anyclass Data.GADT.Compare.GEq
-  deriving anyclass DM.GCompare
-
-data MLineControl t = MLineControl {
-  lineStartControl :: Dynamic t LPoint
-  , lineEndControl :: Dynamic t LPoint
-}
--- TODO helper to create MBoxControl from dragging various parts of the manipulator
-data MBoxControl t = MBoxControl {
-  boxControl :: Event t LBox
-}
-type MNoneControl = ()
-type MControlCmd t = DS.DSum (MControlTag t) Identity
--}
