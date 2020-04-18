@@ -26,7 +26,7 @@ import           Data.Wedge
 -- this is to avoid needing to use 'runWithReplace' to do this in one event tick
 data DynamicSeq t a = DynamicSeq {
   -- | index and sub sequence that was just added
-  _dynamicSeq_added      :: Event t (Int, Seq a)
+  _dynamicSeq_inserted   :: Event t (Int, Seq a)
   -- | original index of removed sub sequence and removed subsequence
   , _dynamicSeq_removed  :: Event t (Int, Seq a)
   -- TODO
@@ -38,7 +38,7 @@ data DynamicSeq t a = DynamicSeq {
 
 data DynamicSeqConfig t a = DynamicSeqConfig {
   -- | index and sub sequence to add
-  _dynamicSeqConfig_add      :: Event t (Int, Seq a)
+  _dynamicSeqConfig_insert   :: Event t (Int, Seq a)
   -- | index and number of elements to remove
   , _dynamicSeqConfig_remove :: Event t (Int, Int)
   -- | same as removing all elts
@@ -50,7 +50,7 @@ data DynamicSeqConfig t a = DynamicSeqConfig {
 
 defaultDynamicSeqConfig :: (Reflex t) => DynamicSeqConfig t a
 defaultDynamicSeqConfig = DynamicSeqConfig {
-    _dynamicSeqConfig_add = never
+    _dynamicSeqConfig_insert = never
     , _dynamicSeqConfig_remove = never
     , _dynamicSeqConfig_clear = never
   }
@@ -69,7 +69,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
   let
     changeEvent :: Event t (DSCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple Seq events firing at once" [
-        fmap DSCAdd _dynamicSeqConfig_add
+        fmap DSCAdd _dynamicSeqConfig_insert
         , fmap DSCRemove _dynamicSeqConfig_remove
         , fmap (const DSCClear) _dynamicSeqConfig_clear
       ]
@@ -92,7 +92,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     foldDynM foldfn (Nowhere, initial) changeEvent
 
   return $ DynamicSeq {
-      _dynamicSeq_added = never
+      _dynamicSeq_inserted = never
       , _dynamicSeq_removed = never
       , _dynamicSeq_contents = snd <$> asdyn
     }
