@@ -93,11 +93,14 @@ holdPF PFConfig {..} = mdo
   rEltFactory :: rEltFactory t
     <- holdREltFactory rEltFactoryConfig
 
+  -- TODO set up add/remove events, these will get sent to both directory and layer tree
+
   -- set up Directory
   let
     directoryConfig = DirectoryConfig {
         -- TODO hook up to fanned outputs from actionStack
         _directoryMapConfig_add = never
+
         , _directoryMapConfig_remove = never
       }
   directory :: Directory t (REltLabel t)

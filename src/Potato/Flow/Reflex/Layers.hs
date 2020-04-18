@@ -1,5 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
+{-# LANGUAGE RecordWildCards         #-}
+{-# LANGUAGE RecursiveDo             #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
 
 
 module Potato.Flow.Reflex.Layers (
@@ -25,10 +26,11 @@ import           Control.Exception     (assert)
 import           Control.Monad.Fix
 
 import           Data.Maybe            (fromJust)
+import           Data.Patch.Map
 
 type LayerPos = Int
 
-class LayerElt a where
+class (Ord (LayerEltId a)) => LayerElt a where
   type LayerEltId a :: Type
   isFolderStart :: a -> Bool
   isFolderEnd :: a -> Bool
@@ -49,7 +51,7 @@ isValidLayerView lv = foldl' foldfn 0 lv == 0 where
 -- if inputs are correct, than outputs are correct, so corroctly use correct outputs to ensure inputs are always correct!
 data LayerTree t a = LayerTree {
   _layerTree_view         :: Dynamic t (LayerView a)
-  , _layerTree_changeView :: Dynamic t (PatchMap (LayerEltId a) a) -- only elements that were added, moved, or deleted
+  , _layerTree_changeView :: Event t (PatchMap (LayerEltId a) a) -- only elements that were added, moved, or deleted
 
   -- does this really need to be piped through LayerTree?
   --, _layerTree_copied     :: Dynamic t (LayerView a)
@@ -94,7 +96,7 @@ data LayerTreeConfig t a = LayerTreeConfig {
   --, _layerTreeConfig_move      :: Event t (LayerPos, LayerPos) -- (from, to)
 }
 
-holdLayerTree :: forall t m a. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
+holdLayerTree :: forall t m a. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m, LayerElt a)
   => LayerTreeConfig t a
   -> m (LayerTree t a)
 holdLayerTree LayerTreeConfig {..} = mdo
@@ -110,11 +112,17 @@ holdLayerTree LayerTreeConfig {..} = mdo
     holdDynamicSeq empty dseqc
   (removeSingleEv, collectedRemovals) :: (Event t LayerPos, Event t [(Int, Seq a)]) <-
     repeatEventAndCollectOutput (reindexLayerPosForRemoval <$> toList <$> _layerTreeConfig_remove) (_dynamicSeq_removed dseq)
+
+  let
+    -- changes from collected removal
+    changes1 :: Event t [(LayerEltId a, Maybe a)]
+    changes1 = fmap join $ toList <$> (\(_, sa) -> (\a -> (getId a, Nothing)) <$> sa) <<$>> collectedRemovals
+    -- changes from insertions
+    changes2 :: Event t [(LayerEltId a, Maybe a)]
+    changes2 = fmap toList $  (\a -> (getId a, Just a)) <<$>> snd <$> (_dynamicSeq_inserted dseq)
+
   return
     LayerTree {
       _layerTree_view = _dynamicSeq_contents dseq
-
-      -- TODO
-      -- merge collectedRemovals and (_dynamicSeq_removed dseq)
-      --, _layerTree_changeView :: Dynamic t (PatchMap (LayerEltId a) a)
+      , _layerTree_changeView = PatchMap . fromList <$> (changes1 <> changes2)
     }
