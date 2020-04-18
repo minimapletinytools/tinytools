@@ -10,6 +10,7 @@ module Reflex.Potato.Helpers (
   , fanDSum
 
   , repeatEvent
+  , repeatEventAndCollectOutput
 ) where
 
 import           Relude
@@ -48,6 +49,18 @@ fanDSum :: forall t k. (Reflex t, DM.GCompare k)
   -> EventSelector t k
 fanDSum ds = fan $ DM.fromAscList . (:[]) <$> ds
 
+
+selectNext :: [a] -> Maybe a
+selectNext []    = Nothing
+selectNext (x:_) = Just x
+selectRest :: [a] -> Maybe [a]
+selectRest []     = Nothing
+selectRest (_:[]) = Nothing
+selectRest (_:xs) = Just xs
+
+-- TODO rename
+-- TODO prob implement with repeatEventAndCollectOutput
+-- lazy evaluation should mean it's no less efficient but IDK
 -- | triggers output event once for each input event
 -- each output event runs in a different consecutive frame
 -- if these events trigger the input event, they get appended to the end of events to be triggered
@@ -58,11 +71,6 @@ repeatEvent evin = mdo
     -- obviously, be mindful of infinite loops
     evin' :: Event t [a]
     evin' = mergeWith (\rev' ev' -> rev' <> ev') [rev, evin]
-    selectNext []    = Nothing
-    selectNext (x:_) = Just x
-    selectRest []     = Nothing
-    selectRest (_:[]) = Nothing
-    selectRest (_:xs) = Just xs
     next = fmapMaybe selectNext evin'
     rest = fmapMaybe selectRest evin'
 
@@ -72,3 +80,25 @@ repeatEvent evin = mdo
 
   (_, rev) <- runWithReplace (return ()) (return <$> rest)
   return next
+
+-- collected result event triggers simultaneously with last event in list to repeat
+repeatEventAndCollectOutput ::
+  forall t m a b. (Adjustable t m, MonadHold t m, MonadFix m)
+  => Event t [a] -- ^ event to repeat
+  -> Event t b -- ^ event to collect results from, only collects if event fires
+  -> m (Event t a, Event t [b]) -- ^ (repeated event, collected results once event is done repeating)
+repeatEventAndCollectOutput evin collectEv = mdo
+  let
+    -- if input event fires in subsequent ticks, append to end
+    -- obviously, be mindful of infinite loops
+    evin' :: Event t [a]
+    evin' = mergeWith (\rev' ev' -> rev' <> ev') [rev, evin]
+    next = fmapMaybe selectNext evin'
+    rest = fmapMaybe selectRest evin'
+    -- nothing left, this means we fired the last event
+    stop = fmapMaybe (\x -> if null x then Just () else Nothing) evin'
+    collected = tagPromptlyDyn (reverse <$> collector) stop
+  -- collect events in reverse order
+  collector <- foldDyn (:) [] collectEv
+  (_, rev) <- runWithReplace (return ()) (return <$> rest)
+  return (next, collected)
