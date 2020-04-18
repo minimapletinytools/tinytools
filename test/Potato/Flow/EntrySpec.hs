@@ -16,37 +16,58 @@ import           Reflex.Potato.Helpers
 import           Reflex.Host.Basic
 
 import qualified Data.List                as L (last)
-import           Data.Sequence
 
 import           Potato.Flow
 
-data FCmd = FCNone deriving (Eq, Show)
+data FCmd =
+  FCNone
+  | FCAddSElt SElt
+  | FCRemoveRElt REltId
+  | FCManipulate ()
+  | FCUndo
+  | FCRedo
+  deriving (Eq, Show)
 
-basic_network :: forall t m a. BasicGuestConstraints t m => Event t FCmd -> BasicGuest t m (Event t ())
+basic_network :: forall t m a. BasicGuestConstraints t m => Event t FCmd -> BasicGuest t m (Event t Int)
 basic_network ev = do
   let
-    noEv = flip fmapMaybe ev $ \case
-      FCNone -> Just ()
+    -- TODO maybe a good place to try out template haskell
+    addEv = flip fmapMaybe ev $ \case
+      FCAddSElt x -> Just (SEltLabel "blank" x)
+      _ -> Nothing
+    removeEv = flip fmapMaybe ev $ \case
+      FCRemoveRElt x -> Just x
+      _ -> Nothing
+    manipEv = flip fmapMaybe ev $ \case
+      FCManipulate x -> Just x
+      _ -> Nothing
+    redoEv = flip fmapMaybe ev $ \case
+      FCRedo -> Just ()
+      _ -> Nothing
+    undoEv = flip fmapMaybe ev $ \case
+      FCUndo -> Just ()
       _ -> Nothing
 
-{-
-    pfc = data PFConfig t = PFConfig {
-      _pfc_addElt       :: Event t SEltLabel
-      , _pfc_removeElt  :: Event t REltId
-      , _pfc_manipulate :: Event t ()
+    pfc = PFConfig {
+      _pfc_addElt       = addEv
+      , _pfc_removeElt  = removeEv
+      , _pfc_manipulate = never
+      , _pfc_undo = undoEv
+      , _pfc_redo = redoEv
     }
   pf <- holdPF pfc
--}
-  return noEv
+  return $ updated . fmap length . _layerTree_view . _pfo_layers $ pf
 
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
   let
     bs = [FCNone]
-    run :: IO [[Maybe ()]]
+    run :: IO [[Maybe Int]]
     run = basicHostWithStaticEvents bs basic_network
   v <- liftIO run
-  L.last (join v) @?= Just ()
+  print v
+  return ()
+  --L.last (join v) @?= Just ()
 
 spec :: Spec
 spec = do

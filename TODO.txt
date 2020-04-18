@@ -1,4 +1,5 @@
 ::TODO::
+-relt serializers
 DONE-remove import qualified Data.Sequence         as Seq
 DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory

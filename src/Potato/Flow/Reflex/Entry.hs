@@ -3,6 +3,7 @@
 
 module Potato.Flow.Reflex.Entry (
   PFConfig(..)
+  , PFOutput(..)
   , holdPF
 ) where
 
@@ -43,14 +44,16 @@ data PFConfig t = PFConfig {
   --, _pfc_paste      :: Event t ([SElt], LayerPos)
   --, _pfc_duplicate  :: Event t [REltId]
   , _pfc_manipulate :: Event t ()
+
+  , _pfc_undo       :: Event t ()
+  , _pfc_redo       :: Event t ()
 }
 
 data PFOutput t = PFOutput {
   -- elements
-  _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
-  -- or maybe just expose layer interface directly?
-  , _pfo_layerView :: Dynamic t [REltId]
-  , _pfo_changView :: Dynamic t (PatchMap REltId (REltLabel t)) -- only elements that were added, moved, or deleted
+  --_pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
+
+  _pfo_layers :: LayerTree t (REltLabel t)
 
   -- manipulators
 }
@@ -65,9 +68,11 @@ holdPF PFConfig {..} = mdo
   let
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
-      _actionStackConfig_do      = undefined
-      , _actionStackConfig_undo  = undefined
-      , _actionStackConfig_redo  = undefined
+      -- TODO
+      _actionStackConfig_do      = never
+
+      , _actionStackConfig_undo  = _pfc_undo
+      , _actionStackConfig_redo  = _pfc_redo
       , _actionStackConfig_clear = never
     }
   actionStack :: ActionStack t (PFCmd t)
@@ -95,6 +100,8 @@ holdPF PFConfig {..} = mdo
     rEltFactory_action_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
   rEltFactory :: rEltFactory t
     <- holdREltFactory rEltFactoryConfig
+
+  -- TODO connect relt factory to actions
 
   -- TODO set up add/remove events, these will get sent to both directory and layer tree
 
@@ -134,4 +141,7 @@ holdPF PFConfig {..} = mdo
   layerTree :: LayerTree t (REltLabel t)
     <- holdLayerTree layerTreeConfig
 
-  undefined
+  return $
+    PFOutput {
+      _pfo_layers = layerTree
+    }
