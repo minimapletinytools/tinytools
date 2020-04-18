@@ -25,7 +25,6 @@ import           Control.Exception     (assert)
 import           Control.Monad.Fix
 
 import           Data.Maybe            (fromJust)
-import qualified Data.Sequence         as Seq
 
 type LayerPos = Int
 
@@ -58,11 +57,11 @@ data LayerTree t a = LayerTree {
 
 -- | use for inserting at end of list
 layerTree_attachEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t (LayerPos,b)
-layerTree_attachEndPos LayerTree {..} = attach (Seq.length <$> current _layerTree_view)
+layerTree_attachEndPos LayerTree {..} = attach (length <$> current _layerTree_view)
 
 -- | use for removing at end of list
 layerTree_tagEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t LayerPos
-layerTree_tagEndPos LayerTree {..} = tag (Seq.length <$> current _layerTree_view)
+layerTree_tagEndPos LayerTree {..} = tag (length <$> current _layerTree_view)
 
 
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
@@ -108,7 +107,7 @@ holdLayerTree LayerTreeConfig {..} = mdo
       }
 
   dseq :: DynamicSeq t a <-
-    holdDynamicSeq Seq.empty dseqc
+    holdDynamicSeq empty dseqc
   (removeSingleEv, collectedRemovals) :: (Event t LayerPos, Event t [(Int, Seq a)]) <-
     repeatEventAndCollectOutput (reindexLayerPosForRemoval <$> toList <$> _layerTreeConfig_remove) (_dynamicSeq_removed dseq)
   return

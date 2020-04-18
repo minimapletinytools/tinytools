@@ -16,7 +16,6 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy           as LBS
 import           Data.Dependent.Sum             ((==>))
 import qualified Data.List.NonEmpty             as NE
-import qualified Data.Sequence                  as Seq
 
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.Layers
@@ -115,7 +114,7 @@ holdPF PFConfig {..} = mdo
     ltc_remove_do_PFCDeleteElt = fmap (\(i,_) -> i :| []) $ selectDo actionStack PFCDeleteElt
     layerTreeConfig = LayerTreeConfig {
         _layerTreeConfig_directory = _directoryMap_contents directory
-        , _layerTreeConfig_add = (\(p, elts) -> (p, Seq.fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
+        , _layerTreeConfig_add = (\(p, elts) -> (p, fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
           [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
         , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $
           [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]

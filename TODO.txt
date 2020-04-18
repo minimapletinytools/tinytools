@@ -1,12 +1,12 @@
 ::TODO::
--remove import qualified Data.Sequence         as Seq
+DONE-remove import qualified Data.Sequence         as Seq
 DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory
 -high priority
   DONE-write Reflex.Data.Seq
   -layertree
     -implement
-    -decide move semantics (indexing is before or after)
+    IGNORE-decide move semantics (indexing is before or after)
   -create simple test app!!
 
 -mid priority
@@ -36,6 +36,7 @@ DONE-manipulators
   -multi select
     -multi delete
     -multi manipulate
+  -move
 -feature creep 1
   -PFCReorder :: PFCmdTag t (REltId, LayerPos)
 -feature creep 2
