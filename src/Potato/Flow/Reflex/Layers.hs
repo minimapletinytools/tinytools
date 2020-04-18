@@ -75,15 +75,17 @@ reindexLayerPosForRemoval (r:xs) = reindexLayerPosForRemoval rest where
   rest = map (\x -> assert (x /= r) $ if x > r then x-1 else x) xs
 
 data LayerTreeConfig t a = LayerTreeConfig {
+  -- DELETE
   -- | directory of elements
-  _layerTreeConfig_directory :: Behavior t (Map (LayerEltId a) a)
+  --_layerTreeConfig_directory :: Behavior t (Map (LayerEltId a) a)
+
   -- | ensure input 'LayerView' satsifies scoping property
   -- if 'LayerPos' is out of range, results in error
-  , _layerTreeConfig_add     :: Event t (LayerPos, LayerView a)
+  _layerTreeConfig_add      :: Event t (LayerPos, LayerView a)
 
   -- | ensure removing elements does not break scoping property
   -- throws error if the element does not exist
-  , _layerTreeConfig_remove  :: Event t (NonEmpty LayerPos)
+  , _layerTreeConfig_remove :: Event t (NonEmpty LayerPos)
 
   -- | ensure copied elts satisfy scoping property
   --, _layerTreeConfig_copy    :: Event t (NonEmpty LayerPos)

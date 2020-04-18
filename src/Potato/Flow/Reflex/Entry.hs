@@ -72,6 +72,8 @@ holdPF PFConfig {..} = mdo
   actionStack :: ActionStack t (PFCmd t)
     <- holdActionStack actionStackConfig
 
+  -- TODO map _pfc_removeElt and _pfc_manipulate to actionStack
+
   -- set up DirectoryIdAssigner
   let
     rEltsCreatedEv = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
@@ -96,6 +98,9 @@ holdPF PFConfig {..} = mdo
   -- TODO set up add/remove events, these will get sent to both directory and layer tree
 
   -- set up Directory
+  -- DELETE or move into layers probably?
+  -- or do we want a separate directory for copy pasta type stuff?
+  {-
   let
     directoryConfig = DirectoryConfig {
         -- TODO hook up to fanned outputs from actionStack
@@ -105,6 +110,7 @@ holdPF PFConfig {..} = mdo
       }
   directory :: Directory t (REltLabel t)
     <- holdDirectory directoryConfig
+  -}
 
   -- set up LayerTree
   let
@@ -116,8 +122,9 @@ holdPF PFConfig {..} = mdo
       layerTree_attachEndPos layerTree $ selectUndo actionStack PFCNewElts
     ltc_remove_do_PFCDeleteElt = fmap (\(i,_) -> i :| []) $ selectDo actionStack PFCDeleteElt
     layerTreeConfig = LayerTreeConfig {
-        _layerTreeConfig_directory = _directoryMap_contents directory
-        , _layerTreeConfig_add = (\(p, elts) -> (p, fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
+        -- DELETE
+        --_layerTreeConfig_directory = _directoryMap_contents directory
+        _layerTreeConfig_add = (\(p, elts) -> (p, fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
           [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
         , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $
           [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]

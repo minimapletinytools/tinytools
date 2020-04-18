@@ -4,7 +4,7 @@ DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory
 -high priority
   DONE-write Reflex.Data.Seq
-  -layertree
+  DONE-layertree
     -implement
     IGNORE-decide move semantics (indexing is before or after)
   -create simple test app!!
