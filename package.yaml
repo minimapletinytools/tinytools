@@ -76,12 +76,14 @@ dependencies:
 - bytestring
 - ilist
 - dependent-sum
+- dependent-sum-template
 - dependent-map
 - smash
 - reflex-basic-host
 - these
 - containers
 - patch
+- template-haskell
 
 
 library:
