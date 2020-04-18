@@ -10,6 +10,7 @@ import           Relude
 
 import           Reflex
 import           Reflex.Data.Directory
+import           Reflex.Potato.Helpers
 
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Layers
@@ -17,6 +18,8 @@ import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.SElts
 
 import           Control.Monad.Fix
+
+import qualified Data.Dependent.Map        as DM
 
 
 
@@ -44,5 +47,7 @@ holdREltFactory REltFactoryConfig {..} = do
     undoev = _rEltFactoryConfig_undoManipulate
   return
     REltFactor {
-        _rEltFactory_rEltTree = pushAlways (deserialize doev undoev) _rEltFactoryConfig_sEltTree
+        _rEltFactory_rEltTree = pushAlways
+          (deserialize (fan $ dsum_to_dmap <$> doev) (fan $ dsum_to_dmap <$> undoev))
+          _rEltFactoryConfig_sEltTree
       }

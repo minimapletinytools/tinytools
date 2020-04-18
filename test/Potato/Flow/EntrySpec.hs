@@ -19,6 +19,9 @@ import qualified Data.List                as L (last)
 
 import           Potato.Flow
 
+simpleSBox :: SBox
+simpleSBox = SBox nilLBox defaultSLineStyle
+
 data FCmd =
   FCNone
   | FCAddSElt SElt
@@ -61,7 +64,11 @@ basic_network ev = do
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
   let
-    bs = [FCNone]
+
+    bs = [
+        FCNone
+        , FCAddSElt (SEltBox simpleSBox)
+      ]
     run :: IO [[Maybe Int]]
     run = basicHostWithStaticEvents bs basic_network
   v <- liftIO run

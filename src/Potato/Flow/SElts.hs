@@ -1,6 +1,9 @@
 module Potato.Flow.SElts (
   PChar
+  , CornerStyle
+  , defaultCornerStyle
   , SLineStyle(..)
+  , defaultSLineStyle
   , STextStyle(..)
   , SBox(..)
   , SLine(..)
@@ -18,14 +21,39 @@ import           Data.Aeson
 
 type PChar = Char
 
+data CornerStyle = CornerStyle {
+  _cornerStyle_ul   :: PChar
+  , _cornerStyle_ur :: PChar
+  , _cornerStyle_bl :: PChar
+  , _cornerStyle_br :: PChar
+} deriving (Eq, Generic, Show)
+
+instance FromJSON CornerStyle
+instance ToJSON CornerStyle
+
+defaultCornerStyle :: CornerStyle
+defaultCornerStyle = CornerStyle {
+    _cornerStyle_ul = '╔'
+    , _cornerStyle_ur = '╗'
+    , _cornerStyle_bl = '╚'
+    , _cornerStyle_br = '╝'
+  }
+
 data SLineStyle = SLineStyle {
-  sbs_corners      :: PChar
+  sbs_corners      :: CornerStyle
   , sbs_vertical   :: PChar
   , sbs_horizontal :: PChar
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLineStyle
 instance ToJSON SLineStyle
+
+defaultSLineStyle :: SLineStyle
+defaultSLineStyle = SLineStyle {
+    sbs_corners      = defaultCornerStyle
+    , sbs_vertical   = '║'
+    , sbs_horizontal = '═'
+  }
 
 data STextStyle = STextStyle {
   -- margins

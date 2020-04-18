@@ -1,4 +1,5 @@
-{-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo     #-}
 module Potato.Flow.Reflex.RElts (
   REltId
   , ManipulatorWithId
@@ -28,12 +29,14 @@ import           Data.Functor.Misc
 import           Data.Maybe                      (fromJust)
 
 import           Reflex
+import           Reflex.Potato.Helpers
 
 -- TODO move to reltfactory
 type REltId = Int
 
 type ManipulatorWithId t = DS.DSum (Const2 REltId (Manipulators t)) Identity
 type ControllerWithId = DS.DSum (Const2 REltId Controllers) Identity
+type ControllerEventSelector t = EventSelector t (Const2 REltId Controllers)
 
 data RElt t =
   REltNone
@@ -124,28 +127,43 @@ type SEltLabelWithId = (REltId, SEltLabel)
 type SEltWithIdTree = [SEltLabelWithId]
 
 deserializeRElt ::
-  (Reflex t, MonadHold t m, MonadFix m)
-  => Event t (ControllerWithId) -- ^ selected do action
-  -> Event t (ControllerWithId) -- ^ selected undo action
+  forall t m. (Reflex t, MonadHold t m, MonadFix m)
+  => ControllerEventSelector t -- ^ event selector for do action
+  -> ControllerEventSelector t -- ^ event selector for undo action
   -> SEltLabelWithId
   -> m (REltLabel t)
-deserializeRElt doev undoev (reltid, SEltLabel sname selt) = do
+deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
+
+  let
+    reltDoEv = select doSelector (Const2 reltid)
+    reltUndoEv = select undoSelector (Const2 reltid)
+    bothEv :: Event t (Either Controllers Controllers)
+    bothEv = alignEitherWarn ("("<>show reltid<>") do/undo") reltDoEv reltUndoEv
+
   -- TODO implement for each type
   relt <- case selt of
     SEltNone        -> return REltNone
     SEltFolderStart -> return REltFolderStart
     SEltFolderEnd   -> return REltFolderEnd
+    SEltBox SBox {..} -> do
+      let
+        foldfn :: Either Controllers Controllers -> LBox -> LBox
+        foldfn (Left ct) box = case ct of
+          (CTagBox :=> Identity dbox) -> plusDelta box dbox
+        foldfn (Right ct) box = case ct of
+          (CTagBox :=> Identity dbox) -> minusDelta box dbox
+      mbox <- foldDyn foldfn sb_box bothEv
+      return $ REltBox (MBox mbox)
     _               -> undefined
-    --SEltBox x -> hold
   return $ REltLabel reltid sname relt
 
 deserialize ::
   (Reflex t, MonadHold t m, MonadFix m)
-  => Event t (ControllerWithId) -- ^ selected do action
-  -> Event t (ControllerWithId) -- ^ selected undo action
+  => ControllerEventSelector t -- ^ event selector for do action
+  -> ControllerEventSelector t -- ^ event selector for undo action
   -> SEltWithIdTree
   -> m (REltTree t)
-deserialize doev undoev = mapM (deserializeRElt doev undoev)
+deserialize doSelector undoSelector = mapM (deserializeRElt doSelector undoSelector)
 
 serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
 serializeRElt relt = do

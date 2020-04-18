@@ -66,11 +66,13 @@ holdPF PFConfig {..} = mdo
 
   -- set up the action stack
   let
+    doActions = leftmostwarn "_actionStackConfig_do" [
+        doAction_PFCNewElts_rEltFactory_newRElt
+      ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
       -- TODO
-      _actionStackConfig_do      = never
-
+      _actionStackConfig_do      = doActions
       , _actionStackConfig_undo  = _pfc_undo
       , _actionStackConfig_redo  = _pfc_redo
       , _actionStackConfig_clear = never
@@ -96,12 +98,10 @@ holdPF PFConfig {..} = mdo
         , _rEltFactoryConfig_doManipulate = selectDo actionStack PFCManipulate
         , _rEltFactoryConfig_undoManipulate = selectUndo actionStack PFCManipulate
       }
-    rEltFactory_action_newRElt :: Event t (PFCmd t)
-    rEltFactory_action_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
+    doAction_PFCNewElts_rEltFactory_newRElt :: Event t (PFCmd t)
+    doAction_PFCNewElts_rEltFactory_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
   rEltFactory :: rEltFactory t
     <- holdREltFactory rEltFactoryConfig
-
-  -- TODO connect relt factory to actions
 
   -- TODO set up add/remove events, these will get sent to both directory and layer tree
 

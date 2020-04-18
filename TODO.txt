@@ -1,5 +1,15 @@
 ::TODO::
 -relt serializers
+-decide what to do with directory and REltIds
+  -considerations:
+    -are REltIds even needed? We can just pass in the full RElt reference
+  -how to reverse map RElts to their layer positions
+    -or we can require front end to always pass in layer positions
+      -as if layer position was the relt id (except it's serializes and changes)
+    -this is where the seq implementation was not such a great idea
+  -move directory into layer
+  -connect remove event
+DONE-connect do events to action stack in entry
 DONE-remove import qualified Data.Sequence         as Seq
 DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory

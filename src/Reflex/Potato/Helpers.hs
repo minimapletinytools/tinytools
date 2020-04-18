@@ -2,8 +2,12 @@
 
 
 module Reflex.Potato.Helpers (
+  -- other helpers
+  dsum_to_dmap
+
   -- reflex helpers
-  leftmostwarn
+  , leftmostwarn
+  , alignEitherWarn
   , foldDynMergeWith
   , foldDynMerge
 
@@ -21,8 +25,13 @@ import           Control.Monad.Fix
 
 import qualified Data.Dependent.Map as DM
 import qualified Data.Dependent.Sum as DS
+import           Data.These
 
 
+dsum_to_dmap :: DM.GCompare k => DS.DSum k f -> DM.DMap k f
+dsum_to_dmap ds = DM.fromList [ds]
+
+-- TODO rename leftmostWarn
 -- | same as leftmost but outputs a warning if more than one event fires at once
 leftmostwarn :: (Reflex t) => String -> [Event t a] -> Event t a
 leftmostwarn label evs = r where
@@ -30,6 +39,11 @@ leftmostwarn label evs = r where
   nowarn = fmapMaybe (\x -> if length x == 1 then Just (head x) else Nothing) combine
   warn = traceEventWith (const ("WARNING: multiple " <> label <> " events triggered")) $ fmapMaybe (\x -> if length x > 1 then Just (head x) else Nothing) combine
   r = leftmost [nowarn, warn]
+
+-- | same as align but only returns left event if both events fire
+-- prints a warning if both events fire
+alignEitherWarn :: (Reflex t) => String -> Event t a -> Event t b -> Event t (Either a b)
+alignEitherWarn label ev1 ev2 = leftmostwarn label [Left <$> ev1, Right <$> ev2]
 
 foldDynMergeWith :: (Reflex t, MonadHold t m, MonadFix m)
   => b -- ^ initial value of dynamic
