@@ -81,7 +81,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     foldfn :: (DSCmd t a) -> DSState a -> PushM t (DSState a)
     foldfn (DSCAdd (i, ys)) (_, xs)  = return (Here (i, ys), newSeq) where
       (l, r) = splitAt i xs
-      newSeq = l >< xs >< r
+      newSeq = l >< ys >< r
     foldfn (DSCRemove (i, n)) (_, xs) = return (There (i, removed), newSeq) where
       (keepl, rs) = splitAt i xs
       (removed, keepr) = splitAt n rs

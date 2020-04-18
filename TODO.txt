@@ -12,6 +12,8 @@ IGNORE-get rid of REltFactory
   -helpers to create fine grained manipulators
 
 -low priority
+  -update new testing framework to match Test.Run in reflex
+  -update test cases to use new testing framework
   -relt serializers
   -refine drawers
 

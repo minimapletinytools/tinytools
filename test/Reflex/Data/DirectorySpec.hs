@@ -19,9 +19,6 @@ import           Reflex.Potato.TestHarness
 
 import           Reflex.Host.Basic
 
-data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
-
-
 basic_network :: forall t m. BasicGuestConstraints t m => Event t [Int] -> BasicGuest t m (Event t (Int,Int))
 basic_network ev = do
   let
