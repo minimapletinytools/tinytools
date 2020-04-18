@@ -16,6 +16,7 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy           as LBS
 import           Data.Dependent.Sum             ((==>))
 import qualified Data.List.NonEmpty             as NE
+import qualified Data.Sequence                  as Seq
 
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.Layers
@@ -55,7 +56,7 @@ data PFOutput t = PFOutput {
 }
 
 holdPF ::
-  forall t m a. (Reflex t, MonadHold t m, MonadFix m)
+  forall t m a. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
   => PFConfig t
   -> m (PFOutput t)
 holdPF PFConfig {..} = mdo
@@ -107,12 +108,18 @@ holdPF PFConfig {..} = mdo
   let
     ltc_add_do_PFCNewElts = layerTree_attachEndPos layerTree $ fmap toList $ selectDo actionStack PFCNewElts
     ltc_add_undo_PFCDeleteElt = fmap (\(i,e) -> (i,[e])) $ selectUndo actionStack PFCDeleteElt
-    ltc_remove_undo_PFCNewElts = getId <<$>> selectUndo actionStack PFCNewElts
-    ltc_remove_do_PFCDeleteElt = fmap (\(i,e) -> getId e :| []) $ selectDo actionStack PFCDeleteElt
+
+    -- new elts are guaranteed to be in sequence at the end
+    ltc_remove_undo_PFCNewElts = fmap (\(i,es) -> snd $ mapAccumL (\acc _ -> (acc+1, acc+1)) (i-1-length es) es) $
+      layerTree_attachEndPos layerTree $ selectUndo actionStack PFCNewElts
+    ltc_remove_do_PFCDeleteElt = fmap (\(i,_) -> i :| []) $ selectDo actionStack PFCDeleteElt
     layerTreeConfig = LayerTreeConfig {
-        _layerTreeConfig_add = leftmostwarn "_layerTreeConfig_add" [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
-        , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $ toList <<$>> [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]
-        , _layerTreeConfig_copy = never
+        _layerTreeConfig_directory = _directoryMap_contents directory
+        , _layerTreeConfig_add = (\(p, elts) -> (p, Seq.fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
+          [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
+        , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $
+          [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]
+        --, _layerTreeConfig_copy = never
       }
   layerTree :: LayerTree t (REltLabel t)
     <- holdLayerTree layerTreeConfig

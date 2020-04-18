@@ -1,8 +1,9 @@
 ::TODO::
+-remove import qualified Data.Sequence         as Seq
 DONE-actually you do need a separate MControl type
 IGNORE-get rid of REltFactory
 -high priority
-  -write Reflex.Data.Seq
+  DONE-write Reflex.Data.Seq
   -layertree
     -implement
     -decide move semantics (indexing is before or after)
@@ -16,6 +17,7 @@ IGNORE-get rid of REltFactory
   -update test cases to use new testing framework
   -relt serializers
   -refine drawers
+  -see if microlens gets inlined and decide to use it if so
 
 DONE-id assigner
   -ids need to be obtained first before relt is created as relt needs to know its id to select its events
@@ -30,6 +32,7 @@ DONE-manipulators
 
 -feature creep 0
   -save/load workspace
+    -clear workspace
   -multi select
     -multi delete
     -multi manipulate

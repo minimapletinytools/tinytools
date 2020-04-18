@@ -10,14 +10,22 @@ module Potato.Flow.Reflex.Layers (
   , LayerTree(..)
   , LayerTreeConfig(..)
   , layerTree_attachEndPos
+  , layerTree_tagEndPos
   , holdLayerTree
 ) where
 
 import           Relude
+import           Relude.Extra.Map
 
 import           Reflex
+import           Reflex.Data.Sequence
+import           Reflex.Potato.Helpers
 
+import           Control.Exception     (assert)
 import           Control.Monad.Fix
+
+import           Data.Maybe            (fromJust)
+import qualified Data.Sequence         as Seq
 
 type LayerPos = Int
 
@@ -27,7 +35,7 @@ class LayerElt a where
   isFolderEnd :: a -> Bool
   getId :: a -> LayerEltId a
 
-type LayerView a = [a]
+type LayerView a = Seq a
 
 -- TODO test
 -- | checks if 'LayerView' satisfies scoping property
@@ -45,22 +53,39 @@ data LayerTree t a = LayerTree {
   , _layerTree_changeView :: Dynamic t (PatchMap (LayerEltId a) a) -- only elements that were added, moved, or deleted
 
   -- does this really need to be piped through LayerTree?
-  , _layerTree_copied     :: Dynamic t (LayerView a)
+  --, _layerTree_copied     :: Dynamic t (LayerView a)
 }
 
--- TODO implement without using 'length' lol
 -- | use for inserting at end of list
 layerTree_attachEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t (LayerPos,b)
-layerTree_attachEndPos LayerTree {..} = attach (length <$> current _layerTree_view)
+layerTree_attachEndPos LayerTree {..} = attach (Seq.length <$> current _layerTree_view)
+
+-- | use for removing at end of list
+layerTree_tagEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t LayerPos
+layerTree_tagEndPos LayerTree {..} = tag (Seq.length <$> current _layerTree_view)
+
+
+-- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
+-- O(n^2) lol
+reindexLayerPosForRemoval :: [LayerPos] -> [LayerPos]
+reindexLayerPosForRemoval [] = []
+reindexLayerPosForRemoval (r:xs) = reindexLayerPosForRemoval rest where
+  -- if this asserts that means you tried to remove the same index twice
+  rest = map (\x -> assert (x /= r) $ if x > r then x-1 else x) xs
 
 data LayerTreeConfig t a = LayerTreeConfig {
+  -- | directory of elements
+  _layerTreeConfig_directory :: Behavior t (Map (LayerEltId a) a)
   -- | ensure input 'LayerView' satsifies scoping property
   -- if 'LayerPos' is out of range, results in error
-  _layerTreeConfig_add      :: Event t (LayerPos, LayerView a)
+  , _layerTreeConfig_add     :: Event t (LayerPos, LayerView a)
+
   -- | ensure removing elements does not break scoping property
-  , _layerTreeConfig_remove :: Event t [LayerEltId a]
+  -- throws error if the element does not exist
+  , _layerTreeConfig_remove  :: Event t (NonEmpty LayerPos)
+
   -- | ensure copied elts satisfy scoping property
-  , _layerTreeConfig_copy   :: Event t [LayerEltId a]
+  --, _layerTreeConfig_copy    :: Event t (NonEmpty LayerPos)
 
   -- TODO this is a little weird with scoping
   -- ensure duplicated elts satisfy scoping property
@@ -70,8 +95,27 @@ data LayerTreeConfig t a = LayerTreeConfig {
   --, _layerTreeConfig_move      :: Event t (LayerPos, LayerPos) -- (from, to)
 }
 
-holdLayerTree :: forall t m a. (Reflex t, MonadHold t m, MonadFix m)
+holdLayerTree :: forall t m a. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
   => LayerTreeConfig t a
   -> m (LayerTree t a)
 holdLayerTree LayerTreeConfig {..} = mdo
-  undefined
+  let
+    removeEv = fmap (\x -> (x,1)) removeSingleEv
+    dseqc = DynamicSeqConfig {
+        _dynamicSeqConfig_insert = _layerTreeConfig_add
+        , _dynamicSeqConfig_remove = removeEv
+        , _dynamicSeqConfig_clear = never
+      }
+
+  dseq :: DynamicSeq t a <-
+    holdDynamicSeq Seq.empty dseqc
+  (removeSingleEv, collectedRemovals) :: (Event t LayerPos, Event t [(Int, Seq a)]) <-
+    repeatEventAndCollectOutput (reindexLayerPosForRemoval <$> toList <$> _layerTreeConfig_remove) (_dynamicSeq_removed dseq)
+  return
+    LayerTree {
+      _layerTree_view = _dynamicSeq_contents dseq
+
+      -- TODO
+      -- merge collectedRemovals and (_dynamicSeq_removed dseq)
+      --, _layerTree_changeView :: Dynamic t (PatchMap (LayerEltId a) a)
+    }
