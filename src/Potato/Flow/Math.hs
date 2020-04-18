@@ -31,15 +31,15 @@ import           Control.Exception (assert)
 -}
 
 -- TODO switch to math library
-newtype XY = XY { unXY :: (Int, Int) } deriving (Generic, Show, FromJSON, ToJSON)
-newtype X = X { unX :: Int } deriving (Generic, Show, FromJSON, ToJSON)
-newtype Y = Y { unY :: Int } deriving (Generic, Show, FromJSON, ToJSON)
+newtype XY = XY { unXY :: (Int, Int) } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
+newtype X = X { unX :: Int } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
+newtype Y = Y { unY :: Int } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
 
 nilXY :: XY
 nilXY = XY (0,0)
 
-newtype LSize = LSize { unLSize :: XY } deriving (Generic, Show, FromJSON, ToJSON)
-newtype LPoint = LPoint { unLPoint :: XY } deriving (Generic, Show, FromJSON, ToJSON)
+newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
+newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
 
 -- | a point in screen space
 -- should only be used by VC, so does not belong here
@@ -54,7 +54,7 @@ newtype LPoint = LPoint { unLPoint :: XY } deriving (Generic, Show, FromJSON, To
 data LBox = LBox {
   ul     :: LPoint
   , size :: LSize
-} deriving (Generic, Show)
+} deriving (Eq, Generic, Show)
 
 nilLBox :: LBox
 nilLBox = LBox (LPoint nilXY) (LSize nilXY)
