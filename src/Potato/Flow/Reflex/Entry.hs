@@ -2,7 +2,8 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Reflex.Entry (
-
+  PFConfig(..)
+  , holdPF
 ) where
 
 import           Relude

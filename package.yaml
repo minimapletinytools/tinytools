@@ -87,6 +87,8 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
+    - Potato.Flow
+    # TODO move to different lib
     - Reflex.Data.ActionStack
     - Reflex.Data.List
     - Reflex.Data.Sequence
