@@ -68,13 +68,6 @@ packages:
   original:
     hackage: witherable-0.3.1@sha256:ed3d5bc9eb1c08fa9704d9e143cdf622e1bd80b847cd5ede8c07da7bc7981ab9,1313
 - completed:
-    hackage: smash-0.1.1.0@sha256:593381bad038ff93898a8a1422c6e81fc4a2a6fb23b64afa2f758f56607b83dc,1583
-    pantry-tree:
-      size: 481
-      sha256: deb2b8b5b3d3c9f9e130eb115c108abdc233f14662d95e1c7de66beb6a32f3dd
-  original:
-    hackage: smash-0.1.1.0
-- completed:
     hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
     pantry-tree:
       size: 436

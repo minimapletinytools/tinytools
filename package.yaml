@@ -78,7 +78,12 @@ dependencies:
 - dependent-sum
 - dependent-sum-template
 - dependent-map
-- smash
+
+#- smash
+- deepseq
+- binary
+- hashable
+
 - reflex-basic-host
 - these
 - containers
