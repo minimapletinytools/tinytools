@@ -19,6 +19,18 @@ import           Data.Sequence
 import           Data.Wedge
 
 
+
+getHere :: Wedge a b -> Maybe a
+getHere c = case c of
+  Here x -> Just x
+  _      -> Nothing
+
+getThere :: Wedge a b -> Maybe b
+getThere c = case c of
+  There x -> Just x
+  _       -> Nothing
+
+
 -- maybe make a simple variant of this that only supports adding one at a time
 
 -- | Dynamic variant of Seq
@@ -70,7 +82,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     changeEvent :: Event t (DSCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple Seq events firing at once" [
         fmap DSCAdd _dynamicSeqConfig_insert
-        , fmap DSCRemove _dynamicSeqConfig_remove
+        , fmap DSCRemove (traceEventSimple "DEF REMOVING" $ _dynamicSeqConfig_remove)
         , fmap (const DSCClear) _dynamicSeqConfig_clear
       ]
 
@@ -92,7 +104,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     foldDynM foldfn (Nowhere, initial) changeEvent
 
   return $ DynamicSeq {
-      _dynamicSeq_inserted = never
-      , _dynamicSeq_removed = never
+      _dynamicSeq_inserted = fmapMaybe (getHere . fst) $ updated asdyn
+      , _dynamicSeq_removed = fmapMaybe (getThere . fst) $ updated asdyn
       , _dynamicSeq_contents = snd <$> asdyn
     }
