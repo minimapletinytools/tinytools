@@ -74,12 +74,25 @@ instance ToJSON SBox
 -- |
 data SLine = SLine {
   sl_start   :: LPoint
-  , sl_ends  :: NonEmpty (Either X Y)
+  , sl_end   :: LPoint
   , sl_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLine
 instance ToJSON SLine
+
+-- TODO make manipulator
+-- TODO rename
+-- |
+data SCartLines = SCartLines {
+  scl_start   :: LPoint
+  , scl_ends  :: NonEmpty (Either X Y)
+  , scl_style :: SLineStyle
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SCartLines
+instance ToJSON SCartLines
+
 
 -- | abitrary text confined to a box
 data SText = SText {

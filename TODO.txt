@@ -1,6 +1,7 @@
 stack build --ghc-options="-ddump-splices"
 
 ::TODO::
+-make naming in selts consistent with rest of code
 -figure out deriveArgDict thing, we need show instances for debugging!!
 -finish relt deserializers
 -hook up manipulators? (or did I do this already)
