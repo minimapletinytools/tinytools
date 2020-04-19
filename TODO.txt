@@ -1,28 +1,12 @@
 stack build --ghc-options="-ddump-splices"
 
 ::TODO::
--relt serializers
--decide what to do with directory and REltIds
-  -considerations:
-    DONE-are REltIds even needed? We can just pass in the full RElt reference
-      -YES they are needed to fan events efficiently
-  -how to reverse map RElts to their layer positions
-    -or we can require front end to always pass in layer positions
-      -as if layer position was the relt id (except it's serializes and changes)
-    -this is where the seq implementation was not such a great idea
-  -move directory into layer
-    -or just delete it for now, prob ok?
-  -connect remove event
-DONE-connect do events to action stack in entry
-DONE-remove import qualified Data.Sequence         as Seq
-DONE-actually you do need a separate MControl type
-IGNORE-get rid of REltFactory
--high priority
-  DONE-write Reflex.Data.Seq
-  DONE-layertree
-    -implement
-    IGNORE-decide move semantics (indexing is before or after)
-  -create simple test app!!
+-figure out deriveArgDict thing, we need show instances for debugging!!
+-finish relt deserializers
+-hook up manipulators? (or did I do this already)
+-start reflex project
+-move directory into layer
+  -or just delete it for now, prob ok?
 
 -mid priority
   -helpers to create fine grained manipulators
@@ -34,6 +18,25 @@ IGNORE-get rid of REltFactory
   -refine drawers
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
+
+DONE-decide what to do with directory and REltIds
+  DONE-are REltIds even needed? We can just pass in the full RElt reference
+      -YES they are needed to fan events efficiently
+  DONE-how to reverse map RElts to their layer positions
+    DONE-or we can require front end to always pass in layer positions
+      -YES as if layer position was time sensitive relt id (except it's serializes and changes)
+    -this is where the seq implementation was not such a great idea
+  DONE-connect remove event
+DONE-connect do events to action stack in entry
+DONE-remove import qualified Data.Sequence         as Seq
+DONE-actually you do need a separate MControl type
+IGNORE-get rid of REltFactory
+DONE-high priority
+  DONE-write Reflex.Data.Seq
+  DONE-layertree
+    -implement
+    IGNORE-decide move semantics (indexing is before or after)
+  DONE-create simple test app!!
 
 DONE-id assigner
   -ids need to be obtained first before relt is created as relt needs to know its id to select its events

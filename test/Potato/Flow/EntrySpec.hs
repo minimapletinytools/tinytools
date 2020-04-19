@@ -76,6 +76,8 @@ basic_test = TestLabel "basic" $ TestCase $ do
         , FCRemoveRElt 3
         , FCRemoveRElt 0
         , FCAddSElt (SEltBox simpleSBox)
+        , FCUndo , FCUndo , FCUndo , FCUndo , FCUndo , FCUndo
+        , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo
       ]
     run :: IO [[Maybe Int]]
     run = basicHostWithStaticEvents bs basic_network
