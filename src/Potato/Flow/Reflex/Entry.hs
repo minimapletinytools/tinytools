@@ -100,7 +100,7 @@ holdPF PFConfig {..} = mdo
       }
     doAction_PFCNewElts_rEltFactory_newRElt :: Event t (PFCmd t)
     doAction_PFCNewElts_rEltFactory_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
-  rEltFactory :: rEltFactory t
+  rEltFactory :: REltFactory t
     <- holdREltFactory rEltFactoryConfig
 
   -- TODO set up add/remove events, these will get sent to both directory and layer tree
