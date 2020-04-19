@@ -82,7 +82,7 @@ holdDynamicSeq initial DynamicSeqConfig {..} = mdo
     changeEvent :: Event t (DSCmd t a)
     changeEvent = leftmostwarn "WARNING: multiple Seq events firing at once" [
         fmap DSCAdd _dynamicSeqConfig_insert
-        , fmap DSCRemove (traceEventSimple "DEF REMOVING" $ _dynamicSeqConfig_remove)
+        , fmap DSCRemove _dynamicSeqConfig_remove
         , fmap (const DSCClear) _dynamicSeqConfig_clear
       ]
 

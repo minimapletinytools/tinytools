@@ -154,6 +154,18 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
           (CTagBox :=> Identity dbox) -> minusDelta box dbox
       mbox <- foldDyn foldfn sb_box bothEv
       return $ REltBox (MBox mbox)
+
+{-
+    -- TODO wut a pain DDDDD:
+    SEltLine SLine {..} -> do
+      let
+        foldfn :: Either Controllers Controllers -> LPoint -> LPoint
+        foldfn
+      --sl_start   :: LPoint
+      --, sl_end  ::LPoint
+      mline <- MLine startl endl
+-}
+
     _               -> undefined
   return $ REltLabel reltid sname relt
 

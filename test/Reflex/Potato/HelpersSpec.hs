@@ -30,7 +30,6 @@ test_repeatEventAndCollectOutput = TestLabel "repeatEventAndCollectOutput" $ Tes
     run :: IO [[Maybe [Int]]]
     run = basicHostWithStaticEvents bs repeatEventAndCollectOutput_network
   v <- liftIO run
-  print v
   fmap Just bs @?= fmap L.last v
 
 repeatEvent_network :: forall t m. BasicGuestConstraints t m => Event t [Int] -> BasicGuest t m (Event t Int)
