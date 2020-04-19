@@ -5,7 +5,9 @@ module Reflex.Potato.Helpers (
   -- other helpers
   dsum_to_dmap
 
+
   -- reflex helpers
+  , traceEventSimple
   , leftmostwarn
   , alignEitherWarn
   , foldDynMergeWith
@@ -30,6 +32,9 @@ import           Data.These
 
 dsum_to_dmap :: DM.GCompare k => DS.DSum k f -> DM.DMap k f
 dsum_to_dmap ds = DM.fromList [ds]
+
+traceEventSimple :: (Reflex t) => String -> Event t a -> Event t a
+traceEventSimple s = traceEventWith (const s)
 
 -- TODO rename leftmostWarn
 -- | same as leftmost but outputs a warning if more than one event fires at once
@@ -110,9 +115,23 @@ repeatEventAndCollectOutput evin collectEv = mdo
     next = fmapMaybe selectNext evin'
     rest = fmapMaybe selectRest evin'
     -- nothing left, this means we fired the last event
-    stop = fmapMaybe (\x -> if null x then Just () else Nothing) evin'
+    stop = fmapMaybe (\x -> if isNothing (selectRest x) then Just () else Nothing) evin'
     collected = tagPromptlyDyn (reverse <$> collector) stop
-  -- collect events in reverse order
-  collector <- foldDyn (:) [] collectEv
+
+    -- collect events in reverse order
+    -- reset when given the signal
+    foldfn :: These Bool b -> [b] -> [b]
+    foldfn (This True) _      = []
+    foldfn (That b) bs        = b : bs
+    foldfn (These True b) _   = [b]
+    foldfn (These False b) bs = b : bs
+    foldfn _ bs               = bs
+
+  -- we use the trick 'tag (current resetState) evin''
+  -- which causes it to use resetState from previous iterations.
+  collector <- foldDyn foldfn [] (alignEventWithMaybe Just (tag (current resetState) evin') collectEv)
+
+  resetState <- foldDyn const True (leftmost [const True <$> stop, const False <$> evin'])
+
   (_, rev) <- runWithReplace (return ()) (return <$> rest)
   return (next, collected)

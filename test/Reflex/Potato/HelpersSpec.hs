@@ -26,11 +26,12 @@ repeatEventAndCollectOutput_network ev = mdo
 test_repeatEventAndCollectOutput :: Test
 test_repeatEventAndCollectOutput = TestLabel "repeatEventAndCollectOutput" $ TestCase $ do
   let
-    bs = [[0],[],[1..5],[],[],[1,2],[1..10]] :: [[Int]]
-    run :: IO [[Maybe Int]]
-    run = basicHostWithStaticEvents bs repeatEvent_network
+    bs = [[0],[],[1..5],[],[],[1,2],[1..10],[]] :: [[Int]]
+    run :: IO [[Maybe [Int]]]
+    run = basicHostWithStaticEvents bs repeatEventAndCollectOutput_network
   v <- liftIO run
-  fmap (filter isJust) v @?= Just <<$>> bs
+  print v
+  fmap Just bs @?= fmap L.last v
 
 repeatEvent_network :: forall t m. BasicGuestConstraints t m => Event t [Int] -> BasicGuest t m (Event t Int)
 repeatEvent_network = repeatEvent
