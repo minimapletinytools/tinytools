@@ -73,6 +73,7 @@ layerTree_attachEltAtPosition :: (Reflex t) => LayerTree t a -> Event t LayerPos
 layerTree_attachEltAtPosition LayerTree {..} = attachWith (\s i -> (i, fromJust $ Seq.lookup i s)) (current _layerTree_view)
 
 
+-- TODO maybe need something for inverse of this (when we undo the remove operation)
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
 -- O(n^2) lol
 reindexLayerPosForRemoval :: [LayerPos] -> [LayerPos]

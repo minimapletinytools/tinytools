@@ -5,6 +5,7 @@ module Reflex.Data.Sequence (
   DynamicSeq(..)
   , DynamicSeqConfig(..)
   , defaultDynamicSeqConfig
+  , dynamicSeq_attachEndPos
   , holdDynamicSeq
 ) where
 
@@ -15,7 +16,7 @@ import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
 
-import           Data.Sequence
+import           Data.Sequence         as Seq
 import           Data.Wedge
 
 
@@ -66,6 +67,11 @@ defaultDynamicSeqConfig = DynamicSeqConfig {
     , _dynamicSeqConfig_remove = never
     , _dynamicSeqConfig_clear = never
   }
+
+
+-- | use for inserting at end of seq
+dynamicSeq_attachEndPos :: (Reflex t) => DynamicSeq t a -> Event t b -> Event t (Int, b)
+dynamicSeq_attachEndPos DynamicSeq {..} = attach (Seq.length <$> current _dynamicSeq_contents)
 
 
 type DSState a = (Wedge (Int, Seq a) (Int, Seq a), Seq a)
