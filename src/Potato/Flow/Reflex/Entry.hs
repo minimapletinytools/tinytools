@@ -68,10 +68,12 @@ holdPF PFConfig {..} = mdo
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
         doAction_PFCNewElts_rEltFactory_newRElt
+        , doAction_PFCDeleteElt_pfc_removeElt
       ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
-      -- TODO
+      -- TODO do proper event tracing
+      --_actionStackConfig_do      = traceEventWith  (const "DO: ") doActions
       _actionStackConfig_do      = doActions
       , _actionStackConfig_undo  = _pfc_undo
       , _actionStackConfig_redo  = _pfc_redo
@@ -79,8 +81,6 @@ holdPF PFConfig {..} = mdo
     }
   actionStack :: ActionStack t (PFCmd t)
     <- holdActionStack actionStackConfig
-
-  -- TODO map _pfc_removeElt and _pfc_manipulate to actionStack
 
   -- set up DirectoryIdAssigner
   let
@@ -140,6 +140,9 @@ holdPF PFConfig {..} = mdo
       }
   layerTree :: LayerTree t (REltLabel t)
     <- holdLayerTree layerTreeConfig
+
+  let
+    doAction_PFCDeleteElt_pfc_removeElt = (PFCDeleteElt ==>) <$> layerTree_attachEltAtPosition layerTree _pfc_removeElt
 
   return $
     PFOutput {

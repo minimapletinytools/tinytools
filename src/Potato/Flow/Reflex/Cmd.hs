@@ -32,6 +32,7 @@ import qualified Data.Dependent.Map              as DM
 import qualified Data.Dependent.Sum              as DS
 import qualified Data.GADT.Compare
 import           Data.GADT.Compare.TH
+import qualified Text.Show
 
 
 {- DELETE
@@ -48,7 +49,7 @@ deriveGCompare ''TESTTag
 -}
 
 data PFCmdTag t a where
-  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabel t)) -- TODO needs LayerPos
+  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabel t)) -- TODO needs LayerPos, right now it just adds to the end
   PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabel t)
   --PFCReorder :: PFCmdTag t (REltId, LayerPos)
   --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
@@ -56,9 +57,18 @@ data PFCmdTag t a where
   PFCManipulate :: PFCmdTag t (ControllerWithId)
   -- TODO maybe there is better type that can make use of Delta type class for scaling many
   PFCManipulateMany :: PFCmdTag t ([REltId], (LBox, LBox)) -- ^ (before, after)
-  --deriving anyclass Data.GADT.Compare.GEq
-  --deriving anyclass DM.GCompare
+
 instance Generic  (PFCmdTag t a)
+
+
+-- TODO use deriveArgDict stuff to do automatically derived show instance
+--instance Show  (PFCmdTag t a)
+-- this still doesn't get us Show (DSum PFCmdTag f) :(
+instance Text.Show.Show (PFCmdTag t a) where
+  show PFCNewElts        = "PFCNewElts"
+  show PFCDeleteElt      = "PFCDeleteElt"
+  show PFCManipulate     = "PFCManipulate"
+  show PFCManipulateMany = "PFCManipulateMany"
 
 instance Data.GADT.Compare.GEq (PFCmdTag t) where
   geq PFCNewElts PFCNewElts               = do return Data.GADT.Compare.Refl
@@ -79,9 +89,6 @@ instance Data.GADT.Compare.GCompare (PFCmdTag t) where
   gcompare PFCManipulateMany PFCManipulateMany = runGComparing $ (do return Data.GADT.Compare.GEQ)
   gcompare PFCManipulateMany _ = Data.GADT.Compare.GLT
   gcompare _ PFCManipulateMany = Data.GADT.Compare.GGT
-
-
-
 
 type PFCmd t = DS.DSum (PFCmdTag t) Identity
 type PFCmdMap t = DM.DMap (PFCmdTag t) Identity

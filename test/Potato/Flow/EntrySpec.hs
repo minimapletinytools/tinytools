@@ -25,7 +25,7 @@ simpleSBox = SBox nilLBox defaultSLineStyle
 data FCmd =
   FCNone
   | FCAddSElt SElt
-  | FCRemoveRElt REltId
+  | FCRemoveRElt Int -- position in layers to remove at
   | FCManipulate ()
   | FCUndo
   | FCRedo
@@ -64,9 +64,17 @@ basic_network ev = do
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
   let
-
     bs = [
         FCNone
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddSElt (SEltBox simpleSBox)
+        , FCRemoveRElt 0
+        , FCRemoveRElt 3
+        , FCRemoveRElt 0
         , FCAddSElt (SEltBox simpleSBox)
       ]
     run :: IO [[Maybe Int]]

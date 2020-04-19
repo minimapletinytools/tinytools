@@ -12,6 +12,7 @@ module Potato.Flow.Reflex.Layers (
   , LayerTreeConfig(..)
   , layerTree_attachEndPos
   , layerTree_tagEndPos
+  , layerTree_attachEltAtPosition
   , holdLayerTree
 ) where
 
@@ -27,6 +28,7 @@ import           Control.Monad.Fix
 
 import           Data.Maybe            (fromJust)
 import           Data.Patch.Map
+import qualified Data.Sequence         as Seq
 
 type LayerPos = Int
 
@@ -65,12 +67,17 @@ layerTree_attachEndPos LayerTree {..} = attach (length <$> current _layerTree_vi
 layerTree_tagEndPos :: (Reflex t) => LayerTree t a -> Event t b -> Event t LayerPos
 layerTree_tagEndPos LayerTree {..} = tag (length <$> current _layerTree_view)
 
+-- TODO PROD switch to attachWithMaybe
+-- | use for finding elements
+layerTree_attachEltAtPosition :: (Reflex t) => LayerTree t a -> Event t LayerPos -> Event t (LayerPos, a)
+layerTree_attachEltAtPosition LayerTree {..} = attachWith (\s i -> (i, fromJust $ Seq.lookup i s)) (current _layerTree_view)
+
 
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
 -- O(n^2) lol
 reindexLayerPosForRemoval :: [LayerPos] -> [LayerPos]
 reindexLayerPosForRemoval [] = []
-reindexLayerPosForRemoval (r:xs) = reindexLayerPosForRemoval rest where
+reindexLayerPosForRemoval (r:xs) = r:reindexLayerPosForRemoval rest where
   -- if this asserts that means you tried to remove the same index twice
   rest = map (\x -> assert (x /= r) $ if x > r then x-1 else x) xs
 
@@ -110,10 +117,13 @@ holdLayerTree LayerTreeConfig {..} = mdo
         , _dynamicSeqConfig_clear = never
       }
 
+    inputRemoveEv :: Event t [LayerPos]
+    inputRemoveEv = reindexLayerPosForRemoval <$> toList <$> _layerTreeConfig_remove
+
   dseq :: DynamicSeq t a <-
     holdDynamicSeq empty dseqc
   (removeSingleEv, collectedRemovals) :: (Event t LayerPos, Event t [(Int, Seq a)]) <-
-    repeatEventAndCollectOutput (reindexLayerPosForRemoval <$> toList <$> _layerTreeConfig_remove) (_dynamicSeq_removed dseq)
+    repeatEventAndCollectOutput inputRemoveEv (_dynamicSeq_removed dseq)
 
   let
     -- changes from collected removal
