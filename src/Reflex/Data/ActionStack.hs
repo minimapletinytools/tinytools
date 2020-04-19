@@ -35,6 +35,7 @@ getThere c = case c of
 data ActionStack t a = ActionStack {
   _actionStack_do            :: Event t a -- ^ fires when element is added to do stack
   , _actionStack_undo        :: Event t a -- ^ fires when element is added to undo stack
+  , _actionStack_clear       :: Event t () -- ^ fires when action stack is cleared either due to a new do action or clear event
   -- probably don't want to expose these?
   , _actionStack_doneStack   :: Dynamic t [a] -- ^ stack of actions we've done
   , _actionStack_undoneStack :: Dynamic t [a] -- ^ stack of actions we've undone
@@ -50,7 +51,8 @@ data ActionStackConfig t a = ActionStackConfig {
   _actionStackConfig_do      :: Event t a -- ^ event to add an element to the stack
   , _actionStackConfig_undo  :: Event t () -- ^ event to undo top action of do stack
   , _actionStackConfig_redo  :: Event t () -- ^ event to redo top action of undo stack
-  , _actionStackConfig_clear :: Event t () -- ^ clears both do/undo stack without firing any events
+
+  , _actionStackConfig_clear :: Event t () -- ^ clears both do/undo stack without firing any do/undo events
 }
 
 -- alternatively, you could do the repeatEvent trick here
@@ -101,6 +103,7 @@ holdActionStack (ActionStackConfig { .. }) = do
     ActionStack {
       _actionStack_do = fmapMaybe getHere changedEv
       , _actionStack_undo   = fmapMaybe getThere changedEv
+      , _actionStack_clear = leftmost [void _actionStackConfig_do, _actionStackConfig_clear]
       , _actionStack_doneStack = fmap (\(_,x,_)->x) asdyn
       , _actionStack_undoneStack = fmap (\(_,_,x)->x) asdyn
     }
