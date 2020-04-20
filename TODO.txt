@@ -1,6 +1,28 @@
+import CodeWorld.Reflex
+import Reflex
+import Control.Monad
+
+main = debugReactiveOf $ do
+    angle <- foldDyn (+) 0 =<< getTimePassing
+    let
+        zero = 0 :: Double
+        zeroDyn = constDyn zero
+        foldfn a _ = holdDyn zero (updated angle)
+
+    doubleDyn <- foldDynM foldfn zeroDyn (updated angle)
+    draw ((\a -> rotated a codeWorldLogo) <$> join doubleDyn)
+
+
+
+
+
+
 stack build --ghc-options="-ddump-splices"
 
 ::TODO::
+-use default instances for config
+-consider adding maybe event to configs
+DONE-rename gitrepo to potato-flow
 -make naming in selts consistent with rest of code
 -figure out deriveArgDict thing, we need show instances for debugging!!
 -finish relt deserializers

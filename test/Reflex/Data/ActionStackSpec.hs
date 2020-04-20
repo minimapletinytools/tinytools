@@ -7,24 +7,25 @@ module Reflex.Data.ActionStackSpec (
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                as L (last)
+import qualified Data.List                 as L (last)
 
 import           Reflex
 import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
 import           Reflex.Potato.TestHarness
+import           Reflex.Test.App
 
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
 
 simple_state_network ::
-  forall t a s m.
-  (a -> s -> s) -- ^ do/redo method to transform state
+  forall t a s m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (a -> s -> s) -- ^ do/redo method to transform state
   -> (a -> s -> s) -- ^ undo method to transform state
   -> s -- ^ initial state
-  -> TestApp t m (TestCmd a) s -- ^ test app producing final state
+  -> (Event t (TestCmd a) -> PerformEventT t m (Event t s)) -- ^ test app producing final state
 simple_state_network fdo fundo initial ev = do
   let
     doEv = flip fmapMaybe ev $ \case
@@ -54,9 +55,9 @@ adder_test :: Test
 adder_test = TestLabel "adder app" $ TestCase $ do
   let
     bs = [TCDo 1, TCDo 2, TCDo 3, TCUndo, TCUndo, TCRedo, TCDo 100]
-    run = playReflexSeq bs (simple_state_network (+) (flip (-)) (0 :: Int))
+    run = runAppSimple (simple_state_network (+) (flip (-)) (0 :: Int)) bs
   v <- liftIO run
-  L.last v @?= Just 103
+  L.last v @?= [Just 103]
 
 spec :: Spec
 spec = do
