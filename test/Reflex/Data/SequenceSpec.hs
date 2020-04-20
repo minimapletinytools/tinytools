@@ -17,11 +17,13 @@ import           Reflex
 import           Reflex.Data.Sequence
 import           Reflex.Potato.Helpers
 
-import           Reflex.Host.Basic
+import           Reflex.Test.App
 
 data SeqCmd a = SCInsert (Int, [a]) | SCRemove (Int, Int) | SCClear deriving (Eq, Show)
 
-seq_network :: forall t m a. BasicGuestConstraints t m => Event t (SeqCmd a) -> BasicGuest t m (Event t (Seq a))
+seq_network ::
+  forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t (SeqCmd a) -> PerformEventT t m (Event t (Seq a)))
 seq_network ev = do
   let
     insertEv = flip fmapMaybe ev $ \case
@@ -33,15 +35,12 @@ seq_network ev = do
     clearEv = flip fmapMaybe ev $ \case
       SCClear -> Just ()
       _ -> Nothing
-
     dseqc = DynamicSeqConfig {
         _dynamicSeqConfig_insert = insertEv
         , _dynamicSeqConfig_remove = removeEv
         , _dynamicSeqConfig_clear = clearEv
       }
-
   dseq <- holdDynamicSeq empty dseqc
-
   return $ updated $ _dynamicSeq_contents dseq
 
 basic_test :: Test
@@ -49,9 +48,9 @@ basic_test = TestLabel "basic" $ TestCase $ do
   let
     bs = [SCInsert (0,[1..10]), SCClear, SCInsert (0,[1..10]), SCRemove (5,5), SCInsert (3,[100])] :: [SeqCmd Int]
     run :: IO [[Maybe (Seq Int)]]
-    run = basicHostWithStaticEvents bs seq_network
+    run = runAppSimple seq_network bs
   v <- liftIO run
-  L.last (join v) @?= Just (fromList [1,2,3,100,4,5])
+  L.last v @?= [Just (fromList [1,2,3,100,4,5])]
 
 
 spec :: Spec

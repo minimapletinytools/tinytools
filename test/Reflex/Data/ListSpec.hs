@@ -7,16 +7,18 @@ module Reflex.Data.ListSpec (
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                 as L (last, tail)
+import qualified Data.List                as L (last, tail)
 
 import           Reflex
 import           Reflex.Data.List
-import           Reflex.Potato.TestHarness
+import           Reflex.Test.App
 
-pushAdd_network :: forall t m. TestApp t m Int [Int]
+pushAdd_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t Int -> PerformEventT t m (Event t [Int]))
 pushAdd_network ev = mdo
   let
     -- element in the list is a dynamic int that adds to itself each new element added to the list
@@ -47,52 +49,61 @@ pushAdd_test :: Test
 pushAdd_test = TestLabel "pushAdd" $ TestCase $ do
   let
     bs = [1,1,1,1,1] :: [Int]
-    run = playReflexSeq bs pushAdd_network
+    run = runAppSimple pushAdd_network bs
   v <- liftIO run
   --print v
   let
     expected = [2,3,4,5,6]
-  L.last v @?= Just expected
+  L.last v @?= [Just expected]
 
+
+push_enqueue_pop_dequeue_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t Int -> PerformEventT t m (Event t [Int]))
+push_enqueue_pop_dequeue_network ev = do
+    let
+      mdl = defaultDynamicListConfig {
+          _dynamicListConfig_push = fmapMaybe (\x -> if x `mod` 4 == 0 then Just x else Nothing) ev
+          , _dynamicListConfig_enqueue = fmapMaybe (\x -> if x `mod` 4 == 1 then Just x else Nothing) ev
+          , _dynamicListConfig_pop = fmapMaybe (\x -> if x `mod` 4 == 2 then Just () else Nothing) ev
+          , _dynamicListConfig_dequeue = fmapMaybe (\x -> if x `mod` 4 == 3 then Just () else Nothing) ev
+        }
+    dl <- holdDynamicList [] mdl
+    return $ updated (_dynamicList_contents dl)
 
 -- basic test case, add to list on each event tick
 push_enqueue_pop_dequeue_test :: Test
 push_enqueue_pop_dequeue_test = TestLabel "push/enqueue/pop/dequeue" $ TestCase $ do
   let
     bs = [0,1,0,1,0,1,0,1,2,3,3] :: [Int]
-    network ev = do
-      let
-        mdl = defaultDynamicListConfig {
-            _dynamicListConfig_push = fmapMaybe (\x -> if x `mod` 4 == 0 then Just x else Nothing) ev
-            , _dynamicListConfig_enqueue = fmapMaybe (\x -> if x `mod` 4 == 1 then Just x else Nothing) ev
-            , _dynamicListConfig_pop = fmapMaybe (\x -> if x `mod` 4 == 2 then Just () else Nothing) ev
-            , _dynamicListConfig_dequeue = fmapMaybe (\x -> if x `mod` 4 == 3 then Just () else Nothing) ev
-          }
-      dl <- holdDynamicList [] mdl
-      return $ updated (_dynamicList_contents dl)
-    run = playReflexSeq bs network
+    run = runAppSimple push_enqueue_pop_dequeue_network bs
   v <- liftIO run
   let
     expected = Just [0,0,0,1,1]
-  L.last v @?= expected
+  L.last v @?= [expected]
+
+
+add_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t Int -> PerformEventT t m (Event t [Int]))
+add_network ev = do
+  let
+    mdl = defaultDynamicListConfig {
+        _dynamicListConfig_add = (fmap (\x -> (0,x)) ev)
+      }
+  dl <- holdDynamicList [] mdl
+  return $ updated (_dynamicList_contents dl)
 
 -- basic test case, add to list on each event tick
 add_test :: Test
 add_test = TestLabel "add" $ TestCase $ do
   let
     bs = [1..10] :: [Int]
-    network ev = do
-      let
-        mdl = defaultDynamicListConfig {
-            _dynamicListConfig_add = (fmap (\x -> (0,x)) ev)
-          }
-      dl <- holdDynamicList [] mdl
-      return $ updated (_dynamicList_contents dl)
-    run = playReflexSeq bs network
+    run = runAppSimple add_network bs
   v <- liftIO run
   let
     expected = fmap Just . L.tail . scanl (\acc x -> x:acc) [] $ bs
-  v @?= expected
+  join v @?= expected
 
 spec :: Spec
 spec = do

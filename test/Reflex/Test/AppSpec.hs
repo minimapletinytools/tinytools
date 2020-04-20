@@ -27,8 +27,6 @@ basic_network AppIn {..} = return
     , _appOut_event = fmap (\(b,e) -> e+b) $ attach _appIn_behavior _appIn_event
   }
 
-
-
 test_basic :: Test
 test_basic = TestLabel "basic" $ TestCase $ runSpiderHost $ do
   let
