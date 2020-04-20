@@ -20,8 +20,11 @@ main = debugReactiveOf $ do
 stack build --ghc-options="-ddump-splices"
 
 ::TODO::
+-delete reflex basic host from github or add a pointer to this repo
+-profile memory usage
+-write profilingWidget which takes an event, calls GHC.Stats, and outputs results
 -use default instances for config
--consider adding maybe event to configs
+-consider adding maybe event to configs instead of using never :o
 DONE-rename gitrepo to potato-flow
 -make naming in selts consistent with rest of code
 -figure out deriveArgDict thing, we need show instances for debugging!!

@@ -18,6 +18,25 @@ import           Reflex.Potato.Helpers
 import           Reflex.Test.App
 
 
+sequenceEvents_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t (Int,Int) -> PerformEventT t m (Event t Int))
+sequenceEvents_network ev = mdo
+  let
+    fstEv = fmap fst ev
+    sndEv = fmap snd ev
+  delayedSndEv <- sequenceEvents fstEv sndEv
+  return $ leftmostwarn "sequenceEvents" [fstEv, delayedSndEv]
+
+test_sequenceEvents :: Test
+test_sequenceEvents = TestLabel "sequenceEvents" $ TestCase $ do
+  let
+    bs = [(0,1)] :: [(Int,Int)]
+    run :: IO [[Maybe Int]]
+    run = runAppSimple sequenceEvents_network bs
+  v <- liftIO run
+  join v @?= [Just 0, Just 1]
+
 repeatEventAndCollectOutput_network ::
   forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => (Event t [Int] -> PerformEventT t m (Event t [Int]))
@@ -32,7 +51,7 @@ test_repeatEventAndCollectOutput = TestLabel "repeatEventAndCollectOutput" $ Tes
     run :: IO [[Maybe [Int]]]
     run = runAppSimple repeatEventAndCollectOutput_network bs
   v <- liftIO run
-  fmap Just bs @?= fmap L.last v
+  fmap L.last v @?= fmap Just bs
 
 repeatEvent_network ::
   forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -55,3 +74,4 @@ spec = do
   describe "Potato" $ do
     fromHUnitTest test_repeatEvent
     fromHUnitTest test_repeatEventAndCollectOutput
+    fromHUnitTest test_sequenceEvents

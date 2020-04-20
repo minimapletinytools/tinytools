@@ -15,6 +15,7 @@ module Reflex.Potato.Helpers (
 
   , fanDSum
 
+  , sequenceEvents
   , repeatEvent
   , repeatEventAndCollectOutput
 ) where
@@ -76,6 +77,28 @@ selectRest :: [a] -> Maybe [a]
 selectRest []     = Nothing
 selectRest (_:[]) = Nothing
 selectRest (_:xs) = Just xs
+
+-- | if both events fire at the same time, this functions returns an event with
+-- the second event's results that fires one frame after the first event fires
+sequenceEvents :: forall t m a b. (Reflex t, Adjustable t m, MonadFix m) => Event t a -> Event t b -> m (Event t b)
+sequenceEvents ev1 ev2 = mdo
+  let
+    makeEv2Delayed :: m (Event t b)
+    makeEv2Delayed = do
+      let
+        -- filters for when BOTH ev1 and ev2 triggered in the previous frame
+        fmapfn = \case
+          These v1 v2 -> Just v2
+          _ -> Nothing
+        delayed = fmapMaybe fmapfn redo
+      -- if ev1 does not trigger, delay does not trigger and this gives ev2
+      -- if ev1 did trigger, and ev2 did not, this gives ev2
+      -- if ev1 and ev2 both triggered, this gives previous value of evl2
+      -- * note that it's possible for ev1 or ev2 to trigger in the second frame for outside reasons
+      -- if this is the case, you really should not use this function
+      return $ leftmost [delayed, difference ev2 ev1]
+  (ev2Delayed, redo) <- runWithReplace makeEv2Delayed (alignEventWithMaybe (Just . return) ev1 ev2)
+  return ev2Delayed
 
 -- TODO rename
 -- TODO prob implement with repeatEventAndCollectOutput
