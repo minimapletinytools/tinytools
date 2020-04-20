@@ -12,8 +12,7 @@ import           Test.HUnit
 
 import           Reflex
 import           Reflex.Potato.Helpers
-
-import           Reflex.Host.Basic
+import           Reflex.Test.App
 
 import qualified Data.List                as L (last)
 
@@ -31,7 +30,9 @@ data FCmd =
   | FCRedo
   deriving (Eq, Show)
 
-basic_network :: forall t m a. BasicGuestConstraints t m => Event t FCmd -> BasicGuest t m (Event t Int)
+basic_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t FCmd -> PerformEventT t m (Event t Int))
 basic_network ev = do
   let
     -- TODO maybe a good place to try out template haskell
@@ -80,7 +81,7 @@ basic_test = TestLabel "basic" $ TestCase $ do
         , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo
       ]
     run :: IO [[Maybe Int]]
-    run = basicHostWithStaticEvents bs basic_network
+    run = runAppSimple basic_network bs
   v <- liftIO run
   print v
   return ()

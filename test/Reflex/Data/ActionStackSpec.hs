@@ -7,15 +7,14 @@ module Reflex.Data.ActionStackSpec (
 import           Relude
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
-import qualified Data.List                 as L (last)
+import qualified Data.List                as L (last)
 
 import           Reflex
 import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
-import           Reflex.Potato.TestHarness
 import           Reflex.Test.App
 
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
