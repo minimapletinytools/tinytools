@@ -85,7 +85,6 @@ dependencies:
 - binary
 - hashable
 
-- reflex-basic-host
 - these
 - containers
 - patch
@@ -103,7 +102,6 @@ library:
     - Reflex.Data.Stack
     - Reflex.Data.Directory
     - Reflex.Potato.Helpers
-    - Reflex.Potato.TestHarness
     - Reflex.Test.App
 
 
