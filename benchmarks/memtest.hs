@@ -17,7 +17,42 @@ import           Data.These
 import           Control.Concurrent
 
 main :: IO ()
-main = memtest
+main = memtest2
+
+-- does not leak
+dyntest_network ::
+  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (AppIn t () Int -> PerformEventT t m (AppOut t () Int))
+dyntest_network AppIn {..} = do
+  tick <- foldDyn (+) 0 _appIn_event
+  let
+    zeroDyn = constDyn 0
+    foldfn _ _ = holdDyn 0 (updated tick)
+  doubleDyn <- foldDynM foldfn zeroDyn (fmapMaybe (\x -> if x == 1 then Just 1 else Nothing) $ updated tick)
+  return
+    AppOut {
+      _appOut_behavior = constant ()
+      , _appOut_event = updated $ join doubleDyn
+    }
+
+
+memtest2 :: IO ()
+memtest2 = runSpiderHost $ do
+  appFrame <- getAppFrame dyntest_network ()
+  let
+    loop n = do
+      out <- tickAppFrame appFrame (Just (That (n `mod` 2)))
+      liftIO $ do
+        putStrLn $ "ticked: " <> show out
+        threadDelay 10000
+        hasStats <- getRTSStatsEnabled
+        when (not hasStats) $ error "no stats"
+        stats <- getRTSStats
+        print (toImportant stats)
+      loop (n+1)
+  loop 0
+
+
 
 
 data TestCmd a = TCDo a | TCUndo | TCRedo | TCClear deriving (Eq, Show)
@@ -58,6 +93,7 @@ simple_state_network fdo fundo initial AppIn {..} = do
       , _appOut_event = updated adder
     }
 
+-- does not leak
 basic_network :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => (AppIn t Int Int -> PerformEventT t m (AppOut t Int Int))
