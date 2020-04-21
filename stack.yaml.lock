@@ -75,19 +75,33 @@ packages:
   original:
     hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
 - completed:
-    size: 11789
-    url: https://github.com/pdlla/reflex-basic-host/archive/9500e9322d7b179f9aa4b08ae2e8bb3b7faf0c6a.tar.gz
+    size: 7245
+    url: https://github.com/pdlla/reflex-test-host/archive/119014e97a5f821635747aec0f67ea2f31181ad7.tar.gz
     cabal-file:
-      size: 3247
-      sha256: 2567b8137651c7c2663f69a6bee280dab5b6fbb211552662b948dfdb1cb48579
-    name: reflex-basic-host
-    version: 0.2.0.1
-    sha256: 0cdc2b6b6a373d3b8ba6edb65fe669e8fd70c7172dbeadbc5f06ffa230958e8f
+      size: 2880
+      sha256: 42a928caab7c51e7a1cd83979f0923311e4f1641a7cc1bcc51c3d652974b91ec
+    name: reflex-test-host
+    version: 0.1.0.0
+    sha256: 1d15f0352a339a1500da0153162e1da54a95d30bdd6af96e4642149ce1c2324d
     pantry-tree:
-      size: 992
-      sha256: a47e7fae7ae5bcdff1acc0e856cb8c81cb9e273bdcdebdac562f0b603b30131a
+      size: 594
+      sha256: ac2431f543f0577b2d64d3c783f15ab4dbb897c9ab3994a7b4c8772489ac0eb8
   original:
-    url: https://github.com/pdlla/reflex-basic-host/archive/9500e9322d7b179f9aa4b08ae2e8bb3b7faf0c6a.tar.gz
+    url: https://github.com/pdlla/reflex-test-host/archive/119014e97a5f821635747aec0f67ea2f31181ad7.tar.gz
+- completed:
+    size: 20499
+    url: https://github.com/pdlla/reflex-dynamic-containers/archive/196093736feff72e93812cf27f427f32436030dc.tar.gz
+    cabal-file:
+      size: 3467
+      sha256: 070230141409319d457b4e267e4d6e633f9a46c2088905474816f4293a920e99
+    name: reflex-dynamic-containers
+    version: 0.1.0.0
+    sha256: 9ef58c3335004032059be61e5b1fdc752003e84683d9e0952b1632fede3f108a
+    pantry-tree:
+      size: 1469
+      sha256: 1d00655cdee218b0778303e37f87d14a967c5cee9d775675a024ec27cc5d61f6
+  original:
+    url: https://github.com/pdlla/reflex-dynamic-containers/archive/196093736feff72e93812cf27f427f32436030dc.tar.gz
 snapshots:
 - completed:
     size: 491389

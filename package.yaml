@@ -89,20 +89,16 @@ dependencies:
 - containers
 - patch
 - template-haskell
+- reflex-dynamic-containers
+- reflex-test-host
+
 
 
 library:
   source-dirs: src
   exposed-modules:
     - Potato.Flow
-    # TODO move to different lib
-    - Reflex.Data.ActionStack
-    - Reflex.Data.List
-    - Reflex.Data.Sequence
-    - Reflex.Data.Stack
-    - Reflex.Data.Directory
     - Reflex.Potato.Helpers
-    - Reflex.Test.App
 
 executables:
   memorytests:

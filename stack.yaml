@@ -51,8 +51,11 @@ extra-deps:
 - witherable-0.3.1@sha256:ed3d5bc9eb1c08fa9704d9e143cdf622e1bd80b847cd5ede8c07da7bc7981ab9,1313
 #- smash-0.1.1.0
 - dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
-- github: pdlla/reflex-basic-host
-  commit: 9500e9322d7b179f9aa4b08ae2e8bb3b7faf0c6a
+- github: pdlla/reflex-test-host
+  commit: 119014e97a5f821635747aec0f67ea2f31181ad7
+- github: pdlla/reflex-dynamic-containers
+  commit: 196093736feff72e93812cf27f427f32436030dc
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

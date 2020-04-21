@@ -26,6 +26,7 @@ stack build --ghc-options="-ddump-splices"
 
 
 ::TODO::
+-try with -o2 for leaks
 -add max length param to actionstack
 -delete reflex basic host from github or add a pointer to this repo
 -profile memory usage
