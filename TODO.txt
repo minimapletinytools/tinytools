@@ -19,6 +19,12 @@ main = debugReactiveOf $ do
 
 stack build --ghc-options="-ddump-splices"
 
+::split up todo::
+-make reflex-test-app Reflex.Test.App package
+-make reflex-potato-containers package
+-consider making reflex-potato-helpers package
+
+
 ::TODO::
 -add max length param to actionstack
 -delete reflex basic host from github or add a pointer to this repo

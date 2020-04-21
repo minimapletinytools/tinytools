@@ -31,6 +31,8 @@ data DirectoryIdAssigner t v  = DirectoryIdAssigner {
 
   -- | tag an event with ided elements that got generate by the event
   -- the input event must be assigned to this directory
+  -- i.e. it will be an event that is passed into
+  -- '_directoryIdAssignerConfig_assign' in some way
   _directoryIdAssigner_tag :: forall a. Event t a -> Event t (NonEmpty (DirId, v))
 }
 
@@ -61,8 +63,6 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = do
       }
 
 
-
--- TODO just rename to Directory
 data Directory t v = Directory {
   _directoryMap_contents  :: Behavior t (Map DirId v)
   , _directoryMap_added   :: Event t (NonEmpty (DirId, v))

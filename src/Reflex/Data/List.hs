@@ -17,27 +17,42 @@ import           Control.Monad.Fix
 
 import           Data.List.Index
 
+-- | A dynamic list which are a set of input and output events that wrap an
+-- internal 'Dynamic [a]'. Just like haskell lists, DynamicList is probably not
+-- what you want. Perhaps you are looking for 'Reflex.Data.Sequence' or
+-- 'Reflex.Data.Stack'?
 data DynamicList t a = DynamicList {
+  -- TODO rename to added/removed
   _dynamicList_add        :: Event t (Int, a)
   , _dynamicList_remove   :: Event t a
+
+  -- TODO delete
   , _dynamicList_move     :: Event t (Int, a)
+
   , _dynamicList_contents :: Dynamic t [a]
 }
 
 data DynamicListConfig t a = DynamicListConfig {
+  -- | event to add an element at a given index
   _dynamicListConfig_add       :: Event t (Int, a)
+  -- | event to remove an element at given index
   , _dynamicListConfig_remove  :: Event t Int
 
-  -- this is slightly different than removing then adding as it can be done in 1 frame
+  -- TODO delete
+  -- | this is slightly different than removing then adding as it can be done in 1 frame
   , _dynamicListConfig_move    :: Event t (Int,Int)
 
-  -- these attach index and follow same code path as add/remove
+  -- | event to add an element to front of list
   , _dynamicListConfig_push    :: Event t a
+  -- | event to remove an element from front of list
   , _dynamicListConfig_pop     :: Event t ()
+  -- | event to add an element to back of list
   , _dynamicListConfig_enqueue :: Event t a
+  -- | event to remove an element from back of list
   , _dynamicListConfig_dequeue :: Event t ()
 }
 
+-- TODO switch to Data.Default
 defaultDynamicListConfig :: (Reflex t) => DynamicListConfig t a
 defaultDynamicListConfig = DynamicListConfig {
     _dynamicListConfig_add = never
@@ -51,13 +66,12 @@ defaultDynamicListConfig = DynamicListConfig {
 
 
 data LState a = LSInserted (Int, a) | LSRemoved a | LSMoved (Int, a) | LSNothing
-
 data DLCmd t a = DLCAdd (Int, a) | DLCRemove Int | DLCMove (Int, Int)
 
 -- | create a dynamic list
 holdDynamicList ::
   forall t m a. (Reflex t, MonadHold t m, MonadFix m)
-  => [a]
+  => [a] -- ^ initial value
   -> DynamicListConfig t a
   -> m (DynamicList t a)
 holdDynamicList initial (DynamicListConfig {..}) = mdo

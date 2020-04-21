@@ -78,6 +78,7 @@ selectRest []     = Nothing
 selectRest (_:[]) = Nothing
 selectRest (_:xs) = Just xs
 
+-- TODO this seems to cause leaks, test it
 -- | if both events fire at the same time, this functions returns an event with
 -- the second event's results that fires one frame after the first event fires
 sequenceEvents :: forall t m a b. (Reflex t, Adjustable t m, MonadFix m) => Event t a -> Event t b -> m (Event t b)
