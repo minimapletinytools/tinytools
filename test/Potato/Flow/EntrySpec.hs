@@ -1,20 +1,24 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Potato.Flow.EntrySpec (
-  spec
-) where
+module Potato.Flow.EntrySpec
+  ( spec
+  )
+where
 
-import           Relude                   hiding (empty, fromList)
+import           Relude                  hiding ( empty
+                                                , fromList
+                                                )
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit       ( fromHUnitTest )
 import           Test.HUnit
 
 import           Reflex
 import           Reflex.Potato.Helpers
-import           Reflex.Test.App
+import           Reflex.Test.Host
 
-import qualified Data.List                as L (last)
+import qualified Data.List                     as L
+                                                ( last )
 
 import           Potato.Flow
 
@@ -30,43 +34,42 @@ data FCmd =
   | FCRedo
   deriving (Eq, Show)
 
-basic_network ::
-  forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+basic_network
+  :: forall t m
+   . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => (Event t FCmd -> PerformEventT t m (Event t Int))
 basic_network ev = do
   let
     -- TODO maybe a good place to try out template haskell
-    addEv = flip fmapMaybe ev $ \case
-      FCAddSElt x -> Just (SEltLabel "blank" x)
-      _ -> Nothing
-    removeEv = flip fmapMaybe ev $ \case
-      FCRemoveRElt x -> Just x
-      _ -> Nothing
-    manipEv = flip fmapMaybe ev $ \case
-      FCManipulate x -> Just x
-      _ -> Nothing
-    redoEv = flip fmapMaybe ev $ \case
-      FCRedo -> Just ()
-      _ -> Nothing
-    undoEv = flip fmapMaybe ev $ \case
-      FCUndo -> Just ()
-      _ -> Nothing
+      addEv = flip fmapMaybe ev $ \case
+        FCAddSElt x -> Just (SEltLabel "blank" x)
+        _           -> Nothing
+      removeEv = flip fmapMaybe ev $ \case
+        FCRemoveRElt x -> Just x
+        _              -> Nothing
+      manipEv = flip fmapMaybe ev $ \case
+        FCManipulate x -> Just x
+        _              -> Nothing
+      redoEv = flip fmapMaybe ev $ \case
+        FCRedo -> Just ()
+        _      -> Nothing
+      undoEv = flip fmapMaybe ev $ \case
+        FCUndo -> Just ()
+        _      -> Nothing
 
-    pfc = PFConfig {
-      _pfc_addElt       = addEv
-      , _pfc_removeElt  = removeEv
-      , _pfc_manipulate = never
-      , _pfc_undo = undoEv
-      , _pfc_redo = redoEv
-    }
+      pfc = PFConfig { _pfc_addElt     = addEv
+                     , _pfc_removeElt  = removeEv
+                     , _pfc_manipulate = never
+                     , _pfc_undo       = undoEv
+                     , _pfc_redo       = redoEv
+                     }
   pf <- holdPF pfc
   return $ updated . fmap length . _layerTree_view . _pfo_layers $ pf
 
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
-  let
-    bs = [
-        FCNone
+  let bs =
+        [ FCNone
         , FCAddSElt (SEltBox simpleSBox)
         , FCAddSElt (SEltBox simpleSBox)
         , FCAddSElt (SEltBox simpleSBox)
@@ -77,11 +80,21 @@ basic_test = TestLabel "basic" $ TestCase $ do
         , FCRemoveRElt 3
         , FCRemoveRElt 0
         , FCAddSElt (SEltBox simpleSBox)
-        , FCUndo , FCUndo , FCUndo , FCUndo , FCUndo , FCUndo
-        , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo , FCRedo
-      ]
-    run :: IO [[Maybe Int]]
-    run = runAppSimple basic_network bs
+        , FCUndo
+        , FCUndo
+        , FCUndo
+        , FCUndo
+        , FCUndo
+        , FCUndo
+        , FCRedo
+        , FCRedo
+        , FCRedo
+        , FCRedo
+        , FCRedo
+        , FCRedo
+        ]
+      run :: IO [[Maybe Int]]
+      run = runAppSimple basic_network bs
   v <- liftIO run
   print v
   return ()

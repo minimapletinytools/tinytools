@@ -52,9 +52,11 @@ extra-deps:
 #- smash-0.1.1.0
 - dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
 - github: pdlla/reflex-test-host
-  commit: 119014e97a5f821635747aec0f67ea2f31181ad7
+  commit: 73de55fbd7cb67b73af8f5d4370b1f653e7e9652
 - github: pdlla/reflex-dynamic-containers
   commit: 196093736feff72e93812cf27f427f32436030dc
+- github: pdlla/reflex-potatoes
+  commit: 2af6a47273cb371abceab643ae787325631f8487
 
 
 # Override default flag values for local packages and extra-deps

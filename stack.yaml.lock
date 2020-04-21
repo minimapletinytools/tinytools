@@ -75,19 +75,19 @@ packages:
   original:
     hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
 - completed:
-    size: 7245
-    url: https://github.com/pdlla/reflex-test-host/archive/119014e97a5f821635747aec0f67ea2f31181ad7.tar.gz
+    size: 7707
+    url: https://github.com/pdlla/reflex-test-host/archive/73de55fbd7cb67b73af8f5d4370b1f653e7e9652.tar.gz
     cabal-file:
-      size: 2880
-      sha256: 42a928caab7c51e7a1cd83979f0923311e4f1641a7cc1bcc51c3d652974b91ec
+      size: 2851
+      sha256: da5bb19a091613bf951daddde077e03481cc4b400d70883f387f2930940c2f6e
     name: reflex-test-host
     version: 0.1.0.0
-    sha256: 1d15f0352a339a1500da0153162e1da54a95d30bdd6af96e4642149ce1c2324d
+    sha256: 99982e0afab3b24d621e7a9808d8c3d46b0a62c730c4e27f0de565cc48f28391
     pantry-tree:
-      size: 594
-      sha256: ac2431f543f0577b2d64d3c783f15ab4dbb897c9ab3994a7b4c8772489ac0eb8
+      size: 598
+      sha256: b78da52f823b455d0c0c464e7b134e92493636819925aa6c40be53579f44ab96
   original:
-    url: https://github.com/pdlla/reflex-test-host/archive/119014e97a5f821635747aec0f67ea2f31181ad7.tar.gz
+    url: https://github.com/pdlla/reflex-test-host/archive/73de55fbd7cb67b73af8f5d4370b1f653e7e9652.tar.gz
 - completed:
     size: 20499
     url: https://github.com/pdlla/reflex-dynamic-containers/archive/196093736feff72e93812cf27f427f32436030dc.tar.gz
@@ -102,6 +102,20 @@ packages:
       sha256: 1d00655cdee218b0778303e37f87d14a967c5cee9d775675a024ec27cc5d61f6
   original:
     url: https://github.com/pdlla/reflex-dynamic-containers/archive/196093736feff72e93812cf27f427f32436030dc.tar.gz
+- completed:
+    size: 9018
+    url: https://github.com/pdlla/reflex-potatoes/archive/2af6a47273cb371abceab643ae787325631f8487.tar.gz
+    cabal-file:
+      size: 2964
+      sha256: fd9cf9af0bcc23d45d0bb1603510738beb3f2479788af2652304ebfc6612155b
+    name: reflex-potatoes
+    version: 0.1.0.0
+    sha256: ba6b13fb5ecaccfffe9b5bac51605728e537e164e59a9a6a30ba1d9420267198
+    pantry-tree:
+      size: 608
+      sha256: bf78806e76333b967845d922968a3fe76e32701b7a5ce1762f30e9a456a3ff9e
+  original:
+    url: https://github.com/pdlla/reflex-potatoes/archive/2af6a47273cb371abceab643ae787325631f8487.tar.gz
 snapshots:
 - completed:
     size: 491389

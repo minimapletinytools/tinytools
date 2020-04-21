@@ -91,14 +91,13 @@ dependencies:
 - template-haskell
 - reflex-dynamic-containers
 - reflex-test-host
-
+- reflex-potatoes
 
 
 library:
   source-dirs: src
   exposed-modules:
     - Potato.Flow
-    - Reflex.Potato.Helpers
 
 executables:
   memorytests:
