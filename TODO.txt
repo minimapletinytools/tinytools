@@ -1,39 +1,14 @@
-import CodeWorld.Reflex
-import Reflex
-import Control.Monad
-
-main = debugReactiveOf $ do
-    angle <- foldDyn (+) 0 =<< getTimePassing
-    let
-        zero = 0 :: Double
-        zeroDyn = constDyn zero
-        foldfn a _ = holdDyn zero (updated angle)
-
-    doubleDyn <- foldDynM foldfn zeroDyn (updated angle)
-    draw ((\a -> rotated a codeWorldLogo) <$> join doubleDyn)
-
-
-
-
-
 
 stack build --ghc-options="-ddump-splices"
 
-::split up todo::
--make reflex-test-app Reflex.Test.App package
--make reflex-potato-containers package
--consider making reflex-potato-helpers package
-
 
 ::TODO::
--try with -o2 for leaks
+-consider refactoring relts so they don't contain dynamics 
+-add test helper for action stack which ensure state after undo/redo remains the same!
+-add manipulate test to EntrySpec
+-setup frontend from potato-flow
 -add max length param to actionstack
--delete reflex basic host from github or add a pointer to this repo
--profile memory usage
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results
--use default instances for config
--consider adding maybe event to configs instead of using never :o
-DONE-rename gitrepo to potato-flow
 -make naming in selts consistent with rest of code
 -figure out deriveArgDict thing, we need show instances for debugging!!
 -finish relt deserializers
@@ -53,6 +28,17 @@ DONE-rename gitrepo to potato-flow
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
 
+
+DONE-delete reflex basic host from github or add a pointer to this repo
+IGNORE-use default instances for config
+DONE-figure out unicode in todo undo dom
+DONE-make reflex-test-app Reflex.Test.App package
+DONE-make reflex-potato-containers package
+DONE-consider making reflex-potato-helpers package
+DONE-try with -o2 for leaks
+DONE-profile memory usage
+IGNORE-consider adding maybe event to configs instead of using never :o
+DONE-rename gitrepo to potato-flow
 DONE-decide what to do with directory and REltIds
   DONE-are REltIds even needed? We can just pass in the full RElt reference
       -YES they are needed to fan events efficiently

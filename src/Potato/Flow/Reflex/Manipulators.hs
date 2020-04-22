@@ -3,8 +3,8 @@
 {-# LANGUAGE RecordWildCards    #-}
 {-# LANGUAGE RecursiveDo        #-}
 
-module Potato.Flow.Reflex.Manipulators (
-  MNone
+module Potato.Flow.Reflex.Manipulators
+  ( MNone
   , MBox(..)
   , MLine(..)
   , MText(..)
@@ -15,7 +15,8 @@ module Potato.Flow.Reflex.Manipulators (
   , CText(..)
   , CTag(..)
   , Controllers
-) where
+  )
+where
 
 import           Relude
 
@@ -82,11 +83,19 @@ data CText = CText {
   , _cText_text :: DeltaText
 }
 
+-- | transforms object based on a reference point
+-- used for multi-selection
+data CRelBox = CRelBox {
+  _cRelBox_original :: LBox
+  , _cRelBox_box    :: DeltaLBox
+}
+
 
 data CTag a where
   CTagBox :: CTag DeltaLBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText
+  CTagRelBox :: CTag CRelBox
   deriving anyclass Data.GADT.Compare.GEq
   deriving anyclass DM.GCompare
 

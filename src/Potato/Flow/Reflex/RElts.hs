@@ -35,6 +35,7 @@ import           Reflex.Potato.Helpers
 type REltId = Int
 
 type ManipulatorWithId t = DS.DSum (Const2 REltId (Manipulators t)) Identity
+-- TODO change to ControllersWithId = DS.DMap
 type ControllerWithId = DS.DSum (Const2 REltId Controllers) Identity
 type ControllerEventSelector t = EventSelector t (Const2 REltId Controllers)
 
