@@ -1,9 +1,35 @@
 
 stack build --ghc-options="-ddump-splices"
 
+::REFACTOR TODO::
+-new relt factory
+  -owns directory id assigner
+  -inputs
+    -new selt
+    -paste/duplicate
+    -undo remove
+  -outputs
+    -new elt :: [(LayerPos, ReltId, SElt)]
+-put directory and layers together
+  -inputs
+    -do/undo mainpulate
+      -use traverseIntMapPatchWithKey (where patch contains deltas)
+    -do remove
+    -do/undo move
+    -new elt
+  -outputs
+    -modified :: PatchIntMap SElt
+    -layers :: Seq REltId
+    -all :: IntMap SElt
+-reusing manipulators
+  -Dynamic [(REltId,SEltLabel)]
+    -fmapMaybe if only 1
+      -fan by SElt type to manipulator
+    -fmapMaybe if many
+      -manipulatemany
 
 ::TODO::
--consider refactoring relts so they don't contain dynamics 
+-consider refactoring relts so they don't contain dynamics
 -add test helper for action stack which ensure state after undo/redo remains the same!
 -add manipulate test to EntrySpec
 -setup frontend from potato-flow
