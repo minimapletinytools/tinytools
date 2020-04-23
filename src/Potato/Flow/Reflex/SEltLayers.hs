@@ -6,6 +6,7 @@
 module Potato.Flow.Reflex.SEltLayers (
   LayerPos
   , SEltLayerTree(..)
+  , sEltLayerTree_sampleSuperSEltByPos
   , sEltLayerTree_tagSuperSEltByPos
   , SEltLayerTreeConfig(..)
   , holdSEltLayerTree
@@ -64,16 +65,17 @@ data SEltLayerTree t = SEltLayerTree {
 
 
 -- TODO do I still need these?
+{-
 -- | use for inserting at end of list
 sEltLayerTree_attachEndPos :: (Reflex t) => SEltLayerTree t -> Event t b -> Event t (LayerPos, b)
 sEltLayerTree_attachEndPos SEltLayerTree {..} = attach (length <$> current _sEltLayerTree_view)
 -- | use for removing at end of list
 sEltLayerTree_tagEndPos :: (Reflex t) => SEltLayerTree t -> Event t b -> Event t LayerPos
 sEltLayerTree_tagEndPos SEltLayerTree {..} = tag (length <$> current _sEltLayerTree_view)
+-}
 
--- | tag the SElt at the input position
-sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t (Maybe SuperSEltLabel)
-sEltLayerTree_tagSuperSEltByPos SEltLayerTree {..} = pushAlways $ \lp -> do
+sEltLayerTree_sampleSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> LayerPos -> PushM t (Maybe SuperSEltLabel)
+sEltLayerTree_sampleSuperSEltByPos SEltLayerTree {..} lp = do
   layers <- sample . current $ _sEltLayerTree_view
   let rid = fromJust $ Seq.lookup lp layers
   slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
@@ -81,6 +83,10 @@ sEltLayerTree_tagSuperSEltByPos SEltLayerTree {..} = pushAlways $ \lp -> do
   return $ do
     sl <- msl
     return (rid, lp, sl)
+
+-- | tag the SElt at the input position
+sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t (SuperSEltLabel)
+sEltLayerTree_tagSuperSEltByPos slt = push $ sEltLayerTree_sampleSuperSEltByPos slt
 
 -- TODO
 -- | tag SEltLabels at the input position

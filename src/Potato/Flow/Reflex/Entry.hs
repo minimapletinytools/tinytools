@@ -52,15 +52,6 @@ data PFConfig t = PFConfig {
 
 data PFOutput t = PFOutput {
   _pfo_layers            :: SEltLayerTree t
-
-
-  -- | helper method for making selections
-  -- N.B. this does not update after changing SEltLayerTree topology.
-  -- The assumption is that if you moved an element, you will reselect the element you need.
-  , _pfo_makeSelectionEv :: Event t LayerPos ->  Event t (Maybe SuperSEltLabel)
-
-  -- TODO make this multi select
-  --_pfo_makeSelectionEv :: Event t [LayerPos] ->  Event t [SuperSEltLabel]
 }
 
 holdPF ::
@@ -80,7 +71,7 @@ holdPF PFConfig {..} = mdo
       fmap (PFCDeleteElts ==>)
       $ fmap (:|[])
       $ fmap fromJust
-      $ sEltLayerTree_tagSuperSEltByPos layerTree _pfc_removeElt
+      $ pushAlways (sEltLayerTree_sampleSuperSEltByPos layerTree) _pfc_removeElt
 
   -- ACTION STACK
   let
@@ -144,7 +135,4 @@ holdPF PFConfig {..} = mdo
   return $
     PFOutput {
       _pfo_layers = layerTree
-
-      -- just for convenience
-      , _pfo_makeSelectionEv = sEltLayerTree_tagSuperSEltByPos layerTree
     }
