@@ -88,8 +88,19 @@ toManipulator selected = do
             _mBox_target = rid
             , _mBox_box  = _sBox_box
           }
-      -- TODO rest of them
-      _                 -> undefined
+      SEltLine SLine {..} -> (MTagLine ==> mline) where
+        mline = MLine {
+            _mLine_target  = rid
+            , _mLine_start = _sLine_start
+            , _mLine_end   = _sLine_end
+          }
+      SEltText SText {..} -> (MTagText ==> mtext) where
+        mtext = MText {
+            _mText_target = rid
+            , _mText_box  = _sText_box
+            , _mText_text = _sText_text
+          }
+      _                 -> nilState
     foldfn (s:ss) _ = r where
       nes = s:|ss
       msboxes = catMaybes . toList $ fmap (getSEltBox . _sEltLabel_sElt . thd3) nes
