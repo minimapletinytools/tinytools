@@ -6,7 +6,7 @@ stack build --ghc-options="-ddump-splices"
 DONE-switch to linear for Math
   -package Math into a separate lib on stackage plz
   -rename stuff a little
--finish selt stuff
+DONE-finish selt stuff
   -toManipulator
   -updateFnFromController
 -testing stuff
@@ -27,6 +27,7 @@ DONE-switch to linear for Math
   -rename relt
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
+  -use affine transformations for box manipulation
 
 DONE-manipulator test
 DONE-hook up manipulators

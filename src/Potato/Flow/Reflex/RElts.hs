@@ -36,10 +36,6 @@ getSEltBox selt = case selt of
   SEltLine x      -> Just $ make_LBox_from_LPoints (_sLine_start x) (_sLine_end x)
   SEltText x      -> Just $ _sText_box x
 
--- TODO
---relScaleSElt :: SElt -> CRelBox -> SElt
---relScaleSElt
-
 data Renderer = Renderer LBox (LPoint -> Maybe PChar)
 
 makePotatoRenderer :: LBox -> Renderer
@@ -115,6 +111,51 @@ toManipulator selected = do
 
 
 
+scale_LSize :: (Float,Float) -> LSize -> LSize
+scale_LSize (sx, sy) (LSize (V2 osx osy)) =
+  LSize $ V2 (floor (fromIntegral osx * sx)) (floor (fromIntegral osy * sy))
+
+transform_LPoint :: (Float,Float) -> LPoint -> LPoint -> LPoint -> LPoint
+transform_LPoint (sx, sy) trans anchor point = trans + anchor + r' where
+  LPoint (V2 px py) = point - anchor
+  r' = LPoint $ V2 (floor (fromIntegral px * sx)) (floor (fromIntegral py * sy))
+
+transform_LBox :: (Float,Float) -> LPoint -> LPoint -> LBox -> LBox
+transform_LBox (sx, sy) trans anchor LBox {..} = LBox {
+    ul = transform_LPoint (sx, sy) trans anchor ul
+    , size = scale_LSize (sx, sy) size
+  }
+
+-- TODO test
+modify_sElt_with_cRelBox :: SElt -> CRelBox -> SElt
+modify_sElt_with_cRelBox selt CRelBox {..} = let
+    -- TODO switch to affine transforms
+    -- TODO probably just use lens ;__;
+    trans = deltaLBox_translate _cRelBox_box
+    anchor = ul _cRelBox_original
+    LSize (V2 dx dy) = deltaLBox_resizeBy _cRelBox_box
+    LSize (V2 x y) = size _cRelBox_original
+    sx :: Float = 1 + fromIntegral dx / fromIntegral x
+    sy :: Float = 1 + fromIntegral dy / fromIntegral y
+  in
+    case selt of
+      SEltBox SBox {..}  -> SEltBox $ SBox {
+          _sBox_box = transform_LBox (sx, sy) trans anchor _sBox_box
+          , _sBox_style = _sBox_style
+        }
+      SEltLine SLine {..} -> SEltLine $ SLine {
+          _sLine_start = transform_LPoint (sx, sy) trans anchor _sLine_start
+          , _sLine_end = transform_LPoint (sx, sy) trans anchor _sLine_end
+          , _sLine_style = _sLine_style
+        }
+      SEltText SText {..} -> SEltText $ SText {
+          _sText_box     = transform_LBox (sx, sy) trans anchor _sText_box
+          , _sText_text  = _sText_text
+          , _sText_style = _sText_style
+        }
+      x          -> x
+
+
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -123,10 +164,16 @@ modifyDelta isDo x dx = if isDo
 updateFnFromController :: Bool -> Controller -> (SEltLabel -> SEltLabel)
 updateFnFromController isDo = \case
   (CTagBox :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
-    SEltBox sbox -> SEltLabel sname (SEltBox $ modifyDelta isDo sbox d)
+    SEltBox s -> SEltLabel sname (SEltBox $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagBox - " <> show selt
-  -- TODO finish
-  --(CTagRelBox :=> Identity d) -> id
+  (CTagLine :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
+    SEltLine s -> SEltLabel sname (SEltLine $ modifyDelta isDo s d)
+    _ -> error $ "Controller - SElt type mismatch: CTagLine - " <> show selt
+  (CTagText :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
+    SEltText s -> SEltLabel sname (SEltText $ modifyDelta isDo s d)
+    _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
+  (CTagRelBox :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sElt_with_cRelBox selt d)
   _ -> id
 
 
