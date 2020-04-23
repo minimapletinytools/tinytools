@@ -35,7 +35,10 @@ stack build --ghc-options="-ddump-splices"
 
 ::TODO::
 -consider refactoring relts so they don't contain dynamics
--add test helper for action stack which ensure state after undo/redo remains the same!
+-testing stuff
+  -basic support for input/expected output pair testing
+  -add test helper for action stack which ensure state after undo/redo remains the same!
+  -add memtest
 -add manipulate test to EntrySpec
 -setup frontend from potato-flow
 -add max length param to actionstack

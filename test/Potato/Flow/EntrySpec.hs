@@ -24,12 +24,21 @@ simpleSBox = SBox nilLBox defaultSLineStyle
 
 data FCmd =
   FCNone
-  | FCAddSElt SElt
-  | FCRemoveRElt Int -- position in layers to remove at
+  | FCAddElt SElt
+  | FCDeleteElt Int -- position in layers to remove at
   | FCManipulate ()
   | FCUndo
   | FCRedo
   deriving (Eq, Show)
+
+{-
+TODO
+randomFCmd :: SEltTree -> IO FCmd
+randomFCmd stree = do
+  let n = length stree
+-}
+
+
 
 basic_network
   :: forall t m
@@ -39,10 +48,10 @@ basic_network ev = do
   let
     -- TODO maybe a good place to try out template haskell
       addEv = flip fmapMaybe ev $ \case
-        FCAddSElt x -> Just (0, SEltLabel "blank" x)
+        FCAddElt x -> Just (0, SEltLabel "blank" x)
         _           -> Nothing
       removeEv = flip fmapMaybe ev $ \case
-        FCRemoveRElt x -> Just x
+        FCDeleteElt x -> Just x
         _              -> Nothing
       manipEv = flip fmapMaybe ev $ \case
         FCManipulate x -> Just x
@@ -67,16 +76,16 @@ basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
   let bs =
         [ FCNone
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCAddSElt (SEltBox simpleSBox)
-        , FCRemoveRElt 0
-        , FCRemoveRElt 3
-        , FCRemoveRElt 0
-        , FCAddSElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCAddElt (SEltBox simpleSBox)
+        , FCDeleteElt 0
+        , FCDeleteElt 3
+        , FCDeleteElt 0
+        , FCAddElt (SEltBox simpleSBox)
         , FCUndo
         , FCUndo
         , FCUndo
@@ -94,8 +103,7 @@ basic_test = TestLabel "basic" $ TestCase $ do
       run = runAppSimple basic_network bs
   v <- liftIO run
   print v
-  return ()
-  --L.last (join v) @?= Just ()
+  L.last (join v) @?= Just 4
 
 spec :: Spec
 spec = do
