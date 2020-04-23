@@ -34,38 +34,40 @@ DONE-selective rendering
     -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`
 
 ::TODO::
-
--state serializers
--consider refactoring relts so they don't contain dynamics
+-finish rest of selt -> manipulator thingies
+  -do the reusing manipulators trick
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
   -add memtest
   -add test to save and reload and ensure state stays the same
+-state serializers (should be done, just need to hook up aeson and test)
+
+-refactor
+  -rename relt
+  -make naming in selts consistent with rest of code
 -add manipulate test to EntrySpec
 -setup frontend from potato-flow
 -add max length param to actionstack
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results
--make naming in selts consistent with rest of code
 -figure out deriveArgDict thing, we need show instances for debugging!!
--finish relt deserializers
--hook up manipulators? (or did I do this already)
--start reflex project
--move directory into layer
-  -or just delete it for now, prob ok?
 
 -mid priority
   -helpers to create fine grained manipulators
-
--low priority
-  -update new testing framework to match Test.Run in reflex
-  -update test cases to use new testing framework
-  -relt serializers
   -refine drawers
+-low priority
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
 
 
+DONE-update new testing framework to match Test.Run in reflex
+DONE-update test cases to use new testing framework
+DONE-consider refactoring relts so they don't contain dynamics
+IGNORE-finish relt deserializers
+IGNORE-hook up manipulators? (or did I do this already)
+DONE-start reflex project
+DONE-move directory into layer
+  -or just delete it for now, prob ok?
 DONE-delete reflex basic host from github or add a pointer to this repo
 IGNORE-use default instances for config
 DONE-figure out unicode in todo undo dom
