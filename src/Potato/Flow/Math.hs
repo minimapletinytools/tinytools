@@ -78,32 +78,33 @@ union_LBox lb1 = const lb1
 instance FromJSON LBox
 instance ToJSON LBox
 
-class Delta x where
-  type DeltaType x :: Type
-  plusDelta :: x -> DeltaType x -> x
-  minusDelta :: x -> DeltaType x -> x
+class Delta x dx where
+  plusDelta :: x -> dx -> x
+  minusDelta :: x -> dx -> x
 
-instance Delta XY where
-  type DeltaType XY = XY
+instance Delta XY XY where
   plusDelta = (+)
   minusDelta = (-)
 
-instance (Delta a, Delta b) => Delta (a,b) where
-  type DeltaType (a,b) = (DeltaType a, DeltaType b)
+instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
   plusDelta (a,b) (c,d) = (plusDelta a c, plusDelta b d)
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
 
-deriving instance Delta LPoint
-deriving instance Delta LSize
 
+instance Delta LPoint LPoint where
+  plusDelta = (+)
+  minusDelta = (-)
+
+instance Delta LSize LSize where
+  plusDelta = (+)
+  minusDelta = (-)
 
 data DeltaLBox = DeltaLBox {
-  deltaLBox_translate  :: XY
-  , deltaLBox_resizeBy :: XY
+  deltaLBox_translate  :: LPoint
+  , deltaLBox_resizeBy :: LSize
 }
 
-instance Delta LBox where
-  type DeltaType LBox = DeltaLBox
+instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {
       ul = plusDelta ul deltaLBox_translate
       , size = plusDelta size deltaLBox_resizeBy
@@ -116,7 +117,6 @@ instance Delta LBox where
 type DeltaText = (Text,Text)
 -- TODO more efficient to do this with zippers prob?
 -- is there a way to make this more generic?
-instance Delta Text where
-  type DeltaType Text = DeltaText
+instance Delta Text DeltaText where
   plusDelta s (b, a) = assert (b == s) a
   minusDelta s (b, a) = assert (a == s) b

@@ -94,8 +94,7 @@ data CBox = CBox {
   _cBox_box :: DeltaLBox
 }
 
-instance Delta SBox where
-  type DeltaType SBox = CBox
+instance Delta SBox CBox where
   plusDelta SBox {..} CBox {..} = SBox {
       _sBox_box   = plusDelta _sBox_box _cBox_box
       , _sBox_style = _sBox_style

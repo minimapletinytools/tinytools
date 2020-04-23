@@ -104,7 +104,7 @@ makeManipulators selected = do
 
 
 
-modifyDelta :: (Delta x) => Bool -> x -> DeltaType x -> x
+modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
   else minusDelta x dx
