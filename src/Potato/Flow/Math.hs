@@ -1,9 +1,9 @@
 {-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Potato.Flow.Math (
-  XY(..), X(..), Y(..)
-  , nilXY
+  XY
   , LSize(..)
   , LPoint(..)
   , LBox(..)
@@ -14,11 +14,14 @@ module Potato.Flow.Math (
   , Delta(..)
   , DeltaLBox(..)
   , DeltaText
+
+  , module Linear.V2
 ) where
 
 import           Relude
 
 import           Data.Aeson
+import           Linear.V2
 
 import           Control.Exception (assert)
 
@@ -31,16 +34,12 @@ import           Control.Exception (assert)
   +y
 -}
 
--- TODO switch to math library
-newtype XY = XY { unXY :: (Int, Int) } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
-newtype X = X { unX :: Int } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
-newtype Y = Y { unY :: Int } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
+type XY = V2 Int
+instance FromJSON XY
+instance ToJSON XY
 
-nilXY :: XY
-nilXY = XY (0,0)
-
-newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
-newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Generic, Show, FromJSON, ToJSON)
+newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
+newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
 
 -- | a point in screen space
 -- should only be used by VC, so does not belong here
@@ -58,18 +57,18 @@ data LBox = LBox {
 } deriving (Eq, Generic, Show)
 
 nilLBox :: LBox
-nilLBox = LBox (LPoint nilXY) (LSize nilXY)
+nilLBox = LBox 0 0
 
 
 make_LBox_from_LPoints :: LPoint -> LPoint -> LBox
-make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
+make_LBox_from_LPoints (LPoint (V2 x1 y1)) (LPoint (V2 x2 y2)) =
   LBox {
-    ul = LPoint $ XY (min x1 x2, min y1 y2)
-    , size = LSize $ XY (abs (x1 - x2), abs (y1 - y2))
+    ul = LPoint $ V2 (min x1 x2) (min y1 y2)
+    , size = LSize $ V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
 does_LBox_contains_LPoint :: LBox -> LPoint -> Bool
-does_LBox_contains_LPoint (LBox (LPoint (XY (bx,by))) (LSize (XY (bw,bh)))) (LPoint (XY (px,py))) =
+does_LBox_contains_LPoint (LBox (LPoint (V2 bx by)) (LSize (V2 bw bh))) (LPoint (V2 px py)) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
 -- TODO
@@ -84,8 +83,8 @@ class Delta x where
   plusDelta :: x -> DeltaType x -> x
   minusDelta :: x -> DeltaType x -> x
 
-instance Delta Int where
-  type DeltaType Int = Int
+instance Delta XY where
+  type DeltaType XY = XY
   plusDelta = (+)
   minusDelta = (-)
 
@@ -94,16 +93,9 @@ instance (Delta a, Delta b) => Delta (a,b) where
   plusDelta (a,b) (c,d) = (plusDelta a c, plusDelta b d)
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
 
-deriving instance Delta X
-deriving instance Delta Y
-
-instance Delta XY where
-  type DeltaType XY = XY
-  plusDelta xy d = XY $ plusDelta (unXY xy) (unXY d)
-  minusDelta xy d = XY $ minusDelta (unXY xy) (unXY d)
-
 deriving instance Delta LPoint
 deriving instance Delta LSize
+
 
 data DeltaLBox = DeltaLBox {
   deltaLBox_translate  :: XY

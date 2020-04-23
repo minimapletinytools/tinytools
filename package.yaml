@@ -93,6 +93,7 @@ dependencies:
 - reflex-test-host
 - reflex-potatoes
 - extra
+- linear
 
 
 library:

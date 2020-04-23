@@ -61,7 +61,7 @@ basic_network ev = mdo
         let
           crelbox = CRelBox {
               _cRelBox_original = fromJust $ getSEltBox selt
-              , _cRelBox_box    = DeltaLBox (XY (0,0)) (XY (10,10))
+              , _cRelBox_box    = DeltaLBox (V2 0 0) (V2 10 10)
             }
         return . Just $ IM.singleton rid (CTagRelBox ==> crelbox)
       _              -> return Nothing

@@ -86,7 +86,7 @@ instance ToJSON SLine
 -- |
 data SCartLines = SCartLines {
   _sCartLines_start   :: LPoint
-  , _sCartLines_ends  :: NonEmpty (Either X Y)
+  , _sCartLines_ends  :: NonEmpty (Either Int Int)
   , _sCartLines_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
