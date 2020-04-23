@@ -54,7 +54,7 @@ data PFOutput t = PFOutput {
 }
 
 holdPF ::
-  forall t m a. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
+  forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
   => PFConfig t
   -> m (PFOutput t)
 holdPF PFConfig {..} = mdo

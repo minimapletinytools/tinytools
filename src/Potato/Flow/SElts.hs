@@ -62,7 +62,7 @@ data STextStyle = STextStyle {
 instance FromJSON STextStyle
 instance ToJSON STextStyle
 
--- | serializable representations of each type of Elt
+-- |
 data SBox = SBox {
   sb_box     :: LBox
   , sb_style :: SLineStyle

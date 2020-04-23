@@ -24,11 +24,55 @@ import           Reflex.Potato.Helpers
 
 
 {-
-
 type ManipulatorWithId t = DS.DSum (Const2 LayerEltId (Manipulators t)) Identity
--- TODO change to ControllersWithId = DS.DMap
-type ControllerWithId = DS.DSum (Const2 LayerEltId Controllers) Identity
-type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controllers)
+type ControllerWithId = DS.DSum (Const2 LayerEltId Controller) Identity
+type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controller)
+-}
+
+
+-- | gets an 'LBox' that contains the entire RElt
+getSEltBox :: SElt -> Maybe LBox
+getSEltBox selt = case selt of
+  SEltNone        -> Nothing
+  SEltFolderStart -> Nothing
+  SEltFolderEnd   -> Nothing
+  SEltBox x       -> Just $ sb_box x
+  SEltLine x      -> Just $ make_LBox_from_LPoints (sl_start x) (sl_end x)
+  SEltText x      -> Just $ st_box x
+
+data Renderer = Renderer LBox (LPoint -> Maybe PChar)
+
+makePotatoRenderer :: LBox -> Renderer
+makePotatoRenderer lbox = Renderer lbox $ \p -> if does_LBox_contains_LPoint lbox p
+  then Just '#'
+  else Nothing
+
+data SEltDrawer = SEltDrawer {
+  _sEltDrawer_box        :: LBox
+  , _sEltDrawer_renderer :: Renderer -- switch to [Renderer] for better performance
+}
+
+nilDrawer :: SEltDrawer
+nilDrawer = SEltDrawer {
+    _sEltDrawer_box = nilLBox
+    , _sEltDrawer_renderer = Renderer nilLBox (const Nothing)
+  }
+
+getDrawer :: SElt -> SEltDrawer
+getDrawer selt = case selt of
+  SEltNone        -> nilDrawer
+  SEltFolderStart -> nilDrawer
+  SEltFolderEnd   -> nilDrawer
+  SEltBox x       -> potatoDrawer
+  SEltLine x      -> potatoDrawer
+  SEltText x      -> potatoDrawer
+  where
+    potatoDrawer = SEltDrawer {
+        _sEltDrawer_box = fromJust (getSEltBox selt)
+        , _sEltDrawer_renderer =  makePotatoRenderer $ fromJust (getSEltBox selt)
+      }
+
+{-
 
 data RElt t =
   REltNone
@@ -49,78 +93,51 @@ getREltManipulator relt = case relt of
   where
     none = MTagNone ==> ()
 
--- | gets an 'LBox' that contains the entire RElt
-getREltBox :: (Reflex t) => RElt t -> Maybe (Dynamic t LBox)
-getREltBox relt = case relt of
-  REltNone        -> Nothing
-  REltFolderStart -> Nothing
-  REltFolderEnd   -> Nothing
-  REltBox x       -> Just $ _mBox_box x
-  REltLine x      -> Just
-    $ uncurry make_LBox_from_LPoints
-    <$> ffor2 (_mLine_start x) (_mLine_end x) (,)
-  REltText x      -> Just $ _mText_box x
 
-data Renderer = Renderer LBox (LPoint -> Maybe PChar)
-
-makePotatoRenderer :: LBox -> Renderer
-makePotatoRenderer lbox = Renderer lbox $ \p -> if does_LBox_contains_LPoint lbox p
-  then Just '#'
-  else Nothing
-
-data REltDrawer t = REltDrawer {
-  _rEltDrawer_box        :: Behavior t LBox
-  , _rEltDrawer_renderer :: Behavior t Renderer -- switch to [Renderer] for better performance
-}
-
-nilDrawer :: (Reflex t) => REltDrawer t
-nilDrawer = REltDrawer {
-    _rEltDrawer_box = constant nilLBox
-    , _rEltDrawer_renderer = constant (Renderer nilLBox (const Nothing))
-  }
-
-getDrawer :: (Reflex t) => RElt t -> REltDrawer t
-getDrawer relt = case relt of
-  REltNone        -> nilDrawer
-  REltFolderStart -> nilDrawer
-  REltFolderEnd   -> nilDrawer
-  REltBox x       -> potatoDrawer
-  REltLine x      -> potatoDrawer
-  REltText x      -> potatoDrawer
-  where
-    potatoDrawer = REltDrawer {
-        _rEltDrawer_box = current $ fromJust (getREltBox relt)
-        , _rEltDrawer_renderer = current $ makePotatoRenderer <$> fromJust (getREltBox relt)
-      }
-
--- | reflex element nodes
 data REltLabel t = REltLabel {
-  re_id     :: LayerEltId
-  , re_name :: Text
-  , re_elt  :: RElt t
+  re_name  :: Text
+  , re_elt :: RElt t
 }
+-}
+
+type Selected = [(REltId, SEltLabel)]
+type Manipulating t = ([REltId], Manipulator t)
+makeManipulators :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
+  => Dynamic t Selected
+  -> m (Dynamic t (Manipulating t))
+makeManipulators selected = do
+  let
+    nilState :: Manipulating t
+    nilState = ([], MTagNone ==> ())
+    foldfn :: Selected -> Manipulating t -> PushM t (Manipulating t)
+    foldfn [] _ = return nilState
+    foldfn ((rid, SEltLabel _ selt):[]) _ = case selt of
+      -- TODO
+      SEltBox SBox {..} -> undefined
+      _                 -> undefined
+    foldfn selected _ = do
+      let
+        -- TODO
+        sboxes = map (getSEltBox . selt_elt . snd) selected
+        combined = undefined
+      return (map fst selected, MTagRelBox ==> combined)
+  foldDynM foldfn nilState (updated selected)
 
 
--- expected to satisfy scoping invariant
-type REltTree t = [REltLabel t]
-type NonEmptyREltTree t = NonEmpty (REltLabel t)
 
--- IDs must be assigned first before we can deserialize
-type SEltLabelWithId = (LayerEltId, SEltLabel)
-type SEltWithIdTree = [SEltLabelWithId]
-
+{-
 deserializeRElt ::
   forall t m. (Reflex t, MonadHold t m, MonadFix m)
   => ControllerEventSelector t -- ^ event selector for do action
   -> ControllerEventSelector t -- ^ event selector for undo action
-  -> SEltLabelWithId
+  -> (REltId, SEltLabel)
   -> m (REltLabel t)
 deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
 
   let
-    reltDoEv = select doSelector (Const2 reltid)
-    reltUndoEv = select undoSelector (Const2 reltid)
-    bothEv :: Event t (Either Controllers Controllers)
+    reltDoEv = selectInt doSelector reltid
+    reltUndoEv = selectInt undoSelector reltid
+    bothEv :: Event t (Either Controller Controller)
     bothEv = alignEitherWarn ("("<>show reltid<>") do/undo") reltDoEv reltUndoEv
 
   -- TODO implement for each type
@@ -130,7 +147,7 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
     SEltFolderEnd   -> return REltFolderEnd
     SEltBox SBox {..} -> do
       let
-        foldfn :: Either Controllers Controllers -> LBox -> LBox
+        foldfn :: Either Controller Controller -> LBox -> LBox
         foldfn (Left ct) box = case ct of
           (CTagBox :=> Identity dbox) -> plusDelta box dbox
         foldfn (Right ct) box = case ct of
@@ -142,7 +159,7 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
     -- TODO wut a pain DDDDD:
     SEltLine SLine {..} -> do
       let
-        foldfn :: Either Controllers Controllers -> LPoint -> LPoint
+        foldfn :: Either Controller Controller -> LPoint -> LPoint
         foldfn
       --sl_start   :: LPoint
       --, sl_end  ::LPoint
@@ -150,28 +167,5 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
 -}
 
     _               -> undefined
-  return $ REltLabel reltid sname relt
-
-deserialize ::
-  (Reflex t, MonadHold t m, MonadFix m)
-  => ControllerEventSelector t -- ^ event selector for do action
-  -> ControllerEventSelector t -- ^ event selector for undo action
-  -> SEltWithIdTree
-  -> m (REltTree t)
-deserialize doSelector undoSelector = mapM (deserializeRElt doSelector undoSelector)
-
-serializeRElt :: (Reflex t, MonadSample t m) => REltLabel t -> m SEltLabel
-serializeRElt relt = do
-  --let
-    --sampleDyn = sample . current
-  selt <- case re_elt relt of
-    REltNone        -> return SEltNone
-    REltFolderStart -> return SEltFolderStart
-    REltFolderEnd   -> return SEltFolderEnd
-    REltBox x       -> undefined --SEltBox <$> sampleDyn x
-    REltLine x      -> undefined --SEltLine <$> sampleDyn x
-    REltText x      -> undefined --SEltText <$> sampleDyn x
-  return $ SEltLabel (re_name relt) selt
-serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
-serialize = mapM serializeRElt
+  return $ REltLabel sname relt
 -}

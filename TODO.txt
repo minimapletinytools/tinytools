@@ -29,16 +29,19 @@ stack build --ghc-options="-ddump-splices"
       -manipulatemany
 
 ::NEW QUESTIONS::
--selective rendering
+DONE-selective rendering
   -upon modifying or deleting an element, we need to know its PREVIOUS state as well to know what needs to be rerendered
     -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`
 
 ::TODO::
+
+-state serializers
 -consider refactoring relts so they don't contain dynamics
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
   -add memtest
+  -add test to save and reload and ensure state stays the same
 -add manipulate test to EntrySpec
 -setup frontend from potato-flow
 -add max length param to actionstack

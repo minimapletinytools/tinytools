@@ -9,14 +9,15 @@ module Potato.Flow.Reflex.Manipulators
   , MBox(..)
   , MLine(..)
   , MText(..)
+  , MRelBox(..)
   , MTag(..)
-  , Manipulators
+  , Manipulator
   , CBox(..)
   , CLine(..)
   , CText(..)
   , CRelBox(..)
   , CTag(..)
-  , Controllers
+  , Controller
   )
 where
 
@@ -49,6 +50,7 @@ data MTag t a where
   MTagBox :: MTag t (MBox t)
   MTagLine :: MTag t (MLine t)
   MTagText :: MTag t (MText t)
+  MTagRelBox :: MTag t (MRelBox t)
   -- TODO manual instances needed
   --deriving anyclass Data.GADT.Compare.GEq
   --deriving anyclass DM.GCompare
@@ -69,7 +71,12 @@ data MText t = MText {
   , _mText_text :: Dynamic t Text
 }
 
-type Manipulators t = DS.DSum (MTag t) Identity
+data MRelBox t = MRelBox {
+  _mRelBox_original :: Dynamic t LBox
+  , _mRelBox_box    :: Dynamic t LBox
+}
+
+type Manipulator t = DS.DSum (MTag t) Identity
 
 data CBox = CBox {
   _cBox_box :: DeltaLBox
@@ -102,4 +109,4 @@ data CTag a where
   --deriving anyclass Data.GADT.Compare.GEq
   --deriving anyclass DM.GCompare
 
-type Controllers = DS.DSum CTag Identity
+type Controller = DS.DSum CTag Identity
