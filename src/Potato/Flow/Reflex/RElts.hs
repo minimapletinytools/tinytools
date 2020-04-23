@@ -2,7 +2,7 @@
 
 module Potato.Flow.Reflex.RElts (
   getSEltBox
-  , makeSEltModifier
+  , updateFnFromController
 ) where
 
 import           Relude
@@ -73,10 +73,10 @@ getDrawer selt = case selt of
       }
 
 type Selected = [SuperSEltLabel]
-makeManipulators :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
+toManipulator :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
   => Event t Selected -- ^ selection event, which will sample manipulators of current selection
   -> m (Dynamic t Manipulator)
-makeManipulators selected = do
+toManipulator selected = do
   let
     nilState :: Manipulator
     nilState = (MTagNone ==> ())
@@ -109,8 +109,8 @@ modifyDelta isDo x dx = if isDo
   then plusDelta x dx
   else minusDelta x dx
 
-makeSEltModifier :: Bool -> Controller -> (SEltLabel -> SEltLabel)
-makeSEltModifier isDo = \case
+updateFnFromController :: Bool -> Controller -> (SEltLabel -> SEltLabel)
+updateFnFromController isDo = \case
   (CTagBox :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
     SEltBox sbox -> SEltLabel sname (SEltBox $ modifyDelta isDo sbox d)
     _ -> error $ "Controller - SElt type mismatch: CTagBox - " <> show selt
@@ -129,7 +129,7 @@ makeSEltModifier isDo = \case
 -- TODO DELETE
 
 {-
--- needed by 'makeManipulators' internally
+-- needed by 'toManipulator' internally
 
 data SEltTag a where
   SEltTagNone :: SEltTag ()

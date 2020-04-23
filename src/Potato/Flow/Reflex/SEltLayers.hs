@@ -153,7 +153,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     extractREltId :: SuperSEltLabel -> REltId
     extractREltId (i,_,_) = i
     flattenControls :: Bool -> IntMap Controller -> [(REltId, SEltLabel -> SEltLabel)]
-    flattenControls isDo im = IM.toList $ flip IM.map im $ makeSEltModifier isDo
+    flattenControls isDo im = IM.toList $ flip IM.map im $ updateFnFromController isDo
     -- PARTIAL
     modifyDo :: Event t (NonEmpty (REltId, SEltLabel -> SEltLabel))
     modifyDo = fmap NE.fromList $ ffor _sEltLayerTree_directory_doManipulate $ flattenControls True
