@@ -18,6 +18,7 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy          as LBS
 import           Data.Dependent.Sum            ((==>))
 import qualified Data.List.NonEmpty            as NE
+import           Data.Maybe                    (fromJust)
 
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.RElts
@@ -50,7 +51,16 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
-  _pfo_layers :: SEltLayerTree t
+  _pfo_layers            :: SEltLayerTree t
+
+
+  -- | helper method for making selections
+  -- N.B. this does not update after changing SEltLayerTree topology.
+  -- The assumption is that if you moved an element, you will reselect the element you need.
+  , _pfo_makeSelectionEv :: Event t LayerPos ->  Event t (Maybe SuperSEltLabel)
+
+  -- TODO make this multi select
+  --_pfo_makeSelectionEv :: Event t [LayerPos] ->  Event t [SuperSEltLabel]
 }
 
 holdPF ::
@@ -69,6 +79,7 @@ holdPF PFConfig {..} = mdo
     doAction_PFCDeleteElts =
       fmap (PFCDeleteElts ==>)
       $ fmap (:|[])
+      $ fmap fromJust
       $ sEltLayerTree_tagSuperSEltByPos layerTree _pfc_removeElt
 
   -- ACTION STACK
@@ -133,4 +144,7 @@ holdPF PFConfig {..} = mdo
   return $
     PFOutput {
       _pfo_layers = layerTree
+
+      -- just for convenience
+      , _pfo_makeSelectionEv = sEltLayerTree_tagSuperSEltByPos layerTree
     }

@@ -71,22 +71,31 @@ sEltLayerTree_attachEndPos SEltLayerTree {..} = attach (length <$> current _sElt
 sEltLayerTree_tagEndPos :: (Reflex t) => SEltLayerTree t -> Event t b -> Event t LayerPos
 sEltLayerTree_tagEndPos SEltLayerTree {..} = tag (length <$> current _sEltLayerTree_view)
 
-
 -- | tag the SElt at the input position
-sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t SuperSEltLabel
+sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t (Maybe SuperSEltLabel)
 sEltLayerTree_tagSuperSEltByPos SEltLayerTree {..} = pushAlways $ \lp -> do
   layers <- sample . current $ _sEltLayerTree_view
   let rid = fromJust $ Seq.lookup lp layers
   slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
   let msl = IM.lookup rid slmap
-  return (rid, lp, fromJust msl) -- PARTIAL
+  return $ do
+    sl <- msl
+    return (rid, lp, sl)
 
+-- TODO
+-- | tag SEltLabels at the input position
+--sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t [LayerPos] ->  Event t [SuperSEltLabel]
+
+
+{-
+-- DELETE
 -- | tag the SElt at the input REltId
 sEltLayerTree_tagSEltById :: (Reflex t) => SEltLayerTree t -> Event t REltId -> Event t (REltId, SEltLabel)
 sEltLayerTree_tagSEltById SEltLayerTree {..} = pushAlways $ \rid -> do
   slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
   let msl = IM.lookup rid slmap
   return (rid, fromJust msl) -- PARTIAL
+-}
 
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
 -- O(n^2) lol
