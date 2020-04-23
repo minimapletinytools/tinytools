@@ -1,41 +1,10 @@
 
 stack build --ghc-options="-ddump-splices"
 
-::REFACTOR TODO::
--new relt factory
-  -owns directory id assigner
-  -inputs
-    -new selt
-    -paste/duplicate
-    -undo remove
-  -outputs
-    -new elt :: [(LayerPos, ReltId, SElt)]
--put directory and layers together
-  -inputs
-    -do/undo mainpulate
-      -use traverseIntMapPatchWithKey (where patch contains deltas)
-    -do remove
-    -do/undo move
-    -new elt
-  -outputs
-    -modified :: PatchIntMap SElt
-    -layers :: Seq LayerEltId
-    -all :: IntMap SElt
--reusing manipulators
-  -Dynamic [(LayerEltId,SEltLabel)]
-    -fmapMaybe if only 1
-      -fan by SElt type to manipulator
-    -fmapMaybe if many
-      -manipulatemany
-
-::NEW QUESTIONS::
-DONE-selective rendering
-  -upon modifying or deleting an element, we need to know its PREVIOUS state as well to know what needs to be rerendered
-    -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`
 
 ::TODO::
 -finish rest of selt -> manipulator thingies
-  -do the reusing manipulators trick
+  IGNORE-do the reusing manipulators trick
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
@@ -60,6 +29,34 @@ DONE-selective rendering
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
 
 
+DONE-Q selective rendering
+  -upon modifying or deleting an element, we need to know its PREVIOUS state as well to know what needs to be rerendered
+    -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`
+DONE-new relt factory
+  -owns directory id assigner
+  -inputs
+    -new selt
+    -paste/duplicate
+    -undo remove
+  -outputs
+    -new elt :: [(LayerPos, ReltId, SElt)]
+DONE-put directory and layers together
+  -inputs
+    -do/undo mainpulate
+      -use traverseIntMapPatchWithKey (where patch contains deltas)
+    -do remove
+    -do/undo move
+    -new elt
+  -outputs
+    -modified :: PatchIntMap SElt
+    -layers :: Seq LayerEltId
+    -all :: IntMap SElt
+DONE-reusing manipulators
+  -Dynamic [(LayerEltId,SEltLabel)]
+    -fmapMaybe if only 1
+      -fan by SElt type to manipulator
+    -fmapMaybe if many
+      -manipulatemany
 DONE-update new testing framework to match Test.Run in reflex
 DONE-update test cases to use new testing framework
 DONE-consider refactoring relts so they don't contain dynamics
