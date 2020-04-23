@@ -32,9 +32,9 @@ getSEltBox selt = case selt of
   SEltNone        -> Nothing
   SEltFolderStart -> Nothing
   SEltFolderEnd   -> Nothing
-  SEltBox x       -> Just $ sb_box x
-  SEltLine x      -> Just $ make_LBox_from_LPoints (sl_start x) (sl_end x)
-  SEltText x      -> Just $ st_box x
+  SEltBox x       -> Just $ _sBox_box x
+  SEltLine x      -> Just $ make_LBox_from_LPoints (_sLine_start x) (_sLine_end x)
+  SEltText x      -> Just $ _sText_box x
 
 -- TODO
 --relScaleSElt :: SElt -> CRelBox -> SElt
@@ -86,13 +86,13 @@ makeManipulators selected = do
       SEltBox SBox {..} -> (MTagBox ==> mbox) where
         mbox = MBox {
             _mBox_target = rid
-            , _mBox_box  = sb_box
+            , _mBox_box  = _sBox_box
           }
       -- TODO rest of them
       _                 -> undefined
     foldfn (s:ss) _ = r where
       nes = s:|ss
-      msboxes = catMaybes . toList $ fmap (getSEltBox . selt_elt . thd3) nes
+      msboxes = catMaybes . toList $ fmap (getSEltBox . _sEltLabel_sElt . thd3) nes
       r = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
         MTagRelBox ==>
           MRelBox {
@@ -171,7 +171,7 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
           (SEltTagBox :=> Identity dbox) -> plusDelta box dbox
         foldfn (Right ct) box = case ct of
           (SEltTagBox :=> Identity dbox) -> minusDelta box dbox
-      mbox <- foldDyn foldfn sb_box bothEv
+      mbox <- foldDyn foldfn _sBox_box bothEv
       return $ REltBox (MBox mbox)
 
 {-

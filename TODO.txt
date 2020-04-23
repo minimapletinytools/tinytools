@@ -3,23 +3,20 @@ stack build --ghc-options="-ddump-splices"
 
 
 ::TODO::
-DONE-manipulator test
--hook up manipulators
+-switch to linear for Math
+  -package Math into a separate lib on stackage plz
+  -rename stuff a little
+-finish selt stuff
+  -makeManipulators
+    -rename to toManipultaor
+  -makeSEltModifier
+    -rename to updateFromController
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
   -add memtest
   -add test to save and reload and ensure state stays the same
--finish rest of selt -> manipulator thingies
-  IGNORE-do the reusing manipulators trick
 -state serializers (should be done, just need to hook up aeson and test)
-
--switch to linear for Math
-  -package Math into a separate lib on stackage plz
-  -rename stuff a little
--refactor
-  -rename relt
-  -make naming in selts consistent with rest of code
 -setup frontend from potato-flow
 -add max length param to actionstack
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results
@@ -29,10 +26,15 @@ DONE-manipulator test
   -helpers to create fine grained manipulators
   -refine drawers
 -low priority
+  -rename relt
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
 
-
+DONE-manipulator test
+DONE-hook up manipulators
+DONE-refactor
+  -make naming in selts consistent with rest of code
+IGNORE-do the reusing manipulators trick
 DONE-Q selective rendering
   -upon modifying or deleting an element, we need to know its PREVIOUS state as well to know what needs to be rerendered
     -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`

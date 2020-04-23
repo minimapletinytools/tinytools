@@ -97,12 +97,12 @@ data CBox = CBox {
 instance Delta SBox where
   type DeltaType SBox = CBox
   plusDelta SBox {..} CBox {..} = SBox {
-      sb_box   = plusDelta sb_box _cBox_box
-      , sb_style = sb_style
+      _sBox_box   = plusDelta _sBox_box _cBox_box
+      , _sBox_style = _sBox_style
     }
   minusDelta SBox {..} CBox {..} = SBox {
-      sb_box   = minusDelta sb_box _cBox_box
-      , sb_style = sb_style
+      _sBox_box   = minusDelta _sBox_box _cBox_box
+      , _sBox_style = _sBox_style
     }
 
 

@@ -40,9 +40,9 @@ defaultCornerStyle = CornerStyle {
   }
 
 data SLineStyle = SLineStyle {
-  sbs_corners      :: CornerStyle
-  , sbs_vertical   :: PChar
-  , sbs_horizontal :: PChar
+  _sLineStyle_corners      :: CornerStyle
+  , _sLineStyle_vertical   :: PChar
+  , _sLineStyle_horizontal :: PChar
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLineStyle
@@ -50,9 +50,9 @@ instance ToJSON SLineStyle
 
 defaultSLineStyle :: SLineStyle
 defaultSLineStyle = SLineStyle {
-    sbs_corners      = defaultCornerStyle
-    , sbs_vertical   = '║'
-    , sbs_horizontal = '═'
+    _sLineStyle_corners      = defaultCornerStyle
+    , _sLineStyle_vertical   = '║'
+    , _sLineStyle_horizontal = '═'
   }
 
 data STextStyle = STextStyle {
@@ -64,8 +64,8 @@ instance ToJSON STextStyle
 
 -- |
 data SBox = SBox {
-  sb_box     :: LBox
-  , sb_style :: SLineStyle
+  _sBox_box     :: LBox
+  , _sBox_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
@@ -73,9 +73,9 @@ instance ToJSON SBox
 
 -- |
 data SLine = SLine {
-  sl_start   :: LPoint
-  , sl_end   :: LPoint
-  , sl_style :: SLineStyle
+  _sLine_start   :: LPoint
+  , _sLine_end   :: LPoint
+  , _sLine_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLine
@@ -85,9 +85,9 @@ instance ToJSON SLine
 -- TODO rename
 -- |
 data SCartLines = SCartLines {
-  scl_start   :: LPoint
-  , scl_ends  :: NonEmpty (Either X Y)
-  , scl_style :: SLineStyle
+  _sCartLines_start   :: LPoint
+  , _sCartLines_ends  :: NonEmpty (Either X Y)
+  , _sCartLines_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SCartLines
@@ -96,9 +96,9 @@ instance ToJSON SCartLines
 
 -- | abitrary text confined to a box
 data SText = SText {
-  st_box     :: LBox
-  , st_text  :: Text
-  , st_style :: STextStyle
+  _sText_box     :: LBox
+  , _sText_text  :: Text
+  , _sText_style :: STextStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SText
@@ -110,8 +110,8 @@ instance FromJSON SElt
 instance ToJSON SElt
 
 data SEltLabel = SEltLabel {
- selt_name  :: Text
- , selt_elt :: SElt
+ _sEltLabel_name   :: Text
+ , _sEltLabel_sElt :: SElt
 } deriving (Generic, Show)
 
 instance FromJSON SEltLabel
