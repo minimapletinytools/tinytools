@@ -10,6 +10,7 @@ module Potato.Flow.Math (
   , nilLBox
   , make_LBox_from_LPoints
   , does_LBox_contains_LPoint
+  , union_LBox
   , Delta(..)
   , DeltaLBox(..)
   , DeltaText
@@ -59,6 +60,7 @@ data LBox = LBox {
 nilLBox :: LBox
 nilLBox = LBox (LPoint nilXY) (LSize nilXY)
 
+
 make_LBox_from_LPoints :: LPoint -> LPoint -> LBox
 make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
   LBox {
@@ -69,6 +71,10 @@ make_LBox_from_LPoints (LPoint (XY (x1, y1))) (LPoint (XY (x2, y2))) =
 does_LBox_contains_LPoint :: LBox -> LPoint -> Bool
 does_LBox_contains_LPoint (LBox (LPoint (XY (bx,by))) (LSize (XY (bw,bh)))) (LPoint (XY (px,py))) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
+
+-- TODO
+union_LBox :: LBox -> LBox -> LBox
+union_LBox lb1 = const lb1
 
 instance FromJSON LBox
 instance ToJSON LBox

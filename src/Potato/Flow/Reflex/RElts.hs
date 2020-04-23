@@ -4,30 +4,23 @@ module Potato.Flow.Reflex.RElts (
 ) where
 
 import           Relude
+import           Relude.Extra.Foldable1   (foldl1')
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 import           Control.Monad.Fix
 
-import           Data.Dependent.Sum              (DSum ((:=>)), (==>))
-import qualified Data.Dependent.Sum              as DS
+import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import qualified Data.Dependent.Sum       as DS
 import           Data.Functor.Misc
-import qualified Data.IntMap.Strict              as IM
-import           Data.Maybe                      (fromJust)
+import qualified Data.IntMap.Strict       as IM
+import           Data.Maybe               (fromJust)
 
 import           Reflex
-import qualified Reflex.Patch.IntMap             as IM
+import qualified Reflex.Patch.IntMap      as IM
 import           Reflex.Potato.Helpers
-
-
-{-
-type ManipulatorWithId t = DS.DSum (Const2 LayerEltId (Manipulators t)) Identity
-type ControllerWithId = DS.DSum (Const2 LayerEltId Controller) Identity
-type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controller)
--}
 
 
 -- | gets an 'LBox' that contains the entire RElt
@@ -72,56 +65,51 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderer =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
-{-
-
-data RElt t =
-  REltNone
-  | REltFolderStart
-  | REltFolderEnd
-  | REltBox (MBox t)
-  | REltLine (MLine t)
-  | REltText (MText t)
-
-getREltManipulator :: RElt t -> Manipulators t
-getREltManipulator relt = case relt of
-  REltNone        -> none
-  REltFolderStart -> none
-  REltFolderEnd   -> none
-  REltBox x       -> MTagBox ==> x
-  REltLine x      -> MTagLine ==> x
-  REltText x      -> MTagText ==> x
-  where
-    none = MTagNone ==> ()
-
-
-data REltLabel t = REltLabel {
-  re_name  :: Text
-  , re_elt :: RElt t
-}
--}
-
 type Selected = [(REltId, SEltLabel)]
-type Manipulating t = ([REltId], Manipulator t)
 makeManipulators :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
-  => Dynamic t Selected
-  -> m (Dynamic t (Manipulating t))
+  => Event t Selected -- ^ selection event, which will sample manipulators of current selection
+  -> m (Dynamic t Manipulator)
 makeManipulators selected = do
   let
-    nilState :: Manipulating t
-    nilState = ([], MTagNone ==> ())
-    foldfn :: Selected -> Manipulating t -> PushM t (Manipulating t)
-    foldfn [] _ = return nilState
+    nilState :: Manipulator
+    nilState = (MTagNone ==> ())
+    foldfn :: Selected -> Manipulator -> Manipulator
+    foldfn [] _ = nilState
     foldfn ((rid, SEltLabel _ selt):[]) _ = case selt of
-      -- TODO
-      SEltBox SBox {..} -> undefined
+      SEltBox SBox {..} -> (MTagBox ==> mbox) where
+        mbox = MBox {
+            _mBox_target = rid
+            , _mBox_box  = sb_box
+          }
+      -- TODO rest of them
       _                 -> undefined
-    foldfn selected _ = do
-      let
-        -- TODO
-        sboxes = map (getSEltBox . selt_elt . snd) selected
-        combined = undefined
-      return (map fst selected, MTagRelBox ==> combined)
-  foldDynM foldfn nilState (updated selected)
+    foldfn (s:ss) _ = r where
+      nes = s:|ss
+      msboxes = catMaybes . toList $ fmap (getSEltBox . selt_elt . snd) nes
+      r = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
+        MTagRelBox ==>
+          MRelBox {
+            _mRelBox_targets    = fmap fst nes
+            , _mRelBox_box      = foldl1' union_LBox sboxes
+          }
+  foldDyn foldfn nilState selected
+
+
+-- TODO DELETE
+
+{-
+-- needed by 'makeManipulators' internally
+
+data SEltTag a where
+  SEltTagNone :: SEltTag ()
+  SEltTagBox :: SEltTag SBox
+  SEltTagLine :: SEltTag SLine
+  SEltTagText :: SEltTag SText
+
+  -- TODO TH to derive these
+  --deriving anyclass Data.GADT.Compare.GEq
+  --deriving anyclass DM.GCompare
+-}
 
 
 
@@ -149,9 +137,9 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
       let
         foldfn :: Either Controller Controller -> LBox -> LBox
         foldfn (Left ct) box = case ct of
-          (CTagBox :=> Identity dbox) -> plusDelta box dbox
+          (SEltTagBox :=> Identity dbox) -> plusDelta box dbox
         foldfn (Right ct) box = case ct of
-          (CTagBox :=> Identity dbox) -> minusDelta box dbox
+          (SEltTagBox :=> Identity dbox) -> minusDelta box dbox
       mbox <- foldDyn foldfn sb_box bothEv
       return $ REltBox (MBox mbox)
 
@@ -168,4 +156,40 @@ deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
 
     _               -> undefined
   return $ REltLabel sname relt
+-}
+
+
+
+{-
+type ManipulatorWithId t = DS.DSum (Const2 LayerEltId (Manipulators t)) Identity
+type ControllerWithId = DS.DSum (Const2 LayerEltId Controller) Identity
+type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controller)
+-}
+
+{-
+
+data RElt t =
+  REltNone
+  | REltFolderStart
+  | REltFolderEnd
+  | REltBox (MBox t)
+  | REltLine (MLine t)
+  | REltText (MText t)
+
+getREltManipulator :: RElt t -> Manipulators t
+getREltManipulator relt = case relt of
+  REltNone        -> none
+  REltFolderStart -> none
+  REltFolderEnd   -> none
+  REltBox x       -> MTagBox ==> x
+  REltLine x      -> MTagLine ==> x
+  REltText x      -> MTagText ==> x
+  where
+    none = MTagNone ==> ()
+
+
+data REltLabel t = REltLabel {
+  re_name  :: Text
+  , re_elt :: RElt t
+}
 -}

@@ -22,31 +22,16 @@ import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 
-import qualified Data.Dependent.Map              as DM
-import qualified Data.Dependent.Sum              as DS
+import qualified Data.Dependent.Map       as DM
+import qualified Data.Dependent.Sum       as DS
 import qualified Data.GADT.Compare
 import           Data.GADT.Compare.TH
 import qualified Text.Show
-
-
-{- DELETE
-
-import           Data.Maybe                      (fromJust)
-import           Language.Haskell.TH
-
-data TESTTag a where
-  TT1 :: TESTTag Int
-  TT2 :: TESTTag String
-  TT3 :: TESTTag Int
-deriveGEq      (fromJust <$> lookupTypeName "TESTTag")
-deriveGCompare ''TESTTag
--}
 
 
 data PFCmdTag t a where
