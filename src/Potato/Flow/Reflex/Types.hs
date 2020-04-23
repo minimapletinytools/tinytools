@@ -106,15 +106,34 @@ instance Delta SBox CBox where
 
 
 data CLine = CLine {
-  -- TODO change to DeltaXY
-  _cLine_start :: XY
-  , _cLine_end :: XY
+  _cLine_start :: LPoint
+  , _cLine_end :: LPoint
 }
+
+instance Delta SLine CLine where
+  plusDelta SLine {..} CLine {..} = SLine {
+      _sLine_start   = plusDelta _sLine_start _cLine_start
+      , _sLine_end   = plusDelta _sLine_end _cLine_end
+    }
+  minusDelta SLine {..} CLine {..} = SLine {
+      _sLine_start   = minusDelta _sLine_start _cLine_start
+      , _sLine_end   = minusDelta _sLine_end _cLine_end
+    }
 
 data CText = CText {
   _cText_box    :: DeltaLBox
   , _cText_text :: DeltaText
 }
+
+instance Delta SText CText where
+  plusDelta SText {..} CText {..} = SText {
+      _sText_box   = plusDelta _sText_box _cText_box
+      , _sText_text   = plusDelta _sText_text _cText_text
+    }
+  minusDelta SText {..} CText {..} = SText {
+      _sText_box   = minusDelta _sText_box _cText_box
+      , _sText_text   = minusDelta _sText_text _cText_text
+    }
 
 -- | transforms object based on a reference point
 -- used for multi-selection
