@@ -17,6 +17,7 @@ import qualified Data.Dependent.Sum       as DS
 import           Data.Functor.Misc
 import qualified Data.IntMap.Strict       as IM
 import           Data.Maybe               (fromJust)
+import           Data.Tuple.Extra         (fst3, snd3, thd3)
 
 import           Reflex
 import qualified Reflex.Patch.IntMap      as IM
@@ -65,7 +66,7 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderer =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
-type Selected = [(REltId, SEltLabel)]
+type Selected = [SuperSEltLabel]
 makeManipulators :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
   => Event t Selected -- ^ selection event, which will sample manipulators of current selection
   -> m (Dynamic t Manipulator)
@@ -75,7 +76,7 @@ makeManipulators selected = do
     nilState = (MTagNone ==> ())
     foldfn :: Selected -> Manipulator -> Manipulator
     foldfn [] _ = nilState
-    foldfn ((rid, SEltLabel _ selt):[]) _ = case selt of
+    foldfn ((rid, _, SEltLabel _ selt):[]) _ = case selt of
       SEltBox SBox {..} -> (MTagBox ==> mbox) where
         mbox = MBox {
             _mBox_target = rid
@@ -85,11 +86,11 @@ makeManipulators selected = do
       _                 -> undefined
     foldfn (s:ss) _ = r where
       nes = s:|ss
-      msboxes = catMaybes . toList $ fmap (getSEltBox . selt_elt . snd) nes
+      msboxes = catMaybes . toList $ fmap (getSEltBox . selt_elt . thd3) nes
       r = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
         MTagRelBox ==>
           MRelBox {
-            _mRelBox_targets    = fmap fst nes
+            _mRelBox_targets    = fmap fst3 nes
             , _mRelBox_box      = foldl1' union_LBox sboxes
           }
   foldDyn foldfn nilState selected
