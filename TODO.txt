@@ -3,15 +3,19 @@ stack build --ghc-options="-ddump-splices"
 
 
 ::TODO::
--finish rest of selt -> manipulator thingies
-  IGNORE-do the reusing manipulators trick
+-manipulator test
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
   -add memtest
   -add test to save and reload and ensure state stays the same
+-finish rest of selt -> manipulator thingies
+  IGNORE-do the reusing manipulators trick
 -state serializers (should be done, just need to hook up aeson and test)
 
+-switch to linear for Math
+  -package Math into a separate lib on stackage plz
+  -rename stuff a little
 -refactor
   -rename relt
   -make naming in selts consistent with rest of code

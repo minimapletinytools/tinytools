@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Reflex.RElts (
+  getSEltBox
 ) where
 
 import           Relude
