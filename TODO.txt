@@ -3,7 +3,8 @@ stack build --ghc-options="-ddump-splices"
 
 
 ::TODO::
--manipulator test
+DONE-manipulator test
+-hook up manipulators
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
@@ -19,7 +20,6 @@ stack build --ghc-options="-ddump-splices"
 -refactor
   -rename relt
   -make naming in selts consistent with rest of code
--add manipulate test to EntrySpec
 -setup frontend from potato-flow
 -add max length param to actionstack
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results

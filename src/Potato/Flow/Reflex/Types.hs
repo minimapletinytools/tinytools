@@ -94,6 +94,18 @@ data CBox = CBox {
   _cBox_box :: DeltaLBox
 }
 
+instance Delta SBox where
+  type DeltaType SBox = CBox
+  plusDelta SBox {..} CBox {..} = SBox {
+      sb_box   = plusDelta sb_box _cBox_box
+      , sb_style = sb_style
+    }
+  minusDelta SBox {..} CBox {..} = SBox {
+      sb_box   = minusDelta sb_box _cBox_box
+      , sb_style = sb_style
+    }
+
+
 data CLine = CLine {
   -- TODO change to DeltaXY
   _cLine_start :: XY
@@ -113,7 +125,7 @@ data CRelBox = CRelBox {
 }
 
 data CTag a where
-  CTagBox :: CTag DeltaLBox
+  CTagBox :: CTag CBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText
   CTagRelBox :: CTag CRelBox

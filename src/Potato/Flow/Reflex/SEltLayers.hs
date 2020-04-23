@@ -15,7 +15,7 @@ module Potato.Flow.Reflex.SEltLayers (
 import           Relude
 import           Relude.Extra.Map
 
---import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
@@ -29,6 +29,7 @@ import           Control.Exception        (assert)
 import           Control.Monad.Fix
 
 import qualified Data.IntMap.Strict       as IM
+import qualified Data.List.NonEmpty       as NE
 import           Data.Maybe               (fromJust)
 import qualified Data.Sequence            as Seq
 import           Data.Tuple.Extra
@@ -54,13 +55,16 @@ isValidSEltLayerView lv = foldl' foldfn 0 lv == 0 where
 -- if inputs are correct, than outputs are correct, so corroctly use correct outputs to ensure inputs are always correct!
 data SEltLayerTree t = SEltLayerTree {
   _sEltLayerTree_view         :: Dynamic t (Seq REltId)
-  , _sEltLayerTree_directory  :: Directory t (SEltLabel)
 
   --, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
 
   -- TODO we have this so ui only re-renders what is needed
   -- the issue is, if we remove an element we need to know what area it previously covered so we only rerender that area
   , _sEltLayerTree_changeView :: Event t (PatchREltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
+
+
+  -- | directory of all SEltLabels
+  , _sEltLayerTree_directory  :: Directory t (SEltLabel)
 }
 
 
@@ -118,11 +122,11 @@ reindexSEltLayerPosForInsertion = reverse . reindexSEltLayerPosForRemoval . reve
 data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   -- error if any REltId or LayerPos are invalid
   -- LayerPos indices are as if all elements already exist in the map
-  _sEltLayerTreeConfig_insert   :: Event t (NonEmpty SuperSEltLabel)
+  _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
   -- error if any REltId or LayerPos are invalid
   -- LayerPos indices are the current indices of elements to be removed
   -- this contains more info than needed to remove, but we need to track it anyways for undoing removals so this just makes life easier
-  , _sEltLayerTreeConfig_remove :: Event t (NonEmpty SuperSEltLabel)
+  , _sEltLayerTreeConfig_remove             :: Event t (NonEmpty SuperSEltLabel)
 
   -- TODO 0
   --, _sEltLayerTreeConfig_modify :: Event t ControllersWithId
@@ -131,6 +135,11 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   --, _sEltLayerTreeConfig_copy
   --, _sEltLayerTreeConfig_duplicate
   --, _sEltLayerTreeConfig_move
+
+
+  -- | pass through modifiers for SEltLabels in directory
+  , _sEltLayerTree_directory_doManipulate   :: Event t ControllersWithId
+  , _sEltLayerTree_directory_undoManipulate :: Event t ControllersWithId
 }
 
 holdSEltLayerTree :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
@@ -143,9 +152,19 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     removeLayerPos (i,_,e) = (i,e)
     extractREltId :: SuperSEltLabel -> REltId
     extractREltId (i,_,_) = i
+    flattenControls :: Bool -> IntMap Controller -> [(REltId, SEltLabel -> SEltLabel)]
+    flattenControls isDo im = IM.toList $ flip IM.map im $ makeSEltModifier isDo
+    -- PARTIAL
+    modifyDo :: Event t (NonEmpty (REltId, SEltLabel -> SEltLabel))
+    modifyDo = fmap NE.fromList $ ffor _sEltLayerTree_directory_doManipulate $ flattenControls True
+    -- PARTIAL
+    modifyUndo :: Event t (NonEmpty (REltId, SEltLabel -> SEltLabel))
+    modifyUndo = fmap NE.fromList $ ffor _sEltLayerTree_directory_undoManipulate $ flattenControls False
+
     directoryConfig = DirectoryConfig {
         _directoryMapConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
         , _directoryMapConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
+        , _directoryMapConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
       }
   directory :: Directory t SEltLabel
     <- holdDirectory directoryConfig

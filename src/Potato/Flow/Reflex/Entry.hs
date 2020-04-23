@@ -70,14 +70,21 @@ holdPF PFConfig {..} = mdo
     doAction_PFCDeleteElts =
       fmap (PFCDeleteElts ==>)
       $ fmap (:|[])
+      -- PARTIAL
       $ fmap fromJust
       $ pushAlways (sEltLayerTree_sampleSuperSEltByPos layerTree) _pfc_removeElt
+
+    doAction_PFCManipulate :: Event t (PFCmd t)
+    doAction_PFCManipulate =
+      fmap (PFCManipulate ==>)
+      _pfc_manipulate
 
   -- ACTION STACK
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
         doAction_PFCNewElts
         , doAction_PFCDeleteElts
+        , doAction_PFCManipulate
       ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
@@ -128,6 +135,8 @@ holdPF PFConfig {..} = mdo
           [selectDo actionStack PFCNewElts, selectUndo actionStack PFCDeleteElts]
         , _sEltLayerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove"
           [selectUndo actionStack PFCNewElts, selectDo actionStack PFCDeleteElts]
+        , _sEltLayerTree_directory_doManipulate = selectDo actionStack PFCManipulate
+        , _sEltLayerTree_directory_undoManipulate = selectUndo actionStack PFCManipulate
       }
   layerTree :: SEltLayerTree t
     <- holdSEltLayerTree layerTreeConfig

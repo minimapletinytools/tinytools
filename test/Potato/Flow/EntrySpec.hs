@@ -58,7 +58,6 @@ basic_network ev = mdo
     manipEv = flip push ev $ \case
       FCScaleBy10 lp -> do
         (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
-        liftIO $ print (rid, selt)
         let
           crelbox = CRelBox {
               _cRelBox_original = fromJust $ getSEltBox selt
@@ -89,6 +88,9 @@ basic_test = TestLabel "basic" $ TestCase $ do
   let bs =
         [ FCNone
         , FCAddElt (SEltBox simpleSBox)
+        , FCScaleBy10 0
+        , FCUndo
+        , FCRedo
         , FCAddElt (SEltBox simpleSBox)
         , FCAddElt (SEltBox simpleSBox)
         , FCAddElt (SEltBox simpleSBox)
@@ -110,9 +112,6 @@ basic_test = TestLabel "basic" $ TestCase $ do
         , FCRedo
         , FCRedo
         , FCRedo
-        --, FCScaleBy10 100
-        --, FCUndo
-        --, FCRedo
         ]
       run :: IO [[Maybe Int]]
       run = runAppSimple basic_network bs

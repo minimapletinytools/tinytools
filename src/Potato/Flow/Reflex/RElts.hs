@@ -2,6 +2,7 @@
 
 module Potato.Flow.Reflex.RElts (
   getSEltBox
+  , makeSEltModifier
 ) where
 
 import           Relude
@@ -34,6 +35,10 @@ getSEltBox selt = case selt of
   SEltBox x       -> Just $ sb_box x
   SEltLine x      -> Just $ make_LBox_from_LPoints (sl_start x) (sl_end x)
   SEltText x      -> Just $ st_box x
+
+-- TODO
+--relScaleSElt :: SElt -> CRelBox -> SElt
+--relScaleSElt
 
 data Renderer = Renderer LBox (LPoint -> Maybe PChar)
 
@@ -95,6 +100,30 @@ makeManipulators selected = do
             , _mRelBox_box      = foldl1' union_LBox sboxes
           }
   foldDyn foldfn nilState selected
+
+
+
+
+modifyDelta :: (Delta x) => Bool -> x -> DeltaType x -> x
+modifyDelta isDo x dx = if isDo
+  then plusDelta x dx
+  else minusDelta x dx
+
+makeSEltModifier :: Bool -> Controller -> (SEltLabel -> SEltLabel)
+makeSEltModifier isDo = \case
+  (CTagBox :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
+    SEltBox sbox -> SEltLabel sname (SEltBox $ modifyDelta isDo sbox d)
+    _ -> error $ "Controller - SElt type mismatch: CTagBox - " <> show selt
+  -- TODO finish
+  --(CTagRelBox :=> Identity d) -> id
+  _ -> id
+
+
+
+
+
+
+
 
 
 -- TODO DELETE
