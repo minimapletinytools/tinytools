@@ -5,20 +5,17 @@ module Potato.Flow.EntrySpec
   )
 where
 
-import           Relude                  hiding ( empty
-                                                , fromList
-                                                )
+import           Relude                   hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit       ( fromHUnitTest )
+import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
 import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
-import qualified Data.List                     as L
-                                                ( last )
+import qualified Data.List                as L (last)
 
 import           Potato.Flow
 
@@ -42,7 +39,7 @@ basic_network ev = do
   let
     -- TODO maybe a good place to try out template haskell
       addEv = flip fmapMaybe ev $ \case
-        FCAddSElt x -> Just (SEltLabel "blank" x)
+        FCAddSElt x -> Just (0, SEltLabel "blank" x)
         _           -> Nothing
       removeEv = flip fmapMaybe ev $ \case
         FCRemoveRElt x -> Just x
@@ -64,7 +61,7 @@ basic_network ev = do
                      , _pfc_redo       = redoEv
                      }
   pf <- holdPF pfc
-  return $ updated . fmap length . _layerTree_view . _pfo_layers $ pf
+  return $ updated . fmap length . _sEltLayerTree_view . _pfo_layers $ pf
 
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do

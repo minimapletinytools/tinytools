@@ -15,14 +15,14 @@ import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 
 import           Data.Aeson
-import qualified Data.ByteString.Lazy           as LBS
-import           Data.Dependent.Sum             ((==>))
-import qualified Data.List.NonEmpty             as NE
+import qualified Data.ByteString.Lazy          as LBS
+import           Data.Dependent.Sum            ((==>))
+import qualified Data.List.NonEmpty            as NE
 
 import           Potato.Flow.Reflex.Cmd
-import           Potato.Flow.Reflex.Layers
-import           Potato.Flow.Reflex.REltFactory
 import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.Reflex.SEltLayers
+import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 
@@ -37,25 +37,20 @@ loadWSFromFile = fmapMaybe decode
 
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
-  _pfc_addElt       :: Event t SEltLabel
-  , _pfc_removeElt  :: Event t REltId
-  --, _pfc_moveElt    :: Event t (REltId, LayerPos) -- new layer position (before or after removal?)
-  --, _pfc_copy       :: Event t [REltId]
+  _pfc_addElt       :: Event t (LayerPos, SEltLabel)
+  , _pfc_removeElt  :: Event t LayerPos
+  --, _pfc_moveElt    :: Event t (LayerEltId, LayerPos) -- new layer position (before or after removal?)
+  --, _pfc_copy       :: Event t [LayerEltId]
   --, _pfc_paste      :: Event t ([SElt], LayerPos)
-  --, _pfc_duplicate  :: Event t [REltId]
-  , _pfc_manipulate :: Event t ()
+  --, _pfc_duplicate  :: Event t [LayerEltId]
+  , _pfc_manipulate :: Event t ControllersWithId
 
   , _pfc_undo       :: Event t ()
   , _pfc_redo       :: Event t ()
 }
 
 data PFOutput t = PFOutput {
-  -- elements
-  --_pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
-
-  _pfo_layers :: LayerTree t (REltLabel t)
-
-  -- manipulators
+  _pfo_layers :: SEltLayerTree t
 }
 
 holdPF ::
@@ -63,12 +58,16 @@ holdPF ::
   => PFConfig t
   -> m (PFOutput t)
 holdPF PFConfig {..} = mdo
+  -- PREP ACTIONS
+  -- TODO
+  --_pfc_addElt       :: Event t (LayerPos, SEltLabel)
+  --, _pfc_removeElt  :: Event t LayerEltId
+  --, _pfc_manipulate :: Event t ControllersWithId
 
-  -- set up the action stack
+  -- ACTION STACK
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
-        doAction_PFCNewElts_rEltFactory_newRElt
-        , doAction_PFCDeleteElt_pfc_removeElt
+        doAction_PFCNewElts
       ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
@@ -82,67 +81,46 @@ holdPF PFConfig {..} = mdo
   actionStack :: ActionStack t (PFCmd t)
     <- holdActionStack actionStackConfig
 
-  -- set up DirectoryIdAssigner
+  -- DIRECTORY ID ASSIGNER
+  -- INPUTS:
+  -- * _pfc_addElt :: Event t SEltLabel
+  -- * TODO _pfc_paste
+  -- * TODO _pfc_duplicate
+  -- OUTPUTS:
+  -- * doAction_PFCNewElts :: Event t (NonEmpty SuperSEltLabel)
+  -- * TODO doAction_paste/duplicate
+
   let
-    rEltsCreatedEv = fmap NE.fromList (_rEltFactory_rEltTree rEltFactory)
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = fmap (:|[]) _pfc_addElt
+        _directoryIdAssignerConfig_assign = fmap (:|[]) $ _pfc_addElt
       }
-  directoryIdAssigner :: DirectoryIdAssigner t (SEltLabel)
+  directoryIdAssigner :: DirectoryIdAssigner t (LayerPos, SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
-
-  -- set up rEltFactory
   let
-    rEltFactoryConfig = REltFactoryConfig {
-        _rEltFactoryConfig_sEltTree = toList <$> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
-        , _rEltFactoryConfig_doManipulate = selectDo actionStack PFCManipulate
-        , _rEltFactoryConfig_undoManipulate = selectUndo actionStack PFCManipulate
+    flattenTuple212 (a,(b,c)) = (a,b,c)
+    doAction_PFCNewElts :: Event t (PFCmd t)
+    doAction_PFCNewElts =
+      fmap (PFCNewElts ==>)
+      $ flattenTuple212
+      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+
+
+  -- SELTLAYERS
+  -- INPUTS
+  -- * selectDo/Undo actionStack PFCNewElts :: Event t (NonEmpty SuperSEltLabel)
+  -- * selectDo/Undo actionStack PFCDeleteElts :: Event t (NonEmpty SuperSEltLabel)
+  -- * TODO modify elements :: ControllersWithId
+  -- OUTPUTS
+  -- * TODO modified elements :: PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)
+  let
+    layerTreeConfig = SEltLayerTreeConfig {
+        _sEltLayerTreeConfig_insert = leftmostwarn "_layerTreeConfig_add"
+          [selectDo actionStack PFCNewElts, selectUndo actionStack PFCDeleteElts]
+        , _sEltLayerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove"
+          [selectUndo actionStack PFCNewElts, selectDo actionStack PFCDeleteElts]
       }
-    doAction_PFCNewElts_rEltFactory_newRElt :: Event t (PFCmd t)
-    doAction_PFCNewElts_rEltFactory_newRElt = fmapMaybe (\x -> nonEmpty x >>= return . (PFCNewElts ==>)) $ _rEltFactory_rEltTree rEltFactory
-  rEltFactory :: REltFactory t
-    <- holdREltFactory rEltFactoryConfig
-
-  -- TODO set up add/remove events, these will get sent to both directory and layer tree
-
-  -- set up Directory
-  -- DELETE or move into layers probably?
-  -- or do we want a separate directory for copy pasta type stuff?
-  {-
-  let
-    directoryConfig = DirectoryConfig {
-        -- TODO hook up to fanned outputs from actionStack
-        _directoryMapConfig_add = never
-
-        , _directoryMapConfig_remove = never
-      }
-  directory :: Directory t (REltLabel t)
-    <- holdDirectory directoryConfig
-  -}
-
-  -- set up LayerTree
-  let
-    ltc_add_do_PFCNewElts = layerTree_attachEndPos layerTree $ fmap toList $ selectDo actionStack PFCNewElts
-    ltc_add_undo_PFCDeleteElt = fmap (\(i,e) -> (i,[e])) $ selectUndo actionStack PFCDeleteElt
-
-    -- new elts are guaranteed to be in sequence at the end
-    ltc_remove_undo_PFCNewElts = fmap (\(i,es) -> snd $ mapAccumL (\acc _ -> (acc+1, acc+1)) (i-1-length es) es) $
-      layerTree_attachEndPos layerTree $ selectUndo actionStack PFCNewElts
-    ltc_remove_do_PFCDeleteElt = fmap (\(i,_) -> i :| []) $ selectDo actionStack PFCDeleteElt
-    layerTreeConfig = LayerTreeConfig {
-        -- DELETE
-        --_layerTreeConfig_directory = _directoryMap_contents directory
-        _layerTreeConfig_add = (\(p, elts) -> (p, fromList elts)) <$> leftmostwarn "_layerTreeConfig_add"
-          [ltc_add_do_PFCNewElts, ltc_add_undo_PFCDeleteElt]
-        , _layerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove" $
-          [ltc_remove_undo_PFCNewElts, ltc_remove_do_PFCDeleteElt]
-        --, _layerTreeConfig_copy = never
-      }
-  layerTree :: LayerTree t (REltLabel t)
-    <- holdLayerTree layerTreeConfig
-
-  let
-    doAction_PFCDeleteElt_pfc_removeElt = (PFCDeleteElt ==>) <$> layerTree_attachEltAtPosition layerTree _pfc_removeElt
+  layerTree :: SEltLayerTree t
+    <- holdSEltLayerTree layerTreeConfig
 
   return $
     PFOutput {

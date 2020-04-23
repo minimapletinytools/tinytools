@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards    #-}
 {-# LANGUAGE RecursiveDo        #-}
 
+-- TODO consider moving to Types.Manipulators
 module Potato.Flow.Reflex.Manipulators
   ( MNone
   , MBox(..)
@@ -13,6 +14,7 @@ module Potato.Flow.Reflex.Manipulators
   , CBox(..)
   , CLine(..)
   , CText(..)
+  , CRelBox(..)
   , CTag(..)
   , Controllers
   )
@@ -23,15 +25,14 @@ import           Relude
 import           Reflex
 
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
 
 import qualified Data.Dependent.Map as DM
 import qualified Data.Dependent.Sum as DS
-import qualified Data.GADT.Compare
+--import qualified Data.GADT.Compare
 
 
 -- pattern for piping manipulator back into PFC
--- start with: _pfo_allElts     :: Behavior t (Map REltId (REltLabel t))
+-- start with: _pfo_allElts     :: Behavior t (Map LayerEltId (REltLabel t))
 -- convert to
 -- selected :: Dynamic t [REltLabel t]
 -- convert to
@@ -48,8 +49,9 @@ data MTag t a where
   MTagBox :: MTag t (MBox t)
   MTagLine :: MTag t (MLine t)
   MTagText :: MTag t (MText t)
-  deriving anyclass Data.GADT.Compare.GEq
-  deriving anyclass DM.GCompare
+  -- TODO manual instances needed
+  --deriving anyclass Data.GADT.Compare.GEq
+  --deriving anyclass DM.GCompare
 
 type MNone = ()
 
@@ -96,7 +98,8 @@ data CTag a where
   CTagLine :: CTag CLine
   CTagText :: CTag CText
   CTagRelBox :: CTag CRelBox
-  deriving anyclass Data.GADT.Compare.GEq
-  deriving anyclass DM.GCompare
+  -- TODO manual instances needed
+  --deriving anyclass Data.GADT.Compare.GEq
+  --deriving anyclass DM.GCompare
 
 type Controllers = DS.DSum CTag Identity

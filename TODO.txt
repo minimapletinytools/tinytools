@@ -19,14 +19,19 @@ stack build --ghc-options="-ddump-splices"
     -new elt
   -outputs
     -modified :: PatchIntMap SElt
-    -layers :: Seq REltId
+    -layers :: Seq LayerEltId
     -all :: IntMap SElt
 -reusing manipulators
-  -Dynamic [(REltId,SEltLabel)]
+  -Dynamic [(LayerEltId,SEltLabel)]
     -fmapMaybe if only 1
       -fan by SElt type to manipulator
     -fmapMaybe if many
       -manipulatemany
+
+::NEW QUESTIONS::
+-selective rendering
+  -upon modifying or deleting an element, we need to know its PREVIOUS state as well to know what needs to be rerendered
+    -we need type `PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)`
 
 ::TODO::
 -consider refactoring relts so they don't contain dynamics
@@ -65,8 +70,8 @@ DONE-try with -o2 for leaks
 DONE-profile memory usage
 IGNORE-consider adding maybe event to configs instead of using never :o
 DONE-rename gitrepo to potato-flow
-DONE-decide what to do with directory and REltIds
-  DONE-are REltIds even needed? We can just pass in the full RElt reference
+DONE-decide what to do with directory and LayerEltIds
+  DONE-are LayerEltIds even needed? We can just pass in the full RElt reference
       -YES they are needed to fan events efficiently
   DONE-how to reverse map RElts to their layer positions
     DONE-or we can require front end to always pass in layer positions
@@ -103,17 +108,17 @@ DONE-manipulators
     -multi manipulate
   -move
 -feature creep 1
-  -PFCReorder :: PFCmdTag t (REltId, LayerPos)
+  -PFCReorder :: PFCmdTag t (LayerEltId, LayerPos)
 -feature creep 2
   -copy pasta
   -PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
-  -PFCDuplicate :: PFCmdTag t [REltId]
+  -PFCDuplicate :: PFCmdTag t [LayerEltId]
   -deleting/moving layer elts that are not in order
 -feature creep 3
   -connected elts
   -RElt manipulators now require readonly hooks into existing RElts
-    -connected :: Dynamic t REltId
-    -reltUpdateds :: Dynamic t (DMap (Const2 REltId REltLabel) Identity)
+    -connected :: Dynamic t LayerEltId
+    -reltUpdateds :: Dynamic t (DMap (Const2 LayerEltId REltLabel) Identity)
     -connectedUpdates' :: fmap (\i -> select i . fan reltUpdates) connected :: Event t [Event t REltLabel]
     -connectedUpdateds :: sequence . switch $ ConnectedUpdates' :: Event t [REltLabel t]
     -now you can set manipulators based on new relt positions

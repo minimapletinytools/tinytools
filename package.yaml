@@ -92,6 +92,7 @@ dependencies:
 - reflex-dynamic-containers
 - reflex-test-host
 - reflex-potatoes
+- extra
 
 
 library:

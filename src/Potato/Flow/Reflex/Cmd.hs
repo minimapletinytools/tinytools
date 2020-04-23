@@ -22,9 +22,9 @@ import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.Manipulators
 import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 
@@ -48,15 +48,14 @@ deriveGEq      (fromJust <$> lookupTypeName "TESTTag")
 deriveGCompare ''TESTTag
 -}
 
+
 data PFCmdTag t a where
-  PFCNewElts :: PFCmdTag t (NonEmpty (REltLabel t)) -- TODO needs LayerPos, right now it just adds to the end
-  PFCDeleteElt :: PFCmdTag t (LayerPos, REltLabel t)
-  --PFCReorder :: PFCmdTag t (REltId, LayerPos)
+  PFCNewElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
+  PFCDeleteElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
+  --PFCReorder :: PFCmdTag t (LayerEltId, LayerPos)
   --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
-  --PFCDuplicate :: PFCmdTag t [REltId]
-  PFCManipulate :: PFCmdTag t (ControllerWithId)
-  -- TODO maybe there is better type that can make use of Delta type class for scaling many
-  PFCManipulateMany :: PFCmdTag t ([REltId], (LBox, LBox)) -- ^ (before, after)
+  --PFCDuplicate :: PFCmdTag t [LayerEltId]
+  PFCManipulate :: PFCmdTag t (ControllersWithId)
 
 instance Generic  (PFCmdTag t a)
 
@@ -65,34 +64,28 @@ instance Generic  (PFCmdTag t a)
 --instance Show  (PFCmdTag t a)
 -- this still doesn't get us Show (DSum PFCmdTag f) :(
 instance Text.Show.Show (PFCmdTag t a) where
-  show PFCNewElts        = "PFCNewElts"
-  show PFCDeleteElt      = "PFCDeleteElt"
-  show PFCManipulate     = "PFCManipulate"
-  show PFCManipulateMany = "PFCManipulateMany"
+  show PFCNewElts    = "PFCNewElts"
+  show PFCDeleteElts = "PFCDeleteElts"
+  show PFCManipulate = "PFCManipulate"
 
 instance Data.GADT.Compare.GEq (PFCmdTag t) where
-  geq PFCNewElts PFCNewElts               = do return Data.GADT.Compare.Refl
-  geq PFCDeleteElt PFCDeleteElt           = do return Data.GADT.Compare.Refl
-  geq PFCManipulate PFCManipulate         = do return Data.GADT.Compare.Refl
-  geq PFCManipulateMany PFCManipulateMany = do return Data.GADT.Compare.Refl
+  geq PFCNewElts PFCNewElts       = do return Data.GADT.Compare.Refl
+  geq PFCDeleteElts PFCDeleteElts = do return Data.GADT.Compare.Refl
+  geq PFCManipulate PFCManipulate = do return Data.GADT.Compare.Refl
 
 instance Data.GADT.Compare.GCompare (PFCmdTag t) where
   gcompare PFCNewElts PFCNewElts = runGComparing $ (do return Data.GADT.Compare.GEQ)
   gcompare PFCNewElts _ = Data.GADT.Compare.GLT
   gcompare _ PFCNewElts = Data.GADT.Compare.GGT
-  gcompare PFCDeleteElt PFCDeleteElt = runGComparing $ (do return Data.GADT.Compare.GEQ)
-  gcompare PFCDeleteElt _ = Data.GADT.Compare.GLT
-  gcompare _ PFCDeleteElt = Data.GADT.Compare.GGT
+  gcompare PFCDeleteElts PFCDeleteElts = runGComparing $ (do return Data.GADT.Compare.GEQ)
+  gcompare PFCDeleteElts _ = Data.GADT.Compare.GLT
+  gcompare _ PFCDeleteElts = Data.GADT.Compare.GGT
   gcompare PFCManipulate PFCManipulate = runGComparing $ (do return Data.GADT.Compare.GEQ)
   gcompare PFCManipulate _ = Data.GADT.Compare.GLT
   gcompare _ PFCManipulate = Data.GADT.Compare.GGT
-  gcompare PFCManipulateMany PFCManipulateMany = runGComparing $ (do return Data.GADT.Compare.GEQ)
-  gcompare PFCManipulateMany _ = Data.GADT.Compare.GLT
-  gcompare _ PFCManipulateMany = Data.GADT.Compare.GGT
 
 type PFCmd t = DS.DSum (PFCmdTag t) Identity
 type PFCmdMap t = DM.DMap (PFCmdTag t) Identity
-
 type PFCmdStack t = ActionStack t (PFCmd t)
 
 selectDo :: forall t a. (Reflex t)

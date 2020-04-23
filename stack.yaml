@@ -54,7 +54,7 @@ extra-deps:
 - github: pdlla/reflex-test-host
   commit: 73de55fbd7cb67b73af8f5d4370b1f653e7e9652
 - github: pdlla/reflex-dynamic-containers
-  commit: 196093736feff72e93812cf27f427f32436030dc
+  commit: 41d6d1b043f59198d26dc29f8f1c83af0efabe15
 - github: pdlla/reflex-potatoes
   commit: 2af6a47273cb371abceab643ae787325631f8487
 

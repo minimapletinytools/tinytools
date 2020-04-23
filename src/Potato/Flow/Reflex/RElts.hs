@@ -1,24 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
+
 module Potato.Flow.Reflex.RElts (
-  REltId
-  , ManipulatorWithId
-  , ControllerWithId
-  , RElt(..)
-  , REltLabel(..)
-  , REltTree
-  , NonEmptyREltTree
-  , SEltLabelWithId
-  , SEltWithIdTree
-  , serialize
-  , deserialize
 ) where
 
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Layers
 import           Potato.Flow.Reflex.Manipulators
+import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 import           Control.Monad.Fix
@@ -26,18 +15,20 @@ import           Control.Monad.Fix
 import           Data.Dependent.Sum              (DSum ((:=>)), (==>))
 import qualified Data.Dependent.Sum              as DS
 import           Data.Functor.Misc
+import qualified Data.IntMap.Strict              as IM
 import           Data.Maybe                      (fromJust)
 
 import           Reflex
+import qualified Reflex.Patch.IntMap             as IM
 import           Reflex.Potato.Helpers
 
--- TODO move to reltfactory
-type REltId = Int
 
-type ManipulatorWithId t = DS.DSum (Const2 REltId (Manipulators t)) Identity
+{-
+
+type ManipulatorWithId t = DS.DSum (Const2 LayerEltId (Manipulators t)) Identity
 -- TODO change to ControllersWithId = DS.DMap
-type ControllerWithId = DS.DSum (Const2 REltId Controllers) Identity
-type ControllerEventSelector t = EventSelector t (Const2 REltId Controllers)
+type ControllerWithId = DS.DSum (Const2 LayerEltId Controllers) Identity
+type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controllers)
 
 data RElt t =
   REltNone
@@ -104,27 +95,18 @@ getDrawer relt = case relt of
 
 -- | reflex element nodes
 data REltLabel t = REltLabel {
-  re_id     :: REltId
+  re_id     :: LayerEltId
   , re_name :: Text
   , re_elt  :: RElt t
 }
 
-instance LayerElt (REltLabel t) where
-  type LayerEltId (REltLabel t) = REltId
-  isFolderStart rel = case re_elt rel of
-    REltFolderStart -> True
-    _               -> False
-  isFolderEnd rel = case re_elt rel of
-    REltFolderEnd -> True
-    _             -> False
-  getId = re_id
 
 -- expected to satisfy scoping invariant
 type REltTree t = [REltLabel t]
 type NonEmptyREltTree t = NonEmpty (REltLabel t)
 
 -- IDs must be assigned first before we can deserialize
-type SEltLabelWithId = (REltId, SEltLabel)
+type SEltLabelWithId = (LayerEltId, SEltLabel)
 type SEltWithIdTree = [SEltLabelWithId]
 
 deserializeRElt ::
@@ -192,3 +174,4 @@ serializeRElt relt = do
   return $ SEltLabel (re_name relt) selt
 serialize :: (Reflex t, MonadSample t m) => REltTree t -> m SEltTree
 serialize = mapM serializeRElt
+-}
