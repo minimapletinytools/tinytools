@@ -64,10 +64,18 @@ holdPF PFConfig {..} = mdo
   --, _pfc_removeElt  :: Event t LayerEltId
   --, _pfc_manipulate :: Event t ControllersWithId
 
+  let
+    doAction_PFCDeleteElts :: Event t (PFCmd t)
+    doAction_PFCDeleteElts =
+      fmap (PFCDeleteElts ==>)
+      $ fmap (:|[])
+      $ sEltLayerTree_tagSuperSEltByPos layerTree _pfc_removeElt
+
   -- ACTION STACK
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
         doAction_PFCNewElts
+        , doAction_PFCDeleteElts
       ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {

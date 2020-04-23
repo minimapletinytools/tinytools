@@ -6,6 +6,7 @@
 module Potato.Flow.Reflex.SEltLayers (
   LayerPos
   , SEltLayerTree(..)
+  , sEltLayerTree_tagSuperSEltByPos
   , SEltLayerTreeConfig(..)
   , holdSEltLayerTree
 ) where
@@ -72,10 +73,13 @@ sEltLayerTree_tagEndPos SEltLayerTree {..} = tag (length <$> current _sEltLayerT
 
 
 -- | tag the SElt at the input position
-sEltLayerTree_tagSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t (REltId, SEltLabel)
-sEltLayerTree_tagSEltByPos slt lpEv = sEltLayerTree_tagSEltByPos slt idEv where
-  idEv :: Event t REltId
-  idEv = attachWith (\s i -> (fromJust $ Seq.lookup i s)) (current $ _sEltLayerTree_view slt) lpEv
+sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t SuperSEltLabel
+sEltLayerTree_tagSuperSEltByPos SEltLayerTree {..} = pushAlways $ \lp -> do
+  layers <- sample . current $ _sEltLayerTree_view
+  let rid = fromJust $ Seq.lookup lp layers
+  slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
+  let msl = IM.lookup rid slmap
+  return (rid, lp, fromJust msl) -- PARTIAL
 
 -- | tag the SElt at the input REltId
 sEltLayerTree_tagSEltById :: (Reflex t) => SEltLayerTree t -> Event t REltId -> Event t (REltId, SEltLabel)
