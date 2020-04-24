@@ -127,7 +127,7 @@ transform_LBox (sx, sy) trans anchor LBox {..} = LBox {
   }
 
 
--- also TODO this needs do/undo
+{- this wont work due to inversion roundoff issues
 modify_sElt_with_cRelBox :: Bool -> SElt -> CRelBox -> SElt
 modify_sElt_with_cRelBox isDo selt CRelBox {..} = let
     -- TODO switch to affine transforms
@@ -142,7 +142,7 @@ modify_sElt_with_cRelBox isDo selt CRelBox {..} = let
   in
     case selt of
       SEltBox SBox {..}  -> SEltBox $ SBox {
-          _sBox_box = transform_LBox (sx, sy) trans anchor _sBox_box
+          _sBox_box = traceShowId $ transform_LBox (sx, sy) trans anchor _sBox_box
           , _sBox_style = _sBox_style
         }
       SEltLine SLine {..} -> SEltLine $ SLine {
@@ -156,7 +156,7 @@ modify_sElt_with_cRelBox isDo selt CRelBox {..} = let
           , _sText_style = _sText_style
         }
       x          -> x
-
+-}
 
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
@@ -174,8 +174,9 @@ updateFnFromController isDo = \case
   (CTagText :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
     SEltText s -> SEltLabel sname (SEltText $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
-  (CTagRelBox :=> Identity d) -> \(SEltLabel sname selt) ->
-    SEltLabel sname (modify_sElt_with_cRelBox isDo selt d)
+  -- TODO
+  --(CTagRelBox :=> Identity d) -> \(SEltLabel sname selt) ->
+  --  SEltLabel sname (modify_sElt_with_cRelBox isDo selt d)
   _ -> id
 
 

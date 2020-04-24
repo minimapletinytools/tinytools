@@ -60,11 +60,10 @@ basic_network ev = mdo
       FCScaleBy10 lp -> do
         (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
         let
-          crelbox = CRelBox {
-              _cRelBox_original = fromJust $ getSEltBox selt
-              , _cRelBox_box    = DeltaLBox (LPoint (V2 0 0)) (LSize (V2 10 10))
+          cbox = CBox {
+              _cBox_box    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
             }
-        return . Just $ IM.singleton rid (CTagRelBox ==> crelbox)
+        return . Just $ IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing
     redoEv = flip fmapMaybe ev $ \case
       FCRedo -> Just ()

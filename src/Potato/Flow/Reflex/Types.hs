@@ -68,6 +68,8 @@ data MText = MText {
 }
 
 data MRelBox = MRelBox {
+  -- TODO change to this
+  --_mRelBox_bounded_targets :: NonEmpty (REltId, LBox)
   _mRelBox_targets :: NonEmpty REltId
   , _mRelBox_box   :: LBox
 }
@@ -135,6 +137,8 @@ instance Delta SText CText where
 -- | transforms object based on a reference point
 -- used for multi-selection
 data CRelBox = CRelBox {
+  --TODO change to this
+  --_cRelBox_box :: DeltaLBox
   _cRelBox_original :: LBox
   , _cRelBox_box    :: DeltaLBox
 }

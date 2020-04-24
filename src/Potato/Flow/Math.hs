@@ -20,10 +20,10 @@ module Potato.Flow.Math (
 
 import           Relude
 
-import           Data.Aeson
-import           Linear.V2
-
 import           Control.Exception (assert)
+import           Data.Aeson
+import           Linear.Matrix
+import           Linear.V2
 import qualified Text.Show
 
 {-
@@ -41,6 +41,8 @@ instance ToJSON XY
 
 newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
 newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
+
+
 
 -- | a point in screen space
 -- should only be used by VC, so does not belong here
