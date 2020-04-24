@@ -34,8 +34,10 @@ data FCmd =
   | FCDeleteElt Int -- position in layers to remove at, must be valid
   | FCUndo
   | FCRedo
-  | FCScaleBy10 LayerPos
   | FCSave
+
+  | FCCustom_Add_SBox_1
+  | FCCustom_CBox_1 LayerPos
   deriving (Eq, Show)
 
 setup_network
@@ -46,12 +48,14 @@ setup_network ev = mdo
   let
     addEv = flip fmapMaybe ev $ \case
       FCAddElt x -> Just (0, SEltLabel "blank" x)
+      FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
       _           -> Nothing
+
     removeEv = flip fmapMaybe ev $ \case
       FCDeleteElt x -> Just x
       _              -> Nothing
     manipEv = flip push ev $ \case
-      FCScaleBy10 lp -> do
+      FCCustom_CBox_1 lp -> do
         (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
         let
           cbox = CBox {
@@ -88,10 +92,26 @@ save_network ev = do
   pfo <- setup_network ev
   return $ _pfo_saved pfo
 
+
 bs_save_0 :: ([FCmd],[FCmd])
 bs_save_0 =
-  ([FCAddElt (SEltBox simpleSBox), FCUndo, FCRedo]
-  , [FCAddElt (SEltBox simpleSBox)])
+  ([FCAddElt (SEltBox simpleSBox), FCUndo, FCRedo, FCSave]
+  , [FCAddElt (SEltBox simpleSBox), FCSave])
+
+bs_save_1 :: ([FCmd],[FCmd])
+bs_save_1 =
+  ([FCCustom_Add_SBox_1, FCCustom_CBox_1 0, FCUndo, FCRedo, FCCustom_Add_SBox_1, FCSave]
+  , [FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_CBox_1 0, FCSave])
+
+bs_save_2 :: ([FCmd],[FCmd])
+bs_save_2 =
+  ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElt 1, FCUndo, FCUndo, FCUndo, FCUndo, FCSave]
+  , [FCSave])
+
+bs_save_3 :: ([FCmd],[FCmd])
+bs_save_3 =
+  ([FCCustom_Add_SBox_1, FCDeleteElt 0, FCUndo, FCRedo, FCSave]
+  , [FCSave])
 
 -- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
 -- you'll need to modify reflex-test-host for this
@@ -112,3 +132,6 @@ spec :: Spec
 spec = do
   describe "Potato Flow" $ do
     fromHUnitTest $ pair_test "save0" save_network bs_save_0
+    fromHUnitTest $ pair_test "save1" save_network bs_save_1
+    fromHUnitTest $ pair_test "save2" save_network bs_save_2
+    fromHUnitTest $ pair_test "save3" save_network bs_save_3
