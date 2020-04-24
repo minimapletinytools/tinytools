@@ -24,6 +24,7 @@ import           Data.Aeson
 import           Linear.V2
 
 import           Control.Exception (assert)
+import qualified Text.Show
 
 {-
  CORDINATE SYSTEM
@@ -50,11 +51,13 @@ newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show
 -- note size is non inclusive
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
 -- e.g. an LBox with size (0,0) contains nothing
-
 data LBox = LBox {
   ul     :: LPoint
   , size :: LSize
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
+
+instance Show LBox where
+  show (LBox (LPoint (V2 x y)) (LSize (V2 w h))) = "LBox: " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
 
 nilLBox :: LBox
 nilLBox = LBox 0 0

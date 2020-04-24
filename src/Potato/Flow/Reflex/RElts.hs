@@ -126,14 +126,16 @@ transform_LBox (sx, sy) trans anchor LBox {..} = LBox {
     , size = scale_LSize (sx, sy) size
   }
 
--- TODO test
-modify_sElt_with_cRelBox :: SElt -> CRelBox -> SElt
-modify_sElt_with_cRelBox selt CRelBox {..} = let
+
+-- also TODO this needs do/undo
+modify_sElt_with_cRelBox :: Bool -> SElt -> CRelBox -> SElt
+modify_sElt_with_cRelBox isDo selt CRelBox {..} = let
     -- TODO switch to affine transforms
     -- TODO probably just use lens ;__;
     trans = deltaLBox_translate _cRelBox_box
     anchor = ul _cRelBox_original
     LSize (V2 dx dy) = deltaLBox_resizeBy _cRelBox_box
+    -- TODO make sure you don't scale 0 boxes
     LSize (V2 x y) = size _cRelBox_original
     sx :: Float = 1 + fromIntegral dx / fromIntegral x
     sy :: Float = 1 + fromIntegral dy / fromIntegral y
@@ -173,7 +175,7 @@ updateFnFromController isDo = \case
     SEltText s -> SEltLabel sname (SEltText $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
   (CTagRelBox :=> Identity d) -> \(SEltLabel sname selt) ->
-    SEltLabel sname (modify_sElt_with_cRelBox selt d)
+    SEltLabel sname (modify_sElt_with_cRelBox isDo selt d)
   _ -> id
 
 
