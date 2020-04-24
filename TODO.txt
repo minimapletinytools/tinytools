@@ -6,13 +6,6 @@ stack build --ghc-options="-ddump-splices"
 -switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
   -or maybe I'm wrong?
 -rename vars in Controllers to indicate they are deltas
-DONE-fix modify stuff, it's broken :(
-DONE-switch to linear for Math
-  -package Math into a separate lib on stackage plz
-  -rename stuff a little
-DONE-finish selt stuff
-  -toManipulator
-  -updateFnFromController
 -testing stuff
   -basic support for input/expected output pair testing
   -add test helper for action stack which ensure state after undo/redo remains the same!
@@ -33,6 +26,13 @@ DONE-finish selt stuff
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
 
+DONE-fix modify stuff, it's broken :(
+DONE-switch to linear for Math
+  -package Math into a separate lib on stackage plz
+  -rename stuff a little
+DONE-finish selt stuff
+  -toManipulator
+  -updateFnFromController
 DONE-manipulator test
 DONE-hook up manipulators
 DONE-refactor

@@ -79,6 +79,7 @@ dependencies:
 - dependent-sum-template
 - dependent-map
 - ref-tf
+- text
 
 #- smash
 - deepseq

@@ -111,7 +111,7 @@ instance ToJSON SElt
 data SEltLabel = SEltLabel {
  _sEltLabel_name   :: Text
  , _sEltLabel_sElt :: SElt
-} deriving (Generic, Show)
+} deriving (Eq, Generic, Show)
 
 instance FromJSON SEltLabel
 instance ToJSON SEltLabel

@@ -1,6 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-module Potato.Flow.EntrySpec
+module Potato.Flow.NewEntrySpec
   ( spec
   )
 where
@@ -20,35 +20,29 @@ import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List                as L (last)
 import           Data.Maybe               (fromJust)
+import qualified Data.Text                as T
+import           Text.Pretty.Simple       (pPrint)
 
 import           Potato.Flow
 
 simpleSBox :: SBox
-simpleSBox = SBox nilLBox defaultSLineStyle
+simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
 
 data FCmd =
   FCNone
   | FCAddElt SElt
-  | FCDeleteElt Int -- position in layers to remove at
+  | FCDeleteElt Int -- position in layers to remove at, must be valid
   | FCUndo
   | FCRedo
   | FCScaleBy10 LayerPos
+  | FCSave
   deriving (Eq, Show)
 
-{-
-TODO
-randomFCmd :: SEltTree -> IO FCmd
-randomFCmd stree = do
-  let n = length stree
--}
-
-
-
-basic_network
+setup_network
   :: forall t m
    . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t FCmd -> PerformEventT t m (Event t Int))
-basic_network ev = mdo
+  => Event t FCmd -> PerformEventT t m (PFOutput t)
+setup_network ev = mdo
   let
     addEv = flip fmapMaybe ev $ \case
       FCAddElt x -> Just (0, SEltLabel "blank" x)
@@ -71,62 +65,50 @@ basic_network ev = mdo
     undoEv = flip fmapMaybe ev $ \case
       FCUndo -> Just ()
       _      -> Nothing
+    saveEv = flip fmapMaybe ev $ \case
+      FCSave -> Just ()
+      _      -> Nothing
 
     pfc = PFConfig { _pfc_addElt     = addEv
                    , _pfc_removeElt  = removeEv
                    , _pfc_manipulate = manipEv
                    , _pfc_undo       = undoEv
                    , _pfc_redo       = redoEv
-                   , _pfc_save = never
+                   , _pfc_save = saveEv
                    }
-  pf <- holdPF pfc
+  pfo <- holdPF pfc
   let
-    layerTree = _pfo_layers $ pf
-    newEltsEv = updated . fmap length . _sEltLayerTree_view $ layerTree
-    changes :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel))
-    changes = _sEltLayerTree_changeView layerTree
-    directory :: Directory t SEltLabel
-    directory = _sEltLayerTree_directory layerTree
+    layerTree = _pfo_layers $ pfo
+  return pfo
 
-  return newEltsEv
+save_network
+  :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t FCmd -> PerformEventT t m (Event t [SEltLabel]))
+save_network ev = do
+  pfo <- setup_network ev
+  return $ _pfo_saved pfo
 
-basic_test :: Test
-basic_test = TestLabel "basic" $ TestCase $ do
-  let bs =
-        [ FCNone
-        , FCAddElt (SEltBox simpleSBox)
-        , FCScaleBy10 0
-        , FCUndo
-        , FCRedo
-        , FCAddElt (SEltBox simpleSBox)
-        , FCAddElt (SEltBox simpleSBox)
-        , FCAddElt (SEltBox simpleSBox)
-        , FCAddElt (SEltBox simpleSBox)
-        , FCAddElt (SEltBox simpleSBox)
-        , FCDeleteElt 0
-        , FCDeleteElt 3
-        , FCDeleteElt 0
-        , FCAddElt (SEltBox simpleSBox)
-        , FCUndo
-        , FCUndo
-        , FCUndo
-        , FCUndo
-        , FCUndo
-        , FCUndo
-        , FCRedo
-        , FCRedo
-        , FCRedo
-        , FCRedo
-        , FCRedo
-        , FCRedo
-        ]
-      run :: IO [[Maybe Int]]
-      run = runAppSimple basic_network bs
-  v <- liftIO run
-  print v
-  L.last (join v) @?= Just 4
+bs_save_0 :: ([FCmd],[FCmd])
+bs_save_0 =
+  ([FCAddElt (SEltBox simpleSBox), FCUndo, FCRedo]
+  , [FCAddElt (SEltBox simpleSBox)])
+
+-- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
+-- you'll need to modify reflex-test-host for this
+pair_test :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global, Eq a, Show a)
+  => Text
+  -> (Event t FCmd -> PerformEventT t m (Event t a))
+  -> ([FCmd],[FCmd])
+  -> Test
+pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ TestCase $ do
+  let
+    run1 = runAppSimple network bs1
+    run2 = runAppSimple network bs2
+  v1 <- liftIO run1
+  v2 <- liftIO run2
+  L.last (join v1) @?= L.last (join v2)
 
 spec :: Spec
 spec = do
   describe "Potato Flow" $ do
-    fromHUnitTest basic_test
+    fromHUnitTest $ pair_test "save0" save_network bs_save_0
