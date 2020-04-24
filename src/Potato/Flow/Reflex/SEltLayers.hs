@@ -57,11 +57,7 @@ data SEltLayerTree t = SEltLayerTree {
   _sEltLayerTree_view         :: Dynamic t (Seq REltId)
 
   --, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
-
-  -- TODO we have this so ui only re-renders what is needed
-  -- the issue is, if we remove an element we need to know what area it previously covered so we only rerender that area
   , _sEltLayerTree_changeView :: Event t (PatchREltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
-
 
   -- | directory of all SEltLabels
   , _sEltLayerTree_directory  :: Directory t (SEltLabel)

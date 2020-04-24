@@ -126,7 +126,7 @@ holdPF PFConfig {..} = mdo
   -- INPUTS
   -- * selectDo/Undo actionStack PFCNewElts :: Event t (NonEmpty SuperSEltLabel)
   -- * selectDo/Undo actionStack PFCDeleteElts :: Event t (NonEmpty SuperSEltLabel)
-  -- * TODO modify elements :: ControllersWithId
+  -- * selectDo/Undo actionStack PFCManipulate :: ControllersWithId
   -- OUTPUTS
   -- * TODO modified elements :: PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)
   let
