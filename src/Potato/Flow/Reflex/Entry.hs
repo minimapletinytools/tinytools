@@ -17,6 +17,7 @@ import           Reflex.Potato.Helpers
 import           Data.Aeson
 import qualified Data.ByteString.Lazy          as LBS
 import           Data.Dependent.Sum            ((==>))
+import qualified Data.IntMap.Strict            as IM
 import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe                    (fromJust)
 
@@ -31,7 +32,7 @@ import           Control.Monad.Fix
 
 -- loading new workspace stufff
 type LoadFileEvent t =  Event t LBS.ByteString
-type SetWSEvent t = Event t SEltTree
+type SetWSEvent t = Event t [SEltLabel]
 
 loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
@@ -48,10 +49,13 @@ data PFConfig t = PFConfig {
 
   , _pfc_undo       :: Event t ()
   , _pfc_redo       :: Event t ()
+
+  , _pfc_save       :: Event t ()
 }
 
 data PFOutput t = PFOutput {
-  _pfo_layers            :: SEltLayerTree t
+  _pfo_layers  :: SEltLayerTree t
+  , _pfo_saved :: Event t [SEltLabel]
 }
 
 holdPF ::
@@ -141,7 +145,18 @@ holdPF PFConfig {..} = mdo
   layerTree :: SEltLayerTree t
     <- holdSEltLayerTree layerTreeConfig
 
+  let
+    pushStateFn :: () -> PushM t [SEltLabel]
+    pushStateFn _ = do
+      layers <- sample . current $ _sEltLayerTree_view layerTree
+      contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
+      let
+        -- PARTIAL
+        foldfn acc rid = (contents IM.! rid) : acc
+      return $ foldl' foldfn [] layers
+
   return $
     PFOutput {
       _pfo_layers = layerTree
+      , _pfo_saved = pushAlways pushStateFn _pfc_save
     }
