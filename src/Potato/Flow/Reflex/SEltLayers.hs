@@ -22,13 +22,13 @@ import           Potato.Flow.SElts
 import           Reflex
 import           Reflex.Data.Directory
 import           Reflex.Data.Sequence
-import qualified Reflex.Patch.IntMap      as IM
 import           Reflex.Potato.Helpers
 
 import           Control.Exception        (assert)
 import           Control.Monad.Fix
 
 import qualified Data.IntMap.Strict       as IM
+import qualified Data.List                as L
 import qualified Data.List.NonEmpty       as NE
 import           Data.Maybe               (fromJust)
 import qualified Data.Sequence            as Seq
@@ -57,7 +57,7 @@ data SEltLayerTree t = SEltLayerTree {
   _sEltLayerTree_view         :: Dynamic t (Seq REltId)
 
   --, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
-  , _sEltLayerTree_changeView :: Event t (PatchREltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
+  , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
 
   -- | directory of all SEltLabels
   , _sEltLayerTree_directory  :: Directory t (SEltLabel)
@@ -78,7 +78,7 @@ sEltLayerTree_sampleSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t ->
 sEltLayerTree_sampleSuperSEltByPos SEltLayerTree {..} lp = do
   layers <- sample . current $ _sEltLayerTree_view
   let rid = fromJust $ Seq.lookup lp layers
-  slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
+  slmap <- sample $ _directory_contents _sEltLayerTree_directory
   let msl = IM.lookup rid slmap
   return $ do
     sl <- msl
@@ -98,7 +98,7 @@ sEltLayerTree_tagSuperSEltByPos slt = push $ sEltLayerTree_sampleSuperSEltByPos 
 -- | tag the SElt at the input REltId
 sEltLayerTree_tagSEltById :: (Reflex t) => SEltLayerTree t -> Event t REltId -> Event t (REltId, SEltLabel)
 sEltLayerTree_tagSEltById SEltLayerTree {..} = pushAlways $ \rid -> do
-  slmap <- sample $ _directoryMap_contents _sEltLayerTree_directory
+  slmap <- sample $ _directory_contents _sEltLayerTree_directory
   let msl = IM.lookup rid slmap
   return (rid, fromJust msl) -- PARTIAL
 -}
@@ -158,13 +158,14 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     modifyUndo = fmap NE.fromList $ ffor _sEltLayerTree_directory_undoManipulate $ flattenControls False
 
     directoryConfig = DirectoryConfig {
-        _directoryMapConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
-        , _directoryMapConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
-        , _directoryMapConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
+        _directoryConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
+        , _directoryConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
+        , _directoryConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
       }
   directory :: Directory t SEltLabel
     <- holdDirectory directoryConfig
 
+  -- TODO add native support for adding many elts at once to seq so you don't have to do this
   -- step insert and remove events
   let
     extractLayerPos :: SuperSEltLabel -> LayerPos
@@ -179,10 +180,10 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     prepForInsertion (rid, lp, _) = (lp, Seq.singleton rid)
     inputInsertEv :: Event t [(LayerPos, Seq REltId)]
     inputInsertEv = toList <$> fmap prepForInsertion <$> _sEltLayerTreeConfig_insert
-  (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [(Int, Seq REltId)]) <-
-    repeatEventAndCollectOutput inputRemoveEv (_dynamicSeq_removed dseq)
-  (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [(Int, Seq REltId)]) <-
-    repeatEventAndCollectOutput inputInsertEv (_dynamicSeq_inserted dseq)
+  (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [NonEmpty (REltId, SEltLabel)]) <-
+    repeatEventAndCollectOutput inputRemoveEv (_directory_removed directory)
+  (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
+    repeatEventAndCollectOutput inputInsertEv (_directory_added directory)
 
   let
     dseqc = DynamicSeqConfig {
@@ -194,26 +195,30 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     holdDynamicSeq empty dseqc
 
   let
-    {- TODO setup changeView stuff
-    -- changes from collected removal
-    changes1 :: Event t [(REltId, Maybe a)]
-    changes1 = fmap join
-      $ toList
-      <$> (\(_, srid) -> (\rid -> (rid, Nothing)) <$> srid)
-      <<$>> collectedRemovals
+
+    -- changes from removal
+    changes1 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
+    changes1 = NE.toList
+      <$> fmap (\(rid, seltl) -> (rid, (Just seltl, Nothing)))
+      <$> L.head -- PARTIAL
+      <$> collectedRemovals
+
     -- changes from insertions
-    changes2 :: Event t [(REltId, Maybe a)]
-    changes2 = fmap join
-      $ toList
-      <$> (\(_, srid) -> (\rid -> (rid, Nothing)) <$> srid)
-      <<$>> collectedRemovals
-      fmap toList $  (\a -> (getId a, Just a)) <<$>> snd <$> (_dynamicSeq_inserted dseq)
-    _sEltLayerTree_changeView = IM.PatchIntMap . fromList <$> (changes1 <> changes2)
-    -}
+    changes2 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
+    changes2 = NE.toList
+      <$> fmap (\(rid, seltl) -> (rid, (Nothing, Just seltl)))
+      <$> L.head -- PARTIAL
+      <$> collectedInsertions
+
+    -- changes from modifications
+    changes3 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
+    changes3 = NE.toList
+      <$> fmap (\(rid, before, after) -> (rid, (Just before, Just after)))
+      <$> _directory_modified directory
 
   return
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      , _sEltLayerTree_changeView = undefined
+      , _sEltLayerTree_changeView = IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }

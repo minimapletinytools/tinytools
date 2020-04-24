@@ -6,7 +6,6 @@ module Potato.Flow.Reflex.Types (
   LayerPos
   , REltId
   , REltIdMap
-  , PatchREltIdMap
   , SuperSEltLabel
   , ControllersWithId
 
@@ -30,7 +29,6 @@ module Potato.Flow.Reflex.Types (
 import           Relude
 
 import           Reflex
-import qualified Reflex.Patch.IntMap  as IM
 
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
@@ -47,7 +45,6 @@ import           Language.Haskell.TH
 type LayerPos = Int
 type REltId = Int
 type REltIdMap a = IM.IntMap a
-type PatchREltIdMap a = IM.PatchIntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 
 

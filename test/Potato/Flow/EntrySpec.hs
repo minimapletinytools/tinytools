@@ -12,6 +12,7 @@ import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
+import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
@@ -81,7 +82,13 @@ basic_network ev = mdo
   pf <- holdPF pfc
   let
     layerTree = _pfo_layers $ pf
-  return $ updated . fmap length . _sEltLayerTree_view $ layerTree
+    newEltsEv = updated . fmap length . _sEltLayerTree_view $ layerTree
+    changes :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel))
+    changes = _sEltLayerTree_changeView layerTree
+    directory :: Directory t SEltLabel
+    directory = _sEltLayerTree_directory layerTree
+
+  return newEltsEv
 
 basic_test :: Test
 basic_test = TestLabel "basic" $ TestCase $ do
