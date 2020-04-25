@@ -126,5 +126,6 @@ step_state_network AppIn {..} = do
   return
     AppOut {
       _appOut_behavior = _pfo_state pfo
-      , _appOut_event  = never
+      --, _appOut_event  = never
+      , _appOut_event = fmap (\x -> x `deepseq` ()) $ _sEltLayerTree_changeView (_pfo_layers pfo)
     }
