@@ -141,10 +141,7 @@ instance Delta SText CText where
 -- | transforms object based on a reference point
 -- used for multi-selection
 data CRelBox = CRelBox {
-  --TODO change to this
-  --_cRelBox_box :: DeltaLBox
-  _cRelBox_original :: LBox
-  , _cRelBox_box    :: DeltaLBox
+  _cRelBox_box    :: DeltaLBox
 }
 
 data CTag a where

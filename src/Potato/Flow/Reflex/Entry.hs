@@ -83,9 +83,7 @@ holdPF PFConfig {..} = mdo
       $ pushAlways (sEltLayerTree_sampleSuperSEltByPos layerTree) _pfc_removeElt
 
     doAction_PFCManipulate :: Event t (PFCmd t)
-    doAction_PFCManipulate =
-      fmap (PFCManipulate ==>)
-      _pfc_manipulate
+    doAction_PFCManipulate = fmap (PFCManipulate ==>) _pfc_manipulate
 
   -- ACTION STACK
   let
