@@ -87,6 +87,7 @@ randomActionFCmd doundo stree = do
             , _sText_text = "moo"
             , _sText_style = defaultSTextStyle
           }
+        _ -> undefined
     else do
       rindex <- R.getRandomR (0, length eltsOnly - 1)
       p1 <- randomXY
@@ -125,11 +126,14 @@ setup_network ev = mdo
       _           -> Nothing
 
     removeEv = flip fmapMaybe ev $ \case
-      FCDeleteElt x -> Just x
+      FCDeleteElt p -> Just p
       _              -> Nothing
     manipEv = flip push ev $ \case
-      FCCustom_CBox_1 lp -> do
-        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
+      FCModify p c -> do
+        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
+        return . Just $ IM.singleton rid c
+      FCCustom_CBox_1 p -> do
+        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let
           cbox = CBox {
               _cBox_box    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))

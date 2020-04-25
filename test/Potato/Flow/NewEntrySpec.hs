@@ -90,8 +90,8 @@ undoredo_test :: forall t m.
 undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
   let
-    m0 = 100 -- num commands to do to set up state
-    l0 = 100 -- num commands to do and the undo
+    m0 = 10 -- num commands to do to set up state
+    l0 = 10 -- num commands to do and the undo
     setupLoop 0 st = return st
     setupLoop n st = do
       action <- liftIO $ randomActionFCmd False st
@@ -121,5 +121,5 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
-    fromHUnitTest $ undoredo_test 100
-    fromHUnitTest $ nstep_test 50000
+    fromHUnitTest $ undoredo_test 1
+    fromHUnitTest $ nstep_test 1
