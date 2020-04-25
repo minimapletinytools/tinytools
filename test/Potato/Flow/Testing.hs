@@ -131,7 +131,8 @@ setup_network ev = mdo
     manipEv = flip push ev $ \case
       FCModify p c -> do
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
-        return . Just $ IM.singleton rid c
+        -- `deepseq` here prevents a leak, fml.
+        return . Just $ selt `deepseq` IM.singleton rid c
       FCCustom_CBox_1 p -> do
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let

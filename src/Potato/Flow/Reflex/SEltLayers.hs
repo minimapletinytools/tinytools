@@ -222,5 +222,6 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
+      -- TODO FIX, disabled to prevent know leaks (so I can find other ones easily lol)
       , _sEltLayerTree_changeView = never --IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }

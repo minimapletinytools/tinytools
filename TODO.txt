@@ -1,6 +1,6 @@
 
 stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
-stack exec --profile -- memtest +RTS -hd
+stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
 ::RENDER NOTES::
