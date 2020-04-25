@@ -196,6 +196,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
 
   let
 
+    -- TODO THIS LEAKS FIX ME
     -- changes from removal
     changes1 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
     changes1 = NE.toList
@@ -203,6 +204,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
       <$> L.head -- PARTIAL
       <$> collectedRemovals
 
+    -- TODO THIS LEAKS FIX ME
     -- changes from insertions
     changes2 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
     changes2 = NE.toList
@@ -220,6 +222,5 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      -- TODO THIS EVENT LEAKS!!! FIX ME
       , _sEltLayerTree_changeView = IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }
