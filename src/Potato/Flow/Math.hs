@@ -22,7 +22,6 @@ import           Relude
 
 import           Control.Exception (assert)
 import           Data.Aeson
-import           Linear.Matrix
 import           Linear.V2
 import qualified Text.Show
 
@@ -39,8 +38,8 @@ type XY = V2 Int
 instance FromJSON XY
 instance ToJSON XY
 
-newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
-newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show, FromJSON, ToJSON)
+newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Num, Generic, Show, NFData, FromJSON, ToJSON)
+newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show, NFData, FromJSON, ToJSON)
 
 
 
@@ -61,6 +60,10 @@ data LBox = LBox {
 instance Show LBox where
   show (LBox (LPoint (V2 x y)) (LSize (V2 w h))) = "LBox: " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
 
+instance FromJSON LBox
+instance ToJSON LBox
+instance NFData LBox
+
 nilLBox :: LBox
 nilLBox = LBox 0 0
 
@@ -79,9 +82,6 @@ does_LBox_contains_LPoint (LBox (LPoint (V2 bx by)) (LSize (V2 bw bh))) (LPoint 
 -- TODO
 union_LBox :: LBox -> LBox -> LBox
 union_LBox lb1 = const lb1
-
-instance FromJSON LBox
-instance ToJSON LBox
 
 class Delta x dx where
   plusDelta :: x -> dx -> x

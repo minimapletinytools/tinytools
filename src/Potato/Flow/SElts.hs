@@ -29,6 +29,7 @@ data CornerStyle = CornerStyle {
 
 instance FromJSON CornerStyle
 instance ToJSON CornerStyle
+instance NFData CornerStyle
 
 defaultCornerStyle :: CornerStyle
 defaultCornerStyle = CornerStyle {
@@ -46,6 +47,7 @@ data SLineStyle = SLineStyle {
 
 instance FromJSON SLineStyle
 instance ToJSON SLineStyle
+instance NFData SLineStyle
 
 defaultSLineStyle :: SLineStyle
 defaultSLineStyle = SLineStyle {
@@ -60,6 +62,7 @@ data STextStyle = STextStyle {
 
 instance FromJSON STextStyle
 instance ToJSON STextStyle
+instance NFData STextStyle
 
 -- |
 data SBox = SBox {
@@ -69,6 +72,7 @@ data SBox = SBox {
 
 instance FromJSON SBox
 instance ToJSON SBox
+instance NFData SBox
 
 -- |
 data SLine = SLine {
@@ -79,6 +83,7 @@ data SLine = SLine {
 
 instance FromJSON SLine
 instance ToJSON SLine
+instance NFData SLine
 
 -- TODO make manipulator
 -- TODO rename
@@ -91,6 +96,7 @@ data SCartLines = SCartLines {
 
 instance FromJSON SCartLines
 instance ToJSON SCartLines
+instance NFData SCartLines
 
 
 -- | abitrary text confined to a box
@@ -102,11 +108,13 @@ data SText = SText {
 
 instance FromJSON SText
 instance ToJSON SText
+instance NFData SText
 
 data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Eq, Generic, Show)
 
 instance FromJSON SElt
 instance ToJSON SElt
+instance NFData SElt
 
 data SEltLabel = SEltLabel {
  _sEltLabel_name   :: Text
@@ -115,3 +123,4 @@ data SEltLabel = SEltLabel {
 
 instance FromJSON SEltLabel
 instance ToJSON SEltLabel
+instance NFData SEltLabel
