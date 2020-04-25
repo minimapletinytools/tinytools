@@ -61,7 +61,6 @@ randomActionFCmd stree = do
     eltsOnly = filter (isElement . snd) $  L.indexed stree
     nCmds = 4
   rcmd :: Int <- R.getRandomR (0, nCmds-1)
-  pos :: Int <- R.getRandomR (0, nElts)
   if null eltsOnly || rcmd == 0
     then do
       --pos <- R.getRandomR (0, nElts)
@@ -176,24 +175,29 @@ step_forever_test n0 = TestCase $ runSpiderHost $ do
       return
         AppOut {
           _appOut_behavior = _pfo_state pfo
-          , _appOut_event  = never :: Event t ()
+          , _appOut_event  = never
         }
   appFrame <- getAppFrame app_network ()
   let
     loop 0 _ = return ()
     loop n st = do
       action <- liftIO $ randomActionFCmd st
+      --action <- return FCCustom_Add_SBox_1
       --liftIO $ print action
-      out <- tickAppFrame appFrame $ Just $ That action
+      _ <- tickAppFrame appFrame $ Just $ That action
+      out <- tickAppFrame appFrame $ Just $ That FCNone
       --liftIO $ do
-        --putStrLn $ "ticked: " <> show out
+        --putStrLn $ "ticked: " <> show (fst out)
         --threadDelay 10000
         --hasStats <- getRTSStatsEnabled
         --when (not hasStats) $ error "no stats"
         --stats <- getRTSStats
         --print (toImportant stats)
       case L.last out of
-        (nst, _) -> loop (n-1) nst
+        (nst, _) -> do
+          --liftIO $ print "ticked"
+          --liftIO $ print nst
+          loop (n-1) nst
   loop n0 []
 
 {-
