@@ -26,9 +26,6 @@ hp2ps -e8in -c memorytests.hp
 
 
 ::TODO TMRW::
--split out test methods into a module
-DONE-undo/redo test
--mem test
 -finish CTagRelBox
 -test for rest of controller stuff
   -refine testing interface so you can modify individual elts
@@ -41,6 +38,9 @@ DONE-undo/redo test
 -THEN you can make a vty frontend :D
 
 ::TODO::
+-fix mem leak
+  -just add multi insert support into seq for easy fix
+  -harder fix is actually understand what is going on D:
 -switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
   -or maybe I'm wrong?
 -rename vars in Controllers to indicate they are deltas
@@ -67,6 +67,9 @@ DONE-undo/redo test
   -use affine transformations for box manipulation
   -write your own math lib ;__;
 
+DONE-split out test methods into a module
+DONE-undo/redo test
+DONE-mem test
 DONE-fix modify stuff, it's broken :(
 DONE-switch to linear for Math
   -package Math into a separate lib on stackage plz

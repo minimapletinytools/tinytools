@@ -89,19 +89,19 @@ packages:
   original:
     url: https://github.com/pdlla/reflex-test-host/archive/73de55fbd7cb67b73af8f5d4370b1f653e7e9652.tar.gz
 - completed:
-    size: 21734
-    url: https://github.com/pdlla/reflex-dynamic-containers/archive/a937f13b3a8104c0d8dbbbf36e8de8d864833dca.tar.gz
+    size: 19369
+    url: https://github.com/pdlla/reflex-dynamic-containers/archive/607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba.tar.gz
     cabal-file:
-      size: 3467
-      sha256: 070230141409319d457b4e267e4d6e633f9a46c2088905474816f4293a920e99
+      size: 3407
+      sha256: 1ee1dd6e74ebb811e8f140d12b2b6d4b91087b1524af4bdc3084897d5ad99a1a
     name: reflex-dynamic-containers
     version: 0.1.0.0
-    sha256: a257f720042274aa1e16f2ed5f8857b9bd5e10355aac2c24247ea830783fb9a7
+    sha256: d8db8d2eaae62525d1e21366a270debf1cebde39f87099b2fa1770747b693ad0
     pantry-tree:
-      size: 1469
-      sha256: 14a3552b6786bf41efbbfcfe2bb38a19435143093a8c79a0a547d89436cd7368
+      size: 1326
+      sha256: f5e5aa7bfcae190d2a9dad0ed2ac6f7bd4e1f3cf2e887ab73c793b2e3a18c609
   original:
-    url: https://github.com/pdlla/reflex-dynamic-containers/archive/a937f13b3a8104c0d8dbbbf36e8de8d864833dca.tar.gz
+    url: https://github.com/pdlla/reflex-dynamic-containers/archive/607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba.tar.gz
 - completed:
     size: 9018
     url: https://github.com/pdlla/reflex-potatoes/archive/2af6a47273cb371abceab643ae787325631f8487.tar.gz
