@@ -13,18 +13,16 @@ import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
-import           Reflex.Data.Directory
-import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import           Data.Dependent.Sum       ((==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List                as L (last, (!!))
 import qualified Data.List.Index          as L
 import           Data.Maybe               (fromJust)
 import qualified Data.Text                as T
 import           Data.These
-import           Text.Pretty.Simple       (pPrint)
+--import           Text.Pretty.Simple       (pPrint)
 
 import qualified Control.Monad.Random     as R
 
@@ -54,12 +52,12 @@ isElement (SEltLabel _ selt) = case selt of
   SEltFolderEnd   -> False
   _               -> True
 
-randomActionFCmd :: SEltTree -> IO FCmd
-randomActionFCmd stree = do
+randomActionFCmd :: Bool -> SEltTree -> IO FCmd
+randomActionFCmd doundo stree = do
   let
-    nElts = length stree
+    --nElts = length stree
     eltsOnly = filter (isElement . snd) $  L.indexed stree
-    nCmds = 4
+    nCmds = if doundo then 5 else 3
   rcmd :: Int <- R.getRandomR (0, nCmds-1)
   if null eltsOnly || rcmd == 0
     then do
@@ -70,11 +68,12 @@ randomActionFCmd stree = do
       let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
       case rcmd of
         1 -> return $ FCDeleteElt pos
-        2 -> return FCUndo
-        3 -> return FCRedo
-        4 -> case selt of
+        2 -> case selt of
           SEltBox _ -> return $ FCCustom_CBox_1 pos
           _         -> return FCNone
+        3 -> return FCUndo
+        4 -> return FCRedo
+        _ -> undefined
 
 
 setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -165,7 +164,7 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   L.last (join v1) @?= L.last (join v2)
 
 
-step_forever_test :: forall t a s m.
+step_forever_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Int -> Test
 step_forever_test n0 = TestCase $ runSpiderHost $ do
@@ -181,7 +180,7 @@ step_forever_test n0 = TestCase $ runSpiderHost $ do
   let
     loop 0 _ = return ()
     loop n st = do
-      action <- liftIO $ randomActionFCmd st
+      action <- liftIO $ randomActionFCmd True st
       --action <- return FCCustom_Add_SBox_1
       --liftIO $ print action
       _ <- tickAppFrame appFrame $ Just $ That action
