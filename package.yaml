@@ -96,6 +96,7 @@ dependencies:
 - extra
 - linear
 - MonadRandom
+- constraints-extras
 
 
 library:

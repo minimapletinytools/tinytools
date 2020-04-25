@@ -35,11 +35,13 @@ import           Reflex
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 
-import qualified Data.Dependent.Map   as DM
-import qualified Data.Dependent.Sum   as DS
+import           Data.Constraint.Extras.TH
+import qualified Data.Dependent.Map        as DM
+import qualified Data.Dependent.Sum        as DS
 import qualified Data.GADT.Compare
 import           Data.GADT.Compare.TH
-import qualified Data.IntMap.Strict   as IM
+import           Data.GADT.Show.TH
+import qualified Data.IntMap.Strict        as IM
 import           Language.Haskell.TH
 
 
@@ -95,7 +97,7 @@ type Manipulator = DS.DSum MTag Identity
 
 data CBox = CBox {
   _cBox_box :: DeltaLBox
-}
+} deriving (Eq, Show)
 
 instance Delta SBox CBox where
   plusDelta SBox {..} CBox {..} = SBox {
@@ -111,7 +113,7 @@ instance Delta SBox CBox where
 data CLine = CLine {
   _cLine_start :: LPoint
   , _cLine_end :: LPoint
-}
+} deriving (Eq, Show)
 
 instance Delta SLine CLine where
   plusDelta SLine {..} CLine {..} = SLine {
@@ -126,7 +128,7 @@ instance Delta SLine CLine where
 data CText = CText {
   _cText_box    :: DeltaLBox
   , _cText_text :: DeltaText
-}
+} deriving (Eq, Show)
 
 instance Delta SText CText where
   plusDelta SText {..} CText {..} = SText {
@@ -142,7 +144,7 @@ instance Delta SText CText where
 -- used for multi-selection
 data CRelBox = CRelBox {
   _cRelBox_box    :: DeltaLBox
-}
+} deriving (Eq, Show)
 
 data CTag a where
   CTagBox :: CTag CBox
@@ -152,6 +154,8 @@ data CTag a where
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
+deriveGShow ''CTag
+deriveArgDict ''CTag
 
 -- | Controllers represent changes to SELts
 type Controller = DS.DSum CTag Identity

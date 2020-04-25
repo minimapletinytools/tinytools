@@ -9,18 +9,19 @@ module Potato.Flow.Testing (
   , step_state_network
 ) where
 
-import           Relude               hiding (empty, fromList)
+import           Relude                 hiding (empty, fromList)
 
 import           Reflex
 import           Reflex.Test.Host
 
-import           Data.Dependent.Sum   ((==>))
-import qualified Data.IntMap.Strict   as IM
-import qualified Data.List            as L ((!!))
-import qualified Data.List.Index      as L
-import           Data.Maybe           (fromJust)
+import           Data.Constraint.Extras (Has')
+import           Data.Dependent.Sum     ((==>))
+import qualified Data.IntMap.Strict     as IM
+import qualified Data.List              as L ((!!))
+import qualified Data.List.Index        as L
+import           Data.Maybe             (fromJust)
 
-import qualified Control.Monad.Random as R
+import qualified Control.Monad.Random   as R
 
 import           Potato.Flow
 
@@ -30,8 +31,8 @@ simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
 data FCmd =
   FCNone
   | FCAddElt Int SElt
-  -- TODO change to take a Selection
   | FCDeleteElt Int
+  | FCModify Int Controller
   | FCUndo
   | FCRedo
   | FCSave
@@ -47,7 +48,15 @@ isElement (SEltLabel _ selt) = case selt of
   SEltFolderEnd   -> False
   _               -> True
 
-randomActionFCmd :: Bool -> SEltTree -> IO FCmd
+randomXY :: IO XY
+randomXY = do
+  x <- R.getRandomR (-99999, 99999)
+  y <- R.getRandomR (-99999, 99999)
+  return $ V2 x y
+
+randomActionFCmd ::
+ (Has' Show CTag Identity)
+ => Bool -> SEltTree -> IO FCmd
 randomActionFCmd doundo stree = do
   let
     nElts = length stree
@@ -57,16 +66,50 @@ randomActionFCmd doundo stree = do
   if null eltsOnly || rcmd == 0
     then do
       pos <- R.getRandomR (0, nElts)
-      return $ FCAddElt pos $ SEltBox simpleSBox
+      stype <- R.getRandomR (0, 2 :: Int)
+      p1 <- randomXY
+      p2 <- randomXY
+      case stype of
+        0 -> return $ FCAddElt pos $ SEltBox
+          SBox {
+            _sBox_box = LBox (LPoint p1) (LSize p2)
+            , _sBox_style = defaultSLineStyle
+          }
+        1 -> return $ FCAddElt pos $ SEltLine
+          SLine {
+            _sLine_start = LPoint p1
+            , _sLine_end = LPoint p2
+            , _sLine_style = defaultSLineStyle
+          }
+        2 -> return $ FCAddElt pos $ SEltText
+          SText {
+            _sText_box = LBox (LPoint p1) (LSize p2)
+            , _sText_text = "moo"
+            , _sText_style = defaultSTextStyle
+          }
     else do
       rindex <- R.getRandomR (0, length eltsOnly - 1)
+      p1 <- randomXY
+      p2 <- randomXY
       let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
       case rcmd of
         1 -> return $ FCDeleteElt pos
         2 -> case selt of
-          SEltBox _ -> return $ FCCustom_CBox_1 pos
-          _         -> undefined
-          --_         -> return FCNone
+          SEltBox _ -> return $ FCModify pos $ CTagBox ==>
+            CBox {
+              _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+            }
+          SEltLine _ -> return $ FCModify pos $ CTagLine ==>
+            CLine {
+              _cLine_start = LPoint p1
+              , _cLine_end = LPoint p2
+            }
+          SEltText (SText _ before _) -> return $ FCModify pos $ CTagText ==>
+            CText {
+              _cText_box = DeltaLBox (LPoint p1) (LSize p2)
+              , _cText_text = (before, "meow meow")
+            }
+          _ -> undefined
         3 -> return FCUndo
         4 -> return FCRedo
         _ -> undefined

@@ -26,7 +26,7 @@ hp2ps -e8in -c memorytests.hp
 
 
 ::TODO TMRW::
--finish CTagRelBox
+-figure out how to handle negative coordinates
 -test for rest of controller stuff
   -refine testing interface so you can modify individual elts
 -test multi-select/add/modify/delete
@@ -37,6 +37,7 @@ DONE-move directory out of dynamics and into here
   -clean up docs in test and put on hackage?
     -maybe need to add or remove some interfaces
 -THEN you can make a vty frontend :D
+-figure out how to handle CTagRelBox
 
 ::TODO::
 -fix mem leak

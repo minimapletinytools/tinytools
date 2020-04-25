@@ -107,7 +107,7 @@ instance Delta LSize LSize where
 data DeltaLBox = DeltaLBox {
   deltaLBox_translate  :: LPoint
   , deltaLBox_resizeBy :: LSize
-}
+}  deriving (Eq, Show)
 
 instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {

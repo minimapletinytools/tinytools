@@ -5,6 +5,7 @@ module Potato.Flow.SElts (
   , SLineStyle(..)
   , defaultSLineStyle
   , STextStyle(..)
+  , defaultSTextStyle
   , SBox(..)
   , SLine(..)
   , SText(..)
@@ -39,6 +40,7 @@ defaultCornerStyle = CornerStyle {
     , _cornerStyle_br = '╝'
   }
 
+-- TODO Rename to just LineStyle
 data SLineStyle = SLineStyle {
   _sLineStyle_corners      :: CornerStyle
   , _sLineStyle_vertical   :: PChar
@@ -56,6 +58,7 @@ defaultSLineStyle = SLineStyle {
     , _sLineStyle_horizontal = '═'
   }
 
+-- TODO rename to TextStyle
 data STextStyle = STextStyle {
   -- margins
 } deriving (Eq, Generic, Show)
@@ -63,6 +66,9 @@ data STextStyle = STextStyle {
 instance FromJSON STextStyle
 instance ToJSON STextStyle
 instance NFData STextStyle
+
+defaultSTextStyle :: STextStyle
+defaultSTextStyle = STextStyle {}
 
 -- |
 data SBox = SBox {
