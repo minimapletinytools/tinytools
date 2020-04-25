@@ -35,8 +35,8 @@ save_network ev = do
 
 bs_save_0 :: ([FCmd],[FCmd])
 bs_save_0 =
-  ([FCAddElt (SEltBox simpleSBox), FCUndo, FCRedo, FCSave]
-  , [FCAddElt (SEltBox simpleSBox), FCSave])
+  ([FCAddElt 0 (SEltBox simpleSBox), FCUndo, FCRedo, FCSave]
+  , [FCAddElt 0 (SEltBox simpleSBox), FCSave])
 
 bs_save_1 :: ([FCmd],[FCmd])
 bs_save_1 =

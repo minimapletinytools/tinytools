@@ -29,8 +29,7 @@ simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
 
 data FCmd =
   FCNone
-  -- TODO add position param
-  | FCAddElt SElt
+  | FCAddElt Int SElt
   -- TODO change to take a Selection
   | FCDeleteElt Int
   | FCUndo
@@ -51,14 +50,14 @@ isElement (SEltLabel _ selt) = case selt of
 randomActionFCmd :: Bool -> SEltTree -> IO FCmd
 randomActionFCmd doundo stree = do
   let
-    --nElts = length stree
+    nElts = length stree
     eltsOnly = filter (isElement . snd) $  L.indexed stree
     nCmds = if doundo then 5 else 3
   rcmd :: Int <- R.getRandomR (0, nCmds-1)
   if null eltsOnly || rcmd == 0
     then do
-      --pos <- R.getRandomR (0, nElts)
-      return $ FCAddElt $ SEltBox simpleSBox
+      pos <- R.getRandomR (0, nElts)
+      return $ FCAddElt pos $ SEltBox simpleSBox
     else do
       rindex <- R.getRandomR (0, length eltsOnly - 1)
       let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
@@ -78,7 +77,7 @@ setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
 setup_network ev = mdo
   let
     addEv = flip fmapMaybe ev $ \case
-      FCAddElt x -> Just (0, SEltLabel "blank" x)
+      FCAddElt p x -> Just (p, SEltLabel "blank" x)
       FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
       _           -> Nothing
 
