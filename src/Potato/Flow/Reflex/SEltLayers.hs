@@ -222,5 +222,5 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      , _sEltLayerTree_changeView = IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
+      , _sEltLayerTree_changeView = never --IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }
