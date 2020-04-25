@@ -231,7 +231,7 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
     st2 <- undoredoLoop True l0 st1
     st3 <- undoredoLoop False l0 st2
     liftIO (st2 @?= st0)
-    --liftIO (st3 @?= st1)
+    liftIO (st3 @?= st1)
 
 
 spec :: Spec
