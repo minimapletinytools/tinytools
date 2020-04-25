@@ -32,7 +32,7 @@ import           Control.Monad.Fix
 
 -- loading new workspace stufff
 type LoadFileEvent t =  Event t LBS.ByteString
-type SetWSEvent t = Event t [SEltLabel]
+type SetWSEvent t = Event t SEltTree
 
 loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
@@ -40,6 +40,7 @@ loadWSFromFile = fmapMaybe decode
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
   _pfc_addElt       :: Event t (LayerPos, SEltLabel)
+  -- TODO take a selection
   , _pfc_removeElt  :: Event t LayerPos
   --, _pfc_moveElt    :: Event t (LayerEltId, LayerPos) -- new layer position (before or after removal?)
   --, _pfc_copy       :: Event t [LayerEltId]
@@ -55,7 +56,10 @@ data PFConfig t = PFConfig {
 
 data PFOutput t = PFOutput {
   _pfo_layers  :: SEltLayerTree t
-  , _pfo_saved :: Event t [SEltLabel]
+  , _pfo_saved :: Event t SEltTree
+
+  -- for debugging
+  , _pfo_state :: Behavior t SEltTree
 }
 
 holdPF ::
@@ -146,7 +150,7 @@ holdPF PFConfig {..} = mdo
     <- holdSEltLayerTree layerTreeConfig
 
   let
-    pushStateFn :: () -> PushM t [SEltLabel]
+    pushStateFn :: (MonadSample t m') => () -> m' SEltTree
     pushStateFn _ = do
       layers <- sample . current $ _sEltLayerTree_view layerTree
       contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
@@ -159,4 +163,5 @@ holdPF PFConfig {..} = mdo
     PFOutput {
       _pfo_layers = layerTree
       , _pfo_saved = pushAlways pushStateFn _pfc_save
+      , _pfo_state = pull (pushStateFn ())
     }

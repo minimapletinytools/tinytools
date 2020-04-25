@@ -1,3 +1,5 @@
+-- DELETE
+
 {-# LANGUAGE RecursiveDo #-}
 
 module Potato.Flow.EntrySpec
@@ -34,15 +36,6 @@ data FCmd =
   | FCRedo
   | FCScaleBy10 LayerPos
   deriving (Eq, Show)
-
-{-
-TODO
-randomFCmd :: SEltTree -> IO FCmd
-randomFCmd stree = do
-  let n = length stree
--}
-
-
 
 basic_network
   :: forall t m
@@ -123,7 +116,6 @@ basic_test = TestLabel "basic" $ TestCase $ do
       run :: IO [[Maybe Int]]
       run = runAppSimple basic_network bs
   v <- liftIO run
-  print v
   L.last (join v) @?= Just 4
 
 spec :: Spec

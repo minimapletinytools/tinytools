@@ -1,6 +1,8 @@
 
 stack build --ghc-options="-ddump-splices"
 
+::TEST TODO::
+-
 
 ::TODO::
 -switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
@@ -16,6 +18,7 @@ stack build --ghc-options="-ddump-splices"
 -add max length param to actionstack
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results
 -figure out deriveArgDict thing, we need show instances for debugging!!
+-decide if you want _pfo_saved or _pfo_state
 
 -mid priority
   -helpers to create fine grained manipulators

@@ -95,6 +95,7 @@ dependencies:
 - reflex-potatoes
 - extra
 - linear
+- MonadRandom
 
 
 library:

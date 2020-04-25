@@ -1,4 +1,5 @@
-{-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.NewEntrySpec
   ( spec
@@ -18,10 +19,14 @@ import           Reflex.Test.Host
 
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
-import qualified Data.List                as L (last)
+import qualified Data.List                as L (last, (!!))
+import qualified Data.List.Index          as L
 import           Data.Maybe               (fromJust)
 import qualified Data.Text                as T
+import           Data.These
 import           Text.Pretty.Simple       (pPrint)
+
+import qualified Control.Monad.Random     as R
 
 import           Potato.Flow
 
@@ -30,8 +35,10 @@ simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
 
 data FCmd =
   FCNone
+  -- TODO add position param
   | FCAddElt SElt
-  | FCDeleteElt Int -- position in layers to remove at, must be valid
+  -- TODO change to take a Selection
+  | FCDeleteElt Int
   | FCUndo
   | FCRedo
   | FCSave
@@ -40,9 +47,38 @@ data FCmd =
   | FCCustom_CBox_1 LayerPos
   deriving (Eq, Show)
 
-setup_network
-  :: forall t m
-   . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+isElement :: SEltLabel -> Bool
+isElement (SEltLabel _ selt) = case selt of
+  SEltNone        -> False
+  SEltFolderStart -> False
+  SEltFolderEnd   -> False
+  _               -> True
+
+randomActionFCmd :: SEltTree -> IO FCmd
+randomActionFCmd stree = do
+  let
+    nElts = length stree
+    eltsOnly = filter (isElement . snd) $  L.indexed stree
+    nCmds = 4
+  rcmd :: Int <- R.getRandomR (0, nCmds-1)
+  pos :: Int <- R.getRandomR (0, nElts)
+  if null eltsOnly || rcmd == 0
+    then do
+      --pos <- R.getRandomR (0, nElts)
+      return $ FCAddElt $ SEltBox simpleSBox
+    else do
+      rindex <- R.getRandomR (0, length eltsOnly - 1)
+      let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
+      case rcmd of
+        1 -> return $ FCDeleteElt pos
+        2 -> return FCUndo
+        3 -> return FCRedo
+        4 -> case selt of
+          SEltBox _ -> return $ FCCustom_CBox_1 pos
+          _         -> return FCNone
+
+
+setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t FCmd -> PerformEventT t m (PFOutput t)
 setup_network ev = mdo
   let
@@ -85,9 +121,10 @@ setup_network ev = mdo
     layerTree = _pfo_layers $ pfo
   return pfo
 
+
 save_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t FCmd -> PerformEventT t m (Event t [SEltLabel]))
+  => (Event t FCmd -> PerformEventT t m (Event t SEltTree))
 save_network ev = do
   pfo <- setup_network ev
   return $ _pfo_saved pfo
@@ -128,6 +165,57 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   v2 <- liftIO run2
   L.last (join v1) @?= L.last (join v2)
 
+
+step_forever_test :: forall t a s m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => Int -> Test
+step_forever_test n0 = TestCase $ runSpiderHost $ do
+  let
+    app_network AppIn {..} = do
+      pfo <- setup_network _appIn_event
+      return
+        AppOut {
+          _appOut_behavior = _pfo_state pfo
+          , _appOut_event  = never :: Event t ()
+        }
+  appFrame <- getAppFrame app_network ()
+  let
+    loop 0 _ = return ()
+    loop n st = do
+      action <- liftIO $ randomActionFCmd st
+      --liftIO $ print action
+      out <- tickAppFrame appFrame $ Just $ That action
+      --liftIO $ do
+        --putStrLn $ "ticked: " <> show out
+        --threadDelay 10000
+        --hasStats <- getRTSStatsEnabled
+        --when (not hasStats) $ error "no stats"
+        --stats <- getRTSStats
+        --print (toImportant stats)
+      case L.last out of
+        (nst, _) -> loop (n-1) nst
+  loop n0 []
+
+{-
+  simple_state_network
+    :: forall t a s m
+     . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+    => (a -> s -> s) -- ^ do/redo method to transform state
+    -> (a -> s -> s) -- ^ undo method to transform state
+    -> s -- ^ initial state
+    -> (AppIn t () (TestCmd a) -> PerformEventT t m (AppOut t () s))
+  simple_state_network fdo fundo initial AppIn {..} = do
+
+    return AppOut { _appOut_behavior = constant ()
+                  , _appOut_event    = updated adder
+                  }
+
+toApp :: forall t m eIn eOut. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (Event t eIn -> PerformEventT t m eOut)
+-}
+
+
+
 spec :: Spec
 spec = do
   describe "Potato Flow" $ do
@@ -135,3 +223,4 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
+    fromHUnitTest $ step_forever_test 10000
