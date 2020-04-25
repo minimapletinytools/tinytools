@@ -1,24 +1,59 @@
 
 stack build --ghc-options="-ddump-splices"
 
-::TEST TODO::
--
+::RENDER NOTES::
+-inputs
+  -layers :: Behavior t (Seq REltId)
+  -seltls :: Behavior t (Map REltId SEltLabel)
+  -changes :: Map REltId (Maybe SEltLabel, Maybe SEltLabel)
+  -location :: Behavior t (Map REltId LayerPos)
+-data
+  -BPTree (for now just do Map REltId AABB)
+  -Canvas = Canvas (Vector Char) Int
+    - use REPA instead?
+-methods
+  -getAABB :: SEltLabel -> AABB
+  -render :: SEltLabel -> LPoint -> Maybe Char
+  -insert/updated :: BPTree -> (REltId, AABB) -> BPTree
+  -broadPhase :: BPTree -> AABB -> [REltId]
+  -render :: AABB -> [SEltLabel] -> Canvas -> Canvas
+-reflex
+  -changes -> insert/update
+  -changes -> getAABBs -> broadPhase -> Event t [REltId]
+    -> fmap (sortBy location) -> render
+
+
+::TODO TMRW::
+-split out test methods into a module
+-undo/redo test
+-mem test
+-finish CTagRelBox
+-test for rest of controller stuff
+  -refine testing interface so you can modify individual elts
+-backend render stuff
+-move directory out of dynamics and into here
+-sharing
+  -clean up doc in dynamics and put on hackage?
+  -clean up docs in test and put on hackage?
+    -maybe need to add or remove some interfaces
+-THEN you can make a vty frontend :D
 
 ::TODO::
 -switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
   -or maybe I'm wrong?
 -rename vars in Controllers to indicate they are deltas
 -testing stuff
-  -basic support for input/expected output pair testing
-  -add test helper for action stack which ensure state after undo/redo remains the same!
+  DONE-basic support for input/expected output pair testing
+  -add undo redo test
   -add memtest
-  -add test to save and reload and ensure state stays the same
 -state serializers (should be done, just need to hook up aeson and test)
 -setup frontend from potato-flow
 -add max length param to actionstack
 -write profilingWidget which takes an event, calls GHC.Stats, and outputs results
 -figure out deriveArgDict thing, we need show instances for debugging!!
 -decide if you want _pfo_saved or _pfo_state
+-load SEltTree
+  -add test to save and reload and ensure state stays the same
 
 -mid priority
   -helpers to create fine grained manipulators

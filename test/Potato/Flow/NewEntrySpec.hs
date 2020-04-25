@@ -70,7 +70,8 @@ randomActionFCmd doundo stree = do
         1 -> return $ FCDeleteElt pos
         2 -> case selt of
           SEltBox _ -> return $ FCCustom_CBox_1 pos
-          _         -> return FCNone
+          _         -> undefined
+          --_         -> return FCNone
         3 -> return FCUndo
         4 -> return FCRedo
         _ -> undefined
@@ -164,19 +165,23 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   L.last (join v1) @?= L.last (join v2)
 
 
-step_forever_test :: forall t m.
+-- | make sure to tick with 'FCNone' to ensure output behavior is most recent
+step_state_network :: forall t m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => (AppIn t () FCmd -> PerformEventT t m (AppOut t SEltTree ()))
+step_state_network AppIn {..} = do
+  pfo <- setup_network _appIn_event
+  return
+    AppOut {
+      _appOut_behavior = _pfo_state pfo
+      , _appOut_event  = never
+    }
+
+nstep_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Int -> Test
-step_forever_test n0 = TestCase $ runSpiderHost $ do
-  let
-    app_network AppIn {..} = do
-      pfo <- setup_network _appIn_event
-      return
-        AppOut {
-          _appOut_behavior = _pfo_state pfo
-          , _appOut_event  = never
-        }
-  appFrame <- getAppFrame app_network ()
+nstep_test n0 = TestLabel (show n0 <> " steps") $ TestCase $ runSpiderHost $ do
+  appFrame <- getAppFrame step_state_network ()
   let
     loop 0 _ = return ()
     loop n st = do
@@ -199,24 +204,34 @@ step_forever_test n0 = TestCase $ runSpiderHost $ do
           loop (n-1) nst
   loop n0 []
 
-{-
-  simple_state_network
-    :: forall t a s m
-     . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-    => (a -> s -> s) -- ^ do/redo method to transform state
-    -> (a -> s -> s) -- ^ undo method to transform state
-    -> s -- ^ initial state
-    -> (AppIn t () (TestCmd a) -> PerformEventT t m (AppOut t () s))
-  simple_state_network fdo fundo initial AppIn {..} = do
-
-    return AppOut { _appOut_behavior = constant ()
-                  , _appOut_event    = updated adder
-                  }
-
-toApp :: forall t m eIn eOut. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t eIn -> PerformEventT t m eOut)
--}
-
+undoredo_test :: forall t m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => Int -> Test
+undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ do
+  appFrame <- getAppFrame step_state_network ()
+  let
+    m0 = 100 -- num commands to do to set up state
+    l0 = 100 -- num commands to do and the undo
+    setupLoop 0 st = return st
+    setupLoop n st = do
+      action <- liftIO $ randomActionFCmd False st
+      _ <- tickAppFrame appFrame $ Just $ That action
+      out <- tickAppFrame appFrame $ Just $ That FCNone
+      case L.last out of
+        (nst, _) -> setupLoop (n-1) nst
+    undoredoLoop _ 0 st = return st
+    undoredoLoop isUndo n st = do
+      _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
+      out <- tickAppFrame appFrame $ Just $ That FCNone
+      case L.last out of
+        (nst, _) -> undoredoLoop isUndo (n-1) nst
+  forM_ [1..n0] $ \_ -> do
+    st0 <- setupLoop m0 []
+    st1 <- setupLoop l0 st0
+    st2 <- undoredoLoop True l0 st1
+    st3 <- undoredoLoop False l0 st2
+    liftIO (st2 @?= st0)
+    --liftIO (st3 @?= st1)
 
 
 spec :: Spec
@@ -226,4 +241,5 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
-    fromHUnitTest $ step_forever_test 10000
+    fromHUnitTest $ undoredo_test 100
+    fromHUnitTest $ nstep_test 50000
