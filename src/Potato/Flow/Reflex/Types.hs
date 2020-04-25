@@ -119,10 +119,12 @@ instance Delta SLine CLine where
   plusDelta SLine {..} CLine {..} = SLine {
       _sLine_start   = plusDelta _sLine_start _cLine_start
       , _sLine_end   = plusDelta _sLine_end _cLine_end
+      , _sLine_style = _sLine_style
     }
   minusDelta SLine {..} CLine {..} = SLine {
       _sLine_start   = minusDelta _sLine_start _cLine_start
       , _sLine_end   = minusDelta _sLine_end _cLine_end
+      , _sLine_style = _sLine_style
     }
 
 data CText = CText {
@@ -134,10 +136,12 @@ instance Delta SText CText where
   plusDelta SText {..} CText {..} = SText {
       _sText_box   = plusDelta _sText_box _cText_box
       , _sText_text   = plusDelta _sText_text _cText_text
+      , _sText_style = _sText_style
     }
   minusDelta SText {..} CText {..} = SText {
       _sText_box   = minusDelta _sText_box _cText_box
       , _sText_text   = minusDelta _sText_text _cText_text
+      , _sText_style = _sText_style
     }
 
 -- | transforms object based on a reference point
@@ -160,4 +164,5 @@ deriveArgDict ''CTag
 -- | Controllers represent changes to SELts
 type Controller = DS.DSum CTag Identity
 
+-- | indexed my REltId
 type ControllersWithId = IntMap Controller

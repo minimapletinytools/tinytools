@@ -154,8 +154,8 @@ holdPF PFConfig {..} = mdo
       contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
       let
         -- PARTIAL
-        foldfn acc rid = (contents IM.! rid) : acc
-      return $ foldl' foldfn [] layers
+        foldfn rid acc = (contents IM.! rid) : acc
+      return $ foldr foldfn [] layers
 
   return $
     PFOutput {

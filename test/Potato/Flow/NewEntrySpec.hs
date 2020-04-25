@@ -41,7 +41,7 @@ bs_save_0 =
 bs_save_1 :: ([FCmd],[FCmd])
 bs_save_1 =
   ([FCCustom_Add_SBox_1, FCCustom_CBox_1 0, FCUndo, FCRedo, FCCustom_Add_SBox_1, FCSave]
-  , [FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_CBox_1 0, FCSave])
+  , [FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_CBox_1 1, FCSave])
 
 bs_save_2 :: ([FCmd],[FCmd])
 bs_save_2 =
@@ -121,5 +121,5 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
-    fromHUnitTest $ undoredo_test 1
-    fromHUnitTest $ nstep_test 1
+    fromHUnitTest $ undoredo_test 100
+    fromHUnitTest $ nstep_test 50000

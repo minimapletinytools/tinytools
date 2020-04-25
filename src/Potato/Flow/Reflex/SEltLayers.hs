@@ -145,9 +145,9 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
 
   let
     removeLayerPos :: SuperSEltLabel -> (REltId, SEltLabel)
-    removeLayerPos (i,_,e) = (i,e)
+    removeLayerPos (rid,_,e) = (rid,e)
     extractREltId :: SuperSEltLabel -> REltId
-    extractREltId (i,_,_) = i
+    extractREltId (rid,_,_) = rid
     flattenControls :: Bool -> IntMap Controller -> [(REltId, SEltLabel -> SEltLabel)]
     flattenControls isDo im = IM.toList $ flip IM.map im $ updateFnFromController isDo
     -- PARTIAL

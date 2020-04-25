@@ -130,10 +130,10 @@ setup_network ev = mdo
       _              -> Nothing
     manipEv = flip push ev $ \case
       FCModify p c -> do
-        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
+        (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         return . Just $ IM.singleton rid c
       FCCustom_CBox_1 p -> do
-        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
+        (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let
           cbox = CBox {
               _cBox_box    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
