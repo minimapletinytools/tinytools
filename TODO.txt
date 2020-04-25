@@ -25,7 +25,7 @@ stack build --ghc-options="-ddump-splices"
 
 ::TODO TMRW::
 -split out test methods into a module
--undo/redo test
+DONE-undo/redo test
 -mem test
 -finish CTagRelBox
 -test for rest of controller stuff

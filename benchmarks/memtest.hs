@@ -1,3 +1,4 @@
+-- DELETE
 --testing for leaks, nothing to see here
 
 {-# LANGUAGE RecordWildCards #-}
@@ -11,7 +12,7 @@ import           Reflex.Data.ActionStack
 import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
-import qualified Data.List                     as L
+import qualified Data.List               as L
 import           Data.These
 
 import           Control.Concurrent
