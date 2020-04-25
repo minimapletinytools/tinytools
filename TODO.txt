@@ -29,8 +29,9 @@ hp2ps -e8in -c memorytests.hp
 -finish CTagRelBox
 -test for rest of controller stuff
   -refine testing interface so you can modify individual elts
+-test multi-select/add/modify/delete
 -backend render stuff
--move directory out of dynamics and into here
+DONE-move directory out of dynamics and into here
 -sharing
   -clean up doc in dynamics and put on hackage?
   -clean up docs in test and put on hackage?

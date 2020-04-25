@@ -77,21 +77,10 @@ nstep_test n0 = TestLabel (show n0 <> " steps") $ TestCase $ runSpiderHost $ do
     loop 0 _ = return ()
     loop n st = do
       action <- liftIO $ randomActionFCmd True st
-      --action <- return FCCustom_Add_SBox_1
-      --liftIO $ print action
       _ <- tickAppFrame appFrame $ Just $ That action
       out <- tickAppFrame appFrame $ Just $ That FCNone
-      --liftIO $ do
-        --putStrLn $ "ticked: " <> show (fst out)
-        --threadDelay 10000
-        --hasStats <- getRTSStatsEnabled
-        --when (not hasStats) $ error "no stats"
-        --stats <- getRTSStats
-        --print (toImportant stats)
       case L.last out of
         (nst, _) -> do
-          --liftIO $ print "ticked"
-          --liftIO $ print nst
           loop (n-1) nst
   loop n0 []
 
