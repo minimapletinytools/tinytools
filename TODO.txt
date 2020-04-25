@@ -1,5 +1,7 @@
 
-stack build --ghc-options="-ddump-splices"
+stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
+stack exec --profile -- memtest +RTS -hd
+hp2ps -e8in -c memorytests.hp
 
 ::RENDER NOTES::
 -inputs
@@ -63,6 +65,7 @@ DONE-undo/redo test
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
+  -write your own math lib ;__;
 
 DONE-fix modify stuff, it's broken :(
 DONE-switch to linear for Math

@@ -3,3 +3,6 @@
 *~
 dist-newstyle
 cabal.project.local
+*.aux
+*.hp
+*.ps

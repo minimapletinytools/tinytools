@@ -43,6 +43,7 @@ main = runSpiderHost $ do
       st2 <- undoredoLoop True l0 st1
       liftIO $ do
         threadDelay 1000
+        --print (length st2)
         stats <- getRTSStats
         printStats n stats
       loopForever st2 (n+1)
