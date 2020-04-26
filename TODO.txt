@@ -26,7 +26,9 @@ hp2ps -e8in -c memorytests.hp
 
 
 ::TODO::
--test multi-select/add/modify/delete
+DONE-test multi-modify
+-add interface for multi delete and test
+-add interface for multi add and test
 -load SEltTree
   -add test to save and reload and ensure state stays the same
 -fix mem leak

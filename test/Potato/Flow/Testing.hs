@@ -17,11 +17,12 @@ import           Reflex.Test.Host
 import           Data.Constraint.Extras (Has')
 import           Data.Dependent.Sum     ((==>))
 import qualified Data.IntMap.Strict     as IM
-import qualified Data.List              as L ((!!))
+import qualified Data.List              as L (take, (!!))
 import qualified Data.List.Index        as L
 import           Data.Maybe             (fromJust)
 
 import qualified Control.Monad.Random   as R
+import           System.Random.Shuffle
 
 import           Potato.Flow
 
@@ -162,26 +163,36 @@ randomActionFCmd doundo stree = do
           }
         _ -> undefined
     _ -> do
+      -- just one random elements
       rindex <- R.getRandomR (0, length eltsOnly - 1)
-      p1 <- randomXY
-      p2 <- randomXY
       let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
+
+      -- many random elements
+      shuffled <- shuffleM eltsOnly
+      -- TODO for delete you don't want to delete too many otherwise you'll always end up with like no elements
+      -- i.e. prob want weighted random
+      nElts <- R.getRandomR (1, length eltsOnly)
+      let randomElts = L.take nElts shuffled
+
       case rcmd of
         3 -> return $ FCDeleteElt pos
-        4 -> case selt of
-          SEltBox _ -> return $ FCModify pos $ CTagBox ==>
-            CBox {
-              _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
-            }
-          SEltLine _ -> return $ FCModify pos $ CTagLine ==>
-            CLine {
-              _cLine_start = LPoint p1
-              , _cLine_end = LPoint p2
-            }
-          SEltText (SText _ before _) -> return $ FCModify pos $ CTagText ==>
-            CText {
-              _cText_box = DeltaLBox (LPoint p1) (LSize p2)
-              , _cText_text = (before, "meow meow")
-            }
-          _ -> error "this should never happen"
+        4 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel _ selt)) -> do
+          p1 <- randomXY
+          p2 <- randomXY
+          case selt of
+            SEltBox _ -> return $ (,) pos $ CTagBox ==>
+              CBox {
+                _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+              }
+            SEltLine _ -> return $ (,) pos $ CTagLine ==>
+              CLine {
+                _cLine_start = LPoint p1
+                , _cLine_end = LPoint p2
+              }
+            SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
+              CText {
+                _cText_box = DeltaLBox (LPoint p1) (LSize p2)
+                , _cText_text = (before, "meow meow")
+              }
+            _ -> error "this should never happen"
         _ -> error "this should never happen"
