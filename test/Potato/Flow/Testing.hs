@@ -30,9 +30,10 @@ simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
 
 data FCmd =
   FCNone
-  | FCAddElt Int SElt
-  | FCDeleteElt Int
-  | FCModify Int Controller
+  | FCAddElt LayerPos SElt
+  | FCDeleteElt LayerPos
+  | FCModify LayerPos Controller
+  | FCModifyMany [(LayerPos, Controller)]
   | FCUndo
   | FCRedo
   | FCSave
@@ -40,81 +41,6 @@ data FCmd =
   | FCCustom_Add_SBox_1
   | FCCustom_CBox_1 LayerPos
   deriving (Eq, Show)
-
-isElement :: SEltLabel -> Bool
-isElement (SEltLabel _ selt) = case selt of
-  SEltNone        -> False
-  SEltFolderStart -> False
-  SEltFolderEnd   -> False
-  _               -> True
-
-randomXY :: IO XY
-randomXY = do
-  x <- R.getRandomR (-99999, 99999)
-  y <- R.getRandomR (-99999, 99999)
-  return $ V2 x y
-
-randomActionFCmd ::
- (Has' Show CTag Identity)
- => Bool -> SEltTree -> IO FCmd
-randomActionFCmd doundo stree = do
-  let
-    nElts = length stree
-    eltsOnly = filter (isElement . snd) $  L.indexed stree
-    nCmds = if doundo then 5 else 3
-  rcmd :: Int <- R.getRandomR (0, nCmds-1)
-  if null eltsOnly || rcmd == 0
-    then do
-      pos <- R.getRandomR (0, nElts)
-      stype <- R.getRandomR (0, 2 :: Int)
-      p1 <- randomXY
-      p2 <- randomXY
-      case stype of
-        0 -> return $ FCAddElt pos $ SEltBox
-          SBox {
-            _sBox_box = LBox (LPoint p1) (LSize p2)
-            , _sBox_style = defaultSLineStyle
-          }
-        1 -> return $ FCAddElt pos $ SEltLine
-          SLine {
-            _sLine_start = LPoint p1
-            , _sLine_end = LPoint p2
-            , _sLine_style = defaultSLineStyle
-          }
-        2 -> return $ FCAddElt pos $ SEltText
-          SText {
-            _sText_box = LBox (LPoint p1) (LSize p2)
-            , _sText_text = "moo"
-            , _sText_style = defaultSTextStyle
-          }
-        _ -> undefined
-    else do
-      rindex <- R.getRandomR (0, length eltsOnly - 1)
-      p1 <- randomXY
-      p2 <- randomXY
-      let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
-      case rcmd of
-        1 -> return $ FCDeleteElt pos
-        2 -> case selt of
-          SEltBox _ -> return $ FCModify pos $ CTagBox ==>
-            CBox {
-              _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
-            }
-          SEltLine _ -> return $ FCModify pos $ CTagLine ==>
-            CLine {
-              _cLine_start = LPoint p1
-              , _cLine_end = LPoint p2
-            }
-          SEltText (SText _ before _) -> return $ FCModify pos $ CTagText ==>
-            CText {
-              _cText_box = DeltaLBox (LPoint p1) (LSize p2)
-              , _cText_text = (before, "meow meow")
-            }
-          _ -> undefined
-        3 -> return FCUndo
-        4 -> return FCRedo
-        _ -> undefined
-
 
 setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t FCmd -> PerformEventT t m (PFOutput t)
@@ -133,6 +59,12 @@ setup_network ev = mdo
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         -- `deepseq` here prevents a leak, fml.
         return . Just $ selt `deepseq` IM.singleton rid c
+      FCModifyMany pcs -> do
+        sseltls <- forM pcs (\(p,c) -> sEltLayerTree_sampleSuperSEltByPos layerTree p >>= \seltl -> seltl `deepseq` return (seltl,c))
+        return . Just . IM.fromList
+          . map (\((rid,_,_),c) -> (rid, c))
+          . map (\(mseltl, c) -> (fromJust mseltl, c))
+          $ sseltls
       FCCustom_CBox_1 p -> do
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let
@@ -176,3 +108,80 @@ step_state_network AppIn {..} = do
       --, _appOut_event  = never
       , _appOut_event = fmap (\x -> x `deepseq` ()) $ _sEltLayerTree_changeView (_pfo_layers pfo)
     }
+
+
+isElement :: SEltLabel -> Bool
+isElement (SEltLabel _ selt) = case selt of
+  SEltNone        -> False
+  SEltFolderStart -> False
+  SEltFolderEnd   -> False
+  _               -> True
+
+randomXY :: IO XY
+randomXY = do
+  x <- R.getRandomR (-99999, 99999)
+  y <- R.getRandomR (-99999, 99999)
+  return $ V2 x y
+
+randomActionFCmd ::
+ (Has' Show CTag Identity)
+ => Bool -> SEltTree -> IO FCmd
+randomActionFCmd doundo stree = do
+  let
+    nElts = length stree
+    eltsOnly = filter (isElement . snd) $  L.indexed stree
+    startCmd = if doundo then 0 else 2
+  rcmd <- if null eltsOnly
+    then return (2 :: Int)
+    else R.getRandomR (startCmd, 4)
+  case rcmd of
+    0 -> return FCUndo
+    1 -> return FCRedo
+    2 -> do
+      pos <- R.getRandomR (0, nElts)
+      stype <- R.getRandomR (0, 2 :: Int)
+      p1 <- randomXY
+      p2 <- randomXY
+      case stype of
+        0 -> return $ FCAddElt pos $ SEltBox
+          SBox {
+            _sBox_box = LBox (LPoint p1) (LSize p2)
+            , _sBox_style = defaultSLineStyle
+          }
+        1 -> return $ FCAddElt pos $ SEltLine
+          SLine {
+            _sLine_start = LPoint p1
+            , _sLine_end = LPoint p2
+            , _sLine_style = defaultSLineStyle
+          }
+        2 -> return $ FCAddElt pos $ SEltText
+          SText {
+            _sText_box = LBox (LPoint p1) (LSize p2)
+            , _sText_text = "moo"
+            , _sText_style = defaultSTextStyle
+          }
+        _ -> undefined
+    _ -> do
+      rindex <- R.getRandomR (0, length eltsOnly - 1)
+      p1 <- randomXY
+      p2 <- randomXY
+      let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
+      case rcmd of
+        3 -> return $ FCDeleteElt pos
+        4 -> case selt of
+          SEltBox _ -> return $ FCModify pos $ CTagBox ==>
+            CBox {
+              _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+            }
+          SEltLine _ -> return $ FCModify pos $ CTagLine ==>
+            CLine {
+              _cLine_start = LPoint p1
+              , _cLine_end = LPoint p2
+            }
+          SEltText (SText _ before _) -> return $ FCModify pos $ CTagText ==>
+            CText {
+              _cText_box = DeltaLBox (LPoint p1) (LSize p2)
+              , _cText_text = (before, "meow meow")
+            }
+          _ -> error "this should never happen"
+        _ -> error "this should never happen"
