@@ -3,6 +3,9 @@
 module Potato.Flow.Reflex.RElts (
   getSEltBox
   , updateFnFromController
+  , Renderer
+  , getDrawer
+  , toManipulator
 ) where
 
 import           Relude
@@ -15,15 +18,10 @@ import           Potato.Flow.SElts
 import           Control.Monad.Fix
 
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
-import qualified Data.Dependent.Sum       as DS
-import           Data.Functor.Misc
-import qualified Data.IntMap.Strict       as IM
 import           Data.Maybe               (fromJust)
-import           Data.Tuple.Extra         (fst3, snd3, thd3)
+import           Data.Tuple.Extra
 
 import           Reflex
-import qualified Reflex.Patch.IntMap      as IM
-import           Reflex.Potato.Helpers
 
 
 -- | gets an 'LBox' that contains the entire RElt
@@ -59,9 +57,9 @@ getDrawer selt = case selt of
   SEltNone        -> nilDrawer
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
-  SEltBox x       -> potatoDrawer
-  SEltLine x      -> potatoDrawer
-  SEltText x      -> potatoDrawer
+  SEltBox _       -> potatoDrawer
+  SEltLine _      -> potatoDrawer
+  SEltText _      -> potatoDrawer
   where
     potatoDrawer = SEltDrawer {
         _sEltDrawer_box = fromJust (getSEltBox selt)
@@ -111,6 +109,7 @@ toManipulator selected = do
 
 
 
+{-
 scale_LSize :: (Float,Float) -> LSize -> LSize
 scale_LSize (sx, sy) (LSize (V2 osx osy)) =
   LSize $ V2 (floor (fromIntegral osx * sx)) (floor (fromIntegral osy * sy))
@@ -125,7 +124,7 @@ transform_LBox (sx, sy) trans anchor LBox {..} = LBox {
     ul = transform_LPoint (sx, sy) trans anchor ul
     , size = scale_LSize (sx, sy) size
   }
-
+-}
 
 {- this wont work due to inversion roundoff issues
 modify_sElt_with_cRelBox :: Bool -> SElt -> CRelBox -> SElt

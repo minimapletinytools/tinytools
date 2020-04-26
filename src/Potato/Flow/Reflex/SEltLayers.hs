@@ -13,16 +13,15 @@ module Potato.Flow.Reflex.SEltLayers (
 ) where
 
 import           Relude
-import           Relude.Extra.Map
-
-import           Potato.Flow.Reflex.RElts
-import           Potato.Flow.Reflex.Types
-import           Potato.Flow.SElts
 
 import           Reflex
 import           Reflex.Data.Directory
 import           Reflex.Data.Sequence
 import           Reflex.Potato.Helpers
+
+import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.Reflex.Types
+import           Potato.Flow.SElts
 
 import           Control.Exception        (assert)
 import           Control.Monad.Fix
@@ -32,7 +31,6 @@ import qualified Data.List                as L
 import qualified Data.List.NonEmpty       as NE
 import           Data.Maybe               (fromJust)
 import qualified Data.Sequence            as Seq
-import           Data.Tuple.Extra
 
 
 

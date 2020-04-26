@@ -30,19 +30,14 @@ module Potato.Flow.Reflex.Types (
 
 import           Relude
 
-import           Reflex
-
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 
 import           Data.Constraint.Extras.TH
-import qualified Data.Dependent.Map        as DM
 import qualified Data.Dependent.Sum        as DS
-import qualified Data.GADT.Compare
 import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
 import qualified Data.IntMap.Strict        as IM
-import           Language.Haskell.TH
 
 
 

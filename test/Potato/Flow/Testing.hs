@@ -139,7 +139,7 @@ setup_network ev = mdo
           cbox = CBox {
               _cBox_box    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
             }
-        return . Just $ IM.singleton rid (CTagBox ==> cbox)
+        return . Just $ selt `deepseq` IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing
     redoEv = flip fmapMaybe ev $ \case
       FCRedo -> Just ()

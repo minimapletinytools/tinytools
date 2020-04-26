@@ -19,13 +19,8 @@ import           Relude
 
 import           Reflex
 import           Reflex.Data.ActionStack
-import           Reflex.Potato.Helpers
 
-import           Potato.Flow.Math
-import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
-import           Potato.Flow.SElts
-
 
 import qualified Data.Dependent.Map       as DM
 import qualified Data.Dependent.Sum       as DS
@@ -42,9 +37,6 @@ data PFCmdTag t a where
   --PFCDuplicate :: PFCmdTag t [LayerEltId]
   PFCManipulate :: PFCmdTag t (ControllersWithId)
 
-instance Generic  (PFCmdTag t a)
-
-
 -- TODO use deriveArgDict stuff to do automatically derived show instance
 --instance Show  (PFCmdTag t a)
 -- this still doesn't get us Show (DSum PFCmdTag f) :(
@@ -57,6 +49,8 @@ instance Data.GADT.Compare.GEq (PFCmdTag t) where
   geq PFCNewElts PFCNewElts       = do return Data.GADT.Compare.Refl
   geq PFCDeleteElts PFCDeleteElts = do return Data.GADT.Compare.Refl
   geq PFCManipulate PFCManipulate = do return Data.GADT.Compare.Refl
+  -- TODO make sure this is correct
+  geq _ _                         = Nothing
 
 instance Data.GADT.Compare.GCompare (PFCmdTag t) where
   gcompare PFCNewElts PFCNewElts = runGComparing $ (do return Data.GADT.Compare.GEQ)

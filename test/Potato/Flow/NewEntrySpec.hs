@@ -94,7 +94,7 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
   let
     m0 = 10 -- num commands to do to set up state
     l0 = 10 -- num commands to do and the undo
-    setupLoop 0 st = return st
+    setupLoop (0 :: Int) st = return st
     setupLoop n st = do
       action <- liftIO $ randomActionFCmd False st
       _ <- tickAppFrame appFrame $ Just $ That action
@@ -102,7 +102,7 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
       case L.last out of
         (nst, _) -> setupLoop (n-1) nst
     undoredoLoop _ 0 st = return st
-    undoredoLoop isUndo n st = do
+    undoredoLoop isUndo n _ = do
       _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
       out <- tickAppFrame appFrame $ Just $ That FCNone
       case L.last out of
@@ -131,8 +131,8 @@ serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
           loop (n-1) nst
   final <- loop 1000 []
   let
-    json = encode final
-    mfinal' = decode json
+    jsontree = encode final
+    mfinal' = decode jsontree
   liftIO $ do
     final @?= fromJust mfinal'
     encodeFile "serialization_test_output.json" final

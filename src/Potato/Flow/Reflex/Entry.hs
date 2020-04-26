@@ -18,11 +18,9 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy          as LBS
 import           Data.Dependent.Sum            ((==>))
 import qualified Data.IntMap.Strict            as IM
-import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe                    (fromJust)
 
 import           Potato.Flow.Reflex.Cmd
-import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
@@ -31,11 +29,12 @@ import           Potato.Flow.SElts
 import           Control.Monad.Fix
 
 -- loading new workspace stufff
+{-
 type LoadFileEvent t =  Event t LBS.ByteString
 type SetWSEvent t = Event t SEltTree
-
 loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
+-}
 
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
