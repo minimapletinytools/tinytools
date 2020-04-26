@@ -30,16 +30,15 @@ import qualified Text.Show
 
 
 data PFCmdTag t a where
+  -- LayerPos indices are as if all elements already exist in the map
   PFCNewElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
+  -- LayerPos indices are the current indices of elements to be removed
   PFCDeleteElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
-  --PFCReorder :: PFCmdTag t (LayerEltId, LayerPos)
-  --PFCPaste :: PFCmdTag t ([SElt t], LayerPos)
-  --PFCDuplicate :: PFCmdTag t [LayerEltId]
+  --PFCReorder :: PFCmdTag t ()
+  --PFCPaste :: PFCmdTag t (LayerPos, [REltId, SEltLabel])
+  --PFCDuplicate :: PFCmdTag t [REltId]
   PFCManipulate :: PFCmdTag t (ControllersWithId)
 
--- TODO use deriveArgDict stuff to do automatically derived show instance
---instance Show  (PFCmdTag t a)
--- this still doesn't get us Show (DSum PFCmdTag f) :(
 instance Text.Show.Show (PFCmdTag t a) where
   show PFCNewElts    = "PFCNewElts"
   show PFCDeleteElts = "PFCDeleteElts"
