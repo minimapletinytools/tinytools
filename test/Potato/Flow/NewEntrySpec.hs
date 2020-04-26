@@ -15,7 +15,9 @@ import           Test.HUnit
 import           Reflex
 import           Reflex.Test.Host
 
+import           Data.Aeson
 import qualified Data.List                as L (last)
+import           Data.Maybe               (fromJust)
 import qualified Data.Text                as T
 import           Data.These
 --import           Text.Pretty.Simple       (pPrint)
@@ -113,6 +115,29 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
     liftIO (st2 @?= st0)
     liftIO (st3 @?= st1)
 
+serialization_test :: forall t m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => Test
+serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
+  appFrame <- getAppFrame step_state_network ()
+  let
+    loop 0 st = return st
+    loop n st = do
+      action <- liftIO $ randomActionFCmd True st
+      _ <- tickAppFrame appFrame $ Just $ That action
+      out <- tickAppFrame appFrame $ Just $ That FCNone
+      case L.last out of
+        (nst, _) -> do
+          loop (n-1) nst
+  final <- loop 1000 []
+  let
+    json = encode final
+    mfinal' = decode json
+  liftIO $ do
+    final @?= fromJust mfinal'
+    encodeFile "serialization_test_output.json" final
+
+
 
 spec :: Spec
 spec = do
@@ -123,3 +148,4 @@ spec = do
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
     fromHUnitTest $ undoredo_test 100
     fromHUnitTest $ nstep_test 50000
+    fromHUnitTest $ serialization_test

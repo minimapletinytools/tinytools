@@ -25,37 +25,26 @@ hp2ps -e8in -c memorytests.hp
     -> fmap (sortBy location) -> render
 
 
-::TODO TMRW::
+::TODO::
+-test multi-select/add/modify/delete
+-load SEltTree
+  -add test to save and reload and ensure state stays the same
+-fix mem leak
+  -just add multi insert support into seq for easy fix
+  -harder fix is actually understand what is going on D:
+-setup frontend from potato-flow
+-add max length param to actionstack
+-decide if you want _pfo_saved or _pfo_state
 -backend render stuff
+  -just do super basic render everything version for now, since we are refactoring math
 -sharing
   -clean up doc in dynamics and put on hackage?
   -clean up docs in test and put on hackage?
     -maybe need to add or remove some interfaces
--THEN you can make a vty frontend :D
--test multi-select/add/modify/delete
--math nonsense
+-controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
-
-::TODO::
--fix mem leak
-  -just add multi insert support into seq for easy fix
-  -harder fix is actually understand what is going on D:
--switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
-  -or maybe I'm wrong?
--rename vars in Controllers to indicate they are deltas
--testing stuff
-  DONE-basic support for input/expected output pair testing
-  -add undo redo test
-  -add memtest
--state serializers (should be done, just need to hook up aeson and test)
--setup frontend from potato-flow
--add max length param to actionstack
--write profilingWidget which takes an event, calls GHC.Stats, and outputs results
--figure out deriveArgDict thing, we need show instances for debugging!!
--decide if you want _pfo_saved or _pfo_state
--load SEltTree
-  -add test to save and reload and ensure state stays the same
+  -rename vars in Controllers to indicate they are deltas
 
 -mid priority
   -helpers to create fine grained manipulators
@@ -65,9 +54,16 @@ hp2ps -e8in -c memorytests.hp
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
-  -write your own math lib ;__;
 
-
+IGNORE-write profilingWidget which takes an event, calls GHC.Stats, and outputs results
+DONE-state serializers (should be done, just need to hook up aeson and test)
+DONE-figure out deriveArgDict thing, we need show instances for debugging!!
+IGNORE-switch bulk manipulation to send manipulators per box, one big box method doesn't work for undo due to roundoff
+  -or maybe I'm wrong?
+DONE-testing stuff
+  DONE-basic support for input/expected output pair testing
+  DONE-add undo redo test
+  DONE-add memtest
 DONE-test for rest of controller stuff
   -refine testing interface so you can modify individual elts
 DONE-move directory out of dynamics and into here
