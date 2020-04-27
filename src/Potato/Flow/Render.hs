@@ -2,6 +2,7 @@
 
 module Potato.Flow.Render (
   Canvas
+  , canvas_box
   , emptyCanvas
   , potatoRender
   , canvasToText
@@ -22,6 +23,9 @@ data Canvas = Canvas {
   _canvas_box        :: LBox
   , _canvas_contents :: V.Vector PChar -- ^ row major
 }
+
+canvas_box :: Canvas -> LBox
+canvas_box = _canvas_box
 
 emptyCanvas :: LBox -> Canvas
 emptyCanvas lb@(LBox _ (LSize (V2 w h))) = Canvas {
