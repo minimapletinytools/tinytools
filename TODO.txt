@@ -39,7 +39,7 @@ DONE-test multi-modify
 -decide if you want _pfo_saved or _pfo_state
 -backend render stuff
   -just do super basic render everything version for now, since we are refactoring math
--sharing
+DONE-sharing
   -clean up doc in dynamics and put on hackage?
   -clean up docs in test and put on hackage?
     -maybe need to add or remove some interfaces

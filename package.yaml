@@ -104,6 +104,7 @@ library:
   source-dirs: src
   exposed-modules:
     - Potato.Flow
+    - Potato.Flow.Testing
     - Reflex.Data.Directory
 
 executables:
