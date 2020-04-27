@@ -179,9 +179,9 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     inputInsertEv :: Event t [(LayerPos, Seq REltId)]
     inputInsertEv = toList <$> fmap prepForInsertion <$> _sEltLayerTreeConfig_insert
   (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [NonEmpty (REltId, SEltLabel)]) <-
-    repeatEventAndCollectOutput inputRemoveEv (_directory_removed directory)
+    stepEventsAndCollectOutput inputRemoveEv (_directory_removed directory)
   (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
-    repeatEventAndCollectOutput inputInsertEv (_directory_added directory)
+    stepEventsAndCollectOutput inputInsertEv (_directory_added directory)
 
   let
     dseqc = DynamicSeqConfig {
