@@ -118,15 +118,15 @@ isElement (SEltLabel _ selt) = case selt of
   SEltFolderEnd   -> False
   _               -> True
 
-randomXY :: IO XY
+randomXY :: (R.MonadRandom m) => m XY
 randomXY = do
   x <- R.getRandomR (-99999, 99999)
   y <- R.getRandomR (-99999, 99999)
   return $ V2 x y
 
 randomActionFCmd ::
- (Has' Show CTag Identity)
- => Bool -> SEltTree -> IO FCmd
+ (R.MonadRandom m, Has' Show CTag Identity)
+ => Bool -> SEltTree -> m FCmd
 randomActionFCmd doundo stree = do
   let
     nElts = length stree
