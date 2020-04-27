@@ -3,7 +3,8 @@
 module Potato.Flow.Reflex.RElts (
   getSEltBox
   , updateFnFromController
-  , Renderer
+  , RenderFn
+  , SEltDrawer(..)
   , getDrawer
   , toManipulator
 ) where
@@ -34,22 +35,22 @@ getSEltBox selt = case selt of
   SEltLine x      -> Just $ make_LBox_from_LPoints (_sLine_start x) (_sLine_end x)
   SEltText x      -> Just $ _sText_box x
 
-data Renderer = Renderer LBox (LPoint -> Maybe PChar)
+type RenderFn = LPoint -> Maybe PChar
 
-makePotatoRenderer :: LBox -> Renderer
-makePotatoRenderer lbox = Renderer lbox $ \p -> if does_LBox_contains_LPoint lbox p
+makePotatoRenderer :: LBox -> RenderFn
+makePotatoRenderer lbox pt = if does_LBox_contains_LPoint lbox pt
   then Just '#'
   else Nothing
 
 data SEltDrawer = SEltDrawer {
   _sEltDrawer_box        :: LBox
-  , _sEltDrawer_renderer :: Renderer -- switch to [Renderer] for better performance
+  , _sEltDrawer_renderFn :: RenderFn -- switch to [RenderFn] for better performance
 }
 
 nilDrawer :: SEltDrawer
 nilDrawer = SEltDrawer {
     _sEltDrawer_box = nilLBox
-    , _sEltDrawer_renderer = Renderer nilLBox (const Nothing)
+    , _sEltDrawer_renderFn = const Nothing
   }
 
 getDrawer :: SElt -> SEltDrawer
@@ -63,7 +64,7 @@ getDrawer selt = case selt of
   where
     potatoDrawer = SEltDrawer {
         _sEltDrawer_box = fromJust (getSEltBox selt)
-        , _sEltDrawer_renderer =  makePotatoRenderer $ fromJust (getSEltBox selt)
+        , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
 type Selected = [SuperSEltLabel]

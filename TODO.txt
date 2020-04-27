@@ -27,10 +27,13 @@ hp2ps -e8in -c memorytests.hp
 
 ::TODO::
 DONE-test multi-modify
+-workspace stuff (for now just support 1 workspace)
+  -resize canvas command
+  -load SEltTree
+    -add test to save and reload and ensure state stays the same
 -add interface for multi delete and test
 -add interface for multi add and test
--load SEltTree
-  -add test to save and reload and ensure state stays the same
+
 -fix mem leak
   -just add multi insert support into seq for easy fix
   -harder fix is actually understand what is going on D:

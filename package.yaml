@@ -80,12 +80,6 @@ dependencies:
 - dependent-map
 - ref-tf
 - text
-
-#- smash
-- deepseq
-- binary
-- hashable
-
 - these
 - containers
 - patch
@@ -98,6 +92,13 @@ dependencies:
 - MonadRandom
 - random-shuffle
 - constraints-extras
+- vector
+
+#- smash
+- deepseq
+- binary
+- hashable
+
 
 
 library:

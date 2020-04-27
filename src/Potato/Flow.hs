@@ -6,6 +6,7 @@ module Potato.Flow (
   , module Potato.Flow.Reflex.Entry
   , module Potato.Flow.Reflex.SEltLayers
   , module Potato.Flow.Reflex.Types
+  , module Potato.Flow.Render
 ) where
 
 import           Potato.Flow.Math
@@ -14,4 +15,5 @@ import           Potato.Flow.Reflex.Entry
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Render
 import           Potato.Flow.SElts

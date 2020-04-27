@@ -45,6 +45,7 @@ data SLineStyle = SLineStyle {
   _sLineStyle_corners      :: CornerStyle
   , _sLineStyle_vertical   :: PChar
   , _sLineStyle_horizontal :: PChar
+  , _sLineStyle_point      :: PChar
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLineStyle
@@ -56,6 +57,7 @@ defaultSLineStyle = SLineStyle {
     _sLineStyle_corners      = defaultCornerStyle
     , _sLineStyle_vertical   = '║'
     , _sLineStyle_horizontal = '═'
+    , _sLineStyle_point = '█'
   }
 
 -- TODO rename to TextStyle
