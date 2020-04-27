@@ -193,26 +193,24 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     holdDynamicSeq empty dseqc
 
   let
-
-    -- TODO THIS LEAKS FIX ME
+    -- 'force' is needed to prevent leaks D:
     -- changes from removal
     changes1 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
-    changes1 = NE.toList
+    changes1 = force <$> NE.toList
       <$> fmap (\(rid, seltl) -> (rid, (Just seltl, Nothing)))
       <$> L.head -- PARTIAL
       <$> collectedRemovals
 
-    -- TODO THIS LEAKS FIX ME
     -- changes from insertions
     changes2 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
-    changes2 = NE.toList
+    changes2 =  force <$> NE.toList
       <$> fmap (\(rid, seltl) -> (rid, (Nothing, Just seltl)))
       <$> L.head -- PARTIAL
       <$> collectedInsertions
 
     -- changes from modifications
     changes3 :: Event t [(REltId, (Maybe SEltLabel, Maybe SEltLabel))]
-    changes3 = NE.toList
+    changes3 = force <$> NE.toList
       <$> fmap (\(rid, before, after) -> (rid, (Just before, Just after)))
       <$> _directory_modified directory
 
@@ -220,6 +218,5 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      -- TODO FIX, disabled to prevent know leaks (so I can find other ones easily lol)
-      , _sEltLayerTree_changeView = never --IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
+      , _sEltLayerTree_changeView = IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }
