@@ -105,7 +105,7 @@ step_state_network AppIn {..} = do
   pfo <- setup_network _appIn_event
   return
     AppOut {
-      _appOut_behavior = _pfo_state pfo
+      _appOut_behavior = _pfo_potato_state pfo
       --, _appOut_event  = never
       , _appOut_event = fmap (\x -> x `deepseq` ()) $ _sEltLayerTree_changeView (_pfo_layers pfo)
     }

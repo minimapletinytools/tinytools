@@ -54,11 +54,12 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
-  _pfo_layers  :: SEltLayerTree t
-  , _pfo_saved :: Event t SEltTree
+  _pfo_layers           :: SEltLayerTree t
+  , _pfo_saved          :: Event t SEltTree
 
   -- for debugging
-  , _pfo_state :: Behavior t SEltTree
+  , _pfo_potato_state   :: Behavior t SEltTree
+  , _pfo_potato_changed :: Event t ()
 }
 
 holdPF ::
@@ -160,5 +161,6 @@ holdPF PFConfig {..} = mdo
     PFOutput {
       _pfo_layers = layerTree
       , _pfo_saved = pushAlways pushStateFn _pfc_save
-      , _pfo_state = pull (pushStateFn ())
+      , _pfo_potato_state = pull (pushStateFn ())
+      , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
     }

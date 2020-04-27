@@ -39,7 +39,7 @@ DONE-test multi-modify
   -harder fix is actually understand what is going on D:
 -setup frontend from potato-flow
 -add max length param to actionstack
--decide if you want _pfo_saved or _pfo_state
+-decide if you want _pfo_saved or _pfo_potato_state
 -backend render stuff
   -just do super basic render everything version for now, since we are refactoring math
 DONE-sharing
