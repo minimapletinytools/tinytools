@@ -34,7 +34,7 @@ emptyCanvas lb@(LBox _ (LSize (V2 w h))) = Canvas {
   }
 
 toPoint :: LBox -> Int -> LPoint
-toPoint (LBox (LPoint (V2 x y)) (LSize (V2 w _))) i = LPoint $ V2 (i `div` w + x) (i `mod` w + y)
+toPoint (LBox (LPoint (V2 x y)) (LSize (V2 w _))) i = LPoint $ V2 (i `mod` w + y) (i `div` w + x) 
 
 
 potatoRender :: [SElt] -> Canvas -> Canvas

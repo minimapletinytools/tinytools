@@ -35,5 +35,6 @@ spec = do
             }
         canvas2 = potatoRender selts canvas1
         canvas2Text = canvasToText canvas2
+      --putTextLn $ canvas2Text
       -- TODO update for real renderer
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` n*4
