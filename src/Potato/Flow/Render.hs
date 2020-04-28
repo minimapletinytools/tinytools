@@ -36,21 +36,23 @@ emptyCanvas lb@(LBox _ (LSize (V2 w h))) = Canvas {
 toPoint :: LBox -> Int -> LPoint
 toPoint (LBox (LPoint (V2 x y)) (LSize (V2 w _))) i = LPoint $ V2 (i `div` w + x) (i `mod` w + y)
 
+
 potatoRender :: [SElt] -> Canvas -> Canvas
 potatoRender seltls Canvas {..} = r where
   drawers = reverse $ map getDrawer seltls
-  imapfn i oc = newc' where
+  genfn i = newc' where
     pt = toPoint _canvas_box i
     -- go through drawers in reverse order until you find a match
     mdraw = find (\d -> isJust $ _sEltDrawer_renderFn d pt) drawers
     newc' = case mdraw of
       Just d  -> fromJust $ _sEltDrawer_renderFn d pt
-      Nothing -> oc
-  newc = V.imap imapfn _canvas_contents
+      Nothing -> ' '
+  newc = V.generate (V.length _canvas_contents) genfn
   r = Canvas {
       _canvas_box = _canvas_box
       , _canvas_contents = newc
     }
+
 
 canvasToText :: Canvas -> Text
 canvasToText Canvas {..} = T.unfoldr unfoldfn (0, False) where

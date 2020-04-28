@@ -26,6 +26,7 @@ hp2ps -e8in -c memorytests.hp
 
 
 ::TODO::
+-canvas needs a clear method
 DONE-test multi-modify
 -workspace stuff (for now just support 1 workspace)
   -resize canvas command
