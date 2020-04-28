@@ -1,7 +1,7 @@
 module Potato.Flow.SElts (
   PChar
   , FillStyle(..)
-  , CornerStyle
+  , CornerStyle(..)
   , SLineStyle(..)
   , STextStyle(..)
   , SBox(..)
