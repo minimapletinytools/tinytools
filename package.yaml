@@ -93,6 +93,7 @@ dependencies:
 - random-shuffle
 - constraints-extras
 - vector
+- data-default
 
 #- smash
 - deepseq

@@ -1,11 +1,9 @@
 module Potato.Flow.SElts (
   PChar
+  , FillStyle(..)
   , CornerStyle
-  , defaultCornerStyle
   , SLineStyle(..)
-  , defaultSLineStyle
   , STextStyle(..)
-  , defaultSTextStyle
   , SBox(..)
   , SLine(..)
   , SText(..)
@@ -18,8 +16,18 @@ import           Relude
 import           Potato.Flow.Math
 
 import           Data.Aeson
+import           Data.Default
 
 type PChar = Char
+
+data FillStyle = FillSimple PChar deriving (Eq, Generic, Show)
+
+instance FromJSON FillStyle
+instance ToJSON FillStyle
+instance NFData FillStyle
+
+instance Default FillStyle where
+  def = FillSimple '@'
 
 data CornerStyle = CornerStyle {
   _cornerStyle_ul   :: PChar
@@ -32,32 +40,35 @@ instance FromJSON CornerStyle
 instance ToJSON CornerStyle
 instance NFData CornerStyle
 
-defaultCornerStyle :: CornerStyle
-defaultCornerStyle = CornerStyle {
-    _cornerStyle_ul = '╔'
-    , _cornerStyle_ur = '╗'
-    , _cornerStyle_bl = '╚'
-    , _cornerStyle_br = '╝'
-  }
+instance Default CornerStyle where
+  def = CornerStyle {
+      _cornerStyle_ul = '╔'
+      , _cornerStyle_ur = '╗'
+      , _cornerStyle_bl = '╚'
+      , _cornerStyle_br = '╝'
+    }
 
 -- TODO Rename to just LineStyle
+-- TODO default instances
 data SLineStyle = SLineStyle {
   _sLineStyle_corners      :: CornerStyle
   , _sLineStyle_vertical   :: PChar
   , _sLineStyle_horizontal :: PChar
   , _sLineStyle_point      :: PChar
+  , _sLineStyle_fill       :: FillStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLineStyle
 instance ToJSON SLineStyle
 instance NFData SLineStyle
 
-defaultSLineStyle :: SLineStyle
-defaultSLineStyle = SLineStyle {
-    _sLineStyle_corners      = defaultCornerStyle
+instance Default SLineStyle where
+  def = SLineStyle {
+    _sLineStyle_corners      = def
     , _sLineStyle_vertical   = '║'
     , _sLineStyle_horizontal = '═'
     , _sLineStyle_point = '█'
+    , _sLineStyle_fill = def
   }
 
 -- TODO rename to TextStyle
@@ -69,8 +80,8 @@ instance FromJSON STextStyle
 instance ToJSON STextStyle
 instance NFData STextStyle
 
-defaultSTextStyle :: STextStyle
-defaultSTextStyle = STextStyle {}
+instance Default STextStyle where
+  def = STextStyle {}
 
 -- |
 data SBox = SBox {

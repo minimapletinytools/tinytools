@@ -15,6 +15,7 @@ import           Reflex
 import           Reflex.Test.Host
 
 import           Data.Constraint.Extras (Has')
+import           Data.Default           (def)
 import           Data.Dependent.Sum     ((==>))
 import qualified Data.IntMap.Strict     as IM
 import qualified Data.List              as L (take, (!!))
@@ -27,7 +28,7 @@ import           System.Random.Shuffle
 import           Potato.Flow
 
 simpleSBox :: SBox
-simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) defaultSLineStyle
+simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) def
 
 data FCmd =
   FCNone
@@ -147,19 +148,19 @@ randomActionFCmd doundo stree = do
         0 -> return $ FCAddElt pos $ SEltBox
           SBox {
             _sBox_box = LBox (LPoint p1) (LSize p2)
-            , _sBox_style = defaultSLineStyle
+            , _sBox_style = def
           }
         1 -> return $ FCAddElt pos $ SEltLine
           SLine {
             _sLine_start = LPoint p1
             , _sLine_end = LPoint p2
-            , _sLine_style = defaultSLineStyle
+            , _sLine_style = def
           }
         2 -> return $ FCAddElt pos $ SEltText
           SText {
             _sText_box = LBox (LPoint p1) (LSize p2)
             , _sText_text = "moo"
-            , _sText_style = defaultSTextStyle
+            , _sText_style = def
           }
         _ -> undefined
     _ -> do

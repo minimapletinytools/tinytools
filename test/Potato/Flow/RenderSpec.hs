@@ -1,16 +1,15 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.RenderSpec
-  ( spec
-  )
-where
+module Potato.Flow.RenderSpec(
+  spec
+) where
 
 import           Relude                   hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit (fromHUnitTest)
 
 import qualified Data.Text                as T
+import Data.Default (def)
 
 import           Potato.Flow
 
@@ -32,7 +31,7 @@ spec = do
         selts = flip map [1..n] $ \i ->
           SEltBox $ SBox {
               _sBox_box    = LBox (LPoint (V2 (i*2) 0)) (LSize (V2 2 2))
-              , _sBox_style = defaultSLineStyle
+              , _sBox_style = def
             }
         canvas2 = potatoRender selts canvas1
         canvas2Text = canvasToText canvas2

@@ -18,6 +18,7 @@ import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
+import           Data.Default             (def)
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List                as L (last)
@@ -26,7 +27,7 @@ import           Data.Maybe               (fromJust)
 import           Potato.Flow
 
 simpleSBox :: SBox
-simpleSBox = SBox nilLBox defaultSLineStyle
+simpleSBox = SBox nilLBox def
 
 data FCmd =
   FCNone
