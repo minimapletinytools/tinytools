@@ -6,6 +6,7 @@ module Potato.Flow.Reflex.RElts (
   , RenderFn
   , SEltDrawer(..)
   , getDrawer
+  , Selected
   , toManipulator
 ) where
 

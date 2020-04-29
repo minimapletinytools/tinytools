@@ -3,6 +3,51 @@ stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
+::VTY CHANGES::
+-MonadNodeId constraint not needed for pane?
+-added PostBuild constraint to Layout
+-added splitH and splitHDrag
+  -maybe do splitHDrag0 and splitVDrag0 for versions that allow initial size
+  -try and combine code, prob not though..
+-fixed an issue in `drag` where mouse down would trigger on wrong button
+  - `end && btn == btn'  -> Just $ Drag (x,y) (x,y) btn' mods' False`
+-added `Drag2` and `drag2` which can track drag start events
+  -implemented splitVDrag with Drag2 as an example
+
+::CURSOR NOTES::
+-selecting
+  -object
+    -up: select
+    -drag: CRelBox drag
+-pan
+  -drag: pan screen
+-box
+  -down: add box
+  -drag: CBox drag bottom right
+  -up: switch to selecting
+
+
+-escape pressed
+  -manipulating: cancel manipulation
+  -selected: deselect
+  -switch to selecting
+
+
+::VTY NOTES::
+
+-make sure
+  -canvas pane does not get mouse inputs from other places
+  -focus switches properly between layer and canvas panes (for key events)
+DONE-L/R panes, resizeable (implement splitH)
+-canvas
+  -data
+    -CursorState = Selecting | Selected | Manipulating | Panning | NewBox | NewLine ...
+    -Dynamic t CursorState
+    -New -> runWithReplace (makeManipulatorFromNewElt) sEltTree_changeView
+
+
+
+
 ::RENDER NOTES::
 -inputs
   -layers :: Behavior t (Seq REltId)
@@ -26,27 +71,17 @@ hp2ps -e8in -c memorytests.hp
 
 
 ::TODO::
--canvas needs a clear method
-DONE-test multi-modify
+IGNORE-canvas needs a clear method
 -workspace stuff (for now just support 1 workspace)
   -resize canvas command
   -load SEltTree
     -add test to save and reload and ensure state stays the same
 -add interface for multi delete and test
 -add interface for multi add and test
-
--fix mem leak
-  -just add multi insert support into seq for easy fix
-  -harder fix is actually understand what is going on D:
--setup frontend from potato-flow
 -add max length param to actionstack
 -decide if you want _pfo_saved or _pfo_potato_state
 -backend render stuff
   -just do super basic render everything version for now, since we are refactoring math
-DONE-sharing
-  -clean up doc in dynamics and put on hackage?
-  -clean up docs in test and put on hackage?
-    -maybe need to add or remove some interfaces
 -controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
@@ -55,12 +90,22 @@ DONE-sharing
 -mid priority
   -helpers to create fine grained manipulators
   -refine drawers
+
 -low priority
-  -rename relt
+  IGNORE-rename relt
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
 
+DONE-setup frontend from potato-flow
+DONE-test multi-modify
+DONE-fix mem leak
+  -just add multi insert support into seq for easy fix
+  -harder fix is actually understand what is going on D:
+DONE-sharing
+  -clean up doc in dynamics and put on hackage?
+  -clean up docs in test and put on hackage?
+    -maybe need to add or remove some interfaces
 IGNORE-write profilingWidget which takes an event, calls GHC.Stats, and outputs results
 DONE-state serializers (should be done, just need to hook up aeson and test)
 DONE-figure out deriveArgDict thing, we need show instances for debugging!!
