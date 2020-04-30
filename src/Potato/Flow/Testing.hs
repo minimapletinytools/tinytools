@@ -118,9 +118,12 @@ step_state_network AppIn {..} = do
   return
     AppOut {
       _appOut_behavior = fmap (fmap thd3) $ _pfo_potato_state pfo
-      , _appOut_event = _pfo_saved pfo
+      --, _appOut_event =
       --, _appOut_event  = never
-      --, _appOut_event = fmap (\x -> x `deepseq` undefined) $ _sEltLayerTree_changeView (_pfo_layers pfo)
+      , _appOut_event = leftmost
+        [_pfo_saved pfo
+        -- this is needed to force the changeView event and prevent leaks
+        , fmapMaybe (const Nothing) $ _sEltLayerTree_changeView (_pfo_layers pfo)]
     }
 
 

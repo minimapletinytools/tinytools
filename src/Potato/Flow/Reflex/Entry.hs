@@ -206,7 +206,8 @@ holdPF PFConfig {..} = mdo
       , _pfo_saved = fmap (uncurry SPotatoFlow)
         $ fmap (over _2 (fmap thd3))
         $ pushAlways pushStateFn _pfc_save
-      , _pfo_potato_state = fmap snd $ pull (pushStateFn ())
+      -- no one is listening to canvas events in our mem tests, so we force it to prevent leaks
+      , _pfo_potato_state = fmap (\x -> x `deepseq` snd x) $ pull (pushStateFn ())
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
       , _pfo_canvas = canvas
     }
