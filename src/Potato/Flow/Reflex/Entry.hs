@@ -17,6 +17,8 @@ import           Reflex.Potato.Helpers
 import           Data.Dependent.Sum            ((==>))
 import qualified Data.IntMap.Strict            as IM
 import           Data.Maybe                    (fromJust)
+import qualified Data.Sequence                 as Seq
+import           Data.Tuple.Extra
 
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.SEltLayers
@@ -56,7 +58,7 @@ data PFOutput t = PFOutput {
   , _pfo_saved          :: Event t SEltTree
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
-  , _pfo_potato_state   :: Behavior t SEltTree
+  , _pfo_potato_state   :: Behavior t [SuperSEltLabel]
   , _pfo_potato_changed :: Event t ()
 }
 
@@ -146,19 +148,19 @@ holdPF PFConfig {..} = mdo
     <- holdSEltLayerTree layerTreeConfig
 
   let
-    pushStateFn :: (MonadSample t m') => () -> m' SEltTree
+    pushStateFn :: (MonadSample t m') => () -> m' [SuperSEltLabel]
     pushStateFn _ = do
       layers <- sample . current $ _sEltLayerTree_view layerTree
       contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
       let
         -- PARTIAL
-        foldfn rid acc = (contents IM.! rid) : acc
-      return $ foldr foldfn [] layers
+        foldfn index rid acc = (rid, index, (contents IM.! rid)) : acc
+      return $ Seq.foldrWithIndex foldfn [] layers
 
   return $
     PFOutput {
       _pfo_layers = layerTree
-      , _pfo_saved = pushAlways pushStateFn _pfc_save
+      , _pfo_saved = fmap (fmap thd3) $ pushAlways pushStateFn _pfc_save
       , _pfo_potato_state = pull (pushStateFn ())
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
     }

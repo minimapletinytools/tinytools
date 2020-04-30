@@ -21,6 +21,7 @@ import qualified Data.IntMap.Strict     as IM
 import qualified Data.List              as L (take, (!!))
 import qualified Data.List.Index        as L
 import           Data.Maybe             (fromJust)
+import           Data.Tuple.Extra
 
 import qualified Control.Monad.Random   as R
 import           System.Random.Shuffle
@@ -106,7 +107,7 @@ step_state_network AppIn {..} = do
   pfo <- setup_network _appIn_event
   return
     AppOut {
-      _appOut_behavior = _pfo_potato_state pfo
+      _appOut_behavior = fmap (fmap thd3) $ _pfo_potato_state pfo
       --, _appOut_event  = never
       , _appOut_event = fmap (\x -> x `deepseq` ()) $ _sEltLayerTree_changeView (_pfo_layers pfo)
     }
