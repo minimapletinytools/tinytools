@@ -8,7 +8,6 @@ module Potato.Flow.Reflex.Types (
   , REltIdMap
   , SuperSEltLabel
   , ControllersWithId
-  , SEltTree
   , Selection
 
   -- * manipulators
@@ -47,7 +46,6 @@ type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 
-type SEltTree = [SEltLabel]
 type Selection = [LayerPos]
 
 type MNone = ()
