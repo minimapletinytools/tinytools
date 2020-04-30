@@ -70,21 +70,21 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   v2 <- liftIO run2
   L.last (join v1) @?= L.last (join v2)
 
+
+doStuff _ 0 st = return st
+doStuff appFrame n st = do
+  action <- liftIO $ randomActionFCmd True st
+  _ <- tickAppFrame appFrame $ Just $ That action
+  out <- tickAppFrame appFrame $ Just $ That FCNone
+  case L.last out of
+    (nst, _) -> doStuff appFrame (n-1) nst
+
 nstep_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Int -> Test
 nstep_test n0 = TestLabel (show n0 <> " steps") $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
-  let
-    loop 0 _ = return ()
-    loop n st = do
-      action <- liftIO $ randomActionFCmd True st
-      _ <- tickAppFrame appFrame $ Just $ That action
-      out <- tickAppFrame appFrame $ Just $ That FCNone
-      case L.last out of
-        (nst, _) -> do
-          loop (n-1) nst
-  loop n0 []
+  void $ doStuff appFrame n0 []
 
 undoredo_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -93,7 +93,7 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
   appFrame <- getAppFrame step_state_network ()
   let
     m0 = 10 -- num commands to do to set up state
-    l0 = 10 -- num commands to do and the undo
+    l0 = 20 -- num commands to do and the undo
     setupLoop (0 :: Int) st = return st
     setupLoop n st = do
       action <- liftIO $ randomActionFCmd False st
@@ -120,16 +120,7 @@ serialization_test :: forall t m.
   => Test
 serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
-  let
-    loop 0 st = return st
-    loop n st = do
-      action <- liftIO $ randomActionFCmd True st
-      _ <- tickAppFrame appFrame $ Just $ That action
-      out <- tickAppFrame appFrame $ Just $ That FCNone
-      case L.last out of
-        (nst, _) -> do
-          loop (n-1) nst
-  final <- loop 1000 []
+  final <- doStuff appFrame 1000 []
   let
     jsontree = encode final
     mfinal' = decode jsontree
@@ -137,7 +128,15 @@ serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
     final @?= fromJust mfinal'
     encodeFile "serialization_test_output.json" final
 
-
+save_load_test :: forall t m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => Test
+save_load_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
+  appFrame <- getAppFrame step_state_network ()
+  final1 <- doStuff appFrame 1000 []
+  -- TODO finish
+  liftIO $ do
+    final1 @?= undefined
 
 spec :: Spec
 spec = do

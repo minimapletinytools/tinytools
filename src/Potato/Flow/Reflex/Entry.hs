@@ -59,8 +59,13 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
+
   _pfo_layers           :: SEltLayerTree t
   , _pfo_canvas         :: Canvas t
+
+  -- TODO
+  --, _pfo_loaded :: Event t ()
+
   , _pfo_saved          :: Event t SPotatoFlow
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done

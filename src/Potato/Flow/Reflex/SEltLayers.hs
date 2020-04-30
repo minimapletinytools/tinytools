@@ -189,11 +189,19 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputInsertEv (_directory_added directory)
 
+  -- load
+  let
+    prepManyForInsertion :: [(REltId, SEltLabel)] -> (LayerPos, Seq REltId)
+    prepManyForInsertion seltls = (0, Seq.fromList $ fmap fst seltls)
+  insertLoadEv <- sequenceEvents _sEltLayerTreeConfig_load
+    $ fmap prepManyForInsertion
+    $ fmap NE.toList _sEltLayerTreeConfig_load
+
   let
     dseqc = DynamicSeqConfig {
-        _dynamicSeqConfig_insert = insertSingleEv
+        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
         , _dynamicSeqConfig_remove = removeSingleEv
-        , _dynamicSeqConfig_clear = never
+        , _dynamicSeqConfig_clear = void _sEltLayerTreeConfig_load
       }
   dseq :: DynamicSeq t REltId <-
     holdDynamicSeq empty dseqc
