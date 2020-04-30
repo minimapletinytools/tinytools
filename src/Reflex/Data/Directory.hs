@@ -70,9 +70,10 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = do
         _         -> Nothing
       maketag :: forall a . Event t a -> Event t (NonEmpty (DirId, v))
       maketag = alignEventWithMaybe alignfn attached
-  return DirectoryIdAssigner {
-        --_directoryIdAssigner_assigned = dAssigned
-                               _directoryIdAssigner_tag = maketag }
+  return
+    DirectoryIdAssigner {
+      _directoryIdAssigner_tag = maketag
+    }
 
 
 

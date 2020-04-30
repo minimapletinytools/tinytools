@@ -16,6 +16,7 @@ import           Reflex.Potato.Helpers
 
 import           Data.Dependent.Sum            ((==>))
 import qualified Data.IntMap.Strict            as IM
+import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe                    (fromJust)
 import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
@@ -53,6 +54,7 @@ data PFConfig t = PFConfig {
   , _pfc_undo         :: Event t ()
   , _pfc_redo         :: Event t ()
 
+  , _pfc_load         :: Event t SPotatoFlow
   , _pfc_save         :: Event t ()
 }
 
@@ -115,15 +117,20 @@ holdPF PFConfig {..} = mdo
   -- DIRECTORY ID ASSIGNER
   -- INPUTS:
   -- * _pfc_addElt :: Event t SEltLabel
+  -- * _pfc_load :: Event t SPotatoFlow
   -- * TODO _pfc_paste
   -- * TODO _pfc_duplicate
   -- OUTPUTS:
   -- * doAction_PFCNewElts :: Event t (NonEmpty SuperSEltLabel)
+  -- * loadedWithIds :: Event t [(REltId, SEltLabel)]
   -- * TODO doAction_paste/duplicate
+
 
   let
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = fmap (:|[]) $ _pfc_addElt
+        _directoryIdAssignerConfig_assign = leftmost
+          [fmap (:|[]) _pfc_addElt
+          , fmapMaybe (NE.nonEmpty . zip [0..] . _sPotatoFlow_sEltTree) _pfc_load]
       }
   directoryIdAssigner :: DirectoryIdAssigner t (LayerPos, SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
@@ -134,6 +141,12 @@ holdPF PFConfig {..} = mdo
       fmap (PFCNewElts ==>)
       $ flattenTuple212
       <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+    -- layer positions are always consecutive here
+    loadedWithIds :: Event t (NonEmpty SuperSEltLabel)
+    loadedWithIds = flattenTuple212
+      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+
+
 
 
   -- SELTLAYERS
@@ -158,13 +171,15 @@ holdPF PFConfig {..} = mdo
   -- CANVAS
   -- INPUTS
   -- * selectDo/Undo actionStack PFCResizeCanvas :: Event t DeltaLBox
+  -- * _pfc_load :: Event t SPotatoFlow
   -- OUTPUTS
   -- * Canvas
   let
     canvasConfig = CanvasConfig {
         _canvasConfig_resize = leftmost
           [fmap (flip plusDelta) (selectDo actionStack PFCResizeCanvas)
-          , fmap (flip minusDelta) (selectDo actionStack PFCResizeCanvas)]
+          , fmap (flip minusDelta) (selectDo actionStack PFCResizeCanvas)
+          , fmap (\pf -> const (_sCanvas_box . _sPotatoFlow_sCanvas $ pf)) _pfc_load]
       }
   canvas <- holdCanvas canvasConfig
 

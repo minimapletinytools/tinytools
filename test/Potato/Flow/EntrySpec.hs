@@ -69,10 +69,11 @@ basic_network ev = mdo
     pfc = PFConfig { _pfc_addElt     = addEv
                    , _pfc_removeElt  = removeEv
                    , _pfc_manipulate = manipEv
+                   , _pfc_resizeCanvas = never
                    , _pfc_undo       = undoEv
                    , _pfc_redo       = redoEv
+                   , _pfc_load = never
                    , _pfc_save = never
-                   , _pfc_resizeCanvas = never
                    }
   pf <- holdPF pfc
   let

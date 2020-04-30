@@ -134,6 +134,8 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   -- | pass through modifiers for SEltLabels in directory
   , _sEltLayerTree_directory_doManipulate   :: Event t ControllersWithId
   , _sEltLayerTree_directory_undoManipulate :: Event t ControllersWithId
+
+  --, _sEltLayerTreeConfig_load :: Event t (NonEmpty SuperSEltLabel)
 }
 
 holdSEltLayerTree :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)

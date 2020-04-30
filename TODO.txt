@@ -88,8 +88,8 @@ DONE-canvas
 ::TODO::
 -REltId -> Index map
 -workspace stuff (for now just support 1 workspace)
-  -canvas support
-  -resize canvas command
+  DONE-canvas support
+  DONE-resize canvas command
   -load SEltTree
     -add test to save and reload and ensure state stays the same
 -controller refactor bleh
