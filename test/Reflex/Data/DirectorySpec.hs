@@ -53,6 +53,7 @@ basic_network ev = do
       dmc          = DirectoryConfig { _directoryConfig_add    = idAssignedEv
                                      , _directoryConfig_remove = never
                                      , _directoryConfig_modifyWith = never
+                                     , _directoryConfig_set = never
                                      }
   dm <- holdDirectory dmc
 
@@ -70,5 +71,5 @@ test_basic_network = TestLabel "basic" $ TestCase $ do
 
 spec :: Spec
 spec = do
-  describe "ActionStack" $ do
+  describe "Directory" $ do
     fromHUnitTest test_basic_network

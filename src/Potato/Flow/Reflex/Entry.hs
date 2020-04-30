@@ -109,7 +109,7 @@ holdPF PFConfig {..} = mdo
       _actionStackConfig_do      = doActions
       , _actionStackConfig_undo  = _pfc_undo
       , _actionStackConfig_redo  = _pfc_redo
-      , _actionStackConfig_clear = never
+      , _actionStackConfig_clear = void _pfc_load
     }
   actionStack :: ActionStack t (PFCmd t)
     <- holdActionStack actionStackConfig
@@ -135,16 +135,15 @@ holdPF PFConfig {..} = mdo
   directoryIdAssigner :: DirectoryIdAssigner t (LayerPos, SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
   let
-    flattenTuple212 (a,(b,c)) = (a,b,c)
     doAction_PFCNewElts :: Event t (PFCmd t)
     doAction_PFCNewElts =
       fmap (PFCNewElts ==>)
-      $ flattenTuple212
+      $ (\(a,(b,c)) -> (a,b,c))
       <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
     -- layer positions are always consecutive here
-    loadedWithIds :: Event t (NonEmpty SuperSEltLabel)
-    loadedWithIds = flattenTuple212
-      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+    loadedWithIds :: Event t (NonEmpty (REltId, SEltLabel))
+    loadedWithIds = (\(a,(_,c)) -> (a,c))
+      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_load
 
 
 
@@ -164,6 +163,7 @@ holdPF PFConfig {..} = mdo
           [selectUndo actionStack PFCNewElts, selectDo actionStack PFCDeleteElts]
         , _sEltLayerTree_directory_doManipulate = selectDo actionStack PFCManipulate
         , _sEltLayerTree_directory_undoManipulate = selectUndo actionStack PFCManipulate
+        , _sEltLayerTreeConfig_load = loadedWithIds
       }
   layerTree :: SEltLayerTree t
     <- holdSEltLayerTree layerTreeConfig

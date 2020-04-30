@@ -135,7 +135,7 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   , _sEltLayerTree_directory_doManipulate   :: Event t ControllersWithId
   , _sEltLayerTree_directory_undoManipulate :: Event t ControllersWithId
 
-  --, _sEltLayerTreeConfig_load :: Event t (NonEmpty SuperSEltLabel)
+  , _sEltLayerTreeConfig_load :: Event t (NonEmpty (REltId, SEltLabel))
 }
 
 holdSEltLayerTree :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
@@ -161,6 +161,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
         _directoryConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
         , _directoryConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
         , _directoryConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
+        , _directoryConfig_set = fmap NE.toList _sEltLayerTreeConfig_load
       }
   directory :: Directory t SEltLabel
     <- holdDirectory directoryConfig

@@ -94,12 +94,14 @@ data DirectoryConfig t v = DirectoryConfig {
   , _directoryConfig_remove     :: Event t (NonEmpty DirId)
   -- | modify an element in the map
   , _directoryConfig_modifyWith :: Event t (NonEmpty (DirId, v->v))
+  -- | set contents of directory (this will NOT fire _directory_added/removed/modified)
+  , _directoryConfig_set        :: Event t [(DirId, v)]
 }
 
 
 
 -- helper type for holdActionStack
-data DCmd v = DCAdd (NonEmpty (DirId, v)) | DCRemove (NonEmpty DirId) | DCModify (NonEmpty (DirId, v->v))
+data DCmd v = DCAdd (NonEmpty (DirId, v)) | DCRemove (NonEmpty DirId) | DCModify (NonEmpty (DirId, v->v)) | DCSet [(DirId, v)]
 
 
 holdDirectory
@@ -118,7 +120,8 @@ holdDirectory DirectoryConfig {..} = mdo
     allEvs = leftmostwarn "Directory" [
       fmap DCAdd _directoryConfig_add
       , fmap DCRemove _directoryConfig_remove
-      , fmap DCModify _directoryConfig_modifyWith]
+      , fmap DCModify _directoryConfig_modifyWith
+      , fmap DCSet _directoryConfig_set]
 
     -- setup the directory
     addToMap els m = foldl' (\(_,accm) (i, e) -> ([],IM.insert i e accm)) m els
@@ -129,10 +132,12 @@ holdDirectory DirectoryConfig {..} = mdo
         -- annoying that we can't get the new value with updatedLookupWithKey, so we just recompute it here
         newaccc = maybe accc (\oldv -> (i,oldv,f oldv):accc) moldv
 
+
     foldfn :: DCmd v -> ([(DirId, v,v)], IM.IntMap v) -> ([(DirId, v,v)], IM.IntMap v)
     foldfn (DCAdd els) m        = addToMap els m
     foldfn (DCRemove els) m     = removeFromMap els m
     foldfn (DCModify els) (_,m) = modifyInMap els ([],m)
+    foldfn (DCSet els) (_,m)    = ([], IM.fromList els)
 
     bDirectory = current $ fmap snd directory
 
