@@ -32,7 +32,7 @@ main = runSpiderHost $ do
       out <- tickAppFrame appFrame $ Just $ That FCNone
       case L.last out of
         (nst, _) -> setupLoop (n-1) nst
-    undoredoLoop _ 0 st = return st
+    undoredoLoop _ (0 :: Int) st = return st
     undoredoLoop isUndo n st = do
       _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
       out <- tickAppFrame appFrame $ Just $ That FCNone

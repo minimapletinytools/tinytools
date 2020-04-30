@@ -14,8 +14,6 @@ import           Reflex.Data.ActionStack
 import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 
-import           Data.Aeson
-import qualified Data.ByteString.Lazy          as LBS
 import           Data.Dependent.Sum            ((==>))
 import qualified Data.IntMap.Strict            as IM
 import           Data.Maybe                    (fromJust)
@@ -57,7 +55,7 @@ data PFOutput t = PFOutput {
   _pfo_layers           :: SEltLayerTree t
   , _pfo_saved          :: Event t SEltTree
 
-  -- for debugging
+  -- for debugging and temp rendering, to be removed once incremental rendering is done
   , _pfo_potato_state   :: Behavior t SEltTree
   , _pfo_potato_changed :: Event t ()
 }
