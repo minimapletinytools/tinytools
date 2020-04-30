@@ -37,6 +37,7 @@ data FCmd =
   | FCDeleteElt LayerPos
   | FCModify LayerPos Controller
   | FCModifyMany [(LayerPos, Controller)]
+  | FCResizeCanvas DeltaLBox
   | FCUndo
   | FCRedo
   | FCSave
@@ -49,12 +50,12 @@ setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t FCmd -> PerformEventT t m (PFOutput t)
 setup_network ev = mdo
   let
-    addEv = flip fmapMaybe ev $ \case
+    addEv = fforMaybe ev $ \case
       FCAddElt p x -> Just (p, SEltLabel "blank" x)
       FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
       _           -> Nothing
 
-    removeEv = flip fmapMaybe ev $ \case
+    removeEv = fforMaybe ev $ \case
       FCDeleteElt p -> Just p
       _              -> Nothing
     manipEv = flip push ev $ \case
@@ -76,13 +77,16 @@ setup_network ev = mdo
             }
         return . Just $ selt `deepseq` IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing
-    redoEv = flip fmapMaybe ev $ \case
+    resizeCanvasEv = fforMaybe ev $ \case
+      FCResizeCanvas x -> Just x
+      _ -> Nothing
+    redoEv = fforMaybe ev $ \case
       FCRedo -> Just ()
       _      -> Nothing
-    undoEv = flip fmapMaybe ev $ \case
+    undoEv = fforMaybe ev $ \case
       FCUndo -> Just ()
       _      -> Nothing
-    saveEv = flip fmapMaybe ev $ \case
+    saveEv = fforMaybe ev $ \case
       FCSave -> Just ()
       _      -> Nothing
 
@@ -92,6 +96,7 @@ setup_network ev = mdo
                    , _pfc_undo       = undoEv
                    , _pfc_redo       = redoEv
                    , _pfc_save = saveEv
+                   , _pfc_resizeCanvas = resizeCanvasEv
                    }
   pfo <- holdPF pfc
   let
@@ -136,7 +141,7 @@ randomActionFCmd doundo stree = do
     startCmd = if doundo then 0 else 2
   rcmd <- if null eltsOnly
     then return (2 :: Int)
-    else R.getRandomR (startCmd, 4)
+    else R.getRandomR (startCmd, 5)
   case rcmd of
     0 -> return FCUndo
     1 -> return FCRedo
@@ -164,6 +169,10 @@ randomActionFCmd doundo stree = do
             , _sText_style = def
           }
         _ -> undefined
+    3 -> do
+      p1 <- randomXY
+      p2 <- randomXY
+      return $ FCResizeCanvas $ DeltaLBox (LPoint p1) (LSize p2)
     _ -> do
       -- just one random elements
       rindex <- R.getRandomR (0, length eltsOnly - 1)
@@ -177,8 +186,8 @@ randomActionFCmd doundo stree = do
       let randomElts = L.take nElts shuffled
 
       case rcmd of
-        3 -> return $ FCDeleteElt pos
-        4 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
+        4 -> return $ FCDeleteElt pos
+        5 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
           rename <- (==0) <$> R.getRandomR (0, 10 :: Int)
           if rename then do
             newName <- show <$> R.getRandomR (0, 1000000 :: Int)

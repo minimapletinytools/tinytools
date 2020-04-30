@@ -27,7 +27,7 @@ import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
-import           Control.Lens                  (over, _1, _2, _3)
+import           Control.Lens                  (over, _2)
 import           Control.Monad.Fix
 
 -- loading new workspace stufff
@@ -40,19 +40,20 @@ loadWSFromFile = fmapMaybe decode
 
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
-  _pfc_addElt       :: Event t (LayerPos, SEltLabel)
+  _pfc_addElt         :: Event t (LayerPos, SEltLabel)
   -- TODO take a selection
-  , _pfc_removeElt  :: Event t LayerPos
+  , _pfc_removeElt    :: Event t LayerPos
   --, _pfc_moveElt    :: Event t (LayerEltId, LayerPos) -- new layer position (before or after removal?)
   --, _pfc_copy       :: Event t [LayerEltId]
   --, _pfc_paste      :: Event t ([SElt], LayerPos)
   --, _pfc_duplicate  :: Event t [LayerEltId]
-  , _pfc_manipulate :: Event t ControllersWithId
+  , _pfc_manipulate   :: Event t ControllersWithId
+  , _pfc_resizeCanvas :: Event t DeltaLBox
 
-  , _pfc_undo       :: Event t ()
-  , _pfc_redo       :: Event t ()
+  , _pfc_undo         :: Event t ()
+  , _pfc_redo         :: Event t ()
 
-  , _pfc_save       :: Event t ()
+  , _pfc_save         :: Event t ()
 }
 
 data PFOutput t = PFOutput {
@@ -88,12 +89,16 @@ holdPF PFConfig {..} = mdo
     doAction_PFCManipulate :: Event t (PFCmd t)
     doAction_PFCManipulate = fmap (PFCManipulate ==>) _pfc_manipulate
 
+    doAction_PFCResizeCanvas :: Event t (PFCmd t)
+    doAction_PFCResizeCanvas = fmap (PFCResizeCanvas ==>) _pfc_resizeCanvas
+
   -- ACTION STACK
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
         doAction_PFCNewElts
         , doAction_PFCDeleteElts
         , doAction_PFCManipulate
+        , doAction_PFCResizeCanvas
       ]
     actionStackConfig :: ActionStackConfig t (PFCmd t)
     actionStackConfig = ActionStackConfig {
@@ -183,4 +188,5 @@ holdPF PFConfig {..} = mdo
         $ pushAlways pushStateFn _pfc_save
       , _pfo_potato_state = fmap snd $ pull (pushStateFn ())
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
+      , _pfo_canvas = canvas
     }

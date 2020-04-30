@@ -72,6 +72,7 @@ basic_network ev = mdo
                    , _pfc_undo       = undoEv
                    , _pfc_redo       = redoEv
                    , _pfc_save = never
+                   , _pfc_resizeCanvas = never
                    }
   pf <- holdPF pfc
   let
