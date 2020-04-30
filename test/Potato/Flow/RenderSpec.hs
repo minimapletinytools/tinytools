@@ -4,17 +4,17 @@ module Potato.Flow.RenderSpec(
   spec
 ) where
 
-import           Relude                   hiding (empty, fromList)
+import           Relude       hiding (empty, fromList)
 
 import           Test.Hspec
 
-import qualified Data.Text                as T
-import Data.Default (def)
+import           Data.Default (def)
+import qualified Data.Text    as T
 
 import           Potato.Flow
 
-testCanvas :: Int -> Int -> Int -> Int -> Canvas
-testCanvas x y w h = emptyCanvas (LBox (LPoint (V2 x y)) (LSize (V2 w h)))
+testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
+testCanvas x y w h = emptyRenderedCanvas (LBox (LPoint (V2 x y)) (LSize (V2 w h)))
 
 spec :: Spec
 spec = do
@@ -22,7 +22,7 @@ spec = do
     it "renders blank text" $ do
       let
         (w,h) = (1003, 422)
-        canvasText = canvasToText (testCanvas (-540) 33 w h)
+        canvasText = renderedCanvasToText (testCanvas (-540) 33 w h)
       T.length canvasText `shouldBe` w * h + h - 1
     it "draws stuff" $ do
       let
@@ -34,7 +34,7 @@ spec = do
               , _sBox_style = def
             }
         canvas2 = potatoRender selts canvas1
-        canvas2Text = canvasToText canvas2
+        canvas2Text = renderedCanvasToText canvas2
       --putTextLn $ canvas2Text
       -- TODO update for real renderer
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` n*4
