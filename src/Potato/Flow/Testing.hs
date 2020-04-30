@@ -41,6 +41,7 @@ data FCmd =
   | FCUndo
   | FCRedo
   | FCSave
+  | FCLoad SPotatoFlow
 
   | FCCustom_Add_SBox_1
   | FCCustom_CBox_1 LayerPos
@@ -86,6 +87,9 @@ setup_network ev = mdo
     undoEv = fforMaybe ev $ \case
       FCUndo -> Just ()
       _      -> Nothing
+    loadEv = fforMaybe ev $ \case
+      FCLoad x -> Just x
+      _      -> Nothing
     saveEv = fforMaybe ev $ \case
       FCSave -> Just ()
       _      -> Nothing
@@ -96,7 +100,7 @@ setup_network ev = mdo
                    , _pfc_resizeCanvas = resizeCanvasEv
                    , _pfc_undo       = undoEv
                    , _pfc_redo       = redoEv
-                   , _pfc_load = never
+                   , _pfc_load = loadEv
                    , _pfc_save = saveEv
                    }
   pfo <- holdPF pfc
@@ -108,14 +112,15 @@ setup_network ev = mdo
 -- | make sure to tick with 'FCNone' to ensure output behavior is most recent
 step_state_network :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (AppIn t () FCmd -> PerformEventT t m (AppOut t SEltTree ()))
+  => (AppIn t () FCmd -> PerformEventT t m (AppOut t SEltTree SPotatoFlow))
 step_state_network AppIn {..} = do
   pfo <- setup_network _appIn_event
   return
     AppOut {
       _appOut_behavior = fmap (fmap thd3) $ _pfo_potato_state pfo
+      , _appOut_event = _pfo_saved pfo
       --, _appOut_event  = never
-      , _appOut_event = fmap (\x -> x `deepseq` ()) $ _sEltLayerTree_changeView (_pfo_layers pfo)
+      --, _appOut_event = fmap (\x -> x `deepseq` undefined) $ _sEltLayerTree_changeView (_pfo_layers pfo)
     }
 
 

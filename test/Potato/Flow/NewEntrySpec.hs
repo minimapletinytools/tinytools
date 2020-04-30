@@ -133,7 +133,15 @@ save_load_test :: forall t m.
   => Test
 save_load_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
+  let
   final1 <- doStuff appFrame 1000 []
+  final2 <- doStuff appFrame 1000 []
+
+  --_ <- tickAppFrame appFrame $ Just $ That (FCLoad )
+  --out <- tickAppFrame appFrame $ Just $ That FCNone
+  --case L.last out of
+    --(nst, _) -> setupLoop (n-1) nst
+
   -- TODO finish
   liftIO $ do
     final1 @?= undefined
