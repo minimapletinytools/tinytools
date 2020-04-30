@@ -20,6 +20,7 @@ module Potato.Flow.Reflex.Types (
   , MTag(..)
   , Manipulator
   -- * controllers
+  , CRename(..)
   , CBox(..)
   , CLine(..)
   , CText(..)
@@ -89,6 +90,13 @@ deriveGCompare ''MTag
 type Manipulator = DS.DSum MTag Identity
 
 
+data CRename = CRename {
+  _cRename_newName :: DeltaText
+} deriving (Eq, Show)
+
+instance Delta SEltLabel CRename where
+  plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_newName) selt
+  minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_newName) selt
 
 data CBox = CBox {
   _cBox_box :: DeltaLBox
@@ -146,6 +154,7 @@ data CRelBox = CRelBox {
 } deriving (Eq, Show)
 
 data CTag a where
+  CTagRename :: CTag CRename
   CTagBox :: CTag CBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText

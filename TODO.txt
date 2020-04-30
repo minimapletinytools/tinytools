@@ -3,6 +3,16 @@ stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
+::Layer Notes::
+-folders
+  -click folder selects all contents
+  -deselect content of folder deselects all parent folders recursively
+-hidden/locked/contracted
+  -need to keep track of which elts/folders are hidden/locked/contract
+  -need something that updates when layers change
+    -I guess you can track insertions/deletes with
+
+
 ::VTY CHANGES::
 -MonadNodeId constraint not needed for pane?
 -added PostBuild constraint to Layout
@@ -25,27 +35,32 @@ hp2ps -e8in -c memorytests.hp
   -down: add box
   -drag: CBox drag bottom right
   -up: switch to selecting
-
-
 -escape pressed
   -manipulating: cancel manipulation
   -selected: deselect
   -switch to selecting
 
 
-::VTY NOTES::
-
+::VTY TODO::
+-layers
+-refactor into several files D:
 -make sure
-  -canvas pane does not get mouse inputs from other places
+  DONE-canvas pane does not get mouse inputs from other places
   -focus switches properly between layer and canvas panes (for key events)
 DONE-L/R panes, resizeable (implement splitH)
--canvas
+DONE-canvas
   -data
     -CursorState = Selecting | Selected | Manipulating | Panning | NewBox | NewLine ...
     -Dynamic t CursorState
     -New -> runWithReplace (makeManipulatorFromNewElt) sEltTree_changeView
-
-
+-add + manipulate = 2 actions issue D:
+  -new workflow is:
+    -tool click ev -> create manipulator -> add widget with initial size
+    -selected ev -> create manipulator -> modify widget
+-pane not registering mouse up events that happen off pane
+  -probably have to make your own dragging stuff
+  -probably need to add Reader monad to pipe global events through everything
+  -maybe you could pane HasVtyInput so it ignores dragging events that happen from off the screen?
 
 
 ::RENDER NOTES::
@@ -71,25 +86,25 @@ DONE-L/R panes, resizeable (implement splitH)
 
 
 ::TODO::
-IGNORE-canvas needs a clear method
+-REltId -> Index map
 -workspace stuff (for now just support 1 workspace)
+  -canvas support
   -resize canvas command
   -load SEltTree
     -add test to save and reload and ensure state stays the same
--add interface for multi delete and test
--add interface for multi add and test
--add max length param to actionstack
--decide if you want _pfo_saved or _pfo_potato_state
--backend render stuff
-  -just do super basic render everything version for now, since we are refactoring math
 -controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
   -rename vars in Controllers to indicate they are deltas
 
 -mid priority
-  -helpers to create fine grained manipulators
+  IGNORE-helpers to create fine grained manipulators
   -refine drawers
+  -add interface for multi delete and test
+  -add interface for multi add and test
+  -add max length param to actionstack
+  -backend render stuff
+    DONE-just do super basic render everything version for now, since we are refactoring math
 
 -low priority
   IGNORE-rename relt
@@ -97,6 +112,9 @@ IGNORE-canvas needs a clear method
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
 
+IGNORE-canvas needs a clear method
+DONE-decide if you want _pfo_saved or _pfo_potato_state
+  -have to keep _pfo_potato_state until render stuffis done properly
 DONE-setup frontend from potato-flow
 DONE-test multi-modify
 DONE-fix mem leak

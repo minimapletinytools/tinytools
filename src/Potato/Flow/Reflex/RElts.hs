@@ -184,6 +184,7 @@ modifyDelta isDo x dx = if isDo
 
 updateFnFromController :: Bool -> Controller -> (SEltLabel -> SEltLabel)
 updateFnFromController isDo = \case
+  (CTagRename :=> Identity d) -> \seltl -> modifyDelta isDo seltl d
   (CTagBox :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
     SEltBox s -> SEltLabel sname (SEltBox $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagBox - " <> show selt

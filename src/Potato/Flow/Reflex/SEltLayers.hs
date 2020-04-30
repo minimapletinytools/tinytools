@@ -180,6 +180,9 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     inputInsertEv = toList <$> fmap prepForInsertion <$> _sEltLayerTreeConfig_insert
   (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputRemoveEv (_directory_removed directory)
+
+  -- TODO make sure inputInsertEv is always ordered from smallest to largest index
+  -- then, listen to collectedInsertions event, and use that event to update REltId -> Index map
   (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputInsertEv (_directory_added directory)
 

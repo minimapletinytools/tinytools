@@ -177,23 +177,31 @@ randomActionFCmd doundo stree = do
 
       case rcmd of
         3 -> return $ FCDeleteElt pos
-        4 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel _ selt)) -> do
-          p1 <- randomXY
-          p2 <- randomXY
-          case selt of
-            SEltBox _ -> return $ (,) pos $ CTagBox ==>
-              CBox {
-                _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+        4 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
+          rename <- (==0) <$> R.getRandomR (0, 10 :: Int)
+          if rename then do
+            newName <- show <$> R.getRandomR (0, 1000000 :: Int)
+            return $ (,) pos $ CTagRename ==>
+              CRename {
+                _cRename_newName = (name, newName)
               }
-            SEltLine _ -> return $ (,) pos $ CTagLine ==>
-              CLine {
-                _cLine_start = LPoint p1
-                , _cLine_end = LPoint p2
-              }
-            SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
-              CText {
-                _cText_box = DeltaLBox (LPoint p1) (LSize p2)
-                , _cText_text = (before, "meow meow")
-              }
-            _ -> error "this should never happen"
+          else do
+            p1 <- randomXY
+            p2 <- randomXY
+            case selt of
+              SEltBox _ -> return $ (,) pos $ CTagBox ==>
+                CBox {
+                  _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+                }
+              SEltLine _ -> return $ (,) pos $ CTagLine ==>
+                CLine {
+                  _cLine_start = LPoint p1
+                  , _cLine_end = LPoint p2
+                }
+              SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
+                CText {
+                  _cText_box = DeltaLBox (LPoint p1) (LSize p2)
+                  , _cText_text = (before, "meow meow")
+                }
+              _ -> error "this should never happen"
         _ -> error "this should never happen"
