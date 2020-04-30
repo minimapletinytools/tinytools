@@ -94,6 +94,7 @@ dependencies:
 - constraints-extras
 - vector
 - data-default
+- lens
 
 #- smash
 - deepseq

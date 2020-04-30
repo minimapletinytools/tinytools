@@ -32,7 +32,7 @@ save_network
   => (Event t FCmd -> PerformEventT t m (Event t SEltTree))
 save_network ev = do
   pfo <- setup_network ev
-  return $ _pfo_saved pfo
+  return $ fmap _sPotatoFlow_sEltTree $ _pfo_saved pfo
 
 
 bs_save_0 :: ([FCmd],[FCmd])

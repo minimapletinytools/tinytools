@@ -20,6 +20,7 @@ import           Relude
 import           Reflex
 import           Reflex.Data.ActionStack
 
+import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Types
 
 import qualified Data.Dependent.Map       as DM
@@ -38,18 +39,21 @@ data PFCmdTag t a where
   --PFCPaste :: PFCmdTag t (LayerPos, [REltId, SEltLabel])
   --PFCDuplicate :: PFCmdTag t [REltId]
   PFCManipulate :: PFCmdTag t (ControllersWithId)
+  PFCResizeCanvas :: PFCmdTag t DeltaLBox
 
 instance Text.Show.Show (PFCmdTag t a) where
-  show PFCNewElts    = "PFCNewElts"
-  show PFCDeleteElts = "PFCDeleteElts"
-  show PFCManipulate = "PFCManipulate"
+  show PFCNewElts      = "PFCNewElts"
+  show PFCDeleteElts   = "PFCDeleteElts"
+  show PFCManipulate   = "PFCManipulate"
+  show PFCResizeCanvas = "PFCResize"
 
 instance Data.GADT.Compare.GEq (PFCmdTag t) where
-  geq PFCNewElts PFCNewElts       = do return Data.GADT.Compare.Refl
-  geq PFCDeleteElts PFCDeleteElts = do return Data.GADT.Compare.Refl
-  geq PFCManipulate PFCManipulate = do return Data.GADT.Compare.Refl
+  geq PFCNewElts PFCNewElts           = do return Data.GADT.Compare.Refl
+  geq PFCDeleteElts PFCDeleteElts     = do return Data.GADT.Compare.Refl
+  geq PFCManipulate PFCManipulate     = do return Data.GADT.Compare.Refl
+  geq PFCResizeCanvas PFCResizeCanvas = do return Data.GADT.Compare.Refl
   -- TODO make sure this is correct
-  geq _ _                         = Nothing
+  geq _ _                             = Nothing
 
 instance Data.GADT.Compare.GCompare (PFCmdTag t) where
   gcompare PFCNewElts PFCNewElts = runGComparing $ (do return Data.GADT.Compare.GEQ)
@@ -61,6 +65,9 @@ instance Data.GADT.Compare.GCompare (PFCmdTag t) where
   gcompare PFCManipulate PFCManipulate = runGComparing $ (do return Data.GADT.Compare.GEQ)
   gcompare PFCManipulate _ = Data.GADT.Compare.GLT
   gcompare _ PFCManipulate = Data.GADT.Compare.GGT
+  gcompare PFCResizeCanvas PFCResizeCanvas = runGComparing $ (do return Data.GADT.Compare.GEQ)
+  gcompare PFCResizeCanvas _ = Data.GADT.Compare.GLT
+  gcompare _ PFCResizeCanvas = Data.GADT.Compare.GGT
 
 type PFCmd t = DS.DSum (PFCmdTag t) Identity
 type PFCmdMap t = DM.DMap (PFCmdTag t) Identity

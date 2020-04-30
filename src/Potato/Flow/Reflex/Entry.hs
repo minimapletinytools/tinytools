@@ -20,12 +20,14 @@ import           Data.Maybe                    (fromJust)
 import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
 
+import           Potato.Flow.Math
+import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
-
+import           Control.Lens                  (over, _1, _2, _3)
 import           Control.Monad.Fix
 
 -- loading new workspace stufff
@@ -55,7 +57,8 @@ data PFConfig t = PFConfig {
 
 data PFOutput t = PFOutput {
   _pfo_layers           :: SEltLayerTree t
-  , _pfo_saved          :: Event t SEltTree
+  , _pfo_canvas         :: Canvas t
+  , _pfo_saved          :: Event t SPotatoFlow
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
   , _pfo_potato_state   :: Behavior t [SuperSEltLabel]
@@ -134,7 +137,7 @@ holdPF PFConfig {..} = mdo
   -- * selectDo/Undo actionStack PFCDeleteElts :: Event t (NonEmpty SuperSEltLabel)
   -- * selectDo/Undo actionStack PFCManipulate :: ControllersWithId
   -- OUTPUTS
-  -- * TODO modified elements :: PatchIntMap (Maybe SEltLabel, Maybe SEltLabel)
+  -- * SEltLayerTree
   let
     layerTreeConfig = SEltLayerTreeConfig {
         _sEltLayerTreeConfig_insert = leftmostwarn "_layerTreeConfig_add"
@@ -147,20 +150,37 @@ holdPF PFConfig {..} = mdo
   layerTree :: SEltLayerTree t
     <- holdSEltLayerTree layerTreeConfig
 
+  -- CANVAS
+  -- INPUTS
+  -- * selectDo/Undo actionStack PFCResizeCanvas :: Event t DeltaLBox
+  -- OUTPUTS
+  -- * Canvas
   let
-    pushStateFn :: (MonadSample t m') => () -> m' [SuperSEltLabel]
+    canvasConfig = CanvasConfig {
+        _canvasConfig_resize = leftmost
+          [fmap (flip plusDelta) (selectDo actionStack PFCResizeCanvas)
+          , fmap (flip minusDelta) (selectDo actionStack PFCResizeCanvas)]
+      }
+  canvas <- holdCanvas canvasConfig
+
+  -- PREP PFO
+  let
+    pushStateFn :: (MonadSample t m') => () -> m' (SCanvas, [SuperSEltLabel])
     pushStateFn _ = do
       layers <- sample . current $ _sEltLayerTree_view layerTree
       contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
+      scanvas <- sample (current $ _canvas_box canvas) >>= return . SCanvas
       let
         -- PARTIAL
         foldfn index rid acc = (rid, index, (contents IM.! rid)) : acc
-      return $ Seq.foldrWithIndex foldfn [] layers
+      return $ (scanvas, Seq.foldrWithIndex foldfn [] layers)
 
   return $
     PFOutput {
       _pfo_layers = layerTree
-      , _pfo_saved = fmap (fmap thd3) $ pushAlways pushStateFn _pfc_save
-      , _pfo_potato_state = pull (pushStateFn ())
+      , _pfo_saved = fmap (uncurry SPotatoFlow)
+        $ fmap (over _2 (fmap thd3))
+        $ pushAlways pushStateFn _pfc_save
+      , _pfo_potato_state = fmap snd $ pull (pushStateFn ())
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
     }

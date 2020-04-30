@@ -158,8 +158,8 @@ instance ToJSON SCanvas
 instance NFData SCanvas
 
 data SPotatoFlow = SPotatoFlow {
-  _sPotatoFlow_sEltTree  :: SEltTree
-  , _sPotatoFlow_sCanvas :: SCanvas
+  _sPotatoFlow_sCanvas    :: SCanvas
+  , _sPotatoFlow_sEltTree :: SEltTree
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SPotatoFlow
