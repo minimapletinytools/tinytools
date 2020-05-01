@@ -87,7 +87,6 @@ DONE-canvas
 
 ::TODO::
 DONE-add mem leak test
--modify DirectoryIdAssigner so it's not using NonEmpty
 -REltId -> Index map
 -controller refactor bleh
   -figure out how to handle negative coordinates
@@ -104,6 +103,8 @@ DONE-add mem leak test
     DONE-just do super basic render everything version for now, since we are refactoring math
 
 -low priority
+  -modify SEltLayers/Directory/DirectoryIdAssigner so it's not using NonEmpty
+    -assert warning if empty
   IGNORE-rename relt
   -see if microlens gets inlined and decide to use it if so
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH

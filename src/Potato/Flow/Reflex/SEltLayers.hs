@@ -122,19 +122,19 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   -- this contains more info than needed to remove, but we need to track it anyways for undoing removals so this just makes life easier
   , _sEltLayerTreeConfig_remove             :: Event t (NonEmpty SuperSEltLabel)
 
-  -- TODO 0
-  --, _sEltLayerTreeConfig_modify :: Event t ControllersWithId
-
   -- TODO
   --, _sEltLayerTreeConfig_copy
   --, _sEltLayerTreeConfig_duplicate
-  --, _sEltLayerTreeConfig_move
+
+  -- | first argument is position of elements BEFORE removal, second argument is elements to move
+  --, _sEltLayerTreeConfig_move :: Event t (LayerPos, NonEmpty LayerPos)
 
 
   -- | pass through modifiers for SEltLabels in directory
   , _sEltLayerTree_directory_doManipulate   :: Event t ControllersWithId
   , _sEltLayerTree_directory_undoManipulate :: Event t ControllersWithId
 
+  -- | load a new SEltLayertree, elements are assumed to be in order
   , _sEltLayerTreeConfig_load               :: Event t [(REltId, SEltLabel)]
 }
 
@@ -188,6 +188,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   -- then, listen to collectedInsertions event, and use that event to update REltId -> Index map
   (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputInsertEv (_directory_added directory)
+
+
 
   -- load
   let
