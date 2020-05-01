@@ -126,7 +126,7 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   --, _sEltLayerTreeConfig_duplicate
 
   -- | first argument is position of elements BEFORE removal, second argument is elements to move
-  --, _sEltLayerTreeConfig_move :: Event t (LayerPos, NonEmpty LayerPos)
+  , _sEltLayerTreeConfig_move :: Event t (LayerPos, NonEmpty LayerPos)
 
 
   -- | pass through modifiers for SEltLabels in directory
@@ -157,6 +157,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     modifyUndo = fmap NE.fromList $ ffor _sEltLayerTree_directory_undoManipulate $ flattenControls False
 
     directoryConfig = DirectoryConfig {
+        -- TODO assert that insert/removal events satisfy scoping property
         _directoryConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
         , _directoryConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
         , _directoryConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
@@ -165,8 +166,10 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   directory :: Directory t SEltLabel
     <- holdDirectory directoryConfig
 
+
+  -- insert and remove events
+  ---------------------------
   -- TODO add native support for adding many elts at once to seq so you don't have to do this
-  -- step insert and remove events
   let
     extractLayerPos :: SuperSEltLabel -> LayerPos
     extractLayerPos (_,p,_) = p
@@ -190,21 +193,51 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
       <$> _sEltLayerTreeConfig_insert
   (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputRemoveEv (_directory_removed directory)
-
-  -- TODO make sure inputInsertEv is always ordered from smallest to largest index
-  -- then, listen to collectedInsertions event, and use that event to update REltId -> Index map
   (insertSingleEv, collectedInsertions) :: (Event t (LayerPos, Seq REltId), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputInsertEv (_directory_added directory)
 
-
-
-  -- load
+  -- load events
+  --------------
   let
     prepManyForInsertion :: [(REltId, SEltLabel)] -> (LayerPos, Seq REltId)
     prepManyForInsertion seltls = (0, Seq.fromList $ fmap fst seltls)
+  -- clear first then load
+  -- _sEltLayerTreeConfig_load is connected to _dynamicSeqConfig_clear and _directoryConfig_set
+  -- insertLoadEv is connected to _dynamicSeqConfig_insert
   insertLoadEv <- sequenceEvents _sEltLayerTreeConfig_load
     $ fmap prepManyForInsertion _sEltLayerTreeConfig_load
 
+  -- move events
+  --------------
+  -- TODO assert that move event contents satisfies scoping property
+  -- store insertion position when we start a move event
+  moveInsertPos <- holdDyn Nothing $ fmap (Just . fst) _sEltLayerTreeConfig_move
+  -- remove stuff first
+  (moveRemoveSingleEv, moveRemoveDone) :: (Event t (LayerPos, Int), Event t [(Int, Seq a)]) <-
+    flip stepEventsAndCollectOutput (_dynamicSeq_removed dseq)
+    $ fmap (fmap (\x -> (x,1)))
+    $ fmap reindexSEltLayerPosForRemoval
+    $ fmap NE.toList
+    $ fmap snd
+    $ _sEltLayerTreeConfig_move
+  -- add it back in all in one go
+  -- TODO can we get rid of fromJust/attachPromptlyDyn here somehow?
+  let
+    moveInsertEv' :: Event t (LayerPos, Seq REltId)
+    moveInsertEv' = attachPromptlyDyn (fmap fromJust moveInsertPos) $ fmap (mconcat . fmap snd) moveRemoveDone
+  moveInsertEv <- sequenceEvents moveRemoveDone moveInsertEv'
+  -- TODO collect changes for modify event
+
+
+
+  -- REltId -> Index map
+  ----------------------
+  -- TODO
+  -- listen to insertions, removals, and moves to reconstruct map from first index that changed
+
+
+  -- create DynamicSeq
+  ------------------------------------------------
   let
     dseqc = DynamicSeqConfig {
         _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
@@ -214,6 +247,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   dseq :: DynamicSeq t REltId <-
     holdDynamicSeq empty dseqc
 
+  -- collect changes for _sEltLayerTree_changeView
+  ------------------------------------------------
   let
     -- 'force' is needed to prevent leaks D:
     -- changes from removal

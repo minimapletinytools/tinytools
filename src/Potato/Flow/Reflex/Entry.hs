@@ -174,6 +174,7 @@ holdPF PFConfig {..} = mdo
         , _sEltLayerTree_directory_doManipulate = selectDo actionStack PFCManipulate
         , _sEltLayerTree_directory_undoManipulate = selectUndo actionStack PFCManipulate
         , _sEltLayerTreeConfig_load = loadedWithIds
+        , _sEltLayerTreeConfig_move = never
       }
   layerTree :: SEltLayerTree t
     <- holdSEltLayerTree layerTreeConfig
