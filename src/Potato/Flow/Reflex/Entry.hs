@@ -146,9 +146,14 @@ holdPF PFConfig {..} = mdo
       $ (\(a,(b,c)) -> (a,b,c))
       <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
     -- layer positions are always consecutive here
-    loadedWithIds :: Event t (NonEmpty (REltId, SEltLabel))
-    loadedWithIds = (\(a,(_,c)) -> (a,c))
-      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_load
+    loadedWithIds :: Event t [(REltId, SEltLabel)]
+    loadedWithIds = leftmost
+      [fmap NE.toList
+        $ (\(a,(_,c)) -> (a,c))
+        <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_load
+      -- directoryIdAssigner will not report events when no ids are assigned, but we want to be able to load an empty SEltTree
+      -- TODO modify DirectoryIdAssigner so it's not using NonEmpty
+      , [] <$ _pfc_load]
 
 
 

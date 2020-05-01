@@ -87,6 +87,7 @@ DONE-canvas
 
 ::TODO::
 DONE-add mem leak test
+-modify DirectoryIdAssigner so it's not using NonEmpty
 -REltId -> Index map
 -workspace stuff (for now just support 1 workspace)
   DONE-canvas support
