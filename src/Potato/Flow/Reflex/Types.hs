@@ -89,66 +89,66 @@ type Manipulator = DS.DSum MTag Identity
 
 
 data CRename = CRename {
-  _cRename_newName :: DeltaText
+  _cRename_deltaLabel :: DeltaText
 } deriving (Eq, Show)
 
 instance Delta SEltLabel CRename where
-  plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_newName) selt
-  minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_newName) selt
+  plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_deltaLabel) selt
+  minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_deltaLabel) selt
 
 data CBox = CBox {
-  _cBox_box :: DeltaLBox
+  _cBox_deltaBox :: DeltaLBox
 } deriving (Eq, Show)
 
 instance Delta SBox CBox where
   plusDelta SBox {..} CBox {..} = SBox {
-      _sBox_box   = plusDelta _sBox_box _cBox_box
+      _sBox_box   = plusDelta _sBox_box _cBox_deltaBox
       , _sBox_style = _sBox_style
     }
   minusDelta SBox {..} CBox {..} = SBox {
-      _sBox_box   = minusDelta _sBox_box _cBox_box
+      _sBox_box   = minusDelta _sBox_box _cBox_deltaBox
       , _sBox_style = _sBox_style
     }
 
 
 data CLine = CLine {
-  _cLine_start :: LPoint
-  , _cLine_end :: LPoint
+  _cLine_deltaStart :: LPoint
+  , _cLine_deltaEnd :: LPoint
 } deriving (Eq, Show)
 
 instance Delta SLine CLine where
   plusDelta SLine {..} CLine {..} = SLine {
-      _sLine_start   = plusDelta _sLine_start _cLine_start
-      , _sLine_end   = plusDelta _sLine_end _cLine_end
+      _sLine_start   = plusDelta _sLine_start _cLine_deltaStart
+      , _sLine_end   = plusDelta _sLine_end _cLine_deltaEnd
       , _sLine_style = _sLine_style
     }
   minusDelta SLine {..} CLine {..} = SLine {
-      _sLine_start   = minusDelta _sLine_start _cLine_start
-      , _sLine_end   = minusDelta _sLine_end _cLine_end
+      _sLine_start   = minusDelta _sLine_start _cLine_deltaStart
+      , _sLine_end   = minusDelta _sLine_end _cLine_deltaEnd
       , _sLine_style = _sLine_style
     }
 
 data CText = CText {
-  _cText_box    :: DeltaLBox
-  , _cText_text :: DeltaText
+  _cText_deltaBox    :: DeltaLBox
+  , _cText_deltaText :: DeltaText
 } deriving (Eq, Show)
 
 instance Delta SText CText where
   plusDelta SText {..} CText {..} = SText {
-      _sText_box   = plusDelta _sText_box _cText_box
-      , _sText_text   = plusDelta _sText_text _cText_text
+      _sText_box   = plusDelta _sText_box _cText_deltaBox
+      , _sText_text   = plusDelta _sText_text _cText_deltaText
       , _sText_style = _sText_style
     }
   minusDelta SText {..} CText {..} = SText {
-      _sText_box   = minusDelta _sText_box _cText_box
-      , _sText_text   = minusDelta _sText_text _cText_text
+      _sText_box   = minusDelta _sText_box _cText_deltaBox
+      , _sText_text   = minusDelta _sText_text _cText_deltaText
       , _sText_style = _sText_style
     }
 
 -- | transforms object based on a reference point
 -- used for multi-selection
 data CRelBox = CRelBox {
-  _cRelBox_box    :: DeltaLBox
+  _cRelBox_deltaBox    :: DeltaLBox
 } deriving (Eq, Show)
 
 data CTag a where

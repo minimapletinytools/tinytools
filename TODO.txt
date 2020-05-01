@@ -86,17 +86,11 @@ DONE-canvas
 
 
 ::TODO::
-DONE-add mem leak test
 -REltId -> Index map
--workspace stuff (for now just support 1 workspace)
-  DONE-canvas support
-  DONE-resize canvas command
-  -load SEltTree
-    -add test to save and reload and ensure state stays the same
 -controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
-  -rename vars in Controllers to indicate they are deltas
+  DONE-rename vars in Controllers to indicate they are deltas
 
 -mid priority
   IGNORE-helpers to create fine grained manipulators
@@ -113,6 +107,13 @@ DONE-add mem leak test
   -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   -use affine transformations for box manipulation
 
+
+DONE-add mem leak test
+DONE-workspace stuff (for now just support 1 workspace)
+  DONE-canvas support
+  DONE-resize canvas command
+  DONE-load SEltTree
+    -add test to save and reload and ensure state stays the same
 IGNORE-canvas needs a clear method
 DONE-decide if you want _pfo_saved or _pfo_potato_state
   -have to keep _pfo_potato_state until render stuffis done properly
