@@ -74,7 +74,7 @@ setup_network ev = mdo
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let
           cbox = CBox {
-              _cBox_box    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
+              _cBox_deltaBox    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
             }
         return . Just $ selt `deepseq` IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing
@@ -202,7 +202,7 @@ randomActionFCmd doundo stree = do
             newName <- show <$> R.getRandomR (0, 1000000 :: Int)
             return $ (,) pos $ CTagRename ==>
               CRename {
-                _cRename_newName = (name, newName)
+                _cRename_deltaLabel = (name, newName)
               }
           else do
             p1 <- randomXY
@@ -210,17 +210,17 @@ randomActionFCmd doundo stree = do
             case selt of
               SEltBox _ -> return $ (,) pos $ CTagBox ==>
                 CBox {
-                  _cBox_box = DeltaLBox (LPoint p1) (LSize p2)
+                  _cBox_deltaBox = DeltaLBox (LPoint p1) (LSize p2)
                 }
               SEltLine _ -> return $ (,) pos $ CTagLine ==>
                 CLine {
-                  _cLine_start = LPoint p1
-                  , _cLine_end = LPoint p2
+                  _cLine_deltaStart = LPoint p1
+                  , _cLine_deltaEnd = LPoint p2
                 }
               SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
                 CText {
-                  _cText_box = DeltaLBox (LPoint p1) (LSize p2)
-                  , _cText_text = (before, "meow meow")
+                  _cText_deltaBox = DeltaLBox (LPoint p1) (LSize p2)
+                  , _cText_deltaText = (before, "meow meow")
                 }
               _ -> error "this should never happen"
         _ -> error "this should never happen"
