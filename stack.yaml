@@ -56,7 +56,7 @@ extra-deps:
 - github: pdlla/reflex-dynamic-containers
   commit: 607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba
 - github: pdlla/reflex-potatoes
-  commit: a2b03bb03822b4d573409f965ee4ded2b03549d4
+  commit: 88a52d1080a120db848f65b8c64c0f6d95f118c0
 
 
 # Override default flag values for local packages and extra-deps

@@ -2,7 +2,6 @@
 {-# LANGUAGE RecursiveDo             #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
-
 module Potato.Flow.Reflex.SEltLayers (
   LayerPos
   , SEltLayerTree(..)
@@ -179,8 +178,16 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
       <$> _sEltLayerTreeConfig_remove
     prepForInsertion :: SuperSEltLabel -> (LayerPos, Seq REltId)
     prepForInsertion (rid, lp, _) = (lp, Seq.singleton rid)
+    insertAssertPred :: Maybe LayerPos -> (LayerPos, Seq REltId) -> Maybe LayerPos
+    insertAssertPred mlp (lp,_) = do
+      plp <- mlp
+      guard $ plp < lp
+      return lp
     inputInsertEv :: Event t [(LayerPos, Seq REltId)]
-    inputInsertEv = toList <$> fmap prepForInsertion <$> _sEltLayerTreeConfig_insert
+    inputInsertEv = assertEvent "SEltLayers insert out of order" (isJust . foldl' insertAssertPred (Just (-1)))
+      $ toList
+      <$> fmap prepForInsertion
+      <$> _sEltLayerTreeConfig_insert
   (removeSingleEv, collectedRemovals) :: (Event t (LayerPos, Int), Event t [NonEmpty (REltId, SEltLabel)]) <-
     stepEventsAndCollectOutput inputRemoveEv (_directory_removed directory)
 
