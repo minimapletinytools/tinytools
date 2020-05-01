@@ -131,20 +131,21 @@ serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
 save_load_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Test
-save_load_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
+save_load_test = TestLabel "save load" $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
   let
-  final1 <- doStuff appFrame 1000 []
-  final2 <- doStuff appFrame 1000 []
-
-  --_ <- tickAppFrame appFrame $ Just $ That (FCLoad )
-  --out <- tickAppFrame appFrame $ Just $ That FCNone
-  --case L.last out of
-    --(nst, _) -> setupLoop (n-1) nst
-
-  -- TODO finish
+    saved = fromJust . snd . L.last
+  doStuff appFrame 1000 []
+  final1 <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
+  doStuff appFrame 1000 []
+  final2 <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
+  tickAppFrame appFrame $ Just $ That (FCLoad final1)
+  final1' <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
+  tickAppFrame appFrame $ Just $ That (FCLoad final2)
+  final2' <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
   liftIO $ do
-    final1 @?= undefined
+    final1 @?= final1'
+    final2 @?= final2'
 
 spec :: Spec
 spec = do
@@ -156,3 +157,4 @@ spec = do
     fromHUnitTest $ undoredo_test 30
     fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
+    fromHUnitTest $ save_load_test
