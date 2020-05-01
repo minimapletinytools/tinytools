@@ -29,13 +29,14 @@ import           Potato.Flow.Testing
 
 
 
+-- bespoke testing
+
 save_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => (Event t FCmd -> PerformEventT t m (Event t SEltTree))
 save_network ev = do
   pfo <- setup_network ev
   return $ fmap _sPotatoFlow_sEltTree $ _pfo_saved pfo
-
 
 bs_save_0 :: ([FCmd],[FCmd])
 bs_save_0 =
@@ -72,6 +73,9 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   v2 <- liftIO run2
   L.last (join v1) @?= L.last (join v2)
 
+
+
+-- randomized testing
 
 data FCmdType = AllCmd | ActionOnly | UndoOnly | RedoOnly
 

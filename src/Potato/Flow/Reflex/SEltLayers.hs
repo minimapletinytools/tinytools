@@ -113,12 +113,16 @@ reindexSEltLayerPosForInsertion :: [LayerPos] -> [LayerPos]
 reindexSEltLayerPosForInsertion = reverse . reindexSEltLayerPosForRemoval . reverse
 
 data SEltLayerTreeConfig t = SEltLayerTreeConfig {
-  -- error if any REltId or LayerPos are invalid
+
+  -- | error if any REltId or LayerPos are invalid
   -- LayerPos indices are as if all elements already exist in the map
+  -- MANY FRAMES
   _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
-  -- error if any REltId or LayerPos are invalid
+
+  -- | error if any REltId or LayerPos are invalid
   -- LayerPos indices are the current indices of elements to be removed
   -- this contains more info than needed to remove, but we need to track it anyways for undoing removals so this just makes life easier
+  -- MANY FRAMES
   , _sEltLayerTreeConfig_remove             :: Event t (NonEmpty SuperSEltLabel)
 
   -- TODO
@@ -126,7 +130,8 @@ data SEltLayerTreeConfig t = SEltLayerTreeConfig {
   --, _sEltLayerTreeConfig_duplicate
 
   -- | first argument is position of elements BEFORE removal, second argument is elements to move
-  , _sEltLayerTreeConfig_move :: Event t (LayerPos, NonEmpty LayerPos)
+  -- TODO this is no good, need to be able to undo
+  --, _sEltLayerTreeConfig_move :: Event t (LayerPos, NonEmpty LayerPos)
 
 
   -- | pass through modifiers for SEltLabels in directory
@@ -209,6 +214,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
 
   -- move events
   --------------
+  {- TODO This is no good, because you need to be able to undo move operations
   -- TODO assert that move event contents satisfies scoping property
   -- store insertion position when we start a move event
   moveInsertPos <- holdDyn Nothing $ fmap (Just . fst) _sEltLayerTreeConfig_move
@@ -225,7 +231,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   let
     moveInsertEv :: Event t (LayerPos, Seq REltId)
     moveInsertEv = attach (current $ fmap fromJust moveInsertPos) $ fmap (mconcat . fmap snd) moveRemoveDone
-
+  -}
 
 
   -- REltId -> Index map
@@ -238,8 +244,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   ------------------------------------------------
   let
     dseqc = DynamicSeqConfig {
-        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv, moveInsertEv]
-        , _dynamicSeqConfig_remove = leftmostwarn "layer seq remove" [removeSingleEv, moveRemoveSingleEv]
+        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
+        , _dynamicSeqConfig_remove = leftmostwarn "layer seq remove" [removeSingleEv]
         , _dynamicSeqConfig_clear = void _sEltLayerTreeConfig_load
       }
   dseq :: DynamicSeq t REltId <-
