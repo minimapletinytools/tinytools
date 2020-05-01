@@ -214,7 +214,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   moveInsertPos <- holdDyn Nothing $ fmap (Just . fst) _sEltLayerTreeConfig_move
   -- remove stuff first
   (moveRemoveSingleEv, moveRemoveDone) :: (Event t (LayerPos, Int), Event t [(Int, Seq a)]) <-
-    flip stepEventsAndCollectOutput (_dynamicSeq_removed dseq)
+    flip stepEventsAndSequenceCollectOutput (_dynamicSeq_removed dseq)
     $ fmap (fmap (\x -> (x,1)))
     $ fmap reindexSEltLayerPosForRemoval
     $ fmap NE.toList
@@ -223,10 +223,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   -- add it back in all in one go
   -- TODO can we get rid of fromJust/attachPromptlyDyn here somehow?
   let
-    moveInsertEv' :: Event t (LayerPos, Seq REltId)
-    moveInsertEv' = attachPromptlyDyn (fmap fromJust moveInsertPos) $ fmap (mconcat . fmap snd) moveRemoveDone
-  moveInsertEv <- sequenceEvents moveRemoveDone moveInsertEv'
-  -- TODO collect changes for modify event
+    moveInsertEv :: Event t (LayerPos, Seq REltId)
+    moveInsertEv = attach (current $ fmap fromJust moveInsertPos) $ fmap (mconcat . fmap snd) moveRemoveDone
 
 
 
@@ -240,8 +238,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   ------------------------------------------------
   let
     dseqc = DynamicSeqConfig {
-        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
-        , _dynamicSeqConfig_remove = removeSingleEv
+        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv, moveInsertEv]
+        , _dynamicSeqConfig_remove = leftmostwarn "layer seq remove" [removeSingleEv, moveRemoveSingleEv]
         , _dynamicSeqConfig_clear = void _sEltLayerTreeConfig_load
       }
   dseq :: DynamicSeq t REltId <-

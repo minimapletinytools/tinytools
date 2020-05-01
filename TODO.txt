@@ -87,6 +87,8 @@ DONE-canvas
 
 ::TODO::
 DONE-add mem leak test
+-take CAREFUL note that sequenceEvents outside of potato-flow might break stuff if it's used internally
+  -perhaps move undo do modify inside of potato-flow so there's no incorrect usage from outside
 -REltId -> Index map
 -controller refactor bleh
   -figure out how to handle negative coordinates
