@@ -15,11 +15,13 @@ import           Test.HUnit
 import           Reflex
 import           Reflex.Test.Host
 
+import           Control.Concurrent
 import           Data.Aeson
 import qualified Data.List                as L (last)
 import           Data.Maybe               (fromJust)
 import qualified Data.Text                as T
 import           Data.These
+import           GHC.Stats
 --import           Text.Pretty.Simple       (pPrint)
 
 import           Potato.Flow
@@ -105,14 +107,8 @@ undoredo_test :: forall t m.
 undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
   let
-    m0 = 10 -- num commands to do to set up state
-    l0 = 20 -- num commands to do and the undo
-    undoredoLoop _ 0 st = return st
-    undoredoLoop isUndo n _ = do
-      _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
-      out <- tickAppFrame appFrame $ Just $ That FCNone
-      case L.last out of
-        (nst, _) -> undoredoLoop isUndo (n-1) nst
+    m0 = 100 -- num commands to do to set up state
+    l0 = 100 -- num commands to do and the undo
   forM_ [1..n0] $ \_ -> do
     st0 <- doStuff appFrame ActionOnly m0 []
     st1 <- doStuff appFrame ActionOnly l0 st0
@@ -120,6 +116,24 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
     st3 <- doStuff appFrame RedoOnly l0 st2
     liftIO (st2 @?= st0)
     liftIO (st3 @?= st1)
+
+leak_test :: forall t m.
+  (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => Int -> Test
+leak_test maxBytes = TestLabel (show maxBytes <> " leaks") $ TestCase $ runSpiderHost $ do
+  appFrame <- getAppFrame step_state_network ()
+  let
+    m0 = 100 -- num commands to do to set up state
+    l0 = 100 -- num commands to do and the undo
+  st0 <- doStuff appFrame ActionOnly m0 []
+  forM_ [1..1000] $ \_ -> do
+    st1 <- doStuff appFrame ActionOnly l0 st0
+    st2 <- doStuff appFrame UndoOnly l0 st1
+    liftIO $ do
+      threadDelay 1000
+      stats <- getRTSStats
+      --print $ fromIntegral $ max_live_bytes stats
+      True @?= (fromIntegral $ max_live_bytes stats) < maxBytes
 
 serialization_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -162,7 +176,9 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
-    fromHUnitTest $ undoredo_test 30
+    fromHUnitTest $ undoredo_test 10
     fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
     fromHUnitTest $ save_load_test
+    -- can't seem to enable GHC stats in tests :(
+    --fromHUnitTest $ leak_test 500000

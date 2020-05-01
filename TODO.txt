@@ -86,7 +86,7 @@ DONE-canvas
 
 
 ::TODO::
--add mem leak test
+DONE-add mem leak test
 -REltId -> Index map
 -workspace stuff (for now just support 1 workspace)
   DONE-canvas support
