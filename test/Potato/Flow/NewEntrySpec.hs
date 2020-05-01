@@ -71,20 +71,33 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
   L.last (join v1) @?= L.last (join v2)
 
 
-doStuff _ 0 st = return st
-doStuff appFrame n st = do
-  action <- liftIO $ randomActionFCmd True st
+data FCmdType = AllCmd | ActionOnly | UndoOnly | RedoOnly
+
+doStuff :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => AppFrame t () FCmd SEltTree SPotatoFlow m
+  -> FCmdType
+  -> Int
+  -> SEltTree
+  -> m SEltTree
+doStuff _ _ 0 st = return st
+doStuff appFrame fcmdType n st = do
+  action <- case fcmdType of
+    UndoOnly   -> return FCUndo
+    RedoOnly   -> return FCRedo
+    AllCmd     -> liftIO $ randomActionFCmd True st
+    ActionOnly -> liftIO $ randomActionFCmd False st
   _ <- tickAppFrame appFrame $ Just $ That action
   out <- tickAppFrame appFrame $ Just $ That FCNone
   case L.last out of
-    (nst, _) -> doStuff appFrame (n-1) nst
+    (nst, _) -> doStuff appFrame fcmdType (n-1) nst
+
 
 nstep_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Int -> Test
 nstep_test n0 = TestLabel (show n0 <> " steps") $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
-  void $ doStuff appFrame n0 []
+  void $ doStuff appFrame AllCmd n0 []
 
 undoredo_test :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -94,13 +107,6 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
   let
     m0 = 10 -- num commands to do to set up state
     l0 = 20 -- num commands to do and the undo
-    setupLoop (0 :: Int) st = return st
-    setupLoop n st = do
-      action <- liftIO $ randomActionFCmd False st
-      _ <- tickAppFrame appFrame $ Just $ That action
-      out <- tickAppFrame appFrame $ Just $ That FCNone
-      case L.last out of
-        (nst, _) -> setupLoop (n-1) nst
     undoredoLoop _ 0 st = return st
     undoredoLoop isUndo n _ = do
       _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
@@ -108,10 +114,10 @@ undoredo_test n0 = TestLabel (show n0 <> " undos") $ TestCase $ runSpiderHost $ 
       case L.last out of
         (nst, _) -> undoredoLoop isUndo (n-1) nst
   forM_ [1..n0] $ \_ -> do
-    st0 <- setupLoop m0 []
-    st1 <- setupLoop l0 st0
-    st2 <- undoredoLoop True l0 st1
-    st3 <- undoredoLoop False l0 st2
+    st0 <- doStuff appFrame ActionOnly m0 []
+    st1 <- doStuff appFrame ActionOnly l0 st0
+    st2 <- doStuff appFrame UndoOnly l0 st1
+    st3 <- doStuff appFrame RedoOnly l0 st2
     liftIO (st2 @?= st0)
     liftIO (st3 @?= st1)
 
@@ -120,7 +126,7 @@ serialization_test :: forall t m.
   => Test
 serialization_test = TestLabel "serialization" $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
-  final <- doStuff appFrame 1000 []
+  final <- doStuff appFrame AllCmd 1000 []
   let
     jsontree = encode final
     mfinal' = decode jsontree
@@ -135,9 +141,9 @@ save_load_test = TestLabel "save load" $ TestCase $ runSpiderHost $ do
   appFrame <- getAppFrame step_state_network ()
   let
     saved = fromJust . snd . L.last
-  doStuff appFrame 1000 []
+  doStuff appFrame AllCmd 1000 []
   final1 <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
-  doStuff appFrame 1000 []
+  doStuff appFrame AllCmd 1000 []
   final2 <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
   tickAppFrame appFrame $ Just $ That (FCLoad final1)
   final1' <- fmap saved  $ tickAppFrame appFrame $ Just $ That FCSave
@@ -146,6 +152,8 @@ save_load_test = TestLabel "save load" $ TestCase $ runSpiderHost $ do
   liftIO $ do
     final1 @?= final1'
     final2 @?= final2'
+
+
 
 spec :: Spec
 spec = do
