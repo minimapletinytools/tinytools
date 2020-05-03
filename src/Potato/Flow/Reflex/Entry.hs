@@ -41,7 +41,9 @@ loadWSFromFile = fmapMaybe decode
 
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
+  -- | don't use this to add folders, as they need to be added with matching pair to ensure scoping property
   _pfc_addElt         :: Event t (LayerPos, SEltLabel)
+  , _pfc_addFolder    :: Event t (LayerPos, Text)
   -- TODO take a selection
   , _pfc_removeElt    :: Event t LayerPos
   --, _pfc_moveElt    :: Event t (LayerEltId, LayerPos) -- new layer position (before or after removal?)
@@ -79,11 +81,6 @@ holdPF ::
   -> m (PFOutput t)
 holdPF PFConfig {..} = mdo
   -- PREP ACTIONS
-  -- TODO
-  --_pfc_addElt       :: Event t (LayerPos, SEltLabel)
-  --, _pfc_removeElt  :: Event t LayerEltId
-  --, _pfc_manipulate :: Event t ControllersWithId
-
   let
     doAction_PFCDeleteElts :: Event t (PFCmd t)
     doAction_PFCDeleteElts =
@@ -102,7 +99,8 @@ holdPF PFConfig {..} = mdo
   -- ACTION STACK
   let
     doActions = leftmostwarn "_actionStackConfig_do" [
-        doAction_PFCNewElts
+        doAction_PFCNewElts_addElt
+        , doAction_PFCNewElts_addFolder
         , doAction_PFCDeleteElts
         , doAction_PFCManipulate
         , doAction_PFCResizeCanvas
@@ -133,18 +131,27 @@ holdPF PFConfig {..} = mdo
 
   let
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = leftmost
+        _directoryIdAssignerConfig_assign = leftmostwarn "DirectoryIdAssigner"
           [fmap (:|[]) _pfc_addElt
-          , fmapMaybe (NE.nonEmpty . zip [0..] . _sPotatoFlow_sEltTree) _pfc_load]
+          , fmapMaybe (NE.nonEmpty . zip [0..] . _sPotatoFlow_sEltTree) _pfc_load
+          , fmap (\(lp,name) -> (lp, SEltLabel name SEltFolderStart) :| [(lp+1, SEltLabel "" SEltFolderEnd)])  _pfc_addFolder
+          ]
       }
   directoryIdAssigner :: DirectoryIdAssigner t (LayerPos, SEltLabel)
     <- holdDirectoryIdAssigner directoryIdAssignerConfig
   let
-    doAction_PFCNewElts :: Event t (PFCmd t)
-    doAction_PFCNewElts =
+    doAction_PFCNewElts_addElt :: Event t (PFCmd t)
+    doAction_PFCNewElts_addElt =
       fmap (PFCNewElts ==>)
       $ (\(a,(b,c)) -> (a,b,c))
       <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addElt
+
+    doAction_PFCNewElts_addFolder :: Event t(PFCmd t)
+    doAction_PFCNewElts_addFolder =
+      fmap (PFCNewElts ==> )
+      $ (\(a,(b,c)) -> (a,b,c))
+      <<$>> _directoryIdAssigner_tag directoryIdAssigner _pfc_addFolder
+
     -- layer positions are always consecutive here
     loadedWithIds :: Event t [(REltId, SEltLabel)]
     loadedWithIds = leftmost

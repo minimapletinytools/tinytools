@@ -94,15 +94,17 @@ setup_network ev = mdo
       FCSave -> Just ()
       _      -> Nothing
 
-    pfc = PFConfig { _pfc_addElt     = addEv
-                   , _pfc_removeElt  = removeEv
-                   , _pfc_manipulate = manipEv
-                   , _pfc_resizeCanvas = resizeCanvasEv
-                   , _pfc_undo       = undoEv
-                   , _pfc_redo       = redoEv
-                   , _pfc_load = loadEv
-                   , _pfc_save = saveEv
-                   }
+    pfc = PFConfig {
+        _pfc_addElt     = addEv
+        , _pfc_addFolder = never
+        , _pfc_removeElt  = removeEv
+        , _pfc_manipulate = manipEv
+        , _pfc_resizeCanvas = resizeCanvasEv
+        , _pfc_undo       = undoEv
+        , _pfc_redo       = redoEv
+        , _pfc_load = loadEv
+        , _pfc_save = saveEv
+      }
   pfo <- holdPF pfc
   let
     layerTree = _pfo_layers $ pfo

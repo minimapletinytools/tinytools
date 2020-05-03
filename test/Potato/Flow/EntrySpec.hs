@@ -67,6 +67,7 @@ basic_network ev = mdo
       _      -> Nothing
 
     pfc = PFConfig { _pfc_addElt     = addEv
+                   , _pfc_addFolder = never
                    , _pfc_removeElt  = removeEv
                    , _pfc_manipulate = manipEv
                    , _pfc_resizeCanvas = never
