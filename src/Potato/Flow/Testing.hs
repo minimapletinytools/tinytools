@@ -22,17 +22,20 @@ import qualified Data.List              as L (take, (!!))
 import qualified Data.List.Index        as L
 import           Data.Maybe             (fromJust)
 import           Data.Tuple.Extra
+import qualified Text.Show
 
 import qualified Control.Monad.Random   as R
 import           System.Random.Shuffle
 
 import           Potato.Flow
 
+
 simpleSBox :: SBox
 simpleSBox = SBox (LBox (V2 5 5) (V2 5 5)) def
 
 data FCmd =
   FCNone
+  -- adding a SEltFolderStart automatically adds corresponding SEltFolderEnd
   | FCAddElt LayerPos SElt
   | FCDeleteElt LayerPos
   | FCModify LayerPos Controller
@@ -45,16 +48,35 @@ data FCmd =
 
   | FCCustom_Add_SBox_1
   | FCCustom_CBox_1 LayerPos
-  deriving (Eq, Show)
+  deriving (Eq)
+
+instance Show FCmd where
+  show FCNone                        = "FCNone"
+  show (FCAddElt lp SEltFolderStart) = "FCAdd Folder " <> show lp
+  show (FCAddElt lp _)               = "FCAdd " <> show lp
+  show (FCDeleteElt lp)              = "FCDelete " <> show lp
+  show FCUndo                        = "FCUndo"
+  show FCRedo                        = "FCRedo"
+  show _                             = "other"
 
 setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t FCmd -> PerformEventT t m (PFOutput t)
 setup_network ev = mdo
   let
+    --ev = traceEvent ("aoeu") ev'
     addEv = fforMaybe ev $ \case
-      FCAddElt p x -> Just (p, SEltLabel "blank" x)
+      FCAddElt p x -> case x of
+        SEltFolderStart -> Nothing
+        SEltFolderEnd   -> error "can not explicity add SEltFolderEnd"
+        _               -> Just (p, SEltLabel "blank" x)
       FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
       _           -> Nothing
+
+    addFolderEv = fforMaybe ev $ \case
+      FCAddElt p x -> case x of
+        SEltFolderStart -> Just (p, "somefolder")
+        _               -> Nothing
+      _ -> Nothing
 
     removeEv = fforMaybe ev $ \case
       FCDeleteElt p -> Just p
@@ -96,7 +118,7 @@ setup_network ev = mdo
 
     pfc = PFConfig {
         _pfc_addElt     = addEv
-        , _pfc_addFolder = never
+        , _pfc_addFolder = addFolderEv
         , _pfc_removeElt  = removeEv
         , _pfc_manipulate = manipEv
         , _pfc_resizeCanvas = resizeCanvasEv
@@ -148,7 +170,8 @@ randomActionFCmd ::
 randomActionFCmd doundo stree = do
   let
     nElts = length stree
-    eltsOnly = filter (isElement . snd) $  L.indexed stree
+    --eltsOnly = filter (isElement . snd) $  L.indexed stree
+    eltsOnly = L.indexed stree
     startCmd = if doundo then 0 else 2
   rcmd <- if null eltsOnly
     then return (2 :: Int)
@@ -156,9 +179,10 @@ randomActionFCmd doundo stree = do
   case rcmd of
     0 -> return FCUndo
     1 -> return FCRedo
+    -- add a new element or folder
     2 -> do
       pos <- R.getRandomR (0, nElts)
-      stype <- R.getRandomR (0, 2 :: Int)
+      stype <- R.getRandomR (0, 3 :: Int)
       p1 <- randomXY
       p2 <- randomXY
       case stype of
@@ -179,55 +203,60 @@ randomActionFCmd doundo stree = do
             , _sText_text = "moo"
             , _sText_style = def
           }
+        3 -> return $ FCAddElt pos $ SEltFolderStart
         _ -> undefined
+    -- resize the canvas
     3 -> do
       p1 <- randomXY
       p2 <- randomXY
       return $ FCResizeCanvas $ DeltaLBox p1 p2
+    -- modify an existing element
     _ -> do
+      -- TODO must delete matching folder pairs
       -- just one random elements
       rindex <- R.getRandomR (0, length eltsOnly - 1)
-      let (pos, (SEltLabel _ selt)) = eltsOnly L.!! rindex
+      let (deletePos, (SEltLabel _ _)) = eltsOnly L.!! rindex
 
       -- many random elements
       shuffled <- shuffleM eltsOnly
       -- TODO for delete you don't want to delete too many otherwise you'll always end up with like no elements
       -- i.e. prob want weighted random
-      nElts <- R.getRandomR (1, length eltsOnly)
-      let randomElts = L.take nElts shuffled
+      nTake <- R.getRandomR (1, length eltsOnly)
+      let randomElts = L.take nTake shuffled
 
       case rcmd of
-        4 -> return $ FCDeleteElt pos
+        4 -> return $ FCDeleteElt deletePos
         5 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
-          rename <- (==0) <$> R.getRandomR (0, 10 :: Int)
-          if rename then do
-            newName <- show <$> R.getRandomR (0, 1000000 :: Int)
-            return $ (,) pos $ CTagRename ==>
-              CRename {
-                _cRename_deltaLabel = (name, newName)
+          p1 <- randomXY
+          p2 <- randomXY
+          cflag <- R.getRandomR (0,10 :: Int)
+          case cflag of
+            0 -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
+                _cBoundingBox_deltaBox = DeltaLBox p1 p2
               }
-          else do
-            p1 <- randomXY
-            p2 <- randomXY
-            manyFlag <- R.getRandomR (0,3 :: Int)
-            case manyFlag of
-              0 -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
+            1 -> do
+              newName <- show <$> R.getRandomR (0, 1000000 :: Int)
+              return $ (,) pos $ CTagRename ==>
+                CRename {
+                  _cRename_deltaLabel = (name, newName)
+                }
+            _ -> case selt of
+              SEltBox _ -> return $ (,) pos $ CTagBox ==>
+                CBox {
+                  _cBox_deltaBox = DeltaLBox p1 p2
+                }
+              SEltLine _ -> return $ (,) pos $ CTagLine ==>
+                CLine {
+                  _cLine_deltaStart = p1
+                  , _cLine_deltaEnd = p2
+                }
+              SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
+                CText {
+                  _cText_deltaBox = DeltaLBox p1 p2
+                  , _cText_deltaText = (before, "meow meow")
+                }
+              -- TODO maybe add a CTagDoNothing?
+              _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
                   _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
-              _ -> case selt of
-                SEltBox _ -> return $ (,) pos $ CTagBox ==>
-                  CBox {
-                    _cBox_deltaBox = DeltaLBox p1 p2
-                  }
-                SEltLine _ -> return $ (,) pos $ CTagLine ==>
-                  CLine {
-                    _cLine_deltaStart = p1
-                    , _cLine_deltaEnd = p2
-                  }
-                SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
-                  CText {
-                    _cText_deltaBox = DeltaLBox p1 p2
-                    , _cText_deltaText = (before, "meow meow")
-                  }
-                _ -> error "this should never happen"
         _ -> error "this should never happen"

@@ -58,6 +58,16 @@ bs_save_3 =
   ([FCCustom_Add_SBox_1, FCDeleteElt 0, FCUndo, FCRedo, FCSave]
   , [FCSave])
 
+bs_save_4 :: ([FCmd],[FCmd])
+bs_save_4 =
+  ([FCAddElt 0 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCUndo, FCUndo, FCRedo, FCRedo, FCSave]
+  , [FCAddElt 0 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCAddElt 3 SEltFolderStart, FCUndo, FCUndo, FCRedo, FCRedo, FCSave])
+
+bs_save_5 :: ([FCmd],[FCmd])
+bs_save_5 =
+  ([FCAddElt 0 SEltFolderStart, FCSave, FCNone, FCSave, FCUndo, FCSave]
+  , [FCAddElt 0 SEltFolderStart, FCNone, FCUndo, FCSave])
+
 -- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
 -- you'll need to modify reflex-test-host for this
 pair_test :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global, Eq a, Show a)
@@ -180,6 +190,8 @@ spec = do
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
+    fromHUnitTest $ pair_test "save4" save_network bs_save_4
+    fromHUnitTest $ pair_test "save5" save_network bs_save_5
     fromHUnitTest $ undoredo_test 10
     fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
