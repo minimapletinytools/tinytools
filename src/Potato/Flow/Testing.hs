@@ -136,14 +136,12 @@ setup_network ev = mdo
 -- | make sure to tick with 'FCNone' to ensure output behavior is most recent
 step_state_network :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (AppIn t () FCmd -> PerformEventT t m (AppOut t SEltTree SPotatoFlow))
+  => (AppIn t () FCmd -> PerformEventT t m (AppOut t () (SPotatoFlow)))
 step_state_network AppIn {..} = do
   pfo <- setup_network _appIn_event
   return
     AppOut {
-      _appOut_behavior = fmap (fmap thd3) $ _pfo_potato_state pfo
-      --, _appOut_event =
-      --, _appOut_event  = never
+      _appOut_behavior = constant ()
       , _appOut_event = leftmost
         [_pfo_saved pfo
         -- this is needed to force the changeView event and prevent leaks

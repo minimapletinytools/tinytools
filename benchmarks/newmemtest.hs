@@ -14,6 +14,7 @@ import           Data.These
 
 import           Control.Concurrent
 
+import           Potato.Flow
 import           Potato.Flow.Testing
 
 main :: IO ()
@@ -29,15 +30,19 @@ main = runSpiderHost $ do
     setupLoop n st = do
       action <- liftIO $ randomActionFCmd False st
       _ <- tickAppFrame appFrame $ Just $ That action
-      out <- tickAppFrame appFrame $ Just $ That FCNone
+      out <- tickAppFrame appFrame $ Just $ That FCSave
       case L.last out of
-        (nst, _) -> setupLoop (n-1) nst
+        (_, mspf) -> case mspf of
+          Nothing  -> error "expected state"
+          Just spf -> setupLoop (n-1) (_sPotatoFlow_sEltTree spf)
     undoredoLoop _ (0 :: Int) st = return st
     undoredoLoop isUndo n st = do
       _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
-      out <- tickAppFrame appFrame $ Just $ That FCNone
+      out <- tickAppFrame appFrame $ Just $ That FCSave
       case L.last out of
-        (nst, _) -> undoredoLoop isUndo (n-1) nst
+        (_, mspf) -> case mspf of
+          Nothing  -> error "expected state"
+          Just spf -> undoredoLoop isUndo (n-1) (_sPotatoFlow_sEltTree spf)
     loopForever st n = do
       st1 <- setupLoop l0 st
       st2 <- undoredoLoop True l0 st1

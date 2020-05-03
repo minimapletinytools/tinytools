@@ -71,7 +71,6 @@ data PFOutput t = PFOutput {
   , _pfo_saved          :: Event t SPotatoFlow
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
-  , _pfo_potato_state   :: Behavior t [SuperSEltLabel]
   , _pfo_potato_changed :: Event t ()
 }
 
@@ -218,8 +217,6 @@ holdPF PFConfig {..} = mdo
       , _pfo_saved = fmap (uncurry SPotatoFlow)
         $ fmap (over _2 (fmap thd3))
         $ pushAlways pushStateFn _pfc_save
-      -- no one is listening to canvas events in our mem tests, so we force it to prevent leaks
-      , _pfo_potato_state = fmap (\x -> x `deepseq` snd x) $ pull (pushStateFn ())
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
       , _pfo_canvas = canvas
     }

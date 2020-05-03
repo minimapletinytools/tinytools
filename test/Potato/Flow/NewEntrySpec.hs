@@ -90,7 +90,7 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
 data FCmdType = AllCmd | ActionOnly | UndoOnly | RedoOnly
 
 doStuff :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => AppFrame t () FCmd SEltTree SPotatoFlow m
+  => AppFrame t () FCmd () SPotatoFlow m
   -> FCmdType
   -> Int
   -> SEltTree
@@ -103,9 +103,11 @@ doStuff appFrame fcmdType n st = do
     AllCmd     -> liftIO $ randomActionFCmd True st
     ActionOnly -> liftIO $ randomActionFCmd False st
   _ <- tickAppFrame appFrame $ Just $ That action
-  out <- tickAppFrame appFrame $ Just $ That FCNone
+  out <- tickAppFrame appFrame $ Just $ That FCSave
   case L.last out of
-    (nst, _) -> doStuff appFrame fcmdType (n-1) nst
+    (_, mspf) -> case mspf of
+      Nothing  -> error "expected state"
+      Just spf -> doStuff appFrame fcmdType (n-1) (_sPotatoFlow_sEltTree spf)
 
 
 nstep_test :: forall t m.
