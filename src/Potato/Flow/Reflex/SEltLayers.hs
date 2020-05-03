@@ -75,7 +75,7 @@ sEltLayerTree_sampleSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t ->
 sEltLayerTree_sampleSuperSEltByPos SEltLayerTree {..} lp = do
   layers <- sample . current $ _sEltLayerTree_view
   let rid = fromJust $ Seq.lookup lp layers
-  slmap <- sample $ _directory_contents _sEltLayerTree_directory
+  slmap <- sample . current $ _directory_contents _sEltLayerTree_directory
   let msl = IM.lookup rid slmap
   return $ do
     sl <- msl

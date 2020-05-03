@@ -72,6 +72,7 @@ data PFOutput t = PFOutput {
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
   , _pfo_potato_changed :: Event t ()
+  , _pfo_potato_state   :: Dynamic t SEltTree
 }
 
 holdPF ::
@@ -204,7 +205,7 @@ holdPF PFConfig {..} = mdo
     pushStateFn :: (MonadSample t m') => () -> m' (SCanvas, [SuperSEltLabel])
     pushStateFn _ = do
       layers <- sample . current $ _sEltLayerTree_view layerTree
-      contents <- sample $ _directory_contents $ _sEltLayerTree_directory layerTree
+      contents <- sample . current $ _directory_contents $ _sEltLayerTree_directory layerTree
       scanvas <- sample (current $ _canvas_box canvas) >>= return . SCanvas
       let
         -- PARTIAL

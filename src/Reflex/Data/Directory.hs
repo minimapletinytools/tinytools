@@ -80,7 +80,7 @@ holdDirectoryIdAssigner DirectoryIdAssignerConfig {..} = do
 -- TODO implement this using DynamicIntMap (once you create it)
 -- | this is bassically a DynamicIntMap with a restricted interface
 data Directory t v = Directory {
-  _directory_contents   :: Behavior t (IM.IntMap v)
+  _directory_contents   :: Dynamic t (IM.IntMap v)
   , _directory_added    :: Event t (NonEmpty (DirId, v))
   , _directory_removed  :: Event t (NonEmpty (DirId, v))
   , _directory_modified :: Event t (NonEmpty (DirId, v, v))
@@ -142,7 +142,7 @@ holdDirectory DirectoryConfig {..} = mdo
     bDirectory = current $ fmap snd directory
 
   directory :: Dynamic t ([(DirId, v,v)], IM.IntMap v) <- foldDyn foldfn ([],IM.empty) allEvs
-  return Directory { _directory_contents = bDirectory
+  return Directory { _directory_contents = fmap snd directory
                    , _directory_added    = _directoryConfig_add
                    , _directory_removed  = fmapMaybe nonEmpty removed
                    , _directory_modified = fmapMaybe nonEmpty $ updated $ fmap fst directory
