@@ -217,6 +217,8 @@ holdPF PFConfig {..} = mdo
       _pfo_layers = layerTree
       , _pfo_saved = fmap (uncurry SPotatoFlow)
         $ fmap (over _2 (fmap thd3))
+        -- force the state to stop leaks
+        $ fmap (\x -> deepseq x x)
         $ pushAlways pushStateFn _pfc_save
       , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
       , _pfo_canvas = canvas
