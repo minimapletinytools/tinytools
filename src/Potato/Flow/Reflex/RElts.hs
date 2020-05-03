@@ -136,9 +136,9 @@ modify_sElt_with_cRelBox isDo selt CBoundingBox {..} = case selt of
   -- TODO handle resize parameter
   SEltLine SLine {..} -> SEltLine $ SLine {
       _sLine_start = modifyDelta isDo _sLine_start
-        (deltaLBox_translate _cBoundingBox_deltaBox)
+        (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sLine_end = modifyDelta isDo _sLine_end
-        (deltaLBox_translate _cBoundingBox_deltaBox)
+        (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sLine_style = _sLine_style
     }
   SEltText SText {..} -> SEltText $ SText {

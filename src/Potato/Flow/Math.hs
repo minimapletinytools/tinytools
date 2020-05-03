@@ -91,18 +91,18 @@ instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
 
 -- TODO rename with _ in front
 data DeltaLBox = DeltaLBox {
-  deltaLBox_translate  :: XY
-  , deltaLBox_resizeBy :: XY
+  _deltaLBox_translate  :: XY
+  , _deltaLBox_resizeBy :: XY
 }  deriving (Eq, Show)
 
 instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {
-      _lBox_ul = plusDelta _lBox_ul deltaLBox_translate
-      , _lBox_size = plusDelta _lBox_size deltaLBox_resizeBy
+      _lBox_ul = plusDelta _lBox_ul _deltaLBox_translate
+      , _lBox_size = plusDelta _lBox_size _deltaLBox_resizeBy
     }
   minusDelta LBox {..} DeltaLBox {..} =  LBox {
-      _lBox_ul = minusDelta _lBox_ul deltaLBox_translate
-      , _lBox_size = minusDelta _lBox_size deltaLBox_resizeBy
+      _lBox_ul = minusDelta _lBox_ul _deltaLBox_translate
+      , _lBox_size = minusDelta _lBox_size _deltaLBox_resizeBy
     }
 
 type DeltaText = (Text,Text)
