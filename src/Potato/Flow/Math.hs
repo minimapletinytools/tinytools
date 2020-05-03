@@ -6,8 +6,8 @@ module Potato.Flow.Math (
   XY
   , LBox(..)
   , nilLBox
-  , make_LBox_from_LPoints
-  , does_LBox_contains_LPoint
+  , make_LBox_from_ul_br
+  , does_LBox_contains_XY
   , union_LBox
   , Delta(..)
   , DeltaLBox(..)
@@ -61,15 +61,15 @@ nilLBox :: LBox
 nilLBox = LBox 0 0
 
 
-make_LBox_from_LPoints :: XY -> XY -> LBox
-make_LBox_from_LPoints (V2 x1 y1) (V2 x2 y2) =
+make_LBox_from_ul_br :: XY -> XY -> LBox
+make_LBox_from_ul_br (V2 x1 y1) (V2 x2 y2) =
   LBox {
     ul = V2 (min x1 x2) (min y1 y2)
     , size = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
-does_LBox_contains_LPoint :: LBox -> XY -> Bool
-does_LBox_contains_LPoint (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
+does_LBox_contains_XY :: LBox -> XY -> Bool
+does_LBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
 -- TODO

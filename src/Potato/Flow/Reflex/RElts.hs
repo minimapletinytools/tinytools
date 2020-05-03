@@ -33,13 +33,13 @@ getSEltBox selt = case selt of
   SEltFolderStart -> Nothing
   SEltFolderEnd   -> Nothing
   SEltBox x       -> Just $ _sBox_box x
-  SEltLine x      -> Just $ make_LBox_from_LPoints (_sLine_start x) (_sLine_end x)
+  SEltLine x      -> Just $ make_LBox_from_ul_br (_sLine_start x) (_sLine_end x)
   SEltText x      -> Just $ _sText_box x
 
 type RenderFn = XY -> Maybe PChar
 
 makePotatoRenderer :: LBox -> RenderFn
-makePotatoRenderer lbox pt = if does_LBox_contains_LPoint lbox pt
+makePotatoRenderer lbox pt = if does_LBox_contains_XY lbox pt
   then Just '#'
   else Nothing
 
@@ -62,7 +62,7 @@ getDrawer selt = case selt of
   SEltBox SBox {..}       -> r where
     LBox (V2 x y) (V2 w h)  = _sBox_box
     rfn pt@(V2 x' y')
-      | not (does_LBox_contains_LPoint _sBox_box pt) = Nothing
+      | not (does_LBox_contains_XY _sBox_box pt) = Nothing
       | w == 1 && h == 1 = Just $ _sLineStyle_point _sBox_style
       | w == 1 = Just $ _sLineStyle_vertical _sBox_style
       | h == 1 = Just $ _sLineStyle_horizontal _sBox_style
