@@ -15,7 +15,7 @@ module Potato.Flow.Reflex.Types (
   , MBox(..)
   , MLine(..)
   , MText(..)
-  , MRelBox(..)
+  , MBoundingBox(..)
   , MTag(..)
   , Manipulator
   -- * controllers
@@ -67,11 +67,8 @@ data MText = MText {
   , _mText_text :: Text
 }
 
-data MRelBox = MRelBox {
-  -- TODO change to this
-  --_mRelBox_bounded_targets :: NonEmpty (REltId, LBox)
-  _mRelBox_targets :: NonEmpty REltId
-  , _mRelBox_box   :: LBox
+data MBoundingBox = MBoundingBox {
+  _mBoundingBox_bounded_targets :: NonEmpty (REltId, LBox)
 }
 
 data MTag a where
@@ -79,7 +76,7 @@ data MTag a where
   MTagBox :: MTag MBox
   MTagLine :: MTag MLine
   MTagText :: MTag MText
-  MTagRelBox :: MTag MRelBox
+  MTagBoundingBox :: MTag MBoundingBox
 
 deriveGEq      ''MTag
 deriveGCompare ''MTag

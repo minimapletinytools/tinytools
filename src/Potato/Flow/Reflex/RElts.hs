@@ -115,20 +115,22 @@ toManipulator selected = do
             , _mText_text = _sText_text
           }
       _                 -> nilState
-    foldfn (s:ss) _ = r where
-      nes = s:|ss
-      msboxes = catMaybes . toList $ fmap (getSEltBox . _sEltLabel_sElt . thd3) nes
+    foldfn sss _ = r where
+      fmapfn (rid, _, seltl) = do
+        box <- getSEltBox . _sEltLabel_sElt $ seltl
+        return (rid,box)
+      msboxes = catMaybes $ fmap fmapfn sss
       r = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
-        MTagRelBox ==>
-          MRelBox {
-            _mRelBox_targets    = fmap fst3 nes
-            , _mRelBox_box      = foldl1' union_LBox sboxes
+        MTagBoundingBox ==>
+          MBoundingBox {
+            _mBoundingBox_bounded_targets = sboxes
           }
+
   foldDyn foldfn nilState selected
 
 
-modify_sElt_with_cRelBox :: Bool -> SElt -> CBoundingBox -> SElt
-modify_sElt_with_cRelBox isDo selt CBoundingBox {..} = case selt of
+modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
+modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
   SEltBox SBox {..}  -> SEltBox $ SBox {
       _sBox_box = modifyDelta isDo _sBox_box _cBoundingBox_deltaBox
       , _sBox_style = _sBox_style
@@ -167,7 +169,7 @@ updateFnFromController isDo = \case
     SEltText s -> SEltLabel sname (SEltText $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
   (CTagBoundingBox :=> Identity d) -> \(SEltLabel sname selt) ->
-    SEltLabel sname (modify_sElt_with_cRelBox isDo selt d)
+    SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   _ -> id
 
 
