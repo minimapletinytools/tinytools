@@ -207,20 +207,25 @@ randomActionFCmd doundo stree = do
           else do
             p1 <- randomXY
             p2 <- randomXY
-            case selt of
-              SEltBox _ -> return $ (,) pos $ CTagBox ==>
-                CBox {
-                  _cBox_deltaBox = DeltaLBox p1 p2
+            manyFlag <- R.getRandomR (0,3 :: Int)
+            case manyFlag of
+              0 -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
+                  _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
-              SEltLine _ -> return $ (,) pos $ CTagLine ==>
-                CLine {
-                  _cLine_deltaStart = p1
-                  , _cLine_deltaEnd = p2
-                }
-              SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
-                CText {
-                  _cText_deltaBox = DeltaLBox p1 p2
-                  , _cText_deltaText = (before, "meow meow")
-                }
-              _ -> error "this should never happen"
+              _ -> case selt of
+                SEltBox _ -> return $ (,) pos $ CTagBox ==>
+                  CBox {
+                    _cBox_deltaBox = DeltaLBox p1 p2
+                  }
+                SEltLine _ -> return $ (,) pos $ CTagLine ==>
+                  CLine {
+                    _cLine_deltaStart = p1
+                    , _cLine_deltaEnd = p2
+                  }
+                SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
+                  CText {
+                    _cText_deltaBox = DeltaLBox p1 p2
+                    , _cText_deltaText = (before, "meow meow")
+                  }
+                _ -> error "this should never happen"
         _ -> error "this should never happen"

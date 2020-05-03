@@ -125,7 +125,6 @@ toManipulator selected = do
           MBoundingBox {
             _mBoundingBox_bounded_targets = sboxes
           }
-
   foldDyn foldfn nilState selected
 
 
