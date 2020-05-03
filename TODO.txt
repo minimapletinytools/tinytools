@@ -43,7 +43,7 @@ hp2ps -e8in -c memorytests.hp
 
 ::VTY TODO::
 -layers
--refactor into several files D:
+DONE-refactor into several files D:
 -make sure
   DONE-canvas pane does not get mouse inputs from other places
   -focus switches properly between layer and canvas panes (for key events)
@@ -69,7 +69,7 @@ DONE-canvas
   -seltls :: Behavior t (Map REltId SEltLabel)
   -changes :: Map REltId (Maybe SEltLabel, Maybe SEltLabel)
   -location :: Behavior t (Map REltId LayerPos)
--data
+-data 
   -BPTree (for now just do Map REltId AABB)
   -Canvas = Canvas (Vector Char) Int
     - use REPA instead?
@@ -93,7 +93,7 @@ DONE-canvas
 DONE-refactor math?
 -controller refactor bleh
   -figure out how to handle negative coordinates
-  -figure out how to handle CTagRelBox
+  DONE-figure out how to handle CTagRelBox
     -rename to CTagBoundingBox
     -you could just keep precise before/after deltas for everything
   DONE-rename vars in Controllers to indicate they are deltas

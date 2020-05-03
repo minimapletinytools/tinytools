@@ -36,7 +36,7 @@ emptyRenderedCanvas lb@(LBox _ (V2 w h)) = RenderedCanvas {
 toPoint :: LBox -> Int -> XY
 toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + y) (i `div` w + x)
 
-
+-- | brute force renders a RenderedCanvas
 potatoRender :: [SElt] -> RenderedCanvas -> RenderedCanvas
 potatoRender seltls RenderedCanvas {..} = r where
   drawers = reverse $ map getDrawer seltls
@@ -52,7 +52,6 @@ potatoRender seltls RenderedCanvas {..} = r where
       _renderedCanvas_box = _renderedCanvas_box
       , _renderedCanvas_contents = newc
     }
-
 
 renderedCanvasToText :: RenderedCanvas -> Text
 renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
