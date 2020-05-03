@@ -86,15 +86,17 @@ DONE-canvas
 
 
 ::TODO::
-DONE-add mem leak test
--redo SEltLayers with bespoke structure so everything can be done in one frame D:
-DONE-take CAREFUL note that sequenceEvents outside of potato-flow might break stuff if it's used internally
-  -perhaps move undo do modify inside of potato-flow so there's no incorrect usage from outside
--REltId -> Index map
+-SEltLayers
+  -redo SEltLayers with bespoke structure so everything can be done in one frame D:
+  -move command
+  -REltId -> Index map
+-refactor math?
 -controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
+    -you could just keep precise before/after deltas for everything
   DONE-rename vars in Controllers to indicate they are deltas
+
 
 -mid priority
   IGNORE-helpers to create fine grained manipulators
@@ -114,6 +116,9 @@ DONE-take CAREFUL note that sequenceEvents outside of potato-flow might break st
   -use affine transformations for box manipulation
 
 
+DONE-add mem leak test
+DONE-take CAREFUL note that sequenceEvents outside of potato-flow might break stuff if it's used internally
+  -perhaps move undo do modify inside of potato-flow so there's no incorrect usage from outside
 DONE-add mem leak test
 DONE-workspace stuff (for now just support 1 workspace)
   DONE-canvas support

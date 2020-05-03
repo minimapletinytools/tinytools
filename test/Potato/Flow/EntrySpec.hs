@@ -55,7 +55,7 @@ basic_network ev = mdo
         (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
         let
           cbox = CBox {
-              _cBox_deltaBox    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
+              _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
             }
         return . Just $ IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing

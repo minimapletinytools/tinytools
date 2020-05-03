@@ -4,8 +4,6 @@
 
 module Potato.Flow.Math (
   XY
-  , LSize(..)
-  , LPoint(..)
   , LBox(..)
   , nilLBox
   , make_LBox_from_LPoints
@@ -38,11 +36,6 @@ type XY = V2 Int
 instance FromJSON XY
 instance ToJSON XY
 
-newtype LSize = LSize { unLSize :: XY } deriving (Eq, Ord, Num, Generic, Show, NFData, FromJSON, ToJSON)
-newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show, NFData, FromJSON, ToJSON)
-
-
-
 -- | a point in screen space
 -- should only be used by VC, so does not belong here
 --newtype VPoint = VPoint (Int, Int) deriving (Generic, Show, FromJSON, ToJSON)
@@ -53,12 +46,12 @@ newtype LPoint = LPoint { unLPoint :: XY } deriving (Eq, Ord, Num, Generic, Show
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
 -- e.g. an LBox with size (0,0) contains nothing
 data LBox = LBox {
-  ul     :: LPoint
-  , size :: LSize
+  ul     :: XY
+  , size :: XY
 } deriving (Eq, Generic)
 
 instance Show LBox where
-  show (LBox (LPoint (V2 x y)) (LSize (V2 w h))) = "LBox: " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
+  show (LBox (V2 x y) (V2 w h)) = "LBox: " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
 
 instance FromJSON LBox
 instance ToJSON LBox
@@ -68,15 +61,15 @@ nilLBox :: LBox
 nilLBox = LBox 0 0
 
 
-make_LBox_from_LPoints :: LPoint -> LPoint -> LBox
-make_LBox_from_LPoints (LPoint (V2 x1 y1)) (LPoint (V2 x2 y2)) =
+make_LBox_from_LPoints :: XY -> XY -> LBox
+make_LBox_from_LPoints (V2 x1 y1) (V2 x2 y2) =
   LBox {
-    ul = LPoint $ V2 (min x1 x2) (min y1 y2)
-    , size = LSize $ V2 (abs (x1 - x2)) (abs (y1 - y2))
+    ul = V2 (min x1 x2) (min y1 y2)
+    , size = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
-does_LBox_contains_LPoint :: LBox -> LPoint -> Bool
-does_LBox_contains_LPoint (LBox (LPoint (V2 bx by)) (LSize (V2 bw bh))) (LPoint (V2 px py)) =
+does_LBox_contains_LPoint :: LBox -> XY -> Bool
+does_LBox_contains_LPoint (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
 -- TODO
@@ -96,17 +89,9 @@ instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
 
 
-instance Delta LPoint LPoint where
-  plusDelta = (+)
-  minusDelta = (-)
-
-instance Delta LSize LSize where
-  plusDelta = (+)
-  minusDelta = (-)
-
 data DeltaLBox = DeltaLBox {
-  deltaLBox_translate  :: LPoint
-  , deltaLBox_resizeBy :: LSize
+  deltaLBox_translate  :: XY
+  , deltaLBox_resizeBy :: XY
 }  deriving (Eq, Show)
 
 instance Delta LBox DeltaLBox where

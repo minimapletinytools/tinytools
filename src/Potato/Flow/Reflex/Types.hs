@@ -57,8 +57,8 @@ data MBox = MBox {
 
 data MLine = MLine {
   _mLine_target  :: REltId
-  , _mLine_start :: LPoint
-  , _mLine_end   :: LPoint
+  , _mLine_start :: XY
+  , _mLine_end   :: XY
 }
 
 data MText = MText {
@@ -112,8 +112,8 @@ instance Delta SBox CBox where
 
 
 data CLine = CLine {
-  _cLine_deltaStart :: LPoint
-  , _cLine_deltaEnd :: LPoint
+  _cLine_deltaStart :: XY
+  , _cLine_deltaEnd :: XY
 } deriving (Eq, Show)
 
 instance Delta SLine CLine where

@@ -98,8 +98,8 @@ instance NFData SBox
 
 -- |
 data SLine = SLine {
-  _sLine_start   :: LPoint
-  , _sLine_end   :: LPoint
+  _sLine_start   :: XY
+  , _sLine_end   :: XY
   , _sLine_style :: SLineStyle
 } deriving (Eq, Generic, Show)
 
@@ -111,7 +111,7 @@ instance NFData SLine
 -- TODO rename
 -- |
 data SCartLines = SCartLines {
-  _sCartLines_start   :: LPoint
+  _sCartLines_start   :: XY
   , _sCartLines_ends  :: NonEmpty (Either Int Int)
   , _sCartLines_style :: SLineStyle
 } deriving (Eq, Generic, Show)

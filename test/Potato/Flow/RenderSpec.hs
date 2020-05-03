@@ -14,7 +14,7 @@ import qualified Data.Text    as T
 import           Potato.Flow
 
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
-testCanvas x y w h = emptyRenderedCanvas (LBox (LPoint (V2 x y)) (LSize (V2 w h)))
+testCanvas x y w h = emptyRenderedCanvas (LBox (V2 x y) (V2 w h))
 
 spec :: Spec
 spec = do
@@ -30,7 +30,7 @@ spec = do
         n = 10
         selts = flip map [1..n] $ \i ->
           SEltBox $ SBox {
-              _sBox_box    = LBox (LPoint (V2 (i*2) 0)) (LSize (V2 2 2))
+              _sBox_box    = LBox (V2 (i*2) 0) (V2 2 2)
               , _sBox_style = def
             }
         canvas2 = potatoRender selts canvas1

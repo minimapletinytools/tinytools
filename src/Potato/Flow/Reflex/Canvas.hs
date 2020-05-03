@@ -13,7 +13,6 @@ import           Relude
 import           Reflex
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Types
 
 import           Control.Monad.Fix
 
@@ -30,7 +29,7 @@ holdCanvas :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   -> m (Canvas t)
 holdCanvas CanvasConfig {..} = mdo
   let
-    canvasBox0 = LBox (LPoint (V2 0 0)) (LSize (V2 100 50))
+    canvasBox0 = LBox (V2 0 0) (V2 100 50)
   canvasBox <- foldDyn ($) canvasBox0 _canvasConfig_resize
   return
     Canvas {

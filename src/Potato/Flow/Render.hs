@@ -28,13 +28,13 @@ renderedCanvas_box :: RenderedCanvas -> LBox
 renderedCanvas_box = _renderedCanvas_box
 
 emptyRenderedCanvas :: LBox -> RenderedCanvas
-emptyRenderedCanvas lb@(LBox _ (LSize (V2 w h))) = RenderedCanvas {
+emptyRenderedCanvas lb@(LBox _ (V2 w h)) = RenderedCanvas {
     _renderedCanvas_box = lb
     , _renderedCanvas_contents = V.replicate (w*h) ' '
   }
 
-toPoint :: LBox -> Int -> LPoint
-toPoint (LBox (LPoint (V2 x y)) (LSize (V2 w _))) i = LPoint $ V2 (i `mod` w + y) (i `div` w + x)
+toPoint :: LBox -> Int -> XY
+toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + y) (i `div` w + x)
 
 
 potatoRender :: [SElt] -> RenderedCanvas -> RenderedCanvas
@@ -57,7 +57,7 @@ potatoRender seltls RenderedCanvas {..} = r where
 renderedCanvasToText :: RenderedCanvas -> Text
 renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
   l = V.length _renderedCanvas_contents
-  (LBox _ (LSize (V2 w _))) = _renderedCanvas_box
+  (LBox _ (V2 w _)) = _renderedCanvas_box
   unfoldfn (i, eol) = if i == l
     then Nothing
     else if eol

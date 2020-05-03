@@ -29,7 +29,7 @@ import           System.Random.Shuffle
 import           Potato.Flow
 
 simpleSBox :: SBox
-simpleSBox = SBox (LBox (LPoint (V2 5 5)) (LSize (V2 5 5))) def
+simpleSBox = SBox (LBox (V2 5 5) (V2 5 5)) def
 
 data FCmd =
   FCNone
@@ -74,7 +74,7 @@ setup_network ev = mdo
         (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
         let
           cbox = CBox {
-              _cBox_deltaBox    = DeltaLBox (LPoint (V2 1 1)) (LSize (V2 5 5))
+              _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
             }
         return . Just $ selt `deepseq` IM.singleton rid (CTagBox ==> cbox)
       _              -> return Nothing
@@ -162,18 +162,18 @@ randomActionFCmd doundo stree = do
       case stype of
         0 -> return $ FCAddElt pos $ SEltBox
           SBox {
-            _sBox_box = LBox (LPoint p1) (LSize p2)
+            _sBox_box = LBox p1 p2
             , _sBox_style = def
           }
         1 -> return $ FCAddElt pos $ SEltLine
           SLine {
-            _sLine_start = LPoint p1
-            , _sLine_end = LPoint p2
+            _sLine_start = p1
+            , _sLine_end = p2
             , _sLine_style = def
           }
         2 -> return $ FCAddElt pos $ SEltText
           SText {
-            _sText_box = LBox (LPoint p1) (LSize p2)
+            _sText_box = LBox p1 p2
             , _sText_text = "moo"
             , _sText_style = def
           }
@@ -181,7 +181,7 @@ randomActionFCmd doundo stree = do
     3 -> do
       p1 <- randomXY
       p2 <- randomXY
-      return $ FCResizeCanvas $ DeltaLBox (LPoint p1) (LSize p2)
+      return $ FCResizeCanvas $ DeltaLBox p1 p2
     _ -> do
       -- just one random elements
       rindex <- R.getRandomR (0, length eltsOnly - 1)
@@ -210,16 +210,16 @@ randomActionFCmd doundo stree = do
             case selt of
               SEltBox _ -> return $ (,) pos $ CTagBox ==>
                 CBox {
-                  _cBox_deltaBox = DeltaLBox (LPoint p1) (LSize p2)
+                  _cBox_deltaBox = DeltaLBox p1 p2
                 }
               SEltLine _ -> return $ (,) pos $ CTagLine ==>
                 CLine {
-                  _cLine_deltaStart = LPoint p1
-                  , _cLine_deltaEnd = LPoint p2
+                  _cLine_deltaStart = p1
+                  , _cLine_deltaEnd = p2
                 }
               SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
                 CText {
-                  _cText_deltaBox = DeltaLBox (LPoint p1) (LSize p2)
+                  _cText_deltaBox = DeltaLBox p1 p2
                   , _cText_deltaText = (before, "meow meow")
                 }
               _ -> error "this should never happen"
