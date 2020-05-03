@@ -8,7 +8,18 @@ module Potato.Flow.Math (
   , nilLBox
   , make_LBox_from_ul_br
   , does_LBox_contains_XY
+
+
+  -- untested
+  , make_LBox_from_axis
   , union_LBox
+
+  -- untested
+  -- these helpers maybe belong in a different file, they have very specific usages
+  , CanonicalLBox(..)
+  , canonicalLBox_from_lBox
+  , deltaLBox_via_canonicalLBox
+
   , Delta(..)
   , DeltaLBox(..)
   , DeltaText
@@ -72,9 +83,41 @@ does_LBox_contains_XY :: LBox -> XY -> Bool
 does_LBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
--- TODO
+make_LBox_from_axis :: (Int, Int) -> (Int, Int) -> LBox
+make_LBox_from_axis (x1,x2) (y1,y2) = LBox (V2 rx ry) (V2 rw rh) where
+  rx = min x1 x2
+  ry = min y1 y2
+  rw = abs (x1-x2)
+  rh = abs (y1-y2)
+
 union_LBox :: LBox -> LBox -> LBox
-union_LBox lb1 = const lb1
+union_LBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = r where
+  cx1 = x1 + w1
+  cy1 = y1 + h1
+  cx2 = x2 + w2
+  cy2 = y2 + h2
+  r = make_LBox_from_axis (cx1, cx2) (cy1, cy2)
+
+-- | CanonicalLBox is always has non-negative width/height
+-- and tracks which axis are flipped to return back to original LBox
+-- first Bool is if x values are flipped, second is for y
+data CanonicalLBox = CanonicalLBox Bool Bool LBox
+
+canonicalLBox_from_lBox :: LBox -> CanonicalLBox
+canonicalLBox_from_lBox (LBox (V2 x y) (V2 w h)) = r where
+  fx = w < 0
+  fy = h < 0
+  r = CanonicalLBox fx fy $ make_LBox_from_axis (x, x+w) (y, y+h)
+
+deltaLBox_via_canonicalLBox :: CanonicalLBox -> DeltaLBox -> DeltaLBox
+deltaLBox_via_canonicalLBox (CanonicalLBox fx fy _) DeltaLBox {..} = r where
+  V2 tx ty = _deltaLBox_translate
+  V2 sx sy = _deltaLBox_resizeBy
+  (rtx, rsx) = if fx then (sx, tx) else (tx, sx)
+  (rty, rsy) = if fy then (sy, ty) else (ty, sy)
+  r = DeltaLBox (V2 rtx rty) (V2 rsx rsy)
+
+
 
 class Delta x dx where
   plusDelta :: x -> dx -> x

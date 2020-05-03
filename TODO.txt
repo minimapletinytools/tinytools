@@ -3,6 +3,27 @@ stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
+
+::SEltLayers refactor notes::
+
+_sEltLayerTree_view         :: Dynamic t (Seq REltId)
+, _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
+, _directory_contents   :: Dynamic t (REltIdMap SEltLabel)
+
+, _sEltLayerTree_reverseMap   :: Dynamic t (REltIdMap LayerPos)
+, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
+, _sEltLayerTree_potato_state :: Dynamic t [SEltLabel]
+
+_sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
+, _sEltLayerTreeConfig_remove             :: Event t (NonEmpty SuperSEltLabel)
+, _sEltLayerTree_directory_doManipulate   :: Event t ControllersWithId
+, _sEltLayerTree_directory_undoManipulate :: Event t ControllersWithId
+, _sEltLayerTreeConfig_load               :: Event t [(REltId, SEltLabel)]
+
+, _sEltLayerTreeConfig_move :: Event t (NonEmpty (LayerPos, LayerPos)) -- TODO figure out rules on indexing, I think destination indexes probably need to be in order
+, _sEltLayerTreeConfig_copy :: Event t (NonEmpty LayerPos)
+, _sEltLayerTreeConfig_duplicate
+
 ::Layer Notes::
 -folders
   -click folder selects all contents
@@ -69,7 +90,7 @@ DONE-canvas
   -seltls :: Behavior t (Map REltId SEltLabel)
   -changes :: Map REltId (Maybe SEltLabel, Maybe SEltLabel)
   -location :: Behavior t (Map REltId LayerPos)
--data 
+-data
   -BPTree (for now just do Map REltId AABB)
   -Canvas = Canvas (Vector Char) Int
     - use REPA instead?
