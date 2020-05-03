@@ -46,8 +46,8 @@ instance ToJSON XY
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
 -- e.g. an LBox with size (0,0) contains nothing
 data LBox = LBox {
-  ul     :: XY
-  , size :: XY
+  _lBox_ul     :: XY
+  , _lBox_size :: XY
 } deriving (Eq, Generic)
 
 instance Show LBox where
@@ -64,8 +64,8 @@ nilLBox = LBox 0 0
 make_LBox_from_ul_br :: XY -> XY -> LBox
 make_LBox_from_ul_br (V2 x1 y1) (V2 x2 y2) =
   LBox {
-    ul = V2 (min x1 x2) (min y1 y2)
-    , size = V2 (abs (x1 - x2)) (abs (y1 - y2))
+    _lBox_ul= V2 (min x1 x2) (min y1 y2)
+    , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
 does_LBox_contains_XY :: LBox -> XY -> Bool
@@ -96,12 +96,12 @@ data DeltaLBox = DeltaLBox {
 
 instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {
-      ul = plusDelta ul deltaLBox_translate
-      , size = plusDelta size deltaLBox_resizeBy
+      _lBox_ul = plusDelta _lBox_ul deltaLBox_translate
+      , _lBox_size = plusDelta _lBox_size deltaLBox_resizeBy
     }
   minusDelta LBox {..} DeltaLBox {..} =  LBox {
-      ul = minusDelta ul deltaLBox_translate
-      , size = minusDelta size deltaLBox_resizeBy
+      _lBox_ul = minusDelta _lBox_ul deltaLBox_translate
+      , _lBox_size = minusDelta _lBox_size deltaLBox_resizeBy
     }
 
 type DeltaText = (Text,Text)
