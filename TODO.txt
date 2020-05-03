@@ -90,10 +90,11 @@ DONE-canvas
   -redo SEltLayers with bespoke structure so everything can be done in one frame D:
   -move command
   -REltId -> Index map
--refactor math?
+DONE-refactor math?
 -controller refactor bleh
   -figure out how to handle negative coordinates
   -figure out how to handle CTagRelBox
+    -rename to CTagBoundingBox
     -you could just keep precise before/after deltas for everything
   DONE-rename vars in Controllers to indicate they are deltas
 

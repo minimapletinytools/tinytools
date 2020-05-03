@@ -23,7 +23,7 @@ module Potato.Flow.Reflex.Types (
   , CBox(..)
   , CLine(..)
   , CText(..)
-  , CRelBox(..)
+  , CBoundingBox(..)
   , CTag(..)
   , Controller
 ) where
@@ -147,8 +147,8 @@ instance Delta SText CText where
 
 -- | transforms object based on a reference point
 -- used for multi-selection
-data CRelBox = CRelBox {
-  _cRelBox_deltaBox    :: DeltaLBox
+data CBoundingBox = CBoundingBox {
+  _cBoundingBox_deltaBox    :: DeltaLBox
 } deriving (Eq, Show)
 
 data CTag a where
@@ -156,7 +156,7 @@ data CTag a where
   CTagBox :: CTag CBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText
-  CTagRelBox :: CTag CRelBox
+  CTagBoundingBox :: CTag CBoundingBox
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag

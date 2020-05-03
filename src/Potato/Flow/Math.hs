@@ -89,6 +89,7 @@ instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
 
 
+-- TODO rename with _ in front
 data DeltaLBox = DeltaLBox {
   deltaLBox_translate  :: XY
   , deltaLBox_resizeBy :: XY
