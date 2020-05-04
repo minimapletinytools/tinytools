@@ -26,6 +26,7 @@ import           Data.Tuple.Extra
 import           Reflex
 
 
+-- TODO rename to getSEltBoundingBox or something
 -- | gets an 'LBox' that contains the entire RElt
 getSEltBox :: SElt -> Maybe LBox
 getSEltBox selt = case selt of

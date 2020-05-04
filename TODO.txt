@@ -7,6 +7,8 @@ hp2ps -e8in -c memorytests.hp
 ::SEltLayers refactor notes::
 
 _sEltLayerTree_view         :: Dynamic t (Seq REltId)
+
+-- TODO BPTREE TRACKS previous SEltLabel, so prob don't need to return it :o
 , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
 , _directory_contents   :: Dynamic t (REltIdMap SEltLabel)
 
