@@ -62,6 +62,7 @@ data PFConfig t = PFConfig {
 
 data PFOutput t = PFOutput {
 
+  -- TODO rename to _pfo_sEltLayerTree
   _pfo_layers           :: SEltLayerTree t
   , _pfo_canvas         :: Canvas t
 

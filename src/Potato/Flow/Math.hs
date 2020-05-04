@@ -8,6 +8,7 @@ module Potato.Flow.Math (
   , nilLBox
   , make_LBox_from_ul_br
   , does_LBox_contains_XY
+  , lBox_area
 
 
   -- untested
@@ -72,6 +73,8 @@ instance NFData LBox
 nilLBox :: LBox
 nilLBox = LBox 0 0
 
+lBox_area :: LBox -> Int
+lBox_area (LBox (V2 _ _) (V2 w h)) = w*h
 
 make_LBox_from_ul_br :: XY -> XY -> LBox
 make_LBox_from_ul_br (V2 x1 y1) (V2 x2 y2) =
