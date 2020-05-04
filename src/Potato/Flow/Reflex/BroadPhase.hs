@@ -4,7 +4,9 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Reflex.BroadPhase (
-  BroadPhase(..)
+  AABB
+  , BPTree
+  , BroadPhase(..)
   , BroadPhaseConfig(..)
   , holdBroadPhase
   , broadPhase_cull
@@ -19,13 +21,15 @@ import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
-import           Control.Lens             (over, _2)
 import           Control.Monad.Fix
 import qualified Data.IntMap.Strict       as IM
+import           Data.Tuple.Extra         (snd3)
 
 
 data BroadPhase t = BroadPhase {
-  _broadPhase_render :: Event t ([AABB], BPTree)
+  -- | (list of AABBs that need to be updated, updated BPTree, changed SEltLabels from last updated)
+  _broadPhase_render   :: Event t ([AABB], BPTree, REltIdMap (Maybe SEltLabel))
+  , _broadPhase_bPTree :: Dynamic t BPTree
 }
 
 data BroadPhaseConfig t = BroadPhaseConfig {
@@ -36,10 +40,11 @@ holdBroadPhase :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => BroadPhaseConfig t
   -> m (BroadPhase t)
 holdBroadPhase BroadPhaseConfig {..} = mdo
-  bptDyn <- foldDyn (\change (_,bpt) -> update_bPTree change bpt) ([], BPTree IM.empty) _broadPhaseConfig_change
+  bptDyn <- foldDyn (\changes (_,bpt,_) -> update_bPTree changes bpt) ([], BPTree IM.empty, IM.empty) _broadPhaseConfig_change
   return
     BroadPhase {
       _broadPhase_render = updated bptDyn
+      , _broadPhase_bPTree = fmap snd3 bptDyn
     }
 
 type AABB = LBox
@@ -50,8 +55,8 @@ data BPTree = BPTree {
 }
 
 -- | updates a BPTree and returns list of AABBs that were affected
-update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> ([AABB], BPTree)
-update_bPTree changes BPTree {..} = over _2 BPTree r where
+update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> ([AABB], BPTree, REltIdMap (Maybe SEltLabel))
+update_bPTree changes BPTree {..} = r where
   -- deletions
   deletefn (aabbs, im) rid = (newaabbs, newim) where
     (moldaabb, newim) = IM.updateLookupWithKey (\_ _ -> Nothing) rid im
@@ -70,7 +75,8 @@ update_bPTree changes BPTree {..} = over _2 BPTree r where
         Just lbox -> ((rid,lbox):insmods', deletes'))
     ([],[])
     (IM.toList changes)
-  r = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
+  (aabbs, nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
+  r = (aabbs, BPTree nbpt, changes)
 
 -- TODO prob don't need this, DELETE
 update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
