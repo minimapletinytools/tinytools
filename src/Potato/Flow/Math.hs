@@ -16,6 +16,7 @@ module Potato.Flow.Math (
   -- untested
   , make_LBox_from_axis
   , union_LBox
+  , intersect_LBox
   , does_LBox_intersect
 
   -- untested
@@ -103,13 +104,39 @@ make_LBox_from_axis (x1,x2,y1,y2) = LBox (V2 rx ry) (V2 rw rh) where
 lBox_to_axis :: LBox -> (Int, Int, Int, Int)
 lBox_to_axis (LBox (V2 x y) (V2 w h)) = (min x (x+w), max x (x+w), min y (y+h), max y (y+h))
 
+min4 :: (Ord a) => a -> a -> a -> a -> a
+min4 a1 a2 a3 a4 = min (min (min a1 a2) a3) a4
+
+max4 :: (Ord a) => a -> a -> a -> a -> a
+max4 a1 a2 a3 a4 = max (max (max a1 a2) a3) a4
+
+-- | inverted LBox are treated as if not inverted
 union_LBox :: LBox -> LBox -> LBox
-union_LBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = r where
+union_LBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = combined where
   cx1 = x1 + w1
   cy1 = y1 + h1
   cx2 = x2 + w2
   cy2 = y2 + h2
-  r = make_LBox_from_axis (cx1, cx2, cy1, cy2)
+  combined = make_LBox_from_axis (min4 x1 cx1 x2 cx2, max4 x1 cx1 x2 cx2, min4 y1 cy1 y2 cy2, max4 y1 cy1 y2 cy2)
+
+-- | inverted LBox are treated as if not inverted
+intersect_LBox :: LBox -> LBox -> Maybe LBox
+intersect_LBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2)) = r where
+  cx1 = x1 + w1
+  cy1 = y1 + h1
+  cx2 = x2 + w2
+  cy2 = y2 + h2
+  l1 = min cx1 x1
+  l2 = min cx2 x2
+  r1 = max cx1 x1
+  r2 = max cx2 x2
+  t1 = min cy1 y1
+  t2 = max cy2 y2
+  b1 = min cy1 y1
+  b2 = max cy2 y2
+  r = if does_LBox_intersect lb1 lb2
+    then Just $ make_LBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
+    else Nothing
 
 does_LBox_intersect :: LBox -> LBox -> Bool
 does_LBox_intersect lb1 lb2 = r where
