@@ -7,6 +7,7 @@ module Potato.Flow.Render (
   , potatoRender
   , render
   , renderedCanvasToText
+  , renderedCanvasRegionToText
 ) where
 
 import           Relude
@@ -68,11 +69,10 @@ render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
   drawers = reverse $ map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
-    lpt@(V2 lx ly) = toPoint llbx i
-    ppt = V2 (lx+x) (ly+y)
-    pindex = toIndex _renderedCanvas_box ppt
+    pt@(V2 lx ly) = toPoint llbx i
+    pindex = toIndex _renderedCanvas_box pt
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d ppt) drawers)
+    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
     newc' = case mdrawn of
       Just c  -> (pindex, c)
       Nothing -> (pindex,' ')
@@ -93,3 +93,20 @@ renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
       else if (i+1) `mod` w == 0
         then Just $ (_renderedCanvas_contents V.! i, (i+1, True))
         else Just $ (_renderedCanvas_contents V.! i, (i+1, False))
+
+-- | assumes region LBox is strictly contained in _renderedCanvas_box
+renderedCanvasRegionToText :: LBox -> RenderedCanvas -> Text
+renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
+  l = lBox_area lbx
+  (LBox (V2 px py) _) = _renderedCanvas_box
+  (LBox _ (V2 lw _)) = lbx
+  unfoldfn (i, eol) = if i == l
+    then Nothing
+    else if eol
+      then Just $ ('\n', (i, False))
+      else if (i+1) `mod` lw == 0
+        then Just $ (_renderedCanvas_contents V.! pindex, (i+1, True))
+        else Just $ (_renderedCanvas_contents V.! pindex, (i+1, False))
+    where
+      pt = toPoint lbx i
+      pindex = toIndex _renderedCanvas_box pt

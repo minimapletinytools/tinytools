@@ -48,5 +48,7 @@ spec = do
           }
         canvas2 = render renderBox [selt] canvas1
         canvas2Text = renderedCanvasToText canvas2
+        canvas2TextRegion = renderedCanvasRegionToText renderBox canvas2
       --putTextLn $ canvas2Text
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` lBox_area renderBox
+      T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2TextRegion) `shouldBe` lBox_area renderBox
