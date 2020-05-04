@@ -6,6 +6,8 @@ module Potato.Flow.Math (
   XY
   , LBox(..)
   , nilLBox
+
+  -- TODO rename this to lBox for consistency...
   , make_LBox_from_ul_br
   , does_LBox_contains_XY
   , lBox_area
