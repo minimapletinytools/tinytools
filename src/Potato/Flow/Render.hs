@@ -71,8 +71,8 @@ render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d ppt) drawers)
     newc' = case mdrawn of
-      Just c  -> (i, c)
-      Nothing -> (i,' ')
+      Just c  -> (pindex, c)
+      Nothing -> (pindex,' ')
   newc = V.generate (lBox_area llbx) genfn
   r = RenderedCanvas {
       _renderedCanvas_box = _renderedCanvas_box
