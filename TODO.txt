@@ -34,6 +34,7 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
     -blink timers
     -escape key?
   -maybe some better way to deal with off pane dragging
+    -alos need to capture release events that happen off pane
     -i.e. modify pane implementation to ignore drag events that started off pane
   -text box that takes return key as confirming a text box and firing off a confirm event, also loses focus?
   -pop up panes (e.g. to save to file or whatever)

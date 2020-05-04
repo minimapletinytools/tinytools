@@ -131,8 +131,8 @@ intersect_LBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2))
   r1 = max cx1 x1
   r2 = max cx2 x2
   t1 = min cy1 y1
-  t2 = max cy2 y2
-  b1 = min cy1 y1
+  t2 = min cy2 y2
+  b1 = max cy1 y1
   b2 = max cy2 y2
   r = if does_LBox_intersect lb1 lb2
     then Just $ make_LBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
