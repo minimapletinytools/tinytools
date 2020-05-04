@@ -99,7 +99,7 @@ make_LBox_from_axis (x1,x2,y1,y2) = LBox (V2 rx ry) (V2 rw rh) where
   rh = abs (y1-y2)
 
 -- | (left, right, top, bottom)
--- right and bottom of non-inclusive
+-- right and bottom are non-inclusive
 lBox_to_axis :: LBox -> (Int, Int, Int, Int)
 lBox_to_axis (LBox (V2 x y) (V2 w h)) = (min x (x+w), max x (x+w), min y (y+h), max y (y+h))
 

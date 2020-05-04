@@ -53,7 +53,7 @@ type AABB = LBox
 -- TODO actual BroadPhase...
 data BPTree = BPTree {
   _bPTree_potato_tree :: REltIdMap AABB
-}
+} deriving (Show)
 
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly
@@ -65,10 +65,10 @@ update_bPTree changes BPTree {..} = r where
     newaabbs = maybe aabbs (\oldaabb -> oldaabb:aabbs) moldaabb
 
   -- modify/insert
-  insmodfn (aabbs :: [AABB], im) (rid, lbox) = (newaabbs, newim) where
-    (moldaabb :: Maybe AABB, newim) = IM.insertLookupWithKey (\_ _ a -> a) rid lbox im
+  insmodfn (aabbs, im) (rid, lbox) = (newaabbs, newim) where
+    (moldaabb :: Maybe AABB, newim) = IM.insertLookupWithKey (\_ a _ -> a) rid lbox im
     newaabbs' = lbox:aabbs
-    newaabbs :: [AABB] = maybe newaabbs' (\oldaabb -> oldaabb:newaabbs') moldaabb
+    newaabbs = maybe newaabbs' (\oldaabb -> oldaabb:newaabbs') moldaabb
 
   (insmods, deletes) = foldl'
     (\(insmods',deletes') (rid, mseltl) -> case mseltl of
@@ -82,8 +82,8 @@ update_bPTree changes BPTree {..} = r where
   r = (aabbs, BPTree nbpt, changes)
 
 -- TODO prob don't need this, DELETE
-update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
-update_bPTree' (rid, ms) BPTree {..} = BPTree $ IM.alter (const (ms >>= getSEltBox . _sEltLabel_sElt)) rid _bPTree_potato_tree
+--update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
+--update_bPTree' (rid, ms) BPTree {..} = BPTree $ IM.alter (const (ms >>= getSEltBox . _sEltLabel_sElt)) rid _bPTree_potato_tree
 
 -- | returns list of REltIds that intersect with given AABB
 broadPhase_cull :: AABB -> BPTree -> [REltId]

@@ -63,7 +63,7 @@ potatoRender seltls RenderedCanvas {..} = r where
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvas
-render :: LBox -> [SElt] -> RenderedCanvas -> RenderedCanvas
+render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvas -> RenderedCanvas
 render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
   drawers = reverse $ map getDrawer seltls
   genfn i = newc' where
