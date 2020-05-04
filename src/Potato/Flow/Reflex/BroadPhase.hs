@@ -1,15 +1,16 @@
--- WIP
-
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Reflex.BroadPhase (
   AABB
-  , BPTree
+  , BPTree(..)
   , BroadPhase(..)
   , BroadPhaseConfig(..)
   , holdBroadPhase
   , broadPhase_cull
+
+  -- exposed for testing
+  , update_bPTree
 ) where
 
 import           Relude
@@ -55,6 +56,7 @@ data BPTree = BPTree {
 }
 
 -- | updates a BPTree and returns list of AABBs that were affected
+-- exposed for testing only, do not call this directly
 update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> ([AABB], BPTree, REltIdMap (Maybe SEltLabel))
 update_bPTree changes BPTree {..} = r where
   -- deletions
@@ -65,7 +67,8 @@ update_bPTree changes BPTree {..} = r where
   -- modify/insert
   insmodfn (aabbs :: [AABB], im) (rid, lbox) = (newaabbs, newim) where
     (moldaabb :: Maybe AABB, newim) = IM.insertLookupWithKey (\_ _ a -> a) rid lbox im
-    newaabbs :: [AABB] = maybe aabbs (\oldaabb -> oldaabb:aabbs) moldaabb
+    newaabbs' = lbox:aabbs
+    newaabbs :: [AABB] = maybe newaabbs' (\oldaabb -> oldaabb:newaabbs') moldaabb
 
   (insmods, deletes) = foldl'
     (\(insmods',deletes') (rid, mseltl) -> case mseltl of

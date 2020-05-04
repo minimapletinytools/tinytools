@@ -3,7 +3,8 @@
 
 
 module Potato.Flow.Reflex.Canvas (
-  Canvas(..)
+  defaultCanvasLBox
+  , Canvas(..)
   , CanvasConfig(..)
   , holdCanvas
 ) where
@@ -16,6 +17,8 @@ import           Potato.Flow.Math
 
 import           Control.Monad.Fix
 
+defaultCanvasLBox :: LBox
+defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
 data Canvas t = Canvas {
   _canvas_box :: Dynamic t LBox
 }
@@ -28,9 +31,7 @@ holdCanvas :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => CanvasConfig t
   -> m (Canvas t)
 holdCanvas CanvasConfig {..} = mdo
-  let
-    canvasBox0 = LBox (V2 0 0) (V2 100 50)
-  canvasBox <- foldDyn ($) canvasBox0 _canvasConfig_resize
+  canvasBox <- foldDyn ($) defaultCanvasLBox _canvasConfig_resize
   return
     Canvas {
       _canvas_box = canvasBox
