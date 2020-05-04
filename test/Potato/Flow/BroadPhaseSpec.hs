@@ -22,7 +22,7 @@ spec = do
       let
         lb1_2 = LBox (V2 0 0) (V2 5 5)
         lb1_1 = LBox (V2 0 0) (V2 10 10)
-        lb2 = LBox (V2 0 0) (V2 5 5)
+        lb2 = LBox (V2 5 5) (V2 5 5)
         lb3 = LBox (V2 0 5) (V2 5 5)
         lb4 = LBox (V2 5 0) (V2 5 5)
         makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def))
@@ -42,7 +42,8 @@ spec = do
       let
         changes3 = makeChange 1 lb1_2
         (aabbs3, bpt3, _) = update_bPTree changes3 bpt2
-        -- note we cull the new box, which is not what we would normally do in rendering
-        culled3 = broadPhase_cull lb1_2 bpt3
+        culled3_1 = broadPhase_cull lb1_2 bpt3
+        culled3_2 = broadPhase_cull (LBox (V2 3 3) (V2 5 5)) bpt3
       length aabbs3 `shouldBe` 2
-      length culled3 `shouldBe` 2
+      length culled3_1 `shouldBe` 1
+      length culled3_2 `shouldBe` 4

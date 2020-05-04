@@ -20,6 +20,7 @@ import qualified Data.Text                as T
 import qualified Data.Vector.Unboxed      as V
 
 
+-- TODO rename, this should mean the portion of the screen that is rendered, not the canvas
 data RenderedCanvas = RenderedCanvas {
   _renderedCanvas_box        :: LBox
   , _renderedCanvas_contents :: V.Vector PChar -- ^ row major
@@ -34,11 +35,13 @@ emptyRenderedCanvas lb@(LBox _ (V2 w h)) = RenderedCanvas {
     , _renderedCanvas_contents = V.replicate (w*h) ' '
   }
 
+-- | input index must be contained in the box
 toPoint :: LBox -> Int -> XY
-toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + y) (i `div` w + x)
+toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + x) (i `div` w + y)
 
+-- | input XY point must be contained in the box
 toIndex :: LBox -> XY -> Int
-toIndex (LBox (V2 x y) (V2 w _)) (V2 px py) = py*w+px
+toIndex (LBox (V2 x y) (V2 w _)) (V2 px py) = (py-y)*w+(px-x)
 
 -- | brute force renders a RenderedCanvas
 potatoRender :: [SElt] -> RenderedCanvas -> RenderedCanvas
