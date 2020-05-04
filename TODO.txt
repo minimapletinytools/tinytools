@@ -26,15 +26,68 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 , _sEltLayerTreeConfig_copy :: Event t (NonEmpty LayerPos)
 , _sEltLayerTreeConfig_duplicate
 
-::Layer Notes::
--folders
-  -click folder selects all contents
-  -deselect content of folder deselects all parent folders recursively
--hidden/locked/contracted
-  -need to keep track of which elts/folders are hidden/locked/contract
-  -need something that updates when layers change
-    -I guess you can track insertions/deletes with
 
+::UI NOTES::
+-vty
+  -setup reader monad
+    -off pane click events
+    -blink timers
+    -escape key?
+  -maybe some better way to deal with off pane dragging
+    -i.e. modify pane implementation to ignore drag events that started off pane
+  -text box that takes return key as confirming a text box and firing off a confirm event, also loses focus?
+  -pop up panes (e.g. to save to file or whatever)
+    -needs to take away focus from panes in the background
+      -we could ad-hoc solves this by having panes always out of focus if the pop up is in focus
+
+-layers
+  -folders
+    -click folder selects all contents
+    -deselect content of folder deselects all parent folders recursively
+  -hidden/locked/contracted
+    -need to keep track of which elts/folders are hidden/locked/contract
+    -need something that updates when layers change
+    -elt is locked/hidden if it's locked/hidden or any of its parents are locked/hidden
+  -rename
+  -multiselect
+    -highlights in canvas
+  -drag and drop
+-manipulators
+  -need custom vty image widgets to draw canvas points
+    -captures mouse down events for dragging per handle
+      -each handle drag event triggers a modify event
+  -do I need to focus when dragging handles?
+    -I think so, so that parents ignore dragging events when dragging handles
+  -text input box exact overlay
+    -if we use built in text input, it unfortunately will create a whitebox that covers other stuff...
+-renderer
+  -hook up BroadPhase renderer
+  -ignore hidden
+-selecting
+  -ignore hidden/locked
+  -click select single
+  -click drag select many (draw bounding box)
+  -selected bounding box
+-params
+
+::ATTACHING::
+-getSEltAttachPoints :: SElt -> IntMap XY
+  -key is attach id, XY is position
+-_sLine_attachments :: (Maybe (REltId, Int), Maybe (REltId, Int))
+  -attach points for each end of the line, really you should use an Either
+    -or another option is to have both attach and hard values, and ensure they are always in sync
+-type AttachMap = REltIdMap [REltId]
+  -map of REltIds attached to given REltId
+-dynamics
+  -CLine has parameter to attach to (REltId, Int)
+  -changes that have attach (or removing attach) modify a Dynamic AttachMap
+  -after modifying a REltId, all attached things are reported as modified as well
+-helper method to convert attachments into hard values
+-some way to render possible attachment points when you hover over something that can be attached to
+  -also a modifier key to move to a position without attaching
+-problems: Do I need to serialize REltId?
+  -kinda don't want to, you can relabel or use layer pos as serialized id
+    -this works, but you need to do a pass on the id's during serialization/deserialization to change between LayerPos and REltId. Sort of abuse of the variable but it works
 
 ::VTY CHANGES::
 -MonadNodeId constraint not needed for pane?
@@ -66,56 +119,31 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 ::VTY TODO::
 -layers
-DONE-refactor into several files D:
 -make sure
   DONE-canvas pane does not get mouse inputs from other places
   -focus switches properly between layer and canvas panes (for key events)
-DONE-L/R panes, resizeable (implement splitH)
-DONE-canvas
-  -data
-    -CursorState = Selecting | Selected | Manipulating | Panning | NewBox | NewLine ...
-    -Dynamic t CursorState
-    -New -> runWithReplace (makeManipulatorFromNewElt) sEltTree_changeView
--add + manipulate = 2 actions issue D:
-  -new workflow is:
-    -tool click ev -> create manipulator -> add widget with initial size
-    -selected ev -> create manipulator -> modify widget
 -pane not registering mouse up events that happen off pane
   -probably have to make your own dragging stuff
   -probably need to add Reader monad to pipe global events through everything
-  -maybe you could pane HasVtyInput so it ignores dragging events that happen from off the screen?
+  -maybe you could change HasVtyInput so it ignores dragging events that happen from off the screen?
 
 
-::RENDER NOTES::
--inputs
-  -layers :: Behavior t (Seq REltId)
-  -seltls :: Behavior t (Map REltId SEltLabel)
-  -changes :: Map REltId (Maybe SEltLabel, Maybe SEltLabel)
-  -location :: Behavior t (Map REltId LayerPos)
--data
-  -BPTree (for now just do Map REltId AABB)
-  -Canvas = Canvas (Vector Char) Int
-    - use REPA instead?
--methods
-  -getAABB :: SEltLabel -> AABB
-  -render :: SEltLabel -> LPoint -> Maybe Char
-  -insert/updated :: BPTree -> (REltId, AABB) -> BPTree
-  -broadPhase :: BPTree -> AABB -> [REltId]
-  -render :: AABB -> [SEltLabel] -> Canvas -> Canvas
--reflex
-  -changes -> insert/update
-  -changes -> getAABBs -> broadPhase -> Event t [REltId]
-    -> fmap (sortBy location) -> render
+
 
 
 ::TODO::
+-textstyle
+  -option for space characters to be transparent
+-multi-line stuff
+  -V/H/V/H alternating
+  -manipulators are on the line (I guess you can do corners too)
 -SEltLayers
   -redo SEltLayers with bespoke structure so everything can be done in one frame D:
   -move command
   -REltId -> Index map
 DONE-refactor math?
 -controller refactor bleh
-  -figure out how to handle negative coordinates
+  DONE-figure out how to handle negative coordinates
   DONE-figure out how to handle CTagRelBox
     -rename to CTagBoundingBox
     -you could just keep precise before/after deltas for everything
@@ -140,6 +168,17 @@ DONE-refactor math?
   -use affine transformations for box manipulation
 
 
+DONE-refactor into several files D:
+DONE-L/R panes, resizeable (implement splitH)
+DONE-canvas
+  -data
+    -CursorState = Selecting | Selected | Manipulating | Panning | NewBox | NewLine ...
+    -Dynamic t CursorState
+    -New -> runWithReplace (makeManipulatorFromNewElt) sEltTree_changeView
+DONE-add + manipulate = 2 actions issue D:
+  -new workflow is:
+    -tool click ev -> create manipulator -> add widget with initial size
+    -selected ev -> create manipulator -> modify widget
 DONE-add mem leak test
 DONE-take CAREFUL note that sequenceEvents outside of potato-flow might break stuff if it's used internally
   -perhaps move undo do modify inside of potato-flow so there's no incorrect usage from outside
@@ -263,6 +302,29 @@ DONE-fan out/in actions for actionstack in entry
 DONE-manipulators
   DONE-design
 
+
+::RENDER NOTES::
+-inputs
+  -layers :: Behavior t (Seq REltId)
+  -seltls :: Behavior t (Map REltId SEltLabel)
+  -changes :: Map REltId (Maybe SEltLabel, Maybe SEltLabel)
+  -location :: Behavior t (Map REltId LayerPos)
+-data
+  -BPTree (for now just do Map REltId AABB)
+  -Canvas = Canvas (Vector Char) Int
+    - use REPA instead?
+-methods
+  -getAABB :: SEltLabel -> AABB
+  -render :: SEltLabel -> LPoint -> Maybe Char
+  -insert/updated :: BPTree -> (REltId, AABB) -> BPTree
+  -broadPhase :: BPTree -> AABB -> [REltId]
+  -render :: AABB -> [SEltLabel] -> Canvas -> Canvas
+-reflex
+  -changes -> insert/update
+  -changes -> getAABBs -> broadPhase -> Event t [REltId]
+    -> fmap (sortBy location) -> render
+
+::OLD STUFF::
 
 -feature creep 0
   -save/load workspace
