@@ -6,7 +6,9 @@ module Potato.Flow.Reflex.SEltLayers (
   LayerPos
   , SEltLayerTree(..)
   , sEltLayerTree_sampleSuperSEltByPos
+  , sEltLayerTree_sampleSuperSEltsByPos
   , sEltLayerTree_tagSuperSEltByPos
+  , sEltLayerTree_tagSuperSEltsByPos
   , SEltLayerTreeConfig(..)
   , holdSEltLayerTree
 ) where
@@ -71,7 +73,23 @@ sEltLayerTree_tagEndPos :: (Reflex t) => SEltLayerTree t -> Event t b -> Event t
 sEltLayerTree_tagEndPos SEltLayerTree {..} = tag (length <$> current _sEltLayerTree_view)
 -}
 
+
+sEltLayerTree_sampleSuperSEltsByPos :: forall t. (Reflex t) => SEltLayerTree t -> [LayerPos] -> PushM t ([Maybe SuperSEltLabel])
+sEltLayerTree_sampleSuperSEltsByPos SEltLayerTree {..} lps = do
+  layers <- sample . current $ _sEltLayerTree_view
+  slmap <- sample . current $ _directory_contents _sEltLayerTree_directory
+  let
+    mrids = foldr (\lp acc -> (Seq.lookup lp layers, lp):acc) [] lps
+    mapfn (mrid, lp) = case mrid of
+      Nothing -> Nothing
+      Just rid -> case IM.lookup rid slmap of
+        Nothing -> Nothing
+        Just sl -> Just (rid, lp, sl)
+  return $ map mapfn mrids
+
 sEltLayerTree_sampleSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> LayerPos -> PushM t (Maybe SuperSEltLabel)
+-- same behavior but uses L.head and is slightly less performant so I just use the old version even if it's code duplication
+--sEltLayerTree_sampleSuperSEltByPos slt lp = sEltLayerTree_sampleSuperSEltsByPos slt [lp] >>= return . L.head
 sEltLayerTree_sampleSuperSEltByPos SEltLayerTree {..} lp = do
   layers <- sample . current $ _sEltLayerTree_view
   let rid = fromJust $ Seq.lookup lp layers
@@ -84,6 +102,10 @@ sEltLayerTree_sampleSuperSEltByPos SEltLayerTree {..} lp = do
 -- | tag the SElt at the input position
 sEltLayerTree_tagSuperSEltByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t LayerPos -> Event t (SuperSEltLabel)
 sEltLayerTree_tagSuperSEltByPos slt = push $ sEltLayerTree_sampleSuperSEltByPos slt
+
+-- | tag the SElt at the input positions
+sEltLayerTree_tagSuperSEltsByPos :: forall t. (Reflex t) => SEltLayerTree t -> Event t [LayerPos] -> Event t ([Maybe SuperSEltLabel])
+sEltLayerTree_tagSuperSEltsByPos slt = pushAlways $ sEltLayerTree_sampleSuperSEltsByPos slt
 
 -- TODO
 -- | tag SEltLabels at the input position
