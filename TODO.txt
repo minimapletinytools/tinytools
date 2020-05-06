@@ -29,12 +29,14 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 ::UI NOTES::
 -vty
-  -setup reader monad
+  DONE/IGNORE-setup reader monad
     -off pane click events
     -blink timers
     -escape key?
-  -maybe some better way to deal with off pane dragging
-    -alos need to capture release events that happen off pane
+  DONE-maybe some better way to deal with off pane dragging
+    -also need to capture release events that happen off pane
+      -this can happen off screen too, maybe you can capture release events off screen? not sure
+        -if not, you'll have to check for a new click event and see if there was a prior release event
     -i.e. modify pane implementation to ignore drag events that started off pane
   -text box that takes return key as confirming a text box and firing off a confirm event, also loses focus?
   -pop up panes (e.g. to save to file or whatever)
@@ -61,8 +63,12 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
     -I think so, so that parents ignore dragging events when dragging handles
   -text input box exact overlay
     -if we use built in text input, it unfortunately will create a whitebox that covers other stuff...
+  -sline multi click when creating new one
+    -click same spot to finish?
+    -click drag to move line, what happens if it's an endpoint? corner?
+  -move cursor, you can move/resize via CBoundingBox even if just one thing is selected
 -renderer
-  -hook up BroadPhase renderer
+  DONE-hook up BroadPhase renderer
   -ignore hidden
 -selecting
   -ignore hidden/locked
@@ -96,10 +102,14 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 -added splitH and splitHDrag
   -maybe do splitHDrag0 and splitVDrag0 for versions that allow initial size
   -try and combine code, prob not though..
+  -(note splitHDrag is using pane2 right now)
+-added pane2, propose to modify pane to use pane2 implementation
 -fixed an issue in `drag` where mouse down would trigger on wrong button
   - `end && btn == btn'  -> Just $ Drag (x,y) (x,y) btn' mods' False`
 -added `Drag2` and `drag2` which can track drag start events
-  -implemented splitVDrag with Drag2 as an example
+  -TODO implement splitVDrag with Drag2 as an example
+-add default implementations of HasVtyInput, HasFocus and ImageWriter
+-added
 
 ::CURSOR NOTES::
 -selecting
@@ -123,16 +133,17 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 -make sure
   DONE-canvas pane does not get mouse inputs from other places
   -focus switches properly between layer and canvas panes (for key events)
--pane not registering mouse up events that happen off pane
-  -probably have to make your own dragging stuff
-  -probably need to add Reader monad to pipe global events through everything
-  -maybe you could change HasVtyInput so it ignores dragging events that happen from off the screen?
+DONE-pane not registering mouse up events that happen off pane
+  DONE-probably have to make your own dragging stuff
+  DONE-probably need to add Reader monad to pipe global events through everything
+  IGNORE-maybe you could change HasVtyInput so it ignores dragging events that happen from off the screen?
 
 
 
 
 
 ::TODO::
+-try this thing: compile reflex with flag 'debug-cycles' and compile with profiling enabled for stack tree
 -textstyle
   -option for space characters to be transparent
 -multi-line stuff
@@ -142,14 +153,6 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
   -redo SEltLayers with bespoke structure so everything can be done in one frame D:
   -move command
   -REltId -> Index map
-DONE-refactor math?
--controller refactor bleh
-  DONE-figure out how to handle negative coordinates
-  DONE-figure out how to handle CTagRelBox
-    -rename to CTagBoundingBox
-    -you could just keep precise before/after deltas for everything
-  DONE-rename vars in Controllers to indicate they are deltas
-
 
 -mid priority
   IGNORE-helpers to create fine grained manipulators
@@ -157,18 +160,25 @@ DONE-refactor math?
   -add interface for multi delete and test
   -add interface for multi add and test
   -add max length param to actionstack
-  -backend render stuff
+  DONE-backend render stuff
     DONE-just do super basic render everything version for now, since we are refactoring math
 
 -low priority
-  -modify SEltLayers/Directory/DirectoryIdAssigner so it's not using NonEmpty
+  -see if microlens gets inlined and decide to use it if so
+  IGNORE-modify SEltLayers/Directory/DirectoryIdAssigner so it's not using NonEmpty
     -assert warning if empty
   IGNORE-rename relt
-  -see if microlens gets inlined and decide to use it if so
-  -add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
-  -use affine transformations for box manipulation
+  IGNORE-add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
+  IGNORE-use affine transformations for box manipulation
 
 
+DONE-refactor math?
+DONE-controller refactor bleh
+  DONE-figure out how to handle negative coordinates
+  DONE-figure out how to handle CTagRelBox
+    -rename to CTagBoundingBox
+    -you could just keep precise before/after deltas for everything
+  DONE-rename vars in Controllers to indicate they are deltas
 DONE-refactor into several files D:
 DONE-L/R panes, resizeable (implement splitH)
 DONE-canvas

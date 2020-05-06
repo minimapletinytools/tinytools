@@ -80,6 +80,8 @@ data MTag a where
 
 deriveGEq      ''MTag
 deriveGCompare ''MTag
+deriveGShow    ''MTag
+deriveArgDict  ''MTag
 
 -- | Manipulators represent starting position of RElts
 type Manipulator = DS.DSum MTag Identity
