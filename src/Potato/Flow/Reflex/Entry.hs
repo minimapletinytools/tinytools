@@ -73,7 +73,6 @@ data PFOutput t = PFOutput {
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
   , _pfo_potato_changed :: Event t ()
-  , _pfo_potato_state   :: Dynamic t SEltTree
 }
 
 holdPF ::

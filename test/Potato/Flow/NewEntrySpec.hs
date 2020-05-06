@@ -89,7 +89,7 @@ pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ Tes
 
 data FCmdType = AllCmd | ActionOnly | UndoOnly | RedoOnly
 
-doStuff :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+doStuff :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => AppFrame t () FCmd () SPotatoFlow m
   -> FCmdType
   -> Int
@@ -142,9 +142,9 @@ leak_test maxBytes = TestLabel (show maxBytes <> " leaks") $ TestCase $ runSpide
     m0 = 100 -- num commands to do to set up state
     l0 = 100 -- num commands to do and the undo
   st0 <- doStuff appFrame ActionOnly m0 []
-  forM_ [1..1000] $ \_ -> do
+  forM_ [1..(1000 :: Int)] $ \_ -> do
     st1 <- doStuff appFrame ActionOnly l0 st0
-    st2 <- doStuff appFrame UndoOnly l0 st1
+    _ <- doStuff appFrame UndoOnly l0 st1
     liftIO $ do
       threadDelay 1000
       stats <- getRTSStats

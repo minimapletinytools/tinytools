@@ -5,8 +5,6 @@ import           Relude
 import           GHC.Stats
 
 import           Reflex
-import           Reflex.Data.ActionStack
-import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
 import qualified Data.List               as L
@@ -36,7 +34,7 @@ main = runSpiderHost $ do
           Nothing  -> error "expected state"
           Just spf -> setupLoop (n-1) (_sPotatoFlow_sEltTree spf)
     undoredoLoop _ (0 :: Int) st = return st
-    undoredoLoop isUndo n st = do
+    undoredoLoop isUndo n _ = do
       _ <- tickAppFrame appFrame $ Just $ That (if isUndo then FCUndo else FCRedo)
       out <- tickAppFrame appFrame $ Just $ That FCSave
       case L.last out of

@@ -19,7 +19,7 @@ import           Reflex.Potato.Helpers
 import           Reflex.Test.Host
 
 import           Data.Default             (def)
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import           Data.Dependent.Sum       ((==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List                as L (last)
 import           Data.Maybe               (fromJust)
@@ -52,7 +52,7 @@ basic_network ev = mdo
       _              -> Nothing
     manipEv = flip push ev $ \case
       FCScaleBy10 lp -> do
-        (_,rid,SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
+        (_,rid,SEltLabel _ _) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree lp
         let
           cbox = CBox {
               _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
@@ -80,11 +80,7 @@ basic_network ev = mdo
   let
     layerTree = _pfo_layers $ pf
     newEltsEv = updated . fmap length . _sEltLayerTree_view $ layerTree
-    changes :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel))
-    changes = _sEltLayerTree_changeView layerTree
-    directory :: Directory t SEltLabel
-    directory = _sEltLayerTree_directory layerTree
-
+  
   return newEltsEv
 
 basic_test :: Test
