@@ -53,23 +53,23 @@ type MNone = ()
 data MBox = MBox {
   _mBox_target :: REltId
   , _mBox_box  :: LBox
-}
+} deriving (Eq, Show)
 
 data MLine = MLine {
   _mLine_target  :: REltId
   , _mLine_start :: XY
   , _mLine_end   :: XY
-}
+} deriving (Eq, Show)
 
 data MText = MText {
   _mText_target :: REltId
   , _mText_box  :: LBox
   , _mText_text :: Text
-}
+} deriving (Eq, Show)
 
 data MBoundingBox = MBoundingBox {
   _mBoundingBox_bounded_targets :: NonEmpty (REltId, LBox)
-}
+} deriving (Eq, Show)
 
 data MTag a where
   MTagNone :: MTag MNone
