@@ -3,6 +3,8 @@
 
 module Potato.Flow.Reflex.Entry (
   PotatoTotal(..)
+  , potato_simplifyPotatoTotal
+
   , PFConfig(..)
   , PFOutput(..)
   , holdPF
@@ -41,12 +43,20 @@ loadWSFromFile = fmapMaybe decode
 -}
 
 -- | temp (or maybe not temp) way to track all changes in SEltLayerTree
+-- TBH not so potatoes, this is legit
 data PotatoTotal = PotatoTotal {
   _potatoTotal_sEltLabelMap  :: IM.IntMap SEltLabel
   --, _potatoTotal_layerPosMap :: IM.IntMap LayerPos
   , _potatoTotal_layerPosMap :: REltId -> Maybe LayerPos
   , _potatoTotal_layers      :: Seq REltId
 }
+
+-- this is potato
+potato_simplifyPotatoTotal :: PotatoTotal -> [SuperSEltLabel]
+potato_simplifyPotatoTotal PotatoTotal {..} = r where
+  foldfn index rid acc = (rid, index, (_potatoTotal_sEltLabelMap IM.! rid)) : acc
+  r = Seq.foldrWithIndex foldfn [] _potatoTotal_layers
+
 
 
 data PFConfig t = PFConfig {
