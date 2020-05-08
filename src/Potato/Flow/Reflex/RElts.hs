@@ -87,7 +87,9 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
+-- TODO delete this type synonym, not useful
 type Selected = [SuperSEltLabel]
+
 toManipulator :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
   => Event t Selected -- ^ selection event, which will sample manipulators of current selection
   -> m (Dynamic t Manipulator)

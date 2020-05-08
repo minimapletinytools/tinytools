@@ -8,7 +8,7 @@
 -- Portability :  non-portable
 --
 -- Structures for dynamically creating ids and tracking id'd objects
--- TODO remove this module from here, it's too specific
+-- TODO prob move into Potato.Flow as it's design is very specific to it
 ----------------------------------------------------------------------------
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}

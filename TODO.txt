@@ -27,6 +27,50 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 , _sEltLayerTreeConfig_duplicate
 
 
+::LAYER AND SELECTION TYPES::
+
+-manipulator
+  -CSBoundingBox (always shows)
+    -get rid of MBox, just inherits CSBoundingBox
+      -need to figure out inversion issue still though
+    -does not show for null elements
+  -specific manipulator (per tool)
+    -must manage mouse hirerachy or guarantee that manipulators never overlap
+      -maybe hide manipulators on manipulation? Nah
+  -it would be nice if click once doesn't actually create  the element until
+    -dragging (as it is now)
+    -release (creates a box with default size)
+-canvas select
+  IGNORE-if cursor == CSSelect
+    -OnClick -> cursor = CSSelecting
+      -supresses manipulators
+        -how do I do this?
+    -OnClick/Drag -> select_LBox :: Event t LBox
+    -OnRelease -> cursor = CSSelect
+  -if cursor == CSSelect
+    -OnClick ->
+      -on element -> begin CSBoundingBox translate
+      -off element -> begin LBox selection
+        -OnRelease -> finish LBOx selection -> select_LBox :: Event t LBox
+    -this design matches illustrator behavior
+  -broadPhase_cull :: LBox -> [REltId]
+
+-selection manager
+  -input selection
+    -new element :: Event t (LayerPos, SEltLabel)
+    -layer click  :: Event t [LayerPos]
+    -canvas select :: Event t (REltId)
+  -output
+    -_selectionManager_selected :: Dynamic t (Bool, [SuperSEltLabel])
+        -consumed by Manipulators
+        -consumed by Params
+  -data/methods
+    -Data VisState = Visible | Hidden | Lock | Hidden/Lock
+    -Data VisStateInternal = InheritParent | VisStateInternal VisState
+    -reverse_layerPos :: REltId -> LayerPos
+    -status :: LayerPos -> VisState
+
+
 ::UI NOTES::
 -vty
   DONE/IGNORE-setup reader monad
@@ -56,13 +100,17 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
     -highlights in canvas
   -drag and drop
 -manipulators
-  -need custom vty image widgets to draw canvas points
+  DONE-need custom vty image widgets to draw canvas points
     -captures mouse down events for dragging per handle
       -each handle drag event triggers a modify event
-  -do I need to focus when dragging handles?
+  DONE-do I need to focus when dragging handles?
     -I think so, so that parents ignore dragging events when dragging handles
+  -cancel event to cancel drags
+  -first time modifies need to undo the creation of elt as well so you don't need to undo twice (once for modify and once for new elt)
+    -make sure layer position of new elt is tracked correctly
   -text input box exact overlay
     -if we use built in text input, it unfortunately will create a whitebox that covers other stuff...
+      -maybe you can at least make the box not white D:
   -sline multi click when creating new one
     -click same spot to finish?
     -click drag to move line, what happens if it's an endpoint? corner?
@@ -77,72 +125,13 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
   -selected bounding box
 -params
 
-::ATTACHING::
--getSEltAttachPoints :: SElt -> IntMap XY
-  -key is attach id, XY is position
--_sLine_attachments :: (Maybe (REltId, Int), Maybe (REltId, Int))
-  -attach points for each end of the line, really you should use an Either
-    -or another option is to have both attach and hard values, and ensure they are always in sync
--type AttachMap = REltIdMap [REltId]
-  -map of REltIds attached to given REltId
--dynamics
-  -CLine has parameter to attach to (REltId, Int)
-  -changes that have attach (or removing attach) modify a Dynamic AttachMap
-  -after modifying a REltId, all attached things are reported as modified as well
--helper method to convert attachments into hard values
--some way to render possible attachment points when you hover over something that can be attached to
-  -also a modifier key to move to a position without attaching
--problems: Do I need to serialize REltId?
-  -kinda don't want to, you can relabel or use layer pos as serialized id
-    -this works, but you need to do a pass on the id's during serialization/deserialization to change between LayerPos and REltId. Sort of abuse of the variable but it works
-
-::VTY CHANGES::
--MonadNodeId constraint not needed for pane?
--added PostBuild constraint to Layout
--added splitH and splitHDrag
-  -maybe do splitHDrag0 and splitVDrag0 for versions that allow initial size
-  -try and combine code, prob not though..
-  -(note splitHDrag is using pane2 right now)
--added pane2, propose to modify pane to use pane2 implementation
--fixed an issue in `drag` where mouse down would trigger on wrong button
-  - `end && btn == btn'  -> Just $ Drag (x,y) (x,y) btn' mods' False`
--added `Drag2` and `drag2` which can track drag start events
-  -TODO implement splitVDrag with Drag2 as an example
--add default implementations of HasVtyInput, HasFocus and ImageWriter
--added
-
-::CURSOR NOTES::
--selecting
-  -object
-    -up: select
-    -drag: CRelBox drag
--pan
-  -drag: pan screen
--box
-  -down: add box
-  -drag: CBox drag bottom right
-  -up: switch to selecting
--escape pressed
-  -manipulating: cancel manipulation
-  -selected: deselect
-  -switch to selecting
-
-
-::VTY TODO::
--layers
--make sure
-  DONE-canvas pane does not get mouse inputs from other places
-  -focus switches properly between layer and canvas panes (for key events)
-DONE-pane not registering mouse up events that happen off pane
-  DONE-probably have to make your own dragging stuff
-  DONE-probably need to add Reader monad to pipe global events through everything
-  IGNORE-maybe you could change HasVtyInput so it ignores dragging events that happen from off the screen?
 
 
 
 
-
-::TODO::
+::NEW TODO::
+-consider hiding manipulators if tool is incorrect (i.e. not select tool)
+-move create new elt into manipulator
 -try this thing: compile reflex with flag 'debug-cycles' and compile with profiling enabled for stack tree
 -textstyle
   -option for space characters to be transparent
@@ -163,7 +152,48 @@ DONE-pane not registering mouse up events that happen off pane
   DONE-backend render stuff
     DONE-just do super basic render everything version for now, since we are refactoring math
 
--low priority
+::VTY CHANGES::
+-MonadNodeId constraint not needed for pane?
+-added PostBuild constraint to Layout
+-added splitH and splitHDrag
+  -maybe do splitHDrag0 and splitVDrag0 for versions that allow initial size
+  -try and combine code, prob not though..
+  -(note splitHDrag is using pane2 right now)
+-added pane2, propose to modify pane to use pane2 implementation
+-fixed an issue in `drag` where mouse down would trigger on wrong button
+  - `end && btn == btn'  -> Just $ Drag (x,y) (x,y) btn' mods' False`
+-added `Drag2` and `drag2` which can track drag start events
+  -TODO implement splitVDrag with Drag2 as an example
+-add default implementations of HasVtyInput, HasFocus and ImageWriter
+-added
+
+:: WISH LIST ::
+-FUTURE folders should have a grouping tag. If any single element in group is selected all elements are selected
+  -but this mean you also need a recursive focus mode, that ungroups grouped elements and only allows you to edit those elements
+-Attaching lines and attachment points
+-line style/thickness :D
+
+::ATTACHING::
+-getSEltAttachPoints :: SElt -> IntMap XY
+  -key is attach id, XY is position
+-_sLine_attachments :: (Maybe (REltId, Int), Maybe (REltId, Int))
+  -attach points for each end of the line, really you should use an Either
+    -or another option is to have both attach and hard values, and ensure they are always in sync
+-type AttachMap = REltIdMap [REltId]
+  -map of REltIds attached to given REltId
+-dynamics
+  -CLine has parameter to attach to (REltId, Int)
+  -changes that have attach (or removing attach) modify a Dynamic AttachMap
+  -after modifying a REltId, all attached things are reported as modified as well
+-helper method to convert attachments into hard values
+-some way to render possible attachment points when you hover over something that can be attached to
+  -also a modifier key to move to a position without attaching
+-problems: Do I need to serialize REltId?
+  -kinda don't want to, you can relabel or use layer pos as serialized id
+    -this works, but you need to do a pass on the id's during serialization/deserialization to change between LayerPos and REltId. Sort of abuse of the variable but it works
+
+:: OLD TODO ::
+DONE/IGNORE-low priority
   -see if microlens gets inlined and decide to use it if so
   IGNORE-modify SEltLayers/Directory/DirectoryIdAssigner so it's not using NonEmpty
     -assert warning if empty
@@ -171,7 +201,13 @@ DONE-pane not registering mouse up events that happen off pane
   IGNORE-add deriveGCompare1/GEq1 to Data.GADT.Compare.TH
   IGNORE-use affine transformations for box manipulation
 
-
+DONE/IGNORE-make sure
+  DONE-canvas pane does not get mouse inputs from other places
+  -focus switches properly between layer and canvas panes (for key events)
+DONE-pane not registering mouse up events that happen off pane
+  DONE-probably have to make your own dragging stuff
+  DONE-probably need to add Reader monad to pipe global events through everything
+  IGNORE-maybe you could change HasVtyInput so it ignores dragging events that happen from off the screen?
 DONE-refactor math?
 DONE-controller refactor bleh
   DONE-figure out how to handle negative coordinates

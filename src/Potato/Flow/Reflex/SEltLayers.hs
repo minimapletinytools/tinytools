@@ -56,6 +56,8 @@ data SEltLayerTree t = SEltLayerTree {
   _sEltLayerTree_view         :: Dynamic t (Seq REltId)
 
   --, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
+
+  -- TODO you can probably just change this to  'REltIdMap (MaybeMaybe SEltLabel)'
   , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
 
   -- | directory of all SEltLabels
@@ -255,15 +257,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     moveInsertEv = attach (current $ fmap fromJust moveInsertPos) $ fmap (mconcat . fmap snd) moveRemoveDone
   -}
 
-
-  -- REltId -> Index map
-  ----------------------
-  -- TODO
-  -- listen to insertions, removals, and moves to reconstruct map from first index that changed
-
-
   -- create DynamicSeq
-  ------------------------------------------------
+  --------------------
   let
     dseqc = DynamicSeqConfig {
         _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
@@ -272,6 +267,14 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
       }
   dseq :: DynamicSeq t REltId <-
     holdDynamicSeq empty dseqc
+
+
+
+  -- REltId -> Index map
+  ----------------------
+  -- TODO listen to insertions, removals, and moves to reconstruct map from first index that changed
+
+
 
   -- collect changes for _sEltLayerTree_changeView
   ------------------------------------------------
@@ -296,6 +299,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     changes3 = force <$> NE.toList
       <$> fmap (\(rid, before, after) -> (rid, (Just before, Just after)))
       <$> _directory_modified directory
+
 
   return
     SEltLayerTree {

@@ -2,7 +2,8 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Reflex.Entry (
-  PFConfig(..)
+  PotatoTotal(..)
+  , PFConfig(..)
   , PFOutput(..)
   , holdPF
 ) where
@@ -39,6 +40,15 @@ loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
 -}
 
+-- | temp (or maybe not temp) way to track all changes in SEltLayerTree
+data PotatoTotal = PotatoTotal {
+  _potatoTotal_sEltLabelMap  :: IM.IntMap SEltLabel
+  --, _potatoTotal_layerPosMap :: IM.IntMap LayerPos
+  , _potatoTotal_layerPosMap :: REltId -> Maybe LayerPos
+  , _potatoTotal_layers      :: Seq REltId
+}
+
+
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
   -- | don't use this to add folders, as they need to be added with matching pair to ensure scoping property
@@ -63,16 +73,18 @@ data PFConfig t = PFConfig {
 data PFOutput t = PFOutput {
 
   -- TODO rename to _pfo_sEltLayerTree
-  _pfo_layers           :: SEltLayerTree t
-  , _pfo_canvas         :: Canvas t
+  _pfo_layers               :: SEltLayerTree t
+  , _pfo_canvas             :: Canvas t
 
   -- TODO
   --, _pfo_loaded :: Event t ()
 
-  , _pfo_saved          :: Event t SPotatoFlow
+  , _pfo_saved              :: Event t SPotatoFlow
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
-  , _pfo_potato_changed :: Event t ()
+  , _pfo_potato_changed     :: Event t ()
+  -- temp access to entire state, or maybe not so temp
+  , _pfo_potato_potatoTotal :: Dynamic t PotatoTotal
 }
 
 holdPF ::
@@ -127,8 +139,6 @@ holdPF PFConfig {..} = mdo
   -- * doAction_PFCNewElts :: Event t (NonEmpty SuperSEltLabel)
   -- * loadedWithIds :: Event t [(REltId, SEltLabel)]
   -- * TODO doAction_paste/duplicate
-
-
   let
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
         _directoryIdAssignerConfig_assign = leftmostwarn "DirectoryIdAssigner"
@@ -161,8 +171,6 @@ holdPF PFConfig {..} = mdo
       -- directoryIdAssigner will not report events when no ids are assigned, but we want to be able to load an empty SEltTree
       -- TODO modify DirectoryIdAssigner so it's not using NonEmpty
       , [] <$ _pfc_load]
-
-
 
 
   -- SELTLAYERS
@@ -200,6 +208,14 @@ holdPF PFConfig {..} = mdo
       }
   canvas <- holdCanvas canvasConfig
 
+  -- POTATO TOTAL
+  -- for now we just do linear search...
+  let
+    ltView = _sEltLayerTree_view layerTree
+    lpMapDyn = fmap (\s rid -> Seq.findIndexL (== rid) s) $ ltView
+    dynPotatoTotal :: Dynamic t PotatoTotal
+    dynPotatoTotal = ffor3 (_directory_contents (_sEltLayerTree_directory layerTree)) lpMapDyn ltView PotatoTotal
+
   -- PREP PFO
   let
     pushStateFn :: (MonadSample t m') => () -> m' (SCanvas, [SuperSEltLabel])
@@ -220,6 +236,7 @@ holdPF PFConfig {..} = mdo
         -- force the state to stop leaks
         $ fmap (\x -> deepseq x x)
         $ pushAlways pushStateFn _pfc_save
-      , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
       , _pfo_canvas = canvas
+      , _pfo_potato_changed = void $ leftmost [_actionStack_do actionStack, _actionStack_undo actionStack]
+      , _pfo_potato_potatoTotal = dynPotatoTotal
     }

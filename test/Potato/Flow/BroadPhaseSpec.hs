@@ -11,7 +11,6 @@ import           Test.Hspec
 import           Data.Default (def)
 import qualified Data.IntMap  as IM
 import qualified Data.List    as L
-import qualified Data.Text    as T
 
 import           Potato.Flow
 
