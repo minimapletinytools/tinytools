@@ -78,10 +78,10 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
     -blink timers
     -escape key?
   DONE-maybe some better way to deal with off pane dragging
-    -also need to capture release events that happen off pane
+    DONE-also need to capture release events that happen off pane
       -this can happen off screen too, maybe you can capture release events off screen? not sure
         -if not, you'll have to check for a new click event and see if there was a prior release event
-    -i.e. modify pane implementation to ignore drag events that started off pane
+    DONE-i.e. modify pane implementation to ignore drag events that started off pane
   -text box that takes return key as confirming a text box and firing off a confirm event, also loses focus?
   -pop up panes (e.g. to save to file or whatever)
     -needs to take away focus from panes in the background
@@ -130,8 +130,17 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
--consider hiding manipulators if tool is incorrect (i.e. not select tool)
--move create new elt into manipulator
+-switch all PARTIALs to use asserts so they give you line numbers...
+-do render order properly in Canvas
+-manipulators
+  -get negative boxes working
+  -do MBoundingBox manipulator
+    -use same code as MBox, but different behavior based on manipulateImmediately
+  -move create new elt into manipulator
+  DONE-do one big manipulator for translating thing
+    -click+drag should ideally go straight to move if it selects
+      -anyway to use the same bool in selectFromVeryNew? Maybe rename the bool to manipulateImmediately which is interpreted by each manipulator differently
+IGNORE-consider hiding manipulators if tool is incorrect (i.e. not select tool)
 -try this thing: compile reflex with flag 'debug-cycles' and compile with profiling enabled for stack tree
 -textstyle
   -option for space characters to be transparent
@@ -142,7 +151,6 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
   -redo SEltLayers with bespoke structure so everything can be done in one frame D:
   -move command
   -REltId -> Index map
-
 -mid priority
   IGNORE-helpers to create fine grained manipulators
   -refine drawers

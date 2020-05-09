@@ -23,6 +23,7 @@ module Potato.Flow.Math (
   -- these helpers maybe belong in a different file, they have very specific usages
   , CanonicalLBox(..)
   , canonicalLBox_from_lBox
+  , lBox_from_canonicalLBox
   , deltaLBox_via_canonicalLBox
 
   , Delta(..)
@@ -82,6 +83,7 @@ lBox_area (LBox (V2 _ _) (V2 w h)) = w*h
 make_LBox_from_ul_br :: XY -> XY -> LBox
 make_LBox_from_ul_br (V2 x1 y1) (V2 x2 y2) =
   LBox {
+    -- TODO rename to _lBox_lt
     _lBox_ul= V2 (min x1 x2) (min y1 y2)
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
@@ -158,6 +160,13 @@ canonicalLBox_from_lBox (LBox (V2 x y) (V2 w h)) = r where
   fx = w < 0
   fy = h < 0
   r = CanonicalLBox fx fy $ make_LBox_from_axis (x, x+w, y, y+h)
+
+lBox_from_canonicalLBox :: CanonicalLBox -> LBox
+lBox_from_canonicalLBox (CanonicalLBox fx fy (LBox (V2 x y) (V2 w h))) = LBox (V2 x' y') (V2 w' h') where
+  x' = if fx then x+w else x
+  y' = if fy then y+h else y
+  w' = if fx then -w else w
+  h' = if fy then -h else h
 
 deltaLBox_via_canonicalLBox :: CanonicalLBox -> DeltaLBox -> DeltaLBox
 deltaLBox_via_canonicalLBox (CanonicalLBox fx fy _) DeltaLBox {..} = r where

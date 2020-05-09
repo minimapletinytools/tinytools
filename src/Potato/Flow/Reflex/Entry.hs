@@ -45,7 +45,9 @@ loadWSFromFile = fmapMaybe decode
 -- | temp (or maybe not temp) way to track all changes in SEltLayerTree
 -- TBH not so potatoes, this is legit
 data PotatoTotal = PotatoTotal {
+  -- map of REltId to SEltLabel
   _potatoTotal_sEltLabelMap  :: IM.IntMap SEltLabel
+  -- map of REltId to LayerPos
   --, _potatoTotal_layerPosMap :: IM.IntMap LayerPos
   , _potatoTotal_layerPosMap :: REltId -> Maybe LayerPos
   , _potatoTotal_layers      :: Seq REltId
