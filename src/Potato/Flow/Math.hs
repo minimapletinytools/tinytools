@@ -207,6 +207,7 @@ instance Delta LBox DeltaLBox where
       , _lBox_size = minusDelta _lBox_size _deltaLBox_resizeBy
     }
 
+-- | (old text, new text)
 type DeltaText = (Text,Text)
 -- TODO more efficient to do this with zippers prob?
 -- is there a way to make this more generic?
