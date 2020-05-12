@@ -8,7 +8,7 @@ module Potato.Flow.Math (
   , nilLBox
 
   -- TODO rename this to lBox for consistency...
-  , make_LBox_from_ul_br
+  , make_LBox_from_XYs
   , does_LBox_contains_XY
   , lBox_area
 
@@ -23,6 +23,7 @@ module Potato.Flow.Math (
   -- these helpers maybe belong in a different file, they have very specific usages
   , CanonicalLBox(..)
   , canonicalLBox_from_lBox
+  , canonicalLBox_from_lBox_
   , lBox_from_canonicalLBox
   , deltaLBox_via_canonicalLBox
 
@@ -63,6 +64,7 @@ instance ToJSON XY
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
 -- e.g. an LBox with size (0,0) contains nothing
 data LBox = LBox {
+  -- TODO rename to _lBox_lt
   _lBox_ul     :: XY
   , _lBox_size :: XY
 } deriving (Eq, Generic)
@@ -80,12 +82,22 @@ nilLBox = LBox 0 0
 lBox_area :: LBox -> Int
 lBox_area (LBox (V2 _ _) (V2 w h)) = w*h
 
-make_LBox_from_ul_br :: XY -> XY -> LBox
-make_LBox_from_ul_br (V2 x1 y1) (V2 x2 y2) =
+-- | always returns a canonical LBox
+make_LBox_from_XYs :: XY -> XY -> LBox
+make_LBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
   LBox {
-    -- TODO rename to _lBox_lt
     _lBox_ul= V2 (min x1 x2) (min y1 y2)
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
+  }
+
+-- UNTESTED
+-- | always returns a canonical LBox
+add_XY_to_LBox :: XY -> LBox -> LBox
+add_XY_to_LBox (V2 px py) lbox = r where
+  (LBox (V2 bx by) (V2 bw bh)) = canonicalLBox_from_lBox_ lbox
+  r = LBox {
+    _lBox_ul = V2 (min px bx) (min py by)
+    , _lBox_size  = V2 (max bw (abs (px-bx))) (max bh (abs (py-by)))
   }
 
 does_LBox_contains_XY :: LBox -> XY -> Bool
@@ -160,6 +172,11 @@ canonicalLBox_from_lBox (LBox (V2 x y) (V2 w h)) = r where
   fx = w < 0
   fy = h < 0
   r = CanonicalLBox fx fy $ make_LBox_from_axis (x, x+w, y, y+h)
+
+-- | same as canonicalLBox_from_lBox but returns just the canonical LBox
+canonicalLBox_from_lBox_ :: LBox -> LBox
+canonicalLBox_from_lBox_ lbox = r where
+  (CanonicalLBox _ _ r) = canonicalLBox_from_lBox lbox
 
 lBox_from_canonicalLBox :: CanonicalLBox -> LBox
 lBox_from_canonicalLBox (CanonicalLBox fx fy (LBox (V2 x y) (V2 w h))) = LBox (V2 x' y') (V2 w' h') where
