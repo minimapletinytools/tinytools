@@ -53,6 +53,9 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
+-click on object should go straight to dragging?
+  -this is hard to do because canvas doesn't know object ordering :(
+    -maybe it makes sense to store object order inside of broadphase...
 -consider combining box and text into one thing..
 -switch all PARTIALs to use asserts so they give you line numbers...
 -try this thing: compile reflex with flag 'debug-cycles' and compile with profiling enabled for stack tree

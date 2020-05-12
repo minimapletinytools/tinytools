@@ -33,6 +33,7 @@ getSEltBox selt = case selt of
   SEltNone        -> Nothing
   SEltFolderStart -> Nothing
   SEltFolderEnd   -> Nothing
+  -- TODO return canonical
   SEltBox x       -> Just $ _sBox_box x
   SEltLine x      -> Just $ make_LBox_from_ul_br (_sLine_start x) (_sLine_end x)
   SEltText x      -> Just $ _sText_box x
@@ -61,9 +62,9 @@ getDrawer selt = case selt of
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
   SEltBox SBox {..}       -> r where
-    LBox (V2 x y) (V2 w h)  = _sBox_box
+    CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
     rfn pt@(V2 x' y')
-      | not (does_LBox_contains_XY _sBox_box pt) = Nothing
+      | not (does_LBox_contains_XY lbox pt) = Nothing
       | w == 1 && h == 1 = Just $ _sLineStyle_point _sBox_style
       | w == 1 = Just $ _sLineStyle_vertical _sBox_style
       | h == 1 = Just $ _sLineStyle_horizontal _sBox_style
@@ -76,7 +77,7 @@ getDrawer selt = case selt of
       | otherwise = case _sLineStyle_fill _sBox_style of
         FillSimple c -> Just c
     r = SEltDrawer {
-        _sEltDrawer_box = _sBox_box
+        _sEltDrawer_box = lbox
         , _sEltDrawer_renderFn = rfn
       }
   SEltLine _      -> potatoDrawer
