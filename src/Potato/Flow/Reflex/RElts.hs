@@ -65,17 +65,18 @@ getDrawer selt = case selt of
     CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
     rfn pt@(V2 x' y')
       | not (does_LBox_contains_XY lbox pt) = Nothing
-      | w == 1 && h == 1 = Just $ _sLineStyle_point _sBox_style
-      | w == 1 = Just $ _sLineStyle_vertical _sBox_style
-      | h == 1 = Just $ _sLineStyle_horizontal _sBox_style
-      | x' == x && y' == y = Just $ _cornerStyle_ul $ _sLineStyle_corners _sBox_style
-      | x' == x && y' == y+h-1 = Just $ _cornerStyle_bl $ _sLineStyle_corners _sBox_style
-      | x' == x+w-1 && y' == y = Just $ _cornerStyle_ur $ _sLineStyle_corners _sBox_style
-      | x' == x+w-1 && y' == y+h-1 = Just $ _cornerStyle_br $ _sLineStyle_corners _sBox_style
-      | x' == x || x' == x+w-1 = Just $ _sLineStyle_vertical _sBox_style
-      | y' == y || y' == y+h-1 = Just $ _sLineStyle_horizontal _sBox_style
-      | otherwise = case _sLineStyle_fill _sBox_style of
-        FillSimple c -> Just c
+      | w == 1 && h == 1 = Just $ _lineStyle_point _sBox_style
+      | w == 1 = Just $ _lineStyle_vertical _sBox_style
+      | h == 1 = Just $ _lineStyle_horizontal _sBox_style
+      | x' == x && y' == y = Just $ _cornerStyle_tl $ _lineStyle_corners _sBox_style
+      | x' == x && y' == y+h-1 = Just $ _cornerStyle_bl $ _lineStyle_corners _sBox_style
+      | x' == x+w-1 && y' == y = Just $ _cornerStyle_tr $ _lineStyle_corners _sBox_style
+      | x' == x+w-1 && y' == y+h-1 = Just $ _cornerStyle_br $ _lineStyle_corners _sBox_style
+      | x' == x || x' == x+w-1 = Just $ _lineStyle_vertical _sBox_style
+      | y' == y || y' == y+h-1 = Just $ _lineStyle_horizontal _sBox_style
+      | otherwise = case _lineStyle_fill _sBox_style of
+        FillStyle_Simple c -> Just c
+        FillStyle_Blank    -> Nothing
     r = SEltDrawer {
         _sEltDrawer_box = lbox
         , _sEltDrawer_renderFn = rfn

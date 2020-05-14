@@ -2,8 +2,8 @@ module Potato.Flow.SElts (
   PChar
   , FillStyle(..)
   , CornerStyle(..)
-  , SLineStyle(..)
-  , STextStyle(..)
+  , LineStyle(..)
+  , TextStyle(..)
   , SBox(..)
   , SLine(..)
   , SText(..)
@@ -23,18 +23,18 @@ import           Data.Default
 
 type PChar = Char
 
-data FillStyle = FillSimple PChar deriving (Eq, Generic, Show)
+data FillStyle = FillStyle_Blank | FillStyle_Simple PChar deriving (Eq, Generic, Show)
 
 instance FromJSON FillStyle
 instance ToJSON FillStyle
 instance NFData FillStyle
 
 instance Default FillStyle where
-  def = FillSimple '@'
+  def = FillStyle_Simple '@'
 
 data CornerStyle = CornerStyle {
-  _cornerStyle_ul   :: PChar
-  , _cornerStyle_ur :: PChar
+  _cornerStyle_tl   :: PChar
+  , _cornerStyle_tr :: PChar
   , _cornerStyle_bl :: PChar
   , _cornerStyle_br :: PChar
 } deriving (Eq, Generic, Show)
@@ -45,51 +45,59 @@ instance NFData CornerStyle
 
 instance Default CornerStyle where
   def = CornerStyle {
-      _cornerStyle_ul = '╔'
-      , _cornerStyle_ur = '╗'
+      _cornerStyle_tl = '╔'
+      , _cornerStyle_tr = '╗'
       , _cornerStyle_bl = '╚'
       , _cornerStyle_br = '╝'
     }
 
--- TODO Rename to just LineStyle
--- TODO default instances
-data SLineStyle = SLineStyle {
-  _sLineStyle_corners      :: CornerStyle
-  , _sLineStyle_vertical   :: PChar
-  , _sLineStyle_horizontal :: PChar
-  , _sLineStyle_point      :: PChar
-  , _sLineStyle_fill       :: FillStyle
+data LineStyle = LineStyle {
+  _lineStyle_corners      :: CornerStyle
+  , _lineStyle_vertical   :: PChar
+  , _lineStyle_horizontal :: PChar
+  , _lineStyle_point      :: PChar
+  , _lineStyle_fill       :: FillStyle
 } deriving (Eq, Generic, Show)
 
-instance FromJSON SLineStyle
-instance ToJSON SLineStyle
-instance NFData SLineStyle
+instance FromJSON LineStyle
+instance ToJSON LineStyle
+instance NFData LineStyle
 
-instance Default SLineStyle where
-  def = SLineStyle {
-    _sLineStyle_corners      = def
-    , _sLineStyle_vertical   = '║'
-    , _sLineStyle_horizontal = '═'
-    , _sLineStyle_point = '█'
-    , _sLineStyle_fill = def
+instance Default LineStyle where
+  def = LineStyle {
+    _lineStyle_corners      = def
+    , _lineStyle_vertical   = '║'
+    , _lineStyle_horizontal = '═'
+    , _lineStyle_point = '█'
+    , _lineStyle_fill = def
   }
 
--- TODO rename to TextStyle
-data STextStyle = STextStyle {
+data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign_Justify deriving (Eq, Generic, Show)
+
+instance FromJSON TextAlign
+instance ToJSON TextAlign
+instance NFData TextAlign
+
+instance Default TextAlign where
+  def = TextAlign_Left
+
+data TextStyle = TextStyle {
   -- margins
+  -- alignment
+  _textStyle_alignment :: TextAlign
 } deriving (Eq, Generic, Show)
 
-instance FromJSON STextStyle
-instance ToJSON STextStyle
-instance NFData STextStyle
+instance FromJSON TextStyle
+instance ToJSON TextStyle
+instance NFData TextStyle
 
-instance Default STextStyle where
-  def = STextStyle {}
+instance Default TextStyle where
+  def = TextStyle { _textStyle_alignment = def }
 
 -- |
 data SBox = SBox {
   _sBox_box     :: LBox
-  , _sBox_style :: SLineStyle
+  , _sBox_style :: LineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
@@ -100,7 +108,8 @@ instance NFData SBox
 data SLine = SLine {
   _sLine_start   :: XY
   , _sLine_end   :: XY
-  , _sLine_style :: SLineStyle
+  , _sLine_style :: LineStyle
+  -- TODO arrows heads (maybe just make it part of LineStyle?)
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLine
@@ -113,7 +122,7 @@ instance NFData SLine
 data SCartLines = SCartLines {
   _sCartLines_start   :: XY
   , _sCartLines_ends  :: NonEmpty (Either Int Int)
-  , _sCartLines_style :: SLineStyle
+  , _sCartLines_style :: LineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SCartLines
@@ -125,7 +134,7 @@ instance NFData SCartLines
 data SText = SText {
   _sText_box     :: LBox
   , _sText_text  :: Text
-  , _sText_style :: STextStyle
+  , _sText_style :: TextStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SText
