@@ -64,8 +64,7 @@ instance ToJSON XY
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
 -- e.g. an LBox with size (0,0) contains nothing
 data LBox = LBox {
-  -- TODO rename to _lBox_lt
-  _lBox_ul     :: XY
+  _lBox_tl     :: XY
   , _lBox_size :: XY
 } deriving (Eq, Generic)
 
@@ -86,7 +85,7 @@ lBox_area (LBox (V2 _ _) (V2 w h)) = w*h
 make_LBox_from_XYs :: XY -> XY -> LBox
 make_LBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
   LBox {
-    _lBox_ul= V2 (min x1 x2) (min y1 y2)
+    _lBox_tl= V2 (min x1 x2) (min y1 y2)
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
@@ -96,7 +95,7 @@ add_XY_to_LBox :: XY -> LBox -> LBox
 add_XY_to_LBox (V2 px py) lbox = r where
   (LBox (V2 bx by) (V2 bw bh)) = canonicalLBox_from_lBox_ lbox
   r = LBox {
-    _lBox_ul = V2 (min px bx) (min py by)
+    _lBox_tl = V2 (min px bx) (min py by)
     , _lBox_size  = V2 (max bw (abs (px-bx))) (max bh (abs (py-by)))
   }
 
@@ -216,11 +215,11 @@ data DeltaLBox = DeltaLBox {
 
 instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {
-      _lBox_ul = plusDelta _lBox_ul _deltaLBox_translate
+      _lBox_tl = plusDelta _lBox_tl _deltaLBox_translate
       , _lBox_size = plusDelta _lBox_size _deltaLBox_resizeBy
     }
   minusDelta LBox {..} DeltaLBox {..} =  LBox {
-      _lBox_ul = minusDelta _lBox_ul _deltaLBox_translate
+      _lBox_tl = minusDelta _lBox_tl _deltaLBox_translate
       , _lBox_size = minusDelta _lBox_size _deltaLBox_resizeBy
     }
 
