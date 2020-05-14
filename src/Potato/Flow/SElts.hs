@@ -1,8 +1,7 @@
 module Potato.Flow.SElts (
   PChar
   , FillStyle(..)
-  , CornerStyle(..)
-  , LineStyle(..)
+  , SuperStyle(..)
   , TextStyle(..)
   , SBox(..)
   , SLine(..)
@@ -32,44 +31,33 @@ instance NFData FillStyle
 instance Default FillStyle where
   def = FillStyle_Simple '@'
 
-data CornerStyle = CornerStyle {
-  _cornerStyle_tl   :: PChar
-  , _cornerStyle_tr :: PChar
-  , _cornerStyle_bl :: PChar
-  , _cornerStyle_br :: PChar
+
+-- TODO maybe rename to SuperStyle?
+data SuperStyle = SuperStyle {
+  _superStyle_tl           :: PChar
+  , _superStyle_tr         :: PChar
+  , _superStyle_bl         :: PChar
+  , _superStyle_br         :: PChar
+  , _superStyle_vertical   :: PChar
+  , _superStyle_horizontal :: PChar
+  , _superStyle_point      :: PChar
+  , _superStyle_fill       :: FillStyle
 } deriving (Eq, Generic, Show)
 
-instance FromJSON CornerStyle
-instance ToJSON CornerStyle
-instance NFData CornerStyle
+instance FromJSON SuperStyle
+instance ToJSON SuperStyle
+instance NFData SuperStyle
 
-instance Default CornerStyle where
-  def = CornerStyle {
-      _cornerStyle_tl = '╔'
-      , _cornerStyle_tr = '╗'
-      , _cornerStyle_bl = '╚'
-      , _cornerStyle_br = '╝'
-    }
-
-data LineStyle = LineStyle {
-  _lineStyle_corners      :: CornerStyle
-  , _lineStyle_vertical   :: PChar
-  , _lineStyle_horizontal :: PChar
-  , _lineStyle_point      :: PChar
-  , _lineStyle_fill       :: FillStyle
-} deriving (Eq, Generic, Show)
-
-instance FromJSON LineStyle
-instance ToJSON LineStyle
-instance NFData LineStyle
-
-instance Default LineStyle where
-  def = LineStyle {
-    _lineStyle_corners      = def
-    , _lineStyle_vertical   = '║'
-    , _lineStyle_horizontal = '═'
-    , _lineStyle_point = '█'
-    , _lineStyle_fill = def
+instance Default SuperStyle where
+  def = SuperStyle {
+    _superStyle_tl = '╔'
+    , _superStyle_tr = '╗'
+    , _superStyle_bl = '╚'
+    , _superStyle_br = '╝'
+    , _superStyle_vertical   = '║'
+    , _superStyle_horizontal = '═'
+    , _superStyle_point = '█'
+    , _superStyle_fill = def
   }
 
 data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign_Justify deriving (Eq, Generic, Show)
@@ -97,7 +85,7 @@ instance Default TextStyle where
 -- |
 data SBox = SBox {
   _sBox_box     :: LBox
-  , _sBox_style :: LineStyle
+  , _sBox_style :: SuperStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
@@ -108,8 +96,8 @@ instance NFData SBox
 data SLine = SLine {
   _sLine_start   :: XY
   , _sLine_end   :: XY
-  , _sLine_style :: LineStyle
-  -- TODO arrows heads (maybe just make it part of LineStyle?)
+  , _sLine_style :: SuperStyle
+  -- TODO arrows heads (maybe just make it part of SuperStyle?)
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SLine
@@ -122,7 +110,7 @@ instance NFData SLine
 data SCartLines = SCartLines {
   _sCartLines_start   :: XY
   , _sCartLines_ends  :: NonEmpty (Either Int Int)
-  , _sCartLines_style :: LineStyle
+  , _sCartLines_style :: SuperStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SCartLines
