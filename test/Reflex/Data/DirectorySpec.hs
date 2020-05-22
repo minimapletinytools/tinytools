@@ -41,7 +41,7 @@ instance (Show a) => Show (TestCmd a) where
 basic_network
   :: forall t m
    . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t [Int] -> PerformEventT t m (Event t (Int, Int)))
+  => (Event t [Int] -> TestGuestT t m (Event t (Int, Int)))
 basic_network ev = do
   let neEv = fmap fromList ev
       diac =

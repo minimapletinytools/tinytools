@@ -12,14 +12,11 @@ module Potato.Flow.Math (
   , does_LBox_contains_XY
   , lBox_area
 
-
-  -- untested
   , make_LBox_from_axis
   , union_LBox
   , intersect_LBox
   , does_LBox_intersect
 
-  -- untested
   -- these helpers maybe belong in a different file, they have very specific usages
   , CanonicalLBox(..)
   , canonicalLBox_from_lBox
@@ -58,7 +55,6 @@ instance ToJSON XY
 -- should only be used by VC, so does not belong here
 --newtype VPoint = VPoint (Int, Int) deriving (Generic, Show, FromJSON, ToJSON)
 
--- TODO rename params maybe?
 -- | a box in logical space
 -- note size is non inclusive
 -- e.g. an LBox with size (1,1) is exactly 1 point at ul
@@ -89,7 +85,6 @@ make_LBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
--- UNTESTED
 -- | always returns a canonical LBox
 add_XY_to_LBox :: XY -> LBox -> LBox
 add_XY_to_LBox (V2 px py) lbox = r where
@@ -102,7 +97,6 @@ add_XY_to_LBox (V2 px py) lbox = r where
 does_LBox_contains_XY :: LBox -> XY -> Bool
 does_LBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
-
 
 -- | right and bottom axis are non-inclusive
 make_LBox_from_axis :: (Int, Int, Int, Int) -> LBox

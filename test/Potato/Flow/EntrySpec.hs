@@ -41,7 +41,7 @@ data FCmd =
 basic_network
   :: forall t m
    . (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t FCmd -> PerformEventT t m (Event t Int))
+  => (Event t FCmd -> TestGuestT t m (Event t Int))
 basic_network ev = mdo
   let
     addEv = flip fmapMaybe ev $ \case
@@ -80,7 +80,7 @@ basic_network ev = mdo
   let
     layerTree = _pfo_layers $ pf
     newEltsEv = updated . fmap length . _sEltLayerTree_view $ layerTree
-  
+
   return newEltsEv
 
 basic_test :: Test

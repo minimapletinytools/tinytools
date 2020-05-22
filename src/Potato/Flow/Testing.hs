@@ -60,7 +60,7 @@ instance Show FCmd where
   show _                             = "other"
 
 setup_network:: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => Event t FCmd -> PerformEventT t m (PFOutput t)
+  => Event t FCmd -> TestGuestT t m (PFOutput t)
 setup_network ev = mdo
   let
     --ev = traceEvent ("aoeu") ev'
@@ -136,7 +136,7 @@ setup_network ev = mdo
 -- | make sure to tick with 'FCNone' to ensure output behavior is most recent
 step_state_network :: forall t m.
   (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (AppIn t () FCmd -> PerformEventT t m (AppOut t () (SPotatoFlow)))
+  => (AppIn t () FCmd -> TestGuestT t m (AppOut t () (SPotatoFlow)))
 step_state_network AppIn {..} = do
   pfo <- setup_network _appIn_event
   return

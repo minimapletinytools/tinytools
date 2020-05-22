@@ -52,7 +52,7 @@ extra-deps:
 #- smash-0.1.1.0
 - dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
 - github: pdlla/reflex-test-host
-  commit: 73de55fbd7cb67b73af8f5d4370b1f653e7e9652
+  commit: 5176714e81bd05428b69755b337e1947faa43c8b
 - github: pdlla/reflex-dynamic-containers
   commit: 607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba
 - github: pdlla/reflex-potatoes

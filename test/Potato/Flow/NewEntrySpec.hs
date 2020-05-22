@@ -33,7 +33,7 @@ import           Potato.Flow.Testing
 
 save_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t FCmd -> PerformEventT t m (Event t SEltTree))
+  => (Event t FCmd -> TestGuestT t m (Event t SEltTree))
 save_network ev = do
   pfo <- setup_network ev
   return $ fmap _sPotatoFlow_sEltTree $ _pfo_saved pfo
@@ -72,7 +72,7 @@ bs_save_5 =
 -- you'll need to modify reflex-test-host for this
 pair_test :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global, Eq a, Show a)
   => Text
-  -> (Event t FCmd -> PerformEventT t m (Event t a))
+  -> (Event t FCmd -> TestGuestT t m (Event t a))
   -> ([FCmd],[FCmd])
   -> Test
 pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ TestCase $ do
