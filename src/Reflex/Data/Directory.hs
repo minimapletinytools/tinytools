@@ -117,7 +117,7 @@ holdDirectory DirectoryConfig {..} = mdo
     lookupElt (m, els) = catMaybes . toList . fmap (\i -> (\x -> (i, x)) <$> IM.lookup i m) $ els
     removed = fmap lookupElt (attach bDirectory _directoryConfig_remove)
     modified = fmap lookupElt (attach bDirectory $ (fst <<$>> _directoryConfig_modifyWith))
-    allEvs = leftmostwarn "Directory" [
+    allEvs = leftmostWarn "Directory" [
       fmap DCAdd _directoryConfig_add
       , fmap DCRemove _directoryConfig_remove
       , fmap DCModify _directoryConfig_modifyWith

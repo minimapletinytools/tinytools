@@ -122,7 +122,7 @@ holdPF PFConfig {..} = mdo
 
   -- ACTION STACK
   let
-    doActions = leftmostwarn "_actionStackConfig_do" [
+    doActions = leftmostWarn "_actionStackConfig_do" [
         doAction_PFCNewElts_addElt
         , doAction_PFCNewElts_addFolder
         , doAction_PFCDeleteElts
@@ -153,7 +153,7 @@ holdPF PFConfig {..} = mdo
   -- * TODO doAction_paste/duplicate
   let
     directoryIdAssignerConfig = DirectoryIdAssignerConfig {
-        _directoryIdAssignerConfig_assign = leftmostwarn "DirectoryIdAssigner"
+        _directoryIdAssignerConfig_assign = leftmostWarn "DirectoryIdAssigner"
           [fmap (:|[]) _pfc_addElt
           , fmapMaybe (NE.nonEmpty . zip [0..] . _sPotatoFlow_sEltTree) _pfc_load
           , fmap (\(lp,name) -> (lp, SEltLabel name SEltFolderStart) :| [(lp+1, SEltLabel "" SEltFolderEnd)])  _pfc_addFolder
@@ -194,9 +194,9 @@ holdPF PFConfig {..} = mdo
   -- * SEltLayerTree
   let
     layerTreeConfig = SEltLayerTreeConfig {
-        _sEltLayerTreeConfig_insert = leftmostwarn "_layerTreeConfig_add"
+        _sEltLayerTreeConfig_insert = leftmostWarn "_layerTreeConfig_add"
           [selectDo actionStack PFCNewElts, selectUndo actionStack PFCDeleteElts]
-        , _sEltLayerTreeConfig_remove = leftmostwarn "_layerTreeConfig_remove"
+        , _sEltLayerTreeConfig_remove = leftmostWarn "_layerTreeConfig_remove"
           [selectUndo actionStack PFCNewElts, selectDo actionStack PFCDeleteElts]
         , _sEltLayerTree_directory_doManipulate = selectDo actionStack PFCManipulate
         , _sEltLayerTree_directory_undoManipulate = selectUndo actionStack PFCManipulate

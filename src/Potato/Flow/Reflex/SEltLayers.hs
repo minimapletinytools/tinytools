@@ -189,7 +189,7 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
         -- TODO assert that insert/removal events satisfy scoping property
         _directoryConfig_add = removeLayerPos <<$>> _sEltLayerTreeConfig_insert
         , _directoryConfig_remove = extractREltId <<$>> _sEltLayerTreeConfig_remove
-        , _directoryConfig_modifyWith = leftmostwarn "directory modify" [modifyDo, modifyUndo]
+        , _directoryConfig_modifyWith = leftmostWarn "directory modify" [modifyDo, modifyUndo]
         , _directoryConfig_set = _sEltLayerTreeConfig_load
       }
   directory :: Directory t SEltLabel
@@ -261,8 +261,8 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
   --------------------
   let
     dseqc = DynamicSeqConfig {
-        _dynamicSeqConfig_insert = leftmostwarn "layer seq insert" [insertSingleEv, insertLoadEv]
-        , _dynamicSeqConfig_remove = leftmostwarn "layer seq remove" [removeSingleEv]
+        _dynamicSeqConfig_insert = leftmostWarn "layer seq insert" [insertSingleEv, insertLoadEv]
+        , _dynamicSeqConfig_remove = leftmostWarn "layer seq remove" [removeSingleEv]
         , _dynamicSeqConfig_clear = void _sEltLayerTreeConfig_load
       }
   dseq :: DynamicSeq t REltId <-
@@ -305,5 +305,5 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      , _sEltLayerTree_changeView = IM.fromList <$> leftmostwarn "SEltLayerTree changes" [changes1, changes2, changes3]
+      , _sEltLayerTree_changeView = IM.fromList <$> leftmostWarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }
