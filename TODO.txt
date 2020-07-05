@@ -3,6 +3,11 @@ stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
+:: DATA REFACTOR NOTES ::
+-Add REltId to SElt
+
+
+
 
 ::SEltLayers refactor notes::
 
