@@ -95,6 +95,8 @@ dependencies:
 - vector
 - data-default
 - lens
+- listsafe
+- data-ordlist
 
 #- smash
 - deepseq

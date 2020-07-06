@@ -39,3 +39,6 @@ spec = do
       insertEltList [(0,1),(2,1),(4,1)] someSeq1 `shouldBe` Seq.fromList [1,0,0,1,0,0,1,0]
     it "removeEltList" $ do
       removeEltList [0..5] someSeq3 `shouldBe` Seq.fromList [6..9]
+      removeEltList [0,1,5,9] someSeq3 `shouldBe` Seq.fromList [2,3,4,6,7,8]
+    it "moveEltList" $ do
+      moveEltList [0,1,5,9] 8 someSeq3 `shouldBe` Seq.fromList [2,3,4,6,7,0,1,5,9,8]

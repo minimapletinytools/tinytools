@@ -27,7 +27,7 @@ data PFCmdTag t a where
   PFCNewElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
   -- LayerPos indices are the current indices of elements to be removed
   PFCDeleteElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
-  --PFCMove :: PFCmdTag t (LayerPos, NonEmpty LayerPos)
+  --PFCMove :: PFCmdTag t (NonEmpty LayerPos, LayerPos)
   --PFCPaste :: PFCmdTag t (LayerPos, [REltId, SEltLabel])
   --PFCDuplicate :: PFCmdTag t [REltId]
   PFCManipulate :: PFCmdTag t (ControllersWithId)

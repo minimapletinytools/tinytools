@@ -6,6 +6,7 @@ module Potato.Flow.Reflex.New.Layers (
   , removeElts
   , insertEltList
   , removeEltList
+  , moveEltList
 ) where
 
 import           Relude
@@ -13,6 +14,7 @@ import           Relude
 import           Potato.Flow.Reflex.Types
 
 import           Control.Exception        (assert)
+import           Data.List.Ordered        (isSorted)
 import           Data.Sequence            ((><))
 import qualified Data.Sequence            as Seq
 
@@ -45,9 +47,13 @@ insertElt i y xs = insertElts i (Seq.singleton y) xs
 -- | removes n elts at index i from xs
 removeElts :: Int -> Int -> Seq a -> Seq a
 removeElts n i xs = newSeq where
-  (keepl  , rs   ) = Seq.splitAt i xs
-  (removed, keepr) = Seq.splitAt n rs
+  (keepl  , rs) = Seq.splitAt i xs
+  (_, keepr) = Seq.splitAt n rs
   newSeq           = keepl >< keepr
+
+-- | removes elt at index i from xs
+removeElt :: Int -> Seq a -> Seq a
+removeElt i xs = Seq.deleteAt i xs
 
 -- | inserts ys into xs, positions are after insertion
 insertEltList :: [(Int, a)] -> Seq a -> Seq a
@@ -61,4 +67,12 @@ insertEltList ys xs = newSeq where
 removeEltList :: [Int] -> Seq a -> Seq a
 removeEltList is' xs = newSeq where
   is = reindexSEltLayerPosForRemoval is'
-  newSeq = foldr (removeElts 1) xs is
+  newSeq = foldl' (flip removeElt) xs is
+
+-- | moves all elts, new position is before removal, ys must be sorted
+moveEltList :: [Int] -> Int -> Seq a -> Seq a
+moveEltList is i xs = assert (isSorted is) $ newSeq where
+  nBefore = length . filter (< i) $ is
+  ys = map (Seq.index xs) is
+  newSeq' = removeEltList is xs
+  newSeq = insertElts (i-nBefore) (Seq.fromList ys) newSeq'

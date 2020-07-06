@@ -4,7 +4,9 @@ stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
 :: DATA REFACTOR NOTES ::
--Add REltId to SElt
+IGNORE-Add REltId to SElt
+-get rid of NonEmpty in PFCmd
+-add assert to check LayerPos boundary stuff
 
 
 

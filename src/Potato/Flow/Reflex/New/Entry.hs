@@ -66,18 +66,15 @@ data PFConfig t = PFConfig {
   -- | don't use this to add folders, as they need to be added with matching pair to ensure scoping property
   _pfc_addElt         :: Event t (LayerPos, SEltLabel)
   , _pfc_addFolder    :: Event t (LayerPos, Text)
-  -- TODO take a selection
-  , _pfc_removeElt    :: Event t LayerPos
-  --, _pfc_moveElt    :: Event t (LayerEltId, LayerPos) -- new layer position (before or after removal?)
-  --, _pfc_copy       :: Event t [LayerEltId]
-  --, _pfc_paste      :: Event t ([SElt], LayerPos)
-  --, _pfc_duplicate  :: Event t [LayerEltId]
+  , _pfc_removeElt    :: Event t [LayerPos]
+  , _pfc_moveElt      :: Event t ([LayerPos], LayerPos) -- new layer position is before removal
+  , _pfc_copy         :: Event t [LayerPos]
+  , _pfc_paste        :: Event t ([SElt], LayerPos)
+  , _pfc_duplicate    :: Event t [LayerPos]
   , _pfc_manipulate   :: Event t ControllersWithId
   , _pfc_resizeCanvas :: Event t DeltaLBox
-
   , _pfc_undo         :: Event t ()
   , _pfc_redo         :: Event t ()
-
   , _pfc_load         :: Event t SPotatoFlow
   , _pfc_save         :: Event t ()
 }
