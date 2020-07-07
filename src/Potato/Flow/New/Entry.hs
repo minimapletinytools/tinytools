@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.New.Entry (
+module Potato.Flow.New.Entry (
   PotatoTotal(..)
   , potato_simplifyPotatoTotal
 
@@ -25,6 +25,7 @@ import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
 
 import           Potato.Flow.Math
+import           Potato.Flow.New.Workspace
 import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.SEltLayers
@@ -95,8 +96,13 @@ data PFOutput t = PFOutput {
   , _pfo_potato_potatoTotal :: Dynamic t PotatoTotal
 }
 
+data PFTotalState = PFTotalState {
+  _pFTotalState_workspace   :: PFWorkspace
+  , _pFTotalState_clipboard :: ()
+}
 
-data PFEventCmd =
+
+data PFEventTag =
   PFEAddElt (LayerPos, SEltLabel)
   | PFEAddFolder (LayerPos, Text)
   | PFERemoveElt [LayerPos]
@@ -118,7 +124,7 @@ holdPF ::
   -> m (PFOutput t)
 holdPF PFConfig {..} = mdo
   let
-    pfccmd = leftmostWarn "PFConfig"
+    pfevent = leftmostWarn "PFConfig"
       [ PFEAddElt <$> _pfc_addElt
       , PFEAddFolder <$> _pfc_addFolder
       , PFERemoveElt <$> _pfc_removeElt
@@ -132,5 +138,12 @@ holdPF PFConfig {..} = mdo
       , PFERedo <$ _pfc_redo
       , PFELoad <$> _pfc_load
       , PFESave <$ _pfc_save]
+
+    foldfn :: PFEventTag -> PFTotalState -> PFTotalState
+    foldfn evt pfts = case evt of
+      _ -> undefined where
+        lastState = _pFTotalState_workspace pfts
+
+  pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace ()) pfevent
 
   undefined

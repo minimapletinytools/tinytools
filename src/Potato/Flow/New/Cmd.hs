@@ -4,7 +4,7 @@
 {-# LANGUAGE RecursiveDo        #-}
 {-# LANGUAGE TemplateHaskell    #-}
 
-module Potato.Flow.Reflex.New.Cmd (
+module Potato.Flow.New.Cmd (
   PFCmdTag(..)
   , PFCmd
 
@@ -22,21 +22,20 @@ import qualified Data.Dependent.Map       as DM
 import qualified Data.Dependent.Sum       as DS
 import qualified Text.Show
 
-data PFCmdTag t a where
+data PFCmdTag a where
   -- LayerPos indices are as if all elements already exist in the map
-  PFCNewElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
+  PFCNewElts :: PFCmdTag (NonEmpty SuperSEltLabel)
   -- LayerPos indices are the current indices of elements to be removed
-  PFCDeleteElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
+  PFCDeleteElts :: PFCmdTag (NonEmpty SuperSEltLabel)
   --PFCMove :: PFCmdTag t (NonEmpty LayerPos, LayerPos)
-  --PFCPaste :: PFCmdTag t (LayerPos, [REltId, SEltLabel])
   --PFCDuplicate :: PFCmdTag t [REltId]
-  PFCManipulate :: PFCmdTag t (ControllersWithId)
-  PFCResizeCanvas :: PFCmdTag t DeltaLBox
+  PFCManipulate :: PFCmdTag (ControllersWithId)
+  PFCResizeCanvas :: PFCmdTag DeltaLBox
 
-instance Text.Show.Show (PFCmdTag t a) where
+instance Text.Show.Show (PFCmdTag a) where
   show PFCNewElts      = "PFCNewElts"
   show PFCDeleteElts   = "PFCDeleteElts"
   show PFCManipulate   = "PFCManipulate"
   show PFCResizeCanvas = "PFCResize"
 
-type PFCmd t = DS.DSum (PFCmdTag t) Identity
+type PFCmd = DS.DSum PFCmdTag Identity

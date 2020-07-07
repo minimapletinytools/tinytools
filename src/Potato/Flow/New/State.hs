@@ -1,8 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.State (
+module Potato.Flow.New.State (
   PFState(..)
   , pFState_maxID
+  , emptyPFState
   , do_newElts
   , undo_newElts
   , do_deleteElts
@@ -15,20 +16,20 @@ module Potato.Flow.State (
 import           Relude
 
 
-import           Potato.Flow.Layers
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.New.Cmd
+import           Potato.Flow.New.Cmd
+import           Potato.Flow.New.Layers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 import           Reflex
 
 import           Data.Aeson
-import           Data.Dependent.Sum         (DSum ((:=>)), (==>))
-import qualified Data.IntMap.Strict         as IM
-import qualified Data.List.NonEmpty         as NE
-import qualified Data.List.Safe             as SL
-import qualified Data.Sequence              as Seq
+import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import qualified Data.IntMap.Strict       as IM
+import qualified Data.List.NonEmpty       as NE
+import qualified Data.List.Safe           as SL
+import qualified Data.Sequence            as Seq
 
 
 data PFState = PFState {
@@ -45,7 +46,8 @@ instance NFData PFState
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
 
-
+emptyPFState :: PFState
+emptyPFState = PFState Seq.empty IM.empty (LBox 0 0)
 
 do_newElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
 do_newElts seltls' PFState {..} = r where
