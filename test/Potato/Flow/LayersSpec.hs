@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Potato.Flow.Reflex.New.LayersSpec(
+module Potato.Flow.LayersSpec(
   spec
 ) where
 
@@ -8,10 +8,10 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.Sequence                 as Seq
+import qualified Data.Sequence            as Seq
 import           Potato.Flow
 
-import           Potato.Flow.Reflex.New.Layers
+import           Potato.Flow.Layers
 import           Potato.Flow.Reflex.Types
 
 someSeq1 :: Seq.Seq Int
@@ -27,7 +27,7 @@ spec :: Spec
 spec = do
   describe "Layers" $ do
     it "reindexing" $ do
-      reindexSEltLayerPosForRemoval [0..9] `shouldBe` [0 | x <- [0..9]]
+      reindexSEltLayerPosForRemoval [0..9] `shouldBe` [0 | _ <- [0..9]]
       reindexSEltLayerPosForInsertion [0..9] `shouldBe` [0..9]
     it "insertElts" $ do
       insertElts 2 someSeq2 someSeq1 `shouldBe` Seq.fromList [0,0,1,2,3,0,0,0]

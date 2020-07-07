@@ -15,20 +15,20 @@ module Potato.Flow.State (
 import           Relude
 
 
+import           Potato.Flow.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.New.Cmd
-import           Potato.Flow.Reflex.New.Layers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 import           Reflex
 
 import           Data.Aeson
-import           Data.Dependent.Sum            (DSum ((:=>)), (==>))
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.List.NonEmpty            as NE
-import qualified Data.List.Safe                as SL
-import qualified Data.Sequence                 as Seq
+import           Data.Dependent.Sum         (DSum ((:=>)), (==>))
+import qualified Data.IntMap.Strict         as IM
+import qualified Data.List.NonEmpty         as NE
+import qualified Data.List.Safe             as SL
+import qualified Data.Sequence              as Seq
 
 
 data PFState = PFState {

@@ -10,9 +10,9 @@ module Potato.Flow.Reflex.New.Workspace (
 import           Relude
 
 
+import           Potato.Flow.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.New.Cmd
-import           Potato.Flow.Reflex.New.Layers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 import           Potato.Flow.State
@@ -20,10 +20,10 @@ import           Potato.Flow.State
 import           Reflex
 
 import           Data.Aeson
-import           Data.Dependent.Sum            (DSum ((:=>)), (==>))
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.List.NonEmpty            as NE
-import qualified Data.Sequence                 as Seq
+import           Data.Dependent.Sum         (DSum ((:=>)), (==>))
+import qualified Data.IntMap.Strict         as IM
+import qualified Data.List.NonEmpty         as NE
+import qualified Data.Sequence              as Seq
 
 -- TODO move this into a diff file
 data ActionStack t = ActionStack {

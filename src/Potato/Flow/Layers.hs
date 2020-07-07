@@ -1,4 +1,4 @@
-module Potato.Flow.Reflex.New.Layers (
+module Potato.Flow.Layers (
   reindexSEltLayerPosForRemoval
   , reindexSEltLayerPosForInsertion
   , insertElts
