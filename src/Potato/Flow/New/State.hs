@@ -21,6 +21,7 @@ import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.Layers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
+import Potato.Flow.Reflex.RElts
 
 import           Reflex
 
@@ -80,5 +81,15 @@ undo_resizeCanvas :: DeltaLBox -> PFState -> PFState
 undo_resizeCanvas d pfs = pfs { _pFState_canvas = minusDelta (_pFState_canvas pfs) d }
 
 -- TODO
+manipulate :: Bool -> ControllersWithId -> PFState -> PFState
+manipulate isDo cs pfs = r where
+  dir = _pFState_directory pfs
+  difffn _ seltl c = Just $ updateFnFromController isDo c seltl
+  newDir = IM.differenceWithKey difffn dir cs
+  r = pfs { _pFState_directory = newDir }
+
 do_manipulate :: ControllersWithId -> PFState -> PFState
-do_manipulate c = undefined
+do_manipulate = manipulate True
+
+undo_manipulate :: ControllersWithId -> PFState -> PFState
+undo_manipulate = manipulate False
