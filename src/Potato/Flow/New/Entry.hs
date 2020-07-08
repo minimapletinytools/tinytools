@@ -22,8 +22,9 @@ import           Data.Maybe                    (fromJust)
 import qualified Data.Sequence                 as Seq
 
 import           Potato.Flow.Math
+import           Potato.Flow.New.Cmd
+import           Potato.Flow.New.State
 import           Potato.Flow.New.Workspace
-import Potato.Flow.New.Cmd
 import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
@@ -151,14 +152,26 @@ holdPF PFConfig {..} = mdo
         PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
-        _ -> undefined where
-        
+        _ -> undefined
 
   pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace ()) pfevent
 
+  let
+    savepushfn _ = do
+      pfts <- sample . current $ pfTotalState
+      let
+        PFState {..} = _pFWorkspace_state (_pFTotalState_workspace pfts)
+        --_pFState_layers      :: Seq REltId
+        --, _pFState_directory :: IM.IntMap SEltLabel
+        selttree = undefined
+      return $ SPotatoFlow _pFState_canvas selttree
+    r_saved = pushAlways savepushfn _pfc_save
 
-  -- TODO handle save
-  --_pfc_save
-  undefined
 
-
+  return PFOutput {
+      _pfo_layers               = undefined -- :: SEltLayerTree t
+      , _pfo_canvas             = undefined -- :: Canvas t
+      , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
+      , _pfo_potato_changed     = undefined -- :: Event t ()
+      , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal
+    }

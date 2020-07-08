@@ -32,7 +32,7 @@ data PFState = PFState {
   _pFState_layers      :: Seq REltId
   -- TODO cache REltId -> Layers map with dirty flag probably
   , _pFState_directory :: IM.IntMap SEltLabel
-  , _pFState_canvas    :: LBox
+  , _pFState_canvas    :: SCanvas
 } deriving (Show, Generic)
 
 instance FromJSON PFState
@@ -43,7 +43,7 @@ pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
 
 emptyPFState :: PFState
-emptyPFState = PFState Seq.empty IM.empty (LBox 0 0)
+emptyPFState = PFState Seq.empty IM.empty (SCanvas (LBox 0 0))
 
 do_newElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
 do_newElts seltls' PFState {..} = r where
@@ -70,10 +70,12 @@ undo_deleteElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
 undo_deleteElts = do_newElts
 
 do_resizeCanvas :: DeltaLBox -> PFState -> PFState
-do_resizeCanvas d pfs = pfs { _pFState_canvas = plusDelta (_pFState_canvas pfs) d }
+do_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
+  newCanvas = SCanvas $ plusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
 undo_resizeCanvas :: DeltaLBox -> PFState -> PFState
-undo_resizeCanvas d pfs = pfs { _pFState_canvas = minusDelta (_pFState_canvas pfs) d }
+undo_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
+  newCanvas = SCanvas $ minusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
 -- TODO
 manipulate :: Bool -> ControllersWithId -> PFState -> PFState

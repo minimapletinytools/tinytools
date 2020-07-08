@@ -154,6 +154,7 @@ instance FromJSON SCanvas
 instance ToJSON SCanvas
 instance NFData SCanvas
 
+-- TODO serialize PFState instead
 data SPotatoFlow = SPotatoFlow {
   _sPotatoFlow_sCanvas    :: SCanvas
   , _sPotatoFlow_sEltTree :: SEltTree
