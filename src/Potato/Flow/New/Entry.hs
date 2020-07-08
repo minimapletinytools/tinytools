@@ -13,8 +13,6 @@ module Potato.Flow.New.Entry (
 import           Relude
 
 import           Reflex
-import           Reflex.Data.ActionStack
-import           Reflex.Data.Directory
 import           Reflex.Potato.Helpers
 
 import           Data.Dependent.Sum            ((==>))
@@ -22,17 +20,14 @@ import qualified Data.IntMap.Strict            as IM
 import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe                    (fromJust)
 import qualified Data.Sequence                 as Seq
-import           Data.Tuple.Extra
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Workspace
 import           Potato.Flow.Reflex.Canvas
-import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
-import           Control.Lens                  (over, _2)
 import           Control.Monad.Fix
 
 -- loading new workspace stufff

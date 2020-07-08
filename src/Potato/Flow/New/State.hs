@@ -11,25 +11,20 @@ module Potato.Flow.New.State (
   , do_resizeCanvas
   , undo_resizeCanvas
   , do_manipulate
+  , undo_manipulate
 ) where
 
 import           Relude
 
 
 import           Potato.Flow.Math
-import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.Layers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 import Potato.Flow.Reflex.RElts
 
-import           Reflex
-
 import           Data.Aeson
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
-import qualified Data.List.NonEmpty       as NE
-import qualified Data.List.Safe           as SL
 import qualified Data.Sequence            as Seq
 
 

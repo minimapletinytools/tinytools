@@ -3,6 +3,10 @@
 module Potato.Flow.New.Workspace (
   PFWorkspace(..)
   , emptyWorkspace
+  , workspaceFromState
+  , undoWorkspace
+  , doCmdWorkspaceUndoFirst
+  , doCmdWorkspace
   , pfc_addElt_to_newElts
   , pfc_addFolder_to_newElts
   , pfc_removeElt_to_deleteElts
@@ -11,17 +15,11 @@ module Potato.Flow.New.Workspace (
 
 import           Relude
 
-
-import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
-import           Potato.Flow.New.Layers
 import           Potato.Flow.New.State
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
-import           Reflex
-
-import           Data.Aeson
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List.NonEmpty       as NE
