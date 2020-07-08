@@ -5,6 +5,7 @@ module Potato.Flow.New.Workspace (
   , emptyWorkspace
   , workspaceFromState
   , undoWorkspace
+  , redoWorkspace
   , doCmdWorkspaceUndoFirst
   , doCmdWorkspace
   , pfc_addElt_to_newElts
@@ -50,9 +51,17 @@ emptyWorkspace = PFWorkspace emptyPFState emptyActionStack (-1)
 undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
+  r = case doStack of
+    c : cs -> PFWorkspace (undoCmdStateState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
+    _ -> pfw
+
+redoWorkspace :: PFWorkspace -> PFWorkspace
+redoWorkspace pfw@PFWorkspace {..} = r where
+  ActionStack {..} = _pFWorkspace_actionStack
   r = case undoStack of
     c : cs -> PFWorkspace (undoCmdStateState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
     _ -> pfw
+
 
 doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
 doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)

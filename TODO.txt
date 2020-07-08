@@ -7,7 +7,8 @@ hp2ps -e8in -c memorytests.hp
 IGNORE-Add REltId to SElt
 -get rid of NonEmpty in PFCmd
 -add assert to check LayerPos boundary stuff
--clipboard should exist outside of workspace
+  -make sure asserts actually work
+DONE-clipboard should exist outside of workspace
 
 
 

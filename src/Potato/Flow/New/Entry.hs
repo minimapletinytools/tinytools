@@ -23,6 +23,7 @@ import qualified Data.Sequence                 as Seq
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Workspace
+import Potato.Flow.New.Cmd
 import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
@@ -96,8 +97,15 @@ data PFTotalState = PFTotalState {
   , _pFTotalState_clipboard :: ()
 }
 
+doCmdPFTotalState :: PFCmd -> PFTotalState -> PFTotalState
+doCmdPFTotalState cmd pfts = pfts { _pFTotalState_workspace = doCmdWorkspace cmd (_pFTotalState_workspace pfts) }
+
+doCmdPFTTotalStateUndoFirst :: PFCmd -> PFTotalState -> PFTotalState
+doCmdPFTTotalStateUndoFirst cmd pfts = pfts { _pFTotalState_workspace = doCmdWorkspaceUndoFirst cmd (_pFTotalState_workspace pfts) }
+
 
 data PFEventTag =
+  -- TODO add undo first param
   PFEAddElt (LayerPos, SEltLabel)
   | PFEAddFolder (LayerPos, Text)
   | PFERemoveElt [LayerPos]
@@ -105,12 +113,12 @@ data PFEventTag =
   -- | PFECopy [LayerPos]
   | PFEPaste ([SElt], LayerPos)
   -- | PFEDuplicate [LayerPos]
+  -- TODO add undo first param
   | PFEManipulate ControllersWithId
   | PFEResizeCanvas DeltaLBox
   | PFEUndo
   | PFERedo
   | PFELoad SPotatoFlow
-  | PFESave
 
 
 holdPF ::
@@ -131,14 +139,26 @@ holdPF PFConfig {..} = mdo
       , PFEResizeCanvas <$> _pfc_resizeCanvas
       , PFEUndo <$ _pfc_undo
       , PFERedo <$ _pfc_redo
-      , PFELoad <$> _pfc_load
-      , PFESave <$ _pfc_save]
+      , PFELoad <$> _pfc_load ]
 
     foldfn :: PFEventTag -> PFTotalState -> PFTotalState
-    foldfn evt pfts = case evt of
-      _ -> undefined where
-        lastState = _pFTotalState_workspace pfts
+    foldfn evt pfts = let
+        lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
+      in case evt of
+        PFEAddElt x -> doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
+        PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
+        PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
+        PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
+        PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
+        PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
+        _ -> undefined where
+        
 
   pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace ()) pfevent
 
+
+  -- TODO handle save
+  --_pfc_save
   undefined
+
+
