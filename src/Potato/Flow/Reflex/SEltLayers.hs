@@ -57,8 +57,8 @@ data SEltLayerTree t = SEltLayerTree {
 
   --, _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
 
-  --, _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
-  , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel)) -- elements that were added, moved, or deleted
+  -- TODO you can probably just change this to  'REltIdMap (MaybeMaybe SEltLabel)'
+  , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
 
   -- | directory of all SEltLabels
   , _sEltLayerTree_directory  :: Directory t (SEltLabel)
@@ -305,5 +305,5 @@ holdSEltLayerTree SEltLayerTreeConfig {..} = mdo
     SEltLayerTree {
       _sEltLayerTree_view = _dynamicSeq_contents dseq
       , _sEltLayerTree_directory = directory
-      , _sEltLayerTree_changeView = (fmap snd . IM.fromList) <$> leftmostWarn "SEltLayerTree changes" [changes1, changes2, changes3]
+      , _sEltLayerTree_changeView = IM.fromList <$> leftmostWarn "SEltLayerTree changes" [changes1, changes2, changes3]
     }
