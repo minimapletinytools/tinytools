@@ -167,11 +167,19 @@ holdPF PFConfig {..} = mdo
       return $ SPotatoFlow _pFState_canvas selttree
     r_saved = pushAlways savepushfn _pfc_save
 
+    r_canvas = fmap (_sCanvas_box . _pFState_canvas . _pFWorkspace_state . _pFTotalState_workspace) pfTotalState
+
+    --potatoTotalMapFn
+    --r_potatoTotal_sEltLabelMap = 
+    --r_potatoTotal_layerPosMap
+    --r_potatoTotal_layers
+
+
 
   return PFOutput {
       _pfo_layers               = undefined -- :: SEltLayerTree t
-      , _pfo_canvas             = undefined -- :: Canvas t
+      , _pfo_canvas             = Canvas r_canvas -- :: Canvas t
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
-      , _pfo_potato_changed     = undefined -- :: Event t ()
+      , _pfo_potato_changed     = void pfevent -- :: Event t ()
       , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal
     }

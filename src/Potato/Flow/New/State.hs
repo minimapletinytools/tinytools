@@ -2,6 +2,7 @@
 
 module Potato.Flow.New.State (
   PFState(..)
+  , getSEltls
   , pFState_maxID
   , emptyPFState
   , do_newElts
@@ -31,13 +32,16 @@ import qualified Data.Sequence            as Seq
 data PFState = PFState {
   _pFState_layers      :: Seq REltId
   -- TODO cache REltId -> Layers map with dirty flag probably
-  , _pFState_directory :: IM.IntMap SEltLabel
+  , _pFState_directory :: REltIdMap SEltLabel
   , _pFState_canvas    :: SCanvas
 } deriving (Show, Generic)
 
 instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
+
+getSEltls :: [REltId] -> PFState -> REltIdMap (Maybe SEltLabel)
+getSEltls rids PFState {..} = foldr (\rid acc -> IM.insert rid (IM.lookup rid _pFState_directory) acc) IM.empty rids
 
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
