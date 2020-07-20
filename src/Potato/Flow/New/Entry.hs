@@ -15,18 +15,17 @@ import           Relude
 import           Reflex
 import           Reflex.Potato.Helpers
 
-import           Data.Dependent.Sum            ((==>))
-import qualified Data.IntMap.Strict            as IM
-import qualified Data.List.NonEmpty            as NE
-import           Data.Maybe                    (fromJust)
-import qualified Data.Sequence                 as Seq
+import           Data.Dependent.Sum        ((==>))
+import qualified Data.IntMap.Strict        as IM
+import qualified Data.List.NonEmpty        as NE
+import           Data.Maybe                (fromJust)
+import qualified Data.Sequence             as Seq
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.State
 import           Potato.Flow.New.Workspace
 import           Potato.Flow.Reflex.Canvas
-import           Potato.Flow.Reflex.SEltLayers
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
@@ -77,10 +76,7 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
-
-  -- TODO rename to _pfo_sEltLayerTree
-  _pfo_layers               :: SEltLayerTree t
-  , _pfo_canvas             :: Canvas t
+  _pfo_pFState              :: Dynamic t (PFState)
 
   -- TODO
   --, _pfo_loaded :: Event t ()
@@ -161,24 +157,21 @@ holdPF PFConfig {..} = mdo
       pfts <- sample . current $ pfTotalState
       let
         PFState {..} = _pFWorkspace_state (_pFTotalState_workspace pfts)
-        --_pFState_layers      :: Seq REltId
-        --, _pFState_directory :: IM.IntMap SEltLabel
-        selttree = undefined
+        selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
       return $ SPotatoFlow _pFState_canvas selttree
     r_saved = pushAlways savepushfn _pfc_save
 
-    r_canvas = fmap (_sCanvas_box . _pFState_canvas . _pFWorkspace_state . _pFTotalState_workspace) pfTotalState
+    r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalState
 
     --potatoTotalMapFn
-    --r_potatoTotal_sEltLabelMap = 
+    --r_potatoTotal_sEltLabelMap =
     --r_potatoTotal_layerPosMap
     --r_potatoTotal_layers
 
 
 
   return PFOutput {
-      _pfo_layers               = undefined -- :: SEltLayerTree t
-      , _pfo_canvas             = Canvas r_canvas -- :: Canvas t
+      _pfo_pFState = r_state
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
       , _pfo_potato_changed     = void pfevent -- :: Event t ()
       , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal

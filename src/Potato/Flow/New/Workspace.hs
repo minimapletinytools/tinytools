@@ -21,6 +21,7 @@ import           Potato.Flow.New.State
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
+import           Data.Constraint.Extras   (Has')
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
 import qualified Data.List.NonEmpty       as NE
@@ -52,14 +53,16 @@ undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case doStack of
-    c : cs -> PFWorkspace (undoCmdStateState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
+    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
+    c : cs -> PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
     _ -> pfw
 
 redoWorkspace :: PFWorkspace -> PFWorkspace
 redoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case undoStack of
-    c : cs -> PFWorkspace (undoCmdStateState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
+    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
+    c : cs -> PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
     _ -> pfw
 
 
@@ -67,10 +70,11 @@ doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
 doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
+--doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r where
 doCmdWorkspace cmd PFWorkspace {..} = r where
   newState = doCmdState cmd _pFWorkspace_state
   ActionStack {..} = _pFWorkspace_actionStack
-  newStack = ActionStack (cmd:doStack) undoStack
+  newStack = ActionStack (cmd:doStack) []
   newMaxId = pFState_maxID _pFWorkspace_state
   r = PFWorkspace newState newStack newMaxId
 
@@ -94,8 +98,8 @@ doCmdState cmd state = case cmd of
   (PFCDeleteElts :=> Identity x) ->  do_deleteElts x state
   _                              -> undefined
 
-undoCmdStateState :: PFCmd -> PFState -> PFState
-undoCmdStateState cmd state = case cmd of
+undoCmdState :: PFCmd -> PFState -> PFState
+undoCmdState cmd state = case cmd of
   (PFCNewElts :=> Identity x)    ->  undo_newElts x state
   (PFCDeleteElts :=> Identity x) ->  undo_deleteElts x state
   _                              -> undefined

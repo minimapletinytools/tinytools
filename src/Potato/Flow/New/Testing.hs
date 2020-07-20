@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Testing (
+module Potato.Flow.New.Testing (
   simpleSBox
   , FCmd(..)
   , randomActionFCmd
@@ -79,21 +79,23 @@ setup_network ev = mdo
       _ -> Nothing
 
     removeEv = fforMaybe ev $ \case
-      FCDeleteElt p -> Just p
+      FCDeleteElt p -> Just [p]
       _              -> Nothing
     manipEv = flip push ev $ \case
       FCModify p c -> do
-        (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
-        -- `deepseq` here prevents a leak, fml.
-        return . Just $ selt `deepseq` IM.singleton rid c
+        pFState <- sample beh_pFState
+        let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos p $ pFState
+        return . Just $ IM.singleton rid c
       FCModifyMany pcs -> do
-        sseltls <- forM pcs (\(p,c) -> sEltLayerTree_sampleSuperSEltByPos layerTree p >>= \seltl -> seltl `deepseq` return (seltl,c))
+        pFState <- sample beh_pFState
+        let sseltls = map (\(p,c) -> (pFState_getSuperSEltByPos p $ pFState, c)) pcs
         return . Just . IM.fromList
           . map (\((rid,_,_),c) -> (rid, c))
           . map (\(mseltl, c) -> (fromJust mseltl, c))
           $ sseltls
       FCCustom_CBox_1 p -> do
-        (rid, _, SEltLabel _ selt) <- fromJust <$> sEltLayerTree_sampleSuperSEltByPos layerTree p
+        pFState <- sample beh_pFState
+        let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos p $ pFState
         let
           cbox = CBox {
               _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
@@ -126,10 +128,13 @@ setup_network ev = mdo
         , _pfc_redo       = redoEv
         , _pfc_load = loadEv
         , _pfc_save = saveEv
+
+        , _pfc_moveElt = never
+        , _pfc_paste = never
       }
   pfo <- holdPF pfc
   let
-    layerTree = _pfo_layers $ pfo
+    beh_pFState = current . _pfo_pFState $ pfo
   return pfo
 
 
@@ -142,10 +147,7 @@ step_state_network AppIn {..} = do
   return
     AppOut {
       _appOut_behavior = constant ()
-      , _appOut_event = leftmost
-        [_pfo_saved pfo
-        -- this is needed to force the changeView event and prevent leaks
-        , fmapMaybe (const Nothing) $ _sEltLayerTree_changeView (_pfo_layers pfo)]
+      , _appOut_event = _pfo_saved pfo
     }
 
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 module Potato.Flow.New.Cmd (
   PFCmdTag(..)
@@ -11,7 +12,10 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Types
 
-import qualified Data.Dependent.Sum       as DS
+import           Data.Constraint.Extras.TH
+import qualified Data.Dependent.Sum        as DS
+import           Data.GADT.Compare.TH
+import           Data.GADT.Show.TH
 import qualified Text.Show
 
 data PFCmdTag a where
@@ -31,3 +35,8 @@ instance Text.Show.Show (PFCmdTag a) where
   show PFCResizeCanvas = "PFCResize"
 
 type PFCmd = DS.DSum PFCmdTag Identity
+
+deriveGEq      ''PFCmdTag
+deriveGCompare ''PFCmdTag
+deriveGShow ''PFCmdTag
+deriveArgDict ''PFCmdTag

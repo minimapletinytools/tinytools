@@ -2,7 +2,8 @@
 
 module Potato.Flow.New.State (
   PFState(..)
-  , getSEltls
+  , pFState_getSuperSEltByPos
+  , pFState_getSEltLabels
   , pFState_maxID
   , emptyPFState
   , do_newElts
@@ -20,9 +21,9 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Layers
+import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
-import Potato.Flow.Reflex.RElts
 
 import           Data.Aeson
 import qualified Data.IntMap.Strict       as IM
@@ -40,8 +41,15 @@ instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
 
-getSEltls :: [REltId] -> PFState -> REltIdMap (Maybe SEltLabel)
-getSEltls rids PFState {..} = foldr (\rid acc -> IM.insert rid (IM.lookup rid _pFState_directory) acc) IM.empty rids
+
+pFState_getSuperSEltByPos :: LayerPos -> PFState -> Maybe SuperSEltLabel
+pFState_getSuperSEltByPos lp PFState {..} = do
+  rid <- Seq.lookup lp _pFState_layers
+  seltl <- IM.lookup rid _pFState_directory
+  return (rid, lp, seltl)
+
+pFState_getSEltLabels :: [REltId] -> PFState -> REltIdMap (Maybe SEltLabel)
+pFState_getSEltLabels rids PFState {..} = foldr (\rid acc -> IM.insert rid (IM.lookup rid _pFState_directory) acc) IM.empty rids
 
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
