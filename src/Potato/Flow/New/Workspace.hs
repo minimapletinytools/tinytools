@@ -40,29 +40,29 @@ data PFWorkspace = PFWorkspace {
   _pFWorkspace_state         :: PFState
   , _pFWorkspace_actionStack :: ActionStack
   -- TODO this isn't needed delete
-  , _pFWorkspace_maxId       :: REltId
+  --, _pFWorkspace_maxId       :: REltId
 }
 
 workspaceFromState :: PFState -> PFWorkspace
-workspaceFromState s = PFWorkspace s emptyActionStack $ pFState_maxID s
+workspaceFromState s = PFWorkspace s emptyActionStack
 
 emptyWorkspace :: PFWorkspace
-emptyWorkspace = PFWorkspace emptyPFState emptyActionStack (-1)
+emptyWorkspace = PFWorkspace emptyPFState emptyActionStack
 
 undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
-    c : cs -> PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack)) _pFWorkspace_maxId
+    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
+    c : cs -> PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
     _ -> pfw
 
 redoWorkspace :: PFWorkspace -> PFWorkspace
 redoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case undoStack of
-    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
-    c : cs -> PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs) _pFWorkspace_maxId
+    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
+    c : cs -> PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
     _ -> pfw
 
 
@@ -75,8 +75,8 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
   newState = doCmdState cmd _pFWorkspace_state
   ActionStack {..} = _pFWorkspace_actionStack
   newStack = ActionStack (cmd:doStack) []
-  newMaxId = pFState_maxID _pFWorkspace_state
-  r = PFWorkspace newState newStack newMaxId
+  --newMaxId = pFState_maxID _pFWorkspace_state
+  r = PFWorkspace newState newStack
 
 {-
 data PFCmdTag t a where
@@ -94,15 +94,19 @@ data PFCmdTag t a where
 
 doCmdState :: PFCmd -> PFState -> PFState
 doCmdState cmd state = case cmd of
-  (PFCNewElts :=> Identity x)    ->  do_newElts x state
-  (PFCDeleteElts :=> Identity x) ->  do_deleteElts x state
-  _                              -> undefined
+  (PFCNewElts :=> Identity x)      ->  do_newElts x state
+  (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
+  (PFCManipulate :=> Identity x)   ->  do_manipulate x state
+  (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x state
+  _                                -> undefined
 
 undoCmdState :: PFCmd -> PFState -> PFState
 undoCmdState cmd state = case cmd of
-  (PFCNewElts :=> Identity x)    ->  undo_newElts x state
-  (PFCDeleteElts :=> Identity x) ->  undo_deleteElts x state
-  _                              -> undefined
+  (PFCNewElts :=> Identity x)      ->  undo_newElts x state
+  (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x state
+  (PFCManipulate :=> Identity x)   ->  undo_manipulate x state
+  (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
+  _                                -> undefined
 
 
 
@@ -119,7 +123,7 @@ pfc_addFolder_to_newElts pfs (lp, name) = r where
   ridEnd = ridStart + 1
   seltlStart = SEltLabel name SEltFolderStart
   seltlEnd = SEltLabel (name <> " (end)") SEltFolderEnd
-  r = PFCNewElts ==> NE.fromList [(ridStart, lp, seltlStart), (ridEnd, lp+1, seltlEnd)]
+  r = PFCNewElts ==> NE.fromList [(ridStart, lp, seltlStart), (ridEnd, lp, seltlEnd)]
 
 -- TODO consider including folder end to selecetion if not included
 pfc_removeElt_to_deleteElts :: PFState -> [LayerPos] -> PFCmd

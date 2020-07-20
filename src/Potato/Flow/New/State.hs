@@ -62,6 +62,8 @@ do_newElts seltls' PFState {..} = r where
   seltls = toList seltls'
   poss = map (\(x,y,_) -> (y,x)) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
+  -- insertEltList is BEFORE insertion, therefore to insert a sequence of elements you give them all the same layer position
+  -- TODO consider if we wantto do it AFTER insertion
   newLayers = insertEltList poss _pFState_layers
   newDir = IM.fromList els `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
@@ -89,7 +91,6 @@ undo_resizeCanvas :: DeltaLBox -> PFState -> PFState
 undo_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
   newCanvas = SCanvas $ minusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
--- TODO
 manipulate :: Bool -> ControllersWithId -> PFState -> PFState
 manipulate isDo cs pfs = r where
   dir = _pFState_directory pfs

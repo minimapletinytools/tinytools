@@ -38,6 +38,7 @@ save_network ev = do
   pfo <- setup_network ev
   return $ fmap _sPotatoFlow_sEltTree $ _pfo_saved pfo
 
+-- second one is "expected"
 bs_save_0 :: ([FCmd],[FCmd])
 bs_save_0 =
   ([FCAddElt 0 (SEltBox simpleSBox), FCUndo, FCRedo, FCSave]
@@ -60,7 +61,7 @@ bs_save_3 =
 
 bs_save_4 :: ([FCmd],[FCmd])
 bs_save_4 =
-  ([FCAddElt 0 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCUndo, FCUndo, FCRedo, FCRedo, FCSave]
+  ([FCAddElt 0 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCSave]
   , [FCAddElt 0 SEltFolderStart, FCAddElt 1 SEltFolderStart, FCAddElt 3 SEltFolderStart, FCUndo, FCUndo, FCRedo, FCRedo, FCSave])
 
 bs_save_5 :: ([FCmd],[FCmd])
