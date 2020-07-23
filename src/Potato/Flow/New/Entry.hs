@@ -149,7 +149,11 @@ holdPF PFConfig {..} = mdo
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
-        PFELoad x -> undefined
+        PFELoad x -> pfts {
+          _pFTotalState_workspace = (_pFTotalState_workspace pfts) {
+            _pFWorkspace_state = sPotatoFlow_to_pFState x
+            , _pFWorkspace_actionStack = emptyActionStack }
+          }
         _ -> undefined
 
   pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace ()) pfevent
@@ -157,10 +161,7 @@ holdPF PFConfig {..} = mdo
   let
     savepushfn _ = do
       pfts <- sample . current $ pfTotalState
-      let
-        PFState {..} = _pFWorkspace_state (_pFTotalState_workspace pfts)
-        selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
-      return $ SPotatoFlow _pFState_canvas selttree
+      return $ pFState_to_sPotatoFlow $ _pFWorkspace_state (_pFTotalState_workspace pfts)
     r_saved = pushAlways savepushfn _pfc_save
 
     r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalState

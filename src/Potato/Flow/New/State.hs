@@ -5,6 +5,8 @@ module Potato.Flow.New.State (
   , pFState_getSuperSEltByPos
   , pFState_getSEltLabels
   , pFState_maxID
+  , sPotatoFlow_to_pFState
+  , pFState_to_sPotatoFlow
   , emptyPFState
   , do_newElts
   , undo_newElts
@@ -27,6 +29,7 @@ import           Potato.Flow.SElts
 
 import           Data.Aeson
 import qualified Data.IntMap.Strict       as IM
+import           Data.Maybe
 import qualified Data.Sequence            as Seq
 
 
@@ -40,7 +43,6 @@ data PFState = PFState {
 instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
-
 
 pFState_getSuperSEltByPos :: LayerPos -> PFState -> Maybe SuperSEltLabel
 pFState_getSuperSEltByPos lp PFState {..} = do
@@ -56,6 +58,18 @@ pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
 
 emptyPFState :: PFState
 emptyPFState = PFState Seq.empty IM.empty (SCanvas (LBox 0 0))
+
+sPotatoFlow_to_pFState :: SPotatoFlow -> PFState
+sPotatoFlow_to_pFState SPotatoFlow {..} = r where
+  elts = zip [0..] _sPotatoFlow_sEltTree
+  dir = foldr (\(rid, e) acc -> IM.insert rid e acc) IM.empty elts
+  layers = Seq.fromList (map fst elts)
+  r = PFState layers dir _sPotatoFlow_sCanvas
+
+pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
+pFState_to_sPotatoFlow PFState {..} = r where
+  selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
+  r = SPotatoFlow _pFState_canvas selttree
 
 do_newElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
 do_newElts seltls' PFState {..} = r where

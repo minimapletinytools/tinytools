@@ -3,6 +3,7 @@
 module Potato.Flow.New.Workspace (
   PFWorkspace(..)
   , emptyWorkspace
+  , emptyActionStack
   , workspaceFromState
   , undoWorkspace
   , redoWorkspace
