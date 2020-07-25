@@ -116,7 +116,7 @@ undoCmdState cmd state = case cmd of
 pfc_addElt_to_newElts :: PFState -> (LayerPos, SEltLabel) -> PFCmd
 pfc_addElt_to_newElts pfs (lp,seltl) = r where
   rid = pFState_maxID pfs + 1
-  r = PFCNewElts ==> ((rid,lp,seltl) NE.:| [])
+  r = PFCNewElts ==> [(rid,lp,seltl)]
 
 pfc_addFolder_to_newElts :: PFState -> (LayerPos, Text) -> PFCmd
 pfc_addFolder_to_newElts pfs (lp, name) = r where
@@ -124,14 +124,14 @@ pfc_addFolder_to_newElts pfs (lp, name) = r where
   ridEnd = ridStart + 1
   seltlStart = SEltLabel name SEltFolderStart
   seltlEnd = SEltLabel (name <> " (end)") SEltFolderEnd
-  r = PFCNewElts ==> NE.fromList [(ridStart, lp, seltlStart), (ridEnd, lp, seltlEnd)]
+  r = PFCNewElts ==> [(ridStart, lp, seltlStart), (ridEnd, lp, seltlEnd)]
 
 -- TODO consider including folder end to selecetion if not included
 pfc_removeElt_to_deleteElts :: PFState -> [LayerPos] -> PFCmd
 pfc_removeElt_to_deleteElts PFState {..} lps = r where
   rids = map (Seq.index _pFState_layers) lps
   seltls = map ((IM.!) _pFState_directory) rids
-  r = PFCDeleteElts ==> NE.fromList (zip3 rids lps seltls)
+  r = PFCDeleteElts ==> (zip3 rids lps seltls)
 
 --pfc_moveElt_to_move :: PFState -> ([LayerPos], LayerPos) -> PFCmd
 --pfc_moveElt_to_move pfs x = r where
@@ -140,7 +140,7 @@ pfc_removeElt_to_deleteElts PFState {..} lps = r where
 pfc_paste_to_newElts :: PFState -> ([SEltLabel], LayerPos) -> PFCmd
 pfc_paste_to_newElts pfs (seltls, lp) = r where
   rid = pFState_maxID pfs + 1
-  r = PFCNewElts ==> NE.fromList (zip3 [rid..] [lp..] seltls)
+  r = PFCNewElts ==> zip3 [rid..] [lp..] seltls
 
 --pfc_duplicate_to_duplicate :: PFState -> [LayerPos] -> PFCmd
 --pfc_duplicate_to_duplicate pfs lps = r where

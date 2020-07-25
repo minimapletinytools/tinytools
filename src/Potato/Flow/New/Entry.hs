@@ -77,10 +77,7 @@ data PFConfig t = PFConfig {
 
 data PFOutput t = PFOutput {
   _pfo_pFState              :: Dynamic t (PFState)
-
-  -- TODO
-  --, _pfo_loaded :: Event t ()
-
+  , _pfo_loaded             :: Event t ()
   , _pfo_saved              :: Event t SPotatoFlow
 
   -- for debugging and temp rendering, to be removed once incremental rendering is done
@@ -146,6 +143,7 @@ holdPF PFConfig {..} = mdo
         PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
         PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
         PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
+        PFEMoveElt x -> undefined
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
@@ -176,6 +174,7 @@ holdPF PFConfig {..} = mdo
   return PFOutput {
       _pfo_pFState = r_state
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
+      , _pfo_loaded = void _pfc_load
       , _pfo_potato_changed     = void pfevent -- :: Event t ()
       , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal
     }

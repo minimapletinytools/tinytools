@@ -71,9 +71,8 @@ pFState_to_sPotatoFlow PFState {..} = r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 
-do_newElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
-do_newElts seltls' PFState {..} = r where
-  seltls = toList seltls'
+do_newElts :: [SuperSEltLabel] -> PFState -> PFState
+do_newElts seltls PFState {..} = r where
   poss = map (\(x,y,_) -> (y,x)) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
   -- insertEltList is BEFORE insertion, therefore to insert a sequence of elements you give them all the same layer position
@@ -82,19 +81,18 @@ do_newElts seltls' PFState {..} = r where
   newDir = IM.fromList els `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
 
-undo_newElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
-undo_newElts seltls' PFState {..} = r where
-  seltls = toList seltls'
+undo_newElts :: [SuperSEltLabel] -> PFState -> PFState
+undo_newElts seltls PFState {..} = r where
   poss = map (\(_,y,_) -> y) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
   newLayers = removeEltList poss _pFState_layers
   newDir = _pFState_directory `IM.difference` fromList els
   r = PFState newLayers newDir _pFState_canvas
 
-do_deleteElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
+do_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
 do_deleteElts = undo_newElts
 
-undo_deleteElts :: NonEmpty SuperSEltLabel -> PFState -> PFState
+undo_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
 undo_deleteElts = do_newElts
 
 do_resizeCanvas :: DeltaLBox -> PFState -> PFState

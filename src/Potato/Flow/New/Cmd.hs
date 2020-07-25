@@ -20,11 +20,12 @@ import qualified Text.Show
 
 data PFCmdTag a where
   -- LayerPos indices are as if all elements already exist in the map
-  PFCNewElts :: PFCmdTag (NonEmpty SuperSEltLabel)
+  PFCNewElts :: PFCmdTag [SuperSEltLabel]
   -- LayerPos indices are the current indices of elements to be removed
-  PFCDeleteElts :: PFCmdTag (NonEmpty SuperSEltLabel)
-  --PFCMove :: PFCmdTag t (NonEmpty LayerPos, LayerPos)
-  --PFCDuplicate :: PFCmdTag t [REltId]
+  PFCDeleteElts :: PFCmdTag [SuperSEltLabel]
+  -- target index is before removal
+  PFCMove :: PFCmdTag ([LayerPos], LayerPos)
+  --PFCDuplicate :: PFCmdTag [REltId]
   PFCManipulate :: PFCmdTag ControllersWithId
   PFCResizeCanvas :: PFCmdTag DeltaLBox
 
