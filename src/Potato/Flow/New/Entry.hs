@@ -64,8 +64,8 @@ data PFConfig t = PFConfig {
   , _pfc_addFolder    :: Event t (LayerPos, Text)
   , _pfc_removeElt    :: Event t [LayerPos]
   , _pfc_moveElt      :: Event t ([LayerPos], LayerPos) -- new layer position is before removal
-  --, _pfc_copy         :: Event t [LayerPos]
-  , _pfc_paste        :: Event t ([SElt], LayerPos)
+  , _pfc_copy         :: Event t [LayerPos]
+  , _pfc_paste        :: Event t LayerPos
   --, _pfc_duplicate    :: Event t [LayerPos]
   , _pfc_manipulate   :: Event t ControllersWithId
   , _pfc_resizeCanvas :: Event t DeltaLBox
@@ -88,7 +88,7 @@ data PFOutput t = PFOutput {
 
 data PFTotalState = PFTotalState {
   _pFTotalState_workspace   :: PFWorkspace
-  , _pFTotalState_clipboard :: ()
+  , _pFTotalState_clipboard :: [SEltLabel]
 }
 
 doCmdPFTotalState :: PFCmd -> PFTotalState -> PFTotalState
@@ -104,8 +104,8 @@ data PFEventTag =
   | PFEAddFolder (LayerPos, Text)
   | PFERemoveElt [LayerPos]
   | PFEMoveElt ([LayerPos], LayerPos)
-  -- | PFECopy [LayerPos]
-  | PFEPaste ([SElt], LayerPos)
+  | PFECopy [LayerPos]
+  | PFEPaste (LayerPos)
   -- | PFEDuplicate [LayerPos]
   -- TODO add undo first param
   | PFEManipulate ControllersWithId
@@ -126,11 +126,11 @@ holdPF PFConfig {..} = mdo
       , PFEAddFolder <$> _pfc_addFolder
       , PFERemoveElt <$> _pfc_removeElt
       , PFEMoveElt <$> _pfc_moveElt
-      -- , PFECopy <$> _pfc_copy
-      , PFEPaste <$> _pfc_paste
       -- , PFEDuplicate <$> _pfc_duplicate
       , PFEManipulate <$> _pfc_manipulate
       , PFEResizeCanvas <$> _pfc_resizeCanvas
+      , PFECopy <$> _pfc_copy
+      , PFEPaste <$> _pfc_paste
       , PFEUndo <$ _pfc_undo
       , PFERedo <$ _pfc_redo
       , PFELoad <$> _pfc_load ]
@@ -145,6 +145,8 @@ holdPF PFConfig {..} = mdo
         PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
         PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
+        PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
+        PFECopy x -> pfts { _pFTotalState_clipboard =  pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
         PFELoad x -> pfts {
@@ -154,7 +156,7 @@ holdPF PFConfig {..} = mdo
           }
         _ -> undefined
 
-  pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace ()) pfevent
+  pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace []) pfevent
 
   let
     savepushfn _ = do

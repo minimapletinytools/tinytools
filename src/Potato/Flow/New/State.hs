@@ -2,6 +2,7 @@
 
 module Potato.Flow.New.State (
   PFState(..)
+  , pFState_copyElts
   , pFState_getSuperSEltByPos
   , pFState_getSEltLabels
   , pFState_maxID
@@ -51,6 +52,13 @@ data PFState = PFState {
 instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
+
+-- lps must be valid
+pFState_copyElts :: PFState -> [LayerPos] -> [SEltLabel]
+pFState_copyElts PFState {..} lps = r where
+  ridfn lp = Seq.index _pFState_layers lp
+  seltlfn rid = fromJust $ IM.lookup rid _pFState_directory
+  r = map (seltlfn . ridfn) lps
 
 pFState_getSuperSEltByPos :: LayerPos -> PFState -> Maybe SuperSEltLabel
 pFState_getSuperSEltByPos lp PFState {..} = do

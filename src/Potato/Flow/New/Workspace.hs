@@ -101,8 +101,6 @@ undoCmdState cmd state = case cmd of
   (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
   _                                -> undefined
 
-
-
 ------ helpers for converting events to cmds
 -- TODO move these to a different file prob
 pfc_addElt_to_newElts :: PFState -> (LayerPos, SEltLabel) -> PFCmd

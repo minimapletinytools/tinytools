@@ -130,6 +130,7 @@ setup_network ev = mdo
         , _pfc_save = saveEv
 
         , _pfc_moveElt = never
+        , _pfc_copy = never
         , _pfc_paste = never
       }
   pfo <- holdPF pfc

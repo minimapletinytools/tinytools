@@ -65,7 +65,7 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
   -switch to use testable methods in Layers
   -write test for undo move
   -add support for move in Testing.hs
-  
+-test copypasta
 -add postbuild back into reflex-test-host
 -remove spiderhost constraints in reflex-test-host
 -switch all PARTIALs to use asserts so they give you line numbers...
