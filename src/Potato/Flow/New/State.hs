@@ -12,6 +12,11 @@ module Potato.Flow.New.State (
   , undo_newElts
   , do_deleteElts
   , undo_deleteElts
+
+  -- TODO test
+  , do_move
+  , undo_move
+
   , do_resizeCanvas
   , undo_resizeCanvas
   , do_manipulate
@@ -27,9 +32,12 @@ import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
+import           Control.Exception        (assert)
 import           Data.Aeson
 import qualified Data.IntMap.Strict       as IM
+import           Data.List.Ordered        (isSorted)
 import           Data.Maybe
+import           Data.Sequence            ((><))
 import qualified Data.Sequence            as Seq
 
 
@@ -76,7 +84,7 @@ do_newElts seltls PFState {..} = r where
   poss = map (\(x,y,_) -> (y,x)) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
   -- insertEltList is BEFORE insertion, therefore to insert a sequence of elements you give them all the same layer position
-  -- TODO consider if we wantto do it AFTER insertion
+  -- TODO consider if we want to do it AFTER insertion
   newLayers = insertEltList poss _pFState_layers
   newDir = IM.fromList els `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
@@ -94,6 +102,26 @@ do_deleteElts = undo_newElts
 
 undo_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
 undo_deleteElts = do_newElts
+
+-- TODO use moveEltList -__-
+do_move :: ([LayerPos], LayerPos) -> PFState -> PFState
+do_move (lps, dst) PFState {..} = r where
+  rids = foldr (\l acc -> Seq.index _pFState_layers l : acc) [] lps
+  newLayers' = assert (isSorted lps) $ foldr (\l acc -> Seq.deleteAt l acc) _pFState_layers lps
+  moveToIndex = dst - (length (takeWhile (\x -> x < dst) lps))
+  (leftL, rightL) = Seq.splitAt moveToIndex newLayers'
+  newLayers = leftL >< fromList rids >< rightL
+  r = PFState newLayers _pFState_directory _pFState_canvas
+
+undo_move :: ([LayerPos], LayerPos) -> PFState -> PFState
+undo_move (lps, dst) PFState {..} = assert (isSorted lps) r where
+  nMoved = length lps
+  moveToIndex = dst - (length (takeWhile (\x -> x < dst) lps))
+  (leftL,rightL') = Seq.splitAt moveToIndex _pFState_layers
+  (toMove,rightL) = Seq.splitAt nMoved rightL'
+  newLayers' = leftL >< rightL
+  newLayers = insertEltList (zip lps (toList toMove)) newLayers'
+  r = PFState newLayers _pFState_directory _pFState_canvas
 
 do_resizeCanvas :: DeltaLBox -> PFState -> PFState
 do_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where

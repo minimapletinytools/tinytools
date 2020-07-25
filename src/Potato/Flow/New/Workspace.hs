@@ -79,16 +79,6 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
   --newMaxId = pFState_maxID _pFWorkspace_state
   r = PFWorkspace newState newStack
 
-{-
-data PFCmdTag t a where
-  -- LayerPos indices are as if all elements already exist in the map
-  PFCNewElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
-  -- LayerPos indices are the current indices of elements to be removed
-  PFCDeleteElts :: PFCmdTag t (NonEmpty SuperSEltLabel)
-  --PFCMove :: PFCmdTag t (LayerPos, NonEmpty LayerPos)
-  PFCManipulate :: PFCmdTag t (ControllersWithId)
-  PFCResizeCanvas :: PFCmdTag t DeltaLBox
--}
 
 -- TODO you probably want to output something like this as well
 --_sEltLayerTree_changeView :: REltIdMap (MaybeMaybe SEltLabel)
@@ -98,6 +88,7 @@ doCmdState cmd state = case cmd of
   (PFCNewElts :=> Identity x)      ->  do_newElts x state
   (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
   (PFCManipulate :=> Identity x)   ->  do_manipulate x state
+  (PFCMove :=> Identity x)         -> do_move x state
   (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x state
   _                                -> undefined
 
@@ -106,6 +97,7 @@ undoCmdState cmd state = case cmd of
   (PFCNewElts :=> Identity x)      ->  undo_newElts x state
   (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x state
   (PFCManipulate :=> Identity x)   ->  undo_manipulate x state
+  (PFCMove :=> Identity x)         -> undo_move x state
   (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
   _                                -> undefined
 
@@ -132,10 +124,6 @@ pfc_removeElt_to_deleteElts PFState {..} lps = r where
   rids = map (Seq.index _pFState_layers) lps
   seltls = map ((IM.!) _pFState_directory) rids
   r = PFCDeleteElts ==> (zip3 rids lps seltls)
-
---pfc_moveElt_to_move :: PFState -> ([LayerPos], LayerPos) -> PFCmd
---pfc_moveElt_to_move pfs x = r where
---  r = PFCMove ==> x
 
 pfc_paste_to_newElts :: PFState -> ([SEltLabel], LayerPos) -> PFCmd
 pfc_paste_to_newElts pfs (seltls, lp) = r where

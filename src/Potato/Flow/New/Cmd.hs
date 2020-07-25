@@ -19,11 +19,11 @@ import           Data.GADT.Show.TH
 import qualified Text.Show
 
 data PFCmdTag a where
-  -- LayerPos indices are as if all elements already exist in the map
+  -- LayerPos indices are as if all elements already exist in the map, must be in order
   PFCNewElts :: PFCmdTag [SuperSEltLabel]
-  -- LayerPos indices are the current indices of elements to be removed
+  -- LayerPos indices are the current indices of elements to be removed, must be in order
   PFCDeleteElts :: PFCmdTag [SuperSEltLabel]
-  -- target index is before removal
+  -- all LayerPos indices are before move, must be in order
   PFCMove :: PFCmdTag ([LayerPos], LayerPos)
   --PFCDuplicate :: PFCmdTag [REltId]
   PFCManipulate :: PFCmdTag ControllersWithId

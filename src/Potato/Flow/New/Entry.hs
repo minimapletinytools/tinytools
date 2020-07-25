@@ -143,7 +143,7 @@ holdPF PFConfig {..} = mdo
         PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
         PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
         PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
-        PFEMoveElt x -> undefined
+        PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
