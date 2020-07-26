@@ -1,6 +1,7 @@
 module Potato.Flow.New.Layers (
   reindexSEltLayerPosForRemoval
   , reindexSEltLayerPosForInsertion
+  , hasScopingProperty
   , insertElts
   , insertElt
   , removeElts
@@ -21,7 +22,6 @@ import           Data.Sequence            ((><))
 import qualified Data.Sequence            as Seq
 
 
-
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
 -- O(n^2) lol
 reindexSEltLayerPosForRemoval :: [LayerPos] -> [LayerPos]
@@ -35,6 +35,18 @@ reindexSEltLayerPosForRemoval (r:xs) = r:reindexSEltLayerPosForRemoval rest wher
 -- O(n^2) lol
 reindexSEltLayerPosForInsertion :: [LayerPos] -> [LayerPos]
 reindexSEltLayerPosForInsertion = reverse . reindexSEltLayerPosForRemoval . reverse
+
+
+hasScopingProperty :: (a -> Maybe Bool) -> Seq a -> Bool
+hasScopingProperty scopeTypeFn xs = not finalFail && finalScope == 0 where
+  foldfn x (scopes, didFail) = case scopeTypeFn x of
+    Nothing -> (scopes, didFail)
+    Just f -> case f of
+      True -> case scopes of
+        0         -> (scopes, True)
+        otherwise -> (scopes-1, didFail)
+      False -> (scopes+1, didFail)
+  (finalScope, finalFail) = foldr foldfn (0,False) xs
 
 -- | inserts ys at index i into xs
 insertElts :: Int -> Seq a -> Seq a -> Seq a

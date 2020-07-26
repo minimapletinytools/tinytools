@@ -23,12 +23,25 @@ someSeq2 = Seq.fromList [1,2,3]
 someSeq3 :: Seq.Seq Int
 someSeq3 = Seq.fromList [0..9]
 
+scopeFn :: Int -> Maybe Bool
+scopeFn 0 = Nothing
+scopeFn 1 = Just True
+scopeFn 2 = Just False
+
+scopingSeq1 :: Seq.Seq Int
+scopingSeq1 = Seq.fromList [0,0,0,0,1,1,1,2,2,1,2,1,2,1,2,1,1,1,2,2,2,2]
+scopingSeq2 :: Seq.Seq Int
+scopingSeq2 = Seq.fromList [0,0,0,0,1,1,1,2,0,1,2,1,2,1,2,1,1,1,2,2,2,2]
+
 spec :: Spec
 spec = do
   describe "Layers" $ do
     it "reindexing" $ do
       reindexSEltLayerPosForRemoval [0..9] `shouldBe` [0 | _ <- [0..9]]
       reindexSEltLayerPosForInsertion [0..9] `shouldBe` [0..9]
+    it "hasScopingProperty" $ do
+      hasScopingProperty scopeFn scopingSeq1 `shouldBe` True
+      hasScopingProperty scopeFn scopingSeq2 `shouldBe` False
     it "insertElts" $ do
       insertElts 2 someSeq2 someSeq1 `shouldBe` Seq.fromList [0,0,1,2,3,0,0,0]
     it "insertElt" $ do
