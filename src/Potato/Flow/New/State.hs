@@ -111,18 +111,23 @@ do_deleteElts = undo_newElts
 undo_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
 undo_deleteElts = do_newElts
 
--- TODO use moveEltList -__-
 do_move :: ([LayerPos], LayerPos) -> PFState -> PFState
 do_move (lps, dst) PFState {..} = r where
+  r = PFState (moveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
+{--
   rids = foldr (\l acc -> Seq.index _pFState_layers l : acc) [] lps
   newLayers' = assert (isSorted lps) $ foldr (\l acc -> Seq.deleteAt l acc) _pFState_layers lps
   moveToIndex = dst - (length (takeWhile (\x -> x < dst) lps))
   (leftL, rightL) = Seq.splitAt moveToIndex newLayers'
   newLayers = leftL >< fromList rids >< rightL
   r = PFState newLayers _pFState_directory _pFState_canvas
+--}
 
 undo_move :: ([LayerPos], LayerPos) -> PFState -> PFState
-undo_move (lps, dst) PFState {..} = assert (isSorted lps) r where
+undo_move (lps, dst) PFState {..} =  r where
+  r = PFState (undoMoveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
+{--
+  --assert (isSorted lps)
   nMoved = length lps
   moveToIndex = dst - (length (takeWhile (\x -> x < dst) lps))
   (leftL,rightL') = Seq.splitAt moveToIndex _pFState_layers
@@ -130,6 +135,7 @@ undo_move (lps, dst) PFState {..} = assert (isSorted lps) r where
   newLayers' = leftL >< rightL
   newLayers = insertEltList (zip lps (toList toMove)) newLayers'
   r = PFState newLayers _pFState_directory _pFState_canvas
+--}
 
 do_resizeCanvas :: DeltaLBox -> PFState -> PFState
 do_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where

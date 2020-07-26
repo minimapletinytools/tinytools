@@ -61,10 +61,10 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
--move
-  -switch to use testable methods in Layers
-  -write test for undo move
-  -add support for move in Testing.hs
+-add support for move in Testing.hs
+DONE-move
+  DONE-switch to use testable methods in Layers
+  DONE-write test for undo move  
 -test copypasta
 -add postbuild back into reflex-test-host
 -remove spiderhost constraints in reflex-test-host

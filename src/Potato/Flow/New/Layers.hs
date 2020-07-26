@@ -5,8 +5,10 @@ module Potato.Flow.New.Layers (
   , insertElt
   , removeElts
   , insertEltList
+  , insertEltList_indexAfterInsertion
   , removeEltList
   , moveEltList
+  , undoMoveEltList
 ) where
 
 import           Relude
@@ -55,17 +57,23 @@ removeElts n i xs = newSeq where
 removeElt :: Int -> Seq a -> Seq a
 removeElt i xs = Seq.deleteAt i xs
 
--- | inserts ys into xs, positions are after insertion
+-- | inserts ys into xs, positions are before insertion
 insertEltList :: [(Int, a)] -> Seq a -> Seq a
-insertEltList ys xs = newSeq where
+insertEltList ys xs = assert (isSorted is') $ newSeq where
   is' = map fst ys
   elts = map snd ys
   is = reindexSEltLayerPosForInsertion is'
   newSeq = foldr (uncurry insertElt) xs (zip is elts)
 
+-- | inserts ys into xs, positions are after insertion
+insertEltList_indexAfterInsertion :: [(Int, a)] -> Seq a -> Seq a
+insertEltList_indexAfterInsertion ys xs = assert (isSorted is) $ newSeq where
+  is = map fst ys
+  newSeq = foldl' (flip (uncurry insertElt)) xs ys
+
 -- | removes is' from xs, positions are before removal
 removeEltList :: [Int] -> Seq a -> Seq a
-removeEltList is' xs = newSeq where
+removeEltList is' xs = assert (isSorted is) $ newSeq where
   is = reindexSEltLayerPosForRemoval is'
   newSeq = foldl' (flip removeElt) xs is
 
@@ -76,3 +84,13 @@ moveEltList is i xs = assert (isSorted is) $ newSeq where
   ys = map (Seq.index xs) is
   newSeq' = removeEltList is xs
   newSeq = insertElts (i-nBefore) (Seq.fromList ys) newSeq'
+
+-- inverse of `moveEltList`
+undoMoveEltList :: [Int] -> Int -> Seq a -> Seq a
+undoMoveEltList is i xs = assert (isSorted is) $ newSeq where
+  nMoved = length is
+  moveToIndex = i - (length (takeWhile (\x -> x < i) is))
+  (leftL,rightL') = Seq.splitAt moveToIndex xs
+  (toMove,rightL) = Seq.splitAt nMoved rightL'
+  newSeq' = leftL >< rightL
+  newSeq = insertEltList_indexAfterInsertion (zip is (toList toMove)) newSeq'
