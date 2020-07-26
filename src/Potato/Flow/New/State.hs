@@ -2,6 +2,7 @@
 
 module Potato.Flow.New.State (
   PFState(..)
+  , pFState_isValid
   , pFState_copyElts
   , pFState_getSuperSEltByPos
   , pFState_getSEltLabels
@@ -52,6 +53,16 @@ data PFState = PFState {
 instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
+
+pFState_isValid :: PFState -> Bool
+pFState_isValid PFState {..} = validElts && validScope where
+  validElts = all isJust . toList $ fmap ((IM.!?) _pFState_directory) _pFState_layers
+  validScope = hasScopingProperty scopeFn _pFState_layers
+  scopeFn x = case IM.lookup x _pFState_directory of
+    Nothing                            -> Nothing -- this will fail in vaildElts case so it doesn't matter what we do here
+    Just (SEltLabel _ SEltFolderStart) -> Just True
+    Just (SEltLabel _ SEltFolderEnd)   -> Just False
+    _                                  -> Nothing
 
 -- lps must be valid
 pFState_copyElts :: PFState -> [LayerPos] -> [SEltLabel]

@@ -22,6 +22,7 @@ import           Potato.Flow.New.State
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
+import           Control.Exception        (assert)
 import           Data.Constraint.Extras   (Has')
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
@@ -84,22 +85,24 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
 --_sEltLayerTree_changeView :: REltIdMap (MaybeMaybe SEltLabel)
 
 doCmdState :: PFCmd -> PFState -> PFState
-doCmdState cmd state = case cmd of
-  (PFCNewElts :=> Identity x)      ->  do_newElts x state
-  (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
-  (PFCManipulate :=> Identity x)   ->  do_manipulate x state
-  (PFCMove :=> Identity x)         -> do_move x state
-  (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x state
-  _                                -> undefined
+doCmdState cmd state = assert (pFState_isValid newState) newState where
+  newState = case cmd of
+    (PFCNewElts :=> Identity x)      ->  do_newElts x state
+    (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
+    (PFCManipulate :=> Identity x)   ->  do_manipulate x state
+    (PFCMove :=> Identity x)         -> do_move x state
+    (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x state
+    _                                -> undefined
 
 undoCmdState :: PFCmd -> PFState -> PFState
-undoCmdState cmd state = case cmd of
-  (PFCNewElts :=> Identity x)      ->  undo_newElts x state
-  (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x state
-  (PFCManipulate :=> Identity x)   ->  undo_manipulate x state
-  (PFCMove :=> Identity x)         -> undo_move x state
-  (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
-  _                                -> undefined
+undoCmdState cmd state = assert (pFState_isValid newState) newState where
+  newState =  case cmd of
+    (PFCNewElts :=> Identity x)      ->  undo_newElts x state
+    (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x state
+    (PFCManipulate :=> Identity x)   ->  undo_manipulate x state
+    (PFCMove :=> Identity x)         -> undo_move x state
+    (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
+    _                                -> undefined
 
 ------ helpers for converting events to cmds
 -- TODO move these to a different file prob

@@ -43,8 +43,8 @@ hasScopingProperty scopeTypeFn xs = not finalFail && finalScope == 0 where
     Nothing -> (scopes, didFail)
     Just f -> case f of
       True -> case scopes of
-        0         -> (scopes, True)
-        otherwise -> (scopes-1, didFail)
+        0 -> (scopes, True)
+        _ -> (scopes-1, didFail)
       False -> (scopes+1, didFail)
   (finalScope, finalFail) = foldr foldfn (0,False) xs
 
