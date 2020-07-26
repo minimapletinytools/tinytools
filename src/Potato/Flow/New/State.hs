@@ -3,6 +3,7 @@
 module Potato.Flow.New.State (
   PFState(..)
   , pFState_isValid
+  , pFState_selectionIsValid
   , pFState_copyElts
   , pFState_getSuperSEltByPos
   , pFState_getSEltLabels
@@ -55,9 +56,21 @@ instance ToJSON PFState
 instance NFData PFState
 
 pFState_isValid :: PFState -> Bool
-pFState_isValid PFState {..} = validElts && validScope where
+pFState_isValid pfs@PFState {..} = pFState_selectionIsValid pfs ([0..Seq.length _pFState_layers - 1])
+{-validElts && validScope where
   validElts = all isJust . toList $ fmap ((IM.!?) _pFState_directory) _pFState_layers
   validScope = hasScopingProperty scopeFn _pFState_layers
+  scopeFn x = case IM.lookup x _pFState_directory of
+    Nothing                            -> Nothing -- this will fail in vaildElts case so it doesn't matter what we do here
+    Just (SEltLabel _ SEltFolderStart) -> Just True
+    Just (SEltLabel _ SEltFolderEnd)   -> Just False
+    _                                  -> Nothing
+-}
+
+pFState_selectionIsValid :: PFState -> [LayerPos] -> Bool
+pFState_selectionIsValid PFState {..} lps = validElts && validScope where
+  validElts = all isJust . toList $ fmap ((IM.!?) _pFState_directory) _pFState_layers
+  validScope = selectionHasScopingProperty scopeFn _pFState_layers lps
   scopeFn x = case IM.lookup x _pFState_directory of
     Nothing                            -> Nothing -- this will fail in vaildElts case so it doesn't matter what we do here
     Just (SEltLabel _ SEltFolderStart) -> Just True
@@ -123,7 +136,7 @@ undo_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
 undo_deleteElts = do_newElts
 
 do_move :: ([LayerPos], LayerPos) -> PFState -> PFState
-do_move (lps, dst) PFState {..} = r where
+do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) r where
   r = PFState (moveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
 {--
   rids = foldr (\l acc -> Seq.index _pFState_layers l : acc) [] lps

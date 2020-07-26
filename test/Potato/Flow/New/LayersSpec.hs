@@ -42,6 +42,11 @@ spec = do
     it "hasScopingProperty" $ do
       hasScopingProperty scopeFn scopingSeq1 `shouldBe` True
       hasScopingProperty scopeFn scopingSeq2 `shouldBe` False
+    it "selectionHasScopingProperty" $ do
+      selectionHasScopingProperty scopeFn scopingSeq1 [4,5,20,21] `shouldBe` True
+      selectionHasScopingProperty scopeFn scopingSeq1 [0..21] `shouldBe` True
+      selectionHasScopingProperty scopeFn scopingSeq1 [0..20] `shouldBe` False
+      selectionHasScopingProperty scopeFn scopingSeq2 ([0..4]<>[6..21]) `shouldBe` True
     it "insertElts" $ do
       insertElts 2 someSeq2 someSeq1 `shouldBe` Seq.fromList [0,0,1,2,3,0,0,0]
     it "insertElt" $ do

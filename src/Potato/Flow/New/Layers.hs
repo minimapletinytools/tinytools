@@ -2,6 +2,7 @@ module Potato.Flow.New.Layers (
   reindexSEltLayerPosForRemoval
   , reindexSEltLayerPosForInsertion
   , hasScopingProperty
+  , selectionHasScopingProperty
   , insertElts
   , insertElt
   , removeElts
@@ -47,6 +48,11 @@ hasScopingProperty scopeTypeFn xs = not finalFail && finalScope == 0 where
         _ -> (scopes-1, didFail)
       False -> (scopes+1, didFail)
   (finalScope, finalFail) = foldr foldfn (0,False) xs
+
+-- | assumes selection is ordered and is valid
+selectionHasScopingProperty :: (a -> Maybe Bool) -> Seq a -> [Int] -> Bool
+selectionHasScopingProperty scopeTypeFn xs is = hasScopingProperty scopeTypeFn subSeq where
+  subSeq = Seq.fromList $ map (\i -> Seq.index xs i) is
 
 -- | inserts ys at index i into xs
 insertElts :: Int -> Seq a -> Seq a -> Seq a
