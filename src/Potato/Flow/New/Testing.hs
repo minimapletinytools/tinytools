@@ -191,12 +191,13 @@ randomActionFCmd ::
 randomActionFCmd doundo stree = do
   let
     nElts = length stree
+    -- if we ever want to do this with elements only I guess, not sure why I commented this out
     --eltsOnly = filter (isElement . snd) $  L.indexed stree
     eltsOnly = L.indexed stree
     startCmd = if doundo then 0 else 2
   rcmd <- if null eltsOnly
     then return (2 :: Int)
-    else R.getRandomR (startCmd, 5)
+    else R.getRandomR (startCmd, 6)
   case rcmd of
     0 -> return FCUndo
     1 -> return FCRedo
@@ -243,9 +244,11 @@ randomActionFCmd doundo stree = do
       nTake <- R.getRandomR (1, length eltsOnly)
       let
         randomElts = L.take nTake shuffled
+
+        -- TODO this ignores folders
         -- for moving elts around, we need to folderize selection to ensure scoping property after move
-        -- TODO
-        --randomEltsScoped = folderizeSelection stree randomElts
+        randomEltsScoped = folderizeSelection stree (map fst randomElts)
+      targetMovePos <- R.getRandomR (0, nElts-1)
 
 
       case rcmd of
@@ -284,5 +287,5 @@ randomActionFCmd doundo stree = do
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
                   _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
-        6 -> undefined -- TODO move elts around
+        6 -> return $ FCMove (randomEltsScoped, targetMovePos)
         _ -> error "this should never happen"
