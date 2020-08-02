@@ -110,7 +110,8 @@ sPotatoFlow_to_pFState SPotatoFlow {..} = r where
   r = PFState layers dir _sPotatoFlow_sCanvas
 
 pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
-pFState_to_sPotatoFlow pfs@PFState {..} = trace ("SAVING: " <> debugPrintPFState pfs) $r where
+--pFState_to_sPotatoFlow pfs@PFState {..} = trace ("SAVING: " <> debugPrintPFState pfs) $r where
+pFState_to_sPotatoFlow pfs@PFState {..} = r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 
