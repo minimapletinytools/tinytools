@@ -59,8 +59,8 @@ spec = do
       insertElt 5 1 someSeq1 `shouldBe` Seq.fromList [0,0,0,0,0,1]
     it "removeElts" $ do
       removeElts 2 0 someSeq2 `shouldBe` Seq.fromList [3]
-    it "insertEltList" $ do
-      insertEltList [(0,1),(2,1),(4,1)] someSeq1 `shouldBe` Seq.fromList [1,0,0,1,0,0,1,0]
+    it "insertEltList_indexBeforeInsertion" $ do
+      insertEltList_indexBeforeInsertion [(0,1),(2,1),(4,1)] someSeq1 `shouldBe` Seq.fromList [1,0,0,1,0,0,1,0]
     it "insertEltList_indexAfterInsertion" $ do
       insertEltList_indexAfterInsertion [(0,1),(2,1),(4,1)] someSeq1 `shouldBe` Seq.fromList [1,0,1,0,1,0,0,0]
     it "removeEltList" $ do

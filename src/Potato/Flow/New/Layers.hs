@@ -8,7 +8,7 @@ module Potato.Flow.New.Layers (
   , insertElts
   , insertElt
   , removeElts
-  , insertEltList
+  , insertEltList_indexBeforeInsertion
   , insertEltList_indexAfterInsertion
   , removeEltList
   , moveEltList
@@ -133,8 +133,8 @@ removeElt :: Int -> Seq a -> Seq a
 removeElt i xs = Seq.deleteAt i xs
 
 -- | inserts ys into xs, positions are before insertion
-insertEltList :: [(Int, a)] -> Seq a -> Seq a
-insertEltList ys xs = assert (isSorted is') $ newSeq where
+insertEltList_indexBeforeInsertion :: [(Int, a)] -> Seq a -> Seq a
+insertEltList_indexBeforeInsertion ys xs = assert (isSorted is') $ newSeq where
   is' = map fst ys
   elts = map snd ys
   is = reindexSEltLayerPosForInsertion is'
