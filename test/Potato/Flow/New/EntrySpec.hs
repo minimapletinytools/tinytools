@@ -69,15 +69,23 @@ bs_save_5 =
   ([FCAddElt 0 SEltFolderStart, FCSave, FCNone, FCSave, FCUndo, FCSave]
   , [FCAddElt 0 SEltFolderStart, FCNone, FCUndo, FCSave])
 
+-- test multi-delete
 bs_save_6 :: ([FCmd],[FCmd])
 bs_save_6 =
   ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElts [0..3], FCUndo, FCRedo, FCSave]
   , [FCSave])
 
+-- test multi-delete
 bs_save_7 :: ([FCmd],[FCmd])
 bs_save_7 =
   ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElts [1,2], FCUndo, FCDeleteElts [2,3], FCCustom_Add_SBox_1, FCSave]
   , [FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCSave])
+
+-- copy paste
+bs_save_8 :: ([FCmd],[FCmd])
+bs_save_8 =
+  ([FCAddElt 0 SEltFolderStart, FCCustom_Add_SBox_1, FCCopy [0], FCPaste 3, FCSave]
+  , [FCCustom_Add_SBox_1,  FCAddElt 0 SEltFolderStart, FCCustom_Add_SBox_1, FCSave])
 
 -- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
 -- you'll need to modify reflex-test-host for this
@@ -208,9 +216,12 @@ spec = do
     fromHUnitTest $ pair_test "save5" save_network bs_save_5
     fromHUnitTest $ pair_test "save6" save_network bs_save_6
     fromHUnitTest $ pair_test "save7" save_network bs_save_7
+    fromHUnitTest $ pair_test "save8" save_network bs_save_8
+
     fromHUnitTest $ undoredo_test 10
     fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
     fromHUnitTest $ save_load_test
+
     -- can't seem to enable GHC stats in tests :(
     --fromHUnitTest $ leak_test 500000

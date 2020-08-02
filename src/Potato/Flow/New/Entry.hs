@@ -114,7 +114,7 @@ data PFEventTag =
   | PFERemoveElt [LayerPos]
   | PFEMoveElt ([LayerPos], LayerPos)
   | PFECopy [LayerPos]
-  | PFEPaste (LayerPos)
+  | PFEPaste LayerPos
   -- | PFEDuplicate [LayerPos]
   -- TODO add undo first param
   | PFEManipulate ControllersWithId

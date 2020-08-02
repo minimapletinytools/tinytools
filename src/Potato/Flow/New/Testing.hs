@@ -44,6 +44,8 @@ data FCmd =
   | FCModifyMany [(LayerPos, Controller)]
   | FCResizeCanvas DeltaLBox
   | FCMove ([LayerPos], LayerPos)
+  | FCCopy [LayerPos]
+  | FCPaste LayerPos
   | FCUndo
   | FCRedo
   | FCSave
@@ -108,9 +110,14 @@ setup_network ev = mdo
     resizeCanvasEv = fforMaybe ev $ \case
       FCResizeCanvas x -> Just x
       _ -> Nothing
-
     moveEv = fforMaybe ev $ \case
       FCMove x -> Just x
+      _ -> Nothing
+    copyEv = fforMaybe ev $ \case
+      FCCopy x -> Just x
+      _ -> Nothing
+    pasteEv = fforMaybe ev $ \case
+      FCPaste x -> Just x
       _ -> Nothing
     redoEv = fforMaybe ev $ \case
       FCRedo -> Just ()
@@ -132,14 +139,12 @@ setup_network ev = mdo
         , _pfc_manipulate = manipEv
         , _pfc_resizeCanvas = resizeCanvasEv
         , _pfc_moveElt = moveEv
-
+        , _pfc_copy = copyEv
+        , _pfc_paste = pasteEv
         , _pfc_undo       = undoEv
         , _pfc_redo       = redoEv
         , _pfc_load = loadEv
         , _pfc_save = saveEv
-
-        , _pfc_copy = never
-        , _pfc_paste = never
       }
   pfo <- holdPF pfc
   let
