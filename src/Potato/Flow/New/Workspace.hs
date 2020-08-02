@@ -23,10 +23,8 @@ import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
 import           Control.Exception        (assert)
-import           Data.Constraint.Extras   (Has')
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict       as IM
-import qualified Data.List.NonEmpty       as NE
 import qualified Data.Sequence            as Seq
 
 -- TODO move this into a diff file
@@ -85,24 +83,22 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
 --_sEltLayerTree_changeView :: REltIdMap (MaybeMaybe SEltLabel)
 
 doCmdState :: PFCmd -> PFState -> PFState
-doCmdState cmd state = assert False $ assert (pFState_isValid newState) newState where
+doCmdState cmd s = assert False $ assert (pFState_isValid newState) newState where
   newState = case cmd of
-    (PFCNewElts :=> Identity x)      ->  do_newElts x state
-    (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
-    (PFCManipulate :=> Identity x)   ->  do_manipulate x state
-    (PFCMove :=> Identity x)         -> do_move x state
-    (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x state
-    _                                -> undefined
+    (PFCNewElts :=> Identity x)      ->  do_newElts x s
+    (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x s
+    (PFCManipulate :=> Identity x)   ->  do_manipulate x s
+    (PFCMove :=> Identity x)         -> do_move x s
+    (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x s
 
 undoCmdState :: PFCmd -> PFState -> PFState
-undoCmdState cmd state = assert (pFState_isValid newState) newState where
+undoCmdState cmd s = assert (pFState_isValid newState) newState where
   newState =  case cmd of
-    (PFCNewElts :=> Identity x)      ->  undo_newElts x state
-    (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x state
-    (PFCManipulate :=> Identity x)   ->  undo_manipulate x state
-    (PFCMove :=> Identity x)         -> undo_move x state
-    (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x state
-    _                                -> undefined
+    (PFCNewElts :=> Identity x)      ->  undo_newElts x s
+    (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x s
+    (PFCManipulate :=> Identity x)   ->  undo_manipulate x s
+    (PFCMove :=> Identity x)         -> undo_move x s
+    (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x s
 
 ------ helpers for converting events to cmds
 -- TODO move these to a different file prob
@@ -129,7 +125,7 @@ debugPrintLayerPoss PFState {..} lps = fromString msg where
 -- or at least assert to ensure it's correct
 pfc_removeElt_to_deleteElts :: PFState -> [LayerPos] -> PFCmd
 --pfc_removeElt_to_deleteElts pfs@PFState {..} lps = if length lps > 1 then trace (debugPrintLayerPoss pfs lps) r else r where
-pfc_removeElt_to_deleteElts pfs@PFState {..} lps = r where
+pfc_removeElt_to_deleteElts PFState {..} lps = r where
   rids = map (Seq.index _pFState_layers) lps
   seltls = map ((IM.!) _pFState_directory) rids
   r = PFCDeleteElts ==> (zip3 rids lps seltls)

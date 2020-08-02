@@ -3,6 +3,11 @@ stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
 hp2ps -e8in -c memorytests.hp
 
+
+stack ghci potato-flow:potato-flow-test
+:set -fbreak-on-exception
+
+
 :: DATA REFACTOR NOTES ::
 IGNORE-Add REltId to SElt
 -get rid of NonEmpty in PFCmd

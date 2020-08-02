@@ -17,15 +17,12 @@ import           Reflex.Potato.Helpers
 
 import           Data.Dependent.Sum        ((==>))
 import qualified Data.IntMap.Strict        as IM
-import qualified Data.List.NonEmpty        as NE
-import           Data.Maybe                (fromJust)
 import qualified Data.Sequence             as Seq
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.State
 import           Potato.Flow.New.Workspace
-import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
 
@@ -156,7 +153,7 @@ holdPF PFConfig {..} = mdo
         PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
         PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
-        PFECopy x -> pfts { _pFTotalState_clipboard =  pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
+        PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
         PFELoad x -> pfts {
@@ -164,7 +161,6 @@ holdPF PFConfig {..} = mdo
             _pFWorkspace_state = sPotatoFlow_to_pFState x
             , _pFWorkspace_actionStack = emptyActionStack }
           }
-        _ -> undefined
       afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
       isValidAfter = pFState_isValid afterState
       in

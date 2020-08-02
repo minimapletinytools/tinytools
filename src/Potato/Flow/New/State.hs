@@ -39,7 +39,6 @@ import           Potato.Flow.SElts
 import           Control.Exception        (assert)
 import           Data.Aeson
 import qualified Data.IntMap.Strict       as IM
-import           Data.List.Ordered        (isSorted)
 import           Data.Maybe
 import qualified Data.Sequence            as Seq
 
@@ -56,7 +55,7 @@ instance ToJSON PFState
 instance NFData PFState
 
 debugPrintPFState :: (IsString a) => PFState -> a
-debugPrintPFState pfs@PFState {..} = fromString $ "PFState:\n" <> show _pFState_layers <> "\n" <> show (IM.keys _pFState_directory) <> "\n"
+debugPrintPFState PFState {..} = fromString $ "PFState:\n" <> show _pFState_layers <> "\n" <> show (IM.keys _pFState_directory) <> "\n"
 
 pFState_isValid :: PFState -> Bool
 pFState_isValid pfs@PFState {..} = pFState_selectionIsValid pfs ([0..Seq.length _pFState_layers - 1])
@@ -80,6 +79,7 @@ pFState_selectionIsValid PFState {..} lps = validElts && validScope where
     Just (SEltLabel _ SEltFolderEnd)   -> Just False
     _                                  -> Nothing
 
+-- TODO SOMETHING BROKEN HERE
 -- lps must be valid
 pFState_copyElts :: PFState -> [LayerPos] -> [SEltLabel]
 pFState_copyElts PFState {..} lps = r where
@@ -111,7 +111,7 @@ sPotatoFlow_to_pFState SPotatoFlow {..} = r where
 
 pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
 --pFState_to_sPotatoFlow pfs@PFState {..} = trace ("SAVING: " <> debugPrintPFState pfs) $r where
-pFState_to_sPotatoFlow pfs@PFState {..} = r where
+pFState_to_sPotatoFlow PFState {..} = r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 

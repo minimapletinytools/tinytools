@@ -22,7 +22,6 @@ import qualified Data.List              as L (take, (!!))
 import qualified Data.List.Index        as L
 import           Data.Maybe             (fromJust)
 import qualified Data.Sequence          as Seq
-import           Data.Tuple.Extra
 import qualified Text.Show
 
 import qualified Control.Monad.Random   as R
@@ -89,7 +88,7 @@ setup_network ev = mdo
     manipEv = flip push ev $ \case
       FCModify p c -> do
         pFState <- sample beh_pFState
-        let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos p $ pFState
+        let (rid, _, SEltLabel _ _) = fromJust . pFState_getSuperSEltByPos p $ pFState
         return . Just $ IM.singleton rid c
       FCModifyMany pcs -> do
         pFState <- sample beh_pFState
@@ -190,6 +189,7 @@ folderizeSelection stree lps = scopeSelection scopeFn (Seq.fromList stree) lps w
     SEltFolderEnd   -> Just False
     _               -> Nothing
 
+-- don't need Has' constraint, but leaving here as reference because you do need it in some other circumstances...
 randomActionFCmd ::
  (R.MonadRandom m, Has' Show CTag Identity)
  => Bool -> SEltTree -> m FCmd
@@ -200,9 +200,13 @@ randomActionFCmd doundo stree = do
     --eltsOnly = filter (isElement . snd) $  L.indexed stree
     eltsOnly = L.indexed stree
     startCmd = if doundo then 0 else 2
+    -- TODO we need to be able to test copy paste, but copy is not an undoable action..
+    -- so really we need some cute trick to copy and paste in one command for the sake of testing...
+    -- FCCopyPasta?
+    endCmd = 6
   rcmd <- if null eltsOnly
     then return (2 :: Int)
-    else R.getRandomR (startCmd, 6)
+    else R.getRandomR (startCmd, endCmd)
   case rcmd of
     0 -> return FCUndo
     1 -> return FCRedo
@@ -231,7 +235,6 @@ randomActionFCmd doundo stree = do
             , _sText_style = def
           }
         3 -> return $ FCAddElt pos $ SEltFolderStart
-        _ -> undefined
     -- resize the canvas
     3 -> do
       p1 <- randomXY
@@ -244,16 +247,19 @@ randomActionFCmd doundo stree = do
       rindex <- R.getRandomR (0, length eltsOnly - 1)
       let (deletePos, (SEltLabel _ _)) = eltsOnly L.!! rindex
 
+      -- TODO this is sloppy, clean this up so selsection criterion for each type of command is more clear...
       -- many random elements
       shuffled <- shuffleM eltsOnly
       nTake <- R.getRandomR (1, length eltsOnly)
+      nTakeFewer <- R.getRandomR (1, min (length eltsOnly) 10)
       let
         randomElts = L.take nTake shuffled
-
-        -- TODO this ignores folders
+        randomEltsFewer = L.take nTakeFewer shuffled
         -- for moving elts around, we need to folderize selection to ensure scoping property after move
+        -- TODO use fewer version for copy pasta
+        --randomEltsScoped = folderizeSelection stree (map fst randomEltsFewer)
         randomEltsScoped = folderizeSelection stree (map fst randomElts)
-      targetMovePos <- R.getRandomR (0, nElts-1)
+      someTargetPos <- R.getRandomR (0, nElts-1)
 
 
       case rcmd of
@@ -292,5 +298,8 @@ randomActionFCmd doundo stree = do
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
                   _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
-        6 -> return $ FCMove (randomEltsScoped, targetMovePos)
+        6 -> return $ FCMove (randomEltsScoped, someTargetPos)
+        -- TODO these aren't currently being tested
+        7 -> return $ FCCopy randomEltsScoped
+        8 -> return $ FCPaste someTargetPos
         _ -> error "this should never happen"
