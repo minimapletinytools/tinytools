@@ -3,6 +3,8 @@ module Potato.Flow.New.Layers (
   , reindexSEltLayerPosForInsertion
   , hasScopingProperty
   , selectionHasScopingProperty
+  , findMatchingScope
+  , scopeSelection
   , insertElts
   , insertElt
   , removeElts
@@ -18,10 +20,19 @@ import           Relude
 import           Potato.Flow.Reflex.Types
 
 import           Control.Exception        (assert)
+import qualified Data.Bimap               as BM
 import           Data.List.Ordered        (isSorted)
 import           Data.Sequence            ((><))
 import qualified Data.Sequence            as Seq
+import qualified Data.Set                 as Set
 
+-- copy pasta https://stackoverflow.com/questions/16108714/removing-duplicates-from-a-list-in-haskell-without-elem
+sortUnique :: Ord a => [a] -> [a]
+sortUnique = sort . rmdups' Set.empty where
+  rmdups' _ [] = []
+  rmdups' a (b : c) = if Set.member b a
+    then rmdups' a c
+    else b : rmdups' (Set.insert b a) c
 
 -- | reindexes list of LayerPos such that each element is indexed as if all previous elements have been removed
 -- O(n^2) lol
@@ -53,6 +64,52 @@ hasScopingProperty scopeTypeFn xs = not finalFail && finalScope == 0 where
 selectionHasScopingProperty :: (a -> Maybe Bool) -> Seq a -> [Int] -> Bool
 selectionHasScopingProperty scopeTypeFn xs is = hasScopingProperty scopeTypeFn subSeq where
   subSeq = Seq.fromList $ map (\i -> Seq.index xs i) is
+
+makePairMap :: (a -> Maybe Bool) -> Seq a -> BM.Bimap Int Int
+makePairMap scopeTypeFn xs = fst r where
+  -- map folders from start to end index
+  pairmapfoldfn i a (pairs, scopes) = case scopeTypeFn a of
+    Nothing -> (pairs, scopes)
+    Just True -> case scopes of
+      []        -> error "mismatched scopes"
+      x:scopes' -> (BM.insert i x pairs, scopes')
+    Just False -> (pairs, i:scopes)
+  r = Seq.foldrWithIndex pairmapfoldfn (BM.empty,[]) xs
+
+-- assumes input sequence satisfies scoping property
+-- assumes input index is actually a folder
+findMatchingScope :: (a -> Maybe Bool) -> Seq a -> Int -> Int
+findMatchingScope scopeTypeFn xs i = r where
+  pairmap = makePairMap scopeTypeFn xs
+  r = case scopeTypeFn (Seq.index xs i) of
+    Nothing -> error "input index was not a folder"
+    Just True -> case BM.lookup i pairmap of
+      Nothing -> error "pairmap missing elements, this means scopes were mismatched"
+      Just x -> x
+    Just False -> case BM.lookupR i pairmap of
+      Nothing -> error "pairmap missing elements, this means scopes were mismatched"
+      Just x -> x
+
+-- | converts selection so that it satisfies the scoping property
+-- assumes input sequence satisfies scoping property
+-- simple and inefficient implementation, do not use in prod
+scopeSelection :: (a -> Maybe Bool) -> Seq a -> [Int] -> [Int]
+scopeSelection scopeTypeFn xs is = r where
+  pairmap = makePairMap scopeTypeFn xs
+  -- go through and lookup matches
+  foldfn i acc = case scopeTypeFn (Seq.index xs i) of
+    Nothing -> acc
+    Just True -> case BM.lookup i pairmap of
+      Nothing -> error "pairmap missing elements, this means scopes were mismatched"
+      Just x -> x:acc
+    Just False -> case BM.lookupR i pairmap of
+      Nothing -> error "pairmap missing elements, this means scopes were mismatched"
+      Just x -> x:acc
+  newElts = foldr foldfn [] is
+  r = sortUnique (newElts <> is)
+
+
+
 
 -- | inserts ys at index i into xs
 insertElts :: Int -> Seq a -> Seq a -> Seq a

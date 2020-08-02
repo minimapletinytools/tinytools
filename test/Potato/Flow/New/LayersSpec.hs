@@ -47,6 +47,12 @@ spec = do
       selectionHasScopingProperty scopeFn scopingSeq1 [0..21] `shouldBe` True
       selectionHasScopingProperty scopeFn scopingSeq1 [0..20] `shouldBe` False
       selectionHasScopingProperty scopeFn scopingSeq2 ([0..4]<>[6..21]) `shouldBe` True
+    it "findMatchingScope" $ do
+      findMatchingScope scopeFn scopingSeq1 4 `shouldBe` 21
+    it "scopeSelection" $ do
+      scopeSelection scopeFn scopingSeq1 [0,4,5,17] `shouldBe` [0,4,5,8,17,18,21]
+      scopeSelection scopeFn scopingSeq1 [0..3] `shouldBe` [0..3]
+      scopeSelection scopeFn scopingSeq1 [18..21] `shouldBe` [4]<>[15..21]
     it "insertElts" $ do
       insertElts 2 someSeq2 someSeq1 `shouldBe` Seq.fromList [0,0,1,2,3,0,0,0]
     it "insertElt" $ do
