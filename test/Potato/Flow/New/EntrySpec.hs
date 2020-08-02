@@ -51,12 +51,12 @@ bs_save_1 =
 
 bs_save_2 :: ([FCmd],[FCmd])
 bs_save_2 =
-  ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElt 1, FCUndo, FCUndo, FCUndo, FCUndo, FCSave]
+  ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElts [1], FCUndo, FCUndo, FCUndo, FCUndo, FCSave]
   , [FCSave])
 
 bs_save_3 :: ([FCmd],[FCmd])
 bs_save_3 =
-  ([FCCustom_Add_SBox_1, FCDeleteElt 0, FCUndo, FCRedo, FCSave]
+  ([FCCustom_Add_SBox_1, FCDeleteElts [0], FCUndo, FCRedo, FCSave]
   , [FCSave])
 
 bs_save_4 :: ([FCmd],[FCmd])
@@ -68,6 +68,16 @@ bs_save_5 :: ([FCmd],[FCmd])
 bs_save_5 =
   ([FCAddElt 0 SEltFolderStart, FCSave, FCNone, FCSave, FCUndo, FCSave]
   , [FCAddElt 0 SEltFolderStart, FCNone, FCUndo, FCSave])
+
+bs_save_6 :: ([FCmd],[FCmd])
+bs_save_6 =
+  ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElts [0..3], FCUndo, FCRedo, FCSave]
+  , [FCSave])
+
+bs_save_7 :: ([FCmd],[FCmd])
+bs_save_7 =
+  ([FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCDeleteElts [1,2], FCUndo, FCDeleteElts [2,3], FCCustom_Add_SBox_1, FCSave]
+  , [FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCCustom_Add_SBox_1, FCSave])
 
 -- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
 -- you'll need to modify reflex-test-host for this
@@ -189,12 +199,15 @@ save_load_test = TestLabel "save load" $ TestCase $ runSpiderHost $ do
 spec :: Spec
 spec = do
   describe "Potato Flow" $ do
+    return ()
     fromHUnitTest $ pair_test "save0" save_network bs_save_0
     fromHUnitTest $ pair_test "save1" save_network bs_save_1
     fromHUnitTest $ pair_test "save2" save_network bs_save_2
     fromHUnitTest $ pair_test "save3" save_network bs_save_3
     fromHUnitTest $ pair_test "save4" save_network bs_save_4
     fromHUnitTest $ pair_test "save5" save_network bs_save_5
+    fromHUnitTest $ pair_test "save6" save_network bs_save_6
+    fromHUnitTest $ pair_test "save7" save_network bs_save_7
     fromHUnitTest $ undoredo_test 10
     fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test

@@ -97,6 +97,7 @@ dependencies:
 - lens
 - listsafe
 - data-ordlist
+- bimap
 
 #- smash
 - deepseq

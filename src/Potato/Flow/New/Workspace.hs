@@ -85,7 +85,7 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
 --_sEltLayerTree_changeView :: REltIdMap (MaybeMaybe SEltLabel)
 
 doCmdState :: PFCmd -> PFState -> PFState
-doCmdState cmd state = assert (pFState_isValid newState) newState where
+doCmdState cmd state = assert False $ assert (pFState_isValid newState) newState where
   newState = case cmd of
     (PFCNewElts :=> Identity x)      ->  do_newElts x state
     (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x state
@@ -117,11 +117,19 @@ pfc_addFolder_to_newElts pfs (lp, name) = r where
   ridEnd = ridStart + 1
   seltlStart = SEltLabel name SEltFolderStart
   seltlEnd = SEltLabel (name <> " (end)") SEltFolderEnd
-  r = PFCNewElts ==> [(ridStart, lp, seltlStart), (ridEnd, lp, seltlEnd)]
+  r = PFCNewElts ==> [(ridStart, lp, seltlStart), (ridEnd, lp+1, seltlEnd)]
+
+debugPrintLayerPoss :: (IsString a) => PFState -> [LayerPos] -> a
+debugPrintLayerPoss PFState {..} lps = fromString msg where
+  rids = map (Seq.index _pFState_layers) lps
+  seltls = map ((IM.!) _pFState_directory) rids
+  msg = show $ (zip3 rids lps (map _sEltLabel_sElt seltls))
 
 -- TODO consider including folder end to selecetion if not included
+-- or at least assert to ensure it's correct
 pfc_removeElt_to_deleteElts :: PFState -> [LayerPos] -> PFCmd
-pfc_removeElt_to_deleteElts PFState {..} lps = r where
+--pfc_removeElt_to_deleteElts pfs@PFState {..} lps = if length lps > 1 then trace (debugPrintLayerPoss pfs lps) r else r where
+pfc_removeElt_to_deleteElts pfs@PFState {..} lps = r where
   rids = map (Seq.index _pFState_layers) lps
   seltls = map ((IM.!) _pFState_directory) rids
   r = PFCDeleteElts ==> (zip3 rids lps seltls)

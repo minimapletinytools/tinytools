@@ -21,6 +21,7 @@ import qualified Data.IntMap.Strict     as IM
 import qualified Data.List              as L (take, (!!))
 import qualified Data.List.Index        as L
 import           Data.Maybe             (fromJust)
+import qualified Data.Sequence          as Seq
 import           Data.Tuple.Extra
 import qualified Text.Show
 
@@ -28,6 +29,7 @@ import qualified Control.Monad.Random   as R
 import           System.Random.Shuffle
 
 import           Potato.Flow
+import           Potato.Flow.New.Layers
 
 
 simpleSBox :: SBox
@@ -37,10 +39,11 @@ data FCmd =
   FCNone
   -- adding a SEltFolderStart automatically adds corresponding SEltFolderEnd
   | FCAddElt LayerPos SElt
-  | FCDeleteElt LayerPos
+  | FCDeleteElts [LayerPos]
   | FCModify LayerPos Controller
   | FCModifyMany [(LayerPos, Controller)]
   | FCResizeCanvas DeltaLBox
+  | FCMove ([LayerPos], LayerPos)
   | FCUndo
   | FCRedo
   | FCSave
@@ -54,7 +57,7 @@ instance Show FCmd where
   show FCNone                        = "FCNone"
   show (FCAddElt lp SEltFolderStart) = "FCAdd Folder " <> show lp
   show (FCAddElt lp _)               = "FCAdd " <> show lp
-  show (FCDeleteElt lp)              = "FCDelete " <> show lp
+  show (FCDeleteElts lp)             = "FCDelete " <> show lp
   show FCUndo                        = "FCUndo"
   show FCRedo                        = "FCRedo"
   show _                             = "other"
@@ -66,7 +69,7 @@ setup_network ev = mdo
     --ev = traceEvent ("aoeu") ev'
     addEv = fforMaybe ev $ \case
       FCAddElt p x -> case x of
-        SEltFolderStart -> Nothing
+        SEltFolderStart -> Nothing -- handled by addFolderEv
         SEltFolderEnd   -> error "can not explicity add SEltFolderEnd"
         _               -> Just (p, SEltLabel "blank" x)
       FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
@@ -78,8 +81,8 @@ setup_network ev = mdo
         _               -> Nothing
       _ -> Nothing
 
-    removeEv = fforMaybe ev $ \case
-      FCDeleteElt p -> Just [p]
+    deleteEv = fforMaybe ev $ \case
+      FCDeleteElts p -> Just p
       _              -> Nothing
     manipEv = flip push ev $ \case
       FCModify p c -> do
@@ -105,6 +108,10 @@ setup_network ev = mdo
     resizeCanvasEv = fforMaybe ev $ \case
       FCResizeCanvas x -> Just x
       _ -> Nothing
+
+    moveEv = fforMaybe ev $ \case
+      FCMove x -> Just x
+      _ -> Nothing
     redoEv = fforMaybe ev $ \case
       FCRedo -> Just ()
       _      -> Nothing
@@ -121,15 +128,16 @@ setup_network ev = mdo
     pfc = PFConfig {
         _pfc_addElt     = addEv
         , _pfc_addFolder = addFolderEv
-        , _pfc_removeElt  = removeEv
+        , _pfc_deleteElts  = deleteEv
         , _pfc_manipulate = manipEv
         , _pfc_resizeCanvas = resizeCanvasEv
+        , _pfc_moveElt = moveEv
+
         , _pfc_undo       = undoEv
         , _pfc_redo       = redoEv
         , _pfc_load = loadEv
         , _pfc_save = saveEv
 
-        , _pfc_moveElt = never
         , _pfc_copy = never
         , _pfc_paste = never
       }
@@ -164,6 +172,18 @@ randomXY = do
   x <- R.getRandomR (-99999, 99999)
   y <- R.getRandomR (-99999, 99999)
   return $ V2 x y
+
+
+
+
+-- | correct selection to include folder pairs
+folderizeSelection :: SEltTree -> [LayerPos] -> [LayerPos]
+folderizeSelection stree lps = scopeSelection scopeFn (Seq.fromList stree) lps where
+  scopeFn :: SEltLabel -> Maybe Bool
+  scopeFn (SEltLabel _ selt)= case selt of
+    SEltFolderStart -> Just True
+    SEltFolderEnd   -> Just False
+    _               -> Nothing
 
 randomActionFCmd ::
  (R.MonadRandom m, Has' Show CTag Identity)
@@ -213,20 +233,24 @@ randomActionFCmd doundo stree = do
       return $ FCResizeCanvas $ DeltaLBox p1 p2
     -- modify an existing element
     _ -> do
-      -- TODO must delete matching folder pairs
-      -- just one random elements
+
+      -- choose just one random element for delete (so that we don't delete too many)
       rindex <- R.getRandomR (0, length eltsOnly - 1)
       let (deletePos, (SEltLabel _ _)) = eltsOnly L.!! rindex
 
       -- many random elements
       shuffled <- shuffleM eltsOnly
-      -- TODO for delete you don't want to delete too many otherwise you'll always end up with like no elements
-      -- i.e. prob want weighted random
       nTake <- R.getRandomR (1, length eltsOnly)
-      let randomElts = L.take nTake shuffled
+      let
+        randomElts = L.take nTake shuffled
+        -- for moving elts around, we need to folderize selection to ensure scoping property after move
+        -- TODO
+        --randomEltsScoped = folderizeSelection stree randomElts
+
 
       case rcmd of
-        4 -> return $ FCDeleteElt deletePos
+        -- folderize delete to ensure scoping property
+        4 -> return $ FCDeleteElts (folderizeSelection stree [deletePos])
         5 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
           p1 <- randomXY
           p2 <- randomXY
@@ -260,4 +284,5 @@ randomActionFCmd doundo stree = do
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
                   _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
+        6 -> undefined -- TODO move elts around
         _ -> error "this should never happen"

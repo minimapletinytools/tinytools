@@ -61,10 +61,13 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
+-get rid of SEltTree or rename to SEltLableTree
+  -mayeb even use newtype wrapper to better ensure scoping property
+-get asserts working
 -add support for move in Testing.hs
 DONE-move
   DONE-switch to use testable methods in Layers
-  DONE-write test for undo move  
+  DONE-write test for undo move
 -test copypasta
 -add postbuild back into reflex-test-host
 -remove spiderhost constraints in reflex-test-host

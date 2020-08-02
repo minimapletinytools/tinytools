@@ -62,7 +62,7 @@ data PFConfig t = PFConfig {
   -- | don't use this to add folders, as they need to be added with matching pair to ensure scoping property
   _pfc_addElt         :: Event t (LayerPos, SEltLabel)
   , _pfc_addFolder    :: Event t (LayerPos, Text)
-  , _pfc_removeElt    :: Event t [LayerPos]
+  , _pfc_deleteElts   :: Event t [LayerPos]
   , _pfc_moveElt      :: Event t ([LayerPos], LayerPos) -- new layer position is before removal
   , _pfc_copy         :: Event t [LayerPos]
   , _pfc_paste        :: Event t LayerPos
@@ -91,8 +91,17 @@ data PFTotalState = PFTotalState {
   , _pFTotalState_clipboard :: [SEltLabel]
 }
 
+debugPrintBeforeAfterState :: (IsString a) => PFState -> PFState -> a
+debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintPFState stateBefore <> "\nAFTER: " <> debugPrintPFState stateAfter
+
 doCmdPFTotalState :: PFCmd -> PFTotalState -> PFTotalState
-doCmdPFTotalState cmd pfts = pfts { _pFTotalState_workspace = doCmdWorkspace cmd (_pFTotalState_workspace pfts) }
+doCmdPFTotalState cmd pfts = r where
+  r = pfts { _pFTotalState_workspace = doCmdWorkspace cmd (_pFTotalState_workspace pfts) }
+  --stateBefore = (_pFWorkspace_state (_pFTotalState_workspace pfts))
+  --isValidBefore = pFState_isValid stateBefore
+  --stateAfter = (_pFWorkspace_state (_pFTotalState_workspace r))
+  --isValidAfter = pFState_isValid stateAfter
+  --trace (show cmd <> "\n" <> debugPrintBeforeAfterState stateBefore stateAfter) r'
 
 doCmdPFTTotalStateUndoFirst :: PFCmd -> PFTotalState -> PFTotalState
 doCmdPFTTotalStateUndoFirst cmd pfts = pfts { _pFTotalState_workspace = doCmdWorkspaceUndoFirst cmd (_pFTotalState_workspace pfts) }
@@ -113,6 +122,7 @@ data PFEventTag =
   | PFEUndo
   | PFERedo
   | PFELoad SPotatoFlow
+  deriving (Show)
 
 
 holdPF ::
@@ -124,7 +134,7 @@ holdPF PFConfig {..} = mdo
     pfevent = leftmostWarn "PFConfig"
       [ PFEAddElt <$> _pfc_addElt
       , PFEAddFolder <$> _pfc_addFolder
-      , PFERemoveElt <$> _pfc_removeElt
+      , PFERemoveElt <$> _pfc_deleteElts
       , PFEMoveElt <$> _pfc_moveElt
       -- , PFEDuplicate <$> _pfc_duplicate
       , PFEManipulate <$> _pfc_manipulate
@@ -137,8 +147,8 @@ holdPF PFConfig {..} = mdo
 
     foldfn :: PFEventTag -> PFTotalState -> PFTotalState
     foldfn evt pfts = let
-        lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
-      in case evt of
+      lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
+      r = case evt of
         PFEAddElt x -> doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
         PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
         PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
@@ -155,6 +165,11 @@ holdPF PFConfig {..} = mdo
             , _pFWorkspace_actionStack = emptyActionStack }
           }
         _ -> undefined
+      afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
+      isValidAfter = pFState_isValid afterState
+      in
+        if isValidAfter then r else
+          error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
 
   pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace []) pfevent
 

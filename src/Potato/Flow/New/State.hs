@@ -2,6 +2,7 @@
 
 module Potato.Flow.New.State (
   PFState(..)
+  , debugPrintPFState
   , pFState_isValid
   , pFState_selectionIsValid
   , pFState_copyElts
@@ -40,7 +41,6 @@ import           Data.Aeson
 import qualified Data.IntMap.Strict       as IM
 import           Data.List.Ordered        (isSorted)
 import           Data.Maybe
-import           Data.Sequence            ((><))
 import qualified Data.Sequence            as Seq
 
 
@@ -54,6 +54,9 @@ data PFState = PFState {
 instance FromJSON PFState
 instance ToJSON PFState
 instance NFData PFState
+
+debugPrintPFState :: (IsString a) => PFState -> a
+debugPrintPFState pfs@PFState {..} = fromString $ "PFState:\n" <> show _pFState_layers <> "\n" <> show (IM.keys _pFState_directory) <> "\n"
 
 pFState_isValid :: PFState -> Bool
 pFState_isValid pfs@PFState {..} = pFState_selectionIsValid pfs ([0..Seq.length _pFState_layers - 1])
@@ -107,7 +110,7 @@ sPotatoFlow_to_pFState SPotatoFlow {..} = r where
   r = PFState layers dir _sPotatoFlow_sCanvas
 
 pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
-pFState_to_sPotatoFlow PFState {..} = r where
+pFState_to_sPotatoFlow pfs@PFState {..} = trace ("SAVING: " <> debugPrintPFState pfs) $r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 
@@ -115,9 +118,7 @@ do_newElts :: [SuperSEltLabel] -> PFState -> PFState
 do_newElts seltls PFState {..} = r where
   poss = map (\(x,y,_) -> (y,x)) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
-  -- insertEltList is BEFORE insertion, therefore to insert a sequence of elements you give them all the same layer position
-  -- TODO consider if we want to do it AFTER insertion
-  newLayers = insertEltList poss _pFState_layers
+  newLayers = insertEltList_indexAfterInsertion poss _pFState_layers
   newDir = IM.fromList els `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
 
