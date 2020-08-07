@@ -42,7 +42,7 @@ data PFWorkspace = PFWorkspace {
   , _pFWorkspace_actionStack :: ActionStack
 }
 
--- TODO should be every element that got added/removed in changeList?
+-- TODO every element should get added to change list
 workspaceFromState :: PFState -> PFWorkspace
 workspaceFromState s = PFWorkspace s IM.empty emptyActionStack
 

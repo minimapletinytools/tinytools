@@ -76,9 +76,7 @@ data PFOutput t = PFOutput {
   _pfo_pFState              :: Dynamic t (PFState)
   , _pfo_loaded             :: Event t ()
   , _pfo_saved              :: Event t SPotatoFlow
-
-  -- for debugging and temp rendering, to be removed once incremental rendering is done
-  , _pfo_potato_changed     :: Event t ()
+  , _pfo_potato_changed     :: Event t SEltLabelChanges
   -- temp access to entire state, or maybe not so temp
   , _pfo_potato_potatoTotal :: Dynamic t PotatoTotal
 }
@@ -174,8 +172,8 @@ holdPF PFConfig {..} = mdo
       pfts <- sample . current $ pfTotalState
       return $ pFState_to_sPotatoFlow $ _pFWorkspace_state (_pFTotalState_workspace pfts)
     r_saved = pushAlways savepushfn _pfc_save
-
     r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalState
+    r_changes = fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalState
 
     --potatoTotalMapFn
     --r_potatoTotal_sEltLabelMap =
@@ -188,6 +186,8 @@ holdPF PFConfig {..} = mdo
       _pfo_pFState = r_state
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
       , _pfo_loaded = void _pfc_load
-      , _pfo_potato_changed     = void pfevent -- :: Event t ()
+      -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
+      -- probably just need to address TODO in workspaceFromState
+      , _pfo_potato_changed     = leftmost [updated r_changes, pfevent $> IM.empty]
       , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal
     }
