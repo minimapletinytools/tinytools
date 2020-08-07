@@ -115,31 +115,34 @@ pFState_to_sPotatoFlow PFState {..} = r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 
-do_newElts :: [SuperSEltLabel] -> PFState -> PFState
-do_newElts seltls PFState {..} = r where
+do_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
+do_newElts seltls PFState {..} = (r, fmap Just changes) where
   poss = map (\(x,y,_) -> (y,x)) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
+  changes = IM.fromList els
   newLayers = insertEltList_indexAfterInsertion poss _pFState_layers
-  newDir = IM.fromList els `IM.union` _pFState_directory
+  newDir = changes `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
 
-undo_newElts :: [SuperSEltLabel] -> PFState -> PFState
-undo_newElts seltls PFState {..} = r where
+undo_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
+undo_newElts seltls PFState {..} = (r, changes) where
   poss = map (\(_,y,_) -> y) seltls
   els = map (\(x,_,z) -> (x,z)) seltls
   newLayers = removeEltList poss _pFState_layers
-  newDir = _pFState_directory `IM.difference` fromList els
+  newDir = _pFState_directory `IM.difference` IM.fromList els
   r = PFState newLayers newDir _pFState_canvas
+  changes = IM.fromList $ map (\(x,y)->(x,Nothing)) els
 
-do_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
+do_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_deleteElts = undo_newElts
 
-undo_deleteElts :: [SuperSEltLabel] -> PFState -> PFState
+undo_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 undo_deleteElts = do_newElts
 
-do_move :: ([LayerPos], LayerPos) -> PFState -> PFState
-do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) r where
+do_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
+do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) (r, changes) where
   r = PFState (moveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
+  changes = pFState_getSEltLabels (fmap (Seq.index _pFState_layers) lps) pfs
 {--
   rids = foldr (\l acc -> Seq.index _pFState_layers l : acc) [] lps
   newLayers' = assert (isSorted lps) $ foldr (\l acc -> Seq.deleteAt l acc) _pFState_layers lps
@@ -149,9 +152,10 @@ do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) 
   r = PFState newLayers _pFState_directory _pFState_canvas
 --}
 
-undo_move :: ([LayerPos], LayerPos) -> PFState -> PFState
-undo_move (lps, dst) PFState {..} =  r where
+undo_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
+undo_move (lps, dst) pfs@PFState {..} =  (r, changes) where
   r = PFState (undoMoveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
+  changes = pFState_getSEltLabels (fmap (Seq.index _pFState_layers) lps) pfs
 {--
   --assert (isSorted lps)
   nMoved = length lps
@@ -171,15 +175,15 @@ undo_resizeCanvas :: DeltaLBox -> PFState -> PFState
 undo_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
   newCanvas = SCanvas $ minusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
-manipulate :: Bool -> ControllersWithId -> PFState -> PFState
-manipulate isDo cs pfs = r where
+manipulate :: Bool -> ControllersWithId -> PFState -> (PFState, SEltLabelChanges)
+manipulate isDo cs pfs = (r, fmap Just changes) where
   dir = _pFState_directory pfs
-  difffn _ seltl c = Just $ updateFnFromController isDo c seltl
-  newDir = IM.differenceWithKey difffn dir cs
+  changes = IM.intersectionWith (updateFnFromController isDo) cs dir
+  newDir = IM.union changes dir
   r = pfs { _pFState_directory = newDir }
 
-do_manipulate :: ControllersWithId -> PFState -> PFState
+do_manipulate :: ControllersWithId -> PFState -> (PFState, SEltLabelChanges)
 do_manipulate = manipulate True
 
-undo_manipulate :: ControllersWithId -> PFState -> PFState
+undo_manipulate :: ControllersWithId -> PFState -> (PFState, SEltLabelChanges)
 undo_manipulate = manipulate False

@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+-- TODO move this out of reflex folder
 
 module Potato.Flow.Reflex.Types (
   LayerPos
@@ -9,6 +10,7 @@ module Potato.Flow.Reflex.Types (
   , SuperSEltLabel
   , ControllersWithId
   , Selection
+  , SEltLabelChanges
 
   -- * manipulators
   , MNone
@@ -45,6 +47,7 @@ type LayerPos = Int
 type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
+type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
 
 type Selection = [LayerPos]
 

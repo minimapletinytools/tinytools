@@ -38,23 +38,23 @@ emptyActionStack = ActionStack [] []
 
 data PFWorkspace = PFWorkspace {
   _pFWorkspace_state         :: PFState
+  , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack
-  -- TODO this isn't needed delete
-  --, _pFWorkspace_maxId       :: REltId
 }
 
+-- TODO should be every element that got added/removed in changeList?
 workspaceFromState :: PFState -> PFWorkspace
-workspaceFromState s = PFWorkspace s emptyActionStack
+workspaceFromState s = PFWorkspace s IM.empty emptyActionStack
 
 emptyWorkspace :: PFWorkspace
-emptyWorkspace = PFWorkspace emptyPFState emptyActionStack
+emptyWorkspace = PFWorkspace emptyPFState IM.empty emptyActionStack
 
 undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case doStack of
     --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
-    c : cs -> PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
+    c : cs -> uncurry PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
     _ -> pfw
 
 redoWorkspace :: PFWorkspace -> PFWorkspace
@@ -62,7 +62,7 @@ redoWorkspace pfw@PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   r = case undoStack of
     --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
-    c : cs -> PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
+    c : cs -> uncurry PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
     _ -> pfw
 
 
@@ -76,29 +76,25 @@ doCmdWorkspace cmd PFWorkspace {..} = r where
   ActionStack {..} = _pFWorkspace_actionStack
   newStack = ActionStack (cmd:doStack) []
   --newMaxId = pFState_maxID _pFWorkspace_state
-  r = PFWorkspace newState newStack
+  r = uncurry PFWorkspace newState newStack
 
-
--- TODO you probably want to output something like this as well
---_sEltLayerTree_changeView :: REltIdMap (MaybeMaybe SEltLabel)
-
-doCmdState :: PFCmd -> PFState -> PFState
-doCmdState cmd s = assert False $ assert (pFState_isValid newState) newState where
-  newState = case cmd of
+doCmdState :: PFCmd -> PFState -> (PFState, SEltLabelChanges)
+doCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
+  (newState, changes) = case cmd of
     (PFCNewElts :=> Identity x)      ->  do_newElts x s
     (PFCDeleteElts :=> Identity x)   ->  do_deleteElts x s
     (PFCManipulate :=> Identity x)   ->  do_manipulate x s
     (PFCMove :=> Identity x)         -> do_move x s
-    (PFCResizeCanvas :=> Identity x) -> do_resizeCanvas x s
+    (PFCResizeCanvas :=> Identity x) -> (do_resizeCanvas x s, IM.empty)
 
-undoCmdState :: PFCmd -> PFState -> PFState
-undoCmdState cmd s = assert (pFState_isValid newState) newState where
-  newState =  case cmd of
+undoCmdState :: PFCmd -> PFState -> (PFState, SEltLabelChanges)
+undoCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
+  (newState, changes) =  case cmd of
     (PFCNewElts :=> Identity x)      ->  undo_newElts x s
     (PFCDeleteElts :=> Identity x)   ->  undo_deleteElts x s
     (PFCManipulate :=> Identity x)   ->  undo_manipulate x s
     (PFCMove :=> Identity x)         -> undo_move x s
-    (PFCResizeCanvas :=> Identity x) -> undo_resizeCanvas x s
+    (PFCResizeCanvas :=> Identity x) -> (undo_resizeCanvas x s, IM.empty)
 
 ------ helpers for converting events to cmds
 -- TODO move these to a different file prob
