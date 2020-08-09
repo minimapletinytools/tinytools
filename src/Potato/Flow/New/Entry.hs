@@ -2,10 +2,7 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.New.Entry (
-  PotatoTotal(..)
-  , potato_simplifyPotatoTotal
-
-  , PFConfig(..)
+  PFConfig(..)
   , PFOutput(..)
   , holdPF
 ) where
@@ -36,23 +33,6 @@ loadWSFromFile :: (Reflex t) => LoadFileEvent t -> SetWSEvent t
 loadWSFromFile = fmapMaybe decode
 -}
 
--- | temp (or maybe not temp) way to track all changes in SEltLayerTree
--- TBH not so potatoes, this is legit
-data PotatoTotal = PotatoTotal {
-  -- map of REltId to SEltLabel
-  _potatoTotal_sEltLabelMap  :: IM.IntMap SEltLabel
-  -- map of REltId to LayerPos
-  --, _potatoTotal_layerPosMap :: IM.IntMap LayerPos
-  , _potatoTotal_layerPosMap :: REltId -> Maybe LayerPos
-  , _potatoTotal_layers      :: Seq REltId
-}
-
--- this is potato
-potato_simplifyPotatoTotal :: PotatoTotal -> [SuperSEltLabel]
-potato_simplifyPotatoTotal PotatoTotal {..} = r where
-  foldfn index rid acc = (rid, index, (_potatoTotal_sEltLabelMap IM.! rid)) : acc
-  r = Seq.foldrWithIndex foldfn [] _potatoTotal_layers
-
 -- _pfc_([^\s]+)\s+:: Event t\s.*
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
@@ -73,12 +53,10 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
-  _pfo_pFState              :: Dynamic t (PFState)
-  , _pfo_loaded             :: Event t ()
-  , _pfo_saved              :: Event t SPotatoFlow
-  , _pfo_potato_changed     :: Event t SEltLabelChanges
-  -- temp access to entire state, or maybe not so temp
-  , _pfo_potato_potatoTotal :: Dynamic t PotatoTotal
+  _pfo_pFState          :: Dynamic t (PFState)
+  , _pfo_loaded         :: Event t ()
+  , _pfo_saved          :: Event t SPotatoFlow
+  , _pfo_potato_changed :: Event t SEltLabelChanges
 }
 
 data PFTotalState = PFTotalState {
@@ -175,13 +153,6 @@ holdPF PFConfig {..} = mdo
     r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalState
     r_changes = fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalState
 
-    --potatoTotalMapFn
-    --r_potatoTotal_sEltLabelMap =
-    --r_potatoTotal_layerPosMap
-    --r_potatoTotal_layers
-
-
-
   return PFOutput {
       _pfo_pFState = r_state
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
@@ -189,5 +160,4 @@ holdPF PFConfig {..} = mdo
       -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
       -- probably just need to address TODO in workspaceFromState
       , _pfo_potato_changed     = leftmost [updated r_changes, pfevent $> IM.empty]
-      , _pfo_potato_potatoTotal = undefined -- :: Dynamic t PotatoTotal
     }
