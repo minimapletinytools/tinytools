@@ -88,18 +88,18 @@ setup_network ev = mdo
     manipEv = flip push ev $ \case
       FCModify p c -> do
         pFState <- sample beh_pFState
-        let (rid, _, SEltLabel _ _) = fromJust . pFState_getSuperSEltByPos p $ pFState
+        let (rid, _, SEltLabel _ _) = fromJust . pFState_getSuperSEltByPos pFState $ p
         return . Just $ IM.singleton rid c
       FCModifyMany pcs -> do
         pFState <- sample beh_pFState
-        let sseltls = map (\(p,c) -> (pFState_getSuperSEltByPos p $ pFState, c)) pcs
+        let sseltls = map (\(p,c) -> (pFState_getSuperSEltByPos pFState p, c)) pcs
         return . Just . IM.fromList
           . map (\((rid,_,_),c) -> (rid, c))
           . map (\(mseltl, c) -> (fromJust mseltl, c))
           $ sseltls
       FCCustom_CBox_1 p -> do
         pFState <- sample beh_pFState
-        let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos p $ pFState
+        let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos pFState $ p
         let
           cbox = CBox {
               _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)

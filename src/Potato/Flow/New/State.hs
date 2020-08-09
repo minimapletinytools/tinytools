@@ -87,14 +87,14 @@ pFState_copyElts PFState {..} lps = r where
   seltlfn rid = fromJust $ IM.lookup rid _pFState_directory
   r = map (seltlfn . ridfn) lps
 
-pFState_getSuperSEltByPos :: LayerPos -> PFState -> Maybe SuperSEltLabel
-pFState_getSuperSEltByPos lp PFState {..} = do
+pFState_getSuperSEltByPos :: PFState -> LayerPos -> Maybe SuperSEltLabel
+pFState_getSuperSEltByPos PFState {..} lp = do
   rid <- Seq.lookup lp _pFState_layers
   seltl <- IM.lookup rid _pFState_directory
   return (rid, lp, seltl)
 
-pFState_getSEltLabels :: [REltId] -> PFState -> REltIdMap (Maybe SEltLabel)
-pFState_getSEltLabels rids PFState {..} = foldr (\rid acc -> IM.insert rid (IM.lookup rid _pFState_directory) acc) IM.empty rids
+pFState_getSEltLabels :: PFState -> [REltId] -> REltIdMap (Maybe SEltLabel)
+pFState_getSEltLabels PFState {..} rids = foldr (\rid acc -> IM.insert rid (IM.lookup rid _pFState_directory) acc) IM.empty rids
 
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
@@ -142,7 +142,7 @@ undo_deleteElts = do_newElts
 do_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) (r, changes) where
   r = PFState (moveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
-  changes = pFState_getSEltLabels (fmap (Seq.index _pFState_layers) lps) pfs
+  changes = pFState_getSEltLabels pfs (fmap (Seq.index _pFState_layers) lps)
 {--
   rids = foldr (\l acc -> Seq.index _pFState_layers l : acc) [] lps
   newLayers' = assert (isSorted lps) $ foldr (\l acc -> Seq.deleteAt l acc) _pFState_layers lps
@@ -155,7 +155,7 @@ do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) 
 undo_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 undo_move (lps, dst) pfs@PFState {..} =  (r, changes) where
   r = PFState (undoMoveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
-  changes = pFState_getSEltLabels (fmap (Seq.index _pFState_layers) lps) pfs
+  changes = pFState_getSEltLabels pfs (fmap (Seq.index _pFState_layers) lps)
 {--
   --assert (isSorted lps)
   nMoved = length lps

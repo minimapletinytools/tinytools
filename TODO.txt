@@ -66,16 +66,10 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
+-add testing for sEltLabelChanges
 -get rid of SEltTree or rename to SEltLableTree
   -mayeb even use newtype wrapper to better ensure scoping property
 -get asserts working
--add support for move in Testing.hs
-DONE-move
-  DONE-switch to use testable methods in Layers
-  DONE-write test for undo move
--test copypasta
--add postbuild back into reflex-test-host
--remove spiderhost constraints in reflex-test-host
 -switch all PARTIALs to use asserts so they give you line numbers...
 -try this thing: compile reflex with flag 'debug-cycles' and compile with profiling enabled for stack tree
 -textstyle
@@ -95,6 +89,14 @@ DONE-move
   -add max length param to actionstack
   DONE-backend render stuff
     DONE-just do super basic render everything version for now, since we are refactoring math
+
+IGNORE/DONE-add postbuild back into reflex-test-host
+IGNORE/FAIL-remove spiderhost constraints in reflex-test-host
+DONE-add support for move in Testing.hs
+DONE-test copypasta
+DONE-move
+  DONE-switch to use testable methods in Layers
+  DONE-write test for undo move
 
 :: WISH LIST ::
 -FUTURE folders should have a grouping tag. If any single element in group is selected all elements are selected
