@@ -19,6 +19,9 @@ import           Control.Monad.Fix
 
 defaultCanvasLBox :: LBox
 defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
+
+
+-- TODO DELETE stuff below? I don't think I'm using it anymore
 data Canvas t = Canvas {
   _canvas_box :: Dynamic t LBox
 }

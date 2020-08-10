@@ -14,7 +14,6 @@ import           Reflex.Potato.Helpers
 
 import           Data.Dependent.Sum        ((==>))
 import qualified Data.IntMap.Strict        as IM
-import qualified Data.Sequence             as Seq
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
@@ -53,10 +52,19 @@ data PFConfig t = PFConfig {
 }
 
 data PFOutput t = PFOutput {
-  _pfo_pFState          :: Dynamic t (PFState)
-  , _pfo_loaded         :: Event t ()
-  , _pfo_saved          :: Event t SPotatoFlow
-  , _pfo_potato_changed :: Event t SEltLabelChanges
+  _pfo_pFState             :: Behavior t (PFState)
+
+  -- does it make sense to group together layers and directory?
+  , _pfo_pFState_layers    :: Dynamic t (Seq REltId)
+  , _pfo_pFState_directory :: Dynamic t (REltIdMap SEltLabel)
+
+  , _pfo_pFState_canvas    :: Dynamic t (SCanvas)
+
+  , _pfo_potato_changed    :: Event t SEltLabelChanges
+
+
+  , _pfo_loaded            :: Event t ()
+  , _pfo_saved             :: Event t SPotatoFlow
 }
 
 data PFTotalState = PFTotalState {
@@ -143,21 +151,33 @@ holdPF PFConfig {..} = mdo
         if isValidAfter then r else
           error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
 
-  pfTotalState <- foldDyn foldfn (PFTotalState emptyWorkspace []) pfevent
+  pfTotalStateDyn <- foldDyn foldfn (PFTotalState emptyWorkspace []) pfevent
 
   let
     savepushfn _ = do
-      pfts <- sample . current $ pfTotalState
+      pfts <- sample . current $ pfTotalStateDyn
       return $ pFState_to_sPotatoFlow $ _pFWorkspace_state (_pFTotalState_workspace pfts)
     r_saved = pushAlways savepushfn _pfc_save
-    r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalState
-    r_changes = fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalState
+    r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalStateDyn
+
+  -- pull stuff uniquely out of state/workspace
+  --TODO use https://hackage.haskell.org/package/reflex-0.7.1.0/docs/Reflex-Dynamic-Uniq.html do I just uniqDynamic . fromUniqDynamic ?
+  r_changes <- holdUniqDyn $ fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalStateDyn
+  r_layers <- holdUniqDyn $ fmap (_pFState_layers . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
+  r_directory <- holdUniqDyn $ fmap (_pFState_directory . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
+  r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
 
   return PFOutput {
-      _pfo_pFState = r_state
-      , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
-      , _pfo_loaded = void _pfc_load
+      _pfo_pFState = current r_state
+
+      , _pfo_pFState_layers    = r_layers
+      , _pfo_pFState_directory = r_directory
+      , _pfo_pFState_canvas    = r_canvas
+
       -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
       -- probably just need to address TODO in workspaceFromState
       , _pfo_potato_changed     = leftmost [updated r_changes, pfevent $> IM.empty]
+
+      , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
+      , _pfo_loaded = void _pfc_load
     }

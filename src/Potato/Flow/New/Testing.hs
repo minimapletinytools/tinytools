@@ -147,7 +147,7 @@ setup_network ev = mdo
       }
   pfo <- holdPF pfc
   let
-    beh_pFState = current . _pfo_pFState $ pfo
+    beh_pFState = _pfo_pFState pfo
   return pfo
 
 
