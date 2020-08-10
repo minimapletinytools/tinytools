@@ -66,6 +66,7 @@ _sEltLayerTreeConfig_insert               :: Event t (NonEmpty SuperSEltLabel)
 
 
 ::NEW TODO::
+-add testing for _pfo_layerPosMap
 -add testing for sEltLabelChanges
 -get rid of SEltTree or rename to SEltLableTree
   -mayeb even use newtype wrapper to better ensure scoping property

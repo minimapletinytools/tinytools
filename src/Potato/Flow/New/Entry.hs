@@ -14,6 +14,7 @@ import           Reflex.Potato.Helpers
 
 import           Data.Dependent.Sum        ((==>))
 import qualified Data.IntMap.Strict        as IM
+import qualified Data.Sequence             as Seq
 
 import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
@@ -51,6 +52,7 @@ data PFConfig t = PFConfig {
   , _pfc_save         :: Event t ()
 }
 
+
 data PFOutput t = PFOutput {
   _pfo_pFState             :: Behavior t (PFState)
 
@@ -59,6 +61,9 @@ data PFOutput t = PFOutput {
   , _pfo_pFState_directory :: Dynamic t (REltIdMap SEltLabel)
 
   , _pfo_pFState_canvas    :: Dynamic t (SCanvas)
+
+  -- takes REltId to LayerPos
+  , _pfo_layerPosMap       :: Dynamic t (REltIdMap LayerPos)
 
   , _pfo_potato_changed    :: Event t SEltLabelChanges
 
@@ -166,6 +171,8 @@ holdPF PFConfig {..} = mdo
   r_layers <- holdUniqDyn $ fmap (_pFState_layers . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
   r_directory <- holdUniqDyn $ fmap (_pFState_directory . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
   r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
+  -- TODO is there a more performant way to do this? probably not really
+  let r_layerPosMap = fmap (Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty) (r_layers)
 
   return PFOutput {
       _pfo_pFState = current r_state
@@ -173,6 +180,8 @@ holdPF PFConfig {..} = mdo
       , _pfo_pFState_layers    = r_layers
       , _pfo_pFState_directory = r_directory
       , _pfo_pFState_canvas    = r_canvas
+
+      , _pfo_layerPosMap = r_layerPosMap
 
       -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
       -- probably just need to address TODO in workspaceFromState
