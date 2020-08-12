@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.New.Entry (
+module Potato.Flow.Entry (
   PFConfig(..)
   , PFOutput(..)
   , holdPF
@@ -12,16 +12,16 @@ import           Relude
 import           Reflex
 import           Reflex.Potato.Helpers
 
-import           Data.Dependent.Sum        ((==>))
-import qualified Data.IntMap.Strict        as IM
-import qualified Data.Sequence             as Seq
+import           Data.Dependent.Sum    ((==>))
+import qualified Data.IntMap.Strict    as IM
+import qualified Data.Sequence         as Seq
 
+import           Potato.Flow.Cmd
 import           Potato.Flow.Math
-import           Potato.Flow.New.Cmd
-import           Potato.Flow.New.State
-import           Potato.Flow.New.Workspace
 import           Potato.Flow.SElts
+import           Potato.Flow.State
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Control.Monad.Fix
 

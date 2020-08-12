@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.New.State (
+module Potato.Flow.State (
   PFState(..)
   , debugPrintPFState
   , pFState_isValid
@@ -31,7 +31,7 @@ import           Relude
 
 
 import           Potato.Flow.Math
-import           Potato.Flow.New.Layers
+import           Potato.Flow.Layers
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Types
 import           Potato.Flow.SElts

@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Potato.Flow.New.StateSpec(
+module Potato.Flow.StateSpec(
   spec
 ) where
 
@@ -8,11 +8,11 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.IntMap           as IM
-import qualified Data.Sequence         as Seq
+import qualified Data.IntMap       as IM
+import qualified Data.Sequence     as Seq
 import           Potato.Flow
 
-import           Potato.Flow.New.State
+import           Potato.Flow.State
 import           Potato.Flow.Types
 
 

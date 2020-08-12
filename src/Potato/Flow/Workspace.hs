@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.New.Workspace (
+module Potato.Flow.Workspace (
   PFWorkspace(..)
   , emptyWorkspace
   , emptyActionStack
@@ -17,8 +17,8 @@ module Potato.Flow.New.Workspace (
 
 import           Relude
 
-import           Potato.Flow.New.Cmd
-import           Potato.Flow.New.State
+import           Potato.Flow.Cmd
+import           Potato.Flow.State
 import           Potato.Flow.Types
 import           Potato.Flow.SElts
 

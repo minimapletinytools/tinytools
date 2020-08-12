@@ -1,4 +1,4 @@
-module Potato.Flow.New.Layers (
+module Potato.Flow.Layers (
   reindexSEltLayerPosForRemoval
   , reindexSEltLayerPosForInsertion
   , hasScopingProperty

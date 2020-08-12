@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TemplateHaskell    #-}
 
-module Potato.Flow.New.Cmd (
+module Potato.Flow.Cmd (
   PFCmdTag(..)
   , PFCmd
 

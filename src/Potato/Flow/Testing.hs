@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.New.Testing (
+module Potato.Flow.Testing (
   simpleSBox
   , FCmd(..)
   , randomActionFCmd
@@ -28,7 +28,7 @@ import qualified Control.Monad.Random   as R
 import           System.Random.Shuffle
 
 import           Potato.Flow
-import           Potato.Flow.New.Layers
+import           Potato.Flow.Layers
 
 
 simpleSBox :: SBox
