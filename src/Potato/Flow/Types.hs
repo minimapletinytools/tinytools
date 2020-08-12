@@ -1,9 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
--- TODO move this out of reflex folder
-
-module Potato.Flow.Reflex.Types (
+module Potato.Flow.Types (
   LayerPos
   , REltId
   , REltIdMap

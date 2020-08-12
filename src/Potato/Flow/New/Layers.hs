@@ -17,7 +17,7 @@ module Potato.Flow.New.Layers (
 
 import           Relude
 
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 
 import           Control.Exception        (assert)
 import qualified Data.Bimap               as BM

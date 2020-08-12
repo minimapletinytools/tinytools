@@ -10,16 +10,16 @@ module Potato.Flow.Reflex.RElts (
 ) where
 
 import           Relude
-import           Relude.Extra.Foldable1   (foldl1')
+import           Relude.Extra.Foldable1 (foldl1')
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
-import           Data.Maybe               (fromJust)
+import           Data.Dependent.Sum     (DSum ((:=>)), (==>))
+import           Data.Maybe             (fromJust)
 import           Data.Tuple.Extra
 
 import           Reflex

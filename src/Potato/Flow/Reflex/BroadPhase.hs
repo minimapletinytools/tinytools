@@ -19,8 +19,8 @@ import           Reflex
 
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.RElts
-import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 import qualified Data.IntMap.Strict       as IM

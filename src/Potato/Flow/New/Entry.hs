@@ -20,8 +20,8 @@ import           Potato.Flow.Math
 import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.State
 import           Potato.Flow.New.Workspace
-import           Potato.Flow.Reflex.Types
 import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
 import           Control.Monad.Fix
 

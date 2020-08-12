@@ -10,7 +10,7 @@ module Potato.Flow.New.Cmd (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 
 import           Data.Constraint.Extras.TH
 import qualified Data.Dependent.Sum        as DS

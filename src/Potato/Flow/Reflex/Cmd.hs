@@ -21,7 +21,7 @@ import           Reflex
 import           Reflex.Data.ActionStack
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 
 import qualified Data.Dependent.Map       as DM
 import qualified Data.Dependent.Sum       as DS

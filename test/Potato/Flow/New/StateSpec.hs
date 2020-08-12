@@ -8,12 +8,12 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.IntMap              as IM
-import qualified Data.Sequence            as Seq
+import qualified Data.IntMap           as IM
+import qualified Data.Sequence         as Seq
 import           Potato.Flow
 
 import           Potato.Flow.New.State
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 
 
 folderStart :: SEltLabel

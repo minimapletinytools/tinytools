@@ -33,7 +33,7 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.New.Layers
 import           Potato.Flow.Reflex.RElts
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 import           Potato.Flow.SElts
 
 import           Control.Exception        (assert)

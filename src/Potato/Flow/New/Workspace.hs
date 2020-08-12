@@ -19,7 +19,7 @@ import           Relude
 
 import           Potato.Flow.New.Cmd
 import           Potato.Flow.New.State
-import           Potato.Flow.Reflex.Types
+import           Potato.Flow.Types
 import           Potato.Flow.SElts
 
 import           Control.Exception        (assert)
