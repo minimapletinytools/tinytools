@@ -6,7 +6,6 @@ module Potato.Flow.Reflex.RElts (
   , RenderFn
   , SEltDrawer(..)
   , getDrawer
-  , Selected
   , toManipulator
 ) where
 
@@ -89,17 +88,15 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
--- TODO delete this type synonym, not useful
-type Selected = [SuperSEltLabel]
-
+-- TODO this is the only Reflex function in this file.. everything else can be moved out of Reflex folder
 toManipulator :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
-  => Event t Selected -- ^ selection event, which will sample manipulators of current selection
+  => Event t [SuperSEltLabel] -- ^ selection event, which will sample manipulators of current selection
   -> m (Dynamic t Manipulator)
 toManipulator selected = do
   let
     nilState :: Manipulator
     nilState = (MTagNone ==> ())
-    foldfn :: Selected -> Manipulator -> Manipulator
+    foldfn :: [SuperSEltLabel] -> Manipulator -> Manipulator
     foldfn [] _ = nilState
     foldfn ((rid, _, SEltLabel _ selt):[]) _ = case selt of
       SEltBox SBox {..} -> (MTagBox ==> mbox) where
@@ -175,110 +172,3 @@ updateFnFromController isDo = \case
   (CTagBoundingBox :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   _ -> id
-
-
-
-
-
-
-
-
-
--- TODO DELETE
-
-{-
--- needed by 'toManipulator' internally
-
-data SEltTag a where
-  SEltTagNone :: SEltTag ()
-  SEltTagBox :: SEltTag SBox
-  SEltTagLine :: SEltTag SLine
-  SEltTagText :: SEltTag SText
-
-  -- TODO TH to derive these
-  --deriving anyclass Data.GADT.Compare.GEq
-  --deriving anyclass DM.GCompare
--}
-
-
-
-{-
-deserializeRElt ::
-  forall t m. (Reflex t, MonadHold t m, MonadFix m)
-  => ControllerEventSelector t -- ^ event selector for do action
-  -> ControllerEventSelector t -- ^ event selector for undo action
-  -> (REltId, SEltLabel)
-  -> m (REltLabel t)
-deserializeRElt doSelector undoSelector (reltid, SEltLabel sname selt) = do
-
-  let
-    reltDoEv = selectInt doSelector reltid
-    reltUndoEv = selectInt undoSelector reltid
-    bothEv :: Event t (Either Controller Controller)
-    bothEv = alignEitherWarn ("("<>show reltid<>") do/undo") reltDoEv reltUndoEv
-
-  -- TODO implement for each type
-  relt <- case selt of
-    SEltNone        -> return REltNone
-    SEltFolderStart -> return REltFolderStart
-    SEltFolderEnd   -> return REltFolderEnd
-    SEltBox SBox {..} -> do
-      let
-        foldfn :: Either Controller Controller -> LBox -> LBox
-        foldfn (Left ct) box = case ct of
-          (SEltTagBox :=> Identity dbox) -> plusDelta box dbox
-        foldfn (Right ct) box = case ct of
-          (SEltTagBox :=> Identity dbox) -> minusDelta box dbox
-      mbox <- foldDyn foldfn _sBox_box bothEv
-      return $ REltBox (MBox mbox)
-
-{-
-    -- TODO wut a pain DDDDD:
-    SEltLine SLine {..} -> do
-      let
-        foldfn :: Either Controller Controller -> LPoint -> LPoint
-        foldfn
-      --sl_start   :: LPoint
-      --, sl_end  ::LPoint
-      mline <- MLine startl endl
--}
-
-    _               -> undefined
-  return $ REltLabel sname relt
--}
-
-
-
-{-
-type ManipulatorWithId t = DS.DSum (Const2 LayerEltId (Manipulators t)) Identity
-type ControllerWithId = DS.DSum (Const2 LayerEltId Controller) Identity
-type ControllerEventSelector t = EventSelector t (Const2 LayerEltId Controller)
--}
-
-{-
-
-data RElt t =
-  REltNone
-  | REltFolderStart
-  | REltFolderEnd
-  | REltBox (MBox t)
-  | REltLine (MLine t)
-  | REltText (MText t)
-
-getREltManipulator :: RElt t -> Manipulators t
-getREltManipulator relt = case relt of
-  REltNone        -> none
-  REltFolderStart -> none
-  REltFolderEnd   -> none
-  REltBox x       -> MTagBox ==> x
-  REltLine x      -> MTagLine ==> x
-  REltText x      -> MTagText ==> x
-  where
-    none = MTagNone ==> ()
-
-
-data REltLabel t = REltLabel {
-  re_name  :: Text
-  , re_elt :: RElt t
-}
--}

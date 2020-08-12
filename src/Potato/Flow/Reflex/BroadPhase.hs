@@ -48,6 +48,8 @@ holdBroadPhase BroadPhaseConfig {..} = mdo
       , _broadPhase_bPTree = fmap snd3 bptDyn
     }
 
+
+-- TODO move stuff below out of Reflex folder
 type AABB = LBox
 
 -- TODO actual BroadPhase...
