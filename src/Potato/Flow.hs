@@ -1,7 +1,6 @@
 module Potato.Flow (
   module Potato.Flow.SElts
   , module Potato.Flow.Reflex.Cmd
-  , module Potato.Flow.Reflex.Canvas
   , module Potato.Flow.Math
   , module Reflex.Data.Directory
   , module Potato.Flow.Reflex.RElts
@@ -16,7 +15,6 @@ import           Potato.Flow.Math
 import           Potato.Flow.New.Entry
 import           Potato.Flow.New.State
 import           Potato.Flow.Reflex.BroadPhase
-import           Potato.Flow.Reflex.Canvas
 import           Potato.Flow.Reflex.Cmd
 import           Potato.Flow.Reflex.RElts
 import           Potato.Flow.Reflex.Types

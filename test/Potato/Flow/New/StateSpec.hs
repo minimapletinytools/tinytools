@@ -25,6 +25,9 @@ folderEnd = SEltLabel "folder (end)" SEltFolderEnd
 someSEltLabel :: SEltLabel
 someSEltLabel = SEltLabel "some elt" SEltNone
 
+defaultCanvasLBox :: LBox
+defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
+
 someValidState1 :: PFState
 someValidState1 = PFState {
       _pFState_layers = Seq.fromList [0..5]
