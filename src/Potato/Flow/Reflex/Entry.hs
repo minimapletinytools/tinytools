@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Entry (
+module Potato.Flow.Reflex.Entry (
   PFConfig(..)
   , PFOutput(..)
   , holdPF

@@ -13,7 +13,7 @@ import           Data.These
 import           Control.Concurrent
 
 import           Potato.Flow
-import           Potato.Flow.Testing
+import           Potato.Flow.Reflex.Testing
 
 main :: IO ()
 main = runSpiderHost $ do

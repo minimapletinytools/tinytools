@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.EntrySpec
+module Potato.Flow.Reflex.EntrySpec
   ( spec
   )
 where
@@ -25,7 +25,7 @@ import           GHC.Stats
 --import           Text.Pretty.Simple       (pPrint)
 
 import           Potato.Flow
-import           Potato.Flow.Testing
+import           Potato.Flow.Reflex.Testing
 
 
 

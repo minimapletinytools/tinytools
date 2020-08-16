@@ -1,7 +1,9 @@
+-- TODO rename to EntryTesting
+
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Testing (
+module Potato.Flow.Reflex.Testing (
   simpleSBox
   , FCmd(..)
   , randomActionFCmd
