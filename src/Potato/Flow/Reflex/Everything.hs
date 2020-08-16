@@ -3,12 +3,11 @@
 
 module Potato.Flow.Reflex.Everything (
   MouseModifier(..)
-  , LMouseEvent(..)
+  , LMouseData(..)
   , Tool(..)
   , LayerDisplay(..)
   , MouseManipulator(..)
   , EverythingBackend(..)
-  , EverythingCmd(..)
   , EverythingWidgetConfig(..)
   , EverythingWidget(..)
 ) where
@@ -30,7 +29,7 @@ data MouseModifier = Shift | Alt
 -- TODO is this the all encompassing mouse event we want?
 -- only one modifier allowed at a time for our app
 -- TODO is there a way to optionally support more fidelity here?
-data LMouseEvent = LMouseDown XY MouseModifier | LMouseUp XY | LMouseCancel
+data LMouseData = LMouseDown XY MouseModifier | LMouseUp XY | LMouseCancel
 
 
 data Tool = TSelect | TPan | TBox | TLine | TText deriving (Eq, Show, Enum)
@@ -58,19 +57,38 @@ data EverythingBackend = EverythingBackend {
 }
 
 data EverythingCmd =
-  -- panning
-  ECmd_Pan XY
-  | ECmd_PanMouseEv LMouseEvent
-
-  -- manipulators
-  | ECmd_ManipulatorMouseEv LMouseEvent
 
   -- selection (second param is add or overwrite)
-  | ECmd_Select [LayerPos] Bool
+  ECmd_Select [LayerPos] Bool
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
+  _everythingWidgetConfig_selectTool  :: Event t Tool
+  , _everythingWidgetConfig_mouse     :: Event t LMouseData
+  , _everythingWidgetConfig_selectNew :: Event t [LayerPos]
+  , _everythingWidgetConfig_selectAdd :: Event t [LayerPos]
 }
 
 data EverythingWidget t = EverythingWidget {
-  --_everythingWidget
+  _everythingWidget_tool           :: Dynamic t Tool
+  , _everythingWidget_selection    :: Dynamic t [SuperSEltLabel]
+  , _everythingWidget_layers       :: Dynamic t (Seq LayerDisplay)
+  , _everythingWidget_manipulators :: Dynamic t [MouseManipulator]
+  , _everythingWidget_pan          :: Dynamic t XY
+  , _everythingWidget_broadPhase   :: Dynamic t BPTree
 }
+
+holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
+  => EverythingWidgetConfig t
+  -> m (EverythingWidget t)
+holdEverythingWidget EverythingWidgetConfig {..} = mdo
+
+  return EverythingWidget
+    {
+      _everythingWidget_tool           = undefined
+      , _everythingWidget_selection    = undefined
+      , _everythingWidget_layers       = undefined
+      , _everythingWidget_manipulators = undefined
+      , _everythingWidget_pan          = undefined
+      , _everythingWidget_broadPhase   = undefined
+
+    }
