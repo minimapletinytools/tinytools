@@ -7,6 +7,8 @@ module Potato.Flow.Entry (
   , holdPF
 ) where
 
+-- TODO move to reflex folder
+
 import           Relude
 
 import           Reflex

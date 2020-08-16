@@ -3,6 +3,7 @@
 module Potato.Flow.BroadPhase (
   AABB
   , BPTree(..)
+  , emptyBPTree
   , broadPhase_cull
 
   -- exposed for testing
@@ -25,6 +26,9 @@ type AABB = LBox
 data BPTree = BPTree {
   _bPTree_potato_tree :: REltIdMap AABB
 } deriving (Show)
+
+emptyBPTree :: BPTree
+emptyBPTree = BPTree IM.empty
 
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly

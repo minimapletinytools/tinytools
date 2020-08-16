@@ -9,19 +9,24 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulator(..)
   , EverythingBackend(..)
   , EverythingWidgetConfig(..)
+  , emptyEverythingWidgetConfig
   , EverythingWidget(..)
+  , holdEverythingWidget
 ) where
 
 import           Relude
 
 import           Reflex
+import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.BroadPhase
 import           Potato.Flow.Types
+import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
+import qualified Data.Sequence                 as Seq
 
 -- only ones we care about
 data MouseModifier = Shift | Alt
@@ -56,10 +61,20 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_broadPhase   :: BPTree
 }
 
-data EverythingCmd =
+emptyEverythingBackend :: EverythingBackend
+emptyEverythingBackend = EverythingBackend {
+    _everythingBackend_selectedTool   = TSelect
+    , _everythingBackend_selection    = []
+    , _everythingBackend_layers       = Seq.empty
+    , _everythingBackend_manipulators = []
+    , _everythingBackend_pan          = V2 0 0
+    , _everythingBackend_broadPhase   = emptyBPTree
+  }
 
+data EverythingCmd =
+  ECmdTool Tool
   -- selection (second param is add or overwrite)
-  ECmd_Select [LayerPos] Bool
+  | ECmdSelect [LayerPos] Bool
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
   _everythingWidgetConfig_selectTool  :: Event t Tool
@@ -67,6 +82,14 @@ data EverythingWidgetConfig t = EverythingWidgetConfig {
   , _everythingWidgetConfig_selectNew :: Event t [LayerPos]
   , _everythingWidgetConfig_selectAdd :: Event t [LayerPos]
 }
+
+emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
+emptyEverythingWidgetConfig = EverythingWidgetConfig {
+    _everythingWidgetConfig_selectTool  = never
+    , _everythingWidgetConfig_mouse     = never
+    , _everythingWidgetConfig_selectNew = never
+    , _everythingWidgetConfig_selectAdd = never
+  }
 
 data EverythingWidget t = EverythingWidget {
   _everythingWidget_tool           :: Dynamic t Tool
@@ -82,9 +105,23 @@ holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   -> m (EverythingWidget t)
 holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
+  let
+    everythingEvent = leftmostWarn "EverythingWidgetConfig"
+      [ ECmdTool <$> _everythingWidgetConfig_selectTool
+      ]
+
+    foldEverythingFn :: EverythingCmd -> EverythingBackend -> EverythingBackend
+    foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
+      ECmdTool x -> everything { _everythingBackend_selectedTool = x }
+      _          -> undefined
+
+  everythingDyn <- foldDyn foldEverythingFn emptyEverythingBackend everythingEvent
+
+  r_tool <- holdUniqDyn $ fmap _everythingBackend_selectedTool everythingDyn
+
   return EverythingWidget
     {
-      _everythingWidget_tool           = undefined
+      _everythingWidget_tool           = r_tool
       , _everythingWidget_selection    = undefined
       , _everythingWidget_layers       = undefined
       , _everythingWidget_manipulators = undefined
