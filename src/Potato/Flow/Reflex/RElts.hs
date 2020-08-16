@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
+-- TODO rename
 module Potato.Flow.Reflex.RElts (
   getSEltBox
   , updateFnFromController
