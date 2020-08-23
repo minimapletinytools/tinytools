@@ -22,12 +22,17 @@ import           Reflex.Potato.Helpers
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.BroadPhase
+import           Potato.Flow.Reflex.Entry
+import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Reflex.Potato.Helpers
 
 import           Control.Monad.Fix
+import qualified Data.List                     as L
 import qualified Data.Sequence                 as Seq
 
+
+-- TODO move all this stuff to types folder or something
 -- only ones we care about
 data MouseModifier = Shift | Alt
 
@@ -35,7 +40,6 @@ data MouseModifier = Shift | Alt
 -- only one modifier allowed at a time for our app
 -- TODO is there a way to optionally support more fidelity here?
 data LMouseData = LMouseDown XY MouseModifier | LMouseUp XY | LMouseCancel
-
 
 data Tool = TSelect | TPan | TBox | TLine | TText deriving (Eq, Show, Enum)
 
@@ -51,10 +55,34 @@ data MouseManipulator = MouseManipulator {
 
 }
 
+-- TODO move to its own file
+-- selection helpers
+disjointUnion :: (Eq a) => [a] -> [a] -> [a]
+disjointUnion a b = L.union a b L.\\ L.intersect a b
 
+-- TODO real implementation...
+disjointUnionSelection :: Selection -> Selection -> Selection
+disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)
+
+data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
+type Selection = Seq SuperSEltLabel
+
+computeSelectionType :: Selection -> SelectionManipulatorType
+computeSelectionType = foldl' foldfn SMTNone where
+  foldfn accType (_,_,SEltLabel _ selt) = case accType of
+    SMTNone -> case selt of
+      SEltBox _  -> SMTBox
+      SEltLine _ -> SMTLine
+      SEltText _ -> SMTText
+      _          -> SMTNone
+    _ -> SMTBoundingBox
+
+
+
+-- TODO rename to Everything
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selectedTool   :: Tool
-  , _everythingBackend_selection    :: [SuperSEltLabel] -- always in order and valid
+  , _everythingBackend_selection    :: Selection
   , _everythingBackend_layers       :: Seq LayerDisplay
   , _everythingBackend_manipulators :: [MouseManipulator]
   , _everythingBackend_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
@@ -64,7 +92,7 @@ data EverythingBackend = EverythingBackend {
 emptyEverythingBackend :: EverythingBackend
 emptyEverythingBackend = EverythingBackend {
     _everythingBackend_selectedTool   = TSelect
-    , _everythingBackend_selection    = []
+    , _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
     , _everythingBackend_pan          = V2 0 0
@@ -73,19 +101,22 @@ emptyEverythingBackend = EverythingBackend {
 
 data EverythingCmd =
   ECmdTool Tool
-  -- selection (second param is add or overwrite)
-  | ECmdSelect [LayerPos] Bool
+  -- selection (first param is add to selection if true)
+  | ECmdSelect Bool [LayerPos]
+
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
-  _everythingWidgetConfig_selectTool  :: Event t Tool
-  , _everythingWidgetConfig_mouse     :: Event t LMouseData
-  , _everythingWidgetConfig_selectNew :: Event t [LayerPos]
-  , _everythingWidgetConfig_selectAdd :: Event t [LayerPos]
+  _everythingWidgetConfig_potatoFlow   :: PFOutput t
+  , _everythingWidgetConfig_selectTool :: Event t Tool
+  , _everythingWidgetConfig_mouse      :: Event t LMouseData
+  , _everythingWidgetConfig_selectNew  :: Event t [LayerPos]
+  , _everythingWidgetConfig_selectAdd  :: Event t [LayerPos]
 }
 
 emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
 emptyEverythingWidgetConfig = EverythingWidgetConfig {
-    _everythingWidgetConfig_selectTool  = never
+    _everythingWidgetConfig_potatoFlow = undefined
+    , _everythingWidgetConfig_selectTool  = never
     , _everythingWidgetConfig_mouse     = never
     , _everythingWidgetConfig_selectNew = never
     , _everythingWidgetConfig_selectAdd = never
@@ -93,7 +124,7 @@ emptyEverythingWidgetConfig = EverythingWidgetConfig {
 
 data EverythingWidget t = EverythingWidget {
   _everythingWidget_tool           :: Dynamic t Tool
-  , _everythingWidget_selection    :: Dynamic t [SuperSEltLabel]
+  , _everythingWidget_selection    :: Dynamic t Selection
   , _everythingWidget_layers       :: Dynamic t (Seq LayerDisplay)
   , _everythingWidget_manipulators :: Dynamic t [MouseManipulator]
   , _everythingWidget_pan          :: Dynamic t XY
@@ -106,13 +137,26 @@ holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   let
+    PFOutput {..} = _everythingWidgetConfig_potatoFlow
+
+    -- TODO event for newly created element
+    -- you could sample directory for "past" version when listening to _pfo_potato_changed for changes
+    newEltsEvent :: Event t [LayerPos]
+    newEltsEvent = undefined
+
     everythingEvent = leftmostWarn "EverythingWidgetConfig"
       [ ECmdTool <$> _everythingWidgetConfig_selectTool
+      , ECmdSelect False <$> _everythingWidgetConfig_selectNew
+      , ECmdSelect True <$> _everythingWidgetConfig_selectAdd
       ]
 
+    -- TODO you nee a DMAP because some of the cmd are allowed to happen at once
+    -- order them so they run in the right order
     foldEverythingFn :: EverythingCmd -> EverythingBackend -> EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
       ECmdTool x -> everything { _everythingBackend_selectedTool = x }
+      ECmdSelect add x -> r where
+        r = undefined
       _          -> undefined
 
   everythingDyn <- foldDyn foldEverythingFn emptyEverythingBackend everythingEvent

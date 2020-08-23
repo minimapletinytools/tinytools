@@ -1,3 +1,4 @@
+-- TODO rename to PF
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
@@ -6,8 +7,6 @@ module Potato.Flow.Reflex.Entry (
   , PFOutput(..)
   , holdPF
 ) where
-
--- TODO move to reflex folder
 
 import           Relude
 
@@ -55,13 +54,14 @@ data PFConfig t = PFConfig {
 }
 
 
+-- TODO reanme to PF
 data PFOutput t = PFOutput {
   _pfo_pFState             :: Behavior t (PFState)
 
+  -- granular access to individual parts of PFState
   -- does it make sense to group together layers and directory?
   , _pfo_pFState_layers    :: Dynamic t (Seq REltId)
   , _pfo_pFState_directory :: Dynamic t (REltIdMap SEltLabel)
-
   , _pfo_pFState_canvas    :: Dynamic t (SCanvas)
 
   -- takes REltId to LayerPos

@@ -7,7 +7,6 @@ module Potato.Flow.Types (
   , REltIdMap
   , SuperSEltLabel
   , ControllersWithId
-  , Selection
   , SEltLabelChanges
 
   -- * manipulators
@@ -46,8 +45,6 @@ type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
-
-type Selection = [LayerPos]
 
 type MNone = ()
 
