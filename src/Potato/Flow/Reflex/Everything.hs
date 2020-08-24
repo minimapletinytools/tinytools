@@ -32,17 +32,48 @@ import qualified Data.List                     as L
 import qualified Data.Sequence                 as Seq
 
 
+-- KEYBOARD
+-- TODO decide if text input happens here or in front end
+-- (don't wanna implement my own text zipper D:)
+data KeyboardData =
+  KeyboardData_Esc
+  | KeyboardData_Return
+  | KeyboardData_Space
+  | KeyboardData_Char Char
+
+-- MOUSE
 -- TODO move all this stuff to types folder or something
 -- only ones we care about
-data MouseModifier = Shift | Alt
+data MouseModifier = MouseModifier_Shift | MouseModifier_Alt
+
+data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right
+
+-- TODO Get rid of cancel? It will be sent over via escape key
+data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancel
 
 -- TODO is this the all encompassing mouse event we want?
 -- only one modifier allowed at a time for our app
 -- TODO is there a way to optionally support more fidelity here?
-data LMouseData = LMouseDown XY MouseModifier | LMouseUp XY | LMouseCancel
+data LMouseData = LMouseData {
+  _lMouseData_position    :: XY
+  , _lMouseData_isRelease :: Bool
+  , _lMouseData_button    :: MouseButton
+  , _lMouseData_dragState :: MouseDragState
+}
 
+data MouseDrag = MouseDrag {
+  _mouseDrag_from          :: XY
+  , _mouseDrag_startButton :: MouseButton
+  -- likely not needed as they will be in the input event
+  , _mouseDrag_to          :: XY
+  , _mouseDrag_state       :: MouseDragState
+}
+
+
+-- TOOL
 data Tool = TSelect | TPan | TBox | TLine | TText deriving (Eq, Show, Enum)
 
+-- LAYER
 data LayerDisplay = LayerDisplay {
   _layerDisplay_isFolder :: Bool
   , _layerDisplay_name   :: Text
@@ -51,9 +82,8 @@ data LayerDisplay = LayerDisplay {
   -- TODO reverse mapping to selt
 }
 
-data MouseManipulator = MouseManipulator {
-
-}
+-- SELECTION
+type Selection = Seq SuperSEltLabel
 
 -- TODO move to its own file
 -- selection helpers
@@ -65,7 +95,6 @@ disjointUnionSelection :: Selection -> Selection -> Selection
 disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)
 
 data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
-type Selection = Seq SuperSEltLabel
 
 computeSelectionType :: Selection -> SelectionManipulatorType
 computeSelectionType = foldl' foldfn SMTNone where
@@ -77,6 +106,11 @@ computeSelectionType = foldl' foldfn SMTNone where
       _          -> SMTNone
     _ -> SMTBoundingBox
 
+
+-- MANIPULATORS
+data MouseManipulator = MouseManipulator {
+
+}
 
 
 -- TODO rename to Everything
@@ -104,11 +138,20 @@ data EverythingCmd =
   -- selection (first param is add to selection if true)
   | ECmdSelect Bool [LayerPos]
 
+  -- canvas direct input
+  | ECmdMouse LMouseData
+  | ECmdKeyboard KeyboardData
+
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
   _everythingWidgetConfig_potatoFlow   :: PFOutput t
-  , _everythingWidgetConfig_selectTool :: Event t Tool
+
+  -- canvas direct input
   , _everythingWidgetConfig_mouse      :: Event t LMouseData
+  , _everythingWidgetConfig_keyboard   :: Event t KeyboardData
+
+  -- command based
+  , _everythingWidgetConfig_selectTool :: Event t Tool
   , _everythingWidgetConfig_selectNew  :: Event t [LayerPos]
   , _everythingWidgetConfig_selectAdd  :: Event t [LayerPos]
 }
@@ -118,6 +161,7 @@ emptyEverythingWidgetConfig = EverythingWidgetConfig {
     _everythingWidgetConfig_potatoFlow = undefined
     , _everythingWidgetConfig_selectTool  = never
     , _everythingWidgetConfig_mouse     = never
+    , _everythingWidgetConfig_keyboard = never
     , _everythingWidgetConfig_selectNew = never
     , _everythingWidgetConfig_selectAdd = never
   }
@@ -148,15 +192,23 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       [ ECmdTool <$> _everythingWidgetConfig_selectTool
       , ECmdSelect False <$> _everythingWidgetConfig_selectNew
       , ECmdSelect True <$> _everythingWidgetConfig_selectAdd
+      , ECmdMouse <$> _everythingWidgetConfig_mouse
+      , ECmdKeyboard <$> _everythingWidgetConfig_keyboard
       ]
 
     -- TODO you nee a DMAP because some of the cmd are allowed to happen at once
     -- order them so they run in the right order
+    -- wait does this even work? Specific scenario
+    -- create new object -> force a new selection...
+    -- ok no it doesn't work, instead the state handler needs to do it without triggering a new event
+    -- you could have state reducers and have one reducer call the other...
     foldEverythingFn :: EverythingCmd -> EverythingBackend -> EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
       ECmdTool x -> everything { _everythingBackend_selectedTool = x }
       ECmdSelect add x -> r where
         r = undefined
+      ECmdMouse x -> undefined
+      ECmdKeyboard x -> undefined
       _          -> undefined
 
   everythingDyn <- foldDyn foldEverythingFn emptyEverythingBackend everythingEvent
