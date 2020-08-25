@@ -7,6 +7,7 @@ module Potato.Flow.Reflex.Everything (
   , Tool(..)
   , LayerDisplay(..)
   , MouseManipulator(..)
+  , Selection
   , EverythingBackend(..)
   , EverythingWidgetConfig(..)
   , emptyEverythingWidgetConfig
@@ -136,7 +137,7 @@ emptyEverythingBackend = EverythingBackend {
 data EverythingCmd =
   ECmdTool Tool
   -- selection (first param is add to selection if true)
-  | ECmdSelect Bool [LayerPos]
+  | ECmdSelect Bool Selection
 
   -- canvas direct input
   | ECmdMouse LMouseData
@@ -152,8 +153,8 @@ data EverythingWidgetConfig t = EverythingWidgetConfig {
 
   -- command based
   , _everythingWidgetConfig_selectTool :: Event t Tool
-  , _everythingWidgetConfig_selectNew  :: Event t [LayerPos]
-  , _everythingWidgetConfig_selectAdd  :: Event t [LayerPos]
+  , _everythingWidgetConfig_selectNew  :: Event t Selection
+  , _everythingWidgetConfig_selectAdd  :: Event t Selection
 }
 
 emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
@@ -205,8 +206,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingFn :: EverythingCmd -> EverythingBackend -> EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
       ECmdTool x -> everything { _everythingBackend_selectedTool = x }
-      ECmdSelect add x -> r where
-        r = undefined
+      -- TODO assert that selection is valid
+      ECmdSelect add x -> if add
+        then everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
+        else everything { _everythingBackend_selection = x }
       ECmdMouse x -> undefined
       ECmdKeyboard x -> undefined
       _          -> undefined
@@ -214,11 +217,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   everythingDyn <- foldDyn foldEverythingFn emptyEverythingBackend everythingEvent
 
   r_tool <- holdUniqDyn $ fmap _everythingBackend_selectedTool everythingDyn
+  r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingDyn
 
   return EverythingWidget
     {
       _everythingWidget_tool           = r_tool
-      , _everythingWidget_selection    = undefined
+      , _everythingWidget_selection    = r_selection
       , _everythingWidget_layers       = undefined
       , _everythingWidget_manipulators = undefined
       , _everythingWidget_pan          = undefined
