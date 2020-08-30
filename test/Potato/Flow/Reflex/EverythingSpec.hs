@@ -6,10 +6,10 @@ module Potato.Flow.Reflex.EverythingSpec
   )
 where
 
-import           Relude                        hiding (empty, fromList)
+import           Relude                              hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit      (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit            (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
@@ -17,11 +17,12 @@ import           Reflex.Test.Host
 
 import           Potato.Flow
 import           Potato.Flow.Reflex.Everything
+import           Potato.Flow.Reflex.EverythingWidget
 import           Potato.Flow.TestStates
 
 import           Control.Monad.Fix
-import qualified Data.IntMap                   as IM
-import qualified Data.Sequence                 as Seq
+import qualified Data.IntMap                         as IM
+import qualified Data.Sequence                       as Seq
 
 someState1 :: PFState
 someState1 = PFState {
