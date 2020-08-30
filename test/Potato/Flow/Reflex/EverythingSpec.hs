@@ -17,34 +17,21 @@ import           Reflex.Test.Host
 
 import           Potato.Flow
 import           Potato.Flow.Reflex.Everything
+import           Potato.Flow.TestStates
 
 import           Control.Monad.Fix
 import qualified Data.IntMap                   as IM
 import qualified Data.Sequence                 as Seq
 
-
--- TODO probably create TestStates.hs and put this stuff in there
-folderStart :: SEltLabel
-folderStart = SEltLabel "folder" SEltFolderStart
-
-folderEnd :: SEltLabel
-folderEnd = SEltLabel "folder (end)" SEltFolderEnd
-
-someSEltLabel :: SEltLabel
-someSEltLabel = SEltLabel "some elt" SEltNone
-
-defaultCanvasLBox :: LBox
-defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
-
 someState1 :: PFState
 someState1 = PFState {
       _pFState_layers = Seq.fromList [0..5]
       , _pFState_directory = IM.fromList [(0, folderStart), (1, someSEltLabel), (2, someSEltLabel), (3, someSEltLabel), (4, someSEltLabel), (5, folderEnd)]
-      , _pFState_canvas = SCanvas defaultCanvasLBox
+      , _pFState_canvas = someSCanvas
   }
 
 
-pfoWithInitialState :: forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m) => PFState -> m (PFOutput t)
+pfoWithInitialState :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m) => PFState -> m (PFOutput t)
 pfoWithInitialState pfState = holdPFWithInitialState pfState neverPFConfig
 
 -- bespoke testing
@@ -55,7 +42,7 @@ tool_network ev = do
   everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig { _everythingWidgetConfig_selectTool = ev }
   return $ updated . _everythingWidget_tool $ everythingWidget
 
-tool_test :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global) => Test
+tool_test :: Test
 tool_test = TestLabel "tool" $ TestCase $ do
   let
     -- note, starting value is TSelect
@@ -83,7 +70,7 @@ select_network ev = do
     }
   return $ updated . _everythingWidget_selection $ everythingWidget
 
-select_test :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global) => Test
+select_test :: Test
 select_test = TestLabel "select" $ TestCase $ do
   let
     -- TODO need to set some initial state with elements in order to test something meaningful here
