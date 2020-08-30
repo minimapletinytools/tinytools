@@ -25,12 +25,15 @@ import           Potato.Flow.Math
 import           Potato.Flow.Reflex.BroadPhase
 import           Potato.Flow.Reflex.Entry
 import           Potato.Flow.SElts
+import           Potato.Flow.State
 import           Potato.Flow.Types
 import           Reflex.Potato.Helpers
 
+import           Control.Exception             (assert)
 import           Control.Monad.Fix
 import qualified Data.List                     as L
 import qualified Data.Sequence                 as Seq
+import           Data.Tuple.Extra
 
 
 -- KEYBOARD
@@ -114,7 +117,7 @@ data MouseManipulator = MouseManipulator {
 }
 
 
--- TODO rename to Everything
+-- TODO rename to Everything, move to types folder maybe?
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selectedTool   :: Tool
   , _everythingBackend_selection    :: Selection
@@ -203,18 +206,26 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- create new object -> force a new selection...
     -- ok no it doesn't work, instead the state handler needs to do it without triggering a new event
     -- you could have state reducers and have one reducer call the other...
-    foldEverythingFn :: EverythingCmd -> EverythingBackend -> EverythingBackend
+    -- actually manipulator events need to trigger PFO inputs and get RID for PFO output
+    -- so what you actualyl need to do is intercept manipulator events and send them to PFO first
+    -- then combine promptly PFO outputs with original inputs
+    foldEverythingFn :: EverythingCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
-      ECmdTool x -> everything { _everythingBackend_selectedTool = x }
+      ECmdTool x -> return $ everything { _everythingBackend_selectedTool = x }
       -- TODO assert that selection is valid
-      ECmdSelect add x -> if add
-        then everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
-        else everything { _everythingBackend_selection = x }
+
+      ECmdSelect add x -> do
+        -- causes my unit tests to fail :(, I guess you need to set up fake PFOOutput or something?
+        --pfState <- sample _pfo_pFState
+        --return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList x))) ()
+        if add
+          then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
+          else return $ everything { _everythingBackend_selection = x }
       ECmdMouse x -> undefined
       ECmdKeyboard x -> undefined
       _          -> undefined
 
-  everythingDyn <- foldDyn foldEverythingFn emptyEverythingBackend everythingEvent
+  everythingDyn <- foldDynM foldEverythingFn emptyEverythingBackend everythingEvent
 
   r_tool <- holdUniqDyn $ fmap _everythingBackend_selectedTool everythingDyn
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingDyn
