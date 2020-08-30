@@ -112,9 +112,28 @@ computeSelectionType = foldl' foldfn SMTNone where
 
 
 -- MANIPULATORS
-data MouseManipulator = MouseManipulator {
+data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point
+data MouseManipulatorState = MouseManipulatorState_Normal | MouseManipulatorState_Dragging
 
+data MouseManipulator = MouseManipulator {
+  _mouseManipulator_pos     :: XY
+  , _mouseManipulator_type  :: MouseManipulatorType
+  , _mouseManipulator_state :: MouseManipulatorState
 }
+
+
+-- REDUCERS/REDUCER HELPERS
+toManipulators :: Selection -> [MouseManipulator]
+toManipulators selection = undefined
+--TODO do something like toManipulator
+-- so convert to Manipulator first and then convert Manipulator to MouseManipulator
+
+changeSelection :: Selection -> EverythingBackend -> EverythingBackend
+changeSelection newSelection everything@EverythingBackend {..} = everything {
+    _everythingBackend_selection = newSelection
+    , _everythingBackend_manipulators = toManipulators newSelection
+  }
+
 
 
 -- TODO rename to Everything, move to types folder maybe?
