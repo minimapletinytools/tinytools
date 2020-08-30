@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
+-- TODO move out of Reflex folder
 module Potato.Flow.Reflex.Everything (
   KeyboardData(..)
   , MouseModifier(..)
@@ -124,7 +125,7 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
 
 
 
--- TODO rename to Everything, move to types folder maybe?
+-- TODO rename to Everything
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selectedTool   :: Tool
   , _everythingBackend_selection    :: Selection

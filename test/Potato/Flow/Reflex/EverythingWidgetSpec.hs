@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.EverythingSpec
+module Potato.Flow.Reflex.EverythingWidgetSpec
   ( spec
   )
 where
@@ -85,6 +85,6 @@ select_test = TestLabel "select" $ TestCase $ do
 
 spec :: Spec
 spec = do
-  describe "Everything" $ do
+  describe "EverythingWidget" $ do
     fromHUnitTest $ tool_test
     fromHUnitTest $ select_test
