@@ -215,9 +215,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       -- TODO assert that selection is valid
 
       ECmdSelect add x -> do
-        -- causes my unit tests to fail :(, I guess you need to set up fake PFOOutput or something?
-        --pfState <- sample _pfo_pFState
-        --return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList x))) ()
+        pfState <- sample _pfo_pFState
+        return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList x))) ()
         if add
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
           else return $ everything { _everythingBackend_selection = x }

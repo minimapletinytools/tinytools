@@ -18,8 +18,34 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.Reflex.Everything
 
+import           Control.Monad.Fix
+import qualified Data.IntMap                   as IM
 import qualified Data.Sequence                 as Seq
 
+
+-- TODO probably create TestStates.hs and put this stuff in there
+folderStart :: SEltLabel
+folderStart = SEltLabel "folder" SEltFolderStart
+
+folderEnd :: SEltLabel
+folderEnd = SEltLabel "folder (end)" SEltFolderEnd
+
+someSEltLabel :: SEltLabel
+someSEltLabel = SEltLabel "some elt" SEltNone
+
+defaultCanvasLBox :: LBox
+defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
+
+someState1 :: PFState
+someState1 = PFState {
+      _pFState_layers = Seq.fromList [0..5]
+      , _pFState_directory = IM.fromList [(0, folderStart), (1, someSEltLabel), (2, someSEltLabel), (3, someSEltLabel), (4, someSEltLabel), (5, folderEnd)]
+      , _pFState_canvas = SCanvas defaultCanvasLBox
+  }
+
+
+pfoWithInitialState :: forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m) => PFState -> m (PFOutput t)
+pfoWithInitialState pfState = holdPFWithInitialState pfState neverPFConfig
 
 -- bespoke testing
 tool_network
@@ -45,12 +71,14 @@ select_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t (Bool, Selection) -> TestGuestT t m (Event t Selection)
 select_network ev = do
+  pfo <- pfoWithInitialState someState1
   let
     addSelectEv = fmapMaybe (\(b,s) -> if b then Just s else Nothing) ev
     newSelectEv = fmapMaybe (\(b,s) -> if not b then Just s else Nothing) ev
   everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig
     {
-      _everythingWidgetConfig_selectNew = newSelectEv
+      _everythingWidgetConfig_potatoFlow = pfo
+      , _everythingWidgetConfig_selectNew = newSelectEv
       , _everythingWidgetConfig_selectAdd = addSelectEv
     }
   return $ updated . _everythingWidget_selection $ everythingWidget

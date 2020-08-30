@@ -4,8 +4,10 @@
 
 module Potato.Flow.Reflex.Entry (
   PFConfig(..)
+  , neverPFConfig
   , PFOutput(..)
   , holdPF
+  , holdPFWithInitialState
 ) where
 
 import           Relude
@@ -51,6 +53,23 @@ data PFConfig t = PFConfig {
   , _pfc_redo         :: Event t ()
   , _pfc_load         :: Event t SPotatoFlow
   , _pfc_save         :: Event t ()
+}
+
+neverPFConfig :: (Reflex t) => PFConfig t
+neverPFConfig = PFConfig {
+  _pfc_addElt         = never
+  , _pfc_addFolder    = never
+  , _pfc_deleteElts   = never
+  , _pfc_moveElt      = never
+  , _pfc_copy         = never
+  , _pfc_paste        = never
+  --, _pfc_duplicate    = never
+  , _pfc_manipulate   = never
+  , _pfc_resizeCanvas = never
+  , _pfc_undo         = never
+  , _pfc_redo         = never
+  , _pfc_load         = never
+  , _pfc_save         = never
 }
 
 
@@ -112,12 +131,19 @@ data PFEventTag =
   | PFELoad SPotatoFlow
   deriving (Show)
 
-
 holdPF ::
   forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
   => PFConfig t
   -> m (PFOutput t)
-holdPF PFConfig {..} = mdo
+holdPF pfc = holdPFWithInitialState emptyPFState pfc
+
+-- intended for testing, though maybe also useful for loading via command line
+holdPFWithInitialState ::
+  forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
+  => PFState
+  -> PFConfig t
+  -> m (PFOutput t)
+holdPFWithInitialState initialState PFConfig {..} = mdo
   let
     pfevent = leftmostWarn "PFConfig"
       [ PFEAddElt <$> _pfc_addElt
@@ -158,7 +184,7 @@ holdPF PFConfig {..} = mdo
         if isValidAfter then r else
           error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
 
-  pfTotalStateDyn <- foldDyn foldfn (PFTotalState emptyWorkspace []) pfevent
+  pfTotalStateDyn <- foldDyn foldfn (PFTotalState (workspaceFromState initialState) []) pfevent
 
   let
     savepushfn _ = do

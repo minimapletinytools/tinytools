@@ -16,6 +16,7 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 
+-- TODO probably create TestStates.hs and put this stuff in there
 folderStart :: SEltLabel
 folderStart = SEltLabel "folder" SEltFolderStart
 
