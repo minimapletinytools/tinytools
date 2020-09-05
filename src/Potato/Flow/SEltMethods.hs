@@ -105,6 +105,42 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
     }
   x          -> x
 
+-- TODO delete
+selectionToManipulator :: [SuperSEltLabel] -> Manipulator
+selectionToManipulator selected = r where
+  nilState :: Manipulator
+  nilState = (MTagNone ==> ())
+  r = case selected of
+    [] -> nilState
+    ((rid, _, SEltLabel _ selt):[]) -> case selt of
+      SEltBox SBox {..} -> (MTagBox ==> mbox) where
+        mbox = MBox {
+            _mBox_target = rid
+            , _mBox_box  = _sBox_box
+          }
+      SEltLine SLine {..} -> (MTagLine ==> mline) where
+        mline = MLine {
+            _mLine_target  = rid
+            , _mLine_start = _sLine_start
+            , _mLine_end   = _sLine_end
+          }
+      SEltText SText {..} -> (MTagText ==> mtext) where
+        mtext = MText {
+            _mText_target = rid
+            , _mText_box  = _sText_box
+            , _mText_text = _sText_text
+          }
+      _                 -> nilState
+    sss -> bb where
+      fmapfn (rid, _, seltl) = do
+        box <- getSEltBox . _sEltLabel_sElt $ seltl
+        return (rid,box)
+      msboxes = catMaybes $ fmap fmapfn sss
+      bb = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
+        MTagBoundingBox ==>
+          MBoundingBox {
+            _mBoundingBox_bounded_targets = sboxes
+          }
 
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
