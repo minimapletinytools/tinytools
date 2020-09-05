@@ -32,7 +32,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.Layers
-import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.Types
 import           Potato.Flow.SElts
 

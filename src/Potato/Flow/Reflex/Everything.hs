@@ -19,13 +19,13 @@ import           Relude
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
-import qualified Data.List                as L
-import qualified Data.Sequence            as Seq
+import           Data.Dependent.Sum      (DSum ((:=>)), (==>))
+import qualified Data.List               as L
+import qualified Data.Sequence           as Seq
 
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end

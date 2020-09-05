@@ -1,13 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 
--- TODO rename
-module Potato.Flow.Reflex.RElts (
+module Potato.Flow.SEltMethods (
   getSEltBox
   , updateFnFromController
   , RenderFn
   , SEltDrawer(..)
   , getDrawer
-  , toManipulator
 ) where
 
 import           Relude
@@ -22,9 +20,6 @@ import           Control.Monad.Fix
 import           Data.Dependent.Sum     (DSum ((:=>)), (==>))
 import           Data.Maybe             (fromJust)
 import           Data.Tuple.Extra
-
-import           Reflex
-
 
 -- TODO rename to getSEltBoundingBox or something
 -- | gets an 'LBox' that contains the entire RElt
@@ -88,49 +83,6 @@ getDrawer selt = case selt of
         _sEltDrawer_box = fromJust (getSEltBox selt)
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
-
--- TODO DELETE
--- TODO this is the only Reflex function in this file.. everything else can be moved out of Reflex folder
-toManipulator :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
-  => Event t [SuperSEltLabel] -- ^ selection event, which will sample manipulators of current selection
-  -> m (Dynamic t Manipulator)
-toManipulator selected = do
-  let
-    nilState :: Manipulator
-    nilState = (MTagNone ==> ())
-    foldfn :: [SuperSEltLabel] -> Manipulator -> Manipulator
-    foldfn [] _ = nilState
-    foldfn ((rid, _, SEltLabel _ selt):[]) _ = case selt of
-      SEltBox SBox {..} -> (MTagBox ==> mbox) where
-        mbox = MBox {
-            _mBox_target = rid
-            , _mBox_box  = _sBox_box
-          }
-      SEltLine SLine {..} -> (MTagLine ==> mline) where
-        mline = MLine {
-            _mLine_target  = rid
-            , _mLine_start = _sLine_start
-            , _mLine_end   = _sLine_end
-          }
-      SEltText SText {..} -> (MTagText ==> mtext) where
-        mtext = MText {
-            _mText_target = rid
-            , _mText_box  = _sText_box
-            , _mText_text = _sText_text
-          }
-      _                 -> nilState
-    foldfn sss _ = r where
-      fmapfn (rid, _, seltl) = do
-        box <- getSEltBox . _sEltLabel_sElt $ seltl
-        return (rid,box)
-      msboxes = catMaybes $ fmap fmapfn sss
-      r = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
-        MTagBoundingBox ==>
-          MBoundingBox {
-            _mBoundingBox_bounded_targets = sboxes
-          }
-  foldDyn foldfn nilState selected
-
 
 modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
 modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of

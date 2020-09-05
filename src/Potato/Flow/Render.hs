@@ -13,7 +13,7 @@ module Potato.Flow.Render (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.RElts
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 
 import           Data.Maybe               (fromJust)
