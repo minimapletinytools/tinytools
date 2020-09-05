@@ -116,7 +116,28 @@ data MouseManipulator = MouseManipulator {
 -- REDUCERS/REDUCER HELPERS
 
 toMouseManipulators :: Selection -> [MouseManipulator]
-toMouseManipulators selection = undefined
+toMouseManipulators selection = if Seq.length selection > 1
+  then
+    case Seq.lookup 0 selection of
+      Nothing -> []
+      Just (rid, _, SEltLabel _ selt) -> case selt of
+        SEltBox SBox {..}   -> undefined
+          -- _sBox_box
+        SEltLine SLine {..} -> undefined
+          --_sLine_start
+          --_sLine_end
+        SEltText SText {..} -> undefined
+          --_sText_box
+          --_sText_text
+        _                   -> []
+  else bb where
+    fmapfn (rid, _, seltl) = do
+      box <- getSEltBox . _sEltLabel_sElt $ seltl
+      return (rid, box)
+    msboxes = sequence $ fmap fmapfn selection
+    bb = undefined
+
+
 --TODO do something like selectionToManipulator
 -- so convert to Manipulator first and then convert Manipulator to MouseManipulator
 
