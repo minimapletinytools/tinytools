@@ -89,6 +89,7 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
 
+-- TODO DELETE
 -- TODO this is the only Reflex function in this file.. everything else can be moved out of Reflex folder
 toManipulator :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
   => Event t [SuperSEltLabel] -- ^ selection event, which will sample manipulators of current selection

@@ -81,7 +81,7 @@ deriveGCompare ''MTag
 deriveGShow    ''MTag
 deriveArgDict  ''MTag
 
--- | Manipulators represent starting position of RElts
+-- NOTE, this is no longer used in Reflex event so DSum is not necessary, but there's no reason to change it
 type Manipulator = DS.DSum MTag Identity
 
 
