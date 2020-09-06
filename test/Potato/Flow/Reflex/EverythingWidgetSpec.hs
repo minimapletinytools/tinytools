@@ -47,8 +47,8 @@ tool_test :: Test
 tool_test = TestLabel "tool" $ TestCase $ do
   let
     -- note, starting value is TSelect
-    bs = [TPan, TSelect, TPan, TPan, TBox, TLine, TText]
-    expected = [Just TPan, Just TSelect, Just TPan, Nothing, Just TBox, Just TLine, Just TText]
+    bs = [Tool_Pan, Tool_Select, Tool_Pan, Tool_Pan, Tool_Box, Tool_Line, Tool_Text]
+    expected = [Just Tool_Pan, Just Tool_Select, Just Tool_Pan, Nothing, Just Tool_Box, Just Tool_Line, Just Tool_Text]
     run = runAppSimple tool_network bs
   v <- liftIO run
   (join v) @?= expected

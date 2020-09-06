@@ -111,8 +111,34 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         if add
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
           else return $ everything { _everythingBackend_selection = x }
-      ECmdMouse x -> undefined
-      ECmdKeyboard x -> undefined
+      ECmdMouse mouseData -> do
+        pfState <- sample _pfo_pFState
+        let
+
+          mouseDrag@MouseDrag{..} = case _everythingBackend_mouseStart of
+            Just ms -> continueDrag mouseData ms
+            Nothing -> newDrag mouseData
+          newMouseStart = case _mouseDrag_state of
+            MouseDragState_Up -> Nothing
+            _                 -> Just _mouseDrag_start
+
+
+        if _everythingBackend_selectedTool == Tool_Pan then
+          -- TODO pan
+          undefined
+        else if _everythingBackend_selectedTool == Tool_Select then
+          -- TODO select or manipulate
+          undefined
+        else
+          case _everythingBackend_manipulating of
+            Just (rid, lp, sseltl) -> undefined
+              -- TODO manipulate
+            Nothing                -> undefined
+              -- TODO create new stuff
+        undefined
+      ECmdKeyboard x -> case x of
+        KeyboardData KeyboardKey_Esc _ -> undefined -- TODO cancel functionality
+        _                              -> undefined
       _          -> undefined
 
   everythingDyn <- foldDynM foldEverythingFn emptyEverythingBackend everythingEvent

@@ -4,8 +4,18 @@
 -- TODO move out of Reflex folder
 module Potato.Flow.Reflex.Everything (
   KeyboardData(..)
+  , KeyboardKey(..)
+  , KeyboardKeyType(..)
+
   , MouseModifier(..)
+  , MouseButton(..)
+  , MouseDragState(..)
   , LMouseData(..)
+  , MouseStart(..)
+  , MouseDrag(..)
+  , newDrag
+  , continueDrag
+
   , Tool(..)
   , LayerDisplay(..)
   , MouseManipulator(..)
@@ -23,6 +33,7 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
+import           Control.Exception       (assert)
 import           Data.Dependent.Sum      (DSum ((:=>)), (==>))
 import qualified Data.List               as L
 import qualified Data.Sequence           as Seq
@@ -30,11 +41,18 @@ import qualified Data.Sequence           as Seq
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end
 -- (don't wanna implement my own text zipper D:)
-data KeyboardData =
-  KeyboardData_Esc
-  | KeyboardData_Return
-  | KeyboardData_Space
-  | KeyboardData_Char Char
+data KeyboardData = KeyboardData KeyboardKey KeyboardKeyType
+
+data KeyboardKey =
+  KeyboardKey_Esc
+  | KeyboardKey_Return
+  | KeyboardKey_Space
+  | KeyboardKey_Char Char
+
+data KeyboardKeyType =
+  KeyboardKeyType_Down
+  | KeyboardKeyType_Up
+  | KeyboardKeyType_Click
 
 -- MOUSE
 -- TODO move all this stuff to types folder or something
@@ -43,30 +61,49 @@ data MouseModifier = MouseModifier_Shift | MouseModifier_Alt
 
 data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right
 
--- TODO Get rid of cancel? It will be sent over via escape key
-data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancel
+data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up
 
 -- TODO is this the all encompassing mouse event we want?
 -- only one modifier allowed at a time for our app
 -- TODO is there a way to optionally support more fidelity here?
+-- mouse drags are sent as click streams
 data LMouseData = LMouseData {
   _lMouseData_position    :: XY
   , _lMouseData_isRelease :: Bool
   , _lMouseData_button    :: MouseButton
-  , _lMouseData_dragState :: MouseDragState
+}
+
+data MouseStart = MouseStart {
+  _mouseStart_from          :: XY
+  , _mouseStart_startButton :: MouseButton
 }
 
 data MouseDrag = MouseDrag {
-  _mouseDrag_from          :: XY
-  , _mouseDrag_startButton :: MouseButton
+  _mouseDrag_start   :: MouseStart
   -- likely not needed as they will be in the input event
-  , _mouseDrag_to          :: XY
-  , _mouseDrag_state       :: MouseDragState
+  , _mouseDrag_to    :: XY
+  , _mouseDrag_state :: MouseDragState
 }
+
+newDrag :: LMouseData -> MouseDrag
+newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
+    _mouseDrag_start = MouseStart _lMouseData_position _lMouseData_button
+    , _mouseDrag_to = _lMouseData_position
+    , _mouseDrag_state = MouseDragState_Down
+  }
+
+continueDrag :: LMouseData -> MouseStart -> MouseDrag
+continueDrag LMouseData {..} ms = MouseDrag {
+    _mouseDrag_start = ms
+    , _mouseDrag_to = _lMouseData_position
+    , _mouseDrag_state = if _lMouseData_isRelease
+      then MouseDragState_Up
+      else MouseDragState_Dragging
+  }
 
 
 -- TOOL
-data Tool = TSelect | TPan | TBox | TLine | TText deriving (Eq, Show, Enum)
+data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
 
 -- LAYER
 data LayerDisplay = LayerDisplay {
@@ -110,11 +147,12 @@ data MouseManipulator = MouseManipulator {
   _mouseManipulator_pos     :: XY
   , _mouseManipulator_type  :: MouseManipulatorType
   , _mouseManipulator_state :: MouseManipulatorState
+  -- back reference to object being manipulated?
+  -- or just use a function
 }
 
 
 -- REDUCERS/REDUCER HELPERS
-
 toMouseManipulators :: Selection -> [MouseManipulator]
 toMouseManipulators selection = if Seq.length selection > 1
   then
@@ -137,10 +175,6 @@ toMouseManipulators selection = if Seq.length selection > 1
     msboxes = sequence $ fmap fmapfn selection
     bb = undefined
 
-
---TODO do something like selectionToManipulator
--- so convert to Manipulator first and then convert Manipulator to MouseManipulator
-
 changeSelection :: Selection -> EverythingBackend -> EverythingBackend
 changeSelection newSelection everything@EverythingBackend {..} = everything {
     _everythingBackend_selection = newSelection
@@ -157,14 +191,18 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_manipulators :: [MouseManipulator]
   , _everythingBackend_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingBackend_broadPhase   :: BPTree
+  , _everythingBackend_manipulating :: Maybe SuperSEltLabel -- element we are in the middle of manipulating
+  , _everythingBackend_mouseStart   :: Maybe MouseStart -- last mouse dragging state
 }
 
 emptyEverythingBackend :: EverythingBackend
 emptyEverythingBackend = EverythingBackend {
-    _everythingBackend_selectedTool   = TSelect
+    _everythingBackend_selectedTool   = Tool_Select
     , _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
     , _everythingBackend_pan          = V2 0 0
     , _everythingBackend_broadPhase   = emptyBPTree
+    , _everythingBackend_manipulating = Nothing
+    , _everythingBackend_mouseStart = Nothing
   }
