@@ -103,6 +103,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- actually manipulator events need to trigger PFO inputs and get RID for PFO output
     -- so what you actualyl need to do is intercept manipulator events and send them to PFO first
     -- then combine promptly PFO outputs with original inputs
+    -- NO everything above is wrong!!!
+    -- just have like EverythingFrontend and EverythingBackend!!!
+    -- where everyhting frontend samples from EverythingBackend generates inputs for PFOutput
+    -- and EverythingBackend reads events from PFOutput
     foldEverythingFn :: EverythingCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
       ECmdTool x -> return $ everything { _everythingBackend_selectedTool = x }
