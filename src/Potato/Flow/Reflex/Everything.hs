@@ -33,10 +33,13 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Control.Exception       (assert)
-import           Data.Dependent.Sum      (DSum ((:=>)), (==>))
-import qualified Data.List               as L
-import qualified Data.Sequence           as Seq
+-- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
+import           Potato.Flow.Reflex.Entry (PFEventTag)
+
+import           Control.Exception        (assert)
+import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import qualified Data.List                as L
+import qualified Data.Sequence            as Seq
 
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end
@@ -191,8 +194,8 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_manipulators :: [MouseManipulator]
   , _everythingBackend_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingBackend_broadPhase   :: BPTree
-  , _everythingBackend_manipulating :: Maybe SuperSEltLabel -- element we are in the middle of manipulating
   , _everythingBackend_mouseStart   :: Maybe MouseStart -- last mouse dragging state
+  , _everythingBackend_command      :: Maybe PFEventTag
 }
 
 emptyEverythingBackend :: EverythingBackend
@@ -203,6 +206,6 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_manipulators = []
     , _everythingBackend_pan          = V2 0 0
     , _everythingBackend_broadPhase   = emptyBPTree
-    , _everythingBackend_manipulating = Nothing
     , _everythingBackend_mouseStart = Nothing
+    , _everythingBackend_command = Nothing
   }

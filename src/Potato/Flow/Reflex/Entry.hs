@@ -6,6 +6,7 @@ module Potato.Flow.Reflex.Entry (
   PFConfig(..)
   , neverPFConfig
   , PFOutput(..)
+  , PFEventTag(..)
   , holdPF
   , holdPFWithInitialState
 ) where

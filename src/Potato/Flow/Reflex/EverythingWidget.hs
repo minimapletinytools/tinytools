@@ -39,6 +39,9 @@ data EverythingCmd =
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
+
+  -- TODO EverythingWidgetConfig constructs potatoFlow, we want to take an initial state
+  -- and possibly some PFConfig as well
   _everythingWidgetConfig_potatoFlow   :: PFOutput t
 
   -- canvas direct input
@@ -103,18 +106,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingFn :: EverythingCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingFn cmd everything@EverythingBackend {..} = case cmd of
       ECmdTool x -> return $ everything { _everythingBackend_selectedTool = x }
-      -- TODO assert that selection is valid
-
-      ECmdSelect add x -> do
+      ECmdSelect add sel -> do
         pfState <- sample _pfo_pFState
-        return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList x))) ()
+        return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList sel))) ()
         if add
-          then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection x }
-          else return $ everything { _everythingBackend_selection = x }
+          then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
+          else return $ everything { _everythingBackend_selection = sel }
       ECmdMouse mouseData -> do
         pfState <- sample _pfo_pFState
-        let
 
+        let
           mouseDrag@MouseDrag{..} = case _everythingBackend_mouseStart of
             Just ms -> continueDrag mouseData ms
             Nothing -> newDrag mouseData
@@ -122,29 +123,50 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             MouseDragState_Up -> Nothing
             _                 -> Just _mouseDrag_start
 
+        everything' <- if _everythingBackend_selectedTool == Tool_Pan then do
+          let
+            V2 cx0 cy0 = _everythingBackend_pan
+            V2 dx dy = (_mouseStart_from _mouseDrag_start) - _mouseDrag_to
+          -- TODO simplify formula once you confirm it's correct
+          return $ everything { _everythingBackend_pan = V2 (cx0+dx) (cy0 + dy) }
 
-        if _everythingBackend_selectedTool == Tool_Pan then
-          -- TODO pan
-          undefined
+
         else if _everythingBackend_selectedTool == Tool_Select then
           -- TODO select or manipulate
           undefined
-        else
-          case _everythingBackend_manipulating of
+        else do
+          manipulating <- sample . current $ manipulatingDyn
+          case manipulating of
             Just (rid, lp, sseltl) -> undefined
               -- TODO manipulate
             Nothing                -> undefined
               -- TODO create new stuff
-        undefined
+
+        -- TODO set the new command or whatever
+        return $ everything' { _everythingBackend_mouseStart = newMouseStart }
       ECmdKeyboard x -> case x of
         KeyboardData KeyboardKey_Esc _ -> undefined -- TODO cancel functionality
         _                              -> undefined
       _          -> undefined
 
-  everythingDyn <- foldDynM foldEverythingFn emptyEverythingBackend everythingEvent
+
+
+  everythingDyn :: Dynamic t EverythingBackend
+    <- foldDynM foldEverythingFn emptyEverythingBackend everythingEvent
+
+  -- TODO I think we need to spilt everythingDyn into 2 steps,
+  -- 1 for stuff that feeds into PFoutput
+  -- and 1 for stuff that comes out of PFOutput
+  -- e.g. capture PFOutput manipulating stuff
+  manipulatingDyn :: Dynamic t (Maybe SuperSEltLabel)
+    <- holdDyn Nothing never
+  -- e.g. update layers
 
   r_tool <- holdUniqDyn $ fmap _everythingBackend_selectedTool everythingDyn
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingDyn
+
+
+
 
   return EverythingWidget
     {
