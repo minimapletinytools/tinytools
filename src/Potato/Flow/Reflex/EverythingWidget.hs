@@ -65,12 +65,14 @@ emptyEverythingWidgetConfig = EverythingWidgetConfig {
   }
 
 data EverythingWidget t = EverythingWidget {
-  _everythingWidget_tool           :: Dynamic t Tool
-  , _everythingWidget_selection    :: Dynamic t Selection
-  , _everythingWidget_layers       :: Dynamic t (Seq LayerDisplay)
-  , _everythingWidget_manipulators :: Dynamic t [MouseManipulator]
-  , _everythingWidget_pan          :: Dynamic t XY
-  , _everythingWidget_broadPhase   :: Dynamic t BPTree
+  _everythingWidget_tool               :: Dynamic t Tool
+  , _everythingWidget_selection        :: Dynamic t Selection
+  , _everythingWidget_layers           :: Dynamic t (Seq LayerDisplay)
+  , _everythingWidget_manipulators     :: Dynamic t [MouseManipulator]
+  , _everythingWidget_pan              :: Dynamic t XY
+  , _everythingWidget_broadPhase       :: Dynamic t BPTree
+
+  , _everythingWidget_everything_DEBUG :: Dynamic t EverythingBackend
 }
 
 holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
@@ -180,5 +182,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       , _everythingWidget_manipulators = undefined
       , _everythingWidget_pan          = undefined
       , _everythingWidget_broadPhase   = undefined
+
+      , _everythingWidget_everything_DEBUG = everythingDyn
 
     }

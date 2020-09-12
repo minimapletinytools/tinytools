@@ -23,7 +23,6 @@ import           Potato.Flow.TestStates
 import           Control.Monad.Fix
 import qualified Data.IntMap                         as IM
 import qualified Data.Sequence                       as Seq
-import           Data.These
 
 someState1 :: PFState
 someState1 = PFState {
@@ -90,8 +89,8 @@ data EverythingWidgetCmd =
 
 everything_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t (EverythingWidget t) ())
-everything_network (AppIn _ ev) = do
+  => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingBackend)
+everything_network ev = do
   pfo <- pfoWithInitialState someState1
   let ewc = EverythingWidgetConfig  {
       _everythingWidgetConfig_potatoFlow = pfo
@@ -113,20 +112,34 @@ everything_network (AppIn _ ev) = do
         _ -> Nothing
     }
   everythingWidget <- holdEverythingWidget ewc
-  return $ AppOut (constant everythingWidget) never
+  return $ updated $ _everythingWidget_everything_DEBUG everythingWidget
+
+data EverythingPredicate where
+  EqPredicate :: (Eq a) => (EverythingBackend -> a) -> a -> EverythingPredicate
+
+testEverythingPredicate :: EverythingPredicate -> EverythingBackend -> Bool
+testEverythingPredicate (EqPredicate f a) e = f e == a
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
     bs = [EWCNothing]
+    --expected = [Just (EqPredicate (const ()) ())]
     expected = [Nothing]
-    run = runApp everything_network () (fmap (Just . That) bs)
-  v <- liftIO run
-  let
-    eventsOnly :: [[Maybe ()]]
-    eventsOnly = fmap (fmap snd) v
-  (join eventsOnly) @?= expected
+    run = runAppSimple everything_network bs
+  values <- liftIO run
+
+  -- TODO move stuff below into helper function
+  -- expect only 1 tick per event
+  forM values $ \x -> length x @?= 1
+  -- expect correct number of outputs
+  length values @?= length expected
+  forM_ (zip (join values) expected) $ \(me, p) -> case p of
+    Nothing -> assertBool "expected no output" (isNothing me)
+    Just p  -> case me of
+      Nothing -> assertFailure "expected output"
+      Just e  -> assertBool "predicate failed" (testEverythingPredicate p e)
 
 
 
