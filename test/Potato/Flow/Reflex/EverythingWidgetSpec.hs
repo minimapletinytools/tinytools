@@ -115,18 +115,33 @@ everything_network ev = do
   return $ updated $ _everythingWidget_everything_DEBUG everythingWidget
 
 data EverythingPredicate where
-  EqPredicate :: (Eq a) => (EverythingBackend -> a) -> a -> EverythingPredicate
+  EqPredicate :: (Show a, Eq a) => (EverythingBackend -> a) -> a -> EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingBackend -> Bool
 testEverythingPredicate (EqPredicate f a) e = f e == a
+
+showEverythingPredicate :: EverythingPredicate -> EverythingBackend -> String
+showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
-    bs = [EWCNothing]
-    --expected = [Just (EqPredicate (const ()) ())]
-    expected = [Nothing]
+    bs = [
+        EWCNothing
+
+        -- test basic panning
+        , EWCTool Tool_Pan
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left)
+      ]
+
+    expected = [
+        Nothing
+        , Just (EqPredicate _everythingBackend_selectedTool Tool_Pan)
+        , Just (EqPredicate _everythingBackend_pan (V2 0 0))
+        , Just (EqPredicate _everythingBackend_pan (V2 (-1) (-1)))
+      ]
     run = runAppSimple everything_network bs
   values <- liftIO run
 
@@ -139,7 +154,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
     Nothing -> assertBool "expected no output" (isNothing me)
     Just p  -> case me of
       Nothing -> assertFailure "expected output"
-      Just e  -> assertBool "predicate failed" (testEverythingPredicate p e)
+      Just e  -> assertBool (showEverythingPredicate p e) (testEverythingPredicate p e)
 
 
 
