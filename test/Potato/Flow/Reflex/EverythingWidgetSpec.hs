@@ -23,6 +23,7 @@ import           Potato.Flow.TestStates
 import           Control.Monad.Fix
 import qualified Data.IntMap                         as IM
 import qualified Data.Sequence                       as Seq
+import           Data.These
 
 someState1 :: PFState
 someState1 = PFState {
@@ -53,8 +54,6 @@ tool_test = TestLabel "tool" $ TestCase $ do
   v <- liftIO run
   (join v) @?= expected
 
-
-
 select_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t (Bool, Selection) -> TestGuestT t m (Event t Selection)
@@ -63,8 +62,7 @@ select_network ev = do
   let
     addSelectEv = fmapMaybe (\(b,s) -> if b then Just s else Nothing) ev
     newSelectEv = fmapMaybe (\(b,s) -> if not b then Just s else Nothing) ev
-  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig
-    {
+  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig {
       _everythingWidgetConfig_potatoFlow = pfo
       , _everythingWidgetConfig_selectNew = newSelectEv
       , _everythingWidgetConfig_selectAdd = addSelectEv
@@ -82,9 +80,38 @@ select_test = TestLabel "select" $ TestCase $ do
   v <- liftIO run
   (join v) @?= expected
 
+-- generic testing
+-- TODO figure out input event type
+everything_network
+  :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => AppIn t () () -> TestGuestT t m (AppOut t (EverythingWidget t) ())
+everything_network ev = do
+  pfo <- pfoWithInitialState someState1
+  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig {
+      -- TODO
+      _everythingWidgetConfig_potatoFlow = pfo
+    }
+  return $ AppOut (constant everythingWidget) never
+
+everything_basic_test :: Test
+everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
+  -- TODO test something
+  let
+    bs = [()]
+    expected = [Nothing]
+    run = runApp everything_network () (fmap (Just . That) bs)
+  v <- liftIO run
+  let
+    eventsOnly :: [[Maybe ()]]
+    eventsOnly = fmap (fmap snd) v
+  (join eventsOnly) @?= expected
+
+
+
 
 spec :: Spec
 spec = do
   describe "EverythingWidget" $ do
     fromHUnitTest $ tool_test
     fromHUnitTest $ select_test
+    fromHUnitTest $ everything_basic_test
