@@ -40,7 +40,7 @@ data EverythingCmd =
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
 
-  -- TODO EverythingWidgetConfig constructs potatoFlow, we want to take an initial state
+  -- TODO EverythingWidgetConfig constructs/owns PFOutput, we want to take an initial state
   -- and possibly some PFConfig as well
   _everythingWidgetConfig_potatoFlow   :: PFOutput t
 

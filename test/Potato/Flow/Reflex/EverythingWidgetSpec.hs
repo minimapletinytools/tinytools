@@ -36,7 +36,7 @@ someState1 = PFState {
 pfoWithInitialState :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m) => PFState -> m (PFOutput t)
 pfoWithInitialState pfState = holdPFWithInitialState pfState neverPFConfig
 
--- bespoke testing
+-- simple bespoke testing
 tool_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => (Event t Tool -> TestGuestT t m (Event t Tool))
@@ -81,23 +81,45 @@ select_test = TestLabel "select" $ TestCase $ do
   (join v) @?= expected
 
 -- generic testing
--- TODO figure out input event type
+data EverythingWidgetCmd =
+  EWCMouse LMouseData
+  | EWCKeyboard KeyboardData
+  | EWCTool Tool
+  | EWCSelect Selection Bool -- true if add to selection
+  | EWCNothing
+
 everything_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => AppIn t () () -> TestGuestT t m (AppOut t (EverythingWidget t) ())
-everything_network ev = do
+  => AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t (EverythingWidget t) ())
+everything_network (AppIn _ ev) = do
   pfo <- pfoWithInitialState someState1
-  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig {
-      -- TODO
+  let ewc = EverythingWidgetConfig  {
       _everythingWidgetConfig_potatoFlow = pfo
+
+      , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
+        EWCMouse x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_keyboard = fforMaybe ev $ \case
+        EWCKeyboard x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectTool = fforMaybe ev $ \case
+        EWCTool x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectNew = fforMaybe ev $ \case
+        EWCSelect x False -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectAdd = fforMaybe ev $ \case
+        EWCSelect x True -> Just x
+        _ -> Nothing
     }
+  everythingWidget <- holdEverythingWidget ewc
   return $ AppOut (constant everythingWidget) never
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
-    bs = [()]
+    bs = [EWCNothing]
     expected = [Nothing]
     run = runApp everything_network () (fmap (Just . That) bs)
   v <- liftIO run
