@@ -1,3 +1,13 @@
+::NEWEST TODO::
+-hook up PF
+  -pass in initial state into EverythingFrontend
+  -prob output PF in EverythingBackend
+-manipulatingDyn can be moved into backend
+
+:::::::::::::::::::::::::::::::::::::::
+:::::PRE MEGA REFACTOR STUFF BELOW:::::
+:::::::::::::::::::::::::::::::::::::::
+
 
 stack build --profile --ghc-options="-ddump-prep -ddump-to-file"
 stack exec --profile -- memorytests +RTS -hd
