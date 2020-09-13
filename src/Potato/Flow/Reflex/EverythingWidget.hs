@@ -28,14 +28,17 @@ import           Data.Tuple.Extra
 
 
 
-data EverythingCmd =
-  ECmdTool Tool
-  -- selection (first param is add to selection if true)
-  | ECmdSelect Bool Selection
+data EverythingFrontendCmd =
+  EFCmdTool Tool
 
   -- canvas direct input
-  | ECmdMouse LMouseData
-  | ECmdKeyboard KeyboardData
+  | EFCmdMouse LMouseData
+  | EFCmdKeyboard KeyboardData
+
+data EverythingBackendCmd =
+  -- selection (first param is add to selection if true)
+  EBCmdSelect Bool Selection
+
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
@@ -89,15 +92,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -------------------------
 
     everythingFrontendEvent = leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
-      [ ECmdTool <$> _everythingWidgetConfig_selectTool
-      , ECmdMouse <$> _everythingWidgetConfig_mouse
-      , ECmdKeyboard <$> _everythingWidgetConfig_keyboard
+      [ EFCmdTool <$> _everythingWidgetConfig_selectTool
+      , EFCmdMouse <$> _everythingWidgetConfig_mouse
+      , EFCmdKeyboard <$> _everythingWidgetConfig_keyboard
       ]
 
-    foldEverythingFrontendFn :: EverythingCmd -> EverythingFrontend -> PushM t EverythingFrontend
+    foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = case cmd of
-      ECmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
-      ECmdMouse mouseData -> do
+      EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
+      EFCmdMouse mouseData -> do
         pfState <- sample _pfo_pFState
 
         let
@@ -128,7 +131,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
         -- TODO set the new command or whatever
         return $ everything' { _everythingFrontend_mouseStart = newMouseStart }
-      ECmdKeyboard x -> case x of
+      EFCmdKeyboard x -> case x of
         KeyboardData KeyboardKey_Esc _ -> undefined -- TODO cancel functionality
         _                              -> undefined
       _          -> undefined
@@ -148,13 +151,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   let
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
-      [ ECmdSelect False <$> _everythingWidgetConfig_selectNew
-      , ECmdSelect True <$> _everythingWidgetConfig_selectAdd
+      [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
+      , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       ]
 
-    foldEverythingBackendFn :: EverythingCmd -> EverythingBackend -> PushM t EverythingBackend
+
+
+    foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingBackendFn cmd everything@EverythingBackend {..} = case cmd of
-      ECmdSelect add sel -> do
+      EBCmdSelect add sel -> do
         pfState <- sample _pfo_pFState
         return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList sel))) ()
         if add
