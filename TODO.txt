@@ -1,8 +1,8 @@
 ::NEWEST TODO::
 -hook up PF
-  -pass in initial state into EverythingFrontend
+  DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
--manipulatingDyn can be moved into backend
+DONE-manipulatingDyn can be moved into backend
 
 :::::::::::::::::::::::::::::::::::::::
 :::::PRE MEGA REFACTOR STUFF BELOW:::::

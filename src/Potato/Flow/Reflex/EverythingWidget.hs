@@ -112,7 +112,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           then do
             let
               V2 cx0 cy0 = _everythingFrontend_pan
-              V2 dx dy = (_mouseStart_from _mouseDrag_start) - _mouseDrag_to
+              V2 dx dy = _mouseDrag_to - (_mouseStart_from _mouseDrag_start)
             -- TODO simplify formula once you confirm it's correct
             return $ everything { _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy) }
           else if _everythingFrontend_selectedTool == Tool_Select then

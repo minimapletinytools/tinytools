@@ -134,7 +134,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         Nothing
         , Just (EqPredicate _everythingCombined_selectedTool Tool_Pan)
         , Just (EqPredicate _everythingCombined_pan (V2 0 0))
-        , Just (EqPredicate _everythingCombined_pan (V2 (-1) (-1)))
+        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
       ]
     run = runAppSimple everything_network bs
   values <- liftIO run
