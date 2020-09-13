@@ -39,6 +39,8 @@ data EverythingBackendCmd =
   -- selection (first param is add to selection if true)
   EBCmdSelect Bool Selection
 
+  | EBCmdChanges SEltLabelChanges
+
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
@@ -70,7 +72,7 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_layers                   :: Dynamic t (Seq LayerDisplay)
   , _everythingWidget_manipulators             :: Dynamic t [MouseManipulator]
   , _everythingWidget_pan                      :: Dynamic t XY
-  , _everythingWidget_broadPhase               :: Dynamic t BPTree
+  , _everythingWidget_broadPhase               :: Dynamic t ([AABB], BPTree, SEltLabelChanges)
 
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
@@ -153,9 +155,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
+      , EBCmdChanges <$> _pfo_potato_changed
       ]
-
-
 
     foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingBackendFn cmd everything@EverythingBackend {..} = case cmd of
@@ -165,6 +166,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         if add
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
           else return $ everything { _everythingBackend_selection = sel }
+      EBCmdChanges changes -> do
+        let
+          newBroadPhase = update_bPTree changes (snd3 _everythingBackend_broadPhase)
+        return $ everything { _everythingBackend_broadPhase = newBroadPhase }
       _          -> undefined
 
   everythingBackendDyn :: Dynamic t EverythingBackend

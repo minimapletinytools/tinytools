@@ -43,6 +43,7 @@ import           Potato.Flow.Reflex.Entry (PFEventTag)
 
 import           Control.Exception        (assert)
 import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
+import qualified Data.IntMap              as IM
 import qualified Data.List                as L
 import qualified Data.Sequence            as Seq
 
@@ -202,7 +203,9 @@ data EverythingBackend = EverythingBackend {
   _everythingBackend_selection      :: Selection
   , _everythingBackend_layers       :: Seq LayerDisplay
   , _everythingBackend_manipulators :: [MouseManipulator]
-  , _everythingBackend_broadPhase   :: BPTree
+  -- | (list of AABBs that need to be updated, updated BPTree, changed SEltLabels from last updated)
+  -- prob don't really need last param?
+  , _everythingBackend_broadPhase   :: ([AABB], BPTree, SEltLabelChanges)
   , _everythingBackend_manipulating :: Maybe SuperSEltLabel
 
 }
@@ -220,11 +223,11 @@ emptyEverythingBackend = EverythingBackend {
     _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
-    , _everythingBackend_broadPhase   = emptyBPTree
+    , _everythingBackend_broadPhase   = ([], emptyBPTree, IM.empty)
     , _everythingBackend_manipulating = Nothing
   }
 
--- combined output for convenient testing th
+-- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   _everythingCombined_selectedTool   :: Tool
   , _everythingCombined_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
@@ -233,7 +236,7 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_selection    :: Selection
   , _everythingCombined_layers       :: Seq LayerDisplay
   , _everythingCombined_manipulators :: [MouseManipulator]
-  , _everythingCombined_broadPhase   :: BPTree
+  , _everythingCombined_broadPhase   :: ([AABB], BPTree, SEltLabelChanges)
   , _everythingCombined_manipulating :: Maybe SuperSEltLabel
 }
 

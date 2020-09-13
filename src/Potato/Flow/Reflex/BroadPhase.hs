@@ -1,4 +1,4 @@
--- TODO deprecate
+-- TODO DEPRECATE
 
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
@@ -20,8 +20,8 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
 import           Control.Monad.Fix
-import qualified Data.IntMap.Strict       as IM
-import           Data.Tuple.Extra         (snd3)
+import qualified Data.IntMap.Strict      as IM
+import           Data.Tuple.Extra        (snd3)
 
 
 
