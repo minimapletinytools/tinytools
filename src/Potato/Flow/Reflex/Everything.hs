@@ -21,8 +21,13 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulator(..)
   , Selection
   , disjointUnionSelection
+  , EverythingFrontend(..)
   , EverythingBackend(..)
+  , emptyEverythingFrontend
   , emptyEverythingBackend
+  , EverythingCombined_DEBUG(..)
+  , combineEverything
+
 ) where
 
 import           Relude
@@ -184,28 +189,58 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
     , _everythingBackend_manipulators = toMouseManipulators newSelection
   }
 
+-- first pass processing inputs
+data EverythingFrontend = EverythingFrontend {
+  _everythingFrontend_selectedTool :: Tool
+  , _everythingFrontend_pan        :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingFrontend_mouseStart :: Maybe MouseStart -- last mouse dragging state
+  , _everythingFrontend_command    :: Maybe PFEventTag
+}
 
-
--- TODO rename to Everything
+-- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {
-  _everythingBackend_selectedTool   :: Tool
-  , _everythingBackend_selection    :: Selection
+  _everythingBackend_selection      :: Selection
   , _everythingBackend_layers       :: Seq LayerDisplay
   , _everythingBackend_manipulators :: [MouseManipulator]
-  , _everythingBackend_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingBackend_broadPhase   :: BPTree
-  , _everythingBackend_mouseStart   :: Maybe MouseStart -- last mouse dragging state
-  , _everythingBackend_command      :: Maybe PFEventTag
 }
+
+emptyEverythingFrontend :: EverythingFrontend
+emptyEverythingFrontend = EverythingFrontend {
+    _everythingFrontend_selectedTool   = Tool_Select
+    , _everythingFrontend_pan          = V2 0 0
+    , _everythingFrontend_mouseStart = Nothing
+    , _everythingFrontend_command = Nothing
+  }
 
 emptyEverythingBackend :: EverythingBackend
 emptyEverythingBackend = EverythingBackend {
-    _everythingBackend_selectedTool   = Tool_Select
-    , _everythingBackend_selection    = Seq.empty
+    _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
-    , _everythingBackend_pan          = V2 0 0
     , _everythingBackend_broadPhase   = emptyBPTree
-    , _everythingBackend_mouseStart = Nothing
-    , _everythingBackend_command = Nothing
+  }
+
+-- easy output for testing
+data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
+  _everythingCombined_selectedTool   :: Tool
+  , _everythingCombined_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingCombined_mouseStart   :: Maybe MouseStart -- last mouse dragging state
+  , _everythingCombined_command      :: Maybe PFEventTag
+  , _everythingCombined_selection    :: Selection
+  , _everythingCombined_layers       :: Seq LayerDisplay
+  , _everythingCombined_manipulators :: [MouseManipulator]
+  , _everythingCombined_broadPhase   :: BPTree
+}
+
+combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
+combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCombined_DEBUG {
+    _everythingCombined_selectedTool =   _everythingFrontend_selectedTool
+    , _everythingCombined_pan        = _everythingFrontend_pan
+    , _everythingCombined_mouseStart = _everythingFrontend_mouseStart
+    , _everythingCombined_command    = _everythingFrontend_command
+    , _everythingCombined_selection      = _everythingBackend_selection
+    , _everythingCombined_layers       = _everythingBackend_layers
+    , _everythingCombined_manipulators = _everythingBackend_manipulators
+    , _everythingCombined_broadPhase   = _everythingBackend_broadPhase
   }

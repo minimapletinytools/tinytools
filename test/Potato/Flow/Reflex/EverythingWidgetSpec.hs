@@ -89,7 +89,7 @@ data EverythingWidgetCmd =
 
 everything_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingBackend)
+  => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingCombined_DEBUG)
 everything_network ev = do
   pfo <- pfoWithInitialState someState1
   let ewc = EverythingWidgetConfig  {
@@ -112,15 +112,15 @@ everything_network ev = do
         _ -> Nothing
     }
   everythingWidget <- holdEverythingWidget ewc
-  return $ updated $ _everythingWidget_everything_DEBUG everythingWidget
+  return $ updated $ _everythingWidget_everythingCombined_DEBUG everythingWidget
 
 data EverythingPredicate where
-  EqPredicate :: (Show a, Eq a) => (EverythingBackend -> a) -> a -> EverythingPredicate
+  EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
 
-testEverythingPredicate :: EverythingPredicate -> EverythingBackend -> Bool
+testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
 testEverythingPredicate (EqPredicate f a) e = f e == a
 
-showEverythingPredicate :: EverythingPredicate -> EverythingBackend -> String
+showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> String
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
 
 everything_basic_test :: Test
@@ -138,9 +138,9 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
     expected = [
         Nothing
-        , Just (EqPredicate _everythingBackend_selectedTool Tool_Pan)
-        , Just (EqPredicate _everythingBackend_pan (V2 0 0))
-        , Just (EqPredicate _everythingBackend_pan (V2 (-1) (-1)))
+        , Just (EqPredicate _everythingCombined_selectedTool Tool_Pan)
+        , Just (EqPredicate _everythingCombined_pan (V2 0 0))
+        , Just (EqPredicate _everythingCombined_pan (V2 (-1) (-1)))
       ]
     run = runAppSimple everything_network bs
   values <- liftIO run
