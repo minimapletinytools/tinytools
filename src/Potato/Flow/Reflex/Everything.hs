@@ -224,7 +224,7 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_manipulating = Nothing
   }
 
--- combined output for convenient testing thx
+-- combined output for convenient testing th
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   _everythingCombined_selectedTool   :: Tool
   , _everythingCombined_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen

@@ -31,10 +31,6 @@ someState1 = PFState {
       , _pFState_canvas = someSCanvas
   }
 
-
-pfoWithInitialState :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m) => PFState -> m (PFOutput t)
-pfoWithInitialState pfState = holdPFWithInitialState pfState neverPFConfig
-
 -- simple bespoke testing
 tool_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -57,12 +53,11 @@ select_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t (Bool, Selection) -> TestGuestT t m (Event t Selection)
 select_network ev = do
-  pfo <- pfoWithInitialState someState1
   let
     addSelectEv = fmapMaybe (\(b,s) -> if b then Just s else Nothing) ev
     newSelectEv = fmapMaybe (\(b,s) -> if not b then Just s else Nothing) ev
   everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig {
-      _everythingWidgetConfig_potatoFlow = pfo
+      _everythingWidgetConfig_initialState = someState1
       , _everythingWidgetConfig_selectNew = newSelectEv
       , _everythingWidgetConfig_selectAdd = addSelectEv
     }
@@ -91,9 +86,8 @@ everything_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingCombined_DEBUG)
 everything_network ev = do
-  pfo <- pfoWithInitialState someState1
   let ewc = EverythingWidgetConfig  {
-      _everythingWidgetConfig_potatoFlow = pfo
+      _everythingWidgetConfig_initialState = someState1
 
       , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
         EWCMouse x -> Just x

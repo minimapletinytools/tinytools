@@ -39,10 +39,7 @@ data EverythingCmd =
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
-
-  -- TODO EverythingWidgetConfig constructs/owns PFOutput, we want to take an initial state
-  -- and possibly some PFConfig as well
-  _everythingWidgetConfig_potatoFlow   :: PFOutput t
+  _everythingWidgetConfig_initialState :: PFState
 
   -- canvas direct input
   , _everythingWidgetConfig_mouse      :: Event t LMouseData
@@ -56,7 +53,7 @@ data EverythingWidgetConfig t = EverythingWidgetConfig {
 
 emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
 emptyEverythingWidgetConfig = EverythingWidgetConfig {
-    _everythingWidgetConfig_potatoFlow = undefined
+    _everythingWidgetConfig_initialState = emptyPFState
     , _everythingWidgetConfig_selectTool  = never
     , _everythingWidgetConfig_mouse     = never
     , _everythingWidgetConfig_keyboard = never
@@ -81,8 +78,6 @@ holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   let
-    PFOutput {..} = _everythingWidgetConfig_potatoFlow
-
     -- TODO event for newly created element
     -- you could sample directory for "past" version when listening to _pfo_potato_changed for changes
     newEltsEvent :: Event t [LayerPos]
@@ -144,8 +139,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   --------------
   -- PFOUTPUT --
   --------------
-  -- TODO
-  -- holdPFWithInitialState
+  PFOutput {..} <- holdPFWithInitialState _everythingWidgetConfig_initialState neverPFConfig
 
 
   ------------------------
