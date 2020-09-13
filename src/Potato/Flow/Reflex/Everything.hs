@@ -203,6 +203,8 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_layers       :: Seq LayerDisplay
   , _everythingBackend_manipulators :: [MouseManipulator]
   , _everythingBackend_broadPhase   :: BPTree
+  , _everythingBackend_manipulating :: Maybe SuperSEltLabel
+
 }
 
 emptyEverythingFrontend :: EverythingFrontend
@@ -219,9 +221,10 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
     , _everythingBackend_broadPhase   = emptyBPTree
+    , _everythingBackend_manipulating = Nothing
   }
 
--- easy output for testing
+-- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   _everythingCombined_selectedTool   :: Tool
   , _everythingCombined_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
@@ -231,6 +234,7 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_layers       :: Seq LayerDisplay
   , _everythingCombined_manipulators :: [MouseManipulator]
   , _everythingCombined_broadPhase   :: BPTree
+  , _everythingCombined_manipulating :: Maybe SuperSEltLabel
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
@@ -243,4 +247,5 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhase
+    , _everythingCombined_manipulating = _everythingBackend_manipulating
   }

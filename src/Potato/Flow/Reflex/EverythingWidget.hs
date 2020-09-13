@@ -89,6 +89,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     newEltsEvent = undefined
 
 
+    -------------------------
+    -- EVERYTHING FRONTEND --
+    -------------------------
 
     everythingFrontendEvent = leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
       [ ECmdTool <$> _everythingWidgetConfig_selectTool
@@ -121,7 +124,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             -- TODO select or manipulate
             undefined
           else do
-            manipulating <- sample . current $ manipulatingDyn
+            manipulating <- sample . current $ (fmap _everythingBackend_manipulating everythingBackendDyn)
             case manipulating of
               Just (rid, lp, sseltl) -> undefined
                 -- TODO manipulate
@@ -137,6 +140,17 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   everythingFrontendDyn :: Dynamic t EverythingFrontend
     <- foldDynM foldEverythingFrontendFn emptyEverythingFrontend everythingFrontendEvent
+
+  --------------
+  -- PFOUTPUT --
+  --------------
+  -- TODO
+  -- holdPFWithInitialState
+
+
+  ------------------------
+  -- EVERYTHING BACKEND --
+  ------------------------
 
   let
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
@@ -157,13 +171,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   everythingBackendDyn :: Dynamic t EverythingBackend
     <- foldDynM foldEverythingBackendFn emptyEverythingBackend everythingBackendEvent
 
-  -- TODO I think we need to spilt everythingDyn into 2 steps,
-  -- 1 for stuff that feeds into PFoutput
-  -- and 1 for stuff that comes out of PFOutput
-  -- e.g. capture PFOutput manipulating stuff
-  manipulatingDyn :: Dynamic t (Maybe SuperSEltLabel)
-    <- holdDyn Nothing never
-  -- e.g. update layers
 
   r_tool <- holdUniqDyn $ fmap _everythingFrontend_selectedTool everythingFrontendDyn
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
