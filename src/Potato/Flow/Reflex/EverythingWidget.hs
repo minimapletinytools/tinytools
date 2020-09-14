@@ -17,12 +17,14 @@ import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.Reflex.Entry
 import           Potato.Flow.Reflex.Everything
+import           Potato.Flow.Render
+import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-
 import           Control.Exception             (assert)
 import           Control.Monad.Fix
+import qualified Data.IntMap                   as IM
 import           Data.Tuple.Extra
 
 
@@ -102,7 +104,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = case cmd of
       EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
       EFCmdMouse mouseData -> do
-        pfState <- sample _pfo_pFState
+        pFState <- sample _pfo_pFState
 
         let
           mouseDrag@MouseDrag{..} = case _everythingFrontend_mouseStart of
@@ -159,17 +161,48 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
     foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingBackendFn cmd everything@EverythingBackend {..} = case cmd of
+
       EBCmdSelect add sel -> do
-        pfState <- sample _pfo_pFState
-        return $ assert (pFState_selectionIsValid pfState (fmap snd3 (toList sel))) ()
+        pFState <- sample _pfo_pFState
+        return $ assert (pFState_selectionIsValid pFState (fmap snd3 (toList sel))) ()
         if add
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
           else return $ everything { _everythingBackend_selection = sel }
-      EBCmdChanges changes -> do
+
+      EBCmdChanges cslmap -> do
+        pFState <- sample _pfo_pFState
         let
-          newBroadPhase = update_bPTree changes (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
-        return $ everything { _everythingBackend_broadPhaseState = newBroadPhase }
+          newBroadPhaseState = update_bPTree cslmap (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
+          bpt = _broadPhaseState_bPTree newBroadPhaseState
+          boxes = _broadPhaseState_needsUpdate newBroadPhaseState
+          rc = _everythingBackend_renderedCanvas
+          newRenderedCanvas = case boxes of
+            [] -> rc
+            (b:bs) -> case intersect_LBox (renderedCanvas_box rc) (foldl' union_LBox b bs) of
+              Nothing -> rc
+              Just aabb -> newrc where
+                slmap = _pFState_directory pFState
+                rids = broadPhase_cull aabb bpt
+                seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+                  Nothing -> case IM.lookup rid slmap of
+                    Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
+                    Just seltl -> seltl
+                  Just mseltl -> case mseltl of
+                    Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
+                    Just seltl -> seltl
+                -- TODO need to order seltls by layer position oops
+                newrc = render aabb (map _sEltLabel_sElt seltls) rc
+
+        return $ everything {
+            _everythingBackend_broadPhaseState = newBroadPhaseState
+            , _everythingBackend_renderedCanvas = undefined
+
+            -- TODO
+            , _everythingBackend_manipulating = Nothing
+          }
       _          -> undefined
+
+
 
   everythingBackendDyn :: Dynamic t EverythingBackend
     <- foldDynM foldEverythingBackendFn emptyEverythingBackend everythingBackendEvent
