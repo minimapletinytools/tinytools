@@ -3,6 +3,8 @@
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+-broadphase tests
+-connect RenderedCanvas
 
 :::::::::::::::::::::::::::::::::::::::
 :::::PRE MEGA REFACTOR STUFF BELOW:::::

@@ -34,6 +34,7 @@ import           Relude
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
+import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
@@ -200,13 +201,14 @@ data EverythingFrontend = EverythingFrontend {
 
 -- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {
-  _everythingBackend_selection      :: Selection
-  , _everythingBackend_layers       :: Seq LayerDisplay
-  , _everythingBackend_manipulators :: [MouseManipulator]
-  -- | (list of AABBs that need to be updated, updated BPTree, changed SEltLabels from last updated)
-  -- prob don't really need last param?
-  , _everythingBackend_broadPhase   :: ([AABB], BPTree, SEltLabelChanges)
-  , _everythingBackend_manipulating :: Maybe SuperSEltLabel
+  _everythingBackend_selection         :: Selection
+  , _everythingBackend_layers          :: Seq LayerDisplay
+  , _everythingBackend_manipulators    :: [MouseManipulator]
+
+  , _everythingBackend_broadPhaseState :: BroadPhaseState
+  , _everythingBackend_renderedCanvas  :: RenderedCanvas
+
+  , _everythingBackend_manipulating    :: Maybe SuperSEltLabel
 
 }
 
@@ -223,21 +225,23 @@ emptyEverythingBackend = EverythingBackend {
     _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_manipulators = []
-    , _everythingBackend_broadPhase   = ([], emptyBPTree, IM.empty)
+    , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
+    , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
     , _everythingBackend_manipulating = Nothing
   }
 
 -- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
-  _everythingCombined_selectedTool   :: Tool
-  , _everythingCombined_pan          :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingCombined_mouseStart   :: Maybe MouseStart -- last mouse dragging state
-  , _everythingCombined_command      :: Maybe PFEventTag
-  , _everythingCombined_selection    :: Selection
-  , _everythingCombined_layers       :: Seq LayerDisplay
-  , _everythingCombined_manipulators :: [MouseManipulator]
-  , _everythingCombined_broadPhase   :: ([AABB], BPTree, SEltLabelChanges)
-  , _everythingCombined_manipulating :: Maybe SuperSEltLabel
+  _everythingCombined_selectedTool     :: Tool
+  , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingCombined_mouseStart     :: Maybe MouseStart -- last mouse dragging state
+  , _everythingCombined_command        :: Maybe PFEventTag
+  , _everythingCombined_selection      :: Selection
+  , _everythingCombined_layers         :: Seq LayerDisplay
+  , _everythingCombined_manipulators   :: [MouseManipulator]
+  , _everythingCombined_broadPhase     :: BroadPhaseState
+  , _everythingCombined_renderedCanvas :: RenderedCanvas
+  , _everythingCombined_manipulating   :: Maybe SuperSEltLabel
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
@@ -249,6 +253,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators
-    , _everythingCombined_broadPhase   = _everythingBackend_broadPhase
+    , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
+    , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
     , _everythingCombined_manipulating = _everythingBackend_manipulating
   }

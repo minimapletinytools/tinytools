@@ -28,19 +28,19 @@ spec = do
 
         bpt0 = BPTree $ IM.empty
         changes1 = makeChange 1 lb1_1
-        (aabbs1, bpt1, _) = update_bPTree changes1 bpt0
+        BroadPhaseState aabbs1 bpt1 _ = update_bPTree changes1 bpt0
         culled1 = broadPhase_cull (L.head aabbs1) bpt1
       length aabbs1 `shouldBe` 1
       culled1 `shouldBe` [1]
       let
         changes2 = mconcat $ [makeChange 2 lb2, makeChange 3 lb3, makeChange 4 lb4]
-        (aabbs2, bpt2, _) = update_bPTree changes2 bpt1
+        BroadPhaseState aabbs2 bpt2 _ = update_bPTree changes2 bpt1
         culled2 = broadPhase_cull lb1_1 bpt2
       length aabbs2 `shouldBe` 3
       length culled2 `shouldBe` 4
       let
         changes3 = makeChange 1 lb1_2
-        (aabbs3, bpt3, _) = update_bPTree changes3 bpt2
+        BroadPhaseState aabbs3 bpt3 _ = update_bPTree changes3 bpt2
         culled3_1 = broadPhase_cull lb1_2 bpt3
         culled3_2 = broadPhase_cull (LBox (V2 3 3) (V2 5 5)) bpt3
       length aabbs3 `shouldBe` 2

@@ -6,6 +6,9 @@ module Potato.Flow.BroadPhase (
   , emptyBPTree
   , broadPhase_cull
 
+  , BroadPhaseState(..)
+  , emptyBroadPhaseState
+
   -- exposed for testing
   , update_bPTree
 ) where
@@ -17,8 +20,8 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import qualified Data.IntMap.Strict       as IM
-import           Data.Tuple.Extra         (snd3)
+import qualified Data.IntMap.Strict      as IM
+import           Data.Tuple.Extra        (snd3)
 
 type AABB = LBox
 
@@ -30,9 +33,21 @@ data BPTree = BPTree {
 emptyBPTree :: BPTree
 emptyBPTree = BPTree IM.empty
 
+
+
+data BroadPhaseState = BroadPhaseState {
+  _broadPhaseState_needsUpdate :: [AABB]
+  , _broadPhaseState_bPTree    :: BPTree
+  , _broadPhaseState_changes   :: SEltLabelChanges -- I don't think I need this
+}
+
+emptyBroadPhaseState :: BroadPhaseState
+emptyBroadPhaseState = BroadPhaseState [] emptyBPTree IM.empty
+
+
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly
-update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> ([AABB], BPTree, REltIdMap (Maybe SEltLabel))
+update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> BroadPhaseState
 update_bPTree changes BPTree {..} = r where
   -- deletions
   deletefn (aabbs, im) rid = (newaabbs, newim) where
@@ -54,7 +69,7 @@ update_bPTree changes BPTree {..} = r where
     ([],[])
     (IM.toList changes)
   (aabbs, nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
-  r = (aabbs, BPTree nbpt, changes)
+  r = BroadPhaseState aabbs (BPTree nbpt) changes
 
 -- TODO prob don't need this, DELETE
 --update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree

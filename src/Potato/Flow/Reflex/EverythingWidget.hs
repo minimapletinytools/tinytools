@@ -15,7 +15,6 @@ import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.BroadPhase
 import           Potato.Flow.Reflex.Entry
 import           Potato.Flow.Reflex.Everything
 import           Potato.Flow.State
@@ -168,8 +167,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           else return $ everything { _everythingBackend_selection = sel }
       EBCmdChanges changes -> do
         let
-          newBroadPhase = update_bPTree changes (snd3 _everythingBackend_broadPhase)
-        return $ everything { _everythingBackend_broadPhase = newBroadPhase }
+          newBroadPhase = update_bPTree changes (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
+        return $ everything { _everythingBackend_broadPhaseState = newBroadPhase }
       _          -> undefined
 
   everythingBackendDyn :: Dynamic t EverythingBackend
