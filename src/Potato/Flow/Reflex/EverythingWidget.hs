@@ -107,18 +107,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         pFState <- sample _pfo_pFState
 
         let
-          mouseDrag@MouseDrag{..} = case _everythingFrontend_mouseStart of
-            Just ms -> continueDrag mouseData ms
-            Nothing -> newDrag mouseData
-          newMouseStart = case _mouseDrag_state of
-            MouseDragState_Up -> Nothing
-            _                 -> Just _mouseDrag_start
+          mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
+            MouseDragState_Up        -> newDrag mouseData
+            MouseDragState_Cancelled -> newDrag mouseData
+            _                        -> continueDrag mouseData _everythingFrontend_mouseDrag
 
         everything' <- if _everythingFrontend_selectedTool == Tool_Pan
           then do
             let
               V2 cx0 cy0 = _everythingFrontend_pan
-              V2 dx dy = _mouseDrag_to - (_mouseStart_from _mouseDrag_start)
+              V2 dx dy = (_mouseDrag_to mouseDrag) - (_mouseDrag_from mouseDrag)
             -- TODO simplify formula once you confirm it's correct
             return $ everything { _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy) }
           else if _everythingFrontend_selectedTool == Tool_Select then
@@ -133,7 +131,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- TODO create new stuff
 
         -- TODO set the new command or whatever
-        return $ everything' { _everythingFrontend_mouseStart = newMouseStart }
+        return $ everything' { _everythingFrontend_mouseDrag = mouseDrag }
       EFCmdKeyboard x -> case x of
         KeyboardData KeyboardKey_Esc _ -> undefined -- TODO cancel functionality
         _                              -> undefined
@@ -149,7 +147,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     backendPFEvent = fmapMaybe _everythingFrontend_command $ updated everythingFrontendDyn
 
     -- connect events to PFConfig
-    -- TODO not all events will come from
+    -- TODO maybe not all events will come from backendPFEvent
     pFConfig = PFConfig {
       _pfc_addElt = fforMaybe backendPFEvent $ \case
         PFEAddElt x -> Just x

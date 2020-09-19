@@ -11,7 +11,6 @@ module Potato.Flow.Reflex.Everything (
   , MouseButton(..)
   , MouseDragState(..)
   , LMouseData(..)
-  , MouseStart(..)
   , MouseDrag(..)
   , newDrag
   , continueDrag
@@ -71,7 +70,7 @@ data MouseModifier = MouseModifier_Shift | MouseModifier_Alt
 
 data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right
 
-data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up
+data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancelled
 
 -- TODO is this the all encompassing mouse event we want?
 -- only one modifier allowed at a time for our app
@@ -83,29 +82,32 @@ data LMouseData = LMouseData {
   , _lMouseData_button    :: MouseButton
 }
 
-data MouseStart = MouseStart {
-  _mouseStart_from          :: XY
-  , _mouseStart_startButton :: MouseButton
+data MouseDrag = MouseDrag {
+  _mouseDrag_from     :: XY -- TODO rename to mousedrag from
+  , _mouseDrag_button :: MouseButton -- tracks button on start of drag
+  , _mouseDrag_to     :: XY -- likely not needed as they will be in the input event, but whatever
+  , _mouseDrag_state  :: MouseDragState
 }
 
-data MouseDrag = MouseDrag {
-  _mouseDrag_start   :: MouseStart
-  -- likely not needed as they will be in the input event
-  , _mouseDrag_to    :: XY
-  , _mouseDrag_state :: MouseDragState
-}
+emptyMouseDrag :: MouseDrag
+emptyMouseDrag = MouseDrag {
+    _mouseDrag_from  = 0
+    , _mouseDrag_button = MouseButton_Left
+    , _mouseDrag_to    = 0
+    , _mouseDrag_state = MouseDragState_Cancelled
+  }
 
 newDrag :: LMouseData -> MouseDrag
 newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
-    _mouseDrag_start = MouseStart _lMouseData_position _lMouseData_button
+    _mouseDrag_from = _lMouseData_position
+    , _mouseDrag_button = _lMouseData_button
     , _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = MouseDragState_Down
   }
 
-continueDrag :: LMouseData -> MouseStart -> MouseDrag
-continueDrag LMouseData {..} ms = MouseDrag {
-    _mouseDrag_start = ms
-    , _mouseDrag_to = _lMouseData_position
+continueDrag :: LMouseData -> MouseDrag -> MouseDrag
+continueDrag LMouseData {..} md = md {
+    _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = if _lMouseData_isRelease
       then MouseDragState_Up
       else MouseDragState_Dragging
@@ -195,7 +197,7 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
 data EverythingFrontend = EverythingFrontend {
   _everythingFrontend_selectedTool :: Tool
   , _everythingFrontend_pan        :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingFrontend_mouseStart :: Maybe MouseStart -- last mouse dragging state
+  , _everythingFrontend_mouseDrag  :: MouseDrag -- last mouse dragging state
   , _everythingFrontend_command    :: Maybe PFEventTag
 }
 
@@ -216,7 +218,7 @@ emptyEverythingFrontend :: EverythingFrontend
 emptyEverythingFrontend = EverythingFrontend {
     _everythingFrontend_selectedTool   = Tool_Select
     , _everythingFrontend_pan          = V2 0 0
-    , _everythingFrontend_mouseStart = Nothing
+    , _everythingFrontend_mouseDrag = emptyMouseDrag
     , _everythingFrontend_command = Nothing
   }
 
@@ -234,7 +236,7 @@ emptyEverythingBackend = EverythingBackend {
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   _everythingCombined_selectedTool     :: Tool
   , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingCombined_mouseStart     :: Maybe MouseStart -- last mouse dragging state
+  , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
   , _everythingCombined_command        :: Maybe PFEventTag
   , _everythingCombined_selection      :: Selection
   , _everythingCombined_layers         :: Seq LayerDisplay
@@ -248,7 +250,7 @@ combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombin
 combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCombined_DEBUG {
     _everythingCombined_selectedTool =   _everythingFrontend_selectedTool
     , _everythingCombined_pan        = _everythingFrontend_pan
-    , _everythingCombined_mouseStart = _everythingFrontend_mouseStart
+    , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
     , _everythingCombined_command    = _everythingFrontend_command
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
