@@ -145,7 +145,48 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   --------------
   -- PFOUTPUT --
   --------------
-  PFOutput {..} <- holdPFWithInitialState _everythingWidgetConfig_initialState neverPFConfig
+  let
+    backendPFEvent = fmapMaybe _everythingFrontend_command $ updated everythingFrontendDyn
+
+    -- connect events to PFConfig
+    -- TODO not all events will come from
+    pFConfig = PFConfig {
+      _pfc_addElt = fforMaybe backendPFEvent $ \case
+        PFEAddElt x -> Just x
+        _ -> Nothing
+      , _pfc_addFolder    = fforMaybe backendPFEvent $ \case
+        PFEAddFolder x -> Just x
+        _ -> Nothing
+      , _pfc_deleteElts   = fforMaybe backendPFEvent $ \case
+        PFERemoveElt x -> Just x
+        _ -> Nothing
+      , _pfc_moveElt      = fforMaybe backendPFEvent $ \case
+        PFEMoveElt x -> Just x
+        _ -> Nothing
+      , _pfc_copy         = fforMaybe backendPFEvent $ \case
+        PFECopy x -> Just x
+        _ -> Nothing
+      , _pfc_paste        = fforMaybe backendPFEvent $ \case
+        PFEPaste x -> Just x
+        _ -> Nothing
+      , _pfc_manipulate   = fforMaybe backendPFEvent $ \case
+        PFEManipulate x -> Just x
+        _ -> Nothing
+      , _pfc_resizeCanvas = fforMaybe backendPFEvent $ \case
+        PFEResizeCanvas x -> Just x
+        _ -> Nothing
+      , _pfc_undo         = fforMaybe backendPFEvent $ \case
+        PFEUndo -> Just ()
+        _ -> Nothing
+      , _pfc_redo         = fforMaybe backendPFEvent $ \case
+        PFERedo -> Just ()
+        _ -> Nothing
+      , _pfc_load         = fforMaybe backendPFEvent $ \case
+        PFELoad x -> Just x
+        _ -> Nothing
+      , _pfc_save         = never
+    }
+  PFOutput {..} <- holdPFWithInitialState _everythingWidgetConfig_initialState pFConfig
 
 
   ------------------------

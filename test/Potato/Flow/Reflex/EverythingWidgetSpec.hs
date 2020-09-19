@@ -128,6 +128,15 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCTool Tool_Pan
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left)
+
+        -- TODO test create new elt
+        -- check in layers and check render
+
+        -- TODO modify created elt
+        -- check in layers and check render
+
+        -- TODO delete the elt
+        -- check in layers and check render
       ]
 
     expected = [
