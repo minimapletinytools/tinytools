@@ -14,6 +14,7 @@ module Potato.Flow.Reflex.Everything (
   , MouseDrag(..)
   , newDrag
   , continueDrag
+  , cancelDrag
 
   , Tool(..)
   , LayerDisplay(..)
@@ -112,6 +113,9 @@ continueDrag LMouseData {..} md = md {
       then MouseDragState_Up
       else MouseDragState_Dragging
   }
+
+cancelDrag :: MouseDrag -> MouseDrag
+cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
 
 
 -- TOOL

@@ -101,41 +101,50 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       ]
 
     foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
-    foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = case cmd of
-      EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
-      EFCmdMouse mouseData -> do
-        pFState <- sample _pfo_pFState
+    foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
+      let
+        everything' = everything { _everythingFrontend_command = Nothing }
+      case cmd of
+        EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
+        EFCmdMouse mouseData -> do
+          pFState <- sample _pfo_pFState
 
-        let
-          mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
-            MouseDragState_Up        -> newDrag mouseData
-            MouseDragState_Cancelled -> newDrag mouseData
-            _                        -> continueDrag mouseData _everythingFrontend_mouseDrag
+          let
+            mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
+              MouseDragState_Up        -> newDrag mouseData
+              MouseDragState_Cancelled -> newDrag mouseData
+              _                        -> continueDrag mouseData _everythingFrontend_mouseDrag
 
-        everything' <- if _everythingFrontend_selectedTool == Tool_Pan
-          then do
-            let
-              V2 cx0 cy0 = _everythingFrontend_pan
-              V2 dx dy = (_mouseDrag_to mouseDrag) - (_mouseDrag_from mouseDrag)
-            -- TODO simplify formula once you confirm it's correct
-            return $ everything { _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy) }
-          else if _everythingFrontend_selectedTool == Tool_Select then
-            -- TODO select or manipulate
-            undefined
-          else do
-            manipulating <- sample . current $ (fmap _everythingBackend_manipulating everythingBackendDyn)
-            case manipulating of
-              Just (rid, lp, sseltl) -> undefined
-                -- TODO manipulate
-              Nothing                -> undefined
-                -- TODO create new stuff
+          everything'' <- if _everythingFrontend_selectedTool == Tool_Pan
+            then do
+              let
+                V2 cx0 cy0 = _everythingFrontend_pan
+                V2 dx dy = (_mouseDrag_to mouseDrag) - (_mouseDrag_from mouseDrag)
+              -- TODO simplify formula once you confirm it's correct
+              return $ everything' { _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy) }
+            else if _everythingFrontend_selectedTool == Tool_Select then
+              -- TODO select or manipulate
+              undefined
+            else do
+              manipulating <- sample . current $ (fmap _everythingBackend_manipulating everythingBackendDyn)
+              case manipulating of
+                Just (rid, lp, sseltl) -> undefined
+                  -- TODO manipulate
+                Nothing                -> undefined
+                  -- TODO create new stuff
 
-        -- TODO set the new command or whatever
-        return $ everything' { _everythingFrontend_mouseDrag = mouseDrag }
-      EFCmdKeyboard x -> case x of
-        KeyboardData KeyboardKey_Esc _ -> undefined -- TODO cancel functionality
-        _                              -> undefined
-      _          -> undefined
+          -- TODO set the new manipulate command or whatever
+          return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+        EFCmdKeyboard x -> case x of
+          KeyboardData KeyboardKey_Esc _ -> case _everythingFrontend_command of
+            Nothing -> do
+              -- TODO cancel panning if needed
+              -- just check if tool was pan and invert the mouseDrag, we assume no way to change tools mid drag
+                -- okay, this isn't true... how can you make it true?
+              return everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
+            Just _ -> undefined
+          _                              -> undefined
+        _          -> undefined
 
   everythingFrontendDyn :: Dynamic t EverythingFrontend
     <- foldDynM foldEverythingFrontendFn emptyEverythingFrontend everythingFrontendEvent
