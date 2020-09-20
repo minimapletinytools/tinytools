@@ -103,7 +103,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
       let
-        everything' = everything { _everythingFrontend_command = Nothing }
+        -- clear per frame statuses for next frame
+        everything' = everything {
+            _everythingFrontend_command = Nothing
+            , _everythingFrontend_lastOperation = FrontendOperation_None
+          }
       case cmd of
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
@@ -121,7 +125,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 V2 cx0 cy0 = _everythingFrontend_pan
                 V2 dx dy = (_mouseDrag_to mouseDrag) - (_mouseDrag_from mouseDrag)
               -- TODO simplify formula once you confirm it's correct
-              return $ everything' { _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy) }
+              return $ everything' {
+                  _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
+                  , _everythingFrontend_lastOperation = FrontendOperation_Pan
+                }
             else if _everythingFrontend_selectedTool == Tool_Select then
               -- TODO select or manipulate
               undefined

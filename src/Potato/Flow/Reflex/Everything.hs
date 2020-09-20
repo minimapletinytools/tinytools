@@ -16,6 +16,7 @@ module Potato.Flow.Reflex.Everything (
   , continueDrag
   , cancelDrag
 
+  , FrontendOperation(..)
   , Tool(..)
   , LayerDisplay(..)
   , MouseManipulator(..)
@@ -197,12 +198,15 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
     , _everythingBackend_manipulators = toMouseManipulators newSelection
   }
 
+data FrontendOperation = FrontendOperation_None | FrontendOperation_Pan | FrontendOperation_LayerDrag
+
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
-  _everythingFrontend_selectedTool :: Tool
-  , _everythingFrontend_pan        :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingFrontend_mouseDrag  :: MouseDrag -- last mouse dragging state
-  , _everythingFrontend_command    :: Maybe PFEventTag
+  _everythingFrontend_selectedTool    :: Tool
+  , _everythingFrontend_pan           :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
+  , _everythingFrontend_command       :: Maybe PFEventTag
+  , _everythingFrontend_lastOperation :: FrontendOperation
 }
 
 -- second pass, taking outputs from PFOutput
@@ -224,6 +228,7 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_pan          = V2 0 0
     , _everythingFrontend_mouseDrag = emptyMouseDrag
     , _everythingFrontend_command = Nothing
+    , _everythingFrontend_lastOperation = FrontendOperation_None
   }
 
 emptyEverythingBackend :: EverythingBackend
@@ -242,6 +247,7 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
   , _everythingCombined_command        :: Maybe PFEventTag
+  , _everythingCombined_lastOperation  :: FrontendOperation
   , _everythingCombined_selection      :: Selection
   , _everythingCombined_layers         :: Seq LayerDisplay
   , _everythingCombined_manipulators   :: [MouseManipulator]
@@ -256,6 +262,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_pan        = _everythingFrontend_pan
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
     , _everythingCombined_command    = _everythingFrontend_command
+    , _everythingCombined_lastOperation = _everythingFrontend_lastOperation
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators
