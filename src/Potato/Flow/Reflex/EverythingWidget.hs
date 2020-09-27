@@ -143,13 +143,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           -- TODO set the new manipulate command or whatever
           return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
         EFCmdKeyboard x -> case x of
-          KeyboardData KeyboardKey_Esc _ -> case _everythingFrontend_command of
-            Nothing -> do
-              -- TODO cancel panning if needed
-              -- just check if tool was pan and invert the mouseDrag, we assume no way to change tools mid drag
-                -- okay, this isn't true... how can you make it true?
-              return everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
-            Just _ -> undefined
+          KeyboardData KeyboardKey_Esc _ -> let
+              everything'' = everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
+            in
+              case _everythingFrontend_lastOperation of
+                FrontendOperation_Pan -> do
+                  return everything''
+                FrontendOperation_LayerDrag -> undefined
+                FrontendOperation_Manipulate -> assert (isJust _everythingFrontend_command) undefined
+                _ -> undefined
           _                              -> undefined
         _          -> undefined
 

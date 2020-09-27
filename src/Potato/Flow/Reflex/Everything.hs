@@ -198,7 +198,11 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
     , _everythingBackend_manipulators = toMouseManipulators newSelection
   }
 
-data FrontendOperation = FrontendOperation_None | FrontendOperation_Pan | FrontendOperation_LayerDrag
+data FrontendOperation =
+  FrontendOperation_None
+  | FrontendOperation_Pan
+  | FrontendOperation_LayerDrag
+  | FrontendOperation_Manipulate -- should be in sync with _everythingFrontend_command
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
