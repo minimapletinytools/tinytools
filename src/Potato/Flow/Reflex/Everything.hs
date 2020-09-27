@@ -15,11 +15,13 @@ module Potato.Flow.Reflex.Everything (
   , newDrag
   , continueDrag
   , cancelDrag
+  , mouseDragDelta
 
   , FrontendOperation(..)
   , Tool(..)
   , LayerDisplay(..)
   , MouseManipulator(..)
+  , checkMouseDownManipulators
   , Selection
   , disjointUnionSelection
   , EverythingFrontend(..)
@@ -59,20 +61,22 @@ data KeyboardKey =
   | KeyboardKey_Return
   | KeyboardKey_Space
   | KeyboardKey_Char Char
+  deriving (Show, Eq)
 
 data KeyboardKeyType =
   KeyboardKeyType_Down
   | KeyboardKeyType_Up
   | KeyboardKeyType_Click
+  deriving (Show, Eq)
 
 -- MOUSE
 -- TODO move all this stuff to types folder or something
 -- only ones we care about
-data MouseModifier = MouseModifier_Shift | MouseModifier_Alt
+data MouseModifier = MouseModifier_Shift | MouseModifier_Alt deriving (Show, Eq)
 
-data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right
+data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right deriving (Show, Eq)
 
-data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancelled
+data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancelled deriving (Show, Eq)
 
 -- TODO is this the all encompassing mouse event we want?
 -- only one modifier allowed at a time for our app
@@ -82,14 +86,14 @@ data LMouseData = LMouseData {
   _lMouseData_position    :: XY
   , _lMouseData_isRelease :: Bool
   , _lMouseData_button    :: MouseButton
-}
+} deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
   _mouseDrag_from     :: XY -- TODO rename to mousedrag from
   , _mouseDrag_button :: MouseButton -- tracks button on start of drag
   , _mouseDrag_to     :: XY -- likely not needed as they will be in the input event, but whatever
   , _mouseDrag_state  :: MouseDragState
-}
+} deriving (Show, Eq)
 
 emptyMouseDrag :: MouseDrag
 emptyMouseDrag = MouseDrag {
@@ -117,6 +121,9 @@ continueDrag LMouseData {..} md = md {
 
 cancelDrag :: MouseDrag -> MouseDrag
 cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
+
+mouseDragDelta :: MouseDrag -> MouseDrag -> XY
+mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
 
 -- TOOL
@@ -157,8 +164,8 @@ computeSelectionType = foldl' foldfn SMTNone where
 
 
 -- MANIPULATORS
-data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point
-data MouseManipulatorState = MouseManipulatorState_Normal | MouseManipulatorState_Dragging
+data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point deriving (Show, Eq)
+data MouseManipulatorState = MouseManipulatorState_Normal | MouseManipulatorState_Dragging deriving (Show, Eq)
 
 data MouseManipulator = MouseManipulator {
   _mouseManipulator_pos     :: XY
@@ -167,6 +174,7 @@ data MouseManipulator = MouseManipulator {
   -- back reference to object being manipulated?
   -- or just use a function
 }
+
 
 
 -- REDUCERS/REDUCER HELPERS
@@ -192,6 +200,9 @@ toMouseManipulators selection = if Seq.length selection > 1
     msboxes = sequence $ fmap fmapfn selection
     bb = undefined
 
+checkMouseDownManipulators :: XY -> [MouseManipulator] -> Maybe MouseManipulator
+checkMouseDownManipulators pos = foldr (\mm acc -> if _mouseManipulator_pos mm == pos then Just mm else acc) Nothing
+
 changeSelection :: Selection -> EverythingBackend -> EverythingBackend
 changeSelection newSelection everything@EverythingBackend {..} = everything {
     _everythingBackend_selection = newSelection
@@ -203,6 +214,7 @@ data FrontendOperation =
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
   | FrontendOperation_Manipulate -- should be in sync with _everythingFrontend_command
+  deriving (Show, Eq)
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
@@ -211,7 +223,7 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
   , _everythingFrontend_command       :: Maybe PFEventTag
   , _everythingFrontend_lastOperation :: FrontendOperation
-}
+} deriving (Show)
 
 -- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {

@@ -114,23 +114,27 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           pFState <- sample _pfo_pFState
 
           let
-            mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
-              MouseDragState_Up        -> newDrag mouseData
-              MouseDragState_Cancelled -> newDrag mouseData
-              _                        -> continueDrag mouseData _everythingFrontend_mouseDrag
+
+            (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
+              MouseDragState_Up        -> (newDrag mouseData, 0)
+              MouseDragState_Cancelled -> (newDrag mouseData, 0)
+              _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
 
           everything'' <- if _everythingFrontend_selectedTool == Tool_Pan
             then do
+              -- add delta to pan position
               let
                 V2 cx0 cy0 = _everythingFrontend_pan
-                V2 dx dy = (_mouseDrag_to mouseDrag) - (_mouseDrag_from mouseDrag)
-              -- TODO simplify formula once you confirm it's correct
-              return $ everything' {
+                V2 dx dy = deltaDrag
+              return $ traceShow deltaDrag $ everything' {
                   _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
             else if _everythingFrontend_selectedTool == Tool_Select then
+              --let
+                --checkMouseDownManipulators
               -- TODO select or manipulate
+
               undefined
             else do
               manipulating <- sample . current $ (fmap _everythingBackend_manipulating everythingBackendDyn)
@@ -144,11 +148,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
         EFCmdKeyboard x -> case x of
           KeyboardData KeyboardKey_Esc _ -> let
+              -- cancel the mouse action
               everything'' = everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
             in
               case _everythingFrontend_lastOperation of
                 FrontendOperation_Pan -> do
-                  return everything''
+                  -- substract entire drag from pan position
+                  let
+                    V2 cx0 cy0 = _everythingFrontend_pan
+                    V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
+                  return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
                 FrontendOperation_LayerDrag -> undefined
                 FrontendOperation_Manipulate -> assert (isJust _everythingFrontend_command) undefined
                 _ -> undefined

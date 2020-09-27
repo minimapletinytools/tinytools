@@ -126,8 +126,15 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         -- test basic panning
         , EWCTool Tool_Pan
+        -- drag to (1, 1) and release
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left)
+        -- drag to (10, 15) and cancel without releasing
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left)
+        , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+
 
         -- TODO test create new elt
         -- check in layers and check render
@@ -141,23 +148,35 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
     expected = [
         Nothing
+
+        -- verify basic panning
         , Just (EqPredicate _everythingCombined_selectedTool Tool_Pan)
         , Just (EqPredicate _everythingCombined_pan (V2 0 0))
         , Just (EqPredicate _everythingCombined_pan (V2 1 1))
+        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
+        , Just (EqPredicate _everythingCombined_pan (V2 0 0))
+        , Just (EqPredicate _everythingCombined_pan (V2 10 15))
+        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
+
+        -- TODO
       ]
     run = runAppSimple everything_network bs
   values <- liftIO run
 
   -- TODO move stuff below into helper function
+
   -- expect only 1 tick per event
   forM values $ \x -> length x @?= 1
+
   -- expect correct number of outputs
   length values @?= length expected
-  forM_ (zip (join values) expected) $ \(me, p) -> case p of
-    Nothing -> assertBool "expected no output" (isNothing me)
+
+  -- expect each output matches predicate
+  forM_ (zip3 (join values) expected [0..]) $ \(me, p, i) -> case p of
+    Nothing -> assertBool ("expected no output for " <> show i) (isNothing me)
     Just p  -> case me of
-      Nothing -> assertFailure "expected output"
-      Just e  -> assertBool (showEverythingPredicate p e) (testEverythingPredicate p e)
+      Nothing -> assertFailure ("expected output for " <> show i)
+      Just e  -> assertBool ((showEverythingPredicate p e) <> " for " <> show i) (testEverythingPredicate p e)
 
 
 
