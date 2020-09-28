@@ -1,4 +1,10 @@
 ::NEWEST TODO::
+-redo manipulator storage in everything
+  -list of manipulators
+  -you need a better way to track which is the active manipulator
+    -instead of iterating trhough thelist... though maybe that's not the worst
+  -here is how it should work:
+    -selection -> indexed list of manipulators + drag delta function
 -hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend

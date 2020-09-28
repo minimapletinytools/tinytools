@@ -18,18 +18,18 @@ module Potato.Flow.Workspace (
 import           Relude
 
 import           Potato.Flow.Cmd
+import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
-import           Potato.Flow.SElts
 
-import           Control.Exception        (assert)
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
-import qualified Data.IntMap.Strict       as IM
-import qualified Data.Sequence            as Seq
+import           Control.Exception  (assert)
+import           Data.Dependent.Sum (DSum ((:=>)), (==>))
+import qualified Data.IntMap.Strict as IM
+import qualified Data.Sequence      as Seq
 
 -- TODO move this into a diff file
 data ActionStack = ActionStack {
-  doStack     :: [PFCmd]
+  doStack     :: [PFCmd] -- maybe just do something lke [PFCmd, Maybe PFState] here for state based undo
   , undoStack :: [PFCmd]
 }
 

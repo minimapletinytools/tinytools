@@ -20,8 +20,12 @@ module Potato.Flow.Reflex.Everything (
   , FrontendOperation(..)
   , Tool(..)
   , LayerDisplay(..)
+
   , MouseManipulator(..)
+  , MouseManipulatorSet
   , checkMouseDownManipulators
+  , getActiveManipulator
+
   , Selection
   , disjointUnionSelection
   , EverythingFrontend(..)
@@ -175,10 +179,18 @@ data MouseManipulator = MouseManipulator {
   -- or just use a function
 }
 
+type MouseManipulatorSet = [MouseManipulator]
+
+-- questionable manipulator helper functions
+checkMouseDownManipulators :: XY -> MouseManipulatorSet -> Maybe MouseManipulator
+checkMouseDownManipulators pos = find (\mm -> _mouseManipulator_pos mm == pos)
+
+getActiveManipulator :: MouseManipulatorSet -> Maybe MouseManipulator
+getActiveManipulator = find (\mm -> _mouseManipulator_state mm == MouseManipulatorState_Dragging)
 
 
 -- REDUCERS/REDUCER HELPERS
-toMouseManipulators :: Selection -> [MouseManipulator]
+toMouseManipulators :: Selection -> MouseManipulatorSet
 toMouseManipulators selection = if Seq.length selection > 1
   then
     case Seq.lookup 0 selection of
@@ -199,9 +211,6 @@ toMouseManipulators selection = if Seq.length selection > 1
       return (rid, box)
     msboxes = sequence $ fmap fmapfn selection
     bb = undefined
-
-checkMouseDownManipulators :: XY -> [MouseManipulator] -> Maybe MouseManipulator
-checkMouseDownManipulators pos = foldr (\mm acc -> if _mouseManipulator_pos mm == pos then Just mm else acc) Nothing
 
 changeSelection :: Selection -> EverythingBackend -> EverythingBackend
 changeSelection newSelection everything@EverythingBackend {..} = everything {
@@ -229,7 +238,7 @@ data EverythingFrontend = EverythingFrontend {
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection         :: Selection
   , _everythingBackend_layers          :: Seq LayerDisplay
-  , _everythingBackend_manipulators    :: [MouseManipulator]
+  , _everythingBackend_manipulators    :: MouseManipulatorSet
 
   , _everythingBackend_broadPhaseState :: BroadPhaseState
   , _everythingBackend_renderedCanvas  :: RenderedCanvas
@@ -266,7 +275,7 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_lastOperation  :: FrontendOperation
   , _everythingCombined_selection      :: Selection
   , _everythingCombined_layers         :: Seq LayerDisplay
-  , _everythingCombined_manipulators   :: [MouseManipulator]
+  , _everythingCombined_manipulators   :: MouseManipulatorSet
   , _everythingCombined_broadPhase     :: BroadPhaseState
   , _everythingCombined_renderedCanvas :: RenderedCanvas
   , _everythingCombined_manipulating   :: Maybe SuperSEltLabel
