@@ -112,7 +112,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
           pFState <- sample _pfo_pFState
-
           let
 
             (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
@@ -120,8 +119,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               MouseDragState_Cancelled -> (newDrag mouseData, 0)
               _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
 
-          everything'' <- if _everythingFrontend_selectedTool == Tool_Pan
-            then do
+          everything'' <- case _everythingFrontend_selectedTool of
+            Tool_Pan -> do
               -- add delta to pan position
               let
                 V2 cx0 cy0 = _everythingFrontend_pan
@@ -130,14 +129,17 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
-            else if _everythingFrontend_selectedTool == Tool_Select then
+            Tool_Select -> do
               --let
                 --checkMouseDownManipulators
               -- TODO select or manipulate
 
               undefined
-            else do
-              manipulating <- sample . current $ (fmap _everythingBackend_manipulating everythingBackendDyn)
+            _ -> do
+              backend <- sample . current $ everythingBackendDyn
+              let
+                mActiveManip = getActiveManipulator (_everythingBackend_manipulators backend)
+                manipulating = _everythingBackend_manipulating backend
               case manipulating of
                 Just (rid, lp, sseltl) -> undefined
                   -- TODO manipulate
@@ -159,7 +161,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
                   return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
                 FrontendOperation_LayerDrag -> undefined
-                FrontendOperation_Manipulate -> assert (isJust _everythingFrontend_command) undefined
+                FrontendOperation_Manipulate _ -> assert (isJust _everythingFrontend_command) undefined
                 _ -> undefined
           _                              -> undefined
         _          -> undefined

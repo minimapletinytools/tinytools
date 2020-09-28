@@ -180,6 +180,7 @@ data MouseManipulator = MouseManipulator {
 }
 
 type MouseManipulatorSet = [MouseManipulator]
+type ManipulatorIndex = Int
 
 -- questionable manipulator helper functions
 checkMouseDownManipulators :: XY -> MouseManipulatorSet -> Maybe MouseManipulator
@@ -222,7 +223,7 @@ data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
-  | FrontendOperation_Manipulate -- should be in sync with _everythingFrontend_command
+  | FrontendOperation_Manipulate (Maybe ManipulatorIndex)-- should be in sync with _everythingFrontend_command
   deriving (Show, Eq)
 
 -- first pass processing inputs
