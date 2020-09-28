@@ -23,6 +23,7 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 import           Control.Exception             (assert)
+import           Control.Lens
 import           Control.Monad.Fix
 import qualified Data.IntMap                   as IM
 import           Data.Tuple.Extra
@@ -239,7 +240,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
       EBCmdChanges cslmap -> do
         pFState <- sample _pfo_pFState
+        fronten <- sample . current $ everythingFrontendDyn
         let
+
+          -- broad phase stuff
           newBroadPhaseState = update_bPTree cslmap (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
           bpt = _broadPhaseState_bPTree newBroadPhaseState
           boxes = _broadPhaseState_needsUpdate newBroadPhaseState
@@ -261,11 +265,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- TODO need to order seltls by layer position oops
                 newrc = render aabb (map _sEltLabel_sElt seltls) rc
 
+
         return $ everything {
             _everythingBackend_broadPhaseState = newBroadPhaseState
             , _everythingBackend_renderedCanvas = undefined
 
-            -- TODO
+            -- TODO check for changes in selection = changes in manipulating
+            -- TODO set the manipulating index: `_everythingBackend_manipulating & element index .~ value`
+            -- TODO assert that manipulating index = no changes in selection
+            -- TODO assert that manipulating index < # manipulators
             , _everythingBackend_manipulating = Nothing
           }
       _          -> undefined
