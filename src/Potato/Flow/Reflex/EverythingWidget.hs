@@ -26,6 +26,7 @@ import           Control.Exception             (assert)
 import           Control.Lens
 import           Control.Monad.Fix
 import qualified Data.IntMap                   as IM
+import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
 
 
@@ -217,28 +218,26 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   ------------------------
 
   let
-
-    -- TODO FIX, select stuff that did not previously exist
-    -- TODO need to get layer pos somehow
-    newEltsEvPushFn :: SEltLabelChangesWithLayerPos -> PushM t (Maybe [LayerPos])
+    newEltsEvPushFn :: SEltLabelChangesWithLayerPos -> PushM t (Maybe Selection)
     newEltsEvPushFn seltlc = do
       lastDir <- sample . current $ _pfo_pFState_directory
       -- if elt was in sampled directory, then it's not new, don't include it
       let
         foldMapFn rid v = case v of
           Nothing     -> []
-          Just (lp,_) -> if IM.member rid lastDir then [] else [lp]
+          Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
         lps = IM.foldMapWithKey foldMapFn seltlc
       case lps of
         [] -> return Nothing
-        x  -> return $ Just x
+        x  -> return $ Just (Seq.fromList x)
 
-    newEltsEv :: Event t [LayerPos]
+    newEltsEv :: Event t Selection
     newEltsEv = push newEltsEvPushFn _pfo_potato_changed
 
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
+      , EBCmdSelect False <$> newEltsEv
       , EBCmdChanges <$> _pfo_potato_changed
       ]
 
