@@ -87,7 +87,7 @@ data PFOutput t = PFOutput {
   -- takes REltId to LayerPos
   , _pfo_layerPosMap       :: Dynamic t (REltIdMap LayerPos)
 
-  , _pfo_potato_changed    :: Event t SEltLabelChanges
+  , _pfo_potato_changed    :: Event t SEltLabelChangesWithLayerPos
 
 
   , _pfo_loaded            :: Event t ()
@@ -196,12 +196,15 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
 
   -- pull stuff uniquely out of state/workspace
   --TODO use https://hackage.haskell.org/package/reflex-0.7.1.0/docs/Reflex-Dynamic-Uniq.html do I just uniqDynamic . fromUniqDynamic ?
-  r_changes <- holdUniqDyn $ fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalStateDyn
+  r_changes' <- holdUniqDyn $ fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalStateDyn
   r_layers <- holdUniqDyn $ fmap (_pFState_layers . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
   r_directory <- holdUniqDyn $ fmap (_pFState_directory . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
   r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
-  -- TODO is there a more performant way to do this? probably not really
-  let r_layerPosMap = fmap (Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty) (r_layers)
+
+  let
+    r_layerPosMap = fmap (Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty) (r_layers)
+    r_changes = ffor2 r_changes' r_layerPosMap $ \changes layerPosMap ->
+      IM.mapWithKey (\rid v -> fmap (\seltl -> (layerPosMap IM.! rid, seltl)) v) changes
 
   return PFOutput {
       _pfo_pFState = current r_state

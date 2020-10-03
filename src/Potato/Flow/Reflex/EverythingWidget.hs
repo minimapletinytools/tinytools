@@ -40,8 +40,7 @@ data EverythingFrontendCmd =
 data EverythingBackendCmd =
   -- selection (first param is add to selection if true)
   EBCmdSelect Bool Selection
-
-  | EBCmdChanges SEltLabelChanges
+  | EBCmdChanges SEltLabelChangesWithLayerPos
 
 
 
@@ -85,10 +84,6 @@ holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   let
-    -- TODO event for newly created element
-    -- you could sample directory for "past" version when listening to _pfo_potato_changed for changes
-    newEltsEvent :: Event t [LayerPos]
-    newEltsEvent = undefined
 
 
     -------------------------
@@ -222,6 +217,25 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   ------------------------
 
   let
+
+    -- TODO FIX, select stuff that did not previously exist
+    -- TODO need to get layer pos somehow
+    newEltsEvPushFn :: SEltLabelChangesWithLayerPos -> PushM t (Maybe [LayerPos])
+    newEltsEvPushFn seltlc = do
+      lastDir <- sample . current $ _pfo_pFState_directory
+      -- if elt was in sampled directory, then it's not new, don't include it
+      let
+        foldMapFn rid v = case v of
+          Nothing     -> []
+          Just (lp,_) -> if IM.member rid lastDir then [] else [lp]
+        lps = IM.foldMapWithKey foldMapFn seltlc
+      case lps of
+        [] -> return Nothing
+        x  -> return $ Just x
+
+    newEltsEv :: Event t [LayerPos]
+    newEltsEv = push newEltsEvPushFn _pfo_potato_changed
+
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
@@ -238,11 +252,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
           else return $ everything { _everythingBackend_selection = sel }
 
-      EBCmdChanges cslmap -> do
+      EBCmdChanges cslmap' -> do
         pFState <- sample _pfo_pFState
         fronten <- sample . current $ everythingFrontendDyn
         let
-
+          cslmap = fmap (fmap snd) cslmap'
           -- broad phase stuff
           newBroadPhaseState = update_bPTree cslmap (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
           bpt = _broadPhaseState_bPTree newBroadPhaseState
@@ -268,7 +282,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
         return $ everything {
             _everythingBackend_broadPhaseState = newBroadPhaseState
-            , _everythingBackend_renderedCanvas = undefined
+            , _everythingBackend_renderedCanvas = newRenderedCanvas
 
             -- TODO check for changes in selection = changes in manipulating
             -- TODO set the manipulating index: `_everythingBackend_manipulating & element index .~ value`

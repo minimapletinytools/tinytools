@@ -8,6 +8,7 @@ module Potato.Flow.Types (
   , SuperSEltLabel
   , ControllersWithId
   , SEltLabelChanges
+  , SEltLabelChangesWithLayerPos
 
   -- * manipulators
   , MNone
@@ -45,6 +46,7 @@ type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
+type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
 
 type MNone = ()
 

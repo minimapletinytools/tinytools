@@ -1,5 +1,5 @@
 ::NEWEST TODO::
--redo manipulator storage in everything
+DONE/IGNORE-redo manipulator storage in everything
   -list of manipulators
   -you need a better way to track which is the active manipulator
     -instead of iterating trhough thelist... though maybe that's not the worst
