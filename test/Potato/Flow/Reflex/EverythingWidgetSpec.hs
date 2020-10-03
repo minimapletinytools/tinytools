@@ -66,10 +66,11 @@ select_network ev = do
 select_test :: Test
 select_test = TestLabel "select" $ TestCase $ do
   let
-    -- TODO need to set some initial state with elements in order to test something meaningful here
-    -- adding Seq.empty means no change in selection so no output event
-    bs = [(False, Seq.empty)]
-    expected = [Nothing]
+    mySelection1 = Seq.fromList [(1,1,someSEltLabel)]
+    mySelection2 = Seq.fromList [(2,2,someSEltLabel)]
+    combined = Seq.fromList [(1,1,someSEltLabel), (2,2,someSEltLabel)]
+    bs = [(False, mySelection1), (True, mySelection2), (True, mySelection1), (False, mySelection1), (True, Seq.empty), (False, Seq.empty)]
+    expected = [Just mySelection1, Just combined, Just mySelection2, Just mySelection1, Nothing, Just (Seq.empty)]
     run = runAppSimple select_network bs
   v <- liftIO run
   (join v) @?= expected

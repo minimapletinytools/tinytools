@@ -40,6 +40,8 @@ data EverythingFrontendCmd =
 
 data EverythingBackendCmd =
   -- selection (first param is add to selection if true)
+  -- it's a little weird that selection comes with all info about what's being selected
+  -- but we have it already so may as well include it
   EBCmdSelect Bool Selection
   | EBCmdChanges SEltLabelChangesWithLayerPos
 
