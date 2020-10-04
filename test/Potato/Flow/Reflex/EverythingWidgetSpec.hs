@@ -23,6 +23,7 @@ import           Potato.Flow.TestStates
 import           Control.Monad.Fix
 import qualified Data.IntMap                         as IM
 import qualified Data.Sequence                       as Seq
+import qualified Data.Text                           as T
 
 someState1 :: PFState
 someState1 = PFState {
@@ -111,14 +112,18 @@ everything_network ev = do
 
 data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
+  FunctionPrediate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
-testEverythingPredicate (EqPredicate f a) e = f e == a
-testEverythingPredicate AlwaysPass _        = True
+testEverythingPredicate (EqPredicate f a) e    = f e == a
+testEverythingPredicate (FunctionPrediate f) e = snd $ f e
+testEverythingPredicate AlwaysPass _           = True
 
-showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> String
+
+showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
+showEverythingPredicate (FunctionPrediate f) e = fst $ f e
 showEverythingPredicate AlwaysPass _ = "always pass"
 
 everything_basic_test :: Test
@@ -188,8 +193,8 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   forM_ (zip3 (join values) expected [0..]) $ \(me, p, i) -> case p of
     Nothing -> assertBool ("expected no output for " <> show i) (isNothing me)
     Just p  -> case me of
-      Nothing -> assertFailure ("expected output for " <> show i)
-      Just e  -> assertBool ((showEverythingPredicate p e) <> " for " <> show i) (testEverythingPredicate p e)
+      Nothing -> (assertFailure . T.unpack) ("expected output for " <> show i)
+      Just e  -> (assertBool . T.unpack) ((showEverythingPredicate p e) <> " for " <> show i) (testEverythingPredicate p e)
 
 
 

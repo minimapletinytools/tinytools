@@ -255,13 +255,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
           else return $ everything { _everythingBackend_selection = sel }
 
-      EBCmdChanges cslmap' -> do
+      EBCmdChanges cslmap -> do
         pFState <- sample _pfo_pFState
         fronten <- sample . current $ everythingFrontendDyn
         let
-          cslmap = fmap (fmap snd) cslmap'
+
           -- broad phase stuff
-          newBroadPhaseState = update_bPTree cslmap (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
+          cslmapForBroadPhase = fmap (fmap snd) cslmap
+          newBroadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
           bpt = _broadPhaseState_bPTree newBroadPhaseState
           boxes = _broadPhaseState_needsUpdate newBroadPhaseState
           rc = _everythingBackend_renderedCanvas
@@ -272,7 +273,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               Just aabb -> newrc where
                 slmap = _pFState_directory pFState
                 rids = broadPhase_cull aabb bpt
-                seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+                seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
                   Nothing -> case IM.lookup rid slmap of
                     Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
                     Just seltl -> seltl
@@ -287,15 +288,19 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           newEltFoldMapFn rid v = case v of
             Nothing     -> []
             Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
-          newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap'
+          newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
 
 
 
         return $ everything {
+            -- render
             _everythingBackend_broadPhaseState = newBroadPhaseState
             , _everythingBackend_renderedCanvas = newRenderedCanvas
+
+            -- set new selection if there was a newly created elt
             ,_everythingBackend_selection = Seq.fromList newlyCreatedSEltls
 
+            -- TODO update manipulating index
             -- TODO check for changes in selection = changes in manipulating
             -- TODO set the manipulating index: `_everythingBackend_manipulating & element index .~ value`
             -- TODO assert that manipulating index = no changes in selection
