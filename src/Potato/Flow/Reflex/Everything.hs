@@ -223,16 +223,18 @@ data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
-  | FrontendOperation_Manipulate (Maybe ManipulatorIndex)-- should be in sync with _everythingFrontend_command
+  -- must be in sync with _everythingFrontend_command
+  | FrontendOperation_Manipulate
   deriving (Show, Eq)
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
-  _everythingFrontend_selectedTool    :: Tool
-  , _everythingFrontend_pan           :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
-  , _everythingFrontend_command       :: Maybe PFEventTag
-  , _everythingFrontend_lastOperation :: FrontendOperation
+  _everythingFrontend_selectedTool        :: Tool
+  , _everythingFrontend_pan               :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingFrontend_mouseDrag         :: MouseDrag -- last mouse dragging state
+  , _everythingFrontend_command           :: Maybe PFEventTag
+  , _everythingFrontend_lastOperation     :: FrontendOperation
+  , _everythingFrontend_manipulationIndex :: Maybe ManipulatorIndex -- index of active MouseManipulator, TODO consider comining with lastOperation
 } deriving (Show)
 
 -- second pass, taking outputs from PFOutput
@@ -244,6 +246,7 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_broadPhaseState :: BroadPhaseState
   , _everythingBackend_renderedCanvas  :: RenderedCanvas
 
+  -- TODO can we delete this?
   , _everythingBackend_manipulating    :: Maybe SuperSEltLabel
 
 }
@@ -255,6 +258,7 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_mouseDrag = emptyMouseDrag
     , _everythingFrontend_command = Nothing
     , _everythingFrontend_lastOperation = FrontendOperation_None
+    , _everythingFrontend_manipulationIndex = Nothing
   }
 
 emptyEverythingBackend :: EverythingBackend
@@ -269,17 +273,18 @@ emptyEverythingBackend = EverythingBackend {
 
 -- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
-  _everythingCombined_selectedTool     :: Tool
-  , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
-  , _everythingCombined_command        :: Maybe PFEventTag
-  , _everythingCombined_lastOperation  :: FrontendOperation
-  , _everythingCombined_selection      :: Selection
-  , _everythingCombined_layers         :: Seq LayerDisplay
-  , _everythingCombined_manipulators   :: MouseManipulatorSet
-  , _everythingCombined_broadPhase     :: BroadPhaseState
-  , _everythingCombined_renderedCanvas :: RenderedCanvas
-  , _everythingCombined_manipulating   :: Maybe SuperSEltLabel
+  _everythingCombined_selectedTool        :: Tool
+  , _everythingCombined_pan               :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingCombined_mouseDrag         :: MouseDrag -- last mouse dragging state
+  , _everythingCombined_command           :: Maybe PFEventTag
+  , _everythingCombined_lastOperation     :: FrontendOperation
+  , _everythingCombined_manipulationIndex :: Maybe ManipulatorIndex
+  , _everythingCombined_selection         :: Selection
+  , _everythingCombined_layers            :: Seq LayerDisplay
+  , _everythingCombined_manipulators      :: MouseManipulatorSet
+  , _everythingCombined_broadPhase        :: BroadPhaseState
+  , _everythingCombined_renderedCanvas    :: RenderedCanvas
+  , _everythingCombined_manipulating      :: Maybe SuperSEltLabel
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
@@ -289,6 +294,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
     , _everythingCombined_command    = _everythingFrontend_command
     , _everythingCombined_lastOperation = _everythingFrontend_lastOperation
+    , _everythingCombined_manipulationIndex = _everythingFrontend_manipulationIndex
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators

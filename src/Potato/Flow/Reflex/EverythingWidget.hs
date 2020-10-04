@@ -108,6 +108,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         everything' = everything {
             _everythingFrontend_command = Nothing
             , _everythingFrontend_lastOperation = FrontendOperation_None
+            , _everythingFrontend_manpulationIndex = Nothing
           }
 
 
@@ -141,6 +142,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               -- TODO select or manipulate
 
               undefined
+            -- create new elements
+            -- note for click + drag on creating new elts, we repeatedly undo + create new elts
             _ -> do
               backend <- sample . current $ everythingBackendDyn
 
@@ -150,17 +153,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 mActiveManip = getActiveManipulator (_everythingBackend_manipulators backend)
                 manipulating = _everythingBackend_manipulating backend
               case manipulating of
-                Just (rid, lp, sseltl) -> undefined
-                  -- TODO manipulate
+                -- TODO I don't think we need this, just recreate the element, be sure to undo first
+                Just (rid, lp, sseltl) -> undefined -- TODO manipulatae
                 Nothing                -> case _everythingFrontend_selectedTool of
                   Tool_Box ->
                     return everything' {
-                        _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing -- TODO is this correct for new elts? Need default manipulator index
+                        _everythingFrontend_lastOperation = FrontendOperation_Manipulate
+                        -- TODO add undofirst if  (isJust mainpulating)
                         , _everythingFrontend_command = Just (PFEAddElt (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))
+                        , _everythingFrontend_manpulationIndex = Just 0
                       }
-
-
-
                   -- TODO finish other types
                   _ -> undefined
 
@@ -180,7 +182,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
                   return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
                 FrontendOperation_LayerDrag -> undefined
-                FrontendOperation_Manipulate _ -> assert (isJust _everythingFrontend_command) undefined
+                FrontendOperation_Manipulate -> assert (isJust _everythingFrontend_command) $
+                  -- undo the last operation
+                  -- TODO do I need to do anything else here?
+                  return everything'' { _everythingFrontend_command = Just PFEUndo }
                 _ -> undefined
           _                              -> undefined
         _          -> undefined
@@ -302,7 +307,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
             -- TODO update manipulating index
             -- TODO check for changes in selection = changes in manipulating
-            -- TODO set the manipulating index: `_everythingBackend_manipulating & element index .~ value`
+            -- TODO set the manipulating index: `_everythingBackend_manipulators & element index .~ value`
             -- TODO assert that manipulating index = no changes in selection
             -- TODO assert that manipulating index < # manipulators
             , _everythingBackend_manipulating = Nothing

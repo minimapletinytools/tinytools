@@ -1,4 +1,6 @@
 ::NEWEST TODO::
+-need to use doCmdPFTTotalStateUndoFirst inside Entry
+  -only need for addElt, manipulateElt and maybe resizeCanvas
 DONE/IGNORE-redo manipulator storage in everything
   -list of manipulators
   -you need a better way to track which is the active manipulator
