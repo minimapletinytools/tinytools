@@ -11,6 +11,9 @@ module Potato.Flow.State (
   , pFState_maxID
   , sPotatoFlow_to_pFState
   , pFState_to_sPotatoFlow
+
+  , pFState_toCanvasCoordinates
+
   , emptyPFState
   , do_newElts
   , undo_newElts
@@ -30,17 +33,17 @@ module Potato.Flow.State (
 import           Relude
 
 
-import           Potato.Flow.Math
 import           Potato.Flow.Layers
+import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
-import           Potato.Flow.Types
 import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
-import           Control.Exception        (assert)
+import           Control.Exception       (assert)
 import           Data.Aeson
-import qualified Data.IntMap.Strict       as IM
+import qualified Data.IntMap.Strict      as IM
 import           Data.Maybe
-import qualified Data.Sequence            as Seq
+import qualified Data.Sequence           as Seq
 
 
 data PFState = PFState {
@@ -114,6 +117,10 @@ pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
 pFState_to_sPotatoFlow PFState {..} = r where
   selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
+
+pFState_toCanvasCoordinates :: PFState -> XY -> XY
+pFState_toCanvasCoordinates PFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
+  LBox (V2 sx sy) _ = _sCanvas_box _pFState_canvas
 
 do_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_newElts seltls PFState {..} = (r, fmap Just changes) where

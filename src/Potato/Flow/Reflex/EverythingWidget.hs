@@ -25,6 +25,8 @@ import           Potato.Flow.Types
 import           Control.Exception             (assert)
 import           Control.Lens
 import           Control.Monad.Fix
+import           Data.Default                  (def)
+import           Data.Foldable                 (minimum)
 import qualified Data.IntMap                   as IM
 import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
@@ -107,6 +109,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             _everythingFrontend_command = Nothing
             , _everythingFrontend_lastOperation = FrontendOperation_None
           }
+
+
       case cmd of
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
@@ -117,6 +121,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               MouseDragState_Up        -> (newDrag mouseData, 0)
               MouseDragState_Cancelled -> (newDrag mouseData, 0)
               _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
+
+            canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
+            canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
 
           everything'' <- case _everythingFrontend_selectedTool of
             Tool_Pan -> do
@@ -136,14 +143,27 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               undefined
             _ -> do
               backend <- sample . current $ everythingBackendDyn
+
               let
+                lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
+                newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
                 mActiveManip = getActiveManipulator (_everythingBackend_manipulators backend)
                 manipulating = _everythingBackend_manipulating backend
               case manipulating of
                 Just (rid, lp, sseltl) -> undefined
                   -- TODO manipulate
-                Nothing                -> undefined
-                  -- TODO create new stuff
+                Nothing                -> case _everythingFrontend_selectedTool of
+                  Tool_Box ->
+                    return everything' {
+                        _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing -- TODO is this correct for new elts? Need default manipulator index
+                        , _everythingFrontend_command = Just (PFEAddElt (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))
+                      }
+
+
+
+                  -- TODO finish other types
+                  _ -> undefined
+
 
           -- TODO set the new manipulate command or whatever
           return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }

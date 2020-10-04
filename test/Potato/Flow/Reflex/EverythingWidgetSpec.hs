@@ -111,21 +111,22 @@ everything_network ev = do
 
 data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
+  AlwaysPass :: EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
 testEverythingPredicate (EqPredicate f a) e = f e == a
+testEverythingPredicate AlwaysPass _        = True
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> String
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
+showEverythingPredicate AlwaysPass _ = "always pass"
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
     bs = [
-        EWCNothing
-
-        -- test basic panning
+        EWCNothing -- test basic panning
         , EWCTool Tool_Pan
         -- drag to (1, 1) and release
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
@@ -136,8 +137,13 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left)
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
-
+        , EWCNothing -- create elt
+        , EWCTool Tool_Box
+        -- drag from (1,1) to (10,10) and release
+        , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
         -- TODO test create new elt
+        -- check that it got selected
         -- check in layers and check render
 
         -- TODO modify created elt
@@ -148,9 +154,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
       ]
 
     expected = [
-        Nothing
-
-        -- verify basic panning
+        Nothing -- very basic panning
         , Just (EqPredicate _everythingCombined_selectedTool Tool_Pan)
         , Just (EqPredicate _everythingCombined_pan (V2 0 0))
         , Just (EqPredicate _everythingCombined_pan (V2 1 1))
@@ -158,6 +162,14 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , Just (EqPredicate _everythingCombined_pan (V2 0 0))
         , Just (EqPredicate _everythingCombined_pan (V2 10 15))
         , Just (EqPredicate _everythingCombined_pan (V2 1 1))
+
+        , Nothing -- create elt
+        , Just (EqPredicate _everythingCombined_selectedTool Tool_Box)
+        -- TODO actually test...
+        --, Just (EqPredicate _everythingCombined_lastOperation Tool_Box)
+        , Just AlwaysPass
+        , Just AlwaysPass
+
 
         -- TODO
       ]
