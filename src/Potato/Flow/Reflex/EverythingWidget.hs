@@ -238,28 +238,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   ------------------------
   -- EVERYTHING BACKEND --
   ------------------------
-
   let
-    newEltsEvPushFn :: SEltLabelChangesWithLayerPos -> PushM t (Maybe Selection)
-    newEltsEvPushFn seltlc = do
-      lastDir <- sample . current $ _pfo_pFState_directory
-      -- if elt was in sampled directory, then it's not new, don't include it
-      let
-        foldMapFn rid v = case v of
-          Nothing     -> []
-          Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
-        lps = IM.foldMapWithKey foldMapFn seltlc
-      case lps of
-        [] -> return Nothing
-        x  -> return $ Just (Seq.fromList x)
-
-    newEltsEv :: Event t Selection
-    newEltsEv = push newEltsEvPushFn _pfo_potato_changed
-
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
-      , EBCmdSelect False <$> newEltsEv
       , EBCmdChanges <$> _pfo_potato_changed
       ]
 
@@ -300,10 +282,19 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- TODO need to order seltls by layer position oops
                 newrc = render aabb (map _sEltLabel_sElt seltls) rc
 
+          -- new elt stuff
+          lastDir = _pFState_directory pFState
+          newEltFoldMapFn rid v = case v of
+            Nothing     -> []
+            Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
+          newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap'
+
+
 
         return $ everything {
             _everythingBackend_broadPhaseState = newBroadPhaseState
             , _everythingBackend_renderedCanvas = newRenderedCanvas
+            ,_everythingBackend_selection = Seq.fromList newlyCreatedSEltls
 
             -- TODO check for changes in selection = changes in manipulating
             -- TODO set the manipulating index: `_everythingBackend_manipulating & element index .~ value`
