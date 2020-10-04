@@ -112,18 +112,17 @@ everything_network ev = do
 
 data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
-  FunctionPrediate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
+  FunctionPredicate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
-testEverythingPredicate (EqPredicate f a) e    = f e == a
-testEverythingPredicate (FunctionPrediate f) e = snd $ f e
-testEverythingPredicate AlwaysPass _           = True
-
+testEverythingPredicate (EqPredicate f a) e     = f e == a
+testEverythingPredicate (FunctionPredicate f) e = snd $ f e
+testEverythingPredicate AlwaysPass _            = True
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
-showEverythingPredicate (FunctionPrediate f) e = fst $ f e
+showEverythingPredicate (FunctionPredicate f) e = fst $ f e
 showEverythingPredicate AlwaysPass _ = "always pass"
 
 everything_basic_test :: Test
@@ -170,10 +169,18 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         , Nothing -- create elt
         , Just (EqPredicate _everythingCombined_selectedTool Tool_Box)
-        -- TODO actually test...
-        --, Just (EqPredicate _everythingCombined_lastOperation Tool_Box)
-        , Just AlwaysPass
-        , Just AlwaysPass
+
+        -- TODO move to helper function
+        , Just (FunctionPredicate (
+          (\case
+            FrontendOperation_Manipulate _ -> ("",True)
+            o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
+          . _everythingCombined_lastOperation))
+        , Just (FunctionPredicate (
+          (\case
+            FrontendOperation_Manipulate _ -> ("",True)
+            o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
+          . _everythingCombined_lastOperation))
 
 
         -- TODO
