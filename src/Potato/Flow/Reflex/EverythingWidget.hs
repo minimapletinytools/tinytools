@@ -108,7 +108,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         everything' = everything {
             _everythingFrontend_command = Nothing
             , _everythingFrontend_lastOperation = FrontendOperation_None
-            , _everythingFrontend_manpulationIndex = Nothing
+            , _everythingFrontend_manipulationIndex = Nothing
           }
 
 
@@ -137,9 +137,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
             Tool_Select -> do
-              --let
+              let
+                -- if we have manipulationIndex then that means we are in the middle of an operation
+                undoFirst = isJust _everythingFrontend_manipulationIndex
                 --checkMouseDownManipulators
-              -- TODO select or manipulate
+              case _everythingFrontend_manipulationIndex of
+                Nothing -> undefined -- TODO select
+                Just i  -> undefined -- TODO manipulate
 
               undefined
             -- create new elements
@@ -150,21 +154,18 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
                 newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
-                mActiveManip = getActiveManipulator (_everythingBackend_manipulators backend)
-                manipulating = _everythingBackend_manipulating backend
-              case manipulating of
-                -- TODO I don't think we need this, just recreate the element, be sure to undo first
-                Just (rid, lp, sseltl) -> undefined -- TODO manipulatae
-                Nothing                -> case _everythingFrontend_selectedTool of
-                  Tool_Box ->
-                    return everything' {
-                        _everythingFrontend_lastOperation = FrontendOperation_Manipulate
-                        -- TODO add undofirst if  (isJust mainpulating)
-                        , _everythingFrontend_command = Just (PFEAddElt (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))
-                        , _everythingFrontend_manpulationIndex = Just 0
-                      }
-                  -- TODO finish other types
-                  _ -> undefined
+                -- if we have manipulationIndex then that means we are in the middle of an operation
+                undoFirst = isJust _everythingFrontend_manipulationIndex
+              case _everythingFrontend_selectedTool of
+                Tool_Box ->
+                  return everything' {
+                      _everythingFrontend_lastOperation = FrontendOperation_Manipulate
+                      -- TODO add undofirst
+                      , _everythingFrontend_command = Just (PFEAddElt (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))
+                      , _everythingFrontend_manipulationIndex = Just 0
+                    }
+                -- TODO finish other types
+                _ -> undefined
 
 
           -- TODO set the new manipulate command or whatever
@@ -262,7 +263,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
       EBCmdChanges cslmap -> do
         pFState <- sample _pfo_pFState
-        fronten <- sample . current $ everythingFrontendDyn
+        frontend <- sample . current $ everythingFrontendDyn
         let
 
           -- broad phase stuff
@@ -294,6 +295,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             Nothing     -> []
             Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
           newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
+          newSelection = if null newlyCreatedSEltls
+            then _everythingBackend_selection
+            else Seq.fromList newlyCreatedSEltls
 
 
 
@@ -303,14 +307,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             , _everythingBackend_renderedCanvas = newRenderedCanvas
 
             -- set new selection if there was a newly created elt
-            ,_everythingBackend_selection = Seq.fromList newlyCreatedSEltls
+            , _everythingBackend_selection = newSelection
 
-            -- TODO update manipulating index
-            -- TODO check for changes in selection = changes in manipulating
-            -- TODO set the manipulating index: `_everythingBackend_manipulators & element index .~ value`
-            -- TODO assert that manipulating index = no changes in selection
-            -- TODO assert that manipulating index < # manipulators
-            , _everythingBackend_manipulating = Nothing
           }
       _          -> undefined
 

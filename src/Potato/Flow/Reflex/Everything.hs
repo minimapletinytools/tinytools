@@ -24,7 +24,7 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulator(..)
   , MouseManipulatorSet
   , checkMouseDownManipulators
-  , getActiveManipulator
+  , toMouseManipulators
 
   , Selection
   , disjointUnionSelection
@@ -169,12 +169,10 @@ computeSelectionType = foldl' foldfn SMTNone where
 
 -- MANIPULATORS
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point deriving (Show, Eq)
-data MouseManipulatorState = MouseManipulatorState_Normal | MouseManipulatorState_Dragging deriving (Show, Eq)
 
 data MouseManipulator = MouseManipulator {
-  _mouseManipulator_pos     :: XY
-  , _mouseManipulator_type  :: MouseManipulatorType
-  , _mouseManipulator_state :: MouseManipulatorState
+  _mouseManipulator_pos    :: XY
+  , _mouseManipulator_type :: MouseManipulatorType
   -- back reference to object being manipulated?
   -- or just use a function
 }
@@ -186,11 +184,8 @@ type ManipulatorIndex = Int
 checkMouseDownManipulators :: XY -> MouseManipulatorSet -> Maybe MouseManipulator
 checkMouseDownManipulators pos = find (\mm -> _mouseManipulator_pos mm == pos)
 
-getActiveManipulator :: MouseManipulatorSet -> Maybe MouseManipulator
-getActiveManipulator = find (\mm -> _mouseManipulator_state mm == MouseManipulatorState_Dragging)
-
-
 -- REDUCERS/REDUCER HELPERS
+-- TODO finish this function
 toMouseManipulators :: Selection -> MouseManipulatorSet
 toMouseManipulators selection = if Seq.length selection > 1
   then
@@ -246,9 +241,6 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_broadPhaseState :: BroadPhaseState
   , _everythingBackend_renderedCanvas  :: RenderedCanvas
 
-  -- TODO can we delete this?
-  , _everythingBackend_manipulating    :: Maybe SuperSEltLabel
-
 }
 
 emptyEverythingFrontend :: EverythingFrontend
@@ -268,7 +260,6 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_manipulators = []
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
-    , _everythingBackend_manipulating = Nothing
   }
 
 -- combined output for convenient testing thx
@@ -284,7 +275,6 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_manipulators      :: MouseManipulatorSet
   , _everythingCombined_broadPhase        :: BroadPhaseState
   , _everythingCombined_renderedCanvas    :: RenderedCanvas
-  , _everythingCombined_manipulating      :: Maybe SuperSEltLabel
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
@@ -300,5 +290,4 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_manipulators = _everythingBackend_manipulators
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
-    , _everythingCombined_manipulating = _everythingBackend_manipulating
   }
