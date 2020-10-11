@@ -162,11 +162,7 @@ step_state_network AppIn {..} = do
   return
     AppOut {
       _appOut_behavior = constant ()
-      , _appOut_event = leftmost
-        [ _pfo_saved pfo
-
-        -- stop leaks.. doesn't actually work :(
-        , fmapMaybe (const Nothing) $ _pfo_potato_changed pfo]
+      , _appOut_event = _pfo_saved pfo
     }
 
 

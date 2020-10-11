@@ -31,7 +31,9 @@ import qualified Data.Sequence      as Seq
 data ActionStack = ActionStack {
   doStack     :: [PFCmd] -- maybe just do something lke [PFCmd, Maybe PFState] here for state based undo
   , undoStack :: [PFCmd]
-}
+} deriving (Generic)
+
+instance NFData ActionStack
 
 emptyActionStack :: ActionStack
 emptyActionStack = ActionStack [] []
@@ -40,7 +42,9 @@ data PFWorkspace = PFWorkspace {
   _pFWorkspace_state         :: PFState
   , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack
-}
+} deriving (Generic)
+
+instance NFData PFWorkspace
 
 -- TODO every element should get added to change list
 workspaceFromState :: PFState -> PFWorkspace
@@ -50,8 +54,7 @@ emptyWorkspace :: PFWorkspace
 emptyWorkspace = PFWorkspace emptyPFState IM.empty emptyActionStack
 
 undoWorkspace :: PFWorkspace -> PFWorkspace
---undoWorkspace pfw = _pFWorkspace_state r `deepseq` _pFWorkspace_lastChanges r `deepseq` r where
-undoWorkspace pfw = r where
+undoWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case doStack of
     --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
@@ -59,7 +62,6 @@ undoWorkspace pfw = r where
     _ -> pfw
 
 redoWorkspace :: PFWorkspace -> PFWorkspace
---redoWorkspace pfw = _pFWorkspace_state r `deepseq` _pFWorkspace_lastChanges r `deepseq` r where
 redoWorkspace pfw = r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case undoStack of
@@ -67,13 +69,13 @@ redoWorkspace pfw = r where
     c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_state pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
-
 doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
 doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
---doCmdWorkspace cmd pfw = _pFWorkspace_state r `deepseq` _pFWorkspace_lastChanges r `deepseq` r where
-doCmdWorkspace cmd pfw = r where
+--doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem
+-- deepseq here to force evaluation of workspace and prevent leaks
+doCmdWorkspace cmd pfw = force r where
   newState = doCmdState cmd (_pFWorkspace_state pfw)
   ActionStack {..} = (_pFWorkspace_actionStack pfw)
   newStack = ActionStack (cmd:doStack) []

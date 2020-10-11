@@ -1,6 +1,6 @@
 ::NEWEST TODO::
--fix memory leak again ;__;
--need to use doCmdPFTTotalStateUndoFirst inside Entry
+DONE-fix memory leak again ;__;
+DONE-need to use doCmdPFTTotalStateUndoFirst inside Entry
   -only need for addElt, manipulateElt and maybe resizeCanvas
 DONE/IGNORE-redo manipulator storage in everything
   -list of manipulators

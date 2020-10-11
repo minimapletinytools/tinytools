@@ -205,7 +205,9 @@ instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
 data DeltaLBox = DeltaLBox {
   _deltaLBox_translate  :: XY
   , _deltaLBox_resizeBy :: XY
-}  deriving (Eq, Show)
+}  deriving (Eq, Generic, Show)
+
+instance NFData DeltaLBox
 
 instance Delta LBox DeltaLBox where
   plusDelta LBox {..} DeltaLBox {..} = LBox {

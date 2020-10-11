@@ -90,7 +90,9 @@ type Manipulator = DS.DSum MTag Identity
 
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
-} deriving (Eq, Show)
+} deriving (Eq, Generic, Show)
+
+instance NFData CRename
 
 instance Delta SEltLabel CRename where
   plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_deltaLabel) selt
@@ -98,7 +100,9 @@ instance Delta SEltLabel CRename where
 
 data CBox = CBox {
   _cBox_deltaBox :: DeltaLBox
-} deriving (Eq, Show)
+} deriving (Eq, Generic, Show)
+
+instance NFData CBox
 
 instance Delta SBox CBox where
   plusDelta SBox {..} CBox {..} = SBox {
@@ -114,7 +118,9 @@ instance Delta SBox CBox where
 data CLine = CLine {
   _cLine_deltaStart :: XY
   , _cLine_deltaEnd :: XY
-} deriving (Eq, Show)
+} deriving (Eq, Generic, Show)
+
+instance NFData CLine
 
 instance Delta SLine CLine where
   plusDelta SLine {..} CLine {..} = SLine {
@@ -131,7 +137,9 @@ instance Delta SLine CLine where
 data CText = CText {
   _cText_deltaBox    :: DeltaLBox
   , _cText_deltaText :: DeltaText
-} deriving (Eq, Show)
+} deriving (Eq, Generic, Show)
+
+instance NFData CText
 
 instance Delta SText CText where
   plusDelta SText {..} CText {..} = SText {
@@ -149,7 +157,9 @@ instance Delta SText CText where
 -- used for multi-selection
 data CBoundingBox = CBoundingBox {
   _cBoundingBox_deltaBox    :: DeltaLBox
-} deriving (Eq, Show)
+} deriving (Eq, Generic, Show)
+
+instance NFData CBoundingBox
 
 data CTag a where
   CTagRename :: CTag CRename
@@ -165,6 +175,15 @@ deriveArgDict ''CTag
 
 -- | Controllers represent changes to SELts
 type Controller = DS.DSum CTag Identity
+
+instance NFData Controller where
+  rnf (CTagRename DS.:=> Identity a)      = rnf a
+  rnf (CTagBox DS.:=> Identity a)         = rnf a
+  rnf (CTagLine DS.:=> Identity a)        = rnf a
+  rnf (CTagText DS.:=> Identity a)        = rnf a
+  rnf (CTagBoundingBox DS.:=> Identity a) = rnf a
+
+
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller

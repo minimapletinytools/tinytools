@@ -37,6 +37,14 @@ instance Text.Show.Show (PFCmdTag a) where
 
 type PFCmd = DS.DSum PFCmdTag Identity
 
+instance NFData PFCmd where
+  rnf (PFCNewElts DS.:=> Identity a)      = rnf a
+  rnf (PFCDeleteElts DS.:=> Identity a)   = rnf a
+  rnf (PFCMove DS.:=> Identity a)         = rnf a
+  rnf (PFCManipulate DS.:=> Identity a)   = rnf a
+  rnf (PFCResizeCanvas DS.:=> Identity a) = rnf a
+  rnf _                                   = ()
+
 deriveGEq      ''PFCmdTag
 deriveGCompare ''PFCmdTag
 deriveGShow ''PFCmdTag
