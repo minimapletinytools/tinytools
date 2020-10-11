@@ -74,8 +74,8 @@ setup_network ev = mdo
       FCAddElt p x -> case x of
         SEltFolderStart -> Nothing -- handled by addFolderEv
         SEltFolderEnd   -> error "can not explicity add SEltFolderEnd"
-        _               -> Just (p, SEltLabel "blank" x)
-      FCCustom_Add_SBox_1 -> Just (0, SEltLabel "customsbox" (SEltBox simpleSBox))
+        _               -> Just (False, (p, SEltLabel "blank" x))
+      FCCustom_Add_SBox_1 -> Just (False, (0, SEltLabel "customsbox" (SEltBox simpleSBox)))
       _           -> Nothing
 
     addFolderEv = fforMaybe ev $ \case
@@ -91,14 +91,14 @@ setup_network ev = mdo
       FCModify p c -> do
         pFState <- sample beh_pFState
         let (rid, _, SEltLabel _ _) = fromJust . pFState_getSuperSEltByPos pFState $ p
-        return . Just $ IM.singleton rid c
+        return . Just $ (False, IM.singleton rid c)
       FCModifyMany pcs -> do
         pFState <- sample beh_pFState
         let sseltls = map (\(p,c) -> (pFState_getSuperSEltByPos pFState p, c)) pcs
-        return . Just . IM.fromList
+        return . Just $ (False, IM.fromList
           . map (\((rid,_,_),c) -> (rid, c))
           . map (\(mseltl, c) -> (fromJust mseltl, c))
-          $ sseltls
+          $ sseltls)
       FCCustom_CBox_1 p -> do
         pFState <- sample beh_pFState
         let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos pFState $ p
@@ -106,7 +106,7 @@ setup_network ev = mdo
           cbox = CBox {
               _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
             }
-        return . Just $ selt `deepseq` IM.singleton rid (CTagBox ==> cbox)
+        return . Just $ (False, selt `deepseq` IM.singleton rid (CTagBox ==> cbox))
       _              -> return Nothing
     resizeCanvasEv = fforMaybe ev $ \case
       FCResizeCanvas x -> Just x

@@ -161,7 +161,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   return everything' {
                       _everythingFrontend_lastOperation = FrontendOperation_Manipulate
                       -- TODO add undofirst
-                      , _everythingFrontend_command = Just (PFEAddElt (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))
+                      , _everythingFrontend_command = Just (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
                       , _everythingFrontend_manipulationIndex = Just 0
                     }
                 -- TODO finish other types

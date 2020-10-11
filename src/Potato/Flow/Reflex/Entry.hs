@@ -41,14 +41,14 @@ loadWSFromFile = fmapMaybe decode
 data PFConfig t = PFConfig {
   --_pfc_setWorkspace :: SetWSEvent t
   -- | don't use this to add folders, as they need to be added with matching pair to ensure scoping property
-  _pfc_addElt         :: Event t (LayerPos, SEltLabel)
+  _pfc_addElt         :: Event t (Bool, (LayerPos, SEltLabel))
   , _pfc_addFolder    :: Event t (LayerPos, Text)
   , _pfc_deleteElts   :: Event t [LayerPos]
   , _pfc_moveElt      :: Event t ([LayerPos], LayerPos) -- new layer position is before removal
   , _pfc_copy         :: Event t [LayerPos]
   , _pfc_paste        :: Event t LayerPos
   --, _pfc_duplicate    :: Event t [LayerPos]
-  , _pfc_manipulate   :: Event t ControllersWithId
+  , _pfc_manipulate   :: Event t (Bool, ControllersWithId)
   , _pfc_resizeCanvas :: Event t DeltaLBox
   , _pfc_undo         :: Event t ()
   , _pfc_redo         :: Event t ()
@@ -116,16 +116,14 @@ doCmdPFTTotalStateUndoFirst cmd pfts = pfts { _pFTotalState_workspace = doCmdWor
 
 
 data PFEventTag =
-  -- TODO add undo first param
-  PFEAddElt (LayerPos, SEltLabel)
+  PFEAddElt (Bool, (LayerPos, SEltLabel))
   | PFEAddFolder (LayerPos, Text)
   | PFERemoveElt [LayerPos]
   | PFEMoveElt ([LayerPos], LayerPos)
   | PFECopy [LayerPos]
   | PFEPaste LayerPos
   -- | PFEDuplicate [LayerPos]
-  -- TODO add undo first param
-  | PFEManipulate ControllersWithId
+  | PFEManipulate (Bool, ControllersWithId)
   | PFEResizeCanvas DeltaLBox
   | PFEUndo
   | PFERedo
@@ -164,10 +162,14 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
     foldfn evt pfts = let
       lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
       r = case evt of
-        PFEAddElt x -> doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
+        PFEAddElt (undo, x) -> if undo
+          then doCmdPFTTotalStateUndoFirst (pfc_addElt_to_newElts lastState x) pfts
+          else doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
         PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
         PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
-        PFEManipulate x -> doCmdPFTotalState (PFCManipulate ==> x) pfts
+        PFEManipulate (undo, x) -> if undo
+          then doCmdPFTTotalStateUndoFirst (PFCManipulate ==> x) pfts
+          else doCmdPFTotalState (PFCManipulate ==> x) pfts
         PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
         PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
