@@ -114,16 +114,19 @@ data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
   FunctionPredicate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
+  Combine :: [EverythingPredicate] -> EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
 testEverythingPredicate (EqPredicate f a) e     = f e == a
 testEverythingPredicate (FunctionPredicate f) e = snd $ f e
 testEverythingPredicate AlwaysPass _            = True
+testEverythingPredicate (Combine xs) e          = all id . map (\p -> testEverythingPredicate p e) $ xs
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
 showEverythingPredicate (FunctionPredicate f) e = fst $ f e
 showEverythingPredicate AlwaysPass _ = "always pass"
+showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
@@ -146,9 +149,6 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- drag from (1,1) to (10,10) and release
         , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
-        -- TODO test create new elt
-        -- check that it got selected
-        -- check in layers and check render
 
         -- TODO modify created elt
         -- check in layers and check render
@@ -196,6 +196,9 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- expect correct number of outputs
   length values @?= length expected
 
+  -- TODO sure would be nice if there is an event then checks predicate against event value
+  -- if no event checks against behavior which has last fired event value in it :)
+  --
   -- expect each output matches predicate
   forM_ (zip3 (join values) expected [0..]) $ \(me, p, i) -> case p of
     Nothing -> assertBool ("expected no output for " <> show i) (isNothing me)

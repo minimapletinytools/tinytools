@@ -1,4 +1,6 @@
 ::NEWEST TODO::
+-broadphase tests
+-connect RenderedCanvas
 DONE-fix memory leak again ;__;
 DONE-need to use doCmdPFTTotalStateUndoFirst inside Entry
   -only need for addElt, manipulateElt and maybe resizeCanvas
@@ -8,12 +10,10 @@ DONE/IGNORE-redo manipulator storage in everything
     -instead of iterating trhough thelist... though maybe that's not the worst
   -here is how it should work:
     -selection -> indexed list of manipulators + drag delta function
--hook up PF
+DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
--broadphase tests
--connect RenderedCanvas
 
 :::::::::::::::::::::::::::::::::::::::
 :::::PRE MEGA REFACTOR STUFF BELOW:::::
