@@ -111,6 +111,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             , _everythingFrontend_manipulationIndex = Nothing
           }
 
+      backend <- sample . current $ everythingBackendDyn
 
       case cmd of
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
@@ -140,10 +141,23 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 -- if we have manipulationIndex then that means we are in the middle of an operation
                 undoFirst = isJust _everythingFrontend_manipulationIndex
-                --checkMouseDownManipulators
-              case _everythingFrontend_manipulationIndex of
-                Nothing -> undefined -- TODO select
-                Just i  -> undefined -- TODO manipulate
+                -- we could/should cache this but it happens to work out if we don't
+                -- TODO this isn't true, another manipulator could end up in the start space when manipulating fix
+                -- TODO should we be fancy about multiple manipulators and choosing one depending on where we end up dragging?
+                --manipulatorUnderMouseStart = checkMouseDownManipulators canvasDragFrom (_everythingBackend_manipulators backend)
+              case _mouseDrag_state mouseDrag of
+                MouseDragState_Down -> case undefined of
+                  -- no manipulators, don't do anything, we will select upon releasing
+                  Nothing -> return everything'
+                  Just m  -> undefined -- TODO set manipulation index
+                MouseDragState_Dragging -> case _everythingFrontend_manipulationIndex of
+                  Nothing -> do
+                    -- TODO (store selection box in everything frontend for rendering?)
+                    return everything'
+                  Just i  -> undefined -- TODO manipulate
+
+                MouseDragState_Up -> undefined -- TODO finalize selection if we didn't click on anything to start
+
 
               undefined
             -- create new elements
