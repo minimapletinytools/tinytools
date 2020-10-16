@@ -24,6 +24,7 @@ import           Control.Monad.Fix
 import qualified Data.IntMap                         as IM
 import qualified Data.Sequence                       as Seq
 import qualified Data.Text                           as T
+import           Data.These
 
 someState1 :: PFState
 someState1 = PFState {
@@ -84,6 +85,37 @@ data EverythingWidgetCmd =
   | EWCSelect Selection Bool -- true if add to selection
   | EWCNothing
 
+
+
+everything_network_app
+  :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
+  => AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t EverythingCombined_DEBUG EverythingCombined_DEBUG)
+everything_network_app (AppIn _ ev) = do
+  let ewc = EverythingWidgetConfig  {
+      _everythingWidgetConfig_initialState = someState1
+
+      , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
+        EWCMouse x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_keyboard = fforMaybe ev $ \case
+        EWCKeyboard x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectTool = fforMaybe ev $ \case
+        EWCTool x -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectNew = fforMaybe ev $ \case
+        EWCSelect x False -> Just x
+        _ -> Nothing
+      , _everythingWidgetConfig_selectAdd = fforMaybe ev $ \case
+        EWCSelect x True -> Just x
+        _ -> Nothing
+    }
+  everythingWidget <- holdEverythingWidget ewc
+  let rDyn = _everythingWidget_everythingCombined_DEBUG everythingWidget
+  return $ AppOut (current rDyn) (updated rDyn)
+
+
+-- simplified version of above with no behavior, you can delete this
 everything_network
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingCombined_DEBUG)
@@ -158,25 +190,25 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
       ]
 
     expected = [
-        Nothing -- very basic panning
-        , Just (EqPredicate _everythingCombined_selectedTool Tool_Pan)
-        , Just (EqPredicate _everythingCombined_pan (V2 0 0))
-        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
-        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
-        , Just (EqPredicate _everythingCombined_pan (V2 0 0))
-        , Just (EqPredicate _everythingCombined_pan (V2 10 15))
-        , Just (EqPredicate _everythingCombined_pan (V2 1 1))
+        AlwaysPass -- very basic panning
+        , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
+        , (EqPredicate _everythingCombined_pan (V2 0 0))
+        , (EqPredicate _everythingCombined_pan (V2 1 1))
+        , (EqPredicate _everythingCombined_pan (V2 1 1))
+        , (EqPredicate _everythingCombined_pan (V2 0 0))
+        , (EqPredicate _everythingCombined_pan (V2 10 15))
+        , (EqPredicate _everythingCombined_pan (V2 1 1))
 
-        , Nothing -- create elt
-        , Just (EqPredicate _everythingCombined_selectedTool Tool_Box)
+        , AlwaysPass -- create elt
+        , (EqPredicate _everythingCombined_selectedTool Tool_Box)
 
         -- TODO move to helper function
-        , Just (FunctionPredicate (
+        , (FunctionPredicate (
           (\case
             FrontendOperation_Manipulate -> ("",True)
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
           . _everythingCombined_lastOperation))
-        , Just (FunctionPredicate (
+        , (FunctionPredicate (
           (\case
             FrontendOperation_Manipulate -> ("",True)
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
@@ -185,10 +217,13 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         -- TODO
       ]
-    run = runAppSimple everything_network bs
-  values <- liftIO run
 
-  -- TODO move stuff below into helper function
+
+
+    --run = runAppSimple everything_network bs
+    run = runApp everything_network_app () (fmap (Just . That) bs)
+  values :: [[(EverythingCombined_DEBUG, Maybe EverythingCombined_DEBUG)]]
+    <- liftIO run
 
   -- expect only 1 tick per event
   forM values $ \x -> length x @?= 1
@@ -196,15 +231,16 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- expect correct number of outputs
   length values @?= length expected
 
-  -- TODO sure would be nice if there is an event then checks predicate against event value
-  -- if no event checks against behavior which has last fired event value in it :)
-  --
   -- expect each output matches predicate
-  forM_ (zip3 (join values) expected [0..]) $ \(me, p, i) -> case p of
-    Nothing -> assertBool ("expected no output for " <> show i) (isNothing me)
-    Just p  -> case me of
-      Nothing -> (assertFailure . T.unpack) ("expected output for " <> show i)
-      Just e  -> (assertBool . T.unpack) ((showEverythingPredicate p e) <> " for " <> show i) (testEverythingPredicate p e)
+  -- if no output event, uses output behavior to test predicate
+  forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
+      testfn ewcd = (assertBool . T.unpack) ((showEverythingPredicate p ewcd) <> " for " <> show i) (testEverythingPredicate p ewcd)
+    in case me of
+      Just e  -> testfn e
+      Nothing -> testfn b
+
+
+
 
 
 
