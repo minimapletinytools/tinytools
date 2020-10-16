@@ -92,7 +92,7 @@ everything_network_app
   => AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t EverythingCombined_DEBUG EverythingCombined_DEBUG)
 everything_network_app (AppIn _ ev) = do
   let ewc = EverythingWidgetConfig  {
-      _everythingWidgetConfig_initialState = someState1
+      _everythingWidgetConfig_initialState = emptyPFState
 
       , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
         EWCMouse x -> Just x
@@ -121,7 +121,7 @@ everything_network
   => Event t EverythingWidgetCmd -> TestGuestT t m (Event t EverythingCombined_DEBUG)
 everything_network ev = do
   let ewc = EverythingWidgetConfig  {
-      _everythingWidgetConfig_initialState = someState1
+      _everythingWidgetConfig_initialState = emptyPFState
 
       , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
         EWCMouse x -> Just x
@@ -152,16 +152,23 @@ data EverythingPredicate where
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
 testEverythingPredicate (EqPredicate f a) e     = f e == a
 testEverythingPredicate (FunctionPredicate f) e = snd $ f e
-testEverythingPredicate (PFStateFunctionPredicate f) e = undefined
+testEverythingPredicate (PFStateFunctionPredicate f) e = snd . f $ _everythingCombined_pFState e
 testEverythingPredicate AlwaysPass _            = True
 testEverythingPredicate (Combine xs) e          = all id . map (\p -> testEverythingPredicate p e) $ xs
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
 showEverythingPredicate (FunctionPredicate f) e = fst $ f e
-showEverythingPredicate (PFStateFunctionPredicate f) e = undefined
+showEverythingPredicate (PFStateFunctionPredicate f) e = fst . f $ _everythingCombined_pFState e
 showEverythingPredicate AlwaysPass _ = "always pass"
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
+
+checkNumElts :: Int -> PFState -> (Text, Bool)
+checkNumElts n PFState {..} = (t,r) where
+  ds = IM.size _pFState_directory
+  ls = Seq.length _pFState_layers
+  r = ds == n && ls == n
+  t = "expected: " <> show n <> " dir: " <> show ds <> " layers: " <> show ls
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
@@ -217,9 +224,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
           . _everythingCombined_lastOperation))
         , Combine [
-            -- check that there is one elt
-
-
+            PFStateFunctionPredicate (checkNumElts 1)
           ]
       ]
 

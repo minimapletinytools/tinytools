@@ -133,7 +133,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 V2 cx0 cy0 = _everythingFrontend_pan
                 V2 dx dy = deltaDrag
-              return $ traceShow deltaDrag $ everything' {
+              return $ everything' {
                   _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
