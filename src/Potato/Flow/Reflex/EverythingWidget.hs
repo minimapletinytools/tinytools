@@ -116,7 +116,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       case cmd of
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
-          pFState <- sample _pfo_pFState
+          pFState <- sample . current $ _pfo_pFState
           let
 
             (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
@@ -269,14 +269,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingBackendFn cmd everything@EverythingBackend {..} = case cmd of
 
       EBCmdSelect add sel -> do
-        pFState <- sample _pfo_pFState
+        pFState <- sample . current $ _pfo_pFState
         return $ assert (pFState_selectionIsValid pFState (fmap snd3 (toList sel))) ()
         if add
           then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
           else return $ everything { _everythingBackend_selection = sel }
 
       EBCmdChanges cslmap -> do
-        pFState <- sample _pfo_pFState
+        pFState <- sample . current $ _pfo_pFState
         frontend <- sample . current $ everythingFrontendDyn
         let
 
@@ -346,5 +346,5 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       , _everythingWidget_manipulators = undefined
       , _everythingWidget_pan          = undefined
       , _everythingWidget_broadPhase   = undefined
-      , _everythingWidget_everythingCombined_DEBUG = ffor2 everythingFrontendDyn everythingBackendDyn combineEverything
+      , _everythingWidget_everythingCombined_DEBUG = ffor3 everythingFrontendDyn everythingBackendDyn _pfo_pFState combineEverything
     }

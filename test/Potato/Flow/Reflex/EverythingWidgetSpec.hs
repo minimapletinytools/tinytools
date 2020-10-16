@@ -145,18 +145,21 @@ everything_network ev = do
 data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (EverythingCombined_DEBUG -> a) -> a -> EverythingPredicate
   FunctionPredicate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
+  PFStateFunctionPredicate :: (PFState -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
   Combine :: [EverythingPredicate] -> EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
 testEverythingPredicate (EqPredicate f a) e     = f e == a
 testEverythingPredicate (FunctionPredicate f) e = snd $ f e
+testEverythingPredicate (PFStateFunctionPredicate f) e = undefined
 testEverythingPredicate AlwaysPass _            = True
 testEverythingPredicate (Combine xs) e          = all id . map (\p -> testEverythingPredicate p e) $ xs
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
 showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: " <> show (f e)
 showEverythingPredicate (FunctionPredicate f) e = fst $ f e
+showEverythingPredicate (PFStateFunctionPredicate f) e = undefined
 showEverythingPredicate AlwaysPass _ = "always pass"
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
@@ -181,6 +184,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- drag from (1,1) to (10,10) and release
         , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
+        , EWCNothing -- dummy to check state
 
         -- TODO modify created elt
         -- check in layers and check render
@@ -201,7 +205,6 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         , AlwaysPass -- create elt
         , (EqPredicate _everythingCombined_selectedTool Tool_Box)
-
         -- TODO move to helper function
         , (FunctionPredicate (
           (\case
@@ -213,9 +216,11 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
             FrontendOperation_Manipulate -> ("",True)
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
           . _everythingCombined_lastOperation))
+        , Combine [
+            -- check that there is one elt
 
 
-        -- TODO
+          ]
       ]
 
 

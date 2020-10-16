@@ -76,7 +76,7 @@ neverPFConfig = PFConfig {
 
 -- TODO reanme to PF
 data PFOutput t = PFOutput {
-  _pfo_pFState             :: Behavior t (PFState)
+  _pfo_pFState             :: Dynamic t (PFState)
 
   -- granular access to individual parts of PFState
   -- does it make sense to group together layers and directory?
@@ -209,7 +209,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
       IM.mapWithKey (\rid v -> fmap (\seltl -> (layerPosMap IM.! rid, seltl)) v) changes
 
   return PFOutput {
-      _pfo_pFState = current r_state
+      _pfo_pFState = r_state
 
       , _pfo_pFState_layers    = r_layers
       , _pfo_pFState_directory = r_directory

@@ -44,6 +44,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
+import           Potato.Flow.State
 import           Potato.Flow.Types
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
@@ -275,10 +276,13 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_manipulators      :: MouseManipulatorSet
   , _everythingCombined_broadPhase        :: BroadPhaseState
   , _everythingCombined_renderedCanvas    :: RenderedCanvas
+
+  -- from PFOutput, remember to set
+  , _everythingCombined_pFState           :: PFState
 }
 
-combineEverything :: EverythingFrontend -> EverythingBackend -> EverythingCombined_DEBUG
-combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCombined_DEBUG {
+combineEverything :: EverythingFrontend -> EverythingBackend -> PFState -> EverythingCombined_DEBUG
+combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = EverythingCombined_DEBUG {
     _everythingCombined_selectedTool =   _everythingFrontend_selectedTool
     , _everythingCombined_pan        = _everythingFrontend_pan
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
@@ -290,4 +294,6 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} = EverythingCom
     , _everythingCombined_manipulators = _everythingBackend_manipulators
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
+
+    , _everythingCombined_pFState = pfs
   }
