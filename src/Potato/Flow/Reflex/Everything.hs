@@ -94,16 +94,18 @@ data LMouseData = LMouseData {
 } deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
-  _mouseDrag_from     :: XY -- TODO rename to mousedrag from
-  , _mouseDrag_button :: MouseButton -- tracks button on start of drag
-  , _mouseDrag_to     :: XY -- likely not needed as they will be in the input event, but whatever
-  , _mouseDrag_state  :: MouseDragState
+  _mouseDrag_from        :: XY -- TODO rename to mousedrag from
+  , _mouseDrag_button    :: MouseButton -- tracks button on start of drag
+  , _mouseDrag_modifiers :: [MouseModifier] -- tracks modifiers held at current state of drag
+  , _mouseDrag_to        :: XY -- likely not needed as they will be in the input event, but whatever
+  , _mouseDrag_state     :: MouseDragState
 } deriving (Show, Eq)
 
 emptyMouseDrag :: MouseDrag
 emptyMouseDrag = MouseDrag {
     _mouseDrag_from  = 0
     , _mouseDrag_button = MouseButton_Left
+    , _mouseDrag_modifiers = []
     , _mouseDrag_to    = 0
     , _mouseDrag_state = MouseDragState_Cancelled
   }
@@ -112,13 +114,15 @@ newDrag :: LMouseData -> MouseDrag
 newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
     _mouseDrag_from = _lMouseData_position
     , _mouseDrag_button = _lMouseData_button
+    , _mouseDrag_modifiers = [] -- TODO
     , _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = MouseDragState_Down
   }
 
 continueDrag :: LMouseData -> MouseDrag -> MouseDrag
 continueDrag LMouseData {..} md = md {
-    _mouseDrag_to = _lMouseData_position
+    _mouseDrag_modifiers = [] -- TODO
+    , _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = if _lMouseData_isRelease
       then MouseDragState_Up
       else MouseDragState_Dragging

@@ -28,10 +28,10 @@ import           Control.Monad.Fix
 import           Data.Default                  (def)
 import           Data.Foldable                 (minimum)
 import qualified Data.IntMap                   as IM
+import qualified Data.List                     as L
+import           Data.Maybe
 import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
-
-
 
 data EverythingFrontendCmd =
   EFCmdTool Tool
@@ -127,6 +127,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
             canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
 
+          -- TODO clean up unecessary monad or move sampling above into use site
           everything'' <- case _everythingFrontend_selectedTool of
             Tool_Pan -> do
               -- add delta to pan position
@@ -156,10 +157,23 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     return everything'
                   Just i  -> undefined -- TODO manipulate
 
-                MouseDragState_Up -> undefined -- TODO finalize selection if we didn't click on anything to start
+                MouseDragState_Up -> case undefined of
+                  -- finalize selection if we didn't click on anything to start
+                  _ -> do
+                    layerPosMap <- sample . current $ _pfo_layerPosMap
+                    let
+                      bps = _everythingBackend_broadPhaseState backend
+                      shiftClick = isJust $ find (==MouseModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                      boxSize = canvasDragTo - canvasDragFrom
+                      selectBox = LBox canvasDragFrom boxSize
+                      selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
+                      mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
+                      lps = case mapToLp selectedRids of
+                        [] -> []
+                        xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
+                      -- TODO set selection, why is it in backend?
+                    return $ everything'
 
-
-              undefined
             -- create new elements
             -- note for click + drag on creating new elts, we repeatedly undo + create new elts
             _ -> do
