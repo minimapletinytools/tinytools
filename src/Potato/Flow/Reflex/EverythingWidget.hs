@@ -155,11 +155,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                   FrontendOperation_Manipulate _ i  -> undefined -- TODO manipulate
                   _ -> do
-                    -- TODO (store selection box in everything frontend for rendering?)
-                    return everything'
+                    return $ everything' {
+                        _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom (canvasDragTo - canvasDragFrom))
+                      }
 
-                MouseDragState_Up -> case undefined of
-                  -- finalize selection if we didn't click on anything to start
+                MouseDragState_Up -> case _everythingFrontend_lastOperation of
+                  -- if we were manipulating, don't need to do anything
+                  FrontendOperation_Manipulate _ _ -> return everything'
+                  -- if we weren't manipulating, then we were selecting, then finalize selection
                   _ -> do
                     layerPosMap <- sample . current $ _pfo_layerPosMap
                     let
@@ -172,8 +175,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       lps = case mapToLp selectedRids of
                         [] -> []
                         xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
-                      -- TODO set selection, why is it in backend?
-                    return $ everything'
+                    -- selection is stored in backend so pass it on to backend
+                    return $ everything' {
+                        _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
+                      }
 
             -- create new elements
             -- note for click + drag on creating new elts, we repeatedly undo + create new elts
@@ -193,9 +198,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     }
                 -- TODO finish other types
                 _ -> undefined
-
-
-          -- TODO set the new manipulate command or whatever
           return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
         EFCmdKeyboard x -> case x of
           KeyboardData KeyboardKey_Esc _ -> let
@@ -221,17 +223,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   everythingFrontendDyn :: Dynamic t EverythingFrontend
     <- foldDynM foldEverythingFrontendFn emptyEverythingFrontend everythingFrontendEvent
 
+  let
+    frontendOperationEv = updated (fmap _everythingFrontend_lastOperation everythingFrontendDyn)
   --------------
   -- PFOUTPUT --
   --------------
   let
-    backendPFEvent = fforMaybe (updated (fmap _everythingFrontend_lastOperation everythingFrontendDyn)) $ \case
+    backendPFEvent = fforMaybe frontendOperationEv $ \case
       FrontendOperation_Manipulate cmd _ -> Just cmd
       FrontendOperation_Undo -> Just PFEUndo
       _ -> Nothing
-
-
-
 
     -- connect events to PFConfig
     -- TODO maybe not all events will come from backendPFEvent
@@ -278,9 +279,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- EVERYTHING BACKEND --
   ------------------------
   let
+    frontendOperation_select = fforMaybe frontendOperationEv $ \case
+      FrontendOperation_Select addToSelection selection -> Just $ EBCmdSelect addToSelection selection
+      _ -> Nothing
+
     everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
+      , frontendOperation_select
       , EBCmdChanges <$> _pfo_potato_changed
       ]
 

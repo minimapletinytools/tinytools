@@ -171,7 +171,6 @@ computeSelectionType = foldl' foldfn SMTNone where
       _          -> SMTNone
     _ -> SMTBoundingBox
 
-
 -- MANIPULATORS
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point deriving (Show, Eq)
 
@@ -224,8 +223,12 @@ data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
+
+  -- TODO probably change to (Maybe PFEventTag)
   | FrontendOperation_Manipulate PFEventTag ManipulatorIndex
-  | FrontendOperation_Undo -- do I combine with manipulate?
+  | FrontendOperation_Undo
+  | FrontendOperation_Selecting LBox
+  | FrontendOperation_Select Bool Selection
   deriving (Show, Eq)
 
 -- first pass processing inputs

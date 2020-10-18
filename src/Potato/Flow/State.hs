@@ -11,8 +11,8 @@ module Potato.Flow.State (
   , pFState_maxID
   , sPotatoFlow_to_pFState
   , pFState_to_sPotatoFlow
-
   , pFState_toCanvasCoordinates
+  , pfState_layerPos_to_superSEltLabel
 
   , emptyPFState
   , do_newElts
@@ -121,6 +121,12 @@ pFState_to_sPotatoFlow PFState {..} = r where
 pFState_toCanvasCoordinates :: PFState -> XY -> XY
 pFState_toCanvasCoordinates PFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
   LBox (V2 sx sy) _ = _sCanvas_box _pFState_canvas
+
+-- expects LayerPos to be valid in PFState
+pfState_layerPos_to_superSEltLabel :: PFState -> LayerPos -> SuperSEltLabel
+pfState_layerPos_to_superSEltLabel PFState {..} lp = (rid, lp, seltl) where
+  rid = Seq.index _pFState_layers lp
+  seltl = (IM.!) _pFState_directory rid
 
 do_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_newElts seltls PFState {..} = (r, fmap Just changes) where
