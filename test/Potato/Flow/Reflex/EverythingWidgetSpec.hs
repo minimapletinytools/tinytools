@@ -215,12 +215,12 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- TODO move to helper function
         , (FunctionPredicate (
           (\case
-            FrontendOperation_Manipulate -> ("",True)
+            FrontendOperation_Manipulate _ _ -> ("",True)
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
           . _everythingCombined_lastOperation))
         , (FunctionPredicate (
           (\case
-            FrontendOperation_Manipulate -> ("",True)
+            FrontendOperation_Manipulate _ _ -> ("",True)
             o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
           . _everythingCombined_lastOperation))
         , Combine [

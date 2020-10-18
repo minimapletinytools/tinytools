@@ -128,7 +128,7 @@ data PFEventTag =
   | PFEUndo
   | PFERedo
   | PFELoad SPotatoFlow
-  deriving (Show)
+  deriving (Show, Eq)
 
 holdPF ::
   forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)

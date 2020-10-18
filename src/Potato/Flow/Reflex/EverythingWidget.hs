@@ -106,12 +106,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       let
         -- clear per frame statuses for next frame
         everything' = everything {
-            _everythingFrontend_command = Nothing
-            , _everythingFrontend_lastOperation = FrontendOperation_None
-            , _everythingFrontend_manipulationIndex = Nothing
+            _everythingFrontend_lastOperation = FrontendOperation_None
           }
+        -- other useful stuff
+        undoFirst = case _everythingFrontend_lastOperation of
+          FrontendOperation_Manipulate _ _ -> True
+          _                                -> False
 
       backend <- sample . current $ everythingBackendDyn
+
+
 
       case cmd of
         EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
@@ -139,9 +143,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
             Tool_Select -> do
-              let
-                -- if we have manipulationIndex then that means we are in the middle of an operation
-                undoFirst = isJust _everythingFrontend_manipulationIndex
                 -- we could/should cache this but it happens to work out if we don't
                 -- TODO this isn't true, another manipulator could end up in the start space when manipulating fix
                 -- TODO should we be fancy about multiple manipulators and choosing one depending on where we end up dragging?
@@ -151,11 +152,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   -- no manipulators, don't do anything, we will select upon releasing
                   Nothing -> return everything'
                   Just m  -> undefined -- TODO set manipulation index
-                MouseDragState_Dragging -> case _everythingFrontend_manipulationIndex of
-                  Nothing -> do
+                MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
+                  FrontendOperation_Manipulate _ i  -> undefined -- TODO manipulate
+                  _ -> do
                     -- TODO (store selection box in everything frontend for rendering?)
                     return everything'
-                  Just i  -> undefined -- TODO manipulate
 
                 MouseDragState_Up -> case undefined of
                   -- finalize selection if we didn't click on anything to start
@@ -182,15 +183,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
                 newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
-                -- if we have manipulationIndex then that means we are in the middle of an operation
-                undoFirst = isJust _everythingFrontend_manipulationIndex
               case _everythingFrontend_selectedTool of
                 Tool_Box ->
                   return everything' {
-                      _everythingFrontend_lastOperation = FrontendOperation_Manipulate
-                      -- TODO add undofirst
-                      , _everythingFrontend_command = Just (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
-                      , _everythingFrontend_manipulationIndex = Just 0
+                      _everythingFrontend_lastOperation =
+                        FrontendOperation_Manipulate
+                          (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
+                          0
                     }
                 -- TODO finish other types
                 _ -> undefined
@@ -211,10 +210,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
                   return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
                 FrontendOperation_LayerDrag -> undefined
-                FrontendOperation_Manipulate -> assert (isJust _everythingFrontend_command) $
+                FrontendOperation_Manipulate _ _-> do
                   -- undo the last operation
                   -- TODO do I need to do anything else here?
-                  return everything'' { _everythingFrontend_command = Just PFEUndo }
+                  return everything'' { _everythingFrontend_lastOperation = FrontendOperation_Undo }
                 _ -> undefined
           _                              -> undefined
         _          -> undefined
@@ -226,7 +225,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- PFOUTPUT --
   --------------
   let
-    backendPFEvent = fmapMaybe _everythingFrontend_command $ updated everythingFrontendDyn
+    backendPFEvent = fforMaybe (updated (fmap _everythingFrontend_lastOperation everythingFrontendDyn)) $ \case
+      FrontendOperation_Manipulate cmd _ -> Just cmd
+      FrontendOperation_Undo -> Just PFEUndo
+      _ -> Nothing
+
+
+
 
     -- connect events to PFConfig
     -- TODO maybe not all events will come from backendPFEvent

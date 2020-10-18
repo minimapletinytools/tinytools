@@ -219,22 +219,23 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
     , _everythingBackend_manipulators = toMouseManipulators newSelection
   }
 
+-- TODO all data to pass onto backend/PFOutput should go here
 data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
-  -- must be in sync with _everythingFrontend_command
-  | FrontendOperation_Manipulate
+  | FrontendOperation_Manipulate PFEventTag ManipulatorIndex
+  | FrontendOperation_Undo -- do I combine with manipulate?
   deriving (Show, Eq)
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
-  _everythingFrontend_selectedTool        :: Tool
-  , _everythingFrontend_pan               :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingFrontend_mouseDrag         :: MouseDrag -- last mouse dragging state
-  , _everythingFrontend_command           :: Maybe PFEventTag
-  , _everythingFrontend_lastOperation     :: FrontendOperation
-  , _everythingFrontend_manipulationIndex :: Maybe ManipulatorIndex -- index of active MouseManipulator, TODO consider comining with lastOperation
+  _everythingFrontend_selectedTool    :: Tool
+  , _everythingFrontend_pan           :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
+  , _everythingFrontend_lastOperation :: FrontendOperation
+
+  -- TODO needs a way to pass selection onto backend
 } deriving (Show)
 
 -- second pass, taking outputs from PFOutput
@@ -253,9 +254,7 @@ emptyEverythingFrontend = EverythingFrontend {
     _everythingFrontend_selectedTool   = Tool_Select
     , _everythingFrontend_pan          = V2 0 0
     , _everythingFrontend_mouseDrag = emptyMouseDrag
-    , _everythingFrontend_command = Nothing
     , _everythingFrontend_lastOperation = FrontendOperation_None
-    , _everythingFrontend_manipulationIndex = Nothing
   }
 
 emptyEverythingBackend :: EverythingBackend
@@ -269,20 +268,18 @@ emptyEverythingBackend = EverythingBackend {
 
 -- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
-  _everythingCombined_selectedTool        :: Tool
-  , _everythingCombined_pan               :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingCombined_mouseDrag         :: MouseDrag -- last mouse dragging state
-  , _everythingCombined_command           :: Maybe PFEventTag
-  , _everythingCombined_lastOperation     :: FrontendOperation
-  , _everythingCombined_manipulationIndex :: Maybe ManipulatorIndex
-  , _everythingCombined_selection         :: Selection
-  , _everythingCombined_layers            :: Seq LayerDisplay
-  , _everythingCombined_manipulators      :: MouseManipulatorSet
-  , _everythingCombined_broadPhase        :: BroadPhaseState
-  , _everythingCombined_renderedCanvas    :: RenderedCanvas
+  _everythingCombined_selectedTool     :: Tool
+  , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
+  , _everythingCombined_lastOperation  :: FrontendOperation
+  , _everythingCombined_selection      :: Selection
+  , _everythingCombined_layers         :: Seq LayerDisplay
+  , _everythingCombined_manipulators   :: MouseManipulatorSet
+  , _everythingCombined_broadPhase     :: BroadPhaseState
+  , _everythingCombined_renderedCanvas :: RenderedCanvas
 
   -- from PFOutput, remember to set
-  , _everythingCombined_pFState           :: PFState
+  , _everythingCombined_pFState        :: PFState
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> PFState -> EverythingCombined_DEBUG
@@ -290,9 +287,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     _everythingCombined_selectedTool =   _everythingFrontend_selectedTool
     , _everythingCombined_pan        = _everythingFrontend_pan
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
-    , _everythingCombined_command    = _everythingFrontend_command
     , _everythingCombined_lastOperation = _everythingFrontend_lastOperation
-    , _everythingCombined_manipulationIndex = _everythingFrontend_manipulationIndex
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators
