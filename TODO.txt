@@ -3,6 +3,7 @@
   -test cancel in creation case
   -test cancel in manipulate case
 -selection tests
+  -basic
   -test cancel
   -test add/noadd to select
   -test single click select

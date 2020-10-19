@@ -219,7 +219,7 @@ spec = do
     fromHUnitTest $ pair_test "save8" save_network bs_save_8
 
     fromHUnitTest $ undoredo_test 10
-    fromHUnitTest $ nstep_test 10000
+    --fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
     fromHUnitTest $ save_load_test
 

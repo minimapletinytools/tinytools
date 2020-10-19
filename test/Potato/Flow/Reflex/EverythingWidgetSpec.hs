@@ -163,6 +163,27 @@ showEverythingPredicate (PFStateFunctionPredicate f) e = fst . f $ _everythingCo
 showEverythingPredicate AlwaysPass _ = "always pass"
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
+
+-- umm, is there a better way to do this? Too bad you can't pass a pattern match as an argument or can you?
+data LastOperationType = LastOperationType_Manipulate | LastOperationType_Undo | LastOperationType_None
+checkLastOperationPredicate :: LastOperationType -> EverythingPredicate
+checkLastOperationPredicate operation = case operation of
+  LastOperationType_Manipulate -> FunctionPredicate (
+    (\case
+      FrontendOperation_Manipulate _ _ -> ("",True)
+      o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
+    . _everythingCombined_lastOperation)
+  LastOperationType_None -> FunctionPredicate (
+    (\case
+      FrontendOperation_None -> ("",True)
+      o -> ("Expected FrontendOperation_None got " <> show o, False))
+    . _everythingCombined_lastOperation)
+  LastOperationType_Undo -> FunctionPredicate (
+    (\case
+      FrontendOperation_Undo -> ("",True)
+      o -> ("Expected FrontendOperation_Undo got " <> show o, False))
+    . _everythingCombined_lastOperation)
+
 checkNumElts :: Int -> PFState -> (Text, Bool)
 checkNumElts n PFState {..} = (t,r) where
   ds = IM.size _pFState_directory
@@ -174,6 +195,7 @@ everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
+    -- these line up with `expected` below
     bs = [
         EWCNothing -- test basic panning
         , EWCTool Tool_Pan
@@ -190,8 +212,20 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCTool Tool_Box
         -- drag from (1,1) to (10,10) and release
         , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
         , EWCNothing -- dummy to check state
+
+        , EWCNothing -- create another elt, but cancel it
+        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left)
+        , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+        , EWCNothing -- dummy to check state
+
+        --, EWCNothing -- create another elt
+
+        -- select the elt we just created
+
 
         -- TODO modify created elt
         -- check in layers and check render
@@ -212,20 +246,19 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         , AlwaysPass -- create elt
         , (EqPredicate _everythingCombined_selectedTool Tool_Box)
-        -- TODO move to helper function
-        , (FunctionPredicate (
-          (\case
-            FrontendOperation_Manipulate _ _ -> ("",True)
-            o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
-          . _everythingCombined_lastOperation))
-        , (FunctionPredicate (
-          (\case
-            FrontendOperation_Manipulate _ _ -> ("",True)
-            o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
-          . _everythingCombined_lastOperation))
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_None
         , Combine [
             PFStateFunctionPredicate (checkNumElts 1)
+            -- TODO test other things
           ]
+
+        , AlwaysPass -- create another elt, but cancel it
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_Undo
+        , PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
       ]
 
 
@@ -244,7 +277,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- expect each output matches predicate
   -- if no output event, uses output behavior to test predicate
   forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
-      testfn ewcd = (assertBool . T.unpack) ((showEverythingPredicate p ewcd) <> " for " <> show i) (testEverythingPredicate p ewcd)
+      testfn ewcd = (assertBool . T.unpack) ((showEverythingPredicate p ewcd) <> " [test index = " <> show i <> "]") (testEverythingPredicate p ewcd)
     in case me of
       Just e  -> testfn e
       Nothing -> testfn b

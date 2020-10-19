@@ -118,7 +118,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
 
       case cmd of
-        EFCmdTool x -> return $ everything { _everythingFrontend_selectedTool = x }
+        EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
           pFState <- sample . current $ _pfo_pFState
           let
@@ -188,16 +188,20 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
                 newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
-              case _everythingFrontend_selectedTool of
-                Tool_Box ->
-                  return everything' {
-                      _everythingFrontend_lastOperation =
-                        FrontendOperation_Manipulate
-                          (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
-                          0
-                    }
-                -- TODO finish other types
-                _ -> undefined
+              case _mouseDrag_state mouseDrag of
+                -- if we were manipulating, don't need to do anything
+                MouseDragState_Up -> return everything'
+                -- otherwise, create a new elt, note this will break if you change tools in the middle of dragging TODO should I bother to fix this?
+                _ -> case _everythingFrontend_selectedTool of
+                  Tool_Box ->
+                    return everything' {
+                        _everythingFrontend_lastOperation =
+                          FrontendOperation_Manipulate
+                            (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
+                            0
+                      }
+                  -- TODO finish other types
+                  _ -> undefined
           return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
         EFCmdKeyboard x -> case x of
           KeyboardData KeyboardKey_Esc _ -> let
