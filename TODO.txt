@@ -1,12 +1,13 @@
 ::NEWEST TODO::
+-undo first does not reset RID counter for some reason
 -manipulate tests
   DONE-test cancel in creation case
   -test cancel in manipulate case
 -selection tests
-  -basic
+  DONE-basic
   -test cancel
   -test add/noadd to select
-  -test single click select
+  DONE-test single click select
 -broadphase tests
 -connect RenderedCanvas
 DONE-fix memory leak again ;__;

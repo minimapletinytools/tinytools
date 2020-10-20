@@ -7,7 +7,7 @@ module Potato.Flow.Workspace (
   , workspaceFromState
   , undoWorkspace
   , redoWorkspace
-  , doCmdWorkspaceUndoFirst
+  --, doCmdWorkspaceUndoFirst
   , doCmdWorkspace
   , pfc_addElt_to_newElts
   , pfc_addFolder_to_newElts
@@ -46,7 +46,7 @@ data PFWorkspace = PFWorkspace {
 
 instance NFData PFWorkspace
 
--- TODO every element should get added to change list
+-- TODO add every element should get added to change list
 workspaceFromState :: PFState -> PFWorkspace
 workspaceFromState s = PFWorkspace s IM.empty emptyActionStack
 
@@ -69,8 +69,9 @@ redoWorkspace pfw = r where
     c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_state pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
-doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
-doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)
+-- moved to entry
+--doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
+--doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
 --doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem

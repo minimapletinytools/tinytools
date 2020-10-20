@@ -174,11 +174,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       selectBox = LBox canvasDragFrom boxSize
                       selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
                       mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
+                      -- TODO only select one thing when single click, otherwise select area (single click implementation below)
                       lps = case mapToLp selectedRids of
                         [] -> []
                         xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
                     -- selection is stored in backend so pass it on to backend
-                    return $ everything' {
+                    return $ traceShow selectedRids $ traceShow layerPosMap $  everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
                       }
 
@@ -222,6 +223,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   -- undo the last operation
                   -- TODO do I need to do anything else here?
                   return everything'' { _everythingFrontend_lastOperation = FrontendOperation_Undo }
+                FrontendOperation_Selecting _ -> return everything''
+                -- change to just return everything''
+                -- leaving as undefined now to catch for accidents
                 _ -> undefined
           _                              -> undefined
         _          -> undefined
@@ -235,7 +239,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- PFOUTPUT --
   --------------
   let
-    backendPFEvent = fforMaybe frontendOperationEv $ \case
+    backendPFEvent = traceEvent "PF: " $ fforMaybe frontendOperationEv $ \case
       FrontendOperation_Manipulate cmd _ -> Just cmd
       FrontendOperation_Undo -> Just PFEUndo
       _ -> Nothing

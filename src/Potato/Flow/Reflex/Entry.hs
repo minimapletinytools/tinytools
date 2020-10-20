@@ -111,8 +111,13 @@ doCmdPFTotalState cmd pfts = r where
   --isValidAfter = pFState_isValid stateAfter
   --trace (show cmd <> "\n" <> debugPrintBeforeAfterState stateBefore stateAfter) r'
 
-doCmdPFTTotalStateUndoFirst :: PFCmd -> PFTotalState -> PFTotalState
-doCmdPFTTotalStateUndoFirst cmd pfts = pfts { _pFTotalState_workspace = doCmdWorkspaceUndoFirst cmd (_pFTotalState_workspace pfts) }
+doCmdPFTTotalStateUndoFirst :: (PFState -> PFCmd) -> PFTotalState -> PFTotalState
+doCmdPFTTotalStateUndoFirst cmdFn pfts = r where
+  ws = _pFTotalState_workspace pfts
+  undoedws = undoWorkspace ws
+  undoedpfs = _pFWorkspace_state undoedws
+  cmd = cmdFn undoedpfs
+  r = pfts { _pFTotalState_workspace = doCmdWorkspace cmd undoedws }
 
 
 data PFEventTag =
@@ -163,12 +168,12 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
       lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
       r = case evt of
         PFEAddElt (undo, x) -> if undo
-          then doCmdPFTTotalStateUndoFirst (pfc_addElt_to_newElts lastState x) pfts
+          then doCmdPFTTotalStateUndoFirst (\pfs -> pfc_addElt_to_newElts pfs x) pfts
           else doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
         PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
         PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
         PFEManipulate (undo, x) -> if undo
-          then doCmdPFTTotalStateUndoFirst (PFCManipulate ==> x) pfts
+          then doCmdPFTTotalStateUndoFirst (const (PFCManipulate ==> x)) pfts
           else doCmdPFTotalState (PFCManipulate ==> x) pfts
         PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
         PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts

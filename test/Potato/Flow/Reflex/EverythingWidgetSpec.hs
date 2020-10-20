@@ -195,7 +195,7 @@ numSelectedEltsEqualPredicate :: Int -> EverythingPredicate
 numSelectedEltsEqualPredicate n = FunctionPredicate $
   (\s ->
     let nSelected = Seq.length s
-    in ("Selected: " <> show s <> " expected: " <> show n, nSelected == n))
+    in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
   . _everythingCombined_selection
 
 
@@ -243,12 +243,22 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         -- now select elts A + B
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left)
+
+        -- beging selecting nothing and cancel
+        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left)
+        , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+
 
         -- TODO broken until shift select is added
         -- now shift unselect elt B
         --, EWCMouse (LMouseData (V2 1 21) False MouseButton_Left)
         --, EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+
+        -- unselect
+        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left)
 
 
         -- TODO modify created elt
@@ -298,6 +308,19 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- now select elts A + B
         , AlwaysPass
         , numSelectedEltsEqualPredicate 2
+
+        -- beging selecting nothing and cancel
+        , AlwaysPass
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 2
+
+        -- now shift unselect elt B
+        -- TODO
+
+        -- unselect
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 0
+
 
 
 
