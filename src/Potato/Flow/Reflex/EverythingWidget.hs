@@ -171,15 +171,20 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       bps = _everythingBackend_broadPhaseState backend
                       shiftClick = isJust $ find (==MouseModifier_Shift) (_mouseDrag_modifiers mouseDrag)
                       boxSize = canvasDragTo - canvasDragFrom
+                      singleClick = boxSize == 0
                       selectBox = LBox canvasDragFrom boxSize
                       selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
                       mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
-                      -- TODO only select one thing when single click, otherwise select area (single click implementation below)
-                      lps = case mapToLp selectedRids of
-                        [] -> []
-                        xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
+                      lps' = mapToLp selectedRids
+                      lps = if singleClick
+                        -- single click, select top elt only
+                        then case lps' of
+                          [] -> []
+                          xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
+                        -- otherwise select everything
+                        else lps'
                     -- selection is stored in backend so pass it on to backend
-                    return $ traceShow selectedRids $ traceShow layerPosMap $  everything' {
+                    return $  everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
                       }
 
@@ -239,7 +244,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- PFOUTPUT --
   --------------
   let
-    backendPFEvent = traceEvent "PF: " $ fforMaybe frontendOperationEv $ \case
+    --backendPFEvent = traceEvent "PF: " $ fforMaybe frontendOperationEv $ \case
+    backendPFEvent = fforMaybe frontendOperationEv $ \case
       FrontendOperation_Manipulate cmd _ -> Just cmd
       FrontendOperation_Undo -> Just PFEUndo
       _ -> Nothing
