@@ -208,57 +208,55 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- test basic panning
         EWCTool Tool_Pan
         -- drag to (1, 1) and release
-        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
         -- drag to (10, 15) and cancel without releasing
-        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left [])
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
         -- create elt A
         , EWCTool Tool_Box
         -- drag from (1,1) to (10,10) and release
-        , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
         , EWCNothing -- dummy to check state
 
         -- create another elt, but cancel it
-        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
         , EWCNothing -- dummy to check state
 
         -- create elt B
-        , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
         , EWCNothing -- dummy to check state
 
         -- select elt B
         , EWCTool Tool_Select
-        , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [])
 
         -- now select elts A + B
-        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
         -- beging selecting nothing and cancel
-        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [])
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
-
-        -- TODO broken until shift select is added
         -- now shift unselect elt B
-        --, EWCMouse (LMouseData (V2 1 21) False MouseButton_Left)
-        --, EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [MouseModifier_Shift])
 
         -- unselect
-        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left)
-        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left)
+        , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
 
         -- TODO modify created elt
@@ -315,7 +313,8 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , numSelectedEltsEqualPredicate 2
 
         -- now shift unselect elt B
-        -- TODO
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 1
 
         -- unselect
         , AlwaysPass

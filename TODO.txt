@@ -1,12 +1,13 @@
 ::NEWEST TODO::
--undo first does not reset RID counter for some reason
+DONE-add modifiers to LMouseData
+DONE-undo first does not reset RID counter for some reason
 -manipulate tests
   DONE-test cancel in creation case
   -test cancel in manipulate case
 -selection tests
   DONE-basic
-  -test cancel
-  -test add/noadd to select
+  DONE-test cancel
+  DONE-test add/noadd to select
   DONE-test single click select
 -broadphase tests
 -connect RenderedCanvas

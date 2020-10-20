@@ -85,13 +85,13 @@ data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragS
 
 -- TODO add modifier
 -- TODO is this the all encompassing mouse event we want?
--- only one modifier allowed at a time for our app
 -- TODO is there a way to optionally support more fidelity here?
 -- mouse drags are sent as click streams
 data LMouseData = LMouseData {
   _lMouseData_position    :: XY
   , _lMouseData_isRelease :: Bool
   , _lMouseData_button    :: MouseButton
+  , _lMouseData_modifiers :: [MouseModifier]
 } deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
@@ -115,18 +115,18 @@ newDrag :: LMouseData -> MouseDrag
 newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
     _mouseDrag_from = _lMouseData_position
     , _mouseDrag_button = _lMouseData_button
-    , _mouseDrag_modifiers = [] -- TODO
+    , _mouseDrag_modifiers = _lMouseData_modifiers
     , _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = MouseDragState_Down
   }
 
 continueDrag :: LMouseData -> MouseDrag -> MouseDrag
 continueDrag LMouseData {..} md = md {
-    _mouseDrag_modifiers = [] -- TODO
-    , _mouseDrag_to = _lMouseData_position
+    _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = if _lMouseData_isRelease
       then MouseDragState_Up
       else MouseDragState_Dragging
+    , _mouseDrag_modifiers = _lMouseData_modifiers
   }
 
 cancelDrag :: MouseDrag -> MouseDrag
