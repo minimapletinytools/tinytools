@@ -1,6 +1,6 @@
 ::NEWEST TODO::
 -manipulate tests
-  -test cancel in creation case
+  DONE-test cancel in creation case
   -test cancel in manipulate case
 -selection tests
   -basic

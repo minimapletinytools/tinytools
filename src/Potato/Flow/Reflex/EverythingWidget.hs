@@ -143,12 +143,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
             Tool_Select -> do
+              let
                 -- we could/should cache this but it happens to work out if we don't
                 -- TODO this isn't true, another manipulator could end up in the start space when manipulating fix
                 -- TODO should we be fancy about multiple manipulators and choosing one depending on where we end up dragging?
                 --manipulatorUnderMouseStart = checkMouseDownManipulators canvasDragFrom (_everythingBackend_manipulators backend)
+                manipulatorUnderMouseStart = Nothing
               case _mouseDrag_state mouseDrag of
-                MouseDragState_Down -> case undefined of
+                MouseDragState_Down -> case manipulatorUnderMouseStart of
                   -- no manipulators, don't do anything, we will select upon releasing
                   Nothing -> return everything'
                   Just m  -> undefined -- TODO set manipulation index

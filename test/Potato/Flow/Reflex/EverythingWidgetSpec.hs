@@ -191,14 +191,22 @@ checkNumElts n PFState {..} = (t,r) where
   r = ds == n && ls == n
   t = "expected: " <> show n <> " dir: " <> show ds <> " layers: " <> show ls
 
+numSelectedEltsEqualPredicate :: Int -> EverythingPredicate
+numSelectedEltsEqualPredicate n = FunctionPredicate $
+  (\s ->
+    let nSelected = Seq.length s
+    in ("Selected: " <> show s <> " expected: " <> show n, nSelected == n))
+  . _everythingCombined_selection
+
+
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
   -- TODO test something
   let
     -- these line up with `expected` below
     bs = [
-        EWCNothing -- test basic panning
-        , EWCTool Tool_Pan
+        -- test basic panning
+        EWCTool Tool_Pan
         -- drag to (1, 1) and release
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left)
@@ -208,7 +216,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left)
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
-        , EWCNothing -- create elt
+        -- create elt A
         , EWCTool Tool_Box
         -- drag from (1,1) to (10,10) and release
         , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left)
@@ -216,15 +224,31 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
         , EWCNothing -- dummy to check state
 
-        , EWCNothing -- create another elt, but cancel it
+        -- create another elt, but cancel it
         , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left)
         , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left)
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
         , EWCNothing -- dummy to check state
 
-        --, EWCNothing -- create another elt
+        -- create elt B
+        , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left)
+        , EWCNothing -- dummy to check state
 
-        -- select the elt we just created
+        -- select elt B
+        , EWCTool Tool_Select
+        , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+
+        -- now select elts A + B
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left)
+        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
+
+        -- TODO broken until shift select is added
+        -- now shift unselect elt B
+        --, EWCMouse (LMouseData (V2 1 21) False MouseButton_Left)
+        --, EWCMouse (LMouseData (V2 1 21) True MouseButton_Left)
 
 
         -- TODO modify created elt
@@ -235,8 +259,8 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
       ]
 
     expected = [
-        AlwaysPass -- very basic panning
-        , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
+        -- very basic panning
+        (EqPredicate _everythingCombined_selectedTool Tool_Pan)
         , (EqPredicate _everythingCombined_pan (V2 0 0))
         , (EqPredicate _everythingCombined_pan (V2 1 1))
         , (EqPredicate _everythingCombined_pan (V2 1 1))
@@ -244,7 +268,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , (EqPredicate _everythingCombined_pan (V2 10 15))
         , (EqPredicate _everythingCombined_pan (V2 1 1))
 
-        , AlwaysPass -- create elt
+        -- create elt A
         , (EqPredicate _everythingCombined_selectedTool Tool_Box)
         , checkLastOperationPredicate LastOperationType_Manipulate
         , checkLastOperationPredicate LastOperationType_Manipulate
@@ -254,11 +278,29 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
             -- TODO test other things
           ]
 
-        , AlwaysPass -- create another elt, but cancel it
+        -- create another elt, but cancel it
         , checkLastOperationPredicate LastOperationType_Manipulate
         , checkLastOperationPredicate LastOperationType_Manipulate
         , checkLastOperationPredicate LastOperationType_Undo
         , PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
+
+        -- create elt B
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_Manipulate
+        , checkLastOperationPredicate LastOperationType_None
+        , PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
+
+        -- select elt B
+        , (EqPredicate _everythingCombined_selectedTool Tool_Select)
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 1
+
+        -- now select elts A + B
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 2
+
+
+
       ]
 
 
