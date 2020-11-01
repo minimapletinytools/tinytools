@@ -172,6 +172,13 @@ computeSelectionType = foldl' foldfn SMTNone where
       _          -> SMTNone
     _ -> SMTBoundingBox
 
+
+changeSelection :: Selection -> EverythingBackend -> EverythingBackend
+changeSelection newSelection everything@EverythingBackend {..} = everything {
+    _everythingBackend_selection = newSelection
+    , _everythingBackend_manipulators = toMouseManipulators newSelection
+  }
+
 -- MANIPULATORS
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point deriving (Show, Eq)
 
@@ -188,6 +195,8 @@ type ManipulatorIndex = Int
 -- questionable manipulator helper functions
 checkMouseDownManipulators :: XY -> MouseManipulatorSet -> Maybe MouseManipulator
 checkMouseDownManipulators pos = find (\mm -> _mouseManipulator_pos mm == pos)
+
+
 
 -- REDUCERS/REDUCER HELPERS
 -- TODO finish this function
@@ -213,11 +222,6 @@ toMouseManipulators selection = if Seq.length selection > 1
     msboxes = sequence $ fmap fmapfn selection
     bb = undefined
 
-changeSelection :: Selection -> EverythingBackend -> EverythingBackend
-changeSelection newSelection everything@EverythingBackend {..} = everything {
-    _everythingBackend_selection = newSelection
-    , _everythingBackend_manipulators = toMouseManipulators newSelection
-  }
 
 -- TODO all data to pass onto backend/PFOutput should go here
 data FrontendOperation =

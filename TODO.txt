@@ -1,10 +1,12 @@
 ::NEWEST TODO::
+-figure out manipulator drag through another manipulator issue
+  -also we want a general interface for all types of manipulators
 DONE-add modifiers to LMouseData
 DONE-undo first does not reset RID counter for some reason
 -manipulate tests
   DONE-test cancel in creation case
   -test cancel in manipulate case
--selection tests
+DONE-selection tests
   DONE-basic
   DONE-test cancel
   DONE-test add/noadd to select
