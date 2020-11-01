@@ -198,6 +198,15 @@ numSelectedEltsEqualPredicate n = FunctionPredicate $
     in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
   . _everythingCombined_selection
 
+firstSelectedSuperSEltLabelPredicate :: (SuperSEltLabel -> Bool) -> EverythingPredicate
+firstSelectedSuperSEltLabelPredicate f = FunctionPredicate $
+  (\s ->
+    let
+      mfirst = Seq.lookup 0 s
+    in case mfirst of
+      Nothing    -> ("Selection is empty", False)
+      Just first -> ("First selected: " <> show first, f first))
+  . _everythingCombined_selection
 
 everything_basic_test :: Test
 everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
@@ -264,7 +273,8 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         -- manipulate A
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
-        -- check in layers and check render
+        , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [])
 
         -- TODO delete the elt
         -- check in layers and check render
@@ -330,6 +340,10 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
 
         -- manipulate A
         , checkLastOperationPredicate LastOperationType_Manipulate
+        , AlwaysPass
+        , firstSelectedSuperSEltLabelPredicate (\(_,_,SEltLabel _ selt) -> case selt of
+          SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
+          _                                  -> False)
 
       ]
 

@@ -26,12 +26,17 @@ import           Control.Exception             (assert)
 import           Control.Lens
 import           Control.Monad.Fix
 import           Data.Default                  (def)
+import           Data.Dependent.Sum            (DSum ((:=>)))
 import           Data.Foldable                 (minimum)
 import qualified Data.IntMap                   as IM
 import qualified Data.List                     as L
 import           Data.Maybe
 import qualified Data.Sequence                 as Seq
 import           Data.Tuple.Extra
+
+
+catMaybesSeq :: Seq (Maybe a) -> Seq a
+catMaybesSeq = fmap fromJust . Seq.filter isJust
 
 data EverythingFrontendCmd =
   EFCmdTool Tool
@@ -113,8 +118,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           }
         -- other useful stuff
         undoFirst = case _everythingFrontend_lastOperation of
-          FrontendOperation_Manipulate _ _ -> True
-          _                                -> False
+          FrontendOperation_Manipulate mpfe _ -> isJust mpfe
+          _                                   -> False
         selection = _everythingBackend_selection backend
         manipulators = toMouseManipulators selection
 
@@ -149,19 +154,24 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               case _mouseDrag_state mouseDrag of
                 MouseDragState_Down -> let
                     mmi = findFirstMouseManipulator canvasDragTo manipulators
-                  in case traceShow mmi $ mmi of
+                  in case mmi of
                     Nothing -> return everything'
                     Just mi -> return everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
                       }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                   FrontendOperation_Manipulate _ i  ->  return $ everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate op mi
+                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just op) mi
                         }
                       where
                         smt = computeSelectionType selection
-                        mi = continueManipulate canvasDragTo i smt manipulators
-                        op = undefined -- TODO!!!
+                        (m, mi) = continueManipulate canvasDragTo i smt manipulators
+                        LBox p _ = _mouseManipulator_box m
+                        controller = CTagBox :=> (Identity $ CBox {
+                            _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                          })
+                        -- TODO we may not want to apply same transformation to everything in selection for bounding box
+                        op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
                   _ -> do
                     return $ everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom (canvasDragTo - canvasDragFrom))
@@ -280,6 +290,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         PFEPaste x -> Just x
         _ -> Nothing
       , _pfc_manipulate   = fforMaybe backendPFEvent $ \case
+        --PFEManipulate x -> traceShow x $ Just x
         PFEManipulate x -> Just x
         _ -> Nothing
       , _pfc_resizeCanvas = fforMaybe backendPFEvent $ \case
@@ -359,7 +370,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
           newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
           newSelection = if null newlyCreatedSEltls
-            then _everythingBackend_selection
+            then catMaybesSeq . flip fmap _everythingBackend_selection $ \sseltl@(rid,_,seltl) ->
+              case IM.lookup rid cslmap of
+                Nothing                  -> Just sseltl
+                Just Nothing             -> Nothing
+                Just (Just (lp, sseltl)) -> Just (rid, lp, sseltl)
             else Seq.fromList newlyCreatedSEltls
 
 

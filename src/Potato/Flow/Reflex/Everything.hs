@@ -204,11 +204,11 @@ type ManipulatorIndex = Int
 findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
 findFirstMouseManipulator pos = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos)
 
-continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> ManipulatorIndex
+continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> (MouseManipulator, ManipulatorIndex)
 continueManipulate pos mi smt mms = let
     boxRules = undefined -- TODO rules for choosing box manipulator
   in case smt of
-    _ -> mi
+    _ -> (mms L.!! mi, mi)
     -- TODO specific rulse for each
     --SMTBox         -> undefined
     --SMTLine        -> undefined
@@ -250,8 +250,8 @@ makeHandleBox bht (LBox (V2 x y) (V2 w h)) = case bht of
       BH_A  -> clbox
       _     -> error "not supported yet"
 
-makeDeltaBox :: BoxHandleType -> (Int, Int) -> DeltaLBox
-makeDeltaBox bht (dx,dy) = case bht of
+makeDeltaBox :: BoxHandleType -> XY -> DeltaLBox
+makeDeltaBox bht (V2 dx dy) = case bht of
   BH_BR -> DeltaLBox 0 $ V2 dx dy
   BH_TL -> DeltaLBox (V2 dx dy) (V2 (-dx) (-dy))
   BH_TR -> DeltaLBox (V2 0 dy) (V2 dx (-dy))
