@@ -24,6 +24,7 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulator(..)
   , MouseManipulatorSet
   , toMouseManipulators
+  , findFirstMouseManipulator
 
   , Selection
   , disjointUnionSelection
@@ -195,11 +196,13 @@ type ManipulatorIndex = Int
 findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
 findFirstMouseManipulator pos = L.findIndex (\mm -> _mouseManipulator_pos mm == pos)
 
+-- TODO rename
+-- TODO do not process mouseDrag State in here.
 manipulateWhatever :: SelectionManipulatorType -> MouseDrag ->  MouseManipulatorSet -> Maybe ManipulatorIndex -> Maybe ManipulatorIndex
 manipulateWhatever smt MouseDrag {..} mms mmi = let
     boxRules = undefined -- TODO rules for choosing box manipulator
   in case _mouseDrag_state of
-    MouseDragState_Up -> findFirstMouseManipulator _mouseDrag_to mms
+    MouseDragState_Down -> findFirstMouseManipulator _mouseDrag_to mms
     MouseDragState_Dragging -> case smt of
       _ -> case mmi of
         Just mi -> Just mi
@@ -246,7 +249,7 @@ data FrontendOperation =
   | FrontendOperation_LayerDrag
 
   -- TODO probably change to (Maybe PFEventTag)
-  | FrontendOperation_Manipulate PFEventTag ManipulatorIndex
+  | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
   | FrontendOperation_Undo
   | FrontendOperation_Selecting LBox
   | FrontendOperation_Select Bool Selection

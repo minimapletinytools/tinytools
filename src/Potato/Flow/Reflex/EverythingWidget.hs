@@ -153,7 +153,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 MouseDragState_Down -> case manipulatorUnderMouseStart of
                   -- no manipulators, don't do anything, we will select upon releasing
                   Nothing -> return everything'
-                  Just m  -> undefined -- TODO set manipulation index
+                  Just m  -> let
+                      mmi = findFirstMouseManipulator canvasDragFrom (_everythingBackend_manipulators backend)
+                    in case mmi of
+                      Nothing -> return everything'
+                      Just mi -> return everything' {
+                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
+                        }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                   FrontendOperation_Manipulate _ i  -> undefined -- TODO manipulate
                   _ -> do
@@ -205,7 +211,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     return everything' {
                         _everythingFrontend_lastOperation =
                           FrontendOperation_Manipulate
-                            (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def)))
+                            (Just (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))))
                             0
                       }
                   -- TODO finish other types
@@ -246,7 +252,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   let
     --backendPFEvent = traceEvent "PF: " $ fforMaybe frontendOperationEv $ \case
     backendPFEvent = fforMaybe frontendOperationEv $ \case
-      FrontendOperation_Manipulate cmd _ -> Just cmd
+      FrontendOperation_Manipulate cmd _ -> cmd
       FrontendOperation_Undo -> Just PFEUndo
       _ -> Nothing
 
