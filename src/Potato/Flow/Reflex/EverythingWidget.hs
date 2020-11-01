@@ -182,9 +182,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     let
                       bps = _everythingBackend_broadPhaseState backend
                       shiftClick = isJust $ find (==MouseModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-                      boxSize = canvasDragTo - canvasDragFrom
-                      singleClick = boxSize == 0
-                      selectBox = LBox canvasDragFrom boxSize
+                      LBox pos' sz' = make_LBox_from_XYs canvasDragTo canvasDragFrom
+                      -- always expand selection by 1
+                      selectBox = LBox pos' (sz' + V2 1 1)
+                      boxSize = lBox_area selectBox
+                      singleClick = boxSize == 1
                       selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
                       mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
                       lps' = mapToLp selectedRids
@@ -196,7 +198,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                         -- otherwise select everything
                         else lps'
                     -- selection is stored in backend so pass it on to backend
-                    return $  everything' {
+                    return $ everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
                       }
 

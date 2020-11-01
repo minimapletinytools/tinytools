@@ -149,7 +149,9 @@ does_LBox_intersect :: LBox -> LBox -> Bool
 does_LBox_intersect lb1 lb2 = r where
   (l1,r1,t1,b1) = lBox_to_axis lb1
   (l2,r2,t2,b2) = lBox_to_axis lb2
-  r | l1 >= r2 = False
+  r | lBox_area lb1 == 0 = False
+    | lBox_area lb2 == 0 = False
+    | l1 >= r2 = False
     | l2 >= r1 = False
     | t1 >= b2 = False
     | t2 >= b1 = False
