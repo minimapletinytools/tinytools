@@ -25,9 +25,13 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulatorSet
   , toMouseManipulators
   , findFirstMouseManipulator
+  , continueManipulate
 
   , Selection
   , disjointUnionSelection
+  , SelectionManipulatorType(..)
+  , computeSelectionType
+
   , EverythingFrontend(..)
   , EverythingBackend(..)
   , emptyEverythingFrontend
@@ -196,24 +200,17 @@ type ManipulatorIndex = Int
 findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
 findFirstMouseManipulator pos = L.findIndex (\mm -> _mouseManipulator_pos mm == pos)
 
--- TODO rename
--- TODO do not process mouseDrag State in here.
-manipulateWhatever :: SelectionManipulatorType -> MouseDrag ->  MouseManipulatorSet -> Maybe ManipulatorIndex -> Maybe ManipulatorIndex
-manipulateWhatever smt MouseDrag {..} mms mmi = let
+continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> ManipulatorIndex
+continueManipulate pos mi smt mms = let
     boxRules = undefined -- TODO rules for choosing box manipulator
-  in case _mouseDrag_state of
-    MouseDragState_Down -> findFirstMouseManipulator _mouseDrag_to mms
-    MouseDragState_Dragging -> case smt of
-      _ -> case mmi of
-        Just mi -> Just mi
-        Nothing -> findFirstMouseManipulator _mouseDrag_to mms
-      -- TODO specific rulse for each
-      --SMTBox         -> undefined
-      --SMTLine        -> undefined
-      --SMTText        -> undefined
-      --SMTBoundingBox -> undefined
-      --_              -> error "unknown selection type"
-    _ -> Nothing
+  in case smt of
+    _ -> mi
+    -- TODO specific rulse for each
+    --SMTBox         -> undefined
+    --SMTLine        -> undefined
+    --SMTText        -> undefined
+    --SMTBoundingBox -> undefined
+    --_              -> error "unknown selection type"
 
 
 

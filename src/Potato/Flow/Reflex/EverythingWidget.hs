@@ -154,14 +154,20 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   -- no manipulators, don't do anything, we will select upon releasing
                   Nothing -> return everything'
                   Just m  -> let
-                      mmi = findFirstMouseManipulator canvasDragFrom (_everythingBackend_manipulators backend)
+                      mmi = findFirstMouseManipulator canvasDragTo (_everythingBackend_manipulators backend)
                     in case mmi of
                       Nothing -> return everything'
                       Just mi -> return everything' {
                           _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
                         }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
-                  FrontendOperation_Manipulate _ i  -> undefined -- TODO manipulate
+                  FrontendOperation_Manipulate _ i  ->  return $ everything' {
+                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate op mi
+                        }
+                      where
+                        smt = computeSelectionType (_everythingBackend_selection backend)
+                        mi = continueManipulate canvasDragTo i smt (_everythingBackend_manipulators backend)
+                        op = undefined -- TODO!!!
                   _ -> do
                     return $ everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom (canvasDragTo - canvasDragFrom))
