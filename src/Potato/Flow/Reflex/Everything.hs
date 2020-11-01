@@ -23,7 +23,6 @@ module Potato.Flow.Reflex.Everything (
 
   , MouseManipulator(..)
   , MouseManipulatorSet
-  , checkMouseDownManipulators
   , toMouseManipulators
 
   , Selection
@@ -193,8 +192,25 @@ type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
 -- questionable manipulator helper functions
-checkMouseDownManipulators :: XY -> MouseManipulatorSet -> Maybe MouseManipulator
-checkMouseDownManipulators pos = find (\mm -> _mouseManipulator_pos mm == pos)
+findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
+findFirstMouseManipulator pos = L.findIndex (\mm -> _mouseManipulator_pos mm == pos)
+
+manipulateWhatever :: SelectionManipulatorType -> MouseDrag ->  MouseManipulatorSet -> Maybe ManipulatorIndex -> Maybe ManipulatorIndex
+manipulateWhatever smt MouseDrag {..} mms mmi = let
+    boxRules = undefined -- TODO rules for choosing box manipulator
+  in case _mouseDrag_state of
+    MouseDragState_Up -> findFirstMouseManipulator _mouseDrag_to mms
+    MouseDragState_Dragging -> case smt of
+      _ -> case mmi of
+        Just mi -> Just mi
+        Nothing -> findFirstMouseManipulator _mouseDrag_to mms
+      -- TODO specific rulse for each
+      --SMTBox         -> undefined
+      --SMTLine        -> undefined
+      --SMTText        -> undefined
+      --SMTBoundingBox -> undefined
+      --_              -> error "unknown selection type"
+    _ -> Nothing
 
 
 
