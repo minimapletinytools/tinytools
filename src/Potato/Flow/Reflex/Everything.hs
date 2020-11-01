@@ -21,6 +21,10 @@ module Potato.Flow.Reflex.Everything (
   , Tool(..)
   , LayerDisplay(..)
 
+  , BoxHandleType(..)
+  , makeHandleBox
+  , makeDeltaBox
+
   , MouseManipulator(..)
   , MouseManipulatorSet
   , toMouseManipulators
@@ -184,10 +188,10 @@ changeSelection newSelection everything@EverythingBackend {..} = everything {
   }
 
 -- MANIPULATORS
-data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Point deriving (Show, Eq)
+data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area deriving (Show, Eq)
 
 data MouseManipulator = MouseManipulator {
-  _mouseManipulator_pos    :: XY
+  _mouseManipulator_box    :: LBox
   , _mouseManipulator_type :: MouseManipulatorType
   -- back reference to object being manipulated?
   -- or just use a function
@@ -198,7 +202,7 @@ type ManipulatorIndex = Int
 
 -- questionable manipulator helper functions
 findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
-findFirstMouseManipulator pos = L.findIndex (\mm -> _mouseManipulator_pos mm == pos)
+findFirstMouseManipulator pos = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos)
 
 continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> ManipulatorIndex
 continueManipulate pos mi smt mms = let
@@ -213,6 +217,51 @@ continueManipulate pos mi smt mms = let
     --_              -> error "unknown selection type"
 
 
+-- BOX MANIPULATOR STUFF
+-- TODO move to diff file
+-- order is manipulator index
+data BoxHandleType = BH_TL | BH_TR | BH_BL | BH_BR | BH_A | BH_T | BH_B | BH_L | BH_R  deriving (Show, Eq, Enum)
+
+makeHandleBox ::
+  BoxHandleType
+  -> LBox -- ^ box being manipulated
+  -> MouseManipulator
+makeHandleBox bht (LBox (V2 x y) (V2 w h)) = case bht of
+  BH_BR -> MouseManipulator box MouseManipulatorType_Corner
+  BH_TL -> MouseManipulator box MouseManipulatorType_Corner
+  BH_TR -> MouseManipulator box MouseManipulatorType_Corner
+  BH_BL -> MouseManipulator box MouseManipulatorType_Corner
+  BH_A  -> MouseManipulator box MouseManipulatorType_Area
+  _     -> MouseManipulator box MouseManipulatorType_Side
+  where
+    (px, py) = (0,0) -- pan position
+    CanonicalLBox _ _ clbox = canonicalLBox_from_lBox $ LBox (V2 (x+px) (y+py)) (V2 w h)
+    nudgex = if w < 0 then 1 else 0
+    nudgey = if h < 0 then 1 else 0
+    l = x+px-1 + nudgex
+    t = y+py-1 + nudgey
+    r = x+px+w - nudgex
+    b = y+py+h - nudgey
+    box = case bht of
+      BH_BR -> LBox (V2 r b) (V2 1 1)
+      BH_TL -> LBox (V2 l t) (V2 1 1)
+      BH_TR -> LBox (V2 r t) (V2 1 1)
+      BH_BL -> LBox (V2 l b) (V2 1 1)
+      BH_A  -> clbox
+      _     -> error "not supported yet"
+
+makeDeltaBox :: BoxHandleType -> (Int, Int) -> DeltaLBox
+makeDeltaBox bht (dx,dy) = case bht of
+  BH_BR -> DeltaLBox 0 $ V2 dx dy
+  BH_TL -> DeltaLBox (V2 dx dy) (V2 (-dx) (-dy))
+  BH_TR -> DeltaLBox (V2 0 dy) (V2 dx (-dy))
+  BH_BL -> DeltaLBox (V2 dx 0) (V2 (-dx) dy)
+  BH_T  -> DeltaLBox (V2 0 dy) (V2 0 (-dy))
+  BH_B  -> DeltaLBox 0 (V2 0 dy)
+  BH_L  -> DeltaLBox (V2 dx 0) (V2 (-dx) 0)
+  BH_R  -> DeltaLBox 0 (V2 dx 0)
+  BH_A  -> DeltaLBox (V2 dx dy) (V2 0 0)
+
 
 -- REDUCERS/REDUCER HELPERS
 -- TODO finish this function
@@ -222,8 +271,7 @@ toMouseManipulators selection = if Seq.length selection > 1
     case Seq.lookup 0 selection of
       Nothing -> []
       Just (rid, _, SEltLabel _ selt) -> case selt of
-        SEltBox SBox {..}   -> undefined
-          -- _sBox_box
+        SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
         SEltLine SLine {..} -> undefined
           --_sLine_start
           --_sLine_end
@@ -232,11 +280,16 @@ toMouseManipulators selection = if Seq.length selection > 1
           --_sText_text
         _                   -> []
   else bb where
+    union_LBoxes :: NonEmpty LBox -> LBox
+    union_LBoxes (x:|xs) = foldl' union_LBox x xs
     fmapfn (rid, _, seltl) = do
       box <- getSEltBox . _sEltLabel_sElt $ seltl
-      return (rid, box)
-    msboxes = sequence $ fmap fmapfn selection
-    bb = undefined
+      return box
+    msboxes = fmap fmapfn selection
+    sboxes = catMaybes (toList msboxes)
+    bb = case sboxes of
+      [] -> []
+      x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
 
 -- TODO all data to pass onto backend/PFOutput should go here
@@ -266,6 +319,8 @@ data EverythingFrontend = EverythingFrontend {
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection         :: Selection
   , _everythingBackend_layers          :: Seq LayerDisplay
+
+  -- TODO DELETE we'll just recompute these everytime in frontend
   , _everythingBackend_manipulators    :: MouseManipulatorSet
 
   , _everythingBackend_broadPhaseState :: BroadPhaseState

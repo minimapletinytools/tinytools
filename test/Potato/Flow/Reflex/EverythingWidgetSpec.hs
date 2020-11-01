@@ -258,8 +258,12 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
+        -- select elt A
+        , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
 
-        -- TODO modify created elt
+        -- manipulate A
+        , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
         -- check in layers and check render
 
         -- TODO delete the elt
@@ -320,8 +324,12 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , AlwaysPass
         , numSelectedEltsEqualPredicate 0
 
+        -- select elt A
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 1
 
-
+        -- manipulate A
+        , checkLastOperationPredicate LastOperationType_Manipulate
 
       ]
 

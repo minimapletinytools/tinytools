@@ -103,6 +103,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
     foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
+
+      backend <- sample . current $ everythingBackendDyn
+
       let
         -- clear per frame statuses for next frame
         everything' = everything {
@@ -112,10 +115,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         undoFirst = case _everythingFrontend_lastOperation of
           FrontendOperation_Manipulate _ _ -> True
           _                                -> False
-
-      backend <- sample . current $ everythingBackendDyn
-
-
+        selection = _everythingBackend_selection backend
+        manipulators = toMouseManipulators selection
 
       case cmd of
         EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
@@ -144,29 +145,22 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 }
             Tool_Select -> do
               let
-                -- we could/should cache this but it happens to work out if we don't
-                -- TODO this isn't true, another manipulator could end up in the start space when manipulating fix
-                -- TODO should we be fancy about multiple manipulators and choosing one depending on where we end up dragging?
-                --manipulatorUnderMouseStart = checkMouseDownManipulators canvasDragFrom (_everythingBackend_manipulators backend)
-                manipulatorUnderMouseStart = Nothing
+                aoeu = undefined
               case _mouseDrag_state mouseDrag of
-                MouseDragState_Down -> case manipulatorUnderMouseStart of
-                  -- no manipulators, don't do anything, we will select upon releasing
-                  Nothing -> return everything'
-                  Just m  -> let
-                      mmi = findFirstMouseManipulator canvasDragTo (_everythingBackend_manipulators backend)
-                    in case mmi of
-                      Nothing -> return everything'
-                      Just mi -> return everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
-                        }
+                MouseDragState_Down -> let
+                    mmi = findFirstMouseManipulator canvasDragTo manipulators
+                  in case traceShow mmi $ mmi of
+                    Nothing -> return everything'
+                    Just mi -> return everything' {
+                        _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
+                      }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                   FrontendOperation_Manipulate _ i  ->  return $ everything' {
                           _everythingFrontend_lastOperation = FrontendOperation_Manipulate op mi
                         }
                       where
-                        smt = computeSelectionType (_everythingBackend_selection backend)
-                        mi = continueManipulate canvasDragTo i smt (_everythingBackend_manipulators backend)
+                        smt = computeSelectionType selection
+                        mi = continueManipulate canvasDragTo i smt manipulators
                         op = undefined -- TODO!!!
                   _ -> do
                     return $ everything' {
