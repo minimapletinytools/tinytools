@@ -157,6 +157,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   in case mmi of
                     Nothing -> return everything'
                     Just mi -> return everything' {
+                        -- just indicate the manipulator selected, don't actually manipulate
                         _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
                       }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
@@ -167,11 +168,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                         smt = computeSelectionType selection
                         (m, mi) = continueManipulate canvasDragTo i smt manipulators
                         LBox p _ = _mouseManipulator_box m
-                        controller = CTagBox :=> (Identity $ CBox {
-                            _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
-                          })
-                        -- TODO we may not want to apply same transformation to everything in selection for bounding box
-                        op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+
+                        -- TODO conisder embedding in MouseManipulator instead of using switch statement below
+                        op = case smt of
+                          SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
+                            controller = CTagBox :=> (Identity $ CBox {
+                                _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                              })
+                          _ -> undefined
+
                   _ -> do
                     return $ everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom (canvasDragTo - canvasDragFrom))
