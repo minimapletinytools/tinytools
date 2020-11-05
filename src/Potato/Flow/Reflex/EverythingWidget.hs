@@ -172,8 +172,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                         -- TODO conisder embedding in MouseManipulator instead of using switch statement below
                         op = case smt of
                           SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
-                            controller = CTagBox :=> (Identity $ CBox {
-                                _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                                controller = CTagBox :=> (Identity $ CBox {
+                                    _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                              })
+                          SMTBoundingBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
+                                -- TODO scaling rather than absolute if modifier is held?
+                                controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
+                                    _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
                               })
                           _ -> undefined
 
