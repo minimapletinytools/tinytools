@@ -136,6 +136,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
             canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
             canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
+            canvasDragDelta = canvasDragTo - canvasDragFrom
 
           -- TODO clean up unecessary monad or move sampling above into use site
           everything'' <- case _everythingFrontend_selectedTool of
@@ -173,18 +174,18 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                         op = case smt of
                           SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
                                 controller = CTagBox :=> (Identity $ CBox {
-                                    _cBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                                    _cBox_deltaBox = makeDeltaBox (toEnum mi) canvasDragDelta
                               })
                           SMTBoundingBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
                                 -- TODO scaling rather than absolute if modifier is held?
                                 controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
-                                    _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) (canvasDragTo - p)
+                                    _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) canvasDragDelta
                               })
                           _ -> undefined
 
                   _ -> do
                     return $ everything' {
-                        _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom (canvasDragTo - canvasDragFrom))
+                        _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom canvasDragDelta)
                       }
 
                 MouseDragState_Up -> case _everythingFrontend_lastOperation of
@@ -227,7 +228,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               case _mouseDrag_state mouseDrag of
                 -- if we were manipulating, don't need to do anything
                 MouseDragState_Up -> return everything'
-                -- otherwise, create a new elt, note this will break if you change tools in the middle of dragging TODO should I bother to fix this?
+                -- otherwise, create a new elt
+                -- note this will break if you change tools in the middle of dragging TODO should I bother to fix this?
+                -- TODO consider doing some funny corner rejiggering depending on direction you drag so that click square is always included?
                 _ -> case _everythingFrontend_selectedTool of
                   Tool_Box ->
                     return everything' {

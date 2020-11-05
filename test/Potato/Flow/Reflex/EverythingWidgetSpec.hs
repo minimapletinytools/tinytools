@@ -254,12 +254,12 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
-        -- beging selecting nothing and cancel
+        -- begin selecting nothing and cancel
         , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [])
         , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
-        -- now shift unselect elt B
+        -- shift unselect elt B
         , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [MouseModifier_Shift])
 
@@ -275,6 +275,15 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
         , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [])
+
+        -- shift select elt B
+        , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [MouseModifier_Shift])
+
+        -- manipulate A+B
+        , EWCMouse (LMouseData (V2 5 5) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
+        , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
 
         -- TODO delete the elt
         -- check in layers and check render
@@ -326,7 +335,7 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         , AlwaysPass
         , numSelectedEltsEqualPredicate 2
 
-        -- now shift unselect elt B
+        -- shift unselect elt B
         , AlwaysPass
         , numSelectedEltsEqualPredicate 1
 
@@ -341,8 +350,22 @@ everything_basic_test = TestLabel "everything_basic" $ TestCase $ do
         -- manipulate A
         , checkLastOperationPredicate LastOperationType_Manipulate
         , AlwaysPass
+        -- check that it got moved to 0 0
         , firstSelectedSuperSEltLabelPredicate (\(_,_,SEltLabel _ selt) -> case selt of
           SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
+          _                                  -> False)
+
+        -- shift select elt B
+        , AlwaysPass
+        , numSelectedEltsEqualPredicate 2
+
+        -- manipulate A+B
+        , AlwaysPass
+        , AlwaysPass
+        -- check that first elt A got moved over by 2
+        -- TODO also check elt B
+        , firstSelectedSuperSEltLabelPredicate (\(_,_,SEltLabel _ selt) -> case selt of
+          SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
           _                                  -> False)
 
       ]
