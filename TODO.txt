@@ -1,4 +1,6 @@
 ::NEWEST TODO::
+-create separate file for manipulator test
+  -maybe improve testing framework a little to have more helpers for testing elts (and giving them names)
 DONE-figure out manipulator drag through another manipulator issue
   -also we want a general interface for all types of manipulators
 DONE-add modifiers to LMouseData
