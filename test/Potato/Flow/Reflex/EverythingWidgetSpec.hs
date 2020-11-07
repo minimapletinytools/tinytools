@@ -18,16 +18,13 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.Reflex.Everything
 import           Potato.Flow.Reflex.EverythingWidget
-import           Potato.Flow.TestStates
 
 -- test imports
 import           Potato.Flow.Reflex.Common
+import           Potato.Flow.TestStates
 
-import           Control.Monad.Fix
 import qualified Data.IntMap                         as IM
 import qualified Data.Sequence                       as Seq
-import qualified Data.Text                           as T
-import           Data.These
 
 someState1 :: PFState
 someState1 = PFState {
@@ -83,7 +80,7 @@ select_test = TestLabel "select" $ TestCase $ do
 
 
 everything_basic_test :: Test
-everything_basic_test = constructTest "basic" bs expected where
+everything_basic_test = constructTest "basic" emptyPFState bs expected where
   bs = [
       -- test basic panning
       EWCTool Tool_Pan

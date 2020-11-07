@@ -48,10 +48,11 @@ data EverythingWidgetCmd =
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t EverythingCombined_DEBUG EverythingCombined_DEBUG)
-everything_network_app (AppIn _ ev) = do
+  => PFState
+  -> AppIn t () EverythingWidgetCmd -> TestGuestT t m (AppOut t EverythingCombined_DEBUG EverythingCombined_DEBUG)
+everything_network_app pfs (AppIn _ ev) = do
   let ewc = EverythingWidgetConfig  {
-      _everythingWidgetConfig_initialState = emptyPFState
+      _everythingWidgetConfig_initialState = pfs
 
       , _everythingWidgetConfig_mouse = fforMaybe ev $ \case
         EWCMouse x -> Just x
@@ -146,10 +147,10 @@ firstSelectedSuperSEltLabelPredicate f = FunctionPredicate $
   . _everythingCombined_selection
 
 
-constructTest :: String -> [EverythingWidgetCmd] -> [EverythingPredicate] -> Test
-constructTest label bs expected = TestLabel label $ TestCase $ do
+constructTest :: String -> PFState -> [EverythingWidgetCmd] -> [EverythingPredicate] -> Test
+constructTest label pfs bs expected = TestLabel label $ TestCase $ do
   let
-    run = runApp everything_network_app () (fmap (Just . That) bs)
+    run = runApp (everything_network_app pfs) () (fmap (Just . That) bs)
   values :: [[(EverythingCombined_DEBUG, Maybe EverythingCombined_DEBUG)]]
     <- liftIO run
 
