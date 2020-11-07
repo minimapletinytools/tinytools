@@ -12,6 +12,7 @@ module Potato.Flow.Reflex.Common
   , checkNumElts
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperSEltLabelPredicate
+  , constructTest
   )
 where
 
@@ -43,6 +44,7 @@ data EverythingWidgetCmd =
   | EWCTool Tool
   | EWCSelect Selection Bool -- true if add to selection
   | EWCNothing
+  | EWCLabel Text
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -77,6 +79,7 @@ data EverythingPredicate where
   FunctionPredicate :: (EverythingCombined_DEBUG -> (Text, Bool)) -> EverythingPredicate
   PFStateFunctionPredicate :: (PFState -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
+  LabelCheck :: Text -> EverythingPredicate
   Combine :: [EverythingPredicate] -> EverythingPredicate
 
 testEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Bool
@@ -84,6 +87,8 @@ testEverythingPredicate (EqPredicate f a) e     = f e == a
 testEverythingPredicate (FunctionPredicate f) e = snd $ f e
 testEverythingPredicate (PFStateFunctionPredicate f) e = snd . f $ _everythingCombined_pFState e
 testEverythingPredicate AlwaysPass _            = True
+-- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
+testEverythingPredicate (LabelCheck l) e = True
 testEverythingPredicate (Combine xs) e          = all id . map (\p -> testEverythingPredicate p e) $ xs
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
@@ -91,6 +96,8 @@ showEverythingPredicate (EqPredicate f a) e = "expected: " <> show a <> " got: "
 showEverythingPredicate (FunctionPredicate f) e = fst $ f e
 showEverythingPredicate (PFStateFunctionPredicate f) e = fst . f $ _everythingCombined_pFState e
 showEverythingPredicate AlwaysPass _ = "always pass"
+-- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
+showEverythingPredicate (LabelCheck l) e = "label check TODO actually check label"
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
 
@@ -137,3 +144,26 @@ firstSelectedSuperSEltLabelPredicate f = FunctionPredicate $
       Nothing    -> ("Selection is empty", False)
       Just first -> ("First selected: " <> show first, f first))
   . _everythingCombined_selection
+
+
+constructTest :: String -> [EverythingWidgetCmd] -> [EverythingPredicate] -> Test
+constructTest label bs expected = TestLabel label $ TestCase $ do
+  let
+    run = runApp everything_network_app () (fmap (Just . That) bs)
+  values :: [[(EverythingCombined_DEBUG, Maybe EverythingCombined_DEBUG)]]
+    <- liftIO run
+
+  -- expect only 1 tick per event
+  forM values $ \x -> assertEqual "expect only 1 tick per event" (length x) 1
+
+  -- expect correct number of outputs
+  assertEqual "expect correct number of outputs" (length values) (length expected)
+
+  -- TODO do index counting from labels
+  -- expect each output matches predicate
+  -- if no output event, uses output behavior to test predicate
+  forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
+      testfn ewcd = (assertBool . T.unpack) ((showEverythingPredicate p ewcd) <> " [test index = " <> show i <> "]") (testEverythingPredicate p ewcd)
+    in case me of
+      Just e  -> testfn e
+      Nothing -> testfn b
