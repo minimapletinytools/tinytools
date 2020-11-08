@@ -49,16 +49,66 @@ basicStateWith4Boxes = PFState {
 basic_sbox_test :: Test
 basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs expected where
   bs = [
-      EWCLabel "select b2"
-      , EWCTool Tool_Select
+      EWCTool Tool_Select
+
+      , EWCLabel "select b2"
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+
+      , EWCLabel "resize tl corner b2"
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+
+      , EWCLabel "resize tr corner b2"
+      , EWCMouse (LMouseData (V2 20 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 8) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 8) True MouseButton_Left [])
+      , EWCLabel "resize bl corner b2"
+      , EWCMouse (LMouseData (V2 10 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 7 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 7 20) True MouseButton_Left [])
+      , EWCLabel "resize br corner b2"
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 25 25) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 25 25) True MouseButton_Left [])
+      , EWCLabel "area move b2"
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 25 25) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 25 25) True MouseButton_Left [])
     ]
   expected = [
-      LabelCheck "select b2"
-      , (EqPredicate _everythingCombined_selectedTool Tool_Select)
+      EqPredicate _everythingCombined_selectedTool Tool_Select
+
+      , LabelCheck "select b2"
       , AlwaysPass
       , numSelectedEltsEqualPredicate 1
+
+      -- TODO actually check values
+      , LabelCheck "resize tl corner b2"
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "resize tr corner b2"
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "resize bl corner b2"
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "resize br corner b2"
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "area move b2"
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
     ]
 
 
