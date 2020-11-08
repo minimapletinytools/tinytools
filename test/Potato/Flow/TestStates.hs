@@ -5,6 +5,7 @@ module Potato.Flow.TestStates (
   , folderEnd
   , someSEltLabel
   , someSCanvas
+  , defaultCanvasLBox
 ) where
 
 import           Relude
