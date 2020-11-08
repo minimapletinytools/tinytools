@@ -39,7 +39,7 @@ data BroadPhaseState = BroadPhaseState {
   _broadPhaseState_needsUpdate :: [AABB]
   , _broadPhaseState_bPTree    :: BPTree
   , _broadPhaseState_changes   :: SEltLabelChanges -- I don't think I need this
-}
+} deriving (Show)
 
 emptyBroadPhaseState :: BroadPhaseState
 emptyBroadPhaseState = BroadPhaseState [] emptyBPTree IM.empty

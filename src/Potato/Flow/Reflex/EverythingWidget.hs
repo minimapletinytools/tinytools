@@ -414,8 +414,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
 
 
+  let
+    --initialize broadphase with initial state
+    initialbp = update_bPTree (fmap Just (_pFState_directory _everythingWidgetConfig_initialState)) emptyBPTree
+    initialbackend = emptyEverythingBackend { _everythingBackend_broadPhaseState = initialbp }
   everythingBackendDyn :: Dynamic t EverythingBackend
-    <- foldDynM foldEverythingBackendFn emptyEverythingBackend everythingBackendEvent
+    <- foldDynM foldEverythingBackendFn initialbackend everythingBackendEvent
 
 
   r_tool <- holdUniqDyn $ fmap _everythingFrontend_selectedTool everythingFrontendDyn
