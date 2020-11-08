@@ -103,7 +103,7 @@ data LMouseData = LMouseData {
 } deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
-  _mouseDrag_from        :: XY -- TODO rename to mousedrag from
+  _mouseDrag_from        :: XY
   , _mouseDrag_button    :: MouseButton -- tracks button on start of drag
   , _mouseDrag_modifiers :: [MouseModifier] -- tracks modifiers held at current state of drag
   , _mouseDrag_to        :: XY -- likely not needed as they will be in the input event, but whatever
@@ -312,6 +312,7 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
   , _everythingFrontend_lastOperation :: FrontendOperation
 
+  , _everythingFrontend_debugLabel    :: Text
   -- TODO needs a way to pass selection onto backend
 } deriving (Show)
 
@@ -334,6 +335,7 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_pan          = V2 0 0
     , _everythingFrontend_mouseDrag = emptyMouseDrag
     , _everythingFrontend_lastOperation = FrontendOperation_None
+    , _everythingFrontend_debugLabel = ""
   }
 
 emptyEverythingBackend :: EverythingBackend
@@ -351,6 +353,8 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
   , _everythingCombined_lastOperation  :: FrontendOperation
+  , _everythingCombined_debugLabel     :: Text
+
   , _everythingCombined_selection      :: Selection
   , _everythingCombined_layers         :: Seq LayerDisplay
   , _everythingCombined_manipulators   :: MouseManipulatorSet
@@ -367,6 +371,8 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     , _everythingCombined_pan        = _everythingFrontend_pan
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
     , _everythingCombined_lastOperation = _everythingFrontend_lastOperation
+    , _everythingCombined_debugLabel = _everythingFrontend_debugLabel
+
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_manipulators = _everythingBackend_manipulators

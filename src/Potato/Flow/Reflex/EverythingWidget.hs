@@ -45,6 +45,9 @@ data EverythingFrontendCmd =
   | EFCmdMouse LMouseData
   | EFCmdKeyboard KeyboardData
 
+  -- debug nonsense
+  | EFCmdSetDebugLabel Text
+
 data EverythingBackendCmd =
   -- selection (first param is add to selection if true)
   -- it's a little weird that selection comes with all info about what's being selected
@@ -55,16 +58,19 @@ data EverythingBackendCmd =
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
-  _everythingWidgetConfig_initialState :: PFState
+  _everythingWidgetConfig_initialState    :: PFState
 
   -- canvas direct input
-  , _everythingWidgetConfig_mouse      :: Event t LMouseData
-  , _everythingWidgetConfig_keyboard   :: Event t KeyboardData
+  , _everythingWidgetConfig_mouse         :: Event t LMouseData
+  , _everythingWidgetConfig_keyboard      :: Event t KeyboardData
 
   -- command based
-  , _everythingWidgetConfig_selectTool :: Event t Tool
-  , _everythingWidgetConfig_selectNew  :: Event t Selection
-  , _everythingWidgetConfig_selectAdd  :: Event t Selection
+  , _everythingWidgetConfig_selectTool    :: Event t Tool
+  , _everythingWidgetConfig_selectNew     :: Event t Selection
+  , _everythingWidgetConfig_selectAdd     :: Event t Selection
+
+  -- debugging
+  , _everythingWidgetConfig_setDebugLabel :: Event t Text
 }
 
 emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
@@ -75,6 +81,7 @@ emptyEverythingWidgetConfig = EverythingWidgetConfig {
     , _everythingWidgetConfig_keyboard = never
     , _everythingWidgetConfig_selectNew = never
     , _everythingWidgetConfig_selectAdd = never
+    , _everythingWidgetConfig_setDebugLabel = never
   }
 
 data EverythingWidget t = EverythingWidget {
@@ -104,6 +111,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       [ EFCmdTool <$> _everythingWidgetConfig_selectTool
       , EFCmdMouse <$> _everythingWidgetConfig_mouse
       , EFCmdKeyboard <$> _everythingWidgetConfig_keyboard
+      , EFCmdSetDebugLabel <$> _everythingWidgetConfig_setDebugLabel
       ]
 
     foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
@@ -124,6 +132,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         manipulators = toMouseManipulators selection
 
       case cmd of
+        EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
         EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
         EFCmdMouse mouseData -> do
           pFState <- sample . current $ _pfo_pFState
