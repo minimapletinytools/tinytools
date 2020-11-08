@@ -21,10 +21,10 @@ import           Potato.Flow.TestStates
 basic_sbox_test :: Test
 basic_sbox_test = constructTest "manipulator - sbox" emptyPFState bs expected where
   bs = [
-      EWCNothing
+      EWCLabel "setup"
     ]
   expected = [
-      AlwaysPass
+      LabelCheck "setup"
     ]
 
 

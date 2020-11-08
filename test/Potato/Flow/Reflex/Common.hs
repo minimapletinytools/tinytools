@@ -91,7 +91,7 @@ testEverythingPredicate (FunctionPredicate f) e = snd $ f e
 testEverythingPredicate (PFStateFunctionPredicate f) e = snd . f $ _everythingCombined_pFState e
 testEverythingPredicate AlwaysPass _            = True
 -- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
-testEverythingPredicate (LabelCheck l) e = True
+testEverythingPredicate (LabelCheck l) e = l == _everythingCombined_debugLabel e
 testEverythingPredicate (Combine xs) e          = all id . map (\p -> testEverythingPredicate p e) $ xs
 
 showEverythingPredicate :: EverythingPredicate -> EverythingCombined_DEBUG -> Text
@@ -100,7 +100,7 @@ showEverythingPredicate (FunctionPredicate f) e = fst $ f e
 showEverythingPredicate (PFStateFunctionPredicate f) e = fst . f $ _everythingCombined_pFState e
 showEverythingPredicate AlwaysPass _ = "always pass"
 -- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
-showEverythingPredicate (LabelCheck l) e = "label check TODO actually check label"
+showEverythingPredicate (LabelCheck l) e = "expected label: " <> show l <> " got: " <> show (_everythingCombined_debugLabel e)
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
 
@@ -166,7 +166,11 @@ constructTest label pfs bs expected = TestLabel label $ TestCase $ do
   -- expect each output matches predicate
   -- if no output event, uses output behavior to test predicate
   forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
-      testfn ewcd = (assertBool . T.unpack) ((showEverythingPredicate p ewcd) <> " [test index = " <> show i <> "]") (testEverythingPredicate p ewcd)
+      testfn ewcd =
+        (assertBool . T.unpack) ((showEverythingPredicate p ewcd)
+          <> " [label = " <> _everythingCombined_debugLabel ewcd
+          <> ", index = " <> show i <> "]")
+        (testEverythingPredicate p ewcd)
     in case me of
       Just e  -> testfn e
       Nothing -> testfn b

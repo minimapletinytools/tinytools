@@ -83,7 +83,8 @@ everything_basic_test :: Test
 everything_basic_test = constructTest "basic" emptyPFState bs expected where
   bs = [
       -- test basic panning
-      EWCTool Tool_Pan
+      EWCLabel "Pan"
+      , EWCTool Tool_Pan
       -- drag to (1, 1) and release
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
@@ -94,6 +95,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
 
       -- create elt A
+      , EWCLabel "Create A"
       , EWCTool Tool_Box
       -- drag from (1,1) to (10,10) and release
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
@@ -159,7 +161,8 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
   expected = [
       -- very basic panning
-      (EqPredicate _everythingCombined_selectedTool Tool_Pan)
+      LabelCheck "Pan"
+      , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
       , (EqPredicate _everythingCombined_pan (V2 0 0))
       , (EqPredicate _everythingCombined_pan (V2 1 1))
       , (EqPredicate _everythingCombined_pan (V2 1 1))
@@ -168,6 +171,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , (EqPredicate _everythingCombined_pan (V2 1 1))
 
       -- create elt A
+      , LabelCheck "Create A"
       , (EqPredicate _everythingCombined_selectedTool Tool_Box)
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Manipulate
