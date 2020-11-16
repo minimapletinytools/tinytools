@@ -16,19 +16,12 @@ module Potato.Flow.Controller.Manipulator (
 
 import           Relude
 
-import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Math
-import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.State
 import           Potato.Flow.Types
 
--- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
-import           Potato.Flow.Entry            (PFEventTag)
-
-import           Control.Exception            (assert)
 import           Data.Dependent.Sum           (DSum ((:=>)), (==>))
 import qualified Data.IntMap                  as IM
 import qualified Data.List                    as L
@@ -67,7 +60,7 @@ toMouseManipulators selection = if Seq.length selection > 1
   then
     case Seq.lookup 0 selection of
       Nothing -> []
-      Just (rid, _, SEltLabel _ selt) -> case selt of
+      Just (_, _, SEltLabel _ selt) -> case selt of
         SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
         SEltLine SLine {..} -> undefined
           --_sLine_start
@@ -79,7 +72,7 @@ toMouseManipulators selection = if Seq.length selection > 1
   else bb where
     union_LBoxes :: NonEmpty LBox -> LBox
     union_LBoxes (x:|xs) = foldl' union_LBox x xs
-    fmapfn (rid, _, seltl) = do
+    fmapfn (_, _, seltl) = do
       box <- getSEltBox . _sEltLabel_sElt $ seltl
       return box
     msboxes = fmap fmapfn selection

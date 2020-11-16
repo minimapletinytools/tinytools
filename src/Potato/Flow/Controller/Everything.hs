@@ -19,24 +19,11 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Math
 import           Potato.Flow.Render
-import           Potato.Flow.SEltMethods
-import           Potato.Flow.SElts
 import           Potato.Flow.State
-import           Potato.Flow.Types
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
 import           Potato.Flow.Entry                  (PFEventTag)
-
-import           Control.Exception                  (assert)
-import           Data.Dependent.Sum                 (DSum ((:=>)), (==>))
-import qualified Data.IntMap                        as IM
-import qualified Data.List                          as L
 import qualified Data.Sequence                      as Seq
-
--- move to manipulators
-import           Data.Tuple.Extra
-import           Potato.Flow.Entry
-
 
 -- DELETE?
 changeSelection :: Selection -> EverythingBackend -> EverythingBackend

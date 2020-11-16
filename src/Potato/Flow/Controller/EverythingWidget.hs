@@ -25,10 +25,8 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 import           Control.Exception                  (assert)
-import           Control.Lens
 import           Control.Monad.Fix
 import           Data.Default                       (def)
-import           Data.Dependent.Sum                 (DSum ((:=>)))
 import           Data.Foldable                      (minimum)
 import qualified Data.IntMap                        as IM
 import qualified Data.List                          as L
@@ -161,8 +159,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   , _everythingFrontend_lastOperation = FrontendOperation_Pan
                 }
             Tool_Select -> do
-              let
-                aoeu = undefined
               case _mouseDrag_state mouseDrag of
                 MouseDragState_Down -> let
                     mmi = findFirstMouseManipulator canvasDragTo manipulators
@@ -174,10 +170,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                   FrontendOperation_Manipulate _ lmi  ->  return $ everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just op) mi
+                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
                         }
                       where
-                        (mi, op) = newManipulate (toRelMouseDrag pFState mouseDrag) selection lmi undoFirst
+                        (mi, operation) = newManipulate (toRelMouseDrag pFState mouseDrag) selection lmi undoFirst
 
                   _ -> do
                     return $ everything' {
@@ -212,6 +208,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     return $ everything' {
                         _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
                       }
+                _ -> undefined
 
             -- create new elements
             -- note for click + drag on creating new elts, we repeatedly undo + create new elts

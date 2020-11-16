@@ -30,19 +30,12 @@ module Potato.Flow.Controller.Input (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import           Control.Exception  (assert)
-import           Data.Dependent.Sum (DSum ((:=>)), (==>))
-import qualified Data.IntMap        as IM
-import qualified Data.List          as L
-import qualified Data.Sequence      as Seq
-
--- move to manipulators
-import           Data.Tuple.Extra
-import           Potato.Flow.Entry
+import           Control.Exception (assert)
+import qualified Data.List         as L
+import qualified Data.Sequence     as Seq
 
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end
