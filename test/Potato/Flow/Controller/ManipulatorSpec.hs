@@ -1,26 +1,26 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.ManipulatorSpec
+module Potato.Flow.Controller.ManipulatorSpec
   ( spec
   )
 where
 
-import           Relude                        hiding (empty, fromList)
+import           Relude                            hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit      (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
-import           Potato.Flow.Reflex.Everything
+import           Potato.Flow.Controller.Everything
 
-import           Potato.Flow.Reflex.Common
+import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
 import           Data.Default
-import qualified Data.IntMap                   as IM
-import qualified Data.Sequence                 as Seq
+import qualified Data.IntMap                       as IM
+import qualified Data.Sequence                     as Seq
 
 basicStateWith4Boxes :: PFState
 basicStateWith4Boxes = PFState {

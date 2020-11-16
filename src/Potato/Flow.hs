@@ -6,13 +6,13 @@ module Potato.Flow (
   , module Potato.Flow.Types
   , module Potato.Flow.Render
   , module Potato.Flow.BroadPhase
-  , module Potato.Flow.Reflex.Entry
+  , module Potato.Flow.Entry
   , module Potato.Flow.State
 ) where
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Entry
+import           Potato.Flow.Entry
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.Render
 import           Potato.Flow.SElts

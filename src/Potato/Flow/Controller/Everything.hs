@@ -2,7 +2,7 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 -- TODO move out of Reflex folder
-module Potato.Flow.Reflex.Everything (
+module Potato.Flow.Controller.Everything (
   KeyboardData(..)
   , KeyboardKey(..)
   , KeyboardKeyType(..)
@@ -31,7 +31,7 @@ module Potato.Flow.Reflex.Everything (
   , MouseManipulatorSet
   , toMouseManipulators
   , findFirstMouseManipulator
-  , continueManipulate
+  , newManipulate
 
   , Selection
   , disjointUnionSelection
@@ -58,17 +58,17 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
-import           Potato.Flow.Reflex.Entry (PFEventTag)
+import           Potato.Flow.Entry       (PFEventTag)
 
-import           Control.Exception        (assert)
-import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
-import qualified Data.IntMap              as IM
-import qualified Data.List                as L
-import qualified Data.Sequence            as Seq
+import           Control.Exception       (assert)
+import           Data.Dependent.Sum      (DSum ((:=>)), (==>))
+import qualified Data.IntMap             as IM
+import qualified Data.List               as L
+import qualified Data.Sequence           as Seq
 
 -- move to manipulators
 import           Data.Tuple.Extra
-import           Potato.Flow.Reflex.Entry
+import           Potato.Flow.Entry
 
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end

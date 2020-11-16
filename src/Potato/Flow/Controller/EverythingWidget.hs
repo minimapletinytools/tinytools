@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.EverythingWidget (
+module Potato.Flow.Controller.EverythingWidget (
   EverythingWidgetConfig(..)
   , emptyEverythingWidgetConfig
   , EverythingWidget(..)
@@ -14,24 +14,24 @@ import           Reflex
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
+import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Entry
 import           Potato.Flow.Math
-import           Potato.Flow.Reflex.Entry
-import           Potato.Flow.Reflex.Everything
 import           Potato.Flow.Render
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import           Control.Exception             (assert)
+import           Control.Exception                 (assert)
 import           Control.Lens
 import           Control.Monad.Fix
-import           Data.Default                  (def)
-import           Data.Dependent.Sum            (DSum ((:=>)))
-import           Data.Foldable                 (minimum)
-import qualified Data.IntMap                   as IM
-import qualified Data.List                     as L
+import           Data.Default                      (def)
+import           Data.Dependent.Sum                (DSum ((:=>)))
+import           Data.Foldable                     (minimum)
+import qualified Data.IntMap                       as IM
+import qualified Data.List                         as L
 import           Data.Maybe
-import qualified Data.Sequence                 as Seq
+import qualified Data.Sequence                     as Seq
 import           Data.Tuple.Extra
 
 
@@ -171,29 +171,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                         _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
                       }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
-
-                  -- TODO call newManipulate
-                  FrontendOperation_Manipulate _ i  ->  return $ everything' {
+                  FrontendOperation_Manipulate _ lmi  ->  return $ everything' {
                           _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just op) mi
                         }
                       where
-                        smt = computeSelectionType selection
-
-                        (m, mi) = continueManipulate canvasDragTo i smt manipulators
-                        LBox p _ = _mouseManipulator_box m
-
-                        -- TODO conisder embedding in MouseManipulator instead of using switch statement below
-                        op = case smt of
-                          SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
-                                controller = CTagBox :=> (Identity $ CBox {
-                                    _cBox_deltaBox = makeDeltaBox (toEnum mi) canvasDragDelta
-                              })
-                          SMTBoundingBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
-                                -- TODO scaling rather than absolute if modifier is held?
-                                controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
-                                    _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) canvasDragDelta
-                              })
-                          _ -> undefined
+                        (mi, op) = newManipulate (toRelMouseDrag pFState mouseDrag) selection lmi undoFirst
 
                   _ -> do
                     return $ everything' {

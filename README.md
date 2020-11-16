@@ -11,8 +11,8 @@ The controller is split into two parts ..
 
 ## model files
 
-- `Potato.Flow.Reflex.Entry` (entry point)
+- `Potato.Flow.Entry` (entry point)
 
 ## controller files
 
-- `Potato.Flow.Reflex.EverythingWidget` (entry point)
+- `Potato.Flow.Controller.EverythingWidget` (entry point)

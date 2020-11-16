@@ -1,8 +1,8 @@
 ::NEWEST TODO::
--switch to newManipulate
+DONE-switch to newManipulate
 -sepearet mouse stuff out of Everything
 -seperate Manipulator out of Everything
--remove reflex folder, Entry goes into Flow folder
+DONE-remove reflex folder, Entry goes into Flow folder
 
 -decide where to store layer state
 -correct manipulator so it takes selection directly in front end

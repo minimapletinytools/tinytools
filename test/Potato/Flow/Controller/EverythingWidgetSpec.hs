@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.EverythingWidgetSpec
+module Potato.Flow.Controller.EverythingWidgetSpec
   ( spec
   )
 where
@@ -16,11 +16,11 @@ import           Reflex
 import           Reflex.Test.Host
 
 import           Potato.Flow
-import           Potato.Flow.Reflex.Everything
-import           Potato.Flow.Reflex.EverythingWidget
+import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.EverythingWidget
 
 -- test imports
-import           Potato.Flow.Reflex.Common
+import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
 import qualified Data.IntMap                         as IM

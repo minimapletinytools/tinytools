@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Reflex.Entry.Testing (
+module Potato.Flow.Entry.Testing (
   simpleSBox
   , FCmd(..)
   , randomActionFCmd
