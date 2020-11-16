@@ -29,6 +29,7 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.EverythingWidget
+import           Potato.Flow.Controller.Input
 import           Potato.Flow.TestStates
 
 import           Control.Monad.Fix

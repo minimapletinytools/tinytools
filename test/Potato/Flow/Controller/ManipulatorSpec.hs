@@ -14,6 +14,7 @@ import           Test.HUnit
 
 import           Potato.Flow
 import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
 import           Potato.Flow.TestStates

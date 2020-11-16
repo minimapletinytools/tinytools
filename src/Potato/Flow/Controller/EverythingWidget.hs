@@ -15,6 +15,7 @@ import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.Input
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.Render

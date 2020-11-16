@@ -1,4 +1,4 @@
--- TODO rename to PF
+-- TODO rename to PF or maybe PFWidget
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
@@ -74,7 +74,7 @@ neverPFConfig = PFConfig {
 }
 
 
--- TODO reanme to PF
+-- TODO rename to PF or maybe PFWidget
 data PFOutput t = PFOutput {
   _pfo_pFState             :: Dynamic t (PFState)
 
