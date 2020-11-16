@@ -19,6 +19,12 @@ module Potato.Flow.Controller.Input (
   , toRelMouseDrag
 
 
+  , Tool(..)
+  , LayerDisplay(..)
+  , Selection
+  , disjointUnionSelection
+  , SelectionManipulatorType(..)
+
 ) where
 
 import           Relude
@@ -26,6 +32,7 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
+import           Potato.Flow.Types
 
 import           Control.Exception  (assert)
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
@@ -123,3 +130,34 @@ toRelMouseDrag pFState md = RelMouseDrag $ md {
     _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md)
     , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md)
   }
+
+
+
+
+-- TODO move out or rename this file to TYpes D:
+
+-- TOOL
+data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
+
+-- LAYER
+data LayerDisplay = LayerDisplay {
+  _layerDisplay_isFolder :: Bool
+  , _layerDisplay_name   :: Text
+  , _layerDisplay_ident  :: Int
+  -- TODO hidden/locked states
+  -- TODO reverse mapping to selt
+}
+
+-- SELECTION
+type Selection = Seq SuperSEltLabel
+
+-- TODO move to its own file
+-- selection helpers
+disjointUnion :: (Eq a) => [a] -> [a] -> [a]
+disjointUnion a b = L.union a b L.\\ L.intersect a b
+
+-- TODO real implementation...
+disjointUnionSelection :: Selection -> Selection -> Selection
+disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)
+
+data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)

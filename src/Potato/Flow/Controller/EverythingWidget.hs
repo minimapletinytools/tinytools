@@ -16,6 +16,7 @@ import           Reflex.Potato.Helpers
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.Render
@@ -23,16 +24,16 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import           Control.Exception                 (assert)
+import           Control.Exception                  (assert)
 import           Control.Lens
 import           Control.Monad.Fix
-import           Data.Default                      (def)
-import           Data.Dependent.Sum                (DSum ((:=>)))
-import           Data.Foldable                     (minimum)
-import qualified Data.IntMap                       as IM
-import qualified Data.List                         as L
+import           Data.Default                       (def)
+import           Data.Dependent.Sum                 (DSum ((:=>)))
+import           Data.Foldable                      (minimum)
+import qualified Data.IntMap                        as IM
+import qualified Data.List                          as L
 import           Data.Maybe
-import qualified Data.Sequence                     as Seq
+import qualified Data.Sequence                      as Seq
 import           Data.Tuple.Extra
 
 
