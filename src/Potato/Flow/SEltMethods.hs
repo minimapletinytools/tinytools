@@ -9,17 +9,13 @@ module Potato.Flow.SEltMethods (
 ) where
 
 import           Relude
-import           Relude.Extra.Foldable1 (foldl1')
 
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Control.Monad.Fix
-
-import           Data.Dependent.Sum     (DSum ((:=>)), (==>))
-import           Data.Maybe             (fromJust)
-import           Data.Tuple.Extra
+import           Data.Dependent.Sum (DSum ((:=>)), (==>))
+import           Data.Maybe         (fromJust)
 
 -- TODO rename to getSEltBoundingBox or something
 -- | gets an 'LBox' that contains the entire RElt
@@ -105,43 +101,6 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
     }
   x          -> x
 
--- TODO delete
-selectionToManipulator :: [SuperSEltLabel] -> Manipulator
-selectionToManipulator selected = r where
-  nilState :: Manipulator
-  nilState = (MTagNone ==> ())
-  r = case selected of
-    [] -> nilState
-    ((rid, _, SEltLabel _ selt):[]) -> case selt of
-      SEltBox SBox {..} -> (MTagBox ==> mbox) where
-        mbox = MBox {
-            _mBox_target = rid
-            , _mBox_box  = _sBox_box
-          }
-      SEltLine SLine {..} -> (MTagLine ==> mline) where
-        mline = MLine {
-            _mLine_target  = rid
-            , _mLine_start = _sLine_start
-            , _mLine_end   = _sLine_end
-          }
-      SEltText SText {..} -> (MTagText ==> mtext) where
-        mtext = MText {
-            _mText_target = rid
-            , _mText_box  = _sText_box
-            , _mText_text = _sText_text
-          }
-      _                 -> nilState
-    sss -> bb where
-      fmapfn (rid, _, seltl) = do
-        box <- getSEltBox . _sEltLabel_sElt $ seltl
-        return (rid,box)
-      msboxes = catMaybes $ fmap fmapfn sss
-      bb = fromMaybe nilState $ flip viaNonEmpty msboxes $ \sboxes ->
-        MTagBoundingBox ==>
-          MBoundingBox {
-            _mBoundingBox_bounded_targets = sboxes
-          }
-
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -161,4 +120,3 @@ updateFnFromController isDo = \case
     _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
   (CTagBoundingBox :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
-  _ -> id

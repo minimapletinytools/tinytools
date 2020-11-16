@@ -43,7 +43,6 @@ instance NFData PFCmd where
   rnf (PFCMove DS.:=> Identity a)         = rnf a
   rnf (PFCManipulate DS.:=> Identity a)   = rnf a
   rnf (PFCResizeCanvas DS.:=> Identity a) = rnf a
-  rnf _                                   = ()
 
 deriveGEq      ''PFCmdTag
 deriveGCompare ''PFCmdTag

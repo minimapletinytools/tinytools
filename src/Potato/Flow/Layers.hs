@@ -19,12 +19,12 @@ import           Relude
 
 import           Potato.Flow.Types
 
-import           Control.Exception        (assert)
-import qualified Data.Bimap               as BM
-import           Data.List.Ordered        (isSorted)
-import           Data.Sequence            ((><))
-import qualified Data.Sequence            as Seq
-import qualified Data.Set                 as Set
+import           Control.Exception (assert)
+import qualified Data.Bimap        as BM
+import           Data.List.Ordered (isSorted)
+import           Data.Sequence     ((><))
+import qualified Data.Sequence     as Seq
+import qualified Data.Set          as Set
 
 -- copy pasta https://stackoverflow.com/questions/16108714/removing-duplicates-from-a-list-in-haskell-without-elem
 sortUnique :: Ord a => [a] -> [a]

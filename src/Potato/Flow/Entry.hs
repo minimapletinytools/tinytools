@@ -136,14 +136,14 @@ data PFEventTag =
   deriving (Show, Eq)
 
 holdPF ::
-  forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
+  forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => PFConfig t
   -> m (PFOutput t)
 holdPF pfc = holdPFWithInitialState emptyPFState pfc
 
 -- intended for testing, though maybe also useful for loading via command line
 holdPFWithInitialState ::
-  forall t m. (Reflex t, Adjustable t m, MonadHold t m, MonadFix m)
+  forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => PFState
   -> PFConfig t
   -> m (PFOutput t)

@@ -21,7 +21,6 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
 import qualified Data.IntMap.Strict      as IM
-import           Data.Tuple.Extra        (snd3)
 
 type AABB = LBox
 
@@ -68,8 +67,8 @@ update_bPTree changes BPTree {..} = r where
         Just lbox -> ((rid,lbox):insmods', deletes'))
     ([],[])
     (IM.toList changes)
-  (aabbs, nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
-  r = BroadPhaseState aabbs (BPTree nbpt) changes
+  (aabbs', nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
+  r = BroadPhaseState aabbs' (BPTree nbpt) changes
 
 -- TODO prob don't need this, DELETE
 --update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
