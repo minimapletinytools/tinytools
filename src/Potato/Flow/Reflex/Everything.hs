@@ -16,6 +16,8 @@ module Potato.Flow.Reflex.Everything (
   , continueDrag
   , cancelDrag
   , mouseDragDelta
+  , RelMouseDrag(..)
+  , toRelMouseDrag
 
   , FrontendOperation(..)
   , Tool(..)
@@ -63,6 +65,10 @@ import           Data.Dependent.Sum       (DSum ((:=>)), (==>))
 import qualified Data.IntMap              as IM
 import qualified Data.List                as L
 import qualified Data.Sequence            as Seq
+
+-- move to manipulators
+import           Data.Tuple.Extra
+import           Potato.Flow.Reflex.Entry
 
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end
@@ -143,6 +149,13 @@ cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
 mouseDragDelta :: MouseDrag -> MouseDrag -> XY
 mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
+newtype RelMouseDrag = RelMouseDrag MouseDrag
+
+toRelMouseDrag :: PFState -> MouseDrag -> RelMouseDrag
+toRelMouseDrag pFState md = RelMouseDrag $ md {
+    _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md)
+    , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md)
+  }
 
 -- TOOL
 data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
@@ -200,9 +213,57 @@ data MouseManipulator = MouseManipulator {
 type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
+-- TODO finish
+toMouseManipulators :: Selection -> MouseManipulatorSet
+toMouseManipulators selection = if Seq.length selection > 1
+  then
+    case Seq.lookup 0 selection of
+      Nothing -> []
+      Just (rid, _, SEltLabel _ selt) -> case selt of
+        SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
+        SEltLine SLine {..} -> undefined
+          --_sLine_start
+          --_sLine_end
+        SEltText SText {..} -> undefined
+          --_sText_box
+          --_sText_text
+        _                   -> []
+  else bb where
+    union_LBoxes :: NonEmpty LBox -> LBox
+    union_LBoxes (x:|xs) = foldl' union_LBox x xs
+    fmapfn (rid, _, seltl) = do
+      box <- getSEltBox . _sEltLabel_sElt $ seltl
+      return box
+    msboxes = fmap fmapfn selection
+    sboxes = catMaybes (toList msboxes)
+    bb = case sboxes of
+      [] -> []
+      x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
+
 -- questionable manipulator helper functions
 findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
 findFirstMouseManipulator pos = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos)
+
+newManipulate :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
+newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
+  mms = toMouseManipulators selection
+  smt = computeSelectionType selection
+  (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
+  dragDelta = _mouseDrag_to - _mouseDrag_from
+
+  -- TODO conisder embedding in MouseManipulator instead of using switch statement below
+  op = case smt of
+    SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
+          controller = CTagBox :=> (Identity $ CBox {
+              _cBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+        })
+    SMTBoundingBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
+          -- TODO scaling rather than absolute if modifier is held?
+          controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
+              _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+        })
+    _ -> undefined
+
 
 continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> (MouseManipulator, ManipulatorIndex)
 continueManipulate pos mi smt mms = let
@@ -263,33 +324,7 @@ makeDeltaBox bht (V2 dx dy) = case bht of
   BH_A  -> DeltaLBox (V2 dx dy) (V2 0 0)
 
 
--- REDUCERS/REDUCER HELPERS
--- TODO finish this function
-toMouseManipulators :: Selection -> MouseManipulatorSet
-toMouseManipulators selection = if Seq.length selection > 1
-  then
-    case Seq.lookup 0 selection of
-      Nothing -> []
-      Just (rid, _, SEltLabel _ selt) -> case selt of
-        SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
-        SEltLine SLine {..} -> undefined
-          --_sLine_start
-          --_sLine_end
-        SEltText SText {..} -> undefined
-          --_sText_box
-          --_sText_text
-        _                   -> []
-  else bb where
-    union_LBoxes :: NonEmpty LBox -> LBox
-    union_LBoxes (x:|xs) = foldl' union_LBox x xs
-    fmapfn (rid, _, seltl) = do
-      box <- getSEltBox . _sEltLabel_sElt $ seltl
-      return box
-    msboxes = fmap fmapfn selection
-    sboxes = catMaybes (toList msboxes)
-    bb = case sboxes of
-      [] -> []
-      x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
+
 
 
 -- TODO all data to pass onto backend/PFOutput should go here

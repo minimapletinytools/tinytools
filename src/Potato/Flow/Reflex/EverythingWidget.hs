@@ -167,15 +167,18 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   in case mmi of
                     Nothing -> return everything'
                     Just mi -> return everything' {
-                        -- just indicate the manipulator selected, don't actually manipulate
+                        -- just indicate the manipulator selected, don't actually manipulate here
                         _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
                       }
                 MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
+
+                  -- TODO call newManipulate
                   FrontendOperation_Manipulate _ i  ->  return $ everything' {
                           _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just op) mi
                         }
                       where
                         smt = computeSelectionType selection
+
                         (m, mi) = continueManipulate canvasDragTo i smt manipulators
                         LBox p _ = _mouseManipulator_box m
 

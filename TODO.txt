@@ -1,4 +1,12 @@
 ::NEWEST TODO::
+-switch to newManipulate
+-sepearet mouse stuff out of Everything
+-seperate Manipulator out of Everything
+-remove reflex folder, Entry goes into Flow folder
+
+-decide where to store layer state
+-correct manipulator so it takes selection directly in front end
+  -manipulate :: MosueDrag -> (SelectionManipulatorType, MouseManipulatorSet, ManipulatorIndex) -> (ManipulatorIndex, Maybe Controller)
 -create separate file for manipulator test
   -maybe improve testing framework a little to have more helpers for testing elts (and giving them names)
 DONE-figure out manipulator drag through another manipulator issue
