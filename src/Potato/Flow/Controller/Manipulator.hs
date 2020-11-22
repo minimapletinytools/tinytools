@@ -92,8 +92,10 @@ newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, o
   (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
   dragDelta = _mouseDrag_to - _mouseDrag_from
 
+  firstSelected = Seq.index selection 0
+
+
   -- TODO conisder embedding in MouseManipulator instead of using switch statement below
-  op = case smt of
     SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
           controller = CTagBox :=> (Identity $ CBox {
               _cBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
