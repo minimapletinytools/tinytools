@@ -94,7 +94,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left [])
-      , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
       -- create elt A
       , EWCLabel "Create A"
@@ -108,7 +108,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       -- create another elt, but cancel it
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCNothing -- dummy to check state
 
       -- create elt B
@@ -129,11 +129,11 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       -- begin selecting nothing and cancel
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [])
-      , EWCKeyboard (KeyboardData KeyboardKey_Esc KeyboardKeyType_Click)
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
       -- shift unselect elt B
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [MouseModifier_Shift])
+      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
       -- unselect
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
@@ -150,7 +150,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
       -- shift select elt B
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [MouseModifier_Shift])
+      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
       -- manipulate A+B
       , EWCMouse (LMouseData (V2 5 5) False MouseButton_Left [])

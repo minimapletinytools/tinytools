@@ -190,7 +190,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     layerPosMap <- sample . current $ _pfo_layerPosMap
                     let
                       bps = _everythingBackend_broadPhaseState backend
-                      shiftClick = isJust $ find (==MouseModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                      shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
                       LBox pos' sz' = make_LBox_from_XYs canvasDragTo canvasDragFrom
                       -- always expand selection by 1
                       selectBox = LBox pos' (sz' + V2 1 1)

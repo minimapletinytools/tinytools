@@ -1,11 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Input (
-  KeyboardData(..)
+  KeyModifier(..)
+  , KeyboardData(..)
   , KeyboardKey(..)
-  , KeyboardKeyType(..)
-
-  , MouseModifier(..)
   , MouseButton(..)
   , MouseDragState(..)
   , LMouseData(..)
@@ -37,29 +35,27 @@ import           Control.Exception (assert)
 import qualified Data.List         as L
 import qualified Data.Sequence     as Seq
 
+data KeyModifier = KeyModifier_Shift | KeyModifier_Alt deriving (Show, Eq)
+
 -- KEYBOARD
 -- TODO decide if text input happens here or in front end
 -- (don't wanna implement my own text zipper D:)
-data KeyboardData = KeyboardData KeyboardKey KeyboardKeyType
+data KeyboardData = KeyboardData KeyboardKey [KeyModifier]
 
 data KeyboardKey =
   KeyboardKey_Esc
   | KeyboardKey_Return
   | KeyboardKey_Space
+  | KeyboardKey_Left
+  | KeyboardKey_Right
+  | KeyboardKey_Up
+  | KeyboardKey_Down
   | KeyboardKey_Char Char
-  deriving (Show, Eq)
-
-data KeyboardKeyType =
-  KeyboardKeyType_Down
-  | KeyboardKeyType_Up
-  | KeyboardKeyType_Click
+  -- not really a keypress but it's fine to put it here
+  | KeyboardKey_Paste Text
   deriving (Show, Eq)
 
 -- MOUSE
--- TODO move all this stuff to types folder or something
--- only ones we care about
-data MouseModifier = MouseModifier_Shift | MouseModifier_Alt deriving (Show, Eq)
-
 data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right deriving (Show, Eq)
 
 data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancelled deriving (Show, Eq)
@@ -72,13 +68,13 @@ data LMouseData = LMouseData {
   _lMouseData_position    :: XY
   , _lMouseData_isRelease :: Bool
   , _lMouseData_button    :: MouseButton
-  , _lMouseData_modifiers :: [MouseModifier]
+  , _lMouseData_modifiers :: [KeyModifier]
 } deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
   _mouseDrag_from        :: XY
   , _mouseDrag_button    :: MouseButton -- tracks button on start of drag
-  , _mouseDrag_modifiers :: [MouseModifier] -- tracks modifiers held at current state of drag
+  , _mouseDrag_modifiers :: [KeyModifier] -- tracks modifiers held at current state of drag
   , _mouseDrag_to        :: XY -- likely not needed as they will be in the input event, but whatever
   , _mouseDrag_state     :: MouseDragState
 } deriving (Show, Eq)
