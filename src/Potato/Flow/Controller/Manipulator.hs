@@ -65,9 +65,9 @@ toMouseManipulators selection = if Seq.length selection > 1
         SEltLine SLine {..} -> undefined
           --_sLine_start
           --_sLine_end
-        SEltText SText {..} -> undefined
-          --_sText_box
-          --_sText_text
+        SEltText SText {..} -> fmap (flip makeHandleBox _sText_box) [BH_TL .. BH_A]
+          -- add at end to preserve indexing of [BH_TL .. BH_A]
+          <> [(makeHandleBox BH_A _sText_box) { _mouseManipulator_type = MouseManipulatorType_Text }]
         _                   -> []
   else bb where
     union_LBoxes :: NonEmpty LBox -> LBox
@@ -82,8 +82,14 @@ toMouseManipulators selection = if Seq.length selection > 1
       x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
 -- TODO rename to newManipulate
-findFirstMouseManipulator :: XY -> Selection -> Maybe ManipulatorIndex
-findFirstMouseManipulator pos selection = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos) (toMouseManipulators selection)
+findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
+findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
+  mms = toMouseManipulators selection
+  smt = computeSelectionType selection
+  r = case smt of
+    SMTText -> undefined
+    _ -> L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
+
 
 -- TODO rename to makeController
 newManipulate :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
@@ -169,3 +175,5 @@ makeDeltaBox bht (V2 dx dy) = case bht of
   BH_L  -> DeltaLBox (V2 dx 0) (V2 (-dx) 0)
   BH_R  -> DeltaLBox 0 (V2 dx 0)
   BH_A  -> DeltaLBox (V2 dx dy) (V2 0 0)
+
+-- TEXTAREA MANIPULATOR STUFF

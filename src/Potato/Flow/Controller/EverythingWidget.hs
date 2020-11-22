@@ -142,9 +142,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               MouseDragState_Cancelled -> (newDrag mouseData, 0)
               _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
 
+            -- TODO DELETE use canvasDrag below instead
             canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
             canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
             canvasDragDelta = canvasDragTo - canvasDragFrom
+
+            canvasDrag = toRelMouseDrag pFState mouseDrag
 
           -- TODO clean up unecessary monad or move sampling above into use site
           everything'' <- case _everythingFrontend_selectedTool of
@@ -160,7 +163,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             Tool_Select -> do
               case _mouseDrag_state mouseDrag of
                 MouseDragState_Down -> let
-                    mmi = findFirstMouseManipulator canvasDragTo selection
+                    mmi = findFirstMouseManipulator canvasDrag selection
                   in case mmi of
                     Nothing -> return everything'
                     Just mi -> return everything' {
@@ -172,7 +175,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                           _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
                         }
                       where
-                        (mi, operation) = newManipulate (toRelMouseDrag pFState mouseDrag) selection lmi undoFirst
+                        (mi, operation) = newManipulate canvasDrag selection lmi undoFirst
 
                   _ -> do
                     return $ everything' {

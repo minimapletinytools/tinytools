@@ -1,28 +1,41 @@
 ::NEWEST TODO::
-DONE-switch to newManipulate
--sepearet mouse stuff out of Everything
--seperate Manipulator out of Everything
-DONE-remove reflex folder, Entry goes into Flow folder
 
--decide where to store layer state
--correct manipulator so it takes selection directly in front end
+
+-line manipulators
+-layers
+  -decide where to store layer state
+  -layer drag interface (mouse position or more abstract?)
+-text manipulators
+  -idk D: make your own zip, how bad could it be
+  -decide how to handle wrap/overflow
+  -selecting text defines the text mainpulator that covers the whole place
+    -click again on text mainpulator updates it (where to store text zipper cursor pos?)
+      -live metadata? Or you can even serialize it with folder stuff 
+    -click drag does nothing (or selects D: maybe not)
+    -click off deselects
+-manipulate tests
+  DONE-test cancel in creation case
+  -test cancel in manipulate case
+-broadphase tests
+-connect RenderedCanvas
+
+DONE-correct manipulator so it takes selection directly in front end
   -manipulate :: MosueDrag -> (SelectionManipulatorType, MouseManipulatorSet, ManipulatorIndex) -> (ManipulatorIndex, Maybe Controller)
--create separate file for manipulator test
+DONE-create separate file for manipulator test
   -maybe improve testing framework a little to have more helpers for testing elts (and giving them names)
+DONE-switch to newManipulate
+DONE-sepearet mouse stuff out of Everything
+DONE-seperate Manipulator out of Everything
+DONE-remove reflex folder, Entry goes into Flow folder
 DONE-figure out manipulator drag through another manipulator issue
   -also we want a general interface for all types of manipulators
 DONE-add modifiers to LMouseData
 DONE-undo first does not reset RID counter for some reason
--manipulate tests
-  DONE-test cancel in creation case
-  -test cancel in manipulate case
 DONE-selection tests
   DONE-basic
   DONE-test cancel
   DONE-test add/noadd to select
   DONE-test single click select
--broadphase tests
--connect RenderedCanvas
 DONE-fix memory leak again ;__;
 DONE-need to use doCmdPFTTotalStateUndoFirst inside Entry
   -only need for addElt, manipulateElt and maybe resizeCanvas
