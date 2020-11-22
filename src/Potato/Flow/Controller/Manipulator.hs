@@ -38,11 +38,11 @@ computeSelectionType = foldl' foldfn SMTNone where
       SEltBox _  -> SMTBox
       SEltLine _ -> SMTLine
       SEltText _ -> SMTText
-      _          -> SMTNone
+      _          -> SMTBoundingBox
     _ -> SMTBoundingBox
 
 
-data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area deriving (Show, Eq)
+data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
 
 data MouseManipulator = MouseManipulator {
   _mouseManipulator_box    :: LBox
@@ -81,10 +81,11 @@ toMouseManipulators selection = if Seq.length selection > 1
       [] -> []
       x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
--- questionable manipulator helper functions
-findFirstMouseManipulator :: XY -> MouseManipulatorSet -> Maybe ManipulatorIndex
-findFirstMouseManipulator pos = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos)
+-- TODO rename to newManipulate
+findFirstMouseManipulator :: XY -> Selection -> Maybe ManipulatorIndex
+findFirstMouseManipulator pos selection = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) pos) (toMouseManipulators selection)
 
+-- TODO rename to makeController
 newManipulate :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
 newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
   mms = toMouseManipulators selection
@@ -94,18 +95,21 @@ newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, o
 
   firstSelected = Seq.index selection 0
 
-
   -- TODO conisder embedding in MouseManipulator instead of using switch statement below
-    SMTBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
-          controller = CTagBox :=> (Identity $ CBox {
-              _cBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+  controller = case smt of
+    SMTBox -> CTagBox :=> (Identity $ CBox {
+          _cBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
         })
-    SMTBoundingBox -> PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection))) where
-          -- TODO scaling rather than absolute if modifier is held?
-          controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
-              _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+    SMTText -> CTagText :=> (Identity $ CText {
+          _cText_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+          , _cText_deltaText = (undefined,"")
+        })
+    SMTBoundingBox -> CTagBoundingBox :=> (Identity $ CBoundingBox {
+          _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
         })
     _ -> undefined
+
+  op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
 
 
 continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> (MouseManipulator, ManipulatorIndex)

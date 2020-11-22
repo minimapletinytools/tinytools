@@ -129,7 +129,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           FrontendOperation_Manipulate mpfe _ -> isJust mpfe
           _                                   -> False
         selection = _everythingBackend_selection backend
-        manipulators = toMouseManipulators selection
 
       case cmd of
         EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
@@ -161,7 +160,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             Tool_Select -> do
               case _mouseDrag_state mouseDrag of
                 MouseDragState_Down -> let
-                    mmi = findFirstMouseManipulator canvasDragTo manipulators
+                    mmi = findFirstMouseManipulator canvasDragTo selection
                   in case mmi of
                     Nothing -> return everything'
                     Just mi -> return everything' {
