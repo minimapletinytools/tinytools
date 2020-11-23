@@ -140,13 +140,17 @@ numSelectedEltsEqualPredicate n = FunctionPredicate $
     in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
   . _everythingCombined_selection
 
-firstSelectedSuperSEltLabelPredicate :: (SuperSEltLabel -> Bool) -> EverythingPredicate
-firstSelectedSuperSEltLabelPredicate f = FunctionPredicate $
+firstSelectedSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
+firstSelectedSuperSEltLabelPredicate mlabel f = FunctionPredicate $
   (\s ->
     let
-      mfirst = Seq.lookup 0 s
+      mfirst = case mlabel of
+        Nothing -> Seq.lookup 0 s
+        Just label -> case Seq.findIndexL (\(_,_,SEltLabel l _) -> label == l) s of
+          Nothing -> Nothing
+          Just i  -> Seq.lookup i s
     in case mfirst of
-      Nothing    -> ("Selection is empty", False)
+      Nothing    -> ("No elt with label " <> show mlabel, False)
       Just first -> ("First selected: " <> show first, f first))
   . _everythingCombined_selection
 

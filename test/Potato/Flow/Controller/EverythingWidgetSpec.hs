@@ -225,7 +225,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkLastOperationPredicate LastOperationType_Manipulate
       , AlwaysPass
       -- check that it got moved to 0 0
-      , firstSelectedSuperSEltLabelPredicate (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
         _                                  -> False)
 
@@ -238,7 +238,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , AlwaysPass
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
-      , firstSelectedSuperSEltLabelPredicate (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
         _                                  -> False)
 

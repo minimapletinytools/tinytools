@@ -112,8 +112,38 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       , AlwaysPass
     ]
 
+restrict8_test :: Test
+restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs expected where
+  bs = [
+      EWCTool Tool_Select
+
+      , EWCLabel "select b2"
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+
+      , EWCLabel "resize tl corner b2 while holding shift"
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [KeyModifier_Shift])
+      , EWCMouse (LMouseData (V2 10 0) False MouseButton_Left [KeyModifier_Shift])
+      , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [KeyModifier_Shift])
+    ]
+  expected = [
+      EqPredicate _everythingCombined_selectedTool Tool_Select
+
+      , LabelCheck "select b2"
+      , AlwaysPass
+      , numSelectedEltsEqualPredicate 1
+
+      , LabelCheck "resize tl corner b2 while holding shift"
+      , AlwaysPass
+      , AlwaysPass
+      , firstSelectedSuperSEltLabelPredicate (Just "b2") (\(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 10 && y == 1
+        _                                  -> False)
+    ]
+
 
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
     fromHUnitTest $ basic_sbox_test
+    fromHUnitTest $ restrict8_test

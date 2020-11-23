@@ -97,14 +97,13 @@ restrict4 (V2 x y) = if abs x > abs y then V2 x 0 else V2 0 y
 
 restrict8 :: XY -> XY
 restrict8 (V2 x y) = r where
-  normx :: Float = fromIntegral $ abs x
-  normy = fromIntegral $  abs y
-  normxy = norm (V2 (fromIntegral x) (fromIntegral y))
+  normx = abs x
+  normy = abs y
   r = if normx > normy
-    then if normx > normxy
+    then if normx*2 > normy
       then (V2 x 0)
       else (V2 x y)
-    else if normy > normxy
+    else if normy*2 > normx
       then (V2 0 y)
       else (V2 x y)
 
@@ -115,20 +114,24 @@ newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, o
   smt = computeSelectionType selection
   (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
   dragDelta = _mouseDrag_to - _mouseDrag_from
+  boxRestrictedDelta = if elem KeyModifier_Shift _mouseDrag_modifiers
+    then traceShow dragDelta $ restrict8 dragDelta
+    else dragDelta
+
 
   firstSelected = Seq.index selection 0
 
-  -- TODO conisder embedding in MouseManipulator instead of using switch statement below
+  -- TODO consider embedding in MouseManipulator instead of using switch statement below
   controller = case smt of
     SMTBox -> CTagBox :=> (Identity $ CBox {
-          _cBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+          _cBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
         })
     SMTText -> CTagText :=> (Identity $ CText {
-          _cText_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+          _cText_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
           , _cText_deltaText = (undefined,"")
         })
     SMTBoundingBox -> CTagBoundingBox :=> (Identity $ CBoundingBox {
-          _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) dragDelta
+          _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
         })
     _ -> undefined
 
