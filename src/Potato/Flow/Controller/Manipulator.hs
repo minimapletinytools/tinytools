@@ -91,6 +91,23 @@ findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
     _ -> L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
 
 
+
+restrict4 :: XY -> XY
+restrict4 (V2 x y) = if abs x > abs y then V2 x 0 else V2 0 y
+
+restrict8 :: XY -> XY
+restrict8 (V2 x y) = r where
+  normx :: Float = fromIntegral $ abs x
+  normy = fromIntegral $  abs y
+  normxy = norm (V2 (fromIntegral x) (fromIntegral y))
+  r = if normx > normy
+    then if normx > normxy
+      then (V2 x 0)
+      else (V2 x y)
+    else if normy > normxy
+      then (V2 0 y)
+      else (V2 x y)
+
 -- TODO rename to makeController
 newManipulate :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
 newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
