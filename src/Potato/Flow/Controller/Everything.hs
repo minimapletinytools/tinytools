@@ -30,8 +30,6 @@ data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
   | FrontendOperation_LayerDrag
-
-  -- TODO probably change to (Maybe PFEventTag)
   | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
   | FrontendOperation_Undo
   | FrontendOperation_Selecting LBox
@@ -46,7 +44,6 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_lastOperation :: FrontendOperation
 
   , _everythingFrontend_debugLabel    :: Text
-  -- TODO needs a way to pass selection onto backend
 } deriving (Show)
 
 -- second pass, taking outputs from PFOutput

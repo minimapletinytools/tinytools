@@ -85,7 +85,7 @@ emptyMouseDrag = MouseDrag {
     , _mouseDrag_button = MouseButton_Left
     , _mouseDrag_modifiers = []
     , _mouseDrag_to    = 0
-    , _mouseDrag_state = MouseDragState_Cancelled
+    , _mouseDrag_state = MouseDragState_Up -- if the last state was MouseDragState_Up we are ready to process more inputs fresh
   }
 
 newDrag :: LMouseData -> MouseDrag

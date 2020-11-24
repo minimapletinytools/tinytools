@@ -1,4 +1,6 @@
 ::NEWEST TODO::
+DONE-proper cancelling (maybe add new state var to ignore mouse stuff?)
+  DONE-fix cancel tests so that they try and do stuff after the cancel
 -look into doing pending selection for immediate select + manipulate
 -line manipulators
 -layers

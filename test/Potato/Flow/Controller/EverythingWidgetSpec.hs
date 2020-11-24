@@ -94,22 +94,25 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left [])
+      -- cancel and keep tracking and make sure nothing changes
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCMouse (LMouseData (V2 9 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 (-20) 31) True MouseButton_Left [])
 
       -- create elt A
       , EWCLabel "Create A"
       , EWCTool Tool_Box
-      -- drag from (1,1) to (10,10) and release
+      -- drag from (1,1) to (10,10) and release (actually (2,2) to (10,10))
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
       , EWCNothing -- dummy to check state
 
-      -- create another elt, but cancel it
+      , EWCLabel "create another elt, but cancel it"
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
-      , EWCNothing -- dummy to check state
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
 
       -- create elt B
       , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [])
@@ -126,10 +129,11 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
-      -- begin selecting nothing and cancel
+      , EWCLabel "begin selecting nothing and cancel"
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [])
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [])
 
       -- shift unselect elt B
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
@@ -157,6 +161,13 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
 
+      -- manipulate A+B then cancel
+      , EWCLabel "Mainpulate A+B then cancel"
+      , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
+
       -- TODO delete the elt
       -- check in layers and check render
     ]
@@ -171,6 +182,8 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , (EqPredicate _everythingCombined_pan (V2 0 0))
       , (EqPredicate _everythingCombined_pan (V2 10 15))
       , (EqPredicate _everythingCombined_pan (V2 1 1))
+      , checkLastOperationPredicate LastOperationType_None
+      , (EqPredicate _everythingCombined_pan (V2 1 1))
 
       -- create elt A
       , LabelCheck "Create A"
@@ -183,7 +196,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
           -- TODO test other things
         ]
 
-      -- create another elt, but cancel it
+      , LabelCheck "create another elt, but cancel it"
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Undo
@@ -204,9 +217,10 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , AlwaysPass
       , numSelectedEltsEqualPredicate 2
 
-      -- beging selecting nothing and cancel
+      , LabelCheck "begin selecting nothing and cancel"
       , AlwaysPass
       , AlwaysPass
+      , numSelectedEltsEqualPredicate 2
       , numSelectedEltsEqualPredicate 2
 
       -- shift unselect elt B
@@ -241,6 +255,20 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
         _                                  -> False)
+
+      -- manipulate A+B then cancel
+      , LabelCheck "Mainpulate A+B then cancel"
+      , AlwaysPass
+      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 5 && y == 5
+        _                                  -> False)
+      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
+        _                                  -> False)
+      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
+        _                                  -> False)
+
 
     ]
 
