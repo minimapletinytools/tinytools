@@ -120,7 +120,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
       , EWCNothing -- dummy to check state
 
-      -- unselect everything
+      -- unselect
       , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
@@ -172,6 +172,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
 
+
       -- TODO delete the elt
       -- check in layers and check render
     ]
@@ -216,7 +217,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
           , numSelectedEltsEqualPredicate 1
         ]
 
-      -- unselect everything
+      -- unselect
       , (EqPredicate _everythingCombined_selectedTool Tool_Select)
       , AlwaysPass
       , numSelectedEltsEqualPredicate 0

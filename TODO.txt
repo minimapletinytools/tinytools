@@ -1,5 +1,4 @@
 ::NEWEST TODO::
--look into doing pending selection for immediate select + manipulate
 -line manipulators
 -layers
   -decide where to store layer state
@@ -15,6 +14,8 @@
 -broadphase tests
 -connect RenderedCanvas
 
+DONE-look into doing pending selection for immediate select + manipulate
+  DONE-add test for single click select + actually manipulate
 DONE-proper cancelling (maybe add new state var to ignore mouse stuff?)
   DONE-fix cancel tests so that they try and do stuff after the cancel
 DONE-manipulate tests
@@ -24,7 +25,7 @@ DONE-correct manipulator so it takes selection directly in front end
   -manipulate :: MosueDrag -> (SelectionManipulatorType, MouseManipulatorSet, ManipulatorIndex) -> (ManipulatorIndex, Maybe Controller)
 DONE-create separate file for manipulator test
   -maybe improve testing framework a little to have more helpers for testing elts (and giving them names)
-DONE-switch to newManipulate
+DONE-switch to makeManipulationController
 DONE-sepearet mouse stuff out of Everything
 DONE-seperate Manipulator out of Everything
 DONE-remove reflex folder, Entry goes into Flow folder

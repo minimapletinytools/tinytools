@@ -124,6 +124,33 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
         _                     -> False
     ]
 
+select_and_drag_sbox_test :: Test
+select_and_drag_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs expected where
+  bs = [
+      EWCTool Tool_Select
+
+      , EWCLabel "select + drag b2"
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 11 11) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 11 11) True MouseButton_Left [])
+
+    ]
+  expected = [
+      EqPredicate _everythingCombined_selectedTool Tool_Select
+
+      , LabelCheck "select + drag b2"
+      , AlwaysPass
+      , numSelectedEltsEqualPredicate 1
+      , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _) -> lbox == LBox (V2 11 11) (V2 5 5)
+        _                     -> False
+
+    ]
+
+
+-- TODO
+--select_and_drag_bbox_test
+
 restrict8_test :: Test
 restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs expected where
   bs = [
@@ -158,4 +185,5 @@ spec :: Spec
 spec = do
   describe "Manipulator" $ do
     fromHUnitTest $ basic_sbox_test
+    fromHUnitTest $ select_and_drag_sbox_test
     fromHUnitTest $ restrict8_test

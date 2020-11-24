@@ -114,7 +114,7 @@ makeManipulationController (RelMouseDrag MouseDrag {..}) selection lastmi undoFi
   (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
   dragDelta = _mouseDrag_to - _mouseDrag_from
   boxRestrictedDelta = if elem KeyModifier_Shift _mouseDrag_modifiers
-    then traceShow dragDelta $ restrict8 dragDelta
+    then restrict8 dragDelta
     else dragDelta
   firstSelected = Seq.index selection 0
 
