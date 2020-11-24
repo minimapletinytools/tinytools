@@ -1,6 +1,5 @@
 ::NEWEST TODO::
-
-
+-look into doing pending selection for immediate select + manipulate
 -line manipulators
 -layers
   -decide where to store layer state
@@ -10,7 +9,7 @@
   -decide how to handle wrap/overflow
   -selecting text defines the text mainpulator that covers the whole place
     -click again on text mainpulator updates it (where to store text zipper cursor pos?)
-      -live metadata? Or you can even serialize it with folder stuff 
+      -live metadata? Or you can even serialize it with folder stuff
     -click drag does nothing (or selects D: maybe not)
     -click off deselects
 -manipulate tests

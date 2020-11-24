@@ -13,6 +13,7 @@ module Potato.Flow.State (
   , pFState_to_sPotatoFlow
   , pFState_toCanvasCoordinates
   , pfState_layerPos_to_superSEltLabel
+  , pFState_to_superSEltLabelSeq
 
   , emptyPFState
   , do_newElts
@@ -127,6 +128,10 @@ pfState_layerPos_to_superSEltLabel :: PFState -> LayerPos -> SuperSEltLabel
 pfState_layerPos_to_superSEltLabel PFState {..} lp = (rid, lp, seltl) where
   rid = Seq.index _pFState_layers lp
   seltl = (IM.!) _pFState_directory rid
+
+-- i.e. select all
+pFState_to_superSEltLabelSeq :: PFState -> Seq SuperSEltLabel
+pFState_to_superSEltLabelSeq PFState {..} = Seq.mapWithIndex (\lp rid -> (rid, lp, fromJust $ IM.lookup rid _pFState_directory)) $ _pFState_layers
 
 do_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_newElts seltls PFState {..} = (r, fmap Just changes) where

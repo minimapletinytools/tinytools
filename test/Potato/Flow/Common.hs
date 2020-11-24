@@ -12,6 +12,7 @@ module Potato.Flow.Common
   , checkNumElts
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperSEltLabelPredicate
+  , firstSuperSEltLabelPredicate
   , constructTest
   )
 where
@@ -145,14 +146,30 @@ firstSelectedSuperSEltLabelPredicate mlabel f = FunctionPredicate $
   (\s ->
     let
       mfirst = case mlabel of
-        Nothing -> Seq.lookup 0 s
-        Just label -> case Seq.findIndexL (\(_,_,SEltLabel l _) -> label == l) s of
-          Nothing -> Nothing
-          Just i  -> Seq.lookup i s
+        Nothing    -> Seq.lookup 0 s
+        Just label -> find (\(_,_,SEltLabel l _) -> label == l) s
     in case mfirst of
-      Nothing    -> ("No elt with label " <> show mlabel, False)
+      Nothing    -> ("No elt with label " <> show mlabel <> show s, False)
       Just first -> ("First selected: " <> show first, f first))
   . _everythingCombined_selection
+
+
+
+firstSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
+firstSuperSEltLabelPredicate mlabel f = FunctionPredicate $
+  (\sseltls ->
+    let
+      mfirst = case mlabel of
+        Nothing -> case toList sseltls of
+          []  -> Nothing
+          x:_ -> Just x
+        Just label -> case find (\(_, _, SEltLabel l _) -> label == l) sseltls of
+          Nothing     -> Nothing
+          Just sseltl -> Just sseltl
+    in case mfirst of
+      Nothing    -> ("No elt with label " <> show mlabel, False)
+      Just first -> ("First elt with label " <> show mlabel <> ": " <> show first, f first))
+  . pFState_to_superSEltLabelSeq . _everythingCombined_pFState
 
 
 constructTest :: String -> PFState -> [EverythingWidgetCmd] -> [EverythingPredicate] -> Test
@@ -174,8 +191,11 @@ constructTest label pfs bs expected = TestLabel label $ TestCase $ do
   forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
       testfn ewcd =
         (assertBool . T.unpack) ((showEverythingPredicate p ewcd)
-          <> " [label = " <> _everythingCombined_debugLabel ewcd
-          <> ", index = " <> show i <> "]")
+          <> " \n[label = " <> _everythingCombined_debugLabel ewcd
+          <> ", index = " <> show i <> "]"
+          <> "\nstate = " <> case me of
+            Just e  -> show (_everythingCombined_pFState e)
+            Nothing -> show (_everythingCombined_pFState b))
         (testEverythingPredicate p ewcd)
     in case me of
       Just e  -> testfn e
