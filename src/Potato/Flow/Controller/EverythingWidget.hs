@@ -95,7 +95,6 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
 
--- todo refactor out selectino logic
 selectMagic :: PFState -> REltIdMap LayerPos -> BroadPhaseState -> RelMouseDrag -> Selection
 selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_LBox_from_XYs _mouseDrag_to _mouseDrag_from
@@ -190,27 +189,48 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   }
               Tool_Select -> do
                 case _mouseDrag_state mouseDrag of
-                  MouseDragState_Down -> let
-                      -- TODO figure out pending selection stuff here?
-                      -- if no selection
-                        --shadow select
-                        --check shadow selection for manipulators
-                        --if manipulators, then actually select and set index
+                  MouseDragState_Down -> do
+                    if Seq.null selection
+                    then do
+                      layerPosMap <- sample . current $ _pfo_layerPosMap
+                      let
+                        bps = _everythingBackend_broadPhaseState backend
+                        nextSelection = selectMagic pFState layerPosMap bps canvasDrag
+                        shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                        mmi = findFirstMouseManipulator canvasDrag nextSelection
+                      case mmi of
+                        Nothing -> return everything'
+                        Just mi -> return everything' {
 
-                      mmi = findFirstMouseManipulator canvasDrag selection
-                    in case mmi of
-                      Nothing -> return everything'
-                      Just mi -> return everything' {
-                          -- just indicate the manipulator selected, don't actually manipulate here
-                          _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
-                        }
+                            _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick nextSelection
+                          }
+                    else let
+                        mmi = findFirstMouseManipulator canvasDrag selection
+                      in case mmi of
+                        Nothing -> return everything'
+                        Just mi -> return everything' {
+                            -- just indicate the manipulator selected, don't actually manipulate here
+                            _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
+                          }
                   MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
                     FrontendOperation_Manipulate _ lmi  ->  return $ everything' {
                             _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
                           }
                         where
                           (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
-
+                    -- IMPORTANT: special case, if last operation was FrontendOperation_Select and mouse state is MouseDragState_Dragging
+                    -- then this means that we are in the special select + manipulate case
+                    -- I am not so happy about this, perhaps it's better just to introduce another state var rather than rely on special state of two state vars
+                    FrontendOperation_Select _ _ -> return $ everything' {
+                            _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
+                          }
+                        where
+                          -- regenerate mouse info from last frame
+                          lastCanvasDrag = toRelMouseDrag pFState _everythingFrontend_mouseDrag
+                          lmi = case findFirstMouseManipulator lastCanvasDrag selection of
+                            Nothing -> error "expected to find manipulator, this probably means assumptions outlined in comments above are false"
+                            Just x -> x
+                          (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
                     _ -> do
                       return $ everything' {
                           _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom canvasDragDelta)
@@ -219,6 +239,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   MouseDragState_Up -> case _everythingFrontend_lastOperation of
                     -- if we were manipulating, don't need to do anything
                     FrontendOperation_Manipulate _ _ -> return everything'
+                    -- This happens in the select+manipulate case in which case we have already selected
+                    FrontendOperation_Select _ _ -> return everything'
                     -- if we weren't manipulating, then we were selecting, then finalize selection
                     _ -> do
                       layerPosMap <- sample . current $ _pfo_layerPosMap

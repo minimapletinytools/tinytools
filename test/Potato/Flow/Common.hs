@@ -108,7 +108,7 @@ showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingP
 
 
 -- umm, is there a better way to do this? Too bad you can't pass a pattern match as an argument or can you?
-data LastOperationType = LastOperationType_Manipulate | LastOperationType_Undo | LastOperationType_None
+data LastOperationType = LastOperationType_Manipulate | LastOperationType_Undo | LastOperationType_Select | LastOperationType_None
 checkLastOperationPredicate :: LastOperationType -> EverythingPredicate
 checkLastOperationPredicate operation = case operation of
   LastOperationType_Manipulate -> FunctionPredicate (
@@ -125,6 +125,11 @@ checkLastOperationPredicate operation = case operation of
     (\case
       FrontendOperation_Undo -> ("",True)
       o -> ("Expected FrontendOperation_Undo got " <> show o, False))
+    . _everythingCombined_lastOperation)
+  LastOperationType_Select -> FunctionPredicate (
+    (\case
+      FrontendOperation_Select _ _ -> ("",True)
+      o -> ("Expected FrontendOperation_Select got " <> show o, False))
     . _everythingCombined_lastOperation)
 
 checkNumElts :: Int -> PFState -> (Text, Bool)

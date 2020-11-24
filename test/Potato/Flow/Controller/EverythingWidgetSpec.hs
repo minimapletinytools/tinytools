@@ -120,8 +120,12 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
       , EWCNothing -- dummy to check state
 
-      -- select elt B
+      -- unselect everything
       , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
+
+      , EWCLabel "select elt B"
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [])
 
@@ -173,7 +177,6 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
     ]
 
   expected = [
-      -- very basic panning
       LabelCheck "Pan"
       , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
       , (EqPredicate _everythingCombined_pan (V2 0 0))
@@ -185,7 +188,6 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkLastOperationPredicate LastOperationType_None
       , (EqPredicate _everythingCombined_pan (V2 1 1))
 
-      -- create elt A
       , LabelCheck "Create A"
       , (EqPredicate _everythingCombined_selectedTool Tool_Box)
       , checkLastOperationPredicate LastOperationType_Manipulate
@@ -193,24 +195,34 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkLastOperationPredicate LastOperationType_None
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1)
-          -- TODO test other things
+          , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "create another elt, but cancel it"
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Undo
-      , PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
+      , Combine [
+          PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
+          , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
+        ]
 
       -- create elt B
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_Manipulate
       , checkLastOperationPredicate LastOperationType_None
-      , PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
+      , Combine [
+          PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
+          , numSelectedEltsEqualPredicate 1
+        ]
 
-      -- select elt B
+      -- unselect everything
       , (EqPredicate _everythingCombined_selectedTool Tool_Select)
       , AlwaysPass
+      , numSelectedEltsEqualPredicate 0
+
+      , LabelCheck "select elt B"
+      , checkLastOperationPredicate LastOperationType_Select -- test for single click select + manipulate selection case
       , numSelectedEltsEqualPredicate 1
 
       -- now select elts A + B
