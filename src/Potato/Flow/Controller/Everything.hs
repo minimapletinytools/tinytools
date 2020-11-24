@@ -43,6 +43,8 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
   , _everythingFrontend_lastOperation :: FrontendOperation
 
+  --, _everythingFrontend_layerMouseDrag :: MouseDrag -- last layer mouse dragging state
+
   , _everythingFrontend_debugLabel    :: Text
 } deriving (Show)
 

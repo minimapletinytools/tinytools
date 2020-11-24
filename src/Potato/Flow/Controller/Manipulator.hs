@@ -81,15 +81,16 @@ toMouseManipulators selection = if Seq.length selection > 1
       [] -> []
       x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
+-- TODO should this method take a "pending selection" so that you can select + manipulate in one go?
 -- TODO rename to newManipulate
 findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
   smt = computeSelectionType selection
+  normalSel = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
   r = case smt of
-    SMTText -> undefined
-    _ -> L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
-
+    SMTText -> normalSel -- TODO figure out how to differentiate between area / text manipulator
+    _       -> normalSel
 
 
 restrict4 :: XY -> XY
