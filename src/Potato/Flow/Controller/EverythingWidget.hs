@@ -95,6 +95,28 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
 
+-- todo refactor out selectino logic
+selectMagic :: PFState -> REltIdMap LayerPos -> BroadPhaseState -> RelMouseDrag -> Selection
+selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
+  LBox pos' sz' = make_LBox_from_XYs _mouseDrag_to _mouseDrag_from
+  -- always expand selection by 1
+  selectBox = LBox pos' (sz' + V2 1 1)
+  boxSize = lBox_area selectBox
+  singleClick = boxSize == 1
+  selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
+  mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
+  lps' = mapToLp selectedRids
+  lps = if singleClick
+    -- single click, select top elt only
+    then case lps' of
+      [] -> []
+      xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
+    -- otherwise select everything
+    else lps'
+  r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
+
+
+
 holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => EverythingWidgetConfig t
   -> m (EverythingWidget t)
@@ -169,6 +191,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               Tool_Select -> do
                 case _mouseDrag_state mouseDrag of
                   MouseDragState_Down -> let
+                      -- TODO figure out pending selection stuff here?
+                      -- if no selection
+                        --shadow select
+                        --check shadow selection for manipulators
+                        --if manipulators, then actually select and set index
+
                       mmi = findFirstMouseManipulator canvasDrag selection
                     in case mmi of
                       Nothing -> return everything'
@@ -181,7 +209,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                             _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
                           }
                         where
-                          (mi, operation) = newManipulate canvasDrag selection lmi undoFirst
+                          (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
 
                     _ -> do
                       return $ everything' {
@@ -197,24 +225,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       let
                         bps = _everythingBackend_broadPhaseState backend
                         shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-                        LBox pos' sz' = make_LBox_from_XYs canvasDragTo canvasDragFrom
-                        -- always expand selection by 1
-                        selectBox = LBox pos' (sz' + V2 1 1)
-                        boxSize = lBox_area selectBox
-                        singleClick = boxSize == 1
-                        selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
-                        mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
-                        lps' = mapToLp selectedRids
-                        lps = if singleClick
-                          -- single click, select top elt only
-                          then case lps' of
-                            [] -> []
-                            xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
-                          -- otherwise select everything
-                          else lps'
                       -- selection is stored in backend so pass it on to backend
                       return $ everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick (Seq.fromList (map (pfState_layerPos_to_superSEltLabel pFState) lps))
+                          _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick $ selectMagic pFState layerPosMap bps canvasDrag
                         }
                   -- 'case _mouseDrag_state mouseDrag of'
                   _ -> undefined

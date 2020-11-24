@@ -10,7 +10,7 @@ module Potato.Flow.Controller.Manipulator (
   , MouseManipulatorSet
   , toMouseManipulators
   , findFirstMouseManipulator
-  , newManipulate
+  , makeManipulationController
 
 ) where
 
@@ -82,7 +82,6 @@ toMouseManipulators selection = if Seq.length selection > 1
       x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
 -- TODO should this method take a "pending selection" so that you can select + manipulate in one go?
--- TODO rename to newManipulate
 findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
@@ -108,9 +107,8 @@ restrict8 (V2 x y) = r where
       then (V2 0 y)
       else (V2 x y)
 
--- TODO rename to makeController
-newManipulate :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
-newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
+makeManipulationController :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
+makeManipulationController (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
   mms = toMouseManipulators selection
   smt = computeSelectionType selection
   (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
@@ -118,8 +116,6 @@ newManipulate (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, o
   boxRestrictedDelta = if elem KeyModifier_Shift _mouseDrag_modifiers
     then traceShow dragDelta $ restrict8 dragDelta
     else dragDelta
-
-
   firstSelected = Seq.index selection 0
 
   -- TODO consider embedding in MouseManipulator instead of using switch statement below
