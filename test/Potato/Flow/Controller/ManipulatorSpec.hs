@@ -105,17 +105,23 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       , LabelCheck "resize bl corner b2"
       , AlwaysPass
       , AlwaysPass
-      , AlwaysPass
+      , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _) -> lbox == LBox (V2 8 9) (V2 7 6)
+        _                     -> False
 
       , LabelCheck "resize br corner b2"
       , AlwaysPass
       , AlwaysPass
-      , AlwaysPass
+      , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _) -> lbox == LBox (V2 8 9) (V2 12 11)
+        _                     -> False
 
       , LabelCheck "area move b2"
       , AlwaysPass
       , AlwaysPass
-      , AlwaysPass
+      , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _) -> lbox == LBox (V2 13 14) (V2 12 11)
+        _                     -> False
     ]
 
 restrict8_test :: Test
