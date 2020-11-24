@@ -22,15 +22,8 @@ import           Potato.Flow.Render
 import           Potato.Flow.State
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
-import           Potato.Flow.Entry                  (PFEventTag)
 import qualified Data.Sequence                      as Seq
-
--- DELETE?
-changeSelection :: Selection -> EverythingBackend -> EverythingBackend
-changeSelection newSelection everything@EverythingBackend {..} = everything {
-    _everythingBackend_selection = newSelection
-    , _everythingBackend_manipulators = toMouseManipulators newSelection
-  }
+import           Potato.Flow.Entry                  (PFEventTag)
 
 -- TODO all data to pass onto backend/PFOutput should go here
 data FrontendOperation =
@@ -60,10 +53,6 @@ data EverythingFrontend = EverythingFrontend {
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection         :: Selection
   , _everythingBackend_layers          :: Seq LayerDisplay
-
-  -- TODO DELETE we'll just recompute these everytime in frontend
-  , _everythingBackend_manipulators    :: MouseManipulatorSet
-
   , _everythingBackend_broadPhaseState :: BroadPhaseState
   , _everythingBackend_renderedCanvas  :: RenderedCanvas
 
@@ -82,7 +71,6 @@ emptyEverythingBackend :: EverythingBackend
 emptyEverythingBackend = EverythingBackend {
     _everythingBackend_selection    = Seq.empty
     , _everythingBackend_layers       = Seq.empty
-    , _everythingBackend_manipulators = []
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
   }
@@ -97,7 +85,6 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
 
   , _everythingCombined_selection      :: Selection
   , _everythingCombined_layers         :: Seq LayerDisplay
-  , _everythingCombined_manipulators   :: MouseManipulatorSet
   , _everythingCombined_broadPhase     :: BroadPhaseState
   , _everythingCombined_renderedCanvas :: RenderedCanvas
 
@@ -115,7 +102,6 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
 
     , _everythingCombined_selection      = _everythingBackend_selection
     , _everythingCombined_layers       = _everythingBackend_layers
-    , _everythingCombined_manipulators = _everythingBackend_manipulators
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
 
