@@ -3,14 +3,26 @@
 -layers
   -decide where to store layer state
   -layer drag interface (mouse position or more abstract?)
+-figure out how to add sub modals (e.g. text edit mode) to frontend
+  -you could actually probably get away with reusing lastOperatino but that's probably asknig for trouble
+    -so just create a new frontend state var for modals?
+    -maybe you can a special clear method that doesn't reset modal state vars when relevant?
+      -clearLastOperation :: FrontEndOperation -> FrontEndOperation
+      -this is simpler because modal state vars are onyl present when modal is active
+        -in this case lastoperation becomes a standin for modals
 -text manipulators
   -idk D: make your own zip, how bad could it be
   -decide how to handle wrap/overflow
   -selecting text defines the text mainpulator that covers the whole place
-    -click again on text mainpulator updates it (where to store text zipper cursor pos?)
-      -live metadata? Or you can even serialize it with folder stuff
-    -click drag does nothing (or selects D: maybe not)
-    -click off deselects
+    -if not selected
+      -click drag selects and drags
+      -click selects
+    -if selected
+      -click enters edit mode at cursor position
+      -if edit mode
+        -click drag does selects text
+      -if not edit mode
+        -click drag drags
 -broadphase tests
 -connect RenderedCanvas
 
