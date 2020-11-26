@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Layers (
-
+  LayerDragState
 ) where
 
 import           Relude
@@ -35,3 +35,7 @@ generateLayers PFState {..} = r where
       SEltLabel _ SEltFolderStart -> depth - 1
       SEltLabel _ SEltFolderEnd   -> depth + 1
   r = foldr foldrfn [] _pFState_layers
+
+data LayerDownType = LDT_Hide | LDT_Lock | LDT_Normal deriving (Show, Eq)
+
+type LayerDragState = (Int, LayerDownType)

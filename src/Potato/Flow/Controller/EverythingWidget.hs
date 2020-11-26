@@ -298,7 +298,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 FrontendOperation_Selecting _ ->
                   -- we don't select until release so just reset to orign state
                   return everything''
-                FrontendOperation_LayerDrag ->
+                FrontendOperation_LayerDrag _ ->
                   -- TODO??
                   undefined
                 FrontendOperation_None -> return everything'

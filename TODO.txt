@@ -10,6 +10,7 @@
       -clearLastOperation :: FrontEndOperation -> FrontEndOperation
       -this is simpler because modal state vars are onyl present when modal is active
         -in this case lastoperation becomes a standin for modals
+    -if yo udo this you should change MainpulationIndex into some more fancy Manipulation state object
 -text manipulators
   -idk D: make your own zip, how bad could it be
   -decide how to handle wrap/overflow

@@ -16,6 +16,7 @@ import           Relude
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Math
 import           Potato.Flow.Render
@@ -29,23 +30,29 @@ import           Potato.Flow.Entry                  (PFEventTag)
 data FrontendOperation =
   FrontendOperation_None
   | FrontendOperation_Pan
-  | FrontendOperation_LayerDrag
-  | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
   | FrontendOperation_Undo
   | FrontendOperation_Selecting LBox
   | FrontendOperation_Select Bool Selection
+
+  -- TODO look into putting ManipulationState type in here so different manipulators can have different state types
+  -- you prob want a DSum kind of nonsense here so it's type safe too
+  | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
+
+  | FrontendOperation_LayerDrag LayerDragState
+
   deriving (Show, Eq)
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
-  _everythingFrontend_selectedTool    :: Tool
-  , _everythingFrontend_pan           :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingFrontend_mouseDrag     :: MouseDrag -- last mouse dragging state
-  , _everythingFrontend_lastOperation :: FrontendOperation
+  _everythingFrontend_selectedTool     :: Tool
+  , _everythingFrontend_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingFrontend_mouseDrag      :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
+  , _everythingFrontend_lastOperation  :: FrontendOperation
 
-  --, _everythingFrontend_layerMouseDrag :: MouseDrag -- last layer mouse dragging state
+  , _everythingFrontend_layerMouseDrag :: MouseDrag -- last layer mouse dragging state
+  , _everythingFrontend_layerScrollPos :: Int
 
-  , _everythingFrontend_debugLabel    :: Text
+  , _everythingFrontend_debugLabel     :: Text
 } deriving (Show)
 
 -- second pass, taking outputs from PFOutput

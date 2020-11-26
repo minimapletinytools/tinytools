@@ -81,7 +81,6 @@ toMouseManipulators selection = if Seq.length selection > 1
       [] -> []
       x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
 
--- TODO should this method take a "pending selection" so that you can select + manipulate in one go?
 findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
