@@ -17,17 +17,17 @@ module Potato.Flow.Controller.Manipulator (
 import           Relude
 
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Data.Dependent.Sum           (DSum ((:=>)), (==>))
+import           Data.Dependent.Sum           (DSum ((:=>)))
 import qualified Data.IntMap                  as IM
 import qualified Data.List                    as L
 import qualified Data.Sequence                as Seq
 import           Data.Tuple.Extra
-import           Potato.Flow.Entry
 
 
 
@@ -124,7 +124,7 @@ makeManipulationController (RelMouseDrag MouseDrag {..}) selection lastmi undoFi
         })
     SMTText -> CTagText :=> (Identity $ CText {
           _cText_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
-          , _cText_deltaText = (undefined,"")
+          , _cText_deltaText = undefined -- TODO need nothing type value
         })
     SMTBoundingBox -> CTagBoundingBox :=> (Identity $ CBoundingBox {
           _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta

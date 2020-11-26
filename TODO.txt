@@ -1,4 +1,5 @@
 ::NEWEST TODO::
+-decide how to handle optional fields in controllers
 -line manipulators
 -layers
   -decide where to store layer state

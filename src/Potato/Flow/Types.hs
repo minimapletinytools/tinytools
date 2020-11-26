@@ -71,6 +71,7 @@ data MBoundingBox = MBoundingBox {
   _mBoundingBox_bounded_targets :: NonEmpty (REltId, LBox)
 } deriving (Eq, Show)
 
+-- TODO DELETE MTag stuff
 data MTag a where
   MTagNone :: MTag MNone
   MTagBox :: MTag MBox
@@ -115,6 +116,7 @@ instance Delta SBox CBox where
     }
 
 
+-- TODO define DeltaXY?
 data CLine = CLine {
   _cLine_deltaStart :: XY
   , _cLine_deltaEnd :: XY

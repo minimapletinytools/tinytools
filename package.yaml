@@ -98,6 +98,7 @@ dependencies:
 - listsafe
 - data-ordlist
 - bimap
+- reflex-vty
 
 #- smash
 - deepseq
