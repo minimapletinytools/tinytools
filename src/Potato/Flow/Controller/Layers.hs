@@ -45,7 +45,6 @@ generateLayers PFState {..} = Seq.fromList r where
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Normal deriving (Show, Eq)
 
--- TODO need scroll position
 -- TODO rename this so it's like interactive state
 type LayerDragState = Maybe (Int, LayerDownType)
 
@@ -58,12 +57,13 @@ clickLayer layers  (V2 absx absy) = case Seq.lookup absy layers of
 
 data LockShowOp = LockShowOp_Lock | LockShowOp_Unlock | LockShowOp_Show | LockShowOp_Hide deriving (Show)
 
-layerInput :: LayerDragState -> LayerIndents -> MouseDrag -> (LayerDragState, Maybe PFEventTag, Maybe (LockShowOp, [Int]))
-layerInput mlds indents md@MouseDrag {..} = let
-    -- TODO handle scroll pos
-    abspos = _mouseDrag_to
+-- TODO add selection as [Int] (layer pos selection)
+layerInput :: PFState -> Int -> LayerDragState -> LayerIndents -> MouseDrag -> (LayerDragState, Maybe PFEventTag, Maybe (LockShowOp, [Int]))
+layerInput PFState {..} scrollPos mlds indents md@MouseDrag {..} = let
+    abspos = _mouseDrag_to + (V2 0 scrollPos)
   in case _mouseDrag_state of
     MouseDragState_Down -> case mlds of
+      -- TODO this is wrong, this needs to track the selection you clicked down on instead
       Nothing -> (clickLayer indents abspos, Nothing, Nothing)
       _       -> error "unexpected"
     MouseDragState_Up -> case mlds of
@@ -71,6 +71,9 @@ layerInput mlds indents md@MouseDrag {..} = let
       Just (downInd, LDT_Normal) -> (Nothing, op, Nothing) where
         op = case clickLayer indents abspos of
           Nothing       -> Nothing
-          Just (idx, _) -> undefined -- TODO drag to from, need PFState
+          -- TODO once we do selection drag in layers, this should only activate if you drop outside of selection
+          Just (idx, _) -> if downInd == idx
+            then Nothing
+            else Just $ PFEMoveElt ([downInd], idx)
       _ -> (Nothing, Nothing, Nothing)
     _ -> (mlds, Nothing, Nothing)
