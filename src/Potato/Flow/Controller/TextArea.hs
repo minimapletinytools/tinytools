@@ -1,7 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.TextArea (
+  TextAreaInputState(..)
 
+  -- exposed for testing
+  , makeTextAreaInputState
+  , mouseText
 ) where
 
 import           Relude
@@ -23,7 +27,7 @@ data TextAreaInputState = TextAreaInputState {
   _textAreaInputState_original   :: Text
   , _textAreaInputState_zipper   :: TZ.TextZipper
   , _textAreaInputState_selected :: Int -- WIP
-}
+} deriving (Show)
 
 makeTextAreaInputState :: SText -> RelMouseDrag -> TextAreaInputState
 makeTextAreaInputState stext rmd = r where
@@ -35,6 +39,7 @@ makeTextAreaInputState stext rmd = r where
     }
   r = mouseText (Just r') stext rmd
 
+-- TODO define behavior for when you click outside box or assert
 mouseText :: Maybe TextAreaInputState -> SText -> RelMouseDrag -> TextAreaInputState
 mouseText mtais stext rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
