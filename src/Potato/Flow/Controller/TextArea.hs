@@ -25,23 +25,30 @@ data TextAreaInputState = TextAreaInputState {
   , _textAreaInputState_selected :: Int -- WIP
 }
 
-
 makeTextAreaInputState :: SText -> RelMouseDrag -> TextAreaInputState
-makeTextAreaInputState SText {..} (RelMouseDrag MouseDrag {..}) = r where
-  ogtz = TZ.fromText _sText_text
-  -- TODO move cursor relative to _sText_box on ogtz
-  r = TextAreaInputState {
-      _textAreaInputState_original   = _sText_text
+makeTextAreaInputState stext rmd = r where
+  ogtz = TZ.fromText (_sText_text stext)
+  r' = TextAreaInputState {
+      _textAreaInputState_original   = _sText_text stext
       , _textAreaInputState_zipper   = ogtz
       , _textAreaInputState_selected = 0
     }
+  r = mouseText (Just r') stext rmd
 
-mouseText :: TextAreaInputState -> SText -> RelMouseDrag -> TextAreaInputState
-mouseText tais SText {..} (RelMouseDrag MouseDrag {..}) = r where
-  -- TODO move cursor relative to _sText_box on ogtz
-  r = tais
+mouseText :: Maybe TextAreaInputState -> SText -> RelMouseDrag -> TextAreaInputState
+mouseText mtais stext rmd = r where
+  RelMouseDrag MouseDrag {..} = rmd
+  r = case mtais of
+    Nothing -> makeTextAreaInputState stext rmd
+    Just tais -> tais { _textAreaInputState_zipper = newtz } where
+      ogtz = _textAreaInputState_zipper tais
+      LBox (V2 x y) (V2 w _) = _sText_box stext
+      -- TODO clip/overflow/wrap mode
+      dl = TZ.displayLines w () () ogtz
+      V2 mousex mousey = _mouseDrag_to
+      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) dl ogtz
 
--- TODO handle shift selecting someday meh
+-- TODO super shift selecting text someday meh
 inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe PFEventTag)
 inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZip }, mop) where
 
@@ -58,7 +65,6 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
     KeyboardKey_Paste t -> (False, TZ.insert t oldZip)
 
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
-
 
   controller = CTagText :=> (Identity $ CText {
       _cText_deltaBox = DeltaLBox 0 0

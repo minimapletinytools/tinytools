@@ -1,6 +1,7 @@
 ::NEWEST TODO::
--prob switch to text-zipper
+IGNORE-prob switch to text-zipper
 -decide how to handle optional fields in controllers
+
 
 -line manipulators
 -layers
@@ -27,6 +28,8 @@
         -click drag does selects text
       -if not edit mode
         -click drag drags
+-layer tests
+-text area tests
 -broadphase tests
 -connect RenderedCanvas
 
