@@ -2,6 +2,10 @@
 
 module Potato.Flow.Controller.Layers (
   LayerDragState
+
+  -- exposed for testing
+  , LayerIndents
+  , generateLayers
 ) where
 
 import           Relude
@@ -30,18 +34,22 @@ data LayerEntry = LayerEntry {
 
 type LayerIndents = Seq Int
 
+
 generateLayers :: PFState -> LayerIndents
 generateLayers PFState {..} = Seq.fromList r where
-  foldrfn rid idents = newDepth:idents where
+  foldrfn rid idents =  traceShow newDepth $ newDepth:idents where
     seltl = case IM.lookup rid _pFState_directory of
       Nothing -> error "invalid PFState"
       Just x  -> x
     depth = case idents of
       []  -> 0
       x:_ -> x
-    newDepth = case seltl of
-      SEltLabel _ SEltFolderStart -> depth - 1
-      SEltLabel _ SEltFolderEnd   -> depth + 1
+    newDepth = traceShow seltl $ case seltl of
+      SEltLabel _ SEltFolderStart -> traceShow "-" $ depth - 1
+      -- note that SEltFolderEnd is indented one level in from it's matching SEltFolderStart
+      -- mainly so this function is simpler, it also doesn't matter since it's always hidden
+      SEltLabel _ SEltFolderEnd   -> traceShow "+" $ depth + 1
+      _ -> depth
   r = foldr foldrfn [] _pFState_layers
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Normal | LDT_Drag deriving (Show, Eq)
@@ -60,6 +68,7 @@ clickLayer selection layers  (V2 absx absy) = case Seq.lookup absy layers of
       then LDT_Drag
       else LDT_Normal
 
+-- TODO folder collapsing
 data LockShowOp = LockShowOp_Lock | LockShowOp_Unlock | LockShowOp_Show | LockShowOp_Hide deriving (Show)
 
 -- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
@@ -67,7 +76,18 @@ data LockShowOp = LockShowOp_Lock | LockShowOp_Unlock | LockShowOp_Show | LockSh
 doesSelectionContainLayerPos :: LayerPos -> Selection -> Bool
 doesSelectionContainLayerPos lp = isJust . find (\(_,lp',_) -> lp' == lp)
 
+-- has collapsed folders and hides SEltFolderEnds
+data CompactLayers = CompactLayers {
+
+}
+
+-- TODO
+convertToTrueIndex :: Int -> CompactLayers -> LayerPos
+convertToTrueIndex absy cl = undefined
+
 -- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
+-- TODO add CompactLayers arg
+-- TODO add selection output
 layerInput :: PFState -> Int -> Selection -> LayerDragState -> LayerIndents -> MouseDrag -> (LayerDragState, Maybe PFEventTag, Maybe (LockShowOp, [Int]))
 layerInput PFState {..} scrollPos selection mlds indents md@MouseDrag {..} = let
     abspos@(V2 _ absy) = _mouseDrag_to + (V2 0 scrollPos)
