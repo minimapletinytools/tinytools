@@ -120,11 +120,12 @@ makeManipulationController (RelMouseDrag MouseDrag {..}) selection lastmi undoFi
   -- TODO consider embedding in MouseManipulator instead of using switch statement below
   controller = case smt of
     SMTBox -> CTagBox :=> (Identity $ CBox {
-          _cBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
+          _cBox_deltaBox = Just $ makeDeltaBox (toEnum mi) boxRestrictedDelta
+          , _cBox_deltaStyle = Nothing
         })
     SMTText -> CTagText :=> (Identity $ CText {
-          _cText_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
-          , _cText_deltaText = undefined -- TODO need nothing type value
+          _cText_deltaBox = Just $ makeDeltaBox (toEnum mi) boxRestrictedDelta
+          , _cText_deltaText = Nothing
         })
     SMTBoundingBox -> CTagBoundingBox :=> (Identity $ CBoundingBox {
           _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta

@@ -53,7 +53,7 @@ mouseText mtais stext rmd = r where
       V2 mousex mousey = _mouseDrag_to
       newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) dl ogtz
 
--- TODO super shift selecting text someday meh
+-- TODO support shift selecting text someday meh
 inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe PFEventTag)
 inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZip }, mop) where
 
@@ -72,8 +72,8 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
   controller = CTagText :=> (Identity $ CText {
-      _cText_deltaBox = DeltaLBox 0 0
-      , _cText_deltaText = (_textAreaInputState_original tais, TZ.value newZip)
+      _cText_deltaBox = Nothing
+      , _cText_deltaText = Just (_textAreaInputState_original tais, TZ.value newZip)
     })
   mop = if changed
     then Just $ PFEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])

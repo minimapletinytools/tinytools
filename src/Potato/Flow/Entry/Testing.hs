@@ -104,7 +104,8 @@ setup_network ev = mdo
         let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos pFState $ p
         let
           cbox = CBox {
-              _cBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
+              _cBox_deltaBox    = Just $ DeltaLBox (V2 1 1) (V2 5 5)
+              , _cBox_deltaStyle = Nothing
             }
         return . Just $ (False, selt `deepseq` IM.singleton rid (CTagBox ==> cbox))
       _              -> return Nothing
@@ -284,17 +285,20 @@ randomActionFCmd doundo stree = do
             _ -> case selt of
               SEltBox _ -> return $ (,) pos $ CTagBox ==>
                 CBox {
-                  _cBox_deltaBox = DeltaLBox p1 p2
+                  _cBox_deltaBox = Just $ DeltaLBox p1 p2
+                  , _cBox_deltaStyle = Nothing
                 }
               SEltLine _ -> return $ (,) pos $ CTagLine ==>
                 CLine {
-                  _cLine_deltaStart = p1
-                  , _cLine_deltaEnd = p2
+                  _cLine_deltaStart = Just (DeltaXY p1)
+                  , _cLine_deltaEnd = Just (DeltaXY p2)
+                  , _cLine_deltaStyle = Nothing
                 }
               SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
                 CText {
-                  _cText_deltaBox = DeltaLBox p1 p2
-                  , _cText_deltaText = (before, "meow meow")
+                  _cText_deltaBox = Just $ DeltaLBox p1 p2
+                  , _cText_deltaText = Just (before, "meow meow")
+                  , _cText_deltaTextStyle = Nothing
                 }
               -- TODO maybe add a CTagDoNothing?
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {

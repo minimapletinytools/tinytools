@@ -1,6 +1,6 @@
 ::NEWEST TODO::
 IGNORE-prob switch to text-zipper
--decide how to handle optional fields in controllers
+DONE-decide how to handle optional fields in controllers
 
 
 -line manipulators

@@ -25,8 +25,8 @@ module Potato.Flow.Math (
   , deltaLBox_via_canonicalLBox
 
   , Delta(..)
+  , DeltaXY(..)
   , DeltaLBox(..)
-  , DeltaText
 
   , module Linear.V2
 ) where
@@ -198,6 +198,15 @@ instance Delta XY XY where
   plusDelta = (+)
   minusDelta = (-)
 
+
+newtype DeltaXY = DeltaXY XY deriving (Eq, Generic, Show)
+
+instance NFData DeltaXY
+
+instance Delta XY DeltaXY where
+  plusDelta xy (DeltaXY dxy) = xy + dxy
+  minusDelta xy (DeltaXY dxy) = xy - dxy
+
 instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
   plusDelta (a,b) (c,d) = (plusDelta a c, plusDelta b d)
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
@@ -220,11 +229,3 @@ instance Delta LBox DeltaLBox where
       _lBox_tl = minusDelta _lBox_tl _deltaLBox_translate
       , _lBox_size = minusDelta _lBox_size _deltaLBox_resizeBy
     }
-
--- | (old text, new text)
-type DeltaText = (Text,Text)
--- TODO more efficient to do this with zippers prob?
--- is there a way to make this more generic?
-instance Delta Text DeltaText where
-  plusDelta s (b, a) = assert (b == s) a
-  minusDelta s (b, a) = assert (a == s) b
