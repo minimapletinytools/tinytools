@@ -86,12 +86,8 @@ updateLockHiddenStateInChildren parentstate = \case
 
 -- this stores info just for what is displayed, Seq LayerEntry is uniquely generated from LayerMetaMap and PFState
 data LayerEntry = LayerEntry {
-  -- TODO rename to _layerEntry_depth
   _layerEntry_depth           :: Int
-
-  -- TODO rename to lockState
   , _layerEntry_lockState :: LockHiddenState
-  -- TODO rename to hiddenState
   , _layerEntry_hideState :: LockHiddenState
   , _layerEntry_isCollapsed :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
 
@@ -187,6 +183,14 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   childles = Seq.takeWhileL childFrom . Seq.drop lepos $ lentries
   frontOfChildles = Seq.take lepos lentries
   backOfChildles = Seq.drop (lepos + Seq.length childles) lentries
+
+  togglefn fn setfn = (newlmm, newlentries) where
+    newlhsstate = toggleLockHiddenState $ fn le
+    newlmm = alterWithDefault (\le' -> le' { _layerMeta_isHidden = lockHiddenStateToBool newlhsstate }) lerid lmm
+    entryfn childle = setfn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
+    newchildles = doChildrenRecursive (lockHiddenStateToBool . fn) entryfn childles
+    newlentries = frontOfChildles >< newchildles >< backOfChildles
+
   r = case op of
     LHCO_ToggleCollapse -> (newlmm, newlentries) where
       newcollapse = not $ _layerEntry_isCollapsed le
@@ -208,21 +212,8 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
         then frontOfChildles >< backOfChildles
         else frontOfChildles >< newchildles >< backOfChildles
 
-    LHCO_ToggleLock -> (newlmm, newlentries) where
-      newlhsstate = toggleLockHiddenState $ _layerEntry_lockState le
-      newlmm = alterWithDefault (\le' -> le' { _layerMeta_isLocked = lockHiddenStateToBool newlhsstate }) lerid lmm
-      entryfn childle = childle { _layerEntry_lockState = updateLockHiddenStateInChildren newlhsstate (_layerEntry_lockState childle) }
-      newchildles = doChildrenRecursive (lockHiddenStateToBool . _layerEntry_lockState) entryfn childles
-      newlentries = frontOfChildles >< newchildles >< backOfChildles
-
-    LHCO_ToggleHide -> (newlmm, newlentries) where
-      -- TODO wrap this in helper fn to reduce code duplication from above?
-      newlhsstate = toggleLockHiddenState $ _layerEntry_hideState le
-      newlmm = alterWithDefault (\le' -> le' { _layerMeta_isHidden = lockHiddenStateToBool newlhsstate }) lerid lmm
-      entryfn childle = childle { _layerEntry_hideState = updateLockHiddenStateInChildren newlhsstate (_layerEntry_hideState childle) }
-      newchildles = doChildrenRecursive (lockHiddenStateToBool . _layerEntry_hideState) entryfn childles
-      newlentries = frontOfChildles >< newchildles >< backOfChildles
-
+    LHCO_ToggleLock -> togglefn _layerEntry_lockState (\childle x -> childle { _layerEntry_lockState = x })
+    LHCO_ToggleHide -> togglefn _layerEntry_hideState (\childle x -> childle { _layerEntry_hideState = x })
 
 
 
