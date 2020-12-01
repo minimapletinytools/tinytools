@@ -263,6 +263,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
                   newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
                 case _mouseDrag_state mouseDrag of
+                  -- TODO run finalize operation on each thing
                   -- if we were manipulating, don't need to do anything
                   MouseDragState_Up -> return everything'
                   -- otherwise, create a new elt
