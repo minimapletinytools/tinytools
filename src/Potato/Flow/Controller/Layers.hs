@@ -184,7 +184,7 @@ addUntilFolderEndRecursive pfs@PFState {..} lmm skipfn eltfn skip parent lp adde
       -- we're done!
       SEltLabel _ SEltFolderEnd -> (lp+1, added)
       -- nothing special, keep going
-      _ -> addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent (lp+1) combined
+      _ ->addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent (lp+1) combined
 
 -- see comments for addUntilFolderEndRecursive
 addUntilFolderEnd :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Maybe LayerEntry -> LayerEntry) -> Maybe LayerEntry -> Int -> Seq LayerEntry
