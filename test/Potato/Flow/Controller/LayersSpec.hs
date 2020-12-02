@@ -76,3 +76,17 @@ spec = do
       it "basic" $ do
         -- empty LayerMetaMap means everything is collapsed by default
         Seq.length (generateLayersNew someState1 IM.empty) `shouldBe` 1
+        Seq.length (generateLayersNew someState2 IM.empty) `shouldBe` 1
+    describe "toggleLayerEntry" $ do
+      it "basic" $ do
+        -- open first folder
+        let
+          lmm_0 = IM.empty
+          lentries_0 = generateLayersNew someState1 lmm_0
+          (lmm_1, lentries_1) = toggleLayerEntry someState1 lmm_0 lentries_0 0 LHCO_ToggleCollapse
+        Seq.length lentries_1 `shouldBe` 5
+        -- close first folder
+        let
+          (lmm_2, lentries_2) = toggleLayerEntry someState1 lmm_1 lentries_1 0 LHCO_ToggleCollapse
+        Seq.length lentries_2 `shouldBe` 1
+        lentries_2 `shouldBe` lentries_0
