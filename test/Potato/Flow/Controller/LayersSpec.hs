@@ -64,6 +64,8 @@ someState2_indents :: LayerIndents
 someState2_indents = Seq.fromList [0,1,2,2,3,3,2,2,1,1,2,1]
 
 
+createExpandAllLayerMetaMap :: PFState -> LayerMetaMap
+createExpandAllLayerMetaMap PFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = False }) _pFState_directory
 
 
 spec :: Spec
@@ -78,10 +80,10 @@ spec = do
         Seq.length (generateLayersNew someState1 IM.empty) `shouldBe` 1
         Seq.length (generateLayersNew someState2 IM.empty) `shouldBe` 1
     describe "toggleLayerEntry" $ do
-      it "basic" $ do
+      it "basic1" $ do
         -- open 0
         let
-          lmm_0 = IM.empty
+          lmm_0 = IM.empty -- everything collapsed
           lentries_0 = generateLayersNew someState1 lmm_0
           (lmm_1, lentries_1) = toggleLayerEntry someState1 lmm_0 lentries_0 0 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
@@ -106,3 +108,8 @@ spec = do
           (lmm_final, lentries_final) = toggleLayerEntry someState1 lmm_4 lentries_4 0 LHCO_ToggleCollapse
         Seq.length lentries_final `shouldBe` 1
         lentries_final `shouldBe` lentries_0
+      it "basic2" $ do
+        let
+          lmm_0 = createExpandAllLayerMetaMap someState2 -- everything expanded
+          lentries_0 = generateLayersNew someState2 lmm_0
+        Seq.length lentries_0 `shouldBe` 8
