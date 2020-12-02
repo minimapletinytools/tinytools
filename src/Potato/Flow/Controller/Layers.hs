@@ -10,6 +10,7 @@ module Potato.Flow.Controller.Layers (
   , LayerIndents
   , generateLayers
 
+  , LockHiddenState(..)
   , LayerEntry(..)
   , LayerEntryPos
   , LockHideCollapseOp(..)
@@ -64,7 +65,6 @@ lockHiddenStateToBool = \case
   LHS_False -> False
   _ -> True
 
-
 toggleLockHiddenState :: LockHiddenState -> LockHiddenState
 toggleLockHiddenState = \case
   LHS_True -> LHS_False
@@ -82,6 +82,7 @@ setLockHiddenStateInChildren parentstate = \case
     LHS_False -> LHS_True
     _ -> LHS_True_InheritTrue
 
+-- ancestor state got set, update the child
 updateLockHiddenStateInChildren :: LockHiddenState -> LockHiddenState -> LockHiddenState
 updateLockHiddenStateInChildren parentstate = \case
   LHS_False -> case parentstate of
@@ -93,7 +94,7 @@ updateLockHiddenStateInChildren parentstate = \case
     LHS_False -> LHS_True
     _ -> invalid
   LHS_True_InheritTrue -> case parentstate of
-    LHS_False -> LHS_False
+    LHS_False -> LHS_True
     LHS_True -> LHS_True_InheritTrue
     _ -> invalid
   LHS_False_InheritTrue -> case parentstate of
@@ -229,7 +230,7 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
     newlentries = (frontOfLe |> newle) >< newchildles >< backOfChildles
 
   r = case op of
-    LHCO_ToggleCollapse -> traceShow newcollapse $ (newlmm, newlentries) where
+    LHCO_ToggleCollapse -> (newlmm, newlentries) where
       newcollapse = not $ _layerEntry_isCollapsed le
       newlmm = alterWithDefault (\le' -> le' { _layerMeta_isCollapsed = newcollapse }) lerid lmm
 
