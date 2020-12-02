@@ -32,6 +32,7 @@ DONE-decide how to handle optional fields in controllers
 -text area tests
 -broadphase tests
 -connect RenderedCanvas
+-undo permament instead of undofirst
 
 DONE-look into doing pending selection for immediate select + manipulate
   DONE-add test for single click select + actually manipulate

@@ -255,9 +255,6 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
     LHCO_ToggleLock -> togglefn _layerEntry_lockState (\le' x -> le' { _layerEntry_lockState = x })
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\le' x -> le' { _layerEntry_hideState = x })
 
-
-
-
 generateLayersNew :: PFState -> LayerMetaMap -> Seq LayerEntry
 generateLayersNew pfs lmm = r where
   entryfn sseltl mparent = case mparent of
@@ -279,7 +276,25 @@ generateLayersNew pfs lmm = r where
       lm = lookupWithDefault (fst3 sseltl) lmm
   r = addUntilFolderEnd pfs lmm (_layerMeta_isCollapsed) entryfn Nothing 0
 
+-- updates lock and hide states (called after elements are added/removed from Seq LayerEntry)
+-- i.e. fixes LayerEntry based on contents of LayerMetaMap
+--updateLockHideState :: PFState -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
+--updateLockHideState = undefined
 
+updateLayers :: PFState -> SEltLabelChangesWithLayerPos -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
+updateLayers pfs changes lmm lentries = r where
+  -- update lmm
+  (deletestuff, maybenewstuff) = IM.partition isNothing changes
+  newlmm = IM.difference (IM.union lmm (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
+  -- keep deleted elts so that folder state is preserved after undos/redos
+  -- this is bad, because dragging creates a whole bunch of new elts right now...
+    -- you could maybe fix this by changing the whole undoFirst thing to "undo permament" and not increase REltId counter
+  --newlmm = IM.union lmm (fmap (const def) maybenewstuff)
+
+  -- TODO incremental rather than regenerate...
+  newlentries = generateLayersNew pfs newlmm
+
+  r = (newlmm, newlentries)
 
 
 
