@@ -273,7 +273,7 @@ generateLayersNew pfs lmm = r where
     }
     where
       lm = lookupWithDefault (fst3 sseltl) lmm
-  r = addUntilFolderEnd pfs lmm (const False) entryfn Nothing 0
+  r = addUntilFolderEnd pfs lmm (_layerMeta_isCollapsed) entryfn Nothing 0
 
 
 
