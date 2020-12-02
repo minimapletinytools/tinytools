@@ -3,10 +3,19 @@
 
 module Potato.Flow.Controller.Layers (
   LayerDragState
+  , LayerMeta(..)
+  , LayerMetaMap
 
   -- exposed for testing
   , LayerIndents
   , generateLayers
+
+  , LayerEntry(..)
+  , LayerEntryPos
+  , LockHideCollapseOp(..)
+  , toggleLayerEntry
+  , generateLayersNew
+
 ) where
 
 import           Relude
@@ -63,6 +72,16 @@ toggleLockHiddenState = \case
   LHS_True_InheritTrue -> LHS_False_InheritTrue
   LHS_False_InheritTrue -> LHS_True_InheritTrue
 
+setLockHiddenStateInChildren :: LockHiddenState -> Bool -> LockHiddenState
+setLockHiddenStateInChildren parentstate = \case
+  False -> case parentstate of
+    LHS_False -> LHS_False
+    _ -> LHS_False_InheritTrue
+    LHS_True -> LHS_False_InheritTrue
+  True -> case parentstate of
+    LHS_False -> LHS_True
+    _ -> LHS_True_InheritTrue
+
 updateLockHiddenStateInChildren :: LockHiddenState -> LockHiddenState -> LockHiddenState
 updateLockHiddenStateInChildren parentstate = \case
   LHS_False -> case parentstate of
@@ -98,10 +117,9 @@ layerEntry_display :: LayerEntry -> Text
 layerEntry_display LayerEntry {..} = label where
   (_,_,SEltLabel label _) = _layerEntry_superSEltLabel
 
-layerEntry_isFolder :: LayerEntry -> Bool
-layerEntry_isFolder LayerEntry {..} = case _layerEntry_superSEltLabel of
+layerEntry_isFolderStart :: LayerEntry -> Bool
+layerEntry_isFolderStart LayerEntry {..} = case _layerEntry_superSEltLabel of
   (_,_,SEltLabel _ SEltFolderStart) -> True
-  (_,_,SEltLabel _ SEltFolderEnd) -> True
   _ -> False
 
 layerEntry_layerPos :: LayerEntry -> LayerPos
@@ -135,26 +153,42 @@ lookupWithDefault rid ridm = case IM.lookup rid ridm of
 -- assumes folder start has already been processed and we are processing its children
 -- very partial, assumes state is valid!!!
 -- assembles list backwards, remember to reverse results when you're done!
-addUntilFolderEndRecursive :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Int -> a) -> Bool -> Int -> LayerPos -> [a] -> (Int, [a])
-addUntilFolderEndRecursive pfs@PFState {..} lmm skipfn eltfn skip depth lp added = let
+
+-- TODO change depth to Maybe LayerEntry? (parent layer entry)
+addUntilFolderEndRecursive ::
+  PFState
+  -> LayerMetaMap
+  -> (LayerMeta -> Bool)
+  -> (SuperSEltLabel -> Maybe LayerEntry -> LayerEntry)
+  -> Bool
+  -> Maybe LayerEntry -- ^ parent
+  -> LayerPos -- ^ current layer position we are adding
+  -> [LayerEntry] -- ^ accumulator
+  -> (Int, [LayerEntry])
+addUntilFolderEndRecursive pfs@PFState {..} lmm skipfn eltfn skip parent lp added = let
     rid = Seq.index _pFState_layers lp
     seltl =  _pFState_directory IM.! rid
     sseltl = (rid, lp, seltl)
-    selfEntry = eltfn sseltl depth
+    selfEntry = eltfn sseltl parent
     combined = if skip then added else selfEntry:added
-  in case seltl of
-    SEltLabel _ SEltFolderStart -> if skipfn (lookupWithDefault rid lmm)
-      then uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip depth) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn True (depth+1) (lp+1) combined
-      -- recurse through children, and then continue where it left off
-      else uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip depth) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn skip (depth+1) (lp+1) combined
-    -- we're done!
-    SEltLabel _ SEltFolderEnd -> (lp+1, added)
-    -- nothing special, keep going
-    _ -> addUntilFolderEndRecursive pfs lmm skipfn eltfn skip depth (lp+1) combined
+  in if lp >= Seq.length _pFState_layers
+    -- this means we've reached the end of layers, nothing to do
+    then (lp+1, added)
+    -- normal case
+    else case seltl of
+      SEltLabel _ SEltFolderStart -> if not skip && skipfn (lookupWithDefault rid lmm)
+          -- recurse through children (skipping) and the continue where it left off
+          then uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn True (Just selfEntry) (lp+1) combined
+          -- recurse through children (possibly skipping), and then continue where it left off
+          else uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn skip (Just selfEntry) (lp+1) combined
+      -- we're done!
+      SEltLabel _ SEltFolderEnd -> (lp+1, added)
+      -- nothing special, keep going
+      _ -> addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent (lp+1) combined
 
 -- see comments for addUntilFolderEndRecursive
-addUntilFolderEnd :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Int -> a) -> Int -> Int -> Seq a
-addUntilFolderEnd pfs lmm skipfn eltfn depth lp = Seq.fromList . reverse . snd $ addUntilFolderEndRecursive pfs lmm skipfn eltfn False depth lp []
+addUntilFolderEnd :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Maybe LayerEntry -> LayerEntry) -> Maybe LayerEntry -> Int -> Seq LayerEntry
+addUntilFolderEnd pfs lmm skipfn eltfn parent lp = Seq.fromList . reverse . snd $ addUntilFolderEndRecursive pfs lmm skipfn eltfn False parent lp []
 
 -- iterates over LayerEntryPos, skipping all children of entries where skipfn evaluates to true
 doChildrenRecursive :: (LayerEntry -> Bool) -> (LayerEntry -> LayerEntry) -> Seq LayerEntry -> Seq LayerEntry
@@ -198,15 +232,17 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
 
       startinglpos = layerEntry_layerPos le
 
-      entryfn sseltl depth = LayerEntry {
-          _layerEntry_depth = depth
+      entryfn sseltl mparent = LayerEntry {
+          _layerEntry_depth = case mparent of
+            Just parent -> _layerEntry_depth parent + 1
+            Nothing -> 0
           , _layerEntry_lockState = LHS_False
           , _layerEntry_hideState = LHS_False
           , _layerEntry_isCollapsed = True -- may not be folder, whatever
           , _layerEntry_superSEltLabel = sseltl
         }
 
-      newchildles = addUntilFolderEnd pfs lmm _layerMeta_isCollapsed entryfn (_layerEntry_depth le + 1) lepos
+      newchildles = addUntilFolderEnd pfs lmm _layerMeta_isCollapsed entryfn (Just le) lepos
 
       newlentries = if newcollapse
         then frontOfChildles >< backOfChildles
@@ -218,33 +254,26 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
 
 
 
-
--- TODO need to finish
--- by default
 generateLayersNew :: PFState -> LayerMetaMap -> Seq LayerEntry
-generateLayersNew PFState {..} lmm = Seq.fromList r where
-  foldrfn rid lentries =  newlentry:lentries where
-    seltl = case IM.lookup rid _pFState_directory of
-      Nothing -> error "invalid PFState"
-      Just x  -> x
-    depth = case lentries of
-      []  -> 0
-      le:_ -> _layerEntry_depth le
-    newDepth = case seltl of
-      SEltLabel _ SEltFolderStart -> traceShow "-" $ depth - 1
-      -- note that SEltFolderEnd is indented one level in from it's matching SEltFolderStart
-      -- mainly so this function is simpler, it also doesn't matter since it's always hidden
-      SEltLabel _ SEltFolderEnd   -> traceShow "+" $ depth + 1
-      _ -> depth
-    newlentry = LayerEntry {
-        _layerEntry_depth = newDepth
-        , _layerEntry_lockState = undefined
-        , _layerEntry_hideState = undefined
-        , _layerEntry_isCollapsed = undefined
-        , _layerEntry_superSEltLabel = undefined
-      }
-  r = foldr foldrfn [] _pFState_layers
-
+generateLayersNew pfs lmm = r where
+  entryfn sseltl mparent = case mparent of
+    Nothing -> LayerEntry {
+      _layerEntry_depth        =  0
+      , _layerEntry_lockState =  if _layerMeta_isLocked lm then LHS_True else LHS_False
+      , _layerEntry_hideState = if _layerMeta_isHidden lm then LHS_True else LHS_False
+      , _layerEntry_isCollapsed = _layerMeta_isCollapsed lm
+      , _layerEntry_superSEltLabel = sseltl
+    }
+    Just parent -> LayerEntry {
+      _layerEntry_depth        = _layerEntry_depth parent + 1
+      , _layerEntry_lockState = setLockHiddenStateInChildren (_layerEntry_lockState parent) $ _layerMeta_isLocked lm
+      , _layerEntry_hideState = setLockHiddenStateInChildren (_layerEntry_hideState parent) $ _layerMeta_isHidden lm
+      , _layerEntry_isCollapsed = _layerMeta_isCollapsed lm
+      , _layerEntry_superSEltLabel = sseltl
+    }
+    where
+      lm = lookupWithDefault (fst3 sseltl) lmm
+  r = addUntilFolderEnd pfs lmm (const False) entryfn Nothing 0
 
 
 
