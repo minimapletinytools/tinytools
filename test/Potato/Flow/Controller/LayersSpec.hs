@@ -36,10 +36,6 @@ someState1 = PFState {
         ]
       , _pFState_canvas = someSCanvas
   }
-
-someState1_indents :: LayerIndents
-someState1_indents = Seq.fromList [0,1,1,1,1,1]
-
 someState2 :: PFState
 someState2 = PFState {
       _pFState_layers = Seq.fromList [0..11]
@@ -60,9 +56,6 @@ someState2 = PFState {
       , _pFState_canvas = someSCanvas
   }
 
-someState2_indents :: LayerIndents
-someState2_indents = Seq.fromList [0,1,2,2,3,3,2,2,1,1,2,1]
-
 
 createExpandAllLayerMetaMap :: PFState -> LayerMetaMap
 createExpandAllLayerMetaMap PFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = False }) _pFState_directory
@@ -71,9 +64,6 @@ createExpandAllLayerMetaMap PFState {..} = fmap (\_ -> def { _layerMeta_isCollap
 spec :: Spec
 spec = do
   describe "Layers" $ do
-    it "generateLayers" $ do
-      generateLayers someState1 `shouldBe` someState1_indents
-      generateLayers someState2 `shouldBe` someState2_indents
     describe "generateLayersNew" $ do
       it "basic" $ do
         -- empty LayerMetaMap means everything is collapsed by default

@@ -8,7 +8,6 @@ module Potato.Flow.Controller.Layers (
 
   -- exposed for testing
   , LayerIndents
-  , generateLayers
 
   , LockHiddenState(..)
   , LayerEntry(..)
@@ -286,25 +285,6 @@ generateLayersNew pfs lmm = r where
 
 -- TODO delete
 type LayerIndents = Seq Int
-
--- TODO delete
-generateLayers :: PFState -> LayerIndents
-generateLayers PFState {..} = Seq.fromList r where
-  foldrfn rid idents =  newDepth:idents where
-    seltl = case IM.lookup rid _pFState_directory of
-      Nothing -> error "invalid PFState"
-      Just x  -> x
-    depth = case idents of
-      []  -> 0
-      x:_ -> x
-    newDepth = case seltl of
-      SEltLabel _ SEltFolderStart -> traceShow "-" $ depth - 1
-      -- note that SEltFolderEnd is indented one level in from it's matching SEltFolderStart
-      -- mainly so this function is simpler, it also doesn't matter since it's always hidden
-      SEltLabel _ SEltFolderEnd   -> traceShow "+" $ depth + 1
-      _ -> depth
-  r = foldr foldrfn [] _pFState_layers
-
 
 
 
