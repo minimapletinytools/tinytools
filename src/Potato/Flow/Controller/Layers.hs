@@ -14,7 +14,9 @@ module Potato.Flow.Controller.Layers (
   , LayerEntryPos
   , LockHideCollapseOp(..)
   , toggleLayerEntry
+  , updateLayers
   , generateLayersNew
+
 
 ) where
 
@@ -281,7 +283,7 @@ generateLayersNew pfs lmm = r where
 --updateLockHideState :: PFState -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
 --updateLockHideState = undefined
 
-updateLayers :: PFState -> SEltLabelChangesWithLayerPos -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
+updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
 updateLayers pfs changes lmm lentries = r where
   -- update lmm
   (deletestuff, maybenewstuff) = IM.partition isNothing changes

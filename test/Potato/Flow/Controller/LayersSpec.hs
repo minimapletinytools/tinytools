@@ -95,6 +95,8 @@ spec = do
         -- empty LayerMetaMap means everything is collapsed by default
         Seq.length (generateLayersNew someState1 IM.empty) `shouldBe` 1
         Seq.length (generateLayersNew someState2 IM.empty) `shouldBe` 1
+      it "handles empty state" $ do
+        Seq.length (generateLayersNew emptyPFState IM.empty) `shouldBe` 0
     describe "toggleLayerEntry" $ do
       it "basic1" $ do
         -- open 0
@@ -156,3 +158,13 @@ spec = do
         let
           (lmm_1, lentries_1) = toggleLayerEntry someState3 lmm_0 lentries_0 3 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
+    describe "updateLayers" $ do
+      it "basic" $ do
+        let
+          state_0 = someState1
+          lmm_0 = createExpandAllLayerMetaMap state_0 -- everything expanded
+          lentries_0 = generateLayersNew state_0 lmm_0
+
+          (state_1, changes) = do_deleteElts [(4,4,someSEltLabel)] state_0
+          (lmm_1, lentries_1) = updateLayers state_1 changes lmm_0 lentries_0
+        Seq.length lentries_1 `shouldBe` 4
