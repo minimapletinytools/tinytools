@@ -332,38 +332,35 @@ layerInputNew ::
   -> LayerDragState
   -> Selection -- ^ current selection
   -> MouseDrag -- ^ input to update with
-  -- TODO add selection to output
-  -> (LayerDragState, LayerState, Maybe PFEventTag) -- ^ new states and possibly an event (perhaps Either LayerDragState (Maybe PFEventTag ) is more appropriate?)
+  -> (LayerDragState, LayerState, Maybe (Bool, LayerPos), Maybe PFEventTag)
 layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDrag {..} = let
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
   in case (_mouseDrag_state, lds) of
     (MouseDragState_Down, LDS_None) -> case clickLayerNew selection lentries leposxy of
-      Nothing -> (LDS_None, layerstate, Nothing)
+      Nothing -> (LDS_None, layerstate, Nothing, Nothing)
       -- (you can only click + drag selected elements)
       Just (downlp, ldtdown) -> case ldtdown of
         LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
-          False -> (LDS_Selecting lepos, layerstate, Nothing)
-          True  -> (LDS_Dragging, layerstate, Nothing)
-        LDT_Hide -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing)
-        LDT_Lock -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing)
-        LDT_Collapse -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing)
+          False -> (LDS_Selecting lepos, layerstate, Nothing, Nothing)
+          True  -> (LDS_Dragging, layerstate, Nothing, Nothing)
+        LDT_Hide -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing, Nothing)
+        LDT_Lock -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing, Nothing)
+        LDT_Collapse -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing, Nothing)
     (MouseDragState_Down, _)       -> error "unexpected, LayerDragState should have been reset on last mouse up"
-
     (MouseDragState_Up, LDS_None) -> error "unexpected, layer input handler should not have been created"
-
-    -- TODO finalize selection
     -- TODO support drag selecting
-    (MouseDragState_Up, LDS_None) -> (LDS_None, layerstate, Nothing)
-
+    (MouseDragState_Up, LDS_Selecting leposdown) -> (LDS_None, layerstate, Just (shift, selectlp), Nothing) where
+      shift = elem KeyModifier_Shift _mouseDrag_modifiers
+      selectlp = snd3 . _layerEntry_superSEltLabel $ Seq.index lentries leposdown
     (MouseDragState_Up, LDS_Dragging) -> case clickLayerNew selection lentries leposxy of
       -- release where there is no element, do nothing
-      Nothing -> (LDS_None, layerstate, Nothing)
+      Nothing -> (LDS_None, layerstate, Nothing, Nothing)
       Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
         -- dropping on a selected element does onthing
-        True ->  (LDS_None, layerstate, Nothing)
-        False -> (LDS_None, layerstate, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
+        True ->  (LDS_None, layerstate, Nothing, Nothing)
+        False -> (LDS_None, layerstate, Nothing, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
 
     -- TODO make sure this is the right way to cancel...
-    (MouseDragState_Cancelled, _) -> (LDS_None, layerstate, Nothing)
+    (MouseDragState_Cancelled, _) -> (LDS_None, layerstate, Nothing, Nothing)
     -- continue
-    _ -> (lds, layerstate, Nothing)
+    _ -> (lds, layerstate, Nothing, Nothing)

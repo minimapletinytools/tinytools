@@ -1,23 +1,15 @@
 ::NEWEST TODO::
-IGNORE-prob switch to text-zipper
-DONE-decide how to handle optional fields in controllers
-
 -mousehandler :O
 -line manipulators
 -layers
+  -add selection to layerInputNew
+  -add tests for layerInputNew
+  -drag select
   -decide where to store layer state
-  -layer drag interface (mouse position or more abstract?)
--figure out how to add sub modals (e.g. text edit mode) to frontend
-  -you could actually probably get away with reusing lastOperatino but that's probably asknig for trouble
-    -so just create a new frontend state var for modals?
-    -maybe you can a special clear method that doesn't reset modal state vars when relevant?
-      -clearLastOperation :: FrontEndOperation -> FrontEndOperation
-      -this is simpler because modal state vars are onyl present when modal is active
-        -in this case lastoperation becomes a standin for modals
-    -if yo udo this you should change MainpulationIndex into some more fancy Manipulation state object
+  DONE-layer drag interface (mouse position or more abstract?)
 -text manipulators
-  -idk D: make your own zip, how bad could it be
-  -decide how to handle wrap/overflow
+  DONE-idk D: make your own zip, how bad could it be
+  DONE-decide how to handle wrap/overflow
   -selecting text defines the text mainpulator that covers the whole place
     -if not selected
       -click drag selects and drags
@@ -28,12 +20,24 @@ DONE-decide how to handle optional fields in controllers
         -click drag does selects text
       -if not edit mode
         -click drag drags
--layer tests
--text area tests
 -broadphase tests
 -connect RenderedCanvas
 -undo permament instead of undofirst
+  -you need this if you want to support tracking layer states through undo/redo
+  -also just a good idea in general I think...
 
+IGNORE-prob switch to text-zipper
+DONE-decide how to handle optional fields in controllers
+IGNORE-figure out how to add sub modals (e.g. text edit mode) to frontend
+  -you could actually probably get away with reusing lastOperation but that's probably asking for trouble
+    -so just create a new frontend state var for modals?
+    -maybe you can a special clear method that doesn't reset modal state vars when relevant?
+      -clearLastOperation :: FrontEndOperation -> FrontEndOperation
+      -this is simpler because modal state vars are onyl present when modal is active
+        -in this case lastoperation becomes a standin for modals
+    -if yo udo this you should change MainpulationIndex into some more fancy Manipulation state object
+DONE-layer tests
+DONE-text area tests
 DONE-look into doing pending selection for immediate select + manipulate
   DONE-add test for single click select + actually manipulate
 DONE-proper cancelling (maybe add new state var to ignore mouse stuff?)
