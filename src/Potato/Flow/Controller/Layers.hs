@@ -322,40 +322,48 @@ clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentri
     where
       lp = snd3 $ _layerEntry_superSEltLabel le
 
+-- TODO consider supporting single click dragging, should be easy to do (drag select if you click off label, select+drag if you click on label)
+data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos
+
 layerInputNew ::
   PFState
   -> Int -- ^ scroll state
   -> LayerState
-  -> Maybe LayerDownType -- TODO this can be changed to Bool
+  -> LayerDragState
   -> Selection -- ^ current selection
   -> MouseDrag -- ^ input to update with
-  -> (Maybe LayerDownType, LayerState, Maybe PFEventTag) -- ^ new states and possibly an event (perhaps Either LayerDragState (Maybe PFEventTag ) is more appropriate?)
-layerInputNew pfs scrollPos layerstate@(lmm, lentries) mldtdown selection md@MouseDrag {..} = let
+  -- TODO add selection to output
+  -> (LayerDragState, LayerState, Maybe PFEventTag) -- ^ new states and possibly an event (perhaps Either LayerDragState (Maybe PFEventTag ) is more appropriate?)
+layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDrag {..} = let
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
-  in case (_mouseDrag_state, mldtdown) of
-    (MouseDragState_Down, Nothing) -> case clickLayerNew selection lentries leposxy of
-      Nothing -> (Nothing, layerstate, Nothing)
+  in case (_mouseDrag_state, lds) of
+    (MouseDragState_Down, LDS_None) -> case clickLayerNew selection lentries leposxy of
+      Nothing -> (LDS_None, layerstate, Nothing)
       -- (you can only click + drag selected elements)
       Just (downlp, ldtdown) -> case ldtdown of
         LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
-          False -> (Nothing, layerstate, Nothing)
-          True  -> (Just ldtdown, layerstate, Nothing)
-        LDT_Hide -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing)
-        LDT_Lock -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing)
-        LDT_Collapse -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing)
+          False -> (LDS_Selecting lepos, layerstate, Nothing)
+          True  -> (LDS_Dragging, layerstate, Nothing)
+        LDT_Hide -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing)
+        LDT_Lock -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing)
+        LDT_Collapse -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing)
+    (MouseDragState_Down, _)       -> error "unexpected, LayerDragState should have been reset on last mouse up"
 
+    (MouseDragState_Up, LDS_None) -> error "unexpected, layer input handler should not have been created"
 
-    (MouseDragState_Down, _)       -> error "unexpected"
-    (MouseDragState_Up, Nothing) -> (Nothing, layerstate, Nothing)
-    (MouseDragState_Up, Just _) -> case clickLayerNew selection lentries leposxy of
+    -- TODO finalize selection
+    -- TODO support drag selecting
+    (MouseDragState_Up, LDS_None) -> (LDS_None, layerstate, Nothing)
+
+    (MouseDragState_Up, LDS_Dragging) -> case clickLayerNew selection lentries leposxy of
       -- release where there is no element, do nothing
-      Nothing -> (Nothing, layerstate, Nothing)
+      Nothing -> (LDS_None, layerstate, Nothing)
       Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
         -- dropping on a selected element does onthing
-        True ->  (Nothing, layerstate, Nothing)
-        False -> (Nothing, layerstate, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
+        True ->  (LDS_None, layerstate, Nothing)
+        False -> (LDS_None, layerstate, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
 
     -- TODO make sure this is the right way to cancel...
-    (MouseDragState_Cancelled, _) -> (Nothing, layerstate, Nothing)
+    (MouseDragState_Cancelled, _) -> (LDS_None, layerstate, Nothing)
     -- continue
-    _ -> (mldtdown, layerstate, Nothing)
+    _ -> (lds, layerstate, Nothing)
