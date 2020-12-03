@@ -38,8 +38,6 @@ import qualified Data.Sequence     as Seq
 data KeyModifier = KeyModifier_Shift | KeyModifier_Alt deriving (Show, Eq)
 
 -- KEYBOARD
--- TODO decide if text input happens here or in front end
--- (don't wanna implement my own text zipper D:)
 data KeyboardData = KeyboardData KeyboardKey [KeyModifier]
 
 data KeyboardKey =
@@ -119,7 +117,6 @@ toRelMouseDrag pFState md = RelMouseDrag $ md {
     _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md)
     , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md)
   }
-
 
 
 

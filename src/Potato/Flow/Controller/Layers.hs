@@ -132,6 +132,7 @@ layerEntry_rEltId LayerEntry {..} = rid where
 -- index type into Seq LayerEntry
 type LayerEntryPos = Int
 
+-- would have been smarter to store this as a Tree...
 type LayerEntries = Seq LayerEntry
 
 type LayerState = (LayerMetaMap, LayerEntries)

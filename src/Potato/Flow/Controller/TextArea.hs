@@ -18,7 +18,6 @@ import           Potato.Flow.Types
 
 import           Data.Dependent.Sum           (DSum ((:=>)))
 import qualified Data.IntMap                  as IM
--- TODO prob switch to text-zipper one
 import qualified Data.Text.Zipper             as TZ
 import           Data.Tuple.Extra
 

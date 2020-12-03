@@ -2,7 +2,8 @@
 -mousehandler :O
 -line manipulators
 -layers
-  -add selection to layerInputNew
+  DONE-add selection to layerInputNew
+  -write method to update layers when moving elements around in layers
   -add tests for layerInputNew
   -drag select
   -decide where to store layer state

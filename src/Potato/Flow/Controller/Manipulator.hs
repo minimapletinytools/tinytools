@@ -194,3 +194,6 @@ makeDeltaBox bht (V2 dx dy) = case bht of
   BH_A  -> DeltaLBox (V2 dx dy) (V2 0 0)
 
 -- TEXTAREA MANIPULATOR STUFF
+
+
+-- LINE MANIPULATOR STUFF
