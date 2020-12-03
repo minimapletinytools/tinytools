@@ -38,7 +38,7 @@ data FrontendOperation =
   -- you prob want a DSum kind of nonsense here so it's type safe too
   | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
 
-  | FrontendOperation_LayerDrag LayerDragState
+  | FrontendOperation_LayerDrag () -- TODO
 
   deriving (Show, Eq)
 

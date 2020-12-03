@@ -2,13 +2,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Potato.Flow.Controller.Layers (
-  LayerDragState
-  , LayerMeta(..)
+  LayerMeta(..)
   , LayerMetaMap
 
   -- exposed for testing
-  , LayerIndents
-
   , LockHiddenState(..)
   , LayerEntry(..)
   , LayerEntryPos
@@ -29,19 +26,19 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import qualified Data.IntMap                  as IM
-import qualified Data.Sequence                as Seq
-import  Data.Sequence                ((|>), (<|), (><))
-import Data.Tuple.Extra
 import           Data.Aeson
-import Data.Default
+import           Data.Default
+import qualified Data.IntMap                  as IM
+import           Data.Sequence                ((<|), (><), (|>))
+import qualified Data.Sequence                as Seq
+import           Data.Tuple.Extra
 
 
 
 data LayerMeta = LayerMeta {
   -- if False, these will inherit from parent
-  _layerMeta_isLocked :: Bool
-  , _layerMeta_isHidden :: Bool
+  _layerMeta_isLocked      :: Bool
+  , _layerMeta_isHidden    :: Bool
   , _layerMeta_isCollapsed :: Bool
 
 } deriving (Eq, Generic, Show)
@@ -77,40 +74,40 @@ setLockHiddenStateInChildren :: LockHiddenState -> Bool -> LockHiddenState
 setLockHiddenStateInChildren parentstate = \case
   False -> case parentstate of
     LHS_False -> LHS_False
-    _ -> LHS_False_InheritTrue
-    LHS_True -> LHS_False_InheritTrue
+    _         -> LHS_False_InheritTrue
+    LHS_True  -> LHS_False_InheritTrue
   True -> case parentstate of
     LHS_False -> LHS_True
-    _ -> LHS_True_InheritTrue
+    _         -> LHS_True_InheritTrue
 
 -- ancestor state got set, update the child
 updateLockHiddenStateInChildren :: LockHiddenState -> LockHiddenState -> LockHiddenState
 updateLockHiddenStateInChildren parentstate = \case
   LHS_False -> case parentstate of
-    LHS_True -> LHS_False_InheritTrue
+    LHS_True  -> LHS_False_InheritTrue
     LHS_False -> LHS_False
-    _ -> invalid
+    _         -> invalid
   LHS_True -> case parentstate of
-    LHS_True -> LHS_True_InheritTrue
+    LHS_True  -> LHS_True_InheritTrue
     LHS_False -> LHS_True
-    _ -> invalid
+    _         -> invalid
   LHS_True_InheritTrue -> case parentstate of
     LHS_False -> LHS_True
-    LHS_True -> LHS_True_InheritTrue
-    _ -> invalid
+    LHS_True  -> LHS_True_InheritTrue
+    _         -> invalid
   LHS_False_InheritTrue -> case parentstate of
     LHS_False -> LHS_False
-    LHS_True -> LHS_False_InheritTrue
-    _ -> invalid
+    LHS_True  -> LHS_False_InheritTrue
+    _         -> invalid
   where
     invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"
 
 -- this stores info just for what is displayed, Seq LayerEntry is uniquely generated from LayerMetaMap and PFState
 data LayerEntry = LayerEntry {
-  _layerEntry_depth           :: Int
-  , _layerEntry_lockState :: LockHiddenState
-  , _layerEntry_hideState :: LockHiddenState
-  , _layerEntry_isCollapsed :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
+  _layerEntry_depth            :: Int
+  , _layerEntry_lockState      :: LockHiddenState
+  , _layerEntry_hideState      :: LockHiddenState
+  , _layerEntry_isCollapsed    :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
 
   , _layerEntry_superSEltLabel :: SuperSEltLabel
 } deriving (Eq, Show)
@@ -122,7 +119,7 @@ layerEntry_display LayerEntry {..} = label where
 layerEntry_isFolderStart :: LayerEntry -> Bool
 layerEntry_isFolderStart LayerEntry {..} = case _layerEntry_superSEltLabel of
   (_,_,SEltLabel _ SEltFolderStart) -> True
-  _ -> False
+  _                                 -> False
 
 layerEntry_layerPos :: LayerEntry -> LayerPos
 layerEntry_layerPos LayerEntry {..} = lp where
@@ -153,7 +150,7 @@ alterWithDefault f k m = IM.alter f' k m where
 lookupWithDefault :: (Default a) => REltId -> REltIdMap a -> a
 lookupWithDefault rid ridm = case IM.lookup rid ridm of
   Nothing -> def
-  Just x -> x
+  Just x  -> x
 
 -- iterates over LayerPos not LayerEntryPos
 -- assumes folder start has already been processed and we are processing its children
@@ -245,7 +242,7 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
       entryfn sseltl mparent = LayerEntry {
           _layerEntry_depth = case mparent of
             Just parent -> _layerEntry_depth parent + 1
-            Nothing -> 0
+            Nothing     -> 0
           , _layerEntry_lockState = LHS_False
           , _layerEntry_hideState = LHS_False
           , _layerEntry_isCollapsed = True -- may not be folder, whatever
@@ -325,7 +322,6 @@ clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentri
     where
       lp = snd3 $ _layerEntry_superSEltLabel le
 
-
 layerInputNew ::
   PFState
   -> Int -- ^ scroll state
@@ -343,7 +339,7 @@ layerInputNew pfs scrollPos layerstate@(lmm, lentries) mldtdown selection md@Mou
       Just (downlp, ldtdown) -> case ldtdown of
         LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
           False -> (Nothing, layerstate, Nothing)
-          True -> (Just ldtdown, layerstate, Nothing)
+          True  -> (Just ldtdown, layerstate, Nothing)
         LDT_Hide -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing)
         LDT_Lock -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing)
         LDT_Collapse -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing)
@@ -359,79 +355,7 @@ layerInputNew pfs scrollPos layerstate@(lmm, lentries) mldtdown selection md@Mou
         True ->  (Nothing, layerstate, Nothing)
         False -> (Nothing, layerstate, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
 
-
-
-
-
+    -- TODO make sure this is the right way to cancel...
+    (MouseDragState_Cancelled, _) -> (Nothing, layerstate, Nothing)
+    -- continue
     _ -> (mldtdown, layerstate, Nothing)
-
-
-
-
-
-
-
-
-
--- TODO delete
-type LayerIndents = Seq Int
-
-
--- TODO rename this so it's like interactive state
-type LayerDragState = Maybe (LayerEntryPos, LayerDownType)
-
--- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
-clickLayer :: Selection -> LayerIndents -> XY -> LayerDragState
-clickLayer selection layers  (V2 absx absy) = case Seq.lookup absy layers of
-  Nothing                      -> Nothing
-  Just ident | ident == absx   -> Just (absy, LDT_Hide)
-  Just ident | ident == absx+1 -> Just (absy, LDT_Lock)
-  Just _                       -> Just (absy, ldttype) where
-    ldttype = if doesSelectionContainLayerPos absy selection
-      then LDT_Drag
-      else LDT_Normal
-
-
-
--- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
--- TODO add CompactLayers arg
--- TODO add selection output
-layerInput :: PFState -> Int -> Selection -> LayerDragState -> LayerIndents -> MouseDrag -> (LayerDragState, Maybe PFEventTag, Maybe (LockHideCollapseOp, [Int]))
-layerInput PFState {..} scrollPos selection mlds indents md@MouseDrag {..} = let
-    abspos@(V2 _ absy) = _mouseDrag_to + (V2 0 scrollPos)
-    selectionInds = fmap snd3 selection
-  in case _mouseDrag_state of
-    MouseDragState_Down -> case mlds of
-      Nothing -> (clickLayer selection indents abspos, Nothing, Nothing) where
-      _       -> error "unexpected"
-    MouseDragState_Up -> let
-        mldsnew = clickLayer selection indents abspos
-      in case mlds of
-        Nothing                    -> error "unexpected"
-        -- this means we clicked down on something selected and want to drag it
-        Just (downInd, LDT_Drag) -> (Nothing, op, Nothing) where
-          op = case mldsnew of
-            Nothing       -> Nothing
-            Just (idx, LDT_Drag) -> Nothing -- this means we released on something we already selected, don't do anything
-            Just (idx, _) -> if doesSelectionContainLayerPos absy selection -- we have to check again because LDT_Hide/Lock override LDT_Drag :(
-              then Nothing -- this means we released on something we already selected, don't do anything
-              else Just $ PFEMoveElt (toList (fmap snd3 selection), idx)
-        Just (downInd, oldldt) -> case mldsnew of
-          Nothing -> (Nothing, Nothing, Nothing)
-          Just (idx, _) -> case oldldt of
-            LDT_Normal -> if downInd == idx
-              then undefined -- TODO select/shift select
-              else (Nothing, Nothing, Nothing) -- maybe we can do something cute here instead?
-
-            LDT_Hide -> if downInd == idx
-              then (Nothing, Nothing, Just (showop, [downInd]))
-              else (Nothing, Nothing, Nothing) -- TODO consider click drag to Show/Hide several things at once (depending on if first thing clicked is shown/hidden)
-                where
-                    showop = undefined -- TODO showop depends on what original state was
-            LDT_Lock -> if downInd == idx
-              then (Nothing, Nothing, Just (lockop, [downInd]))
-              else (Nothing, Nothing, Nothing) -- TODO consider click drag to Show/Hide several things at once (depending on if first thing clicked is shown/hidden)
-                where
-                  lockop = undefined -- TODO showop depends on what original state was
-        _ -> (Nothing, Nothing, Nothing)
-    _ -> (mlds, Nothing, Nothing)
