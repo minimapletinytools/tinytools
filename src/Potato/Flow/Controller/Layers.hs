@@ -135,6 +135,10 @@ layerEntry_rEltId LayerEntry {..} = rid where
 -- index type into Seq LayerEntry
 type LayerEntryPos = Int
 
+type LayerEntries = Seq LayerEntry
+
+type LayerState = (LayerMetaMap, LayerEntries)
+
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 
 
@@ -166,7 +170,7 @@ addUntilFolderEndRecursive ::
   -> Maybe LayerEntry -- ^ parent
   -> LayerPos -- ^ current layer position we are adding
   -> [LayerEntry] -- ^ accumulator
-  -> (Int, [LayerEntry])
+  -> (LayerPos, [LayerEntry]) -- ^ (next lp, accumulator)
 addUntilFolderEndRecursive pfs@PFState {..} lmm skipfn eltfn skip parent lp added = let
     rid = Seq.index _pFState_layers lp
     seltl =  _pFState_directory IM.! rid
@@ -189,7 +193,7 @@ addUntilFolderEndRecursive pfs@PFState {..} lmm skipfn eltfn skip parent lp adde
       _ ->addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent (lp+1) combined
 
 -- see comments for addUntilFolderEndRecursive
-addUntilFolderEnd :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Maybe LayerEntry -> LayerEntry) -> Maybe LayerEntry -> Int -> Seq LayerEntry
+addUntilFolderEnd :: PFState -> LayerMetaMap -> (LayerMeta -> Bool) -> (SuperSEltLabel -> Maybe LayerEntry -> LayerEntry) -> Maybe LayerEntry -> LayerPos -> Seq LayerEntry
 addUntilFolderEnd pfs lmm skipfn eltfn parent lp = Seq.fromList . reverse . snd $ addUntilFolderEndRecursive pfs lmm skipfn eltfn False parent lp []
 
 -- iterates over LayerEntryPos, skipping all children of entries where skipfn evaluates to true
@@ -209,6 +213,7 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
       then le -- no changes to skipped elts
       else entryfn le
 
+-- TODO change 'LayerMetaMap -> LayerEntries' to 'LayerState'
 toggleLayerEntry :: PFState -> LayerMetaMap -> Seq LayerEntry -> LayerEntryPos -> LockHideCollapseOp -> (LayerMetaMap, Seq LayerEntry)
 toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   le = Seq.index lentries lepos
@@ -283,7 +288,9 @@ generateLayersNew pfs lmm = r where
 --updateLockHideState :: PFState -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
 --updateLockHideState = undefined
 
-updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
+
+-- TODO change 'LayerMetaMap -> LayerEntries' to 'LayerState'
+updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> LayerEntries -> LayerState
 updateLayers pfs changes lmm lentries = r where
   -- update lmm
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
@@ -300,17 +307,78 @@ updateLayers pfs changes lmm lentries = r where
 
 
 
+-- TODO binary search instead
+doesSelectionContainLayerPos :: LayerPos -> Selection -> Bool
+doesSelectionContainLayerPos lp = isJust . find (\(_,lp',_) -> lp' == lp)
+
+-- TODO delete LDT_Drag
+data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal | LDT_Drag deriving (Show, Eq)
+
+clickLayerNew :: Selection -> Seq LayerEntry -> XY -> Maybe (LayerPos, LayerDownType)
+clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
+  Nothing                      -> Nothing
+  Just le -> Just . (,) lp $ case () of
+    () | _layerEntry_depth le == absx+1   -> LDT_Hide
+    () | _layerEntry_depth le == absx+2 -> LDT_Lock
+    () | layerEntry_isFolderStart le && _layerEntry_depth le == absx -> LDT_Collapse
+    ()                       -> LDT_Normal
+    where
+      lp = snd3 $ _layerEntry_superSEltLabel le
+
+
+layerInputNew ::
+  PFState
+  -> Int -- ^ scroll state
+  -> LayerState
+  -> Maybe LayerDownType -- TODO this can be changed to Bool
+  -> Selection -- ^ current selection
+  -> MouseDrag -- ^ input to update with
+  -> (Maybe LayerDownType, LayerState, Maybe PFEventTag) -- ^ new states and possibly an event (perhaps Either LayerDragState (Maybe PFEventTag ) is more appropriate?)
+layerInputNew pfs scrollPos layerstate@(lmm, lentries) mldtdown selection md@MouseDrag {..} = let
+    leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
+  in case (_mouseDrag_state, mldtdown) of
+    (MouseDragState_Down, Nothing) -> case clickLayerNew selection lentries leposxy of
+      Nothing -> (Nothing, layerstate, Nothing)
+      -- (you can only click + drag selected elements)
+      Just (downlp, ldtdown) -> case ldtdown of
+        LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
+          False -> (Nothing, layerstate, Nothing)
+          True -> (Just ldtdown, layerstate, Nothing)
+        LDT_Hide -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing)
+        LDT_Lock -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing)
+        LDT_Collapse -> (Nothing, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing)
+
+
+    (MouseDragState_Down, _)       -> error "unexpected"
+    (MouseDragState_Up, Nothing) -> (Nothing, layerstate, Nothing)
+    (MouseDragState_Up, Just _) -> case clickLayerNew selection lentries leposxy of
+      -- release where there is no element, do nothing
+      Nothing -> (Nothing, layerstate, Nothing)
+      Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
+        -- dropping on a selected element does onthing
+        True ->  (Nothing, layerstate, Nothing)
+        False -> (Nothing, layerstate, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
+
+
+
+
+
+    _ -> (mldtdown, layerstate, Nothing)
+
+
+
+
+
+
+
+
+
 -- TODO delete
 type LayerIndents = Seq Int
 
 
-
-
-
-data LayerDownType = LDT_Hide | LDT_Lock | LDT_Normal | LDT_Drag deriving (Show, Eq)
-
 -- TODO rename this so it's like interactive state
-type LayerDragState = Maybe (Int, LayerDownType)
+type LayerDragState = Maybe (LayerEntryPos, LayerDownType)
 
 -- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
 clickLayer :: Selection -> LayerIndents -> XY -> LayerDragState
@@ -324,19 +392,6 @@ clickLayer selection layers  (V2 absx absy) = case Seq.lookup absy layers of
       else LDT_Normal
 
 
--- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
--- TODO binary search instead
-doesSelectionContainLayerPos :: LayerPos -> Selection -> Bool
-doesSelectionContainLayerPos lp = isJust . find (\(_,lp',_) -> lp' == lp)
-
--- has collapsed folders and hides SEltFolderEnds
-data CompactLayers = CompactLayers {
-
-}
-
--- TODO
-convertToTrueIndex :: Int -> CompactLayers -> LayerPos
-convertToTrueIndex absy cl = undefined
 
 -- TODO layer indexing is wrong, you need a function to convert display layer pos (abspos) to true layer pos due to hidden stuff
 -- TODO add CompactLayers arg
