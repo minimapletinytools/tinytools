@@ -1,19 +1,11 @@
--- TODO delete this file
-
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.Manipulator (
+module Potato.Flow.Controller.Manipulator.Box (
   BoxHandleType(..)
   , makeHandleBox
   , makeDeltaBox
-  , ManipulatorIndex
   , MouseManipulator(..)
-  , MouseManipulatorSet
   , toMouseManipulators
-  , findFirstMouseManipulator
-  , makeManipulationController
-
 ) where
 
 import           Relude
@@ -47,17 +39,17 @@ computeSelectionType = foldl' foldfn SMTNone where
     _ -> SMTBoundingBox
 
 
+-- TODO rework this stuff
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
-
 data MouseManipulator = MouseManipulator {
   _mouseManipulator_box    :: LBox
   , _mouseManipulator_type :: MouseManipulatorType
   -- back reference to object being manipulated?
   -- or just use a function
 }
-
 type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
+
 
 -- TODO finish
 toMouseManipulators :: Selection -> MouseManipulatorSet
@@ -111,47 +103,6 @@ restrict8 (V2 x y) = r where
       then (V2 0 y)
       else (V2 x y)
 
-makeManipulationController :: RelMouseDrag -> Selection -> ManipulatorIndex -> Bool -> (ManipulatorIndex, PFEventTag)
-makeManipulationController (RelMouseDrag MouseDrag {..}) selection lastmi undoFirst =  (mi, op) where
-  mms = toMouseManipulators selection
-  smt = computeSelectionType selection
-  (m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
-  dragDelta = _mouseDrag_to - _mouseDrag_from
-  boxRestrictedDelta = if elem KeyModifier_Shift _mouseDrag_modifiers
-    then restrict8 dragDelta
-    else dragDelta
-  firstSelected = Seq.index selection 0
-
-  -- TODO consider embedding in MouseManipulator instead of using switch statement below
-  controller = case smt of
-    SMTBox -> CTagBox :=> (Identity $ CBox {
-          _cBox_deltaBox = Just $ makeDeltaBox (toEnum mi) boxRestrictedDelta
-          , _cBox_deltaStyle = Nothing
-        })
-    SMTText -> CTagText :=> (Identity $ CText {
-          _cText_deltaBox = Just $ makeDeltaBox (toEnum mi) boxRestrictedDelta
-          , _cText_deltaText = Nothing
-        })
-    SMTBoundingBox -> CTagBoundingBox :=> (Identity $ CBoundingBox {
-          _cBoundingBox_deltaBox = makeDeltaBox (toEnum mi) boxRestrictedDelta
-        })
-    _ -> undefined
-
-  op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
-
-
-continueManipulate :: XY -> ManipulatorIndex -> SelectionManipulatorType ->  MouseManipulatorSet -> (MouseManipulator, ManipulatorIndex)
-continueManipulate pos mi smt mms = let
-    boxRules = undefined -- TODO rules for choosing box manipulator
-  in case smt of
-    _ -> (mms L.!! mi, mi)
-    -- TODO specific rulse for each
-    --SMTBox         -> undefined
-    --SMTLine        -> undefined
-    --SMTText        -> undefined
-    --SMTBoundingBox -> undefined
-    --_              -> error "unknown selection type"
-
 
 -- BOX MANIPULATOR STUFF
 -- TODO move to diff file
@@ -197,3 +148,69 @@ makeDeltaBox bht (V2 dx dy) = case bht of
   BH_L  -> DeltaLBox (V2 dx 0) (V2 (-dx) 0)
   BH_R  -> DeltaLBox 0 (V2 dx 0)
   BH_A  -> DeltaLBox (V2 dx dy) (V2 0 0)
+
+
+
+-- new handler stuff
+data BoxHandler = BoxHandler {
+
+    _boxHandler_handle       :: BoxHandleType -- the current handle we are dragging
+    , _boxHandler_undoFirst  :: Bool
+
+    -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
+    , _boxHandler_isCreation :: Bool
+  }
+
+instance PotatoHandler BoxHandler where
+  pHandlerName _ = "BoxHandler"
+  pHandleMouse bh@BoxHandler {..} pfs selection rmd = let
+      RelMouseDrag MouseDrag {..} = rmd
+      dragDelta = _mouseDrag_to - _mouseDrag_from
+      shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
+    in case _mouseDrag_state of
+        MouseDragState_Down -> r where
+
+          mmi = findFirstMouseManipulator rmd selection
+          r = case mmi of
+            -- didn't click on a manipulator, so cancel everything and pass on the state
+            Nothing -> (Nothing, Nothing, Nothing)
+            Just mi -> (Just (SomePotatoHandler newbh), Nothing, Nothing) where
+              newbh = bh {
+                  _boxHandler_handle = toEnum mi
+                }
+
+        MouseDragState_Dragging -> (Just (SomePotatoHandler newbh), Nothing, Just op) where
+          -- TODO may change handle when dragging
+          --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
+          m = _boxHandler_handle
+
+          boxRestrictedDelta = if shiftClick
+            then restrict8 dragDelta
+            else dragDelta
+          selectedBox = assert (computeSelectionType selection == SMTBox) $ Seq.index selection 0
+
+          -- for creating new elt
+          lastSelectionLps = fmap snd3 $ selection
+          newEltPos = if Seq.null lastSelectionLps then 0 else L.minimum lastSelectionLps
+
+          -- for manipulate
+          controller = CTagBox :=> (Identity $ CBox {
+              _cBox_deltaBox = Just $ makeDeltaBox m boxRestrictedDelta
+              , _cBox_deltaStyle = Nothing
+            })
+
+          op = if _boxHandler_isCreation
+            then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
+            else PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+
+          newbh = bh { _boxHandler_undoFirst = True }
+
+        MouseDragState_Up -> (Nothing, Nothing, Nothing)
+          -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
+
+        MouseDragState_Cancelled -> (Nothing, Nothing, Nothing)
+
+  pHandleKeyboard _ _ _ _ = (Nothing, Nothing, Nothing)
+  pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+    MouseDragState_Down -> False
+    _                   -> True

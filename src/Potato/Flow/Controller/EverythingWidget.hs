@@ -154,6 +154,23 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       case cmd of
         EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
         EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
+
+        --EFCmdMouse mouseData -> undefined
+        -- if mouse cancel state
+          -- do nothing
+        -- else if mouse down and creation tool
+          -- cancel previous handler
+          -- create new handler and pass input onto handler
+        -- else
+          --pass input onto handler
+          -- if handler doesn't process input
+            -- create phantom selection
+            -- if something was selected
+              -- create BBox handler and start dragging
+            -- else create selection handler and pass on input
+
+
+
         EFCmdMouse mouseData -> case _mouseDrag_state _everythingFrontend_mouseDrag of
           -- if last mouse was cancelled, only "uncancel" when we release the mouse
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData

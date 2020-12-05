@@ -2,7 +2,7 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.Handler (
-  SomePotatoHandlerOutput
+  PotatoHandlerOutput
   , PotatoHandler(..)
   , SomePotatoHandler(..)
 ) where
@@ -22,25 +22,29 @@ import qualified Data.List                    as L
 import qualified Data.Sequence                as Seq
 import           Data.Tuple.Extra
 
+-- TODO I don't think the selection thing is necessary.. only Layer drags use it...
 -- use DMap if you start having more actions...
-type PotatoHandlerOutput h = (Maybe h, Maybe (Bool, Selection), Maybe PFEventTag)
-type SomePotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
+type PotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
 
+-- TODO rename methods in here..
+-- rename to Manipulator XD
 class PotatoHandler h where
   pHandlerName :: h -> Text
-  -- TODO maybe split into handleLayerMouse (MouseDrag) and handleCanvasMouse (RelMosueDrag)?
-  pHandleMouse :: h -> PFState -> Selection -> RelMouseDrag -> Maybe (PotatoHandlerOutput h)
-  pHandleKeyboard :: h -> PFState -> Selection -> KeyboardData -> Maybe (PotatoHandlerOutput h)
 
+  -- TODO maybe split into handleLayerMouse (MouseDrag) and handleCanvasMouse (RelMosueDrag)?
+  pHandleMouse :: h -> PFState -> Selection -> RelMouseDrag -> PotatoHandlerOutput
+  pHandleKeyboard :: h -> PFState -> Selection -> KeyboardData -> PotatoHandlerOutput
+  pHandleCancel :: h -> PFState -> Selection -> KeyboardData -> PotatoHandlerOutput
+
+  -- TODO handler render type??
+  --
+  pRenderHandler :: h -> ()
+
+
+  -- helper method used to check that we aren't feeding invalid mouse states
+  pValidateMouse :: h -> RelMouseDrag -> Bool
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 
-testHandleMouse :: SomePotatoHandler -> PFState -> Selection -> RelMouseDrag -> SomePotatoHandlerOutput
-testHandleMouse (SomePotatoHandler h) pfs sel rmd = r where
-  mho = pHandleMouse h pfs sel rmd
-  r = case mho of
-    Nothing -> (Nothing, Nothing, Nothing)
-    Just (mhs, mnewsel, mpfe) -> (mshout, mnewsel, mpfe) where
-      mshout = case mhs of
-        Nothing   -> Nothing
-        Just newh -> Just $ SomePotatoHandler newh
+testHandleMouse :: SomePotatoHandler -> PFState -> Selection -> RelMouseDrag -> PotatoHandlerOutput
+testHandleMouse (SomePotatoHandler h) pfs sel rmd = pHandleMouse h pfs sel rmd
