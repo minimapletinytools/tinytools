@@ -7,7 +7,7 @@ module Potato.Flow.Workspace (
   , workspaceFromState
   , undoWorkspace
   , redoWorkspace
-  --, doCmdWorkspaceUndoFirst
+  , undoPermanentWorkspace
   , doCmdWorkspace
   , pfc_addElt_to_newElts
   , pfc_addFolder_to_newElts
@@ -69,9 +69,13 @@ redoWorkspace pfw = r where
     c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_state pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
--- moved to entry
---doCmdWorkspaceUndoFirst :: PFCmd -> PFWorkspace -> PFWorkspace
---doCmdWorkspaceUndoFirst cmd ws = doCmdWorkspace cmd (undoWorkspace ws)
+undoPermanentWorkspace :: PFWorkspace -> PFWorkspace
+undoPermanentWorkspace pfw =  r where
+  ActionStack {..} = _pFWorkspace_actionStack pfw
+  r = case doStack of
+    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
+    c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_state pfw)) (ActionStack cs undoStack)
+    _ -> pfw
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
 --doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem

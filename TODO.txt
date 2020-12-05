@@ -35,7 +35,7 @@ DONE-decide how to handle cancel in mouse drag handlers
         -click drag drags
 -broadphase tests
 -connect RenderedCanvas
--undo permament instead of undofirst
+DONE-undo permament instead of undofirst
   -you need this if you want to support tracking layer states through undo/redo
   -also just a good idea in general I think...
 
