@@ -166,217 +166,218 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
         -- handler (eventually may be override from backend? If so, be sure to set in everything')
         -- TODO doesn't work, needs to be in a pattern match I think o_o
-        SomePotatoHandler handler = _everythingFrontend_handler
+        someHandler = _everythingFrontend_handler
 
-      case cmd of
-        EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
-        EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
-        -- TODO DELETE
-        EFCmdMouse mouseData -> case _mouseDrag_state _everythingFrontend_mouseDrag of
-          -- if last mouse was cancelled, only "uncancel" when we release the mouse
-          MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-            then return everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
-            else return everything' -- still cancelled
-          -- otherwise process the mouse as normal
-          _ -> do
+      case someHandler of
+        SomePotatoHandler handler -> case cmd of
+          EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
+          EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
+          -- TODO DELETE
+          EFCmdMouse mouseData -> case _mouseDrag_state _everythingFrontend_mouseDrag of
+            -- if last mouse was cancelled, only "uncancel" when we release the mouse
+            MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
+              then return everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
+              else return everything' -- still cancelled
+            -- otherwise process the mouse as normal
+            _ -> do
+              let
+
+                (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
+                  MouseDragState_Up        -> (newDrag mouseData, 0)
+                  MouseDragState_Cancelled -> (newDrag mouseData, 0)
+                  _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
+
+                -- TODO DELETE use canvasDrag below instead
+                canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
+                canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
+                canvasDragDelta = canvasDragTo - canvasDragFrom
+
+                canvasDrag = toRelMouseDrag pFState mouseDrag
+
+              -- TODO clean up unecessary monad or move sampling above into use site
+              everything'' <- case _everythingFrontend_selectedTool of
+                Tool_Pan -> do
+                  -- add delta to pan position
+                  let
+                    V2 cx0 cy0 = _everythingFrontend_pan
+                    V2 dx dy = deltaDrag
+                  return $ everything' {
+                      _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
+                      , _everythingFrontend_lastOperation = FrontendOperation_Pan
+                    }
+                Tool_Select -> do
+                  case _mouseDrag_state mouseDrag of
+                    MouseDragState_Down -> do
+                      if Seq.null selection
+                      then do
+                        layerPosMap <- sample . current $ _pfo_layerPosMap
+                        let
+                          bps = _everythingBackend_broadPhaseState backend
+                          nextSelection = selectMagic pFState layerPosMap bps canvasDrag
+                          shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                          mmi = findFirstMouseManipulator canvasDrag nextSelection
+                        case mmi of
+                          Nothing -> return everything'
+                          Just mi -> return everything' {
+
+                              _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick nextSelection
+                            }
+                      else let
+                          mmi = findFirstMouseManipulator canvasDrag selection
+                        in case mmi of
+                          Nothing -> return everything'
+                          Just mi -> return everything' {
+                              -- just indicate the manipulator selected, don't actually manipulate here
+                              _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
+                            }
+                    MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
+                      FrontendOperation_Manipulate _ lmi  ->  return $ everything' {
+                              _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
+                            }
+                          where
+                            (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
+                      -- IMPORTANT: special case, if last operation was FrontendOperation_Select and mouse state is MouseDragState_Dragging
+                      -- then this means that we are in the special select + manipulate case
+                      -- I am not so happy about this, perhaps it's better just to introduce another state var rather than rely on special state of two state vars
+                      FrontendOperation_Select _ _ -> return $ everything' {
+                              _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
+                            }
+                          where
+                            -- regenerate mouse info from last frame
+                            lastCanvasDrag = toRelMouseDrag pFState _everythingFrontend_mouseDrag
+                            lmi = case findFirstMouseManipulator lastCanvasDrag selection of
+                              Nothing -> error "expected to find manipulator, this probably means assumptions outlined in comments above are false"
+                              Just x -> x
+                            (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
+                      _ -> do
+                        return $ everything' {
+                            _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom canvasDragDelta)
+                          }
+
+                    MouseDragState_Up -> case _everythingFrontend_lastOperation of
+                      -- if we were manipulating, don't need to do anything
+                      FrontendOperation_Manipulate _ _ -> return everything'
+                      -- This happens in the select+manipulate case in which case we have already selected
+                      FrontendOperation_Select _ _ -> return everything'
+                      -- if we weren't manipulating, then we were selecting, then finalize selection
+                      _ -> do
+                        layerPosMap <- sample . current $ _pfo_layerPosMap
+                        let
+                          bps = _everythingBackend_broadPhaseState backend
+                          shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                        -- selection is stored in backend so pass it on to backend
+                        return $ everything' {
+                            _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick $ selectMagic pFState layerPosMap bps canvasDrag
+                          }
+                    -- 'case _mouseDrag_state mouseDrag of'
+                    _ -> undefined
+
+                -- 'case _everythingFrontend_selectedTool of'
+                -- create new elements
+                _ -> do
+                  backend <- sample . current $ everythingBackendDyn
+
+                  let
+                    lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
+                    newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
+                  case _mouseDrag_state mouseDrag of
+                    -- TODO run finalize operation on each thing
+                    -- if we were manipulating, don't need to do anything
+                    MouseDragState_Up -> return everything'
+                    -- otherwise, create a new elt
+                    -- note this will break if you change tools in the middle of dragging TODO should I bother to fix this?
+                    -- TODO consider doing some funny corner rejiggering depending on direction you drag so that click square is always included?
+                    _ -> case _everythingFrontend_selectedTool of
+                      Tool_Box ->
+                        return everything' {
+                            _everythingFrontend_lastOperation =
+                              FrontendOperation_Manipulate
+                                (Just (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))))
+                                0
+                          }
+                      -- TODO finish other types
+                      _ -> undefined
+              return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+          EFCmdKeyboard x -> case x of
+            KeyboardData KeyboardKey_Esc _ -> let
+                -- cancel the mouse action
+                everything'' = everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
+              in
+                case _everythingFrontend_lastOperation of
+                  FrontendOperation_Pan -> do
+                    -- substract entire drag from pan position
+                    let
+                      V2 cx0 cy0 = _everythingFrontend_pan
+                      V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
+                    -- TODO cancel future pans until mouse is released
+                    return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
+                  FrontendOperation_Manipulate _ _->
+                    -- undo the last operation
+                    return everything'' { _everythingFrontend_lastOperation = FrontendOperation_Undo }
+                  FrontendOperation_Selecting _ ->
+                    -- we don't select until release so just reset to orign state
+                    return everything''
+                  FrontendOperation_LayerDrag _ ->
+                    -- TODO??
+                    undefined
+                  FrontendOperation_None -> return everything'
+                  -- change to just return everything''
+                  -- leaving as undefined now to catch for accidents
+                  op -> error (show op)
+            _                              -> undefined
+
+
+          -- TODO use this instead
+          EFCmdMouse mouseData -> do
             let
-
               (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
                 MouseDragState_Up        -> (newDrag mouseData, 0)
                 MouseDragState_Cancelled -> (newDrag mouseData, 0)
                 _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
 
-              -- TODO DELETE use canvasDrag below instead
-              canvasDragFrom = pFState_toCanvasCoordinates pFState (_mouseDrag_from mouseDrag)
-              canvasDragTo = pFState_toCanvasCoordinates pFState (_mouseDrag_to mouseDrag)
-              canvasDragDelta = canvasDragTo - canvasDragFrom
-
               canvasDrag = toRelMouseDrag pFState mouseDrag
 
-            -- TODO clean up unecessary monad or move sampling above into use site
-            everything'' <- case _everythingFrontend_selectedTool of
-              Tool_Pan -> do
-                -- add delta to pan position
-                let
-                  V2 cx0 cy0 = _everythingFrontend_pan
-                  V2 dx dy = deltaDrag
-                return $ everything' {
-                    _everythingFrontend_pan = V2 (cx0+dx) (cy0 + dy)
-                    , _everythingFrontend_lastOperation = FrontendOperation_Pan
-                  }
-              Tool_Select -> do
-                case _mouseDrag_state mouseDrag of
-                  MouseDragState_Down -> do
-                    if Seq.null selection
-                    then do
-                      layerPosMap <- sample . current $ _pfo_layerPosMap
-                      let
-                        bps = _everythingBackend_broadPhaseState backend
-                        nextSelection = selectMagic pFState layerPosMap bps canvasDrag
-                        shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-                        mmi = findFirstMouseManipulator canvasDrag nextSelection
-                      case mmi of
-                        Nothing -> return everything'
-                        Just mi -> return everything' {
-
-                            _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick nextSelection
-                          }
-                    else let
-                        mmi = findFirstMouseManipulator canvasDrag selection
-                      in case mmi of
-                        Nothing -> return everything'
-                        Just mi -> return everything' {
-                            -- just indicate the manipulator selected, don't actually manipulate here
-                            _everythingFrontend_lastOperation = FrontendOperation_Manipulate Nothing mi
-                          }
-                  MouseDragState_Dragging -> case _everythingFrontend_lastOperation of
-                    FrontendOperation_Manipulate _ lmi  ->  return $ everything' {
-                            _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
-                          }
-                        where
-                          (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
-                    -- IMPORTANT: special case, if last operation was FrontendOperation_Select and mouse state is MouseDragState_Dragging
-                    -- then this means that we are in the special select + manipulate case
-                    -- I am not so happy about this, perhaps it's better just to introduce another state var rather than rely on special state of two state vars
-                    FrontendOperation_Select _ _ -> return $ everything' {
-                            _everythingFrontend_lastOperation = FrontendOperation_Manipulate (Just operation) mi
-                          }
-                        where
-                          -- regenerate mouse info from last frame
-                          lastCanvasDrag = toRelMouseDrag pFState _everythingFrontend_mouseDrag
-                          lmi = case findFirstMouseManipulator lastCanvasDrag selection of
-                            Nothing -> error "expected to find manipulator, this probably means assumptions outlined in comments above are false"
-                            Just x -> x
-                          (mi, operation) = makeManipulationController canvasDrag selection lmi undoFirst
-                    _ -> do
-                      return $ everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Selecting (LBox canvasDragFrom canvasDragDelta)
-                        }
-
-                  MouseDragState_Up -> case _everythingFrontend_lastOperation of
-                    -- if we were manipulating, don't need to do anything
-                    FrontendOperation_Manipulate _ _ -> return everything'
-                    -- This happens in the select+manipulate case in which case we have already selected
-                    FrontendOperation_Select _ _ -> return everything'
-                    -- if we weren't manipulating, then we were selecting, then finalize selection
-                    _ -> do
-                      layerPosMap <- sample . current $ _pfo_layerPosMap
-                      let
-                        bps = _everythingBackend_broadPhaseState backend
-                        shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-                      -- selection is stored in backend so pass it on to backend
-                      return $ everything' {
-                          _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick $ selectMagic pFState layerPosMap bps canvasDrag
-                        }
-                  -- 'case _mouseDrag_state mouseDrag of'
-                  _ -> undefined
-
-              -- 'case _everythingFrontend_selectedTool of'
-              -- create new elements
-              _ -> do
-                backend <- sample . current $ everythingBackendDyn
-
-                let
-                  lastSelectionLps = fmap snd3 $ _everythingBackend_selection backend
-                  newEltPos = if Seq.null lastSelectionLps then 0 else minimum lastSelectionLps
-                case _mouseDrag_state mouseDrag of
-                  -- TODO run finalize operation on each thing
-                  -- if we were manipulating, don't need to do anything
-                  MouseDragState_Up -> return everything'
-                  -- otherwise, create a new elt
-                  -- note this will break if you change tools in the middle of dragging TODO should I bother to fix this?
-                  -- TODO consider doing some funny corner rejiggering depending on direction you drag so that click square is always included?
-                  _ -> case _everythingFrontend_selectedTool of
-                    Tool_Box ->
-                      return everything' {
-                          _everythingFrontend_lastOperation =
-                            FrontendOperation_Manipulate
-                              (Just (PFEAddElt (undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (canvasDragFrom) (canvasDragTo - canvasDragFrom)) def))))
-                              0
-                        }
-                    -- TODO finish other types
-                    _ -> undefined
-            return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
-        EFCmdKeyboard x -> case x of
-          KeyboardData KeyboardKey_Esc _ -> let
-              -- cancel the mouse action
-              everything'' = everything' { _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag }
-            in
-              case _everythingFrontend_lastOperation of
-                FrontendOperation_Pan -> do
-                  -- substract entire drag from pan position
-                  let
-                    V2 cx0 cy0 = _everythingFrontend_pan
-                    V2 dx dy = (_mouseDrag_to _everythingFrontend_mouseDrag) - (_mouseDrag_from _everythingFrontend_mouseDrag)
-                  -- TODO cancel future pans until mouse is released
-                  return everything'' { _everythingFrontend_pan = V2 (cx0-dx) (cy0-dy) }
-                FrontendOperation_Manipulate _ _->
-                  -- undo the last operation
-                  return everything'' { _everythingFrontend_lastOperation = FrontendOperation_Undo }
-                FrontendOperation_Selecting _ ->
-                  -- we don't select until release so just reset to orign state
-                  return everything''
-                FrontendOperation_LayerDrag _ ->
-                  -- TODO??
+              everything'' = case _mouseDrag_state mouseDrag of
+                -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
+                MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
+                  then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
+                  else everything' -- still cancelled
+                -- if mouse down and creation tool
+                MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool ->
+                  -- TODO
+                  -- cancel previous handler
+                  -- create new handler and pass input onto handler
                   undefined
-                FrontendOperation_None -> return everything'
-                -- change to just return everything''
-                -- leaving as undefined now to catch for accidents
-                op -> error (show op)
-          _                              -> undefined
+                _ ->
+                  -- TODO
+                  --pass input onto handler
+                  -- if input not caputerd by handler
+                    -- create phantom selection
+                    -- if something was selected
+                      -- create BBox handler and start dragging
+                    -- else create selection handler and pass on input
+                  undefined
+            return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+          EFCmdKeyboard x -> case x of
+            KeyboardData KeyboardKey_Esc _ -> do
+              let
+                -- cancel handler
+                pho = pHandleCancel handler pFState selection
+                r = fillEverythingWithHandlerOutput pho everything'
+              case fst3 pho of
+                -- TODO create handler from selection here
+                Nothing -> return r
+                Just _  -> return r
+            kbd -> do
+              let
+                pho = pHandleKeyboard handler pFState selection kbd
 
+              --TODO if input not captured by handler TODO halp, no one way to distinguish this... We can just have it return Nothing?.. no I think it needs to capture...
+                -- process input (e.g. tool hotkeys, copy pasta)
 
-        -- TODO use this instead
-        EFCmdMouse mouseData -> do
-          let
-            (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
-              MouseDragState_Up        -> (newDrag mouseData, 0)
-              MouseDragState_Cancelled -> (newDrag mouseData, 0)
-              _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
+              return $ fillEverythingWithHandlerOutput pho everything'
 
-            canvasDrag = toRelMouseDrag pFState mouseDrag
-
-            everything'' = case _mouseDrag_state mouseDrag of
-              -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
-              MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-                then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
-                else everything' -- still cancelled
-              -- if mouse down and creation tool
-              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool ->
-                -- TODO
-                -- cancel previous handler
-                -- create new handler and pass input onto handler
-                undefined
-              _ ->
-                -- TODO
-                --pass input onto handler
-                -- if input not caputerd by handler
-                  -- create phantom selection
-                  -- if something was selected
-                    -- create BBox handler and start dragging
-                  -- else create selection handler and pass on input
-                undefined
-          return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
-        EFCmdKeyboard x -> case x of
-          KeyboardData KeyboardKey_Esc _ -> do
-            let
-              -- cancel handler
-              pho = pHandleCancel handler pFState selection
-              r = fillEverythingWithHandlerOutput pho everything'
-            case fst3 pho of
-              -- TODO create handler from selection here
-              Nothing -> return r
-              Just _  -> return r
-          kbd -> do
-            let
-              pho = pHandleKeyboard handler pFState selection kbd
-
-            --TODO if input not captured by handler TODO halp, no one way to distinguish this... We can just have it return Nothing?.. no I think it needs to capture...
-              -- process input (e.g. tool hotkeys, copy pasta)
-
-            return $ fillEverythingWithHandlerOutput pho everything'
-
-        _          -> undefined
+          _          -> undefined
 
   everythingFrontendDyn :: Dynamic t EverythingFrontend
     <- foldDynM foldEverythingFrontendFn emptyEverythingFrontend everythingFrontendEvent
