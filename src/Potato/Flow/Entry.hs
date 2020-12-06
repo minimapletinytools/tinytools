@@ -114,6 +114,7 @@ doCmdPFTotalState cmd pfts = r where
 doCmdPFTTotalStateUndoPermanentFirst :: (PFState -> PFCmd) -> PFTotalState -> PFTotalState
 doCmdPFTTotalStateUndoPermanentFirst cmdFn pfts = r where
   ws = _pFTotalState_workspace pfts
+  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
   undoedws = undoPermanentWorkspace ws
   undoedpfs = _pFWorkspace_state undoedws
   cmd = cmdFn undoedpfs

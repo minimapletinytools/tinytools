@@ -208,7 +208,7 @@ instance PotatoHandler BoxHandler where
         MouseDragState_Up -> (Nothing, Nothing, Nothing)
           -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
-        MouseDragState_Cancelled -> (Nothing, Nothing, Nothing)
+        MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
   pHandleKeyboard _ _ _ _ = (Nothing, Nothing, Nothing)
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of

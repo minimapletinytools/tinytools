@@ -18,6 +18,7 @@ module Potato.Flow.Controller.Input (
 
 
   , Tool(..)
+  , tool_isCreate
   , LayerDisplay(..)
   , Selection
   , disjointUnionSelection
@@ -124,6 +125,12 @@ toRelMouseDrag pFState md = RelMouseDrag $ md {
 
 -- TOOL
 data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
+
+tool_isCreate :: Tool -> Bool
+tool_isCreate = \case
+  Tool_Select -> False
+  Tool_Pan -> False
+  _ -> True
 
 -- LAYER
 data LayerDisplay = LayerDisplay {

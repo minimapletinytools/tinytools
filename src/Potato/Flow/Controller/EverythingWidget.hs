@@ -15,6 +15,7 @@ import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Entry
@@ -114,7 +115,14 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
     else lps'
   r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
 
-
+fillEverythingWithHandlerOutput :: PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
+fillEverythingWithHandlerOutput (msph, msel, mpfe) everything = everything {
+    _everythingFrontend_handler = case msph of
+      Just sph -> sph
+      Nothing  -> SomePotatoHandler EmptyHandler
+    , _everythingFrontend_select = msel
+    , _everythingFrontend_pFEvent = mpfe
+  }
 
 holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => EverythingWidgetConfig t
@@ -139,11 +147,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
 
       backend <- sample . current $ everythingBackendDyn
+      pFState <- sample . current $ _pfo_pFState
 
       let
         -- clear per frame statuses for next frame
         everything' = everything {
             _everythingFrontend_lastOperation = FrontendOperation_None
+
+            -- clear one shot events
+            , _everythingFrontend_pFEvent = Nothing
+            , _everythingFrontend_select = Nothing
           }
         -- other useful stuff
         undoFirst = case _everythingFrontend_lastOperation of
@@ -151,26 +164,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           _                                   -> False
         selection = _everythingBackend_selection backend
 
+        -- handler (eventually may be override from backend? If so, be sure to set in everything')
+        -- TODO doesn't work, needs to be in a pattern match I think o_o
+        SomePotatoHandler handler = _everythingFrontend_handler
+
       case cmd of
         EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
         EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
-
-        --EFCmdMouse mouseData -> undefined
-        -- if mouse cancel state
-          -- do nothing
-        -- else if mouse down and creation tool
-          -- cancel previous handler
-          -- create new handler and pass input onto handler
-        -- else
-          --pass input onto handler
-          -- if handler doesn't process input
-            -- create phantom selection
-            -- if something was selected
-              -- create BBox handler and start dragging
-            -- else create selection handler and pass on input
-
-
-
+        -- TODO DELETE
         EFCmdMouse mouseData -> case _mouseDrag_state _everythingFrontend_mouseDrag of
           -- if last mouse was cancelled, only "uncancel" when we release the mouse
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
@@ -178,7 +179,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             else return everything' -- still cancelled
           -- otherwise process the mouse as normal
           _ -> do
-            pFState <- sample . current $ _pfo_pFState
             let
 
               (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
@@ -324,6 +324,58 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- leaving as undefined now to catch for accidents
                 op -> error (show op)
           _                              -> undefined
+
+
+        -- TODO use this instead
+        EFCmdMouse mouseData -> do
+          let
+            (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
+              MouseDragState_Up        -> (newDrag mouseData, 0)
+              MouseDragState_Cancelled -> (newDrag mouseData, 0)
+              _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
+
+            canvasDrag = toRelMouseDrag pFState mouseDrag
+
+            everything'' = case _mouseDrag_state mouseDrag of
+              -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
+              MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
+                then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
+                else everything' -- still cancelled
+              -- if mouse down and creation tool
+              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool ->
+                -- TODO
+                -- cancel previous handler
+                -- create new handler and pass input onto handler
+                undefined
+              _ ->
+                -- TODO
+                --pass input onto handler
+                -- if input not caputerd by handler
+                  -- create phantom selection
+                  -- if something was selected
+                    -- create BBox handler and start dragging
+                  -- else create selection handler and pass on input
+                undefined
+          return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+        EFCmdKeyboard x -> case x of
+          KeyboardData KeyboardKey_Esc _ -> do
+            let
+              -- cancel handler
+              pho = pHandleCancel handler pFState selection
+              r = fillEverythingWithHandlerOutput pho everything'
+            case fst3 pho of
+              -- TODO create handler from selection here
+              Nothing -> return r
+              Just _  -> return r
+          kbd -> do
+            let
+              pho = pHandleKeyboard handler pFState selection kbd
+
+            --TODO if input not captured by handler TODO halp, no one way to distinguish this... We can just have it return Nothing?.. no I think it needs to capture...
+              -- process input (e.g. tool hotkeys, copy pasta)
+
+            return $ fillEverythingWithHandlerOutput pho everything'
+
         _          -> undefined
 
   everythingFrontendDyn :: Dynamic t EverythingFrontend
@@ -335,11 +387,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- PFOUTPUT --
   --------------
   let
+    -- TODO DELETE
     --backendPFEvent = traceEvent "PF: " $ fforMaybe frontendOperationEv $ \case
     backendPFEvent = fforMaybe frontendOperationEv $ \case
       FrontendOperation_Manipulate cmd _ -> cmd
       FrontendOperation_Undo -> Just PFEUndo
       _ -> Nothing
+
+    -- TODO use this instead of the above
+    newBackendPFEvent = updated (fmap _everythingFrontend_pFEvent everythingFrontendDyn)
 
     -- connect events to PFConfig
     -- TODO maybe not all events will come from backendPFEvent

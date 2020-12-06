@@ -15,6 +15,7 @@ module Potato.Flow.Controller.Everything (
 import           Relude
 
 import           Potato.Flow.BroadPhase
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator
@@ -33,11 +34,9 @@ data FrontendOperation =
   | FrontendOperation_Undo
   | FrontendOperation_Selecting LBox
   | FrontendOperation_Select Bool Selection
-
   -- TODO look into putting ManipulationState type in here so different manipulators can have different state types
   -- you prob want a DSum kind of nonsense here so it's type safe too
   | FrontendOperation_Manipulate (Maybe PFEventTag) ManipulatorIndex
-
   | FrontendOperation_LayerDrag () -- TODO
 
   deriving (Show, Eq)
@@ -47,9 +46,15 @@ data EverythingFrontend = EverythingFrontend {
   _everythingFrontend_selectedTool     :: Tool
   , _everythingFrontend_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingFrontend_mouseDrag      :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
+
+  -- TODO DELETE
   , _everythingFrontend_lastOperation  :: FrontendOperation
 
-  , _everythingFrontend_layerMouseDrag :: MouseDrag -- last layer mouse dragging state
+  -- replaces above
+  , _everythingFrontend_handler        :: SomePotatoHandler
+  , _everythingFrontend_pFEvent        :: Maybe PFEventTag -- one shot event passed onto PF
+  , _everythingFrontend_select         :: Maybe (Bool, Selection) -- one shot
+
   , _everythingFrontend_layerScrollPos :: Int
 
   , _everythingFrontend_debugLabel     :: Text
@@ -70,6 +75,10 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_pan          = V2 0 0
     , _everythingFrontend_mouseDrag = emptyMouseDrag
     , _everythingFrontend_lastOperation = FrontendOperation_None
+    , _everythingFrontend_handler = SomePotatoHandler EmptyHandler
+    , _everythingFrontend_select = Nothing
+    , _everythingFrontend_layerScrollPos = 0
+
     , _everythingFrontend_debugLabel = ""
   }
 
@@ -87,6 +96,12 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
   , _everythingCombined_lastOperation  :: FrontendOperation
+
+  , _everythingCombined_handler        :: SomePotatoHandler
+  , _everythingCombined_pFEvent        :: Maybe PFEventTag -- one shot event passed onto PF
+  , _everythingCombined_select         :: Maybe (Bool, Selection) -- one shot
+  , _everythingCombined_layerScrollPos :: Int
+
   , _everythingCombined_debugLabel     :: Text
 
   , _everythingCombined_selection      :: Selection
@@ -104,6 +119,10 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     , _everythingCombined_pan        = _everythingFrontend_pan
     , _everythingCombined_mouseDrag = _everythingFrontend_mouseDrag
     , _everythingCombined_lastOperation = _everythingFrontend_lastOperation
+    , _everythingCombined_handler = _everythingFrontend_handler
+    , _everythingCombined_pFEvent = _everythingFrontend_pFEvent
+    , _everythingCombined_select = _everythingFrontend_select
+    , _everythingCombined_layerScrollPos = _everythingFrontend_layerScrollPos
     , _everythingCombined_debugLabel = _everythingFrontend_debugLabel
 
     , _everythingCombined_selection      = _everythingBackend_selection
