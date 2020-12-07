@@ -46,13 +46,19 @@
       -may trigger events to update selection and create new handler
     -input gets ignored
 
-
-
-
 -auto create handler based on selection when handler is cleared
   -we need to do this so that if we start creating a new handler and then cancel, we want to get the default selection based handler back
     -this is not ideal though because if we have sub modal handlers (e.g. text editting mode) that handler info gets loss
       -I guess you could solve this with "lastHandler" or some kind of handler stack D:
+
+
+-HANDLER PLAN
+  -return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
+  -need to pass in broad phase for selecting
+    NO-or perhaps select returns a box to be selected?
+  -need to add render function
+  -new selection generates new handler and cancels previous one, this handler must be stored in backend
+
 
 DONE-decide how to handle cancel in mouse drag handlers
   -either pass in cancel mouse state or pass in escape key
@@ -60,6 +66,7 @@ DONE-decide how to handle cancel in mouse drag handlers
     -I think it's best if cancel mouse states aren't passed in so that handlers don't need to individually account for this
       -except this means it is expected for escape key to cancel the handler
         -so you should add a separate method for cancelling handler so that this assupmtion is clear
+-add test to ensure REltId does not change from undofirst
 -mousehandler :O
 -line manipulators
 -layers

@@ -456,69 +456,72 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       ]
 
     foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
-    foldEverythingBackendFn cmd everything@EverythingBackend {..} = case cmd of
-
-      EBCmdSelect add sel -> do
-        pFState <- sample . current $ _pfo_pFState
-        return $ assert (pFState_selectionIsValid pFState (fmap snd3 (toList sel))) ()
-        if add
-          then return $ everything { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
-          else return $ everything { _everythingBackend_selection = sel }
-
-      EBCmdChanges cslmap -> do
-        pFState <- sample . current $ _pfo_pFState
-        frontend <- sample . current $ everythingFrontendDyn
-        let
-
-          -- broad phase stuff
-          cslmapForBroadPhase = fmap (fmap snd) cslmap
-          newBroadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
-          bpt = _broadPhaseState_bPTree newBroadPhaseState
-          boxes = _broadPhaseState_needsUpdate newBroadPhaseState
-          rc = _everythingBackend_renderedCanvas
-          newRenderedCanvas = case boxes of
-            [] -> rc
-            (b:bs) -> case intersect_LBox (renderedCanvas_box rc) (foldl' union_LBox b bs) of
-              Nothing -> rc
-              Just aabb -> newrc where
-                slmap = _pFState_directory pFState
-                rids = broadPhase_cull aabb bpt
-                seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
-                  Nothing -> case IM.lookup rid slmap of
-                    Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-                    Just seltl -> seltl
-                  Just mseltl -> case mseltl of
-                    Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-                    Just seltl -> seltl
-                -- TODO need to order seltls by layer position oops
-                newrc = render aabb (map _sEltLabel_sElt seltls) rc
-
-          -- new elt stuff
-          lastDir = _pFState_directory pFState
-          newEltFoldMapFn rid v = case v of
-            Nothing     -> []
-            Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
-          newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
-          newSelection = if null newlyCreatedSEltls
-            then catMaybesSeq . flip fmap _everythingBackend_selection $ \sseltl@(rid,_,seltl) ->
-              case IM.lookup rid cslmap of
-                Nothing                  -> Just sseltl
-                Just Nothing             -> Nothing
-                Just (Just (lp, sseltl)) -> Just (rid, lp, sseltl)
-            else Seq.fromList newlyCreatedSEltls
-
-
-
-        return $ everything {
-            -- render
-            _everythingBackend_broadPhaseState = newBroadPhaseState
-            , _everythingBackend_renderedCanvas = newRenderedCanvas
-
-            -- set new selection if there was a newly created elt
-            , _everythingBackend_selection = newSelection
-
+    foldEverythingBackendFn cmd everything@EverythingBackend {..} = let
+        everything' = everything {
+            _everythingBackend_handlerFromSelection = Nothing
           }
-      _          -> undefined
+      in case cmd of
+        EBCmdSelect add sel -> do
+          pFState <- sample . current $ _pfo_pFState
+          return $ assert (pFState_selectionIsValid pFState (fmap snd3 (toList sel))) ()
+          if add
+            then return $ everything' { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
+            else return $ everything' { _everythingBackend_selection = sel }
+
+        EBCmdChanges cslmap -> do
+          pFState <- sample . current $ _pfo_pFState
+          frontend <- sample . current $ everythingFrontendDyn
+          let
+
+            -- broad phase stuff
+            cslmapForBroadPhase = fmap (fmap snd) cslmap
+            newBroadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _everythingBackend_broadPhaseState)
+            bpt = _broadPhaseState_bPTree newBroadPhaseState
+            boxes = _broadPhaseState_needsUpdate newBroadPhaseState
+            rc = _everythingBackend_renderedCanvas
+            newRenderedCanvas = case boxes of
+              [] -> rc
+              (b:bs) -> case intersect_LBox (renderedCanvas_box rc) (foldl' union_LBox b bs) of
+                Nothing -> rc
+                Just aabb -> newrc where
+                  slmap = _pFState_directory pFState
+                  rids = broadPhase_cull aabb bpt
+                  seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
+                    Nothing -> case IM.lookup rid slmap of
+                      Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
+                      Just seltl -> seltl
+                    Just mseltl -> case mseltl of
+                      Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
+                      Just seltl -> seltl
+                  -- TODO need to order seltls by layer position oops
+                  newrc = render aabb (map _sEltLabel_sElt seltls) rc
+
+            -- new elt stuff
+            lastDir = _pFState_directory pFState
+            newEltFoldMapFn rid v = case v of
+              Nothing     -> []
+              Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
+            newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
+            newSelection = if null newlyCreatedSEltls
+              then catMaybesSeq . flip fmap _everythingBackend_selection $ \sseltl@(rid,_,seltl) ->
+                case IM.lookup rid cslmap of
+                  Nothing                  -> Just sseltl
+                  Just Nothing             -> Nothing
+                  Just (Just (lp, sseltl)) -> Just (rid, lp, sseltl)
+              else Seq.fromList newlyCreatedSEltls
+
+
+
+          return $ everything' {
+              -- render
+              _everythingBackend_broadPhaseState = newBroadPhaseState
+              , _everythingBackend_renderedCanvas = newRenderedCanvas
+
+              -- set new selection if there was a newly created elt
+              , _everythingBackend_selection = newSelection
+
+            }
+        _          -> undefined
 
 
 

@@ -62,10 +62,12 @@ data EverythingFrontend = EverythingFrontend {
 
 -- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {
-  _everythingBackend_selection         :: Selection
-  , _everythingBackend_layers          :: Seq LayerDisplay
-  , _everythingBackend_broadPhaseState :: BroadPhaseState
-  , _everythingBackend_renderedCanvas  :: RenderedCanvas
+  _everythingBackend_selection              :: Selection
+  , _everythingBackend_layers               :: Seq LayerDisplay
+  , _everythingBackend_broadPhaseState      :: BroadPhaseState
+  , _everythingBackend_renderedCanvas       :: RenderedCanvas
+
+  , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
 
 }
 
@@ -88,29 +90,32 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
+
+    , _everythingBackend_handlerFromSelection = Nothing
   }
 
 -- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
-  _everythingCombined_selectedTool     :: Tool
-  , _everythingCombined_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
-  , _everythingCombined_mouseDrag      :: MouseDrag -- last mouse dragging state
-  , _everythingCombined_lastOperation  :: FrontendOperation
+  _everythingCombined_selectedTool           :: Tool
+  , _everythingCombined_pan                  :: XY -- panPos is position of upper left corner of canvas relative to screen
+  , _everythingCombined_mouseDrag            :: MouseDrag -- last mouse dragging state
+  , _everythingCombined_lastOperation        :: FrontendOperation
 
-  , _everythingCombined_handler        :: SomePotatoHandler
-  , _everythingCombined_pFEvent        :: Maybe PFEventTag -- one shot event passed onto PF
-  , _everythingCombined_select         :: Maybe (Bool, Selection) -- one shot
-  , _everythingCombined_layerScrollPos :: Int
+  , _everythingCombined_handler              :: SomePotatoHandler
+  , _everythingCombined_pFEvent              :: Maybe PFEventTag -- one shot event passed onto PF
+  , _everythingCombined_select               :: Maybe (Bool, Selection) -- one shot
+  , _everythingCombined_layerScrollPos       :: Int
 
-  , _everythingCombined_debugLabel     :: Text
+  , _everythingCombined_debugLabel           :: Text
 
-  , _everythingCombined_selection      :: Selection
-  , _everythingCombined_layers         :: Seq LayerDisplay
-  , _everythingCombined_broadPhase     :: BroadPhaseState
-  , _everythingCombined_renderedCanvas :: RenderedCanvas
+  , _everythingCombined_selection            :: Selection
+  , _everythingCombined_layers               :: Seq LayerDisplay
+  , _everythingCombined_broadPhase           :: BroadPhaseState
+  , _everythingCombined_renderedCanvas       :: RenderedCanvas
+  , _everythingCombined_handlerFromSelection :: Maybe SomePotatoHandler
 
   -- from PFOutput, remember to set
-  , _everythingCombined_pFState        :: PFState
+  , _everythingCombined_pFState              :: PFState
 }
 
 combineEverything :: EverythingFrontend -> EverythingBackend -> PFState -> EverythingCombined_DEBUG
@@ -129,6 +134,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
+    , _everythingCombined_handlerFromSelection = _everythingBackend_handlerFromSelection
 
     , _everythingCombined_pFState = pfs
   }
