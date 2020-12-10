@@ -60,6 +60,7 @@
   -new selection generates new handler and cancels previous one, this handler must be stored in backend
 
 
+DONE-add modifiers to keyboard
 DONE-decide how to handle cancel in mouse drag handlers
   -either pass in cancel mouse state or pass in escape key
   -make sure that future cancel mouse drag stuff is correctly ignored

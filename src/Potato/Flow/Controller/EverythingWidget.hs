@@ -378,8 +378,24 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               case mpho of
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
                 -- input not captured by handler
-                Nothing -> return everything'
-                  -- TODO process input (e.g. tool hotkeys, copy pasta)
+                Nothing -> case x of
+
+
+                  -- tool hotkeys
+                  KeyboardData (KeyboardKey_Char key) _ -> return r where
+                    newTool = case key of
+                      'v'  -> Tool_Select
+                      -- 'p' -> Tool_Pan
+                      'b'  -> Tool_Box
+                      '\\' -> Tool_Line
+                      't'  -> Tool_Text
+                    r = everything' { _everythingFrontend_selectedTool = newTool }
+
+                  -- TODO copy pasta, or maybe copy pasta lives outside of EverythingWidget?
+
+                  -- unhandled input
+                  _ -> return everything'
+
 
           _          -> undefined
 
