@@ -168,7 +168,7 @@ instance PotatoHandler BoxHandler where
       dragDelta = _mouseDrag_to - _mouseDrag_from
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
     in case _mouseDrag_state of
-        MouseDragState_Down -> r where
+        MouseDragState_Down -> Just r where
 
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
@@ -179,7 +179,7 @@ instance PotatoHandler BoxHandler where
                   _boxHandler_handle = toEnum mi
                 }
 
-        MouseDragState_Dragging -> (Just (SomePotatoHandler newbh), Nothing, Just op) where
+        MouseDragState_Dragging -> Just (Just (SomePotatoHandler newbh), Nothing, Just op) where
           -- TODO may change handle when dragging
           --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
           m = _boxHandler_handle
@@ -205,12 +205,15 @@ instance PotatoHandler BoxHandler where
 
           newbh = bh { _boxHandler_undoFirst = True }
 
-        MouseDragState_Up -> (Nothing, Nothing, Nothing)
+        MouseDragState_Up -> Just (Nothing, Nothing, Nothing)
           -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
         MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
-  pHandleKeyboard _ _ _ _ = (Nothing, Nothing, Nothing)
+  -- TODO keyboard movement
+  pHandleKeyboard _ _ _ _ = Nothing
+
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Down -> False
-    _                   -> True
+    MouseDragState_Down      -> False
+    MouseDragState_Cancelled -> False
+    _                        -> True

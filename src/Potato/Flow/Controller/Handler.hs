@@ -41,8 +41,12 @@ class PotatoHandler h where
 
   -- TODO need to add broadphase to args as it's used for finding new selections..
   -- TODO maybe split into handleLayerMouse (MouseDrag) and handleCanvasMouse (RelMosueDrag)?
-  pHandleMouse :: h -> PFState -> Selection -> RelMouseDrag -> PotatoHandlerOutput
-  pHandleKeyboard :: h -> PFState -> Selection -> KeyboardData -> PotatoHandlerOutput
+  -- NOTE, MouseDragState_Cancelled will never be passed into this
+  -- return type of Nothing means input is not captured
+  pHandleMouse :: h -> PFState -> Selection -> RelMouseDrag -> Maybe PotatoHandlerOutput
+  -- NOTE, Escape key is never passed in, instead that goes to pHandleCancel
+  -- return type of Nothing means input is not captured
+  pHandleKeyboard :: h -> PFState -> Selection -> KeyboardData -> Maybe PotatoHandlerOutput
   pHandleCancel :: h -> PFState -> Selection -> PotatoHandlerOutput
 
   -- TODO handler render type??
@@ -58,7 +62,7 @@ data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 instance Show SomePotatoHandler where
   show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h
 
-testHandleMouse :: SomePotatoHandler -> PFState -> Selection -> RelMouseDrag -> PotatoHandlerOutput
+testHandleMouse :: SomePotatoHandler -> PFState -> Selection -> RelMouseDrag -> Maybe PotatoHandlerOutput
 testHandleMouse (SomePotatoHandler h) pfs sel rmd = pHandleMouse h pfs sel rmd
 
 
@@ -66,8 +70,8 @@ data EmptyHandler = EmptyHandler
 
 instance PotatoHandler EmptyHandler where
   pHandlerName _ = "EmptyHandler"
-  pHandleMouse _ _ _ _ = (Nothing, Nothing, Nothing)
-  pHandleKeyboard _ _ _ _ = (Nothing, Nothing, Nothing)
+  pHandleMouse _ _ _ _ = Nothing
+  pHandleKeyboard _ _ _ _ = Nothing
   pHandleCancel _ _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler = undefined
   pValidateMouse _ _ = True
@@ -79,13 +83,14 @@ data SelectHandler = SelectHandler {
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = "SelectHandler"
-  pHandleMouse sh pfs selection (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+  pHandleMouse sh pfs selection (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Down -> (Just $ SomePotatoHandler sh { _selectHandler_selecting = True}, Nothing, Nothing)
     MouseDragState_Dragging -> (Just $ SomePotatoHandler sh, Nothing, Nothing)
     MouseDragState_Up -> (Nothing, newSelection, Nothing) where
+      -- TODO need broadphase
       newSelection = undefined
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh pfs selection kbd = (Nothing, Nothing, Nothing)
+  pHandleKeyboard sh pfs selection kbd = Nothing
   pHandleCancel sh pfs selection = (Nothing, Nothing, Nothing)
   pRenderHandler = undefined
   pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh

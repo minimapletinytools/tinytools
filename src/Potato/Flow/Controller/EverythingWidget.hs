@@ -343,11 +343,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
                   else everything' -- still cancelled
                 -- if mouse down and creation tool
-                MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool ->
-                  -- TODO
+                MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> r where
                   -- cancel previous handler
+                  pho = pHandleCancel handler pFState selection
+                  -- TODO
                   -- create new handler and pass input onto handler
-                  undefined
+                  r = undefined
                 _ ->
                   -- TODO
                   --pass input onto handler
@@ -370,12 +371,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just _  -> return r
             kbd -> do
               let
-                pho = pHandleKeyboard handler pFState selection kbd
+                mpho = pHandleKeyboard handler pFState selection kbd
 
-              --TODO if input not captured by handler TODO halp, no one way to distinguish this... We can just have it return Nothing?.. no I think it needs to capture...
-                -- process input (e.g. tool hotkeys, copy pasta)
-
-              return $ fillEverythingWithHandlerOutput pho everything'
+              case mpho of
+                Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
+                -- input not captured by handler
+                Nothing -> return everything'
+                  -- TODO process input (e.g. tool hotkeys, copy pasta)
 
           _          -> undefined
 
