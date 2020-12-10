@@ -356,7 +356,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   newHandler = case _everythingFrontend_selectedTool of
                     Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
                     Tool_Line   -> SomePotatoHandler $ (def :: SimpleLineHandler)
-                    Tool_Select -> SomePotatoHandler $ def { _selectHandler_selecting = True }
+                    Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
                     _           -> error "not implemented yet"
 
                 -- pass input onto newly created handler
@@ -367,16 +367,22 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
               _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
-                -- input not caputerd by handler
-                Nothing -> do
+                -- input not captured by handler
+                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> do
                   layerPosMap <- sample . current $ _pfo_layerPosMap
                   let
-                    nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
-                  if not (Seq.null nextSelection)
-                    then undefined
-                      -- TODO create BBox handler and start dragging
-                    else undefined
-                      -- TODO else create selection handler and pass on input
+                    nextSelection' = selectMagic pFState layerPosMap broadphase canvasDrag
+                    (nextSelection, newHandler) = if not (Seq.null nextSelection)
+                      -- special drag + select case, override the selection
+                      -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
+                      -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
+                      then (nextSelection', SomePotatoHandler $ (def :: BoxHandler))
+                      else (selection, SomePotatoHandler $ (def :: SelectHandler))
+                  return $ case newHandler of
+                    SomePotatoHandler handler -> case pHandleMouse handler (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
+                      Just pho -> fillEverythingWithHandlerOutput pho everything'
+                      Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover"
+                Nothing -> error "handler was expected to capture this mouse state"
             return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
           EFCmdKeyboard x -> case x of
             KeyboardData KeyboardKey_Esc _ -> do

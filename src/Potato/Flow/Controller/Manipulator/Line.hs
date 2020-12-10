@@ -19,12 +19,14 @@ import qualified Data.IntMap                    as IM
 
 
 data SimpleLineHandler = SimpleLineHandler {
-    _simpleLineHandler_isStart :: Bool --either we are manipulating start, or we are manipulating end
+    _simpleLineHandler_isStart     :: Bool --either we are manipulating start, or we are manipulating end
+    , _simpleLineHandler_undoFirst :: Bool
   }
 
 instance Default SimpleLineHandler where
   def = SimpleLineHandler {
       _simpleLineHandler_isStart = False
+      , _simpleLineHandler_undoFirst = False
     }
 
 --handleMouse :: Maybe SimpleLineHandler -> PFState -> Selection -> RelMouseDrag -> PotatoHandlerOutput
@@ -41,6 +43,5 @@ instance PotatoHandler SimpleLineHandler where
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Down      -> False
     MouseDragState_Cancelled -> False
     _                        -> True

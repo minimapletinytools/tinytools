@@ -155,7 +155,7 @@ makeDeltaBox bht (V2 dx dy) = case bht of
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
-    _boxHandler_handle       :: BoxHandleType -- the current handle we are dragging
+    _boxHandler_handle       :: BoxHandleType -- the current handle we are dragging, TODO should this be Maybe BoxHandleType?
     , _boxHandler_undoFirst  :: Bool
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
@@ -180,6 +180,8 @@ instance PotatoHandler BoxHandler where
     in case _mouseDrag_state of
         MouseDragState_Down -> Just r where
 
+          -- TODO this needs to handle isCreation case
+
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
             -- didn't click on a manipulator, so cancel everything and pass on the state
@@ -190,8 +192,10 @@ instance PotatoHandler BoxHandler where
                 }
 
         MouseDragState_Dragging -> Just (Just (SomePotatoHandler newbh), Nothing, Just op) where
-          -- TODO may change handle when dragging
+
+          -- TODO may change handle when dragging through axis
           --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
+
           m = _boxHandler_handle
 
           boxRestrictedDelta = if shiftClick
@@ -226,6 +230,5 @@ instance PotatoHandler BoxHandler where
   pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
 
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Down      -> False
     MouseDragState_Cancelled -> False
     _                        -> True
