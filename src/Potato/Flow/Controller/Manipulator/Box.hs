@@ -214,8 +214,8 @@ instance PotatoHandler BoxHandler where
 
   -- TODO keyboard movement
   pHandleKeyboard _ _ _ = Nothing
-
-  pHandleKeyboard _ _ _ = Nothing
+  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
+  pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
 
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Down      -> False

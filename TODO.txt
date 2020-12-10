@@ -54,9 +54,9 @@
 
 -HANDLER PLAN
   DONE-return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
-  -need to pass in broad phase for selecting
+  DONE-need to pass in broad phase for selecting
     NO-or perhaps select returns a box to be selected?
-  -need to add render function
+  DONE-need to add render function
   -new selection generates new handler and cancels previous one, this handler must be stored in backend
 
 

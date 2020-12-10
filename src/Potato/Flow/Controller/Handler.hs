@@ -5,6 +5,7 @@ module Potato.Flow.Controller.Handler (
   PotatoHandlerOutput
   , PotatoHandler(..)
   , PotatoHandlerInput(..)
+  , HandlerRenderOutput(..)
   , SomePotatoHandler(..)
   , EmptyHandler(..)
   , SelectHandler(..)
@@ -38,6 +39,8 @@ data PotatoHandlerInput = PotatoHandlerInput {
     , _potatoHandlerInput_selection  :: Selection
   }
 
+data HandlerRenderOutput = HandlerRenderOutput
+
 -- TODO prob replace this with 'data PotatoHandler' rather than typeclass
 -- TODO rename methods in here..
 -- rename to Manipulator XD
@@ -59,7 +62,7 @@ class PotatoHandler h where
 
   -- TODO handler render type??
   --
-  pRenderHandler :: h -> ()
+  pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
 
 
   -- helper method used to check that we aren't feeding invalid mouse states
@@ -81,7 +84,7 @@ instance PotatoHandler EmptyHandler where
   pHandleMouse _ _ _ = Nothing
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
-  pRenderHandler = undefined
+  pRenderHandler _ _ = HandlerRenderOutput
   pValidateMouse _ _ = True
 
 -- TODO move to another file?
@@ -100,7 +103,7 @@ instance PotatoHandler SelectHandler where
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pHandleCancel sh PotatoHandlerInput {..} = (Nothing, Nothing, Nothing)
-  pRenderHandler = undefined
+  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput
   pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
     then _mouseDrag_state /= MouseDragState_Down
     else _mouseDrag_state == MouseDragState_Down

@@ -33,6 +33,7 @@ instance PotatoHandler SimpleLineHandler where
     _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
+  pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Down      -> False
     MouseDragState_Cancelled -> False
