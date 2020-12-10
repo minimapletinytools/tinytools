@@ -5,6 +5,7 @@
 
 module Potato.Flow.Controller.Manipulator (
   BoxHandleType(..)
+  , computeSelectionType
   , makeHandleBox
   , makeDeltaBox
   , ManipulatorIndex

@@ -126,6 +126,15 @@ fillEverythingWithHandlerOutput (msph, msel, mpfe) everything = everything {
     , _everythingFrontend_pFEvent = mpfe
   }
 
+makeHandlerFromSelection :: PotatoHandlerInput -> SomePotatoHandler
+makeHandlerFromSelection PotatoHandlerInput {..} = case computeSelectionType _potatoHandlerInput_selection of
+  SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
+  SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
+  SMTText        -> SomePotatoHandler $ EmptyHandler -- TODO
+  SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
+  SMTNone        -> SomePotatoHandler EmptyHandler
+
+
 holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => EverythingWidgetConfig t
   -> m (EverythingWidget t)
@@ -389,11 +398,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 -- cancel handler
                 pho = pHandleCancel handler potatoHandlerInput
-                r = fillEverythingWithHandlerOutput pho everything'
+                everything'' = fillEverythingWithHandlerOutput pho everything'
               case fst3 pho of
-                -- TODO create handler from selection here
-                Nothing -> return r
-                Just _  -> return r
+                Nothing -> return everything'' {
+                    _everythingFrontend_handler = makeHandlerFromSelection potatoHandlerInput
+                  }
+                Just _  -> return everything''
             kbd -> do
               let
                 mpho = pHandleKeyboard handler potatoHandlerInput kbd
