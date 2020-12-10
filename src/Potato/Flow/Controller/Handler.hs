@@ -4,6 +4,7 @@
 module Potato.Flow.Controller.Handler (
   PotatoHandlerOutput
   , PotatoHandler(..)
+  , PotatoHandlerInput(..)
   , SomePotatoHandler(..)
   , EmptyHandler(..)
   , SelectHandler(..)
@@ -11,6 +12,7 @@ module Potato.Flow.Controller.Handler (
 
 import           Relude
 
+import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
@@ -30,6 +32,12 @@ import qualified Text.Show
 -- use DMap if you start having more actions...
 type PotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
 
+data PotatoHandlerInput = PotatoHandlerInput {
+    _potatoHandlerInput_pFState      :: PFState
+    , _potatoHandlerInput_broadPhase :: BroadPhaseState
+    , _potatoHandlerInput_selection  :: Selection
+  }
+
 -- TODO prob replace this with 'data PotatoHandler' rather than typeclass
 -- TODO rename methods in here..
 -- rename to Manipulator XD
@@ -43,11 +51,11 @@ class PotatoHandler h where
   -- TODO maybe split into handleLayerMouse (MouseDrag) and handleCanvasMouse (RelMosueDrag)?
   -- NOTE, MouseDragState_Cancelled will never be passed into this
   -- return type of Nothing means input is not captured
-  pHandleMouse :: h -> PFState -> Selection -> RelMouseDrag -> Maybe PotatoHandlerOutput
+  pHandleMouse :: h -> PotatoHandlerInput -> RelMouseDrag -> Maybe PotatoHandlerOutput
   -- NOTE, Escape key is never passed in, instead that goes to pHandleCancel
   -- return type of Nothing means input is not captured
-  pHandleKeyboard :: h -> PFState -> Selection -> KeyboardData -> Maybe PotatoHandlerOutput
-  pHandleCancel :: h -> PFState -> Selection -> PotatoHandlerOutput
+  pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
+  pHandleCancel :: h -> PotatoHandlerInput -> PotatoHandlerOutput
 
   -- TODO handler render type??
   --
@@ -62,17 +70,17 @@ data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 instance Show SomePotatoHandler where
   show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h
 
-testHandleMouse :: SomePotatoHandler -> PFState -> Selection -> RelMouseDrag -> Maybe PotatoHandlerOutput
-testHandleMouse (SomePotatoHandler h) pfs sel rmd = pHandleMouse h pfs sel rmd
+testHandleMouse :: SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> Maybe PotatoHandlerOutput
+testHandleMouse (SomePotatoHandler h) phi rmd = pHandleMouse h phi rmd
 
 
 data EmptyHandler = EmptyHandler
 
 instance PotatoHandler EmptyHandler where
   pHandlerName _ = "EmptyHandler"
-  pHandleMouse _ _ _ _ = Nothing
-  pHandleKeyboard _ _ _ _ = Nothing
-  pHandleCancel _ _ _ = (Nothing, Nothing, Nothing)
+  pHandleMouse _ _ _ = Nothing
+  pHandleKeyboard _ _ _ = Nothing
+  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler = undefined
   pValidateMouse _ _ = True
 
@@ -83,15 +91,15 @@ data SelectHandler = SelectHandler {
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = "SelectHandler"
-  pHandleMouse sh pfs selection (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
+  pHandleMouse sh PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Down -> (Just $ SomePotatoHandler sh { _selectHandler_selecting = True}, Nothing, Nothing)
     MouseDragState_Dragging -> (Just $ SomePotatoHandler sh, Nothing, Nothing)
     MouseDragState_Up -> (Nothing, newSelection, Nothing) where
       -- TODO need broadphase
       newSelection = undefined
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh pfs selection kbd = Nothing
-  pHandleCancel sh pfs selection = (Nothing, Nothing, Nothing)
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
+  pHandleCancel sh PotatoHandlerInput {..} = (Nothing, Nothing, Nothing)
   pRenderHandler = undefined
   pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
     then _mouseDrag_state /= MouseDragState_Down

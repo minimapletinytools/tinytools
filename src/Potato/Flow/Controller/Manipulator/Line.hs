@@ -26,12 +26,13 @@ data SimpleLineHandler = SimpleLineHandler {
 
 instance PotatoHandler SimpleLineHandler where
   pHandlerName _ = "SimpleLineHandler"
-  pHandleMouse slh@SimpleLineHandler {..} pfs sel (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+  pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Dragging -> Just (Just (SomePotatoHandler slh), Nothing, op) where
       op = Nothing -- TODO
     MouseDragState_Up -> Just (Nothing, Nothing, Nothing)
     _ -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard _ _ _ _ = Nothing
+  pHandleKeyboard _ _ _ = Nothing
+  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Down      -> False
     MouseDragState_Cancelled -> False

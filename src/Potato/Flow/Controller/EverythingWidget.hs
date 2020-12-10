@@ -168,6 +168,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         -- TODO doesn't work, needs to be in a pattern match I think o_o
         someHandler = _everythingFrontend_handler
 
+        broadphase = _everythingBackend_broadPhaseState backend
+
+        potatoHandlerInput = PotatoHandlerInput pFState broadphase selection
+
       case someHandler of
         SomePotatoHandler handler -> case cmd of
           EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
@@ -212,8 +216,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       then do
                         layerPosMap <- sample . current $ _pfo_layerPosMap
                         let
-                          bps = _everythingBackend_broadPhaseState backend
-                          nextSelection = selectMagic pFState layerPosMap bps canvasDrag
+                          nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
                           shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
                           mmi = findFirstMouseManipulator canvasDrag nextSelection
                         case mmi of
@@ -263,11 +266,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       _ -> do
                         layerPosMap <- sample . current $ _pfo_layerPosMap
                         let
-                          bps = _everythingBackend_broadPhaseState backend
                           shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
                         -- selection is stored in backend so pass it on to backend
                         return $ everything' {
-                            _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick $ selectMagic pFState layerPosMap bps canvasDrag
+                            _everythingFrontend_lastOperation = FrontendOperation_Select shiftClick $ selectMagic pFState layerPosMap broadphase canvasDrag
                           }
                     -- 'case _mouseDrag_state mouseDrag of'
                     _ -> undefined
@@ -345,7 +347,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- if mouse down and creation tool
                 MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> r where
                   -- cancel previous handler
-                  pho = pHandleCancel handler pFState selection
+                  pho = pHandleCancel handler potatoHandlerInput
                   -- TODO
                   -- create new handler and pass input onto handler
                   r = undefined
@@ -363,7 +365,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             KeyboardData KeyboardKey_Esc _ -> do
               let
                 -- cancel handler
-                pho = pHandleCancel handler pFState selection
+                pho = pHandleCancel handler potatoHandlerInput
                 r = fillEverythingWithHandlerOutput pho everything'
               case fst3 pho of
                 -- TODO create handler from selection here
@@ -371,7 +373,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just _  -> return r
             kbd -> do
               let
-                mpho = pHandleKeyboard handler pFState selection kbd
+                mpho = pHandleKeyboard handler potatoHandlerInput kbd
 
               case mpho of
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'

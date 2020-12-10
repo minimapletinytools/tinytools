@@ -53,7 +53,7 @@
 
 
 -HANDLER PLAN
-  -return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
+  DONE-return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
   -need to pass in broad phase for selecting
     NO-or perhaps select returns a box to be selected?
   -need to add render function

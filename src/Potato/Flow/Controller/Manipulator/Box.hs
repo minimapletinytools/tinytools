@@ -163,7 +163,9 @@ data BoxHandler = BoxHandler {
 
 instance PotatoHandler BoxHandler where
   pHandlerName _ = "BoxHandler"
-  pHandleMouse bh@BoxHandler {..} pfs selection rmd = let
+  pHandleMouse bh@BoxHandler {..} PotatoHandlerInput {..} rmd = let
+      pfs = _potatoHandlerInput_pFState
+      selection = _potatoHandlerInput_selection
       RelMouseDrag MouseDrag {..} = rmd
       dragDelta = _mouseDrag_to - _mouseDrag_from
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
@@ -211,7 +213,9 @@ instance PotatoHandler BoxHandler where
         MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
   -- TODO keyboard movement
-  pHandleKeyboard _ _ _ _ = Nothing
+  pHandleKeyboard _ _ _ = Nothing
+
+  pHandleKeyboard _ _ _ = Nothing
 
   pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Down      -> False
