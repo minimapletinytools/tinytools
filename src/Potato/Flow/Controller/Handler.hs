@@ -21,6 +21,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
+import           Data.Default
 import           Data.Dependent.Sum           (DSum ((:=>)))
 import qualified Data.IntMap                  as IM
 import qualified Data.List                    as L
@@ -29,6 +30,7 @@ import qualified Data.Text                    as T
 import           Data.Tuple.Extra
 import qualified Text.Show
 
+-- TODO change to ADT
 -- TODO I don't think the selection thing is necessary.. only Layer drags use it...
 -- use DMap if you start having more actions...
 type PotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
@@ -91,6 +93,11 @@ instance PotatoHandler EmptyHandler where
 data SelectHandler = SelectHandler {
     _selectHandler_selecting :: Bool
   }
+
+instance Default SelectHandler where
+  def = SelectHandler {
+      _selectHandler_selecting = False
+    }
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = "SelectHandler"

@@ -18,6 +18,8 @@ import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator
+import           Potato.Flow.Controller.Manipulator.Box
+import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.Render
@@ -25,14 +27,14 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import           Control.Exception                  (assert)
+import           Control.Exception                       (assert)
 import           Control.Monad.Fix
-import           Data.Default                       (def)
-import           Data.Foldable                      (minimum)
-import qualified Data.IntMap                        as IM
-import qualified Data.List                          as L
+import           Data.Default                            (def)
+import           Data.Foldable                           (minimum)
+import qualified Data.IntMap                             as IM
+import qualified Data.List                               as L
 import           Data.Maybe
-import qualified Data.Sequence                      as Seq
+import qualified Data.Sequence                           as Seq
 import           Data.Tuple.Extra
 
 
@@ -345,12 +347,24 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
                 else everything' -- still cancelled
               -- if mouse down and creation tool
-              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> return r where
-                -- cancel previous handler
-                pho = pHandleCancel handler potatoHandlerInput
-                -- TODO
-                -- create new handler and pass input onto handler
-                r = undefined
+              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> do
+                let
+                  -- cancel previous handler
+                  phoFromCancel = pHandleCancel handler potatoHandlerInput
+                  -- TODO should I do something if phoFromCancel is not nothing??
+
+                  newHandler = case _everythingFrontend_selectedTool of
+                    Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
+                    Tool_Line   -> SomePotatoHandler $ (def :: SimpleLineHandler)
+                    Tool_Select -> SomePotatoHandler $ def { _selectHandler_selecting = True }
+                    _           -> error "not implemented yet"
+
+                -- pass input onto newly created handler
+                return $ case newHandler of
+                  SomePotatoHandler handler -> case pHandleMouse handler potatoHandlerInput canvasDrag of
+                    Just pho -> fillEverythingWithHandlerOutput pho everything'
+                    Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
+
               _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
                 -- input not caputerd by handler

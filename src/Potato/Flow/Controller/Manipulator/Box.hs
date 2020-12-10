@@ -2,9 +2,10 @@
 
 module Potato.Flow.Controller.Manipulator.Box (
   BoxHandleType(..)
+  , BoxHandler(..)
   , makeHandleBox
   , makeDeltaBox
-  , MouseManipulator(..)
+  --, MouseManipulator(..)
   , toMouseManipulators
 ) where
 
@@ -160,6 +161,13 @@ data BoxHandler = BoxHandler {
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
     , _boxHandler_isCreation :: Bool
   }
+
+instance Default BoxHandler where
+  def = BoxHandler {
+      _boxHandler_handle       = BH_BR -- does this matter?
+      , _boxHandler_undoFirst  = False
+      , _boxHandler_isCreation = False
+    }
 
 instance PotatoHandler BoxHandler where
   pHandlerName _ = "BoxHandler"
