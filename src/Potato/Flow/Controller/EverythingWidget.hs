@@ -339,27 +339,30 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
               canvasDrag = toRelMouseDrag pFState mouseDrag
 
-              everything'' = case _mouseDrag_state mouseDrag of
-                -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
-                MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-                  then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
-                  else everything' -- still cancelled
-                -- if mouse down and creation tool
-                MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> r where
-                  -- cancel previous handler
-                  pho = pHandleCancel handler potatoHandlerInput
-                  -- TODO
-                  -- create new handler and pass input onto handler
-                  r = undefined
-                _ ->
-                  -- TODO
-                  --pass input onto handler
-                  -- if input not caputerd by handler
-                    -- create phantom selection
-                    -- if something was selected
-                      -- create BBox handler and start dragging
-                    -- else create selection handler and pass on input
-                  undefined
+            everything'' <- case _mouseDrag_state mouseDrag of
+              -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
+              MouseDragState_Cancelled -> return $ if _lMouseData_isRelease mouseData
+                then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
+                else everything' -- still cancelled
+              -- if mouse down and creation tool
+              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> return r where
+                -- cancel previous handler
+                pho = pHandleCancel handler potatoHandlerInput
+                -- TODO
+                -- create new handler and pass input onto handler
+                r = undefined
+              _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
+                Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
+                -- input not caputerd by handler
+                Nothing -> do
+                  layerPosMap <- sample . current $ _pfo_layerPosMap
+                  let
+                    nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
+                  if not (Seq.null nextSelection)
+                    then undefined
+                      -- TODO create BBox handler and start dragging
+                    else undefined
+                      -- TODO else create selection handler and pass on input
             return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
           EFCmdKeyboard x -> case x of
             KeyboardData KeyboardKey_Esc _ -> do
@@ -374,13 +377,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             kbd -> do
               let
                 mpho = pHandleKeyboard handler potatoHandlerInput kbd
-
               case mpho of
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
                 -- input not captured by handler
                 Nothing -> case x of
-
-
                   -- tool hotkeys
                   KeyboardData (KeyboardKey_Char key) _ -> return r where
                     newTool = case key of
