@@ -113,7 +113,7 @@ makeHandlerFromSelection PotatoHandlerInput {..} = case computeSelectionType _po
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
   SMTText        -> SomePotatoHandler $ EmptyHandler -- TODO
-  SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
+  SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler) -- pretty sure this is OK?
   SMTNone        -> SomePotatoHandler EmptyHandler
 
 

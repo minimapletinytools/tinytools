@@ -57,8 +57,8 @@
 
 DONE-create handler from selection helper
 DONE-finish select handler
--box handler needs to handle creation case
--bbox handler (could just use box handler, but it's a little sloppy this way...)
+DONE-box handler needs to handle creation case
+DONE?-bbox handler (could just use box handler, but it's a little sloppy this way...)
 -ensure handler stuff works with no regression in tests
   -update tests so they check for new handler states
 -finish simple line handler

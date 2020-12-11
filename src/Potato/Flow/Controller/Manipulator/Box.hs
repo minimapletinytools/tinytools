@@ -178,10 +178,8 @@ instance PotatoHandler BoxHandler where
       dragDelta = _mouseDrag_to - _mouseDrag_from
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
     in case _mouseDrag_state of
+        MouseDragState_Down | _boxHandler_isCreation -> Just (Just (SomePotatoHandler bh), Nothing, Nothing) where
         MouseDragState_Down -> Just r where
-
-          -- TODO this needs to handle isCreation case
-
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
             -- didn't click on a manipulator, so cancel everything and pass on the state
