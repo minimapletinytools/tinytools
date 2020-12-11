@@ -206,10 +206,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
                 -- input not captured by handler
                 Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> do
-                  layerPosMap <- sample . current $ _pfo_layerPosMap
                   let
                     nextSelection' = selectMagic pFState layerPosMap broadphase canvasDrag
-                    (nextSelection, newHandler) = if not (Seq.null nextSelection)
+                    (nextSelection, newHandler) = if not (Seq.null nextSelection')
                       -- special drag + select case, override the selection
                       -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                       -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
