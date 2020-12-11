@@ -10,6 +10,7 @@ module Potato.Flow.Common
   , LastOperationType(..)
   , checkLastOperationPredicate
   , checkNumElts
+  , checkHandlerName
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperSEltLabelPredicate
   , firstSuperSEltLabelPredicate
@@ -30,6 +31,7 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.EverythingWidget
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.TestStates
 
@@ -146,6 +148,13 @@ numSelectedEltsEqualPredicate n = FunctionPredicate $
     in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
   . _everythingCombined_selection
 
+checkHandlerName :: Text -> EverythingPredicate
+checkHandlerName name = FunctionPredicate $
+  (\(SomePotatoHandler h) ->
+    let hName = pHandlerName h
+    in ("Handler: " <> hName <> " expected: " <> name, hName == name))
+  . _everythingCombined_handler
+
 firstSelectedSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
 firstSelectedSuperSEltLabelPredicate mlabel f = FunctionPredicate $
   (\s ->
@@ -157,8 +166,6 @@ firstSelectedSuperSEltLabelPredicate mlabel f = FunctionPredicate $
       Nothing    -> ("No elt with label " <> show mlabel <> show s, False)
       Just first -> ("First selected: " <> show first, f first))
   . _everythingCombined_selection
-
-
 
 firstSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
 firstSuperSEltLabelPredicate mlabel f = FunctionPredicate $

@@ -85,7 +85,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select b2"
-      , AlwaysPass
+      , checkHandlerName "SelectHandler"
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "resize tl corner b2"
@@ -125,7 +125,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
     ]
 
 select_and_drag_sbox_test :: Test
-select_and_drag_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs expected where
+select_and_drag_sbox_test = constructTest "manipulator - select and drag" basicStateWith4Boxes bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -139,7 +139,7 @@ select_and_drag_sbox_test = constructTest "manipulator - sbox" basicStateWith4Bo
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select + drag b2"
-      , AlwaysPass
+      , checkHandlerName "BoxHandler"
       , numSelectedEltsEqualPredicate 1
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox lbox _) -> lbox == LBox (V2 11 11) (V2 5 5)
@@ -184,6 +184,6 @@ restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
-    fromHUnitTest $ basic_sbox_test
+    --fromHUnitTest $ basic_sbox_test
     fromHUnitTest $ select_and_drag_sbox_test
-    fromHUnitTest $ restrict8_test
+    --fromHUnitTest $ restrict8_test
