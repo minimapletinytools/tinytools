@@ -20,6 +20,7 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Line
+import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.Render
@@ -27,14 +28,14 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
-import           Control.Exception                       (assert)
+import           Control.Exception                         (assert)
 import           Control.Monad.Fix
-import           Data.Default                            (def)
-import           Data.Foldable                           (minimum)
-import qualified Data.IntMap                             as IM
-import qualified Data.List                               as L
+import           Data.Default                              (def)
+import           Data.Foldable                             (minimum)
+import qualified Data.IntMap                               as IM
+import qualified Data.List                                 as L
 import           Data.Maybe
-import qualified Data.Sequence                           as Seq
+import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
 
 
@@ -98,25 +99,6 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
 
-selectMagic :: PFState -> REltIdMap LayerPos -> BroadPhaseState -> RelMouseDrag -> Selection
-selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
-  LBox pos' sz' = make_LBox_from_XYs _mouseDrag_to _mouseDrag_from
-  -- always expand selection by 1
-  selectBox = LBox pos' (sz' + V2 1 1)
-  boxSize = lBox_area selectBox
-  singleClick = boxSize == 1
-  selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
-  mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
-  lps' = mapToLp selectedRids
-  lps = if singleClick
-    -- single click, select top elt only
-    then case lps' of
-      [] -> []
-      xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
-    -- otherwise select everything
-    else lps'
-  r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
-
 fillEverythingWithHandlerOutput :: PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
 fillEverythingWithHandlerOutput (msph, msel, mpfe) everything = everything {
     _everythingFrontend_handler = case msph of
@@ -159,6 +141,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
       backend <- sample . current $ everythingBackendDyn
       pFState <- sample . current $ _pfo_pFState
+      layerPosMap <- sample . current $ _pfo_layerPosMap
 
       let
         -- clear per frame statuses for next frame
@@ -181,7 +164,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
         broadphase = _everythingBackend_broadPhaseState backend
 
-        potatoHandlerInput = PotatoHandlerInput pFState broadphase selection
+        potatoHandlerInput = PotatoHandlerInput pFState broadphase layerPosMap selection
 
       case someHandler of
         SomePotatoHandler handler -> case cmd of
@@ -225,7 +208,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     MouseDragState_Down -> do
                       if Seq.null selection
                       then do
-                        layerPosMap <- sample . current $ _pfo_layerPosMap
                         let
                           nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
                           shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)

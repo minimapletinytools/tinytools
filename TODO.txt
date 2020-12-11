@@ -56,7 +56,7 @@
 ::NEWEST TODO::
 
 DONE-create handler from selection helper
--finish select handler
+DONE-finish select handler
 -box handler needs to handle creation case
 -bbox handler (could just use box handler, but it's a little sloppy this way...)
 -ensure handler stuff works with no regression in tests

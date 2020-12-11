@@ -8,7 +8,6 @@ module Potato.Flow.Controller.Handler (
   , HandlerRenderOutput(..)
   , SomePotatoHandler(..)
   , EmptyHandler(..)
-  , SelectHandler(..)
 ) where
 
 import           Relude
@@ -36,9 +35,10 @@ import qualified Text.Show
 type PotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
 
 data PotatoHandlerInput = PotatoHandlerInput {
-    _potatoHandlerInput_pFState      :: PFState
-    , _potatoHandlerInput_broadPhase :: BroadPhaseState
-    , _potatoHandlerInput_selection  :: Selection
+    _potatoHandlerInput_pFState       :: PFState
+    , _potatoHandlerInput_broadPhase  :: BroadPhaseState
+    , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
+    , _potatoHandlerInput_selection   :: Selection
   }
 
 data HandlerRenderOutput = HandlerRenderOutput
@@ -88,29 +88,3 @@ instance PotatoHandler EmptyHandler where
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler _ _ = HandlerRenderOutput
   pValidateMouse _ _ = True
-
--- TODO move to another file?
-data SelectHandler = SelectHandler {
-    _selectHandler_selecting :: Bool
-  }
-
-instance Default SelectHandler where
-  def = SelectHandler {
-      _selectHandler_selecting = False
-    }
-
-instance PotatoHandler SelectHandler where
-  pHandlerName _ = "SelectHandler"
-  pHandleMouse sh PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
-    MouseDragState_Down -> (Just $ SomePotatoHandler sh { _selectHandler_selecting = True}, Nothing, Nothing)
-    MouseDragState_Dragging -> (Just $ SomePotatoHandler sh, Nothing, Nothing)
-    MouseDragState_Up -> (Nothing, newSelection, Nothing) where
-      -- TODO need broadphase
-      newSelection = undefined
-    MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
-  pHandleCancel sh PotatoHandlerInput {..} = (Nothing, Nothing, Nothing)
-  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput
-  pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
-    then _mouseDrag_state /= MouseDragState_Down
-    else _mouseDrag_state == MouseDragState_Down
