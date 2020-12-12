@@ -54,7 +54,19 @@
 
 
 ::NEWEST TODO::
-
+-figure out how to call makeHandlerFromSelection after making a new selection
+  -pass on new handler from backend after selection is made
+  -regular select cases, (layer, select tool)
+    -ok for handler to override previous one
+  -select + drag box handler case
+    -select on click, creates box handler, drag can take over next frame?
+  -select from new elt case
+    -fack TODO figure this out
+    -right now handler from backend will overwrite the creation handler D:
+  -other select cases
+    -there are currently no other select cases
+    -can we treat select output in PFO specially then?
+      -like 'Either SomePotatoHandler Selection' since they seem to be exclusive
 DONE-create handler from selection helper
 DONE-finish select handler
 DONE-box handler needs to handle creation case

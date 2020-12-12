@@ -53,6 +53,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       EWCTool Tool_Select
 
       , EWCLabel "select b2"
+      -- Note, this is a little weird, even though we are just selecting (no dragging) it will still go to BoxHandler first to do the selection...
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
 
@@ -85,7 +86,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select b2"
-      , checkHandlerName "SelectHandler"
+      , checkHandlerName "BoxHandler"
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "resize tl corner b2"
@@ -184,6 +185,6 @@ restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
-    --fromHUnitTest $ basic_sbox_test
-    fromHUnitTest $ select_and_drag_sbox_test
+    fromHUnitTest $ basic_sbox_test
+    --fromHUnitTest $ select_and_drag_sbox_test
     --fromHUnitTest $ restrict8_test

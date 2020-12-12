@@ -108,8 +108,8 @@ fillEverythingWithHandlerOutput (msph, msel, mpfe) everything = everything {
     , _everythingFrontend_pFEvent = mpfe
   }
 
-makeHandlerFromSelection :: PotatoHandlerInput -> SomePotatoHandler
-makeHandlerFromSelection PotatoHandlerInput {..} = case computeSelectionType _potatoHandlerInput_selection of
+makeHandlerFromSelection :: Selection -> SomePotatoHandler
+makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
   SMTText        -> SomePotatoHandler $ EmptyHandler -- TODO
@@ -151,6 +151,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             -- clear one shot events
             , _everythingFrontend_pFEvent = Nothing
             , _everythingFrontend_select = Nothing
+
+            -- update handler from backend (maybe)
+            , _everythingFrontend_handler = someHandler
           }
         -- other useful stuff
         undoFirst = case _everythingFrontend_lastOperation of
@@ -158,8 +161,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           _                                   -> False
         selection = _everythingBackend_selection backend
 
-        -- handler (eventually may be override from backend? If so, be sure to set in everything')
-        someHandler = _everythingFrontend_handler
+        someHandler = fromMaybe _everythingFrontend_handler (_everythingBackend_handlerFromSelection backend)
 
         broadphase = _everythingBackend_broadPhaseState backend
 
@@ -221,7 +223,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput pho everything') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
                 Nothing -> error "handler was expected to capture this mouse state"
-            return $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+            return $ trace "mouse: " $ traceShow everything'' $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
           EFCmdKeyboard x -> case x of
             KeyboardData KeyboardKey_Esc _ -> do
               let
@@ -230,7 +232,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 everything'' = fillEverythingWithHandlerOutput pho everything'
               case fst3 pho of
                 Nothing -> return everything'' {
-                    _everythingFrontend_handler = makeHandlerFromSelection potatoHandlerInput
+                    _everythingFrontend_handler = makeHandlerFromSelection selection
                   }
                 Just _  -> return everything''
             kbd -> do
@@ -325,20 +327,28 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       ]
 
     foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
-    foldEverythingBackendFn cmd everything@EverythingBackend {..} = let
+    foldEverythingBackendFn cmd everything@EverythingBackend {..} = do
+
+      -- DOES NOT include latest changes!
+      pFStateMaybeStale <- sample . current $ _pfo_pFState
+      let
         everything' = everything {
             _everythingBackend_handlerFromSelection = Nothing
           }
-      in case cmd of
+
+      case cmd of
         EBCmdSelect add sel -> do
-          pFState <- sample . current $ _pfo_pFState
-          return $ assert (pFState_selectionIsValid pFState (fmap snd3 (toList sel))) ()
-          if add
-            then return $ everything' { _everythingBackend_selection = disjointUnionSelection _everythingBackend_selection sel }
-            else return $ everything' { _everythingBackend_selection = sel }
+          return $ assert (pFState_selectionIsValid pFStateMaybeStale (fmap snd3 (toList sel))) ()
+          let
+            newsel = if add
+              then disjointUnionSelection _everythingBackend_selection sel
+              else sel
+          return $ everything' {
+              _everythingBackend_selection = newsel
+              , _everythingBackend_handlerFromSelection = makeHandlerFromSelection newsel
+            }
 
         EBCmdChanges cslmap -> do
-          pFState <- sample . current $ _pfo_pFState
           frontend <- sample . current $ everythingFrontendDyn
           let
 
@@ -353,7 +363,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               (b:bs) -> case intersect_LBox (renderedCanvas_box rc) (foldl' union_LBox b bs) of
                 Nothing -> rc
                 Just aabb -> newrc where
-                  slmap = _pFState_directory pFState
+                  slmap = _pFState_directory pFStateMaybeStale
                   rids = broadPhase_cull aabb bpt
                   seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
                     Nothing -> case IM.lookup rid slmap of
@@ -366,7 +376,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   newrc = render aabb (map _sEltLabel_sElt seltls) rc
 
             -- new elt stuff
-            lastDir = _pFState_directory pFState
+            lastDir = _pFState_directory pFStateMaybeStale
             newEltFoldMapFn rid v = case v of
               Nothing     -> []
               Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
@@ -388,6 +398,9 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
               -- set new selection if there was a newly created elt
               , _everythingBackend_selection = newSelection
+
+              -- TODO this is wrong ;__;, it will mess up the handler that's creating the new elt
+              --, _everythingBackend_handlerFromSelection = makeHandlerFromSelection newSelection
 
             }
         _          -> undefined
