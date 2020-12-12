@@ -51,6 +51,7 @@ data EverythingFrontendCmd =
 
   -- debug nonsense
   | EFCmdSetDebugLabel Text
+  deriving (Show)
 
 data EverythingBackendCmd =
   -- selection (first param is add to selection if true)
@@ -58,6 +59,7 @@ data EverythingBackendCmd =
   -- but we have it already so may as well include it
   EBCmdSelect Bool Selection
   | EBCmdChanges SEltLabelChangesWithLayerPos
+  deriving (Show)
 
 
 
@@ -129,7 +131,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- EVERYTHING FRONTEND --
     -------------------------
 
-    everythingFrontendEvent = leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
+    everythingFrontendEvent = traceEventWith ((<>"\n\n") . show) $ leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
       [ EFCmdTool <$> _everythingWidgetConfig_selectTool
       , EFCmdMouse <$> _everythingWidgetConfig_mouse
       , EFCmdKeyboard <$> _everythingWidgetConfig_keyboard
@@ -137,6 +139,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       ]
 
     foldEverythingFrontendFn :: EverythingFrontendCmd -> EverythingFrontend -> PushM t EverythingFrontend
+    -- TODO rename everything to "frontend" or "lastFrontend"
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
 
       backend <- sample . current $ everythingBackendDyn
@@ -161,7 +164,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           _                                   -> False
         selection = _everythingBackend_selection backend
 
-        someHandler = fromMaybe _everythingFrontend_handler (_everythingBackend_handlerFromSelection backend)
+        someHandler = case _everythingBackend_handlerFromSelection backend of
+          -- triple check that we're not trying to overwrite an active handler
+          Just sh -> assert (not . everythingFrontend_isHandlerActive $ everything) sh
+          Nothing -> _everythingFrontend_handler
 
         broadphase = _everythingBackend_broadPhaseState backend
 
@@ -329,6 +335,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
     foldEverythingBackendFn cmd everything@EverythingBackend {..} = do
 
+      frontend <- sample . current $ everythingFrontendDyn
+
       -- DOES NOT include latest changes!
       pFStateMaybeStale <- sample . current $ _pfo_pFState
       let
@@ -345,11 +353,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               else sel
           return $ everything' {
               _everythingBackend_selection = newsel
-              , _everythingBackend_handlerFromSelection = makeHandlerFromSelection newsel
+              -- always set the handler in this case, the frontend handler should never be active
+              , _everythingBackend_handlerFromSelection = assert (everythingFrontend_isHandlerActive frontend) $ Just $ makeHandlerFromSelection newsel
             }
 
         EBCmdChanges cslmap -> do
-          frontend <- sample . current $ everythingFrontendDyn
           let
 
             -- broad phase stuff
@@ -399,8 +407,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               -- set new selection if there was a newly created elt
               , _everythingBackend_selection = newSelection
 
-              -- TODO this is wrong ;__;, it will mess up the handler that's creating the new elt
-              --, _everythingBackend_handlerFromSelection = makeHandlerFromSelection newSelection
+
+              , _everythingBackend_handlerFromSelection = if (everythingFrontend_isHandlerActive frontend)
+                then Nothing
+                -- only set handler from selection if frontend handler isn't active
+                else Just $ makeHandlerFromSelection newSelection
 
             }
         _          -> undefined

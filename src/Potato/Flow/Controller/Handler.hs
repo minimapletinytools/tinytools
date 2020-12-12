@@ -62,18 +62,25 @@ class PotatoHandler h where
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
   pHandleCancel :: h -> PotatoHandlerInput -> PotatoHandlerOutput
 
-  -- TODO handler render type??
-  --
-  pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
+  -- active manipulators will not be overwritten by new handlers via selection from backend
+  pIsHandlerActive :: h -> Bool
+  pIsHandlerActive _ = False
 
+  pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
 
   -- helper method used to check that we aren't feeding invalid mouse states
   pValidateMouse :: h -> RelMouseDrag -> Bool
+  -- default version that ensures mouse state is valid when handler is active
+  pValidateMouse h (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+    MouseDragState_Cancelled -> False
+    MouseDragState_Down      -> not $ pIsHandlerActive h
+    _                        -> True
+
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 
 instance Show SomePotatoHandler where
-  show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h
+  show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h <> " active: " <> show (pIsHandlerActive h)
 
 testHandleMouse :: SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> Maybe PotatoHandlerOutput
 testHandleMouse (SomePotatoHandler h) phi rmd = pHandleMouse h phi rmd

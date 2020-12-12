@@ -40,7 +40,7 @@ import qualified Data.Sequence     as Seq
 data KeyModifier = KeyModifier_Shift | KeyModifier_Alt deriving (Show, Eq)
 
 -- KEYBOARD
-data KeyboardData = KeyboardData KeyboardKey [KeyModifier]
+data KeyboardData = KeyboardData KeyboardKey [KeyModifier] deriving (Show)
 
 data KeyboardKey =
   KeyboardKey_Esc

@@ -226,7 +226,5 @@ instance PotatoHandler BoxHandler where
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
-
-  pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Cancelled -> False
-    _                        -> True
+  -- if undoFirst is true then we have already started dragging
+  pIsHandlerActive = _boxHandler_undoFirst

@@ -42,6 +42,5 @@ instance PotatoHandler SimpleLineHandler where
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
-  pValidateMouse _ (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Cancelled -> False
-    _                        -> True
+  -- if undoFirst is true then we have already started dragging
+  pIsHandlerActive = _simpleLineHandler_undoFirst

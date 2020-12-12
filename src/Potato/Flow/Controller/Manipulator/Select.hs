@@ -64,6 +64,8 @@ instance PotatoHandler SelectHandler where
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pHandleCancel sh PotatoHandlerInput {..} = (Nothing, Nothing, Nothing)
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput
-  pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
-    then _mouseDrag_state /= MouseDragState_Down
-    else _mouseDrag_state == MouseDragState_Down
+  -- same as default?
+  --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
+  --  then _mouseDrag_state /= MouseDragState_Down
+  --  else _mouseDrag_state == MouseDragState_Down
+  pIsHandlerActive = _selectHandler_selecting
