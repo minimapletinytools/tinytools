@@ -173,7 +173,7 @@ instance Default BoxHandler where
     }
 
 instance PotatoHandler BoxHandler where
-  pHandlerName _ = "BoxHandler"
+  pHandlerName _ = handlerName_box
   pHandleMouse bh@BoxHandler {..} PotatoHandlerInput {..} rmd = let
       pfs = _potatoHandlerInput_pFState
       selection = _potatoHandlerInput_selection

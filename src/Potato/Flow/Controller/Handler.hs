@@ -2,7 +2,14 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.Handler (
-  PotatoHandlerOutput(..)
+
+  handlerName_box
+  , handlerName_simpleLine
+  , handlerName_pan
+  , handlerName_select
+  , handlerName_empty
+
+  , PotatoHandlerOutput(..)
   , PotatoHandler(..)
   , PotatoHandlerInput(..)
   , HandlerRenderOutput(..)
@@ -53,11 +60,28 @@ data PotatoHandlerInput = PotatoHandlerInput {
 
 data HandlerRenderOutput = HandlerRenderOutput
 
+-- we check handler name for debug reasons so it's useful to have constants
+-- there should be no non-test code that depends on comparing pHandlerName
+handlerName_box :: Text
+handlerName_box = "BoxHandler"
+handlerName_simpleLine :: Text
+handlerName_simpleLine = "SimpleLineHandler"
+handlerName_pan :: Text
+handlerName_pan = "PanHandler"
+handlerName_select :: Text
+handlerName_select = "SelectHandler"
+handlerName_empty :: Text
+handlerName_empty = "EmptyHandler"
+
+
 -- TODO prob replace this with 'data PotatoHandler' rather than typeclass
 -- TODO rename methods in here..
 -- rename to Manipulator XD
 class PotatoHandler h where
   pHandlerName :: h -> Text
+
+  pHandlerDebugShow :: h -> Text
+  pHandlerDebugShow _ = "<no debug info>"
 
   -- TODO consider removing Selection from input args since it should be static through lifetime of handler and therefore passed in during construction
   -- i.e. invariant is selection changed -> new handler

@@ -33,7 +33,7 @@ instance Default SimpleLineHandler where
 --handleMouse mslh pfs sel rmd = case
 
 instance PotatoHandler SimpleLineHandler where
-  pHandlerName _ = "SimpleLineHandler"
+  pHandlerName _ = handlerName_simpleLine
   pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Dragging -> Just r where
       op = Nothing -- TODO

@@ -53,7 +53,7 @@ instance Default SelectHandler where
     }
 
 instance PotatoHandler SelectHandler where
-  pHandlerName _ = "SelectHandler"
+  pHandlerName _ = handlerName_select
   pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag md) = Just $ case _mouseDrag_state md of
     MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh { _selectHandler_selecting = True} }
     MouseDragState_Dragging -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh }

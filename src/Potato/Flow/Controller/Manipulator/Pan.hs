@@ -31,7 +31,7 @@ instance Default PanHandler where
   def = PanHandler { _panHandler_pan = 0 }
 
 instance PotatoHandler PanHandler where
-  pHandlerName _ = "PanHandler"
+  pHandlerName _ = handlerName_pan
   pHandleMouse ph@PanHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag md@MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
     MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler ph }
