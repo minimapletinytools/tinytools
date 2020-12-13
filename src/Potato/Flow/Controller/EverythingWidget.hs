@@ -105,17 +105,17 @@ data EverythingWidget t = EverythingWidget {
 
 -- TODO rename to fillEverythingFrontendWithHandlerOutput
 fillEverythingWithHandlerOutput :: Selection -> PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
-fillEverythingWithHandlerOutput selection (msph, msel, mpfe) everything = everything {
-    _everythingFrontend_handler = case msph of
+fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} everything = everything {
+    _everythingFrontend_handler = case _potatoHandlerOutput_nextHandler of
       Just sph -> sph
-      Nothing  -> case msel of
+      Nothing  -> case _potatoHandlerOutput_select of
         -- there was no selection, create a new handler to replace the finished one
         -- alternatively, we could let backend do this??
-        Nothing -> makeHandlerFromSelection  selection
+        Nothing -> makeHandlerFromSelection selection
         -- in this case, backend will override the handler from the new selection
         Just _  -> SomePotatoHandler EmptyHandler
-    , _everythingFrontend_select = msel
-    , _everythingFrontend_pFEvent = mpfe
+    , _everythingFrontend_select = _potatoHandlerOutput_select
+    , _everythingFrontend_pFEvent = _potatoHandlerOutput_event
   }
 
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
@@ -238,8 +238,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                     -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                     else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
-                      -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be nothing)
-                      Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
+                      -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
+                      Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (fillEverythingWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
                 Nothing -> error "handler was expected to capture this mouse state"
           EFCmdKeyboard x -> case x of

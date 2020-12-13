@@ -186,6 +186,6 @@ spec :: Spec
 spec = do
   describe "Manipulator" $ do
     return ()
-    fromHUnitTest $ basic_sbox_test
-    fromHUnitTest $ select_and_drag_sbox_test
-    fromHUnitTest $ restrict8_test
+    --fromHUnitTest $ basic_sbox_test
+    --fromHUnitTest $ select_and_drag_sbox_test
+    --fromHUnitTest $ restrict8_test

@@ -181,19 +181,19 @@ instance PotatoHandler BoxHandler where
       dragDelta = _mouseDrag_to - _mouseDrag_from
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
     in case _mouseDrag_state of
-        MouseDragState_Down | _boxHandler_isCreation -> Just (Just (SomePotatoHandler bh), Nothing, Nothing) where
-        MouseDragState_Down -> trace "MOUSE DOWN SELECT" $ traceShow mmi $ r where
+        MouseDragState_Down | _boxHandler_isCreation -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh } where
+        MouseDragState_Down -> r where
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
             -- didn't click on a manipulator, don't capture input
             Nothing -> Nothing
-            Just mi -> Just (Just (SomePotatoHandler newbh), Nothing, Nothing) where
+            Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
               newbh = bh {
                   _boxHandler_handle = toEnum mi
                   , _boxHandler_active = True
                 }
 
-        MouseDragState_Dragging -> Just (Just (SomePotatoHandler newbh), Nothing, Just op) where
+        MouseDragState_Dragging -> Just r where
 
           -- TODO may change handle when dragging through axis
           --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
@@ -221,13 +221,18 @@ instance PotatoHandler BoxHandler where
 
           newbh = bh { _boxHandler_undoFirst = True }
 
-        MouseDragState_Up -> Just (Nothing, Nothing, Nothing)
+          r = def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
+              , _potatoHandlerOutput_event = Just op
+            }
+
+        MouseDragState_Up -> Just def
           -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
         MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
   -- TODO keyboard movement
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
+  pHandleCancel _ _ = def
   pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
   pIsHandlerActive = _boxHandler_active

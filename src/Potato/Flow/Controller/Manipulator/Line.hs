@@ -35,12 +35,16 @@ instance Default SimpleLineHandler where
 instance PotatoHandler SimpleLineHandler where
   pHandlerName _ = "SimpleLineHandler"
   pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Dragging -> Just (Just (SomePotatoHandler slh), Nothing, op) where
+    MouseDragState_Dragging -> Just r where
       op = Nothing -- TODO
-    MouseDragState_Up -> Just (Nothing, Nothing, Nothing)
+      r = def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh
+          , _potatoHandlerOutput_event = op
+        }
+    MouseDragState_Up -> Just def
     _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
+  pHandleCancel _ _ = def
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   -- if undoFirst is true then we have already started dragging
   pIsHandlerActive = _simpleLineHandler_undoFirst

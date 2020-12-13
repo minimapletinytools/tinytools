@@ -2,7 +2,7 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.Handler (
-  PotatoHandlerOutput
+  PotatoHandlerOutput(..)
   , PotatoHandler(..)
   , PotatoHandlerInput(..)
   , HandlerRenderOutput(..)
@@ -29,10 +29,20 @@ import qualified Data.Text                    as T
 import           Data.Tuple.Extra
 import qualified Text.Show
 
--- TODO change to ADT
--- TODO I don't think the selection thing is necessary.. only Layer drags use it...
--- use DMap if you start having more actions...
-type PotatoHandlerOutput = (Maybe SomePotatoHandler, Maybe (Bool, Selection), Maybe PFEventTag)
+data PotatoHandlerOutput = PotatoHandlerOutput {
+    _potatoHandlerOutput_nextHandler :: Maybe SomePotatoHandler
+    , _potatoHandlerOutput_select    :: Maybe (Bool, Selection)
+    , _potatoHandlerOutput_event     :: Maybe PFEventTag
+    , _potatoHandlerOutput_pan       :: Maybe XY
+  } deriving (Show)
+
+instance Default PotatoHandlerOutput where
+  def = PotatoHandlerOutput {
+      _potatoHandlerOutput_nextHandler = Nothing
+      , _potatoHandlerOutput_event = Nothing
+      , _potatoHandlerOutput_pan = Nothing
+      , _potatoHandlerOutput_select = Nothing
+    }
 
 data PotatoHandlerInput = PotatoHandlerInput {
     _potatoHandlerInput_pFState       :: PFState
@@ -92,6 +102,6 @@ instance PotatoHandler EmptyHandler where
   pHandlerName _ = "EmptyHandler"
   pHandleMouse _ _ _ = Nothing
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel _ _ = (Nothing, Nothing, Nothing)
+  pHandleCancel _ _ = def
   pRenderHandler _ _ = HandlerRenderOutput
   pValidateMouse _ _ = True

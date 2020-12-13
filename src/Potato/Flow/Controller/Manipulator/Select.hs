@@ -55,14 +55,14 @@ instance Default SelectHandler where
 instance PotatoHandler SelectHandler where
   pHandlerName _ = "SelectHandler"
   pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag md) = Just $ case _mouseDrag_state md of
-    MouseDragState_Down -> (Just $ SomePotatoHandler sh { _selectHandler_selecting = True}, Nothing, Nothing)
-    MouseDragState_Dragging -> (Just $ SomePotatoHandler sh, Nothing, Nothing)
-    MouseDragState_Up -> (Nothing, Just (shiftClick, newSelection), Nothing) where
+    MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh { _selectHandler_selecting = True} }
+    MouseDragState_Dragging -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh }
+    MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
-  pHandleCancel sh PotatoHandlerInput {..} = (Nothing, Nothing, Nothing)
+  pHandleCancel sh PotatoHandlerInput {..} = def
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput
   -- same as default?
   --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
