@@ -17,7 +17,6 @@ import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Controller.Manipulator.Pan
@@ -96,7 +95,6 @@ data EverythingWidget t = EverythingWidget {
   _everythingWidget_tool                       :: Dynamic t Tool
   , _everythingWidget_selection                :: Dynamic t Selection
   , _everythingWidget_layers                   :: Dynamic t (Seq LayerDisplay)
-  , _everythingWidget_manipulators             :: Dynamic t [MouseManipulator]
   , _everythingWidget_pan                      :: Dynamic t XY
   , _everythingWidget_broadPhase               :: Dynamic t ([AABB], BPTree, SEltLabelChanges)
 
@@ -130,7 +128,6 @@ makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler) -- pretty sure this is OK?
   SMTNone        -> SomePotatoHandler EmptyHandler
 
-
 holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => EverythingWidgetConfig t
   -> m (EverythingWidget t)
@@ -163,19 +160,14 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       let
         -- clear per frame statuses for next frame
         everything' = everything {
-            _everythingFrontend_lastOperation = FrontendOperation_None
-
             -- clear one shot events
-            , _everythingFrontend_pFEvent = Nothing
+            _everythingFrontend_pFEvent = Nothing
             , _everythingFrontend_select = Nothing
 
             -- update handler from backend (maybe)
             , _everythingFrontend_handler = someHandler
           }
-        -- other useful stuff
-        undoFirst = case _everythingFrontend_lastOperation of
-          FrontendOperation_Manipulate mpfe _ -> isJust mpfe
-          _                                   -> False
+
         selection = _everythingBackend_selection backend
 
         someHandler = case _everythingBackend_handlerFromSelection backend of
@@ -290,8 +282,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   everythingFrontendDyn :: Dynamic t EverythingFrontend
     <- foldDynM foldEverythingFrontendFn emptyEverythingFrontend everythingFrontendEvent
 
-  let
-    frontendOperationEv = updated (fmap _everythingFrontend_lastOperation everythingFrontendDyn)
   --------------
   -- PFOUTPUT --
   --------------
@@ -470,7 +460,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       _everythingWidget_tool           = r_tool
       , _everythingWidget_selection    = r_selection
       , _everythingWidget_layers       = undefined
-      , _everythingWidget_manipulators = undefined
       , _everythingWidget_pan          = undefined
       , _everythingWidget_broadPhase   = undefined
       , _everythingWidget_everythingCombined_DEBUG = ffor3 everythingFrontendDyn everythingBackendDyn _pfo_pFState combineEverything

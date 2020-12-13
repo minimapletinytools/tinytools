@@ -1,7 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.Box (
-  BoxHandleType(..)
+  computeSelectionType
+  , BoxHandleType(..)
   , BoxHandler(..)
   , makeHandleBox
   , makeDeltaBox
@@ -28,7 +29,7 @@ import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
 
 
-
+-- TODO move this somewhere else?
 computeSelectionType :: Selection -> SelectionManipulatorType
 computeSelectionType = foldl' foldfn SMTNone where
   foldfn accType (_,_,SEltLabel _ selt) = case accType of
@@ -38,7 +39,6 @@ computeSelectionType = foldl' foldfn SMTNone where
       SEltText _ -> SMTText
       _          -> SMTBoundingBox
     _ -> SMTBoundingBox
-
 
 -- TODO rework this stuff
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)

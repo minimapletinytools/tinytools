@@ -2,7 +2,7 @@
 
 ::NEWEST TODO::
 -make controller module for easier imports...
--update tests so they check for new handler states
+
 -finish simple line handler
 -finish text area handler
 -add test to ensure REltId does not change from undofirst
@@ -18,7 +18,6 @@
     -select and drag + select case
 -combine everything and entry 😱😱😱😱😱😱😱
   -maybe do this at the end, won't get that much harder prob...
-DONE-mousehandler :O
 -layers
   DONE-add selection to layerInputNew
   -write method to update layers when moving elements around in layers
@@ -42,6 +41,8 @@ DONE-mousehandler :O
 -broadphase tests
 -connect RenderedCanvas
 
+DONE-mousehandler :O
+DONE-update tests so they check for new handler states
 DONE-you forgot to add pan functionality D:
 DONE-figure out how to call makeHandlerFromSelection after making a new selection
   DONE-pass on new handler from backend after selection is made
