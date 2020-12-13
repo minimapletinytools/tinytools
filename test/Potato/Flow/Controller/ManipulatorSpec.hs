@@ -185,6 +185,7 @@ restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
-    fromHUnitTest $ basic_sbox_test
+    return ()
+    --fromHUnitTest $ basic_sbox_test
     --fromHUnitTest $ select_and_drag_sbox_test
     --fromHUnitTest $ restrict8_test

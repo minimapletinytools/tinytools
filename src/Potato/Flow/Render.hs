@@ -16,16 +16,16 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 
-import           Data.Maybe               (fromJust)
-import qualified Data.Text                as T
-import qualified Data.Vector.Unboxed      as V
+import           Data.Maybe              (fromJust)
+import qualified Data.Text               as T
+import qualified Data.Vector.Unboxed     as V
 
 
 -- TODO rename, this should mean the portion of the screen that is rendered, not the canvas
 data RenderedCanvas = RenderedCanvas {
   _renderedCanvas_box        :: LBox
   , _renderedCanvas_contents :: V.Vector PChar -- ^ row major
-}
+} deriving (Show)
 
 renderedCanvas_box :: RenderedCanvas -> LBox
 renderedCanvas_box = _renderedCanvas_box

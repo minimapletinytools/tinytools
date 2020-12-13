@@ -4,6 +4,7 @@
 module Potato.Flow.Controller.Everything (
   FrontendOperation(..)
   , EverythingFrontend(..)
+  , everythingFrontend_isHandlerActive
   , EverythingBackend(..)
   , emptyEverythingFrontend
   , emptyEverythingBackend
@@ -60,6 +61,10 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_debugLabel     :: Text
 } deriving (Show)
 
+everythingFrontend_isHandlerActive :: EverythingFrontend -> Bool
+everythingFrontend_isHandlerActive EverythingFrontend {..} = case _everythingFrontend_handler of
+  SomePotatoHandler h -> pIsHandlerActive h
+
 -- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection              :: Selection
@@ -68,8 +73,7 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_renderedCanvas       :: RenderedCanvas
 
   , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
-
-}
+} deriving (Show)
 
 emptyEverythingFrontend :: EverythingFrontend
 emptyEverythingFrontend = EverythingFrontend {

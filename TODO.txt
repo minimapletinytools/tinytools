@@ -54,15 +54,20 @@
 
 
 ::NEWEST TODO::
--figure out how to call makeHandlerFromSelection after making a new selection
-  -pass on new handler from backend after selection is made
-  -regular select cases, (layer, select tool)
+-you forgot to add pan functionality D:
+DONE-figure out how to call makeHandlerFromSelection after making a new selection
+  DONE-pass on new handler from backend after selection is made
+  DONE-regular select cases, (layer, select tool)
     -ok for handler to override previous one
-  -select + drag box handler case
+  DONE-select + drag box handler case
     -select on click, creates box handler, drag can take over next frame?
-  -select from new elt case
+  DONE-select from new elt case
     -fack TODO figure this out
     -right now handler from backend will overwrite the creation handler D:
+    DONE-2 solutions
+      DONE-pIsHandlerActive solution
+        -this isn't terrible has handlers seem to have 2 distinct modes... at least you sort of made it that way by having combining drag manipulators with selection modals
+      -split up new elts from tools and other cases (copy pasta, undo/redo) and don't do new handler in new elts from tool case
   -other select cases
     -there are currently no other select cases
     -can we treat select output in PFO specially then?
@@ -82,8 +87,6 @@ DONE?-bbox handler (could just use box handler, but it's a little sloppy this wa
     NO-or perhaps select returns a box to be selected?
   DONE-need to add render function
   -new selection generates new handler and cancels previous one, this handler must be stored in backend
-
-
 DONE-add modifiers to keyboard
 DONE-decide how to handle cancel in mouse drag handlers
   -either pass in cancel mouse state or pass in escape key

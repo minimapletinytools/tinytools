@@ -291,4 +291,4 @@ spec = do
   describe "EverythingWidget" $ do
     fromHUnitTest $ tool_test
     fromHUnitTest $ select_test
-    --fromHUnitTest $ everything_basic_test
+    fromHUnitTest $ everything_basic_test

@@ -109,6 +109,8 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+    - -fno-ignore-asserts
 
 executables:
   memorytests:
@@ -130,6 +132,7 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -fno-ignore-asserts
     dependencies:
     - potato-flow
     - HUnit

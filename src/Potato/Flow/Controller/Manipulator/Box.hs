@@ -160,6 +160,8 @@ data BoxHandler = BoxHandler {
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
     , _boxHandler_isCreation :: Bool
+    , _boxHandler_active     :: Bool
+
   }
 
 instance Default BoxHandler where
@@ -167,6 +169,7 @@ instance Default BoxHandler where
       _boxHandler_handle       = BH_BR -- does this matter?
       , _boxHandler_undoFirst  = False
       , _boxHandler_isCreation = False
+      , _boxHandler_active = False
     }
 
 instance PotatoHandler BoxHandler where
@@ -179,14 +182,15 @@ instance PotatoHandler BoxHandler where
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
     in case _mouseDrag_state of
         MouseDragState_Down | _boxHandler_isCreation -> Just (Just (SomePotatoHandler bh), Nothing, Nothing) where
-        MouseDragState_Down -> Just r where
+        MouseDragState_Down -> trace "MOUSE DOWN SELECT" $ traceShow mmi $ r where
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
-            -- didn't click on a manipulator, so cancel everything and pass on the state
-            Nothing -> (Nothing, Nothing, Nothing)
-            Just mi -> (Just (SomePotatoHandler newbh), Nothing, Nothing) where
+            -- didn't click on a manipulator, don't capture input
+            Nothing -> Nothing
+            Just mi -> Just (Just (SomePotatoHandler newbh), Nothing, Nothing) where
               newbh = bh {
                   _boxHandler_handle = toEnum mi
+                  , _boxHandler_active = True
                 }
 
         MouseDragState_Dragging -> Just (Just (SomePotatoHandler newbh), Nothing, Just op) where
@@ -213,7 +217,7 @@ instance PotatoHandler BoxHandler where
 
           op = if _boxHandler_isCreation
             then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
-            else PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+            else traceShow m $ PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
 
           newbh = bh { _boxHandler_undoFirst = True }
 
@@ -226,5 +230,4 @@ instance PotatoHandler BoxHandler where
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = (Nothing, Nothing, Nothing)
   pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
-  -- if undoFirst is true then we have already started dragging
-  pIsHandlerActive = _boxHandler_undoFirst
+  pIsHandlerActive = _boxHandler_active

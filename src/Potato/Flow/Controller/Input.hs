@@ -140,7 +140,7 @@ data LayerDisplay = LayerDisplay {
   , _layerDisplay_ident  :: Int
   -- TODO hidden/locked states
   -- TODO reverse mapping to selt
-}
+} deriving (Show)
 
 -- SELECTION
 type Selection = Seq SuperSEltLabel

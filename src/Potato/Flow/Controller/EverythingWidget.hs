@@ -59,6 +59,7 @@ data EverythingBackendCmd =
   -- but we have it already so may as well include it
   EBCmdSelect Bool Selection
   | EBCmdChanges SEltLabelChangesWithLayerPos
+  | EBCmdNothing
   deriving (Show)
 
 
@@ -101,11 +102,17 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
 
-fillEverythingWithHandlerOutput :: PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
-fillEverythingWithHandlerOutput (msph, msel, mpfe) everything = everything {
+-- TODO rename to fillEverythingFrontendWithHandlerOutput
+fillEverythingWithHandlerOutput :: Selection -> PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
+fillEverythingWithHandlerOutput selection (msph, msel, mpfe) everything = everything {
     _everythingFrontend_handler = case msph of
       Just sph -> sph
-      Nothing  -> SomePotatoHandler EmptyHandler
+      Nothing  -> case msel of
+        -- there was no selection, create a new handler to replace the finished one
+        -- alternatively, we could let backend do this??
+        Nothing -> makeHandlerFromSelection  selection
+        -- in this case, backend will override the handler from the new selection
+        Just _  -> SomePotatoHandler EmptyHandler
     , _everythingFrontend_select = msel
     , _everythingFrontend_pFEvent = mpfe
   }
@@ -142,6 +149,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- TODO rename everything to "frontend" or "lastFrontend"
     foldEverythingFrontendFn cmd everything@EverythingFrontend {..} = do
 
+      -- these are always UP TO DATE as frontend only listens to UI events
       backend <- sample . current $ everythingBackendDyn
       pFState <- sample . current $ _pfo_pFState
       layerPosMap <- sample . current $ _pfo_layerPosMap
@@ -207,35 +215,36 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- pass input onto newly created handler
                 return $ case newHandler of
                   SomePotatoHandler handler -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-                    Just pho -> fillEverythingWithHandlerOutput pho everything'
+                    Just pho -> fillEverythingWithHandlerOutput selection pho everything'
                     Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
 
-              _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-                Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
+              _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
+                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
                 -- input not captured by handler
-                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> do
+                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> trace "nothingcase" $ do
                   let
                     nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
                   return $ if Seq.null nextSelection
                     -- clicked on nothing, start SelectHandler
                     then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                      Just pho -> fillEverythingWithHandlerOutput pho everything'
+                      Just pho -> traceShowId $ fillEverythingWithHandlerOutput selection pho everything'
                       Nothing -> error "handler was expected to capture this mouse state"
                     -- special drag + select case, override the selection
                     -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                     -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                     else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                       -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be nothing)
-                      Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput pho everything') { _everythingFrontend_select = Just (False, nextSelection) }
+                      Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput selection pho everything') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
                 Nothing -> error "handler was expected to capture this mouse state"
-            return $ trace "mouse: " $ traceShow everything'' $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+            --return $ trace "mouse: " $ traceShow everything'' $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
+            return $ trace "frontend output:" $ traceShowId $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
           EFCmdKeyboard x -> case x of
             KeyboardData KeyboardKey_Esc _ -> do
               let
                 -- cancel handler
                 pho = pHandleCancel handler potatoHandlerInput
-                everything'' = fillEverythingWithHandlerOutput pho everything'
+                everything'' = fillEverythingWithHandlerOutput selection pho everything'
               case fst3 pho of
                 Nothing -> return everything'' {
                     _everythingFrontend_handler = makeHandlerFromSelection selection
@@ -245,7 +254,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 mpho = pHandleKeyboard handler potatoHandlerInput kbd
               case mpho of
-                Just pho -> return $ fillEverythingWithHandlerOutput pho everything'
+                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
                 -- input not captured by handler
                 Nothing -> case x of
                   -- tool hotkeys
@@ -325,17 +334,27 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- TODO hook up to _everythingFrontend_select
     frontendOperation_select = fmapMaybe _everythingFrontend_select (updated everythingFrontendDyn)
 
-    everythingBackendEvent = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
+    everythingBackendEvent' = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       , fmap (uncurry EBCmdSelect) frontendOperation_select
       , EBCmdChanges <$> _pfo_potato_changed
       ]
 
-    foldEverythingBackendFn :: EverythingBackendCmd -> EverythingBackend -> PushM t EverythingBackend
-    foldEverythingBackendFn cmd everything@EverythingBackend {..} = do
 
-      frontend <- sample . current $ everythingFrontendDyn
+
+    -- we need the latest version of frontend. We could have done this using events as well, either
+    -- 1. cherry picking just the events we need it each circumstance (currently few enough that this is very feasible)
+    -- 2. or connecting backend to (updated everythingFrontendDyn)
+    -- attachPromptlyDyn solves this problem in the simplest way, and we can easily change to 2. if we decide so
+    everythingBackendEvent = attachPromptlyDyn everythingFrontendDyn $ leftmost $ [
+      everythingBackendEvent'
+      -- D:, we need to reset backend for every frontend event so we add a dummy empty event
+      , EBCmdNothing <$ everythingFrontendEvent]
+
+    foldEverythingBackendFn :: (EverythingFrontend, EverythingBackendCmd) -> EverythingBackend -> PushM t EverythingBackend
+    -- TODO rename everything to backend
+    foldEverythingBackendFn (frontend, cmd) everything@EverythingBackend {..} = trace "BACKEND UPDATE" $ do
 
       -- DOES NOT include latest changes!
       pFStateMaybeStale <- sample . current $ _pfo_pFState
@@ -343,6 +362,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         everything' = everything {
             _everythingBackend_handlerFromSelection = Nothing
           }
+
+        maybeSetHandler selection = if (everythingFrontend_isHandlerActive frontend)
+          then Nothing
+          -- only set handler from selection if frontend handler isn't active
+          else Just $ makeHandlerFromSelection selection
 
       case cmd of
         EBCmdSelect add sel -> do
@@ -353,8 +377,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               else sel
           return $ everything' {
               _everythingBackend_selection = newsel
-              -- always set the handler in this case, the frontend handler should never be active
-              , _everythingBackend_handlerFromSelection = assert (everythingFrontend_isHandlerActive frontend) $ Just $ makeHandlerFromSelection newsel
+              , _everythingBackend_handlerFromSelection = maybeSetHandler newsel
             }
 
         EBCmdChanges cslmap -> do
@@ -408,13 +431,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               , _everythingBackend_selection = newSelection
 
 
-              , _everythingBackend_handlerFromSelection = if (everythingFrontend_isHandlerActive frontend)
-                then Nothing
-                -- only set handler from selection if frontend handler isn't active
-                else Just $ makeHandlerFromSelection newSelection
+              , _everythingBackend_handlerFromSelection = maybeSetHandler newSelection
 
             }
-        _          -> undefined
+        _          -> return $ everything'
 
 
 
