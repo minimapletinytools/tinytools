@@ -105,7 +105,7 @@ data EverythingWidget t = EverythingWidget {
 
 -- TODO rename to fillEverythingFrontendWithHandlerOutput
 fillEverythingWithHandlerOutput :: Selection -> PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
-fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} everything = everything {
+fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} frontend = frontend {
     _everythingFrontend_handler = case _potatoHandlerOutput_nextHandler of
       Just sph -> sph
       Nothing  -> case _potatoHandlerOutput_select of
@@ -116,6 +116,10 @@ fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} everything = 
         Just _  -> SomePotatoHandler EmptyHandler
     , _everythingFrontend_select = _potatoHandlerOutput_select
     , _everythingFrontend_pFEvent = _potatoHandlerOutput_event
+    , _everythingFrontend_pan = case _potatoHandlerOutput_pan of
+      Nothing -> _everythingFrontend_pan frontend
+      Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
+        V2 cx0 cy0 = _everythingFrontend_pan frontend
   }
 
 makeHandlerFromSelection :: Selection -> SomePotatoHandler

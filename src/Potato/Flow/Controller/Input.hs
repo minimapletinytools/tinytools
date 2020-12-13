@@ -109,6 +109,7 @@ continueDrag LMouseData {..} md = md {
 cancelDrag :: MouseDrag -> MouseDrag
 cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
 
+-- wats this for D:?
 mouseDragDelta :: MouseDrag -> MouseDrag -> XY
 mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
