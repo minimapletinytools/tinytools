@@ -14,6 +14,7 @@ import           Test.HUnit
 
 import           Potato.Flow
 import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
@@ -86,7 +87,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select b2"
-      , checkHandlerName "BoxHandler"
+      , checkHandlerName handlerName_box
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "resize tl corner b2"
@@ -140,7 +141,7 @@ select_and_drag_sbox_test = constructTest "manipulator - select and drag" basicS
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select + drag b2"
-      , checkHandlerName "BoxHandler"
+      , checkHandlerName handlerName_box
       , numSelectedEltsEqualPredicate 1
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox lbox _) -> lbox == LBox (V2 11 11) (V2 5 5)

@@ -19,6 +19,7 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.EverythingWidget
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 -- test imports
@@ -125,7 +126,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
-      , EWCLabel "select elt B"
+      , EWCLabel "single click select elt B"
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [])
 
@@ -139,15 +140,15 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [])
 
-      , EWCLabel "shift unselect elt B"
-      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
+      , EWCLabel "single click shift unselect elt B"
+      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
       , EWCLabel "unselect"
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
-      , EWCLabel "select elt A"
+      , EWCLabel "single click select elt A"
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
 
@@ -156,7 +157,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [])
 
-      , EWCLabel "shift select elt B"
+      , EWCLabel "single click shift select elt B"
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
@@ -190,78 +191,86 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
       , LabelCheck "Create A"
       , (EqPredicate _everythingCombined_selectedTool Tool_Box)
-      , AlwaysPass
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1)
           , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "create another elt, but cancel it"
-      , AlwaysPass
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
           , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
+          , checkHandlerNameAndState handlerName_empty False -- handler defaults to empty selection after cancelling :(
         ]
 
       -- create elt B
-      , AlwaysPass
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
           , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_box False
         ]
 
       -- unselect
       , (EqPredicate _everythingCombined_selectedTool Tool_Select)
-      , AlwaysPass
-      , numSelectedEltsEqualPredicate 0
+      , checkHandlerNameAndState handlerName_select True
+      , Combine [
+          numSelectedEltsEqualPredicate 0
+          , checkHandlerNameAndState handlerName_empty False
+        ]
 
-      , LabelCheck "select elt B"
-      , AlwaysPass
-      , numSelectedEltsEqualPredicate 1
+      , LabelCheck "single click select elt B"
+      , checkHandlerNameAndState handlerName_box True -- select+drag case, expect box handler
+      , Combine [
+          numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_box False
+        ]
 
       -- now select elts A + B
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_select True
       , numSelectedEltsEqualPredicate 2
 
       , LabelCheck "begin selecting nothing and cancel"
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_select True
+      , checkHandlerNameAndState handlerName_select True
       , numSelectedEltsEqualPredicate 2
       , numSelectedEltsEqualPredicate 2
 
-      , LabelCheck "shift unselect elt B"
-      , AlwaysPass
+      , LabelCheck "single click shift unselect elt B"
+      , checkHandlerNameAndState handlerName_select True -- single click shift unselect case uses select handler
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "unselect"
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_select True
       , numSelectedEltsEqualPredicate 0
 
-      , LabelCheck "select elt A"
-      , AlwaysPass
+      , LabelCheck "single click select elt A"
+      , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "manipulate A"
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
       -- check that it got moved to 0 0
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
         _                                  -> False)
 
-      , LabelCheck "shift select elt B"
-      , AlwaysPass
+      , LabelCheck "single click shift select elt B"
+      , checkHandlerNameAndState handlerName_select True -- single click shift unselect case uses select handler
       , numSelectedEltsEqualPredicate 2
 
       , LabelCheck "manipulate A+B"
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
@@ -269,7 +278,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
         _                                  -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 5 && y == 5
         _                                  -> False)

@@ -9,6 +9,7 @@ module Potato.Flow.Common
   , showEverythingPredicate
   , checkNumElts
   , checkHandlerName
+  , checkHandlerNameAndState
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperSEltLabelPredicate
   , firstSuperSEltLabelPredicate
@@ -120,11 +121,21 @@ numSelectedEltsEqualPredicate n = FunctionPredicate $
     in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
   . _everythingCombined_selection
 
+-- you can prob delete this, better to always check for state using version below
 checkHandlerName :: Text -> EverythingPredicate
 checkHandlerName name = FunctionPredicate $
   (\(SomePotatoHandler h) ->
     let hName = pHandlerName h
     in ("Handler: " <> hName <> " expected: " <> name, hName == name))
+  . _everythingCombined_handler
+
+checkHandlerNameAndState :: Text -> Bool -> EverythingPredicate
+checkHandlerNameAndState name state = FunctionPredicate $
+  (\(SomePotatoHandler h) ->
+    let
+      hName = pHandlerName h
+      hState = pIsHandlerActive h
+    in ("Handler: " <> hName <> "(" <> show hState <> ") expected: " <> name <> " (" <> show state <> ")", hName == name && hState == state))
   . _everythingCombined_handler
 
 firstSelectedSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
