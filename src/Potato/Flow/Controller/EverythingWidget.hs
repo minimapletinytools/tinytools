@@ -18,6 +18,7 @@ import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Box
+import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select

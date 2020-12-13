@@ -22,7 +22,6 @@ module Potato.Flow.Controller.Input (
   , LayerDisplay(..)
   , Selection
   , disjointUnionSelection
-  , SelectionManipulatorType(..)
 
 ) where
 
@@ -154,5 +153,3 @@ disjointUnion a b = L.union a b L.\\ L.intersect a b
 -- TODO real implementation...
 disjointUnionSelection :: Selection -> Selection -> Selection
 disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)
-
-data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)

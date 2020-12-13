@@ -14,31 +14,21 @@ import           Relude
 
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Control.Exception              (assert)
+import           Control.Exception                         (assert)
 import           Data.Default
-import           Data.Dependent.Sum             (DSum ((:=>)))
-import qualified Data.IntMap                    as IM
-import qualified Data.List                      as L
-import qualified Data.Sequence                  as Seq
+import           Data.Dependent.Sum                        (DSum ((:=>)))
+import qualified Data.IntMap                               as IM
+import qualified Data.List                                 as L
+import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
 
-
--- TODO move this somewhere else?
-computeSelectionType :: Selection -> SelectionManipulatorType
-computeSelectionType = foldl' foldfn SMTNone where
-  foldfn accType (_,_,SEltLabel _ selt) = case accType of
-    SMTNone -> case selt of
-      SEltBox _  -> SMTBox
-      SEltLine _ -> SMTLine
-      SEltText _ -> SMTText
-      _          -> SMTBoundingBox
-    _ -> SMTBoundingBox
 
 -- TODO rework this stuff
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
@@ -88,21 +78,6 @@ findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
     SMTText -> normalSel -- TODO figure out how to differentiate between area / text manipulator
     _       -> normalSel
 
-
-restrict4 :: XY -> XY
-restrict4 (V2 x y) = if abs x > abs y then V2 x 0 else V2 0 y
-
-restrict8 :: XY -> XY
-restrict8 (V2 x y) = r where
-  normx = abs x
-  normy = abs y
-  r = if normx > normy
-    then if normx*2 > normy
-      then (V2 x 0)
-      else (V2 x y)
-    else if normy*2 > normx
-      then (V2 0 y)
-      else (V2 x y)
 
 
 -- BOX MANIPULATOR STUFF
