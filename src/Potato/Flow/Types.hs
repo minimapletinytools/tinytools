@@ -39,6 +39,7 @@ import           Potato.Flow.SElts
 
 import           Control.Exception         (assert)
 import           Data.Constraint.Extras.TH
+import           Data.Default
 import qualified Data.Dependent.Sum        as DS
 import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
@@ -148,6 +149,9 @@ data CBox = CBox {
 
 instance NFData CBox
 
+instance Default CBox where
+  def = CBox Nothing Nothing
+
 instance Delta SBox CBox where
   plusDelta SBox {..} CBox {..} = SBox {
       _sBox_box   = case _cBox_deltaBox of
@@ -175,6 +179,9 @@ data CLine = CLine {
 } deriving (Eq, Generic, Show)
 
 instance NFData CLine
+
+instance Default CLine where
+  def = CLine Nothing Nothing Nothing
 
 instance Delta SLine CLine where
   plusDelta SLine {..} CLine {..} = SLine {
@@ -207,6 +214,9 @@ data CText = CText {
 } deriving (Eq, Generic, Show)
 
 instance NFData CText
+
+instance Default CText where
+  def = CText Nothing Nothing Nothing
 
 instance Delta SText CText where
   plusDelta SText {..} CText {..} = SText {
