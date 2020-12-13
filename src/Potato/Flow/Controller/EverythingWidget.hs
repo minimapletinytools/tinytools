@@ -20,6 +20,7 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Line
+import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
@@ -187,19 +188,24 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
           EFCmdMouse mouseData -> do
             let
-              (mouseDrag, deltaDrag) = case _mouseDrag_state _everythingFrontend_mouseDrag of
-                MouseDragState_Up        -> (newDrag mouseData, 0)
-                MouseDragState_Cancelled -> (newDrag mouseData, 0)
-                _                        -> (continueDrag mouseData _everythingFrontend_mouseDrag, mouseDragDelta mouseDrag _everythingFrontend_mouseDrag)
+              mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
+                MouseDragState_Up        -> newDrag mouseData
+                MouseDragState_Cancelled -> (continueDrag mouseData _everythingFrontend_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
+                _                        -> continueDrag mouseData _everythingFrontend_mouseDrag
 
               canvasDrag = toRelMouseDrag pFState mouseDrag
+              everything'' = everything' { _everythingFrontend_mouseDrag = mouseDrag }
 
-            everything'' <- case _mouseDrag_state mouseDrag of
+            case _mouseDrag_state mouseDrag of
               -- if mouse was cancelled, update _everythingFrontend_mouseDrag accordingly
               MouseDragState_Cancelled -> return $ if _lMouseData_isRelease mouseData
-                then everything' { _everythingFrontend_mouseDrag = emptyMouseDrag }
-                else everything' -- still cancelled
-              -- if mouse down and creation tool
+                then everything'' { _everythingFrontend_mouseDrag = emptyMouseDrag }
+                else everything'' -- still cancelled
+              -- special case, if mouse down and pan tool, we override with a new handler
+              MouseDragState_Down | _everythingFrontend_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
+                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
+                Nothing -> error "this should never happen"
+              -- special case, if mouse down and creation tool, we override with a new handler
               MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> do
                 let
                   -- cancel previous handler
@@ -215,41 +221,35 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- pass input onto newly created handler
                 return $ case newHandler of
                   SomePotatoHandler handler -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-                    Just pho -> fillEverythingWithHandlerOutput selection pho everything'
+                    Just pho -> fillEverythingWithHandlerOutput selection pho everything''
                     Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
-
               _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
-                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
-                -- input not captured by handler
+                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
+                -- input not captured by handler, do select or drag+select
                 Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> trace "nothingcase" $ do
                   let
                     nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
                   return $ if Seq.null nextSelection
                     -- clicked on nothing, start SelectHandler
                     then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                      Just pho -> traceShowId $ fillEverythingWithHandlerOutput selection pho everything'
+                      Just pho -> traceShowId $ fillEverythingWithHandlerOutput selection pho everything''
                       Nothing -> error "handler was expected to capture this mouse state"
                     -- special drag + select case, override the selection
                     -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                     -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                     else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                       -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be nothing)
-                      Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput selection pho everything') { _everythingFrontend_select = Just (False, nextSelection) }
+                      Just pho -> assert (isNothing . snd3 $ pho) $ (fillEverythingWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
                 Nothing -> error "handler was expected to capture this mouse state"
-            --return $ trace "mouse: " $ traceShow everything'' $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
-            return $ trace "frontend output:" $ traceShowId $ everything'' { _everythingFrontend_mouseDrag = mouseDrag }
           EFCmdKeyboard x -> case x of
             KeyboardData KeyboardKey_Esc _ -> do
               let
                 -- cancel handler
                 pho = pHandleCancel handler potatoHandlerInput
-                everything'' = fillEverythingWithHandlerOutput selection pho everything'
-              case fst3 pho of
-                Nothing -> return everything'' {
-                    _everythingFrontend_handler = makeHandlerFromSelection selection
-                  }
-                Just _  -> return everything''
+              return $ fillEverythingWithHandlerOutput selection pho everything' {
+                  _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag
+                }
             kbd -> do
               let
                 mpho = pHandleKeyboard handler potatoHandlerInput kbd

@@ -54,6 +54,10 @@
 
 
 ::NEWEST TODO::
+-consider doing override handlers for
+  -new element handler case
+  -pan handler case
+  -select and drag + select case
 -you forgot to add pan functionality D:
 DONE-figure out how to call makeHandlerFromSelection after making a new selection
   DONE-pass on new handler from backend after selection is made
