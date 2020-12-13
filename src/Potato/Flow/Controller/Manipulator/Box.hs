@@ -219,7 +219,7 @@ instance PotatoHandler BoxHandler where
 
           op = if _boxHandler_isCreation
             then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
-            else traceShow m $ PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+            else PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
 
           newbh = bh { _boxHandler_undoFirst = True }
 

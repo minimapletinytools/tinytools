@@ -143,7 +143,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     -- EVERYTHING FRONTEND --
     -------------------------
 
-    everythingFrontendEvent = traceEventWith ((<>"\n\n") . show) $ leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
+    --everythingFrontendEvent = traceEventWith ((<>"\n\n") . show) $ leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
+    everythingFrontendEvent = leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
       [ EFCmdTool <$> _everythingWidgetConfig_selectTool
       , EFCmdMouse <$> _everythingWidgetConfig_mouse
       , EFCmdKeyboard <$> _everythingWidgetConfig_keyboard
@@ -365,7 +366,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
     foldEverythingBackendFn :: (EverythingFrontend, EverythingBackendCmd) -> EverythingBackend -> PushM t EverythingBackend
     -- TODO rename everything to backend
-    foldEverythingBackendFn (frontend, cmd) everything@EverythingBackend {..} = trace "BACKEND UPDATE" $ do
+    --foldEverythingBackendFn (frontend, cmd) everything@EverythingBackend {..} = trace "BACKEND UPDATE" $ do
+    foldEverythingBackendFn (frontend, cmd) everything@EverythingBackend {..} = do
 
       -- DOES NOT include latest changes!
       pFStateMaybeStale <- sample . current $ _pfo_pFState

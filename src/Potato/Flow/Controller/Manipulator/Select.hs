@@ -57,7 +57,7 @@ instance PotatoHandler SelectHandler where
   pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag md) = Just $ case _mouseDrag_state md of
     MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh { _selectHandler_selecting = True} }
     MouseDragState_Dragging -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh }
-    MouseDragState_Up -> def { _potatoHandlerOutput_select = traceShowId $ Just (shiftClick, newSelection) }  where
+    MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
