@@ -181,7 +181,9 @@ instance PotatoHandler BoxHandler where
       dragDelta = _mouseDrag_to - _mouseDrag_from
       shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
     in case _mouseDrag_state of
-        MouseDragState_Down | _boxHandler_isCreation -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh } where
+        MouseDragState_Down | _boxHandler_isCreation -> Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
+          }
         MouseDragState_Down -> r where
           mmi = findFirstMouseManipulator rmd selection
           r = case mmi of
@@ -233,6 +235,8 @@ instance PotatoHandler BoxHandler where
 
   -- TODO keyboard movement
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel _ _ = def
+  pHandleCancel bh _ = if pIsHandlerActive bh
+    then def { _potatoHandlerOutput_event = Just PFEUndo }
+    else def
   pRenderHandler bh PotatoHandlerInput {..} = HandlerRenderOutput
   pIsHandlerActive = _boxHandler_active

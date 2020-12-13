@@ -44,7 +44,11 @@ instance PotatoHandler SimpleLineHandler where
     MouseDragState_Up -> Just def
     _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel _ _ = def
+  pHandleCancel slh _ = if pIsHandlerActive slh
+    -- TODO enable this when we are done implementing
+    --then def { _potatoHandlerOutput_event = Just PFEUndo }
+    then def
+    else def
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   -- if undoFirst is true then we have already started dragging
   pIsHandlerActive = _simpleLineHandler_undoFirst

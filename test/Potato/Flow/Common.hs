@@ -7,8 +7,6 @@ module Potato.Flow.Common
   , EverythingPredicate(..)
   , testEverythingPredicate
   , showEverythingPredicate
-  , LastOperationType(..)
-  , checkLastOperationPredicate
   , checkNumElts
   , checkHandlerName
   , numSelectedEltsEqualPredicate
@@ -107,32 +105,6 @@ showEverythingPredicate AlwaysPass _ = "always pass"
 -- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
 showEverythingPredicate (LabelCheck l) e = "expected label: " <> show l <> " got: " <> show (_everythingCombined_debugLabel e)
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
-
-
--- umm, is there a better way to do this? Too bad you can't pass a pattern match as an argument or can you?
-data LastOperationType = LastOperationType_Manipulate | LastOperationType_Undo | LastOperationType_Select | LastOperationType_None
-checkLastOperationPredicate :: LastOperationType -> EverythingPredicate
-checkLastOperationPredicate operation = case operation of
-  LastOperationType_Manipulate -> FunctionPredicate (
-    (\case
-      FrontendOperation_Manipulate _ _ -> ("",True)
-      o -> ("Expected FrontendOperation_Manipulate got " <> show o, False))
-    . _everythingCombined_lastOperation)
-  LastOperationType_None -> FunctionPredicate (
-    (\case
-      FrontendOperation_None -> ("",True)
-      o -> ("Expected FrontendOperation_None got " <> show o, False))
-    . _everythingCombined_lastOperation)
-  LastOperationType_Undo -> FunctionPredicate (
-    (\case
-      FrontendOperation_Undo -> ("",True)
-      o -> ("Expected FrontendOperation_Undo got " <> show o, False))
-    . _everythingCombined_lastOperation)
-  LastOperationType_Select -> FunctionPredicate (
-    (\case
-      FrontendOperation_Select _ _ -> ("",True)
-      o -> ("Expected FrontendOperation_Select got " <> show o, False))
-    . _everythingCombined_lastOperation)
 
 checkNumElts :: Int -> PFState -> (Text, Bool)
 checkNumElts n PFState {..} = (t,r) where

@@ -139,33 +139,32 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [])
 
-      -- shift unselect elt B
+      , EWCLabel "shift unselect elt B"
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
-      -- unselect
+      , EWCLabel "unselect"
       , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
 
-      -- select elt A
+      , EWCLabel "select elt A"
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
 
-      -- manipulate A
+      , EWCLabel "manipulate A"
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [])
 
-      -- shift select elt B
-      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
+      , EWCLabel "shift select elt B"
+      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift])
       , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
 
-      -- manipulate A+B
+      , EWCLabel "manipulate A+B"
       , EWCMouse (LMouseData (V2 5 5) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
 
-      -- manipulate A+B then cancel
       , EWCLabel "Mainpulate A+B then cancel"
       , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
@@ -186,32 +185,32 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , (EqPredicate _everythingCombined_pan (V2 0 0))
       , (EqPredicate _everythingCombined_pan (V2 10 15))
       , (EqPredicate _everythingCombined_pan (V2 1 1))
-      , checkLastOperationPredicate LastOperationType_None
+      , AlwaysPass
       , (EqPredicate _everythingCombined_pan (V2 1 1))
 
       , LabelCheck "Create A"
       , (EqPredicate _everythingCombined_selectedTool Tool_Box)
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_None
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1)
           , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "create another elt, but cancel it"
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_Undo
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
           , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
         ]
 
       -- create elt B
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_Manipulate
-      , checkLastOperationPredicate LastOperationType_None
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
       , Combine [
           PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
           , numSelectedEltsEqualPredicate 1
@@ -223,7 +222,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , numSelectedEltsEqualPredicate 0
 
       , LabelCheck "select elt B"
-      , checkLastOperationPredicate LastOperationType_Select -- test for single click select + manipulate selection case
+      , AlwaysPass
       , numSelectedEltsEqualPredicate 1
 
       -- now select elts A + B
@@ -236,31 +235,31 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , numSelectedEltsEqualPredicate 2
       , numSelectedEltsEqualPredicate 2
 
-      -- shift unselect elt B
+      , LabelCheck "shift unselect elt B"
       , AlwaysPass
       , numSelectedEltsEqualPredicate 1
 
-      -- unselect
+      , LabelCheck "unselect"
       , AlwaysPass
       , numSelectedEltsEqualPredicate 0
 
-      -- select elt A
+      , LabelCheck "select elt A"
       , AlwaysPass
       , numSelectedEltsEqualPredicate 1
 
-      -- manipulate A
-      , checkLastOperationPredicate LastOperationType_Manipulate
+      , LabelCheck "manipulate A"
+      , AlwaysPass
       , AlwaysPass
       -- check that it got moved to 0 0
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
         _                                  -> False)
 
-      -- shift select elt B
+      , LabelCheck "shift select elt B"
       , AlwaysPass
       , numSelectedEltsEqualPredicate 2
 
-      -- manipulate A+B
+      , LabelCheck "manipulate A+B"
       , AlwaysPass
       , AlwaysPass
       -- check that first elt A got moved over by 2
@@ -269,7 +268,6 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
         _                                  -> False)
 
-      -- manipulate A+B then cancel
       , LabelCheck "Mainpulate A+B then cancel"
       , AlwaysPass
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of

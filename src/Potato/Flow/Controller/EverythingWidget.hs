@@ -190,6 +190,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         SomePotatoHandler handler -> case cmd of
           EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
           EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
+          --EFCmdMouse mouseData -> traceShow _everythingFrontend_handler $ do
           EFCmdMouse mouseData -> do
             let
               mouseDrag = case _mouseDrag_state _everythingFrontend_mouseDrag of
@@ -227,16 +228,22 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   SomePotatoHandler handler -> case pHandleMouse handler potatoHandlerInput canvasDrag of
                     Just pho -> fillEverythingWithHandlerOutput selection pho everything''
                     Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
-              _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
+              -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
+              _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
                 -- input not captured by handler, do select or drag+select
-                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> trace "nothingcase" $ do
+                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> do
                   let
                     nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
-                  return $ if Seq.null nextSelection
-                    -- clicked on nothing, start SelectHandler
+                    shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
+                  return $ if Seq.null nextSelection || shiftClick
+                    -- clicked on nothing or shift click, start SelectHandler
+                    -- NOTE this is weird because:
+                    -- 1. doesn't select until mouse up, which is regression from when you do regular click on an elt (via BoxHandler which immediately selects)
+                    -- 2. if you let go of shift before mouse up, it just does a standard mouse selection
+                    -- I think this is still better than letting BoxHandler handle this case
                     then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                      Just pho -> traceShowId $ fillEverythingWithHandlerOutput selection pho everything''
+                      Just pho -> fillEverythingWithHandlerOutput selection pho everything''
                       Nothing -> error "handler was expected to capture this mouse state"
                     -- special drag + select case, override the selection
                     -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
@@ -251,7 +258,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               let
                 -- cancel handler
                 pho = pHandleCancel handler potatoHandlerInput
-              return $ fillEverythingWithHandlerOutput selection pho everything' {
+              return $ (fillEverythingWithHandlerOutput selection pho everything') {
                   _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag
                 }
             kbd -> do
