@@ -1,103 +1,18 @@
-::Handler Notes 12/2020::
-
--PROBELM can't respond to PFOutput
-  -SEltLabelChanges happen in backend and aren't avail in frontend
-    -currently we just query PFState and don't need the changes
-      -could stash a copy of changes to query in backend if we really needed them to update I guess
-    -render event can be triggered from changes so it always has access to most up to date version
-    -handleChanges method not possible I think...
-      -yes, if you do it in backend... then pass it to frontend...
-  -selection stored in back end and not accessible in frontend D:
-    -see above
-    -store handler in backend then D:? Annoying, next handler needs to be passed from frontend....
-      -more like override handler? idk...
-
--invariants
-  -selection does not change throughout lifetime of a handler
-    -"handler lifetime" = chain of handlers returned by pHandelXYZ operations
-
--handler creation/update cases
-  -uncaptured input
-  -new selection
-    -Ughh, selection isn't so good because you get a new selection for each change during a drag D:
-      DONE-could resolve by not generating new REltIds but I think this is not so good
-      -maybe OK now??
-      -just need to track REltId in handler I guess??
-  -how about handleChange :: ... -> SEltLabelChanges -> ...
-    -you will need this anyways to update manipulators after changes from PFOutput??
-
-
--handler cancel cases
-  -escape cancel
-  -input falls through and new handler created thus cancelling oldo ne
-  -new selection creates new handler
-
--handler input cases
-  -captures
-    -does nothing
-    -updates handler state
-    -returns different handler
-    -returns new selections
-    -return new event
-  -does not capture
-    -input possible passed to new handler
-      -in which case old handler gets canceled
-    -input gets consumed by non-handler operation
-      -may trigger events to update selection and create new handler
-    -input gets ignored
-
--auto create handler based on selection when handler is cleared
-  -we need to do this so that if we start creating a new handler and then cancel, we want to get the default selection based handler back
-    -this is not ideal though because if we have sub modal handlers (e.g. text editting mode) that handler info gets loss
-      -I guess you could solve this with "lastHandler" or some kind of handler stack D:
-
 
 
 ::NEWEST TODO::
 -consider doing override handlers for
-  -new element handler case
-  -pan handler case
-  -select and drag + select case
--you forgot to add pan functionality D:
-DONE-figure out how to call makeHandlerFromSelection after making a new selection
-  DONE-pass on new handler from backend after selection is made
-  DONE-regular select cases, (layer, select tool)
-    -ok for handler to override previous one
-  DONE-select + drag box handler case
-    -select on click, creates box handler, drag can take over next frame?
-  DONE-select from new elt case
-    -fack TODO figure this out
-    -right now handler from backend will overwrite the creation handler D:
-    DONE-2 solutions
-      DONE-pIsHandlerActive solution
-        -this isn't terrible has handlers seem to have 2 distinct modes... at least you sort of made it that way by having combining drag manipulators with selection modals
-      -split up new elts from tools and other cases (copy pasta, undo/redo) and don't do new handler in new elts from tool case
-  -other select cases
-    -there are currently no other select cases
-    -can we treat select output in PFO specially then?
-      -like 'Either SomePotatoHandler Selection' since they seem to be exclusive
-DONE-create handler from selection helper
-DONE-finish select handler
-DONE-box handler needs to handle creation case
-DONE?-bbox handler (could just use box handler, but it's a little sloppy this way...)
--ensure handler stuff works with no regression in tests
-  -update tests so they check for new handler states
+  -this is needed so that when you cancel, you get back the original handler and state
+  -also creates good separation of normal handler cases and so called "override" cases
+  -cases:
+    -new element handler case
+    -pan handler case
+    -select and drag + select case
+-update tests so they check for new handler states
+-combine everything and entry 😱😱😱😱😱😱😱
+  -maybe do this at the end, won't get that much harder prob...
 -finish simple line handler
 -finish text area handler
-
--HANDLER PLAN
-  DONE-return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
-  DONE-need to pass in broad phase for selecting
-    NO-or perhaps select returns a box to be selected?
-  DONE-need to add render function
-  -new selection generates new handler and cancels previous one, this handler must be stored in backend
-DONE-add modifiers to keyboard
-DONE-decide how to handle cancel in mouse drag handlers
-  -either pass in cancel mouse state or pass in escape key
-  -make sure that future cancel mouse drag stuff is correctly ignored
-    -I think it's best if cancel mouse states aren't passed in so that handlers don't need to individually account for this
-      -except this means it is expected for escape key to cancel the handler
-        -so you should add a separate method for cancelling handler so that this assupmtion is clear
 -add test to ensure REltId does not change from undofirst
 -mousehandler :O
 -line manipulators
@@ -123,6 +38,44 @@ DONE-decide how to handle cancel in mouse drag handlers
         -click drag drags
 -broadphase tests
 -connect RenderedCanvas
+
+DONE-you forgot to add pan functionality D:
+DONE-figure out how to call makeHandlerFromSelection after making a new selection
+  DONE-pass on new handler from backend after selection is made
+  DONE-regular select cases, (layer, select tool)
+    -ok for handler to override previous one
+  DONE-select + drag box handler case
+    -select on click, creates box handler, drag can take over next frame?
+  DONE-select from new elt case
+    -fack TODO figure this out
+    -right now handler from backend will overwrite the creation handler D:
+    DONE-2 solutions
+      DONE-pIsHandlerActive solution
+        -this isn't terrible has handlers seem to have 2 distinct modes... at least you sort of made it that way by having combining drag manipulators with selection modals
+      -split up new elts from tools and other cases (copy pasta, undo/redo) and don't do new handler in new elts from tool case
+  -other select cases
+    -there are currently no other select cases
+    -can we treat select output in PFO specially then?
+      -like 'Either SomePotatoHandler Selection' since they seem to be exclusive
+DONE-create handler from selection helper
+DONE-finish select handler
+DONE-box handler needs to handle creation case
+DONE?-bbox handler (could just use box handler, but it's a little sloppy this way...)
+DONE-ensure handler stuff works with no regression in tests
+DONE-HANDLER PLAN
+  DONE-return type needs to be changed to Maybe PotatoHandlerOutput where Nothing means input was not captured at all
+  DONE-need to pass in broad phase for selecting
+    NO-or perhaps select returns a box to be selected?
+  DONE-need to add render function
+  -new selection generates new handler and cancels previous one, this handler must be stored in backend
+DONE-add modifiers to keyboard
+DONE-decide how to handle cancel in mouse drag handlers
+  -either pass in cancel mouse state or pass in escape key
+  -make sure that future cancel mouse drag stuff is correctly ignored
+    -I think it's best if cancel mouse states aren't passed in so that handlers don't need to individually account for this
+      -except this means it is expected for escape key to cancel the handler
+        -so you should add a separate method for cancelling handler so that this assupmtion is clear
+
 DONE-undo permament instead of undofirst
   -you need this if you want to support tracking layer states through undo/redo
   -also just a good idea in general I think...
@@ -175,6 +128,62 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+
+::Handler Notes 12/2020::
+
+-PROBLEM can't respond to PFOutput
+  -SEltLabelChanges happen in backend and aren't avail in frontend
+    -currently we just query PFState and don't need the changes
+      -could stash a copy of changes to query in backend if we really needed them to update I guess
+    -render event can be triggered from changes so it always has access to most up to date version
+    -handleChanges method not possible I think...
+      -yes, if you do it in backend... then pass it to frontend...
+  -selection stored in back end and not accessible in frontend D:
+    -see above
+    -store handler in backend then D:? Annoying, next handler needs to be passed from frontend....
+      -more like override handler? idk...
+
+-invariants
+  -selection does not change throughout lifetime of a handler
+    -"handler lifetime" = chain of handlers returned by pHandelXYZ operations
+
+-handler creation/update cases
+  -uncaptured input
+  -new selection
+    -Ughh, selection isn't so good because you get a new selection for each change during a drag D:
+      DONE-could resolve by not generating new REltIds but I think this is not so good
+      -maybe OK now??
+      -just need to track REltId in handler I guess??
+  -how about handleChange :: ... -> SEltLabelChanges -> ...
+    -you will need this anyways to update manipulators after changes from PFOutput??
+
+
+-handler cancel cases
+  -escape cancel
+  -input falls through and new handler created thus cancelling oldo ne
+  -new selection creates new handler
+
+-handler input cases
+  -captures
+    -does nothing
+    -updates handler state
+    -returns different handler
+    -returns new selections
+    -return new event
+  -does not capture
+    -input possible passed to new handler
+      -in which case old handler gets canceled
+    -input gets consumed by non-handler operation
+      -may trigger events to update selection and create new handler
+    -input gets ignored
+
+-auto create handler based on selection when handler is cleared
+  -we need to do this so that if we start creating a new handler and then cancel, we want to get the default selection based handler back
+    -this is not ideal though because if we have sub modal handlers (e.g. text editting mode) that handler info gets loss
+      -I guess you could solve this with "lastHandler" or some kind of handler stack D:
+
+
 
 :::::::::::::::::::::::::::::::::::::::
 :::::PRE MEGA REFACTOR STUFF BELOW:::::
