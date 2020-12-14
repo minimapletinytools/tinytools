@@ -24,6 +24,7 @@ data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool --either we are manipulating start, or we are manipulating end
     , _simpleLineHandler_undoFirst  :: Bool
     , _simpleLineHandler_isCreation :: Bool
+    , _simpleLineHandler_isActive   :: Bool
   }
 
 instance Default SimpleLineHandler where
@@ -31,6 +32,7 @@ instance Default SimpleLineHandler where
       _simpleLineHandler_isStart = False
       , _simpleLineHandler_undoFirst = False
       , _simpleLineHandler_isCreation = False
+      , _simpleLineHandler_isActive = False
     }
 
 
@@ -42,7 +44,7 @@ findFirstLineManipulator (RelMouseDrag MouseDrag {..}) selection = assert (Seq.l
         else if _mouseDrag_to == _sLine_end then Just False
           else Nothing
 
-    Just x -> error $ "expected SLine inselection but got " <> show x <> " instead"
+    Just x -> error $ "expected SLine in selection but got " <> show x <> " instead"
 
 
 instance PotatoHandler SimpleLineHandler where
@@ -50,13 +52,18 @@ instance PotatoHandler SimpleLineHandler where
   pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
 
     MouseDragState_Down | _simpleLineHandler_isCreation -> Just $ def {
-        _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh -- nothing to do here
+        _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+            _simpleLineHandler_isActive = True
+          }
       }
     MouseDragState_Down -> r where
       mistart = findFirstLineManipulator rmd _potatoHandlerInput_selection
       nextslh = case mistart of
         Nothing -> Nothing -- did not click on manipulator, no capture
-        Just isstart -> Just $ SomePotatoHandler slh { _simpleLineHandler_isStart = isstart }
+        Just isstart -> Just $ SomePotatoHandler slh {
+            _simpleLineHandler_isStart = isstart
+            , _simpleLineHandler_isActive = False
+          }
       r = Just $ def {
           _potatoHandlerOutput_nextHandler = nextslh
         }
@@ -89,4 +96,4 @@ instance PotatoHandler SimpleLineHandler where
     else def
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   -- if undoFirst is true then we have already started dragging
-  pIsHandlerActive = _simpleLineHandler_undoFirst
+  pIsHandlerActive = _simpleLineHandler_isActive

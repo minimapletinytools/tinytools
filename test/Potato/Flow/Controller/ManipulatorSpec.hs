@@ -48,8 +48,9 @@ basicStateWith4Boxes = PFState {
       , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
-test_BoxHandler_basic :: Test
-test_BoxHandler_basic = constructTest "basic" basicStateWith4Boxes bs expected where
+
+test_BoxHandler_drag :: Test
+test_BoxHandler_drag = constructTest "drag" basicStateWith4Boxes bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -184,10 +185,60 @@ test_BoxHandler_restrict8 = constructTest "restrict8" basicStateWith4Boxes bs ex
     ]
 
 
+
+-- this should work with any initial state so long as default names aren't used
+test_Common_create :: Test
+test_Common_create = constructTest "create" basicStateWith4Boxes bs expected where
+  bs = [
+
+      EWCLabel "create <box>"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+
+
+
+      , EWCLabel "create <line>"
+      , EWCTool Tool_Line
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+    ]
+  expected = [
+      LabelCheck "create <box>"
+      , EqPredicate _everythingCombined_selectedTool Tool_Box
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<box>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltBox (SBox lbox _) -> lbox == LBox (V2 10 10) (V2 10 10)
+            _                     -> False
+          , numSelectedEltsEqualPredicate 1
+        ]
+
+      , LabelCheck "create <line>"
+      , EqPredicate _everythingCombined_selectedTool Tool_Line
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<line>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltLine (SLine start end _) -> start == (V2 10 10) && end == (V2 20 20)
+            _                    -> False
+          , numSelectedEltsEqualPredicate 1
+        ]
+
+
+
+
+    ]
+
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
     describe "BoxHandler" $ do
-      fromHUnitTest $ test_BoxHandler_basic
+      fromHUnitTest $ test_BoxHandler_drag
       fromHUnitTest $ test_BoxHandler_select_and_drag
       fromHUnitTest $ test_BoxHandler_restrict8
+    describe "Common" $ do
+      fromHUnitTest $ test_Common_create

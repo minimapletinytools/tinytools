@@ -213,7 +213,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
                   newHandler = case _everythingFrontend_selectedTool of
                     Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
-                    Tool_Line   -> SomePotatoHandler $ (def :: SimpleLineHandler)
+                    Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
                     Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
                     _           -> error "not implemented yet"
 
