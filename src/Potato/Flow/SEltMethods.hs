@@ -26,7 +26,9 @@ getSEltBox selt = case selt of
   SEltFolderEnd   -> Nothing
   -- TODO return canonical
   SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
-  SEltLine x      -> Just $ make_LBox_from_XYs (_sLine_start x) (_sLine_end x)
+  SEltLine x      -> Just $ union_LBox
+    (make_LBox_from_XYs (_sLine_start x) (_sLine_end x))
+    (make_LBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
   SEltText x      -> Just $ canonicalLBox_from_lBox_ $ _sText_box x
 
 type RenderFn = XY -> Maybe PChar

@@ -1,6 +1,7 @@
 
 
 ::NEWEST TODO::
+-need narrow phase selection methods, i.e. can't just do it using boxes
 IGNORE-make controller module for easier imports...
 DONE-finish simple line handler
 -test simple line handler

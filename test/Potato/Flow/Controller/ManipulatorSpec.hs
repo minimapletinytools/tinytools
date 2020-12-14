@@ -198,6 +198,60 @@ test_BoxHandler_restrict8 = constructTest "restrict8" basicState1 bs expected wh
         _                                  -> False
     ]
 
+test_LineHandler_drag :: Test
+test_LineHandler_drag = constructTest "drag" basicState1 bs expected where
+  bs = [
+      EWCTool Tool_Select
+
+      , EWCLabel "select sl1"
+      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 100) True MouseButton_Left [])
+
+      , EWCLabel "move end of line"
+      , EWCMouse (LMouseData (V2 0 110) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 120) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 120) True MouseButton_Left [])
+
+      , EWCLabel "select sl2"
+      , EWCMouse (LMouseData (V2 2 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 2 100) True MouseButton_Left [])
+
+      , EWCLabel "move start of line"
+      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 90) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 90) True MouseButton_Left [])
+    ]
+  expected = [
+      EqPredicate _everythingCombined_selectedTool Tool_Select
+
+      , LabelCheck "select sl1"
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_simpleLine False
+        ]
+
+      , LabelCheck "move end of line"
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , firstSuperSEltLabelPredicate (Just "sl1") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltLine (SLine start end _) -> start == (V2 0 100) && end == (V2 0 120)
+        _                                  -> False
+
+      , LabelCheck "select sl2"
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_simpleLine False
+        ]
+
+      , LabelCheck "move start of line"
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine True
+      , firstSuperSEltLabelPredicate (Just "sl2") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltLine (SLine start end _) -> start == (V2 0 90) && end == (V2 10 100)
+        _                                  -> False
+    ]
 
 
 -- this should work with any initial state so long as default names aren't used
@@ -254,5 +308,7 @@ spec = do
       fromHUnitTest $ test_BoxHandler_drag
       fromHUnitTest $ test_BoxHandler_select_and_drag
       fromHUnitTest $ test_BoxHandler_restrict8
+    describe "LineHandler" $ do
+      fromHUnitTest $ test_LineHandler_drag
     describe "Common" $ do
       fromHUnitTest $ test_Common_create

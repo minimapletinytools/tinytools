@@ -112,7 +112,7 @@ cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
 mouseDragDelta :: MouseDrag -> MouseDrag -> XY
 mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
-newtype RelMouseDrag = RelMouseDrag MouseDrag
+newtype RelMouseDrag = RelMouseDrag MouseDrag deriving (Show)
 
 toRelMouseDrag :: PFState -> MouseDrag -> RelMouseDrag
 toRelMouseDrag pFState md = RelMouseDrag $ md {

@@ -58,15 +58,14 @@ instance PotatoHandler SimpleLineHandler where
       }
     MouseDragState_Down -> r where
       mistart = findFirstLineManipulator rmd _potatoHandlerInput_selection
-      nextslh = case mistart of
+      r = case mistart of
         Nothing -> Nothing -- did not click on manipulator, no capture
-        Just isstart -> Just $ SomePotatoHandler slh {
-            _simpleLineHandler_isStart = isstart
-            , _simpleLineHandler_isActive = False
+        Just isstart -> Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _simpleLineHandler_isStart = isstart
+                , _simpleLineHandler_isActive = True
+              }
           }
-      r = Just $ def {
-          _potatoHandlerOutput_nextHandler = nextslh
-        }
     MouseDragState_Dragging -> Just r where
       -- TODO handle shift click using restrict8
       dragDelta = _mouseDrag_to - _mouseDrag_from
