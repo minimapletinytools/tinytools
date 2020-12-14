@@ -94,5 +94,4 @@ instance PotatoHandler SimpleLineHandler where
     then def { _potatoHandlerOutput_event = Just PFEUndo }
     else def
   pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
-  -- if undoFirst is true then we have already started dragging
   pIsHandlerActive = _simpleLineHandler_isActive

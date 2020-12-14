@@ -5,6 +5,8 @@ module Potato.Flow.Controller.Handler (
 
   handlerName_box
   , handlerName_simpleLine
+  , handlerName_cartesianLine
+  , handlerName_textArea
   , handlerName_pan
   , handlerName_select
   , handlerName_empty
@@ -14,6 +16,7 @@ module Potato.Flow.Controller.Handler (
   , PotatoHandlerInput(..)
   , HandlerRenderOutput(..)
   , SomePotatoHandler(..)
+  , captureWithNoChange
   , EmptyHandler(..)
 ) where
 
@@ -66,6 +69,10 @@ handlerName_box :: Text
 handlerName_box = "BoxHandler"
 handlerName_simpleLine :: Text
 handlerName_simpleLine = "SimpleLineHandler"
+handlerName_cartesianLine :: Text
+handlerName_cartesianLine = "CartesianLineHandler"
+handlerName_textArea :: Text
+handlerName_textArea = "TextAreaHandler"
 handlerName_pan :: Text
 handlerName_pan = "PanHandler"
 handlerName_select :: Text
@@ -112,6 +119,11 @@ class PotatoHandler h where
 
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
+
+captureWithNoChange :: (PotatoHandler h) => h -> PotatoHandlerOutput
+captureWithNoChange h = def {
+    _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
+  }
 
 instance Show SomePotatoHandler where
   show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h <> " active: " <> show (pIsHandlerActive h)

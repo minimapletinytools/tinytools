@@ -96,6 +96,7 @@ data PFOutput t = PFOutput {
 
 data PFTotalState = PFTotalState {
   _pFTotalState_workspace   :: PFWorkspace
+  -- TODO can this move to Controller? In this case, controller just does new elt event instead
   , _pFTotalState_clipboard :: [SEltLabel]
 }
 

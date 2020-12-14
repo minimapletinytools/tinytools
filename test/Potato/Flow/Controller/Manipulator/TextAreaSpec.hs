@@ -1,23 +1,24 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.TextAreaSpec
+module Potato.Flow.Controller.Manipulator.TextAreaSpec
   ( spec
   )
 where
 
-import           Relude                          hiding (empty, fromList)
+import           Relude                                      hiding (empty,
+                                                              fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit        (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit                    (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.TextArea
+import           Potato.Flow.Controller.Manipulator.TextArea
 
 import           Data.Default
-import qualified Data.Text.Zipper                as TZ
+import qualified Data.Text.Zipper                            as TZ
 
 testText1 :: Text
 testText1 = "aoeu\nhi\n12345wrapping"

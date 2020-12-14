@@ -180,7 +180,7 @@ instance PotatoHandler BoxHandler where
           boxRestrictedDelta = if shiftClick
             then restrict8 dragDelta
             else dragDelta
-          selectedBox = assert (computeSelectionType selection == SMTBox) $ Seq.index selection 0
+          selectedBox = assert (computeSelectionType selection == SMTBox) $ selectionToSuperSEltLabel selection
 
           -- for creating new elt
           newEltPos = lastPositionInSelection selection
