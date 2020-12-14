@@ -12,6 +12,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
@@ -23,6 +24,8 @@ import qualified Data.List                      as L
 import           Data.Maybe
 import qualified Data.Sequence                  as Seq
 
+
+
 selectMagic :: PFState -> REltIdMap LayerPos -> BroadPhaseState -> RelMouseDrag -> Selection
 selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_LBox_from_XYs _mouseDrag_to _mouseDrag_from
@@ -30,7 +33,18 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   selectBox = LBox pos' (sz' + V2 1 1)
   boxSize = lBox_area selectBox
   singleClick = boxSize == 1
-  selectedRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
+
+  isboxshaped = \case
+    SEltLabel _ (SEltBox _) -> True
+    SEltLabel _ (SEltText _) -> True
+    _ -> False
+
+  unculledRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
+  selectedRids = flip filter unculledRids $ \rid -> case IM.lookup rid (_pFState_directory pFState) of
+    Nothing -> error $ "expected to find rid in directory " <> show rid
+    Just seltl | isboxshaped seltl -> True
+    Just (SEltLabel _ selt) -> doesSEltIntersectBox selectBox selt
+
   mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
   lps' = mapToLp selectedRids
   lps = if singleClick

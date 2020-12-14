@@ -1,10 +1,12 @@
 
 
 ::NEWEST TODO::
+-click + drag needs to CTagBoundingBox and not CTagBox or it will only work on SBox
 -need narrow phase selection methods, i.e. can't just do it using boxes
+  -make sure to test :)
 IGNORE-make controller module for easier imports...
 DONE-finish simple line handler
--test simple line handler
+DONE-test simple line handler
 -finish text area handler
 -add test to ensure REltId does not change from undofirst
 -figure out how you want to handle layer input using handlers

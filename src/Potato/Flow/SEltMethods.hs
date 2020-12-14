@@ -2,6 +2,7 @@
 
 module Potato.Flow.SEltMethods (
   getSEltBox
+  , doesSEltIntersectBox
   , updateFnFromController
   , RenderFn
   , SEltDrawer(..)
@@ -30,6 +31,18 @@ getSEltBox selt = case selt of
     (make_LBox_from_XYs (_sLine_start x) (_sLine_end x))
     (make_LBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
   SEltText x      -> Just $ canonicalLBox_from_lBox_ $ _sText_box x
+
+doesSEltIntersectBox :: LBox -> SElt -> Bool
+doesSEltIntersectBox lbox selt = case selt of
+  SEltNone                     -> False
+  SEltFolderStart              -> False
+  SEltFolderEnd                -> False
+  SEltBox x                    -> does_LBox_intersect lbox (_sBox_box x)
+  SEltText x                   -> does_LBox_intersect lbox (_sText_box x)
+  -- TODO this is wrong, do it correctly...
+  SEltLine (SLine start end style) -> does_LBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SLine start end style)))
+
+
 
 type RenderFn = XY -> Maybe PChar
 
