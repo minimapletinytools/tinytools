@@ -48,8 +48,8 @@ basicStateWith4Boxes = PFState {
       , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
-basic_sbox_test :: Test
-basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs expected where
+test_BoxHandler_basic :: Test
+test_BoxHandler_basic = constructTest "basic" basicStateWith4Boxes bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -87,7 +87,7 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select b2"
-      , checkHandlerName handlerName_box
+      , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "resize tl corner b2"
@@ -126,8 +126,9 @@ basic_sbox_test = constructTest "manipulator - sbox" basicStateWith4Boxes bs exp
         _                     -> False
     ]
 
-select_and_drag_sbox_test :: Test
-select_and_drag_sbox_test = constructTest "manipulator - select and drag" basicStateWith4Boxes bs expected where
+-- TODO test this on non-SBox stuff too
+test_BoxHandler_select_and_drag :: Test
+test_BoxHandler_select_and_drag = constructTest "select and drag" basicStateWith4Boxes bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -141,7 +142,7 @@ select_and_drag_sbox_test = constructTest "manipulator - select and drag" basicS
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select + drag b2"
-      , checkHandlerName handlerName_box
+      , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox lbox _) -> lbox == LBox (V2 11 11) (V2 5 5)
@@ -151,10 +152,10 @@ select_and_drag_sbox_test = constructTest "manipulator - select and drag" basicS
 
 
 -- TODO
---select_and_drag_bbox_test
+--test_BoxHandler_boundingbox
 
-restrict8_test :: Test
-restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs expected where
+test_BoxHandler_restrict8 :: Test
+test_BoxHandler_restrict8 = constructTest "restrict8" basicStateWith4Boxes bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -171,12 +172,12 @@ restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs
       EqPredicate _everythingCombined_selectedTool Tool_Select
 
       , LabelCheck "select b2"
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "resize tl corner b2 while holding shift"
-      , AlwaysPass
-      , AlwaysPass
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _) -> x == 10 && y == 1
         _                                  -> False
@@ -186,7 +187,7 @@ restrict8_test = constructTest "manipulator - restrict8" basicStateWith4Boxes bs
 spec :: Spec
 spec = do
   describe "Manipulator" $ do
-    return ()
-    --fromHUnitTest $ basic_sbox_test
-    --fromHUnitTest $ select_and_drag_sbox_test
-    --fromHUnitTest $ restrict8_test
+    describe "BoxHandler" $ do
+      fromHUnitTest $ test_BoxHandler_basic
+      fromHUnitTest $ test_BoxHandler_select_and_drag
+      fromHUnitTest $ test_BoxHandler_restrict8
