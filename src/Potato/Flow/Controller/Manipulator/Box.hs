@@ -183,8 +183,7 @@ instance PotatoHandler BoxHandler where
           selectedBox = assert (computeSelectionType selection == SMTBox) $ Seq.index selection 0
 
           -- for creating new elt
-          lastSelectionLps = fmap snd3 $ selection
-          newEltPos = if Seq.null lastSelectionLps then 0 else L.minimum lastSelectionLps
+          newEltPos = lastPositionInSelection selection
 
           -- for manipulate
           controller = CTagBox :=> (Identity $ CBox {

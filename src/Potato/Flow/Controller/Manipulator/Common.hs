@@ -5,6 +5,8 @@ module Potato.Flow.Controller.Manipulator.Common (
   , computeSelectionType
   , restrict4
   , restrict8
+  , selectionToSuperSEltLabel
+  , lastPositionInSelection
 ) where
 
 import           Relude
@@ -13,6 +15,11 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+
+import           Control.Exception
+import qualified Data.List                    as L
+import qualified Data.Sequence                as Seq
+import           Data.Tuple.Extra
 
 data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
 
@@ -40,3 +47,11 @@ restrict8 (V2 x y) = r where
     else if normy*2 > normx
       then (V2 0 y)
       else (V2 x y)
+
+selectionToSuperSEltLabel :: Selection -> SuperSEltLabel
+selectionToSuperSEltLabel selection = assert (Seq.length selection == 1) $ Seq.index selection 0
+
+lastPositionInSelection :: Selection -> LayerPos
+lastPositionInSelection selection = r where
+  lastSelectionLps = fmap snd3 $ selection
+  r = if Seq.null lastSelectionLps then 0 else L.minimum lastSelectionLps
