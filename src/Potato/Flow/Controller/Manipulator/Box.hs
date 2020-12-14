@@ -147,65 +147,68 @@ instance Default BoxHandler where
       , _boxHandler_active = False
     }
 
+makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> PFEventTag
+makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
+  selection = _potatoHandlerInput_selection
+  RelMouseDrag MouseDrag {..} = rmd
+  dragDelta = _mouseDrag_to - _mouseDrag_from
+  shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
+
+  -- TODO may change handle when dragging through axis
+  --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
+  m = bht
+
+  boxRestrictedDelta = if shiftClick
+    then restrict8 dragDelta
+    else dragDelta
+  selectedBox = selectionToSuperSEltLabel selection
+
+  controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
+      _cBoundingBox_deltaBox = makeDeltaBox m boxRestrictedDelta
+    })
+
+  op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
-  pHandleMouse bh@BoxHandler {..} PotatoHandlerInput {..} rmd = let
-      pfs = _potatoHandlerInput_pFState
-      selection = _potatoHandlerInput_selection
-      RelMouseDrag MouseDrag {..} = rmd
-      dragDelta = _mouseDrag_to - _mouseDrag_from
-      shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
-    in case _mouseDrag_state of
-        MouseDragState_Down | _boxHandler_isCreation -> Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
-          }
-        MouseDragState_Down -> r where
-          mmi = findFirstMouseManipulator rmd selection
-          r = case mmi of
-            -- didn't click on a manipulator, don't capture input
-            Nothing -> Nothing
-            Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
-              newbh = bh {
-                  _boxHandler_handle = toEnum mi
-                  , _boxHandler_active = True
-                }
-
-        MouseDragState_Dragging -> Just r where
-
-          -- TODO may change handle when dragging through axis
-          --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
-
-          m = _boxHandler_handle
-
-          boxRestrictedDelta = if shiftClick
-            then restrict8 dragDelta
-            else dragDelta
-          selectedBox = assert (computeSelectionType selection == SMTBox) $ selectionToSuperSEltLabel selection
-
-          -- for creating new elt
-          newEltPos = lastPositionInSelection selection
-
-          -- for manipulate
-          controller = CTagBox :=> (Identity $ CBox {
-              _cBox_deltaBox = Just $ makeDeltaBox m boxRestrictedDelta
-              , _cBox_deltaStyle = Nothing
-            })
-
-          op = if _boxHandler_isCreation
-            then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
-            else PFEManipulate (_boxHandler_undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
-
-          newbh = bh { _boxHandler_undoFirst = True }
-
-          r = def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
-              , _potatoHandlerOutput_event = Just op
+  pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+    MouseDragState_Down | _boxHandler_isCreation -> Just $ def {
+        _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
+      }
+    MouseDragState_Down -> r where
+      mmi = findFirstMouseManipulator rmd _potatoHandlerInput_selection
+      r = case mmi of
+        -- didn't click on a manipulator, don't capture input
+        Nothing -> Nothing
+        Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
+          newbh = bh {
+              _boxHandler_handle = toEnum mi
+              , _boxHandler_active = True
             }
 
-        MouseDragState_Up -> Just def
-          -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
+    MouseDragState_Dragging -> Just r where
+      dragDelta = _mouseDrag_to - _mouseDrag_from
+      newEltPos = lastPositionInSelection _potatoHandlerInput_selection
 
-        MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
+      -- TODO do I use this for box creation? Prob want to restrictDiag or something though
+      --shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
+      --boxRestrictedDelta = if shiftClick then restrict8 dragDelta else dragDelta
+
+      op = if _boxHandler_isCreation
+        then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
+        else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
+
+      newbh = bh { _boxHandler_undoFirst = True }
+
+      r = def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
+          , _potatoHandlerOutput_event = Just op
+        }
+
+    MouseDragState_Up -> Just def
+      -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
+
+    MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
   -- TODO keyboard movement
   pHandleKeyboard _ _ _ = Nothing
