@@ -10,14 +10,6 @@ module Potato.Flow.Types (
   , SEltLabelChanges
   , SEltLabelChangesWithLayerPos
 
-  -- * manipulators
-  , MNone
-  , MBox(..)
-  , MLine(..)
-  , MText(..)
-  , MBoundingBox(..)
-  , MTag(..)
-  , Manipulator
   -- * controllers
   , CRename(..)
   , CBox(..)
@@ -53,47 +45,6 @@ type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
 type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
-
--- TODO DELETE
-type MNone = ()
-
-data MBox = MBox {
-  _mBox_target :: REltId
-  , _mBox_box  :: LBox
-} deriving (Eq, Show)
-
-data MLine = MLine {
-  _mLine_target  :: REltId
-  , _mLine_start :: XY
-  , _mLine_end   :: XY
-} deriving (Eq, Show)
-
-data MText = MText {
-  _mText_target :: REltId
-  , _mText_box  :: LBox
-  , _mText_text :: Text
-} deriving (Eq, Show)
-
-data MBoundingBox = MBoundingBox {
-  _mBoundingBox_bounded_targets :: NonEmpty (REltId, LBox)
-} deriving (Eq, Show)
-
--- TODO DELETE MTag stuff
-data MTag a where
-  MTagNone :: MTag MNone
-  MTagBox :: MTag MBox
-  MTagLine :: MTag MLine
-  MTagText :: MTag MText
-  MTagBoundingBox :: MTag MBoundingBox
-
-deriveGEq      ''MTag
-deriveGCompare ''MTag
-deriveGShow    ''MTag
-deriveArgDict  ''MTag
-
-
-
-
 
 -- | (old text, new text)
 type DeltaText = (Text,Text)
