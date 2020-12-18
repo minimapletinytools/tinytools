@@ -28,6 +28,10 @@ import qualified Data.Sequence                             as Seq
 import qualified Data.Text.Zipper                          as TZ
 import           Data.Tuple.Extra
 
+getSText :: Selection -> SText
+getSText selection = case selectionToSuperSEltLabel selection of
+  (_,_,SEltLabel _ (SEltText stext)) -> stext
+  (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
 
 data TextAreaInputState = TextAreaInputState {
   _textAreaInputState_original   :: Text -- needed to properly create DeltaText for undo
@@ -106,20 +110,24 @@ data TextAreaHandler = TextAreaHandler {
   }
 
 makeTextAreaHandler :: Selection -> RelMouseDrag -> TextAreaHandler
-makeTextAreaHandler selection rmd = case selectionToSuperSEltLabel selection of
-  (_,_,SEltLabel _ (SEltText stext)) -> TextAreaHandler {
+makeTextAreaHandler selection rmd = TextAreaHandler {
       _textAreaHandler_isActive = False
-      , _textAreaHandler_state = makeTextAreaInputState stext rmd
+      , _textAreaHandler_state = makeTextAreaInputState (getSText selection) rmd
     }
-  (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
 
+updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
+updateTextAreaHandlerState selection tah@TextAreaHandler {..} = r where
+  stext = getSText selection
+  -- TODO
+  r = tah {
+    _textAreaHandler_state = undefined
+  }
 
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
-  pHandleMouse tah@TextAreaHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      stext = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-        (_,_,SEltLabel _ (SEltText stext)) -> stext
-        (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
+  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+      tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
+      stext = getSText _potatoHandlerInput_selection
       validateFirst = assert (checkTextAreaHandlerStateIsConsistent _textAreaHandler_state stext)
     in validateFirst $ case _mouseDrag_state of
       MouseDragState_Down -> r where
@@ -144,11 +152,13 @@ instance PotatoHandler TextAreaHandler where
       _ -> error "unexpected mouse state passed to handler"
 
 
-  pHandleKeyboard tah@TextAreaHandler {..} PotatoHandlerInput {..} (KeyboardData k mods) = r where
+  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = r where
+    tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
     -- TODO make this work...
     r = Just $ captureWithNoChange tah
 
   -- TODO figure this out
+  -- ok maybe I don't actually need tihs
   --pSelectionUpdated tah@TextAreaHandler {..} PotatoHandlerInput {..} =
 
   -- in this case, cancel simply goes back to box handler and does not undo the operation

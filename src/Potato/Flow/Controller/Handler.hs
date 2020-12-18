@@ -107,6 +107,7 @@ class PotatoHandler h where
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
 
   -- TODO something like this?
+  -- I guess you don't need this, you can always check the selection for changes on each input, it's less efficient only in non-manipulate cases
   --pSelectionUpdated :: h -> PotatoHandlerInput -> PotatoHandlerOutput
 
   -- TODO there are actually two types of cancel, escape key cancel and click outside cancel
