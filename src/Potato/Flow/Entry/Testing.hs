@@ -103,11 +103,10 @@ setup_network ev = mdo
         pFState <- sample beh_pFState
         let (rid, _, SEltLabel _ selt) = fromJust . pFState_getSuperSEltByPos pFState $ p
         let
-          cbox = CBox {
-              _cBox_deltaBox    = Just $ DeltaLBox (V2 1 1) (V2 5 5)
-              , _cBox_deltaStyle = Nothing
+          cbox = CBoundingBox {
+              _cBoundingBox_deltaBox    = DeltaLBox (V2 1 1) (V2 5 5)
             }
-        return . Just $ (False, selt `deepseq` IM.singleton rid (CTagBox ==> cbox))
+        return . Just $ (False, selt `deepseq` IM.singleton rid (CTagBoundingBox ==> cbox))
       _              -> return Nothing
     resizeCanvasEv = fforMaybe ev $ \case
       FCResizeCanvas x -> Just x
@@ -282,23 +281,20 @@ randomActionFCmd doundo stree = do
                 CRename {
                   _cRename_deltaLabel = (name, newName)
                 }
+            -- NOTE this test was written back when each SElt type had it's own controller type, so it's not testing everything.
             _ -> case selt of
-              SEltBox _ -> return $ (,) pos $ CTagBox ==>
-                CBox {
-                  _cBox_deltaBox = Just $ DeltaLBox p1 p2
-                  , _cBox_deltaStyle = Nothing
+              SEltBox _ -> return $ (,) pos $ CTagBoundingBox ==>
+                CBoundingBox {
+                  _cBoundingBox_deltaBox = DeltaLBox p1 p2
                 }
               SEltLine _ -> return $ (,) pos $ CTagLine ==>
                 CLine {
                   _cLine_deltaStart = Just (DeltaXY p1)
                   , _cLine_deltaEnd = Just (DeltaXY p2)
-                  , _cLine_deltaStyle = Nothing
                 }
               SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
                 CText {
-                  _cText_deltaBox = Just $ DeltaLBox p1 p2
-                  , _cText_deltaText = Just (before, "meow meow")
-                  , _cText_deltaTextStyle = Nothing
+                  _cText_deltaText = (before, "meow meow")
                 }
               -- TODO maybe add a CTagDoNothing?
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {

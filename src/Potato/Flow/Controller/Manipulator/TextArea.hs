@@ -78,8 +78,7 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
   controller = CTagText :=> (Identity $ CText {
-      _cText_deltaBox = Nothing
-      , _cText_deltaText = Just (_textAreaInputState_original tais, TZ.value newZip)
+      _cText_deltaText = (_textAreaInputState_original tais, TZ.value newZip)
     })
   mop = if changed
     then Just $ PFEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])

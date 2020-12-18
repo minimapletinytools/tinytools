@@ -12,11 +12,12 @@ module Potato.Flow.Types (
 
   -- * controllers
   , CRename(..)
-  , CBox(..)
   , CLine(..)
   , CText(..)
   , CBoundingBox(..)
   , CTag(..)
+  , CTextStyle(..)
+  , CSuperStyle(..)
   , Controller
 
   , DeltaText
@@ -86,105 +87,46 @@ instance Delta SEltLabel CRename where
   plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_deltaLabel) selt
   minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_deltaLabel) selt
 
--- TODO DELETE not needed, just use CBoundingBox
-data CBox = CBox {
-  _cBox_deltaBox     :: Maybe DeltaLBox
-  , _cBox_deltaStyle :: Maybe DeltaSuperStyle
-} deriving (Eq, Generic, Show)
-
-instance NFData CBox
-
-instance Default CBox where
-  def = CBox Nothing Nothing
-
-instance Delta SBox CBox where
-  plusDelta SBox {..} CBox {..} = SBox {
-      _sBox_box   = case _cBox_deltaBox of
-        Nothing -> _sBox_box
-        Just d  -> plusDelta _sBox_box d
-      , _sBox_style = case _cBox_deltaStyle of
-        Nothing -> _sBox_style
-        Just d  -> plusDelta _sBox_style d
-    }
-  minusDelta SBox {..} CBox {..} = SBox {
-      _sBox_box   = case _cBox_deltaBox of
-        Nothing -> _sBox_box
-        Just d  -> minusDelta _sBox_box d
-        , _sBox_style = case _cBox_deltaStyle of
-          Nothing -> _sBox_style
-          Just d  -> minusDelta _sBox_style d
-    }
-
-
--- TODO define DeltaXY?
 data CLine = CLine {
-  _cLine_deltaStart   :: Maybe DeltaXY
-  , _cLine_deltaEnd   :: Maybe DeltaXY
-  , _cLine_deltaStyle :: Maybe DeltaSuperStyle
+  _cLine_deltaStart :: Maybe DeltaXY
+  , _cLine_deltaEnd :: Maybe DeltaXY
 } deriving (Eq, Generic, Show)
 
 instance NFData CLine
 
 instance Default CLine where
-  def = CLine Nothing Nothing Nothing
+  def = CLine Nothing Nothing
 
 instance Delta SLine CLine where
-  plusDelta SLine {..} CLine {..} = SLine {
+  plusDelta sline@SLine {..} CLine {..} = sline {
       _sLine_start   = case _cLine_deltaStart of
         Nothing -> _sLine_start
         Just d  -> plusDelta _sLine_start d
       , _sLine_end   =  case _cLine_deltaEnd of
         Nothing -> _sLine_end
         Just d  -> plusDelta _sLine_end d
-      , _sLine_style = case _cLine_deltaStyle of
-        Nothing -> _sLine_style
-        Just d  -> plusDelta _sLine_style d
     }
-  minusDelta SLine {..} CLine {..} = SLine {
+  minusDelta sline@SLine {..} CLine {..} = sline {
       _sLine_start   = case _cLine_deltaStart of
         Nothing -> _sLine_start
         Just d  -> minusDelta _sLine_start d
         , _sLine_end   =  case _cLine_deltaEnd of
           Nothing -> _sLine_end
           Just d  -> minusDelta _sLine_end d
-        , _sLine_style = case _cLine_deltaStyle of
-          Nothing -> _sLine_style
-          Just d  -> minusDelta _sLine_style d
     }
 
 data CText = CText {
-  _cText_deltaBox         :: Maybe DeltaLBox
-  , _cText_deltaText      :: Maybe DeltaText
-  , _cText_deltaTextStyle :: Maybe DeltaTextStyle
+  _cText_deltaText      :: DeltaText
 } deriving (Eq, Generic, Show)
 
 instance NFData CText
 
-instance Default CText where
-  def = CText Nothing Nothing Nothing
-
 instance Delta SText CText where
-  plusDelta SText {..} CText {..} = SText {
-      _sText_box   = case _cText_deltaBox of
-        Nothing -> _sText_box
-        Just d  -> plusDelta _sText_box d
-      , _sText_text   = case _cText_deltaText of
-        Nothing -> _sText_text
-        Just d  -> plusDelta _sText_text d
-      , _sText_style = case _cText_deltaTextStyle of
-        Nothing -> _sText_style
-        Just d  -> plusDelta _sText_style d
+  plusDelta stext@SText {..} CText {..} = stext {
+      _sText_text   = plusDelta _sText_text _cText_deltaText
     }
-  minusDelta SText {..} CText {..} = SText {
-      _sText_box   = case _cText_deltaBox of
-        Nothing -> _sText_box
-        Just d  -> minusDelta _sText_box d
-      , _sText_text   = case _cText_deltaText of
-        Nothing -> _sText_text
-        Just d  -> minusDelta _sText_text d
-      , _sText_style = case _cText_deltaTextStyle of
-        Nothing -> _sText_style
-        Just d  -> minusDelta _sText_style d
+  minusDelta stext@SText {..} CText {..} = stext {
+      _sText_text   = minusDelta _sText_text _cText_deltaText
     }
 
 -- | transforms object based on a reference point
@@ -205,7 +147,6 @@ instance NFData CTextStyle
 
 data CTag a where
   CTagRename :: CTag CRename
-  CTagBox :: CTag CBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText
   CTagBoundingBox :: CTag CBoundingBox
@@ -224,12 +165,11 @@ type Controller = DS.DSum CTag Identity
 
 instance NFData Controller where
   rnf (CTagRename DS.:=> Identity a)      = rnf a
-  rnf (CTagBox DS.:=> Identity a)         = rnf a
   rnf (CTagLine DS.:=> Identity a)        = rnf a
   rnf (CTagText DS.:=> Identity a)        = rnf a
   rnf (CTagBoundingBox DS.:=> Identity a) = rnf a
-
-
+  rnf (CTagSuperStyle DS.:=> Identity a)  = rnf a
+  rnf (CTagTextStyle DS.:=> Identity a)   = rnf a
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller
