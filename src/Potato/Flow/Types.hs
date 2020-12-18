@@ -57,7 +57,6 @@ instance Delta Text DeltaText where
 
 -- TODO
 data DeltaSuperStyle = DeltaSuperStyle deriving (Eq, Generic, Show)
-
 instance NFData DeltaSuperStyle
 
 -- TODO
@@ -65,17 +64,14 @@ instance Delta SuperStyle DeltaSuperStyle where
   plusDelta ss _ = ss
   minusDelta ss _ = ss
 
-
 -- TODO
 data DeltaTextStyle = DeltaTextStyle deriving (Eq, Generic, Show)
-
 instance NFData DeltaTextStyle
 
 -- TODO
 instance Delta TextStyle DeltaTextStyle where
   plusDelta ts _ = ts
   minusDelta ts _ = ts
-
 
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
