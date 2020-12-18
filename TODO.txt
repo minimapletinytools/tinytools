@@ -1,20 +1,16 @@
 
--new controller type sketch
-  -controllers are universal
-    -change style
-    -change size (erhm, make sure your mindful about handling undo operations accross diff types?)
-    -per-SElt controllers
-  -if controller is applied to incompatible type, assert for now
-
 ::NEWEST TODO::
--click + drag needs to CTagBoundingBox and not CTagBox or it will only work on SBox
-  IGNORE-maybe easier just to make BoundingBoxHandler
-    -ignore this, see new controller sketch
+-handle updating text zipper when the stext lbox gets updated
+
+-figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
+  -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
--copy pasta test
+-copy pasta
+  -copy pasta test
+  -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
 -finish text area handler
-  -kind of want to combine BoxHandler functionality D:
+  DONE-kind of want to combine BoxHandler functionality D:
     -if we don't allow box manipulation in text edit mode then we can have Boxhandler return a TextHandler :O
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
@@ -53,6 +49,15 @@
 -cartesian lines spec
 -attached line spec
 
+DONE-new controller type sketch
+  -controllers are universal
+    -change style
+    -change size (erhm, make sure your mindful about handling undo operations across diff types?)
+    -per-SElt controllers
+  -if controller is applied to incompatible type, assert for now
+IGNORE-click + drag needs to CTagBoundingBox and not CTagBox or it will only work on SBox
+  IGNORE-maybe easier just to make BoundingBoxHandler
+    DONE-ignore this, see new controller sketch
 IGNORE-make controller module for easier imports...
 DONE-finish simple line handler
 DONE-test simple line handler

@@ -424,8 +424,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                   Just (Just (lp, sseltl)) -> Just (rid, lp, sseltl)
               else Seq.fromList newlyCreatedSEltls
 
-
-
           return $ everything' {
               -- render
               _everythingBackend_broadPhaseState = newBroadPhaseState
@@ -436,6 +434,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
 
               , _everythingBackend_handlerFromSelection = maybeSetHandler newSelection
+              -- TODO possibly also call pSelectionUpdated
+              -- you'll need to compare the new selection with the previous one and only call if there were actually changes
 
             }
         _          -> return $ everything'

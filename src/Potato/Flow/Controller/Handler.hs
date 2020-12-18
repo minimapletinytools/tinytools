@@ -58,6 +58,10 @@ data PotatoHandlerInput = PotatoHandlerInput {
     _potatoHandlerInput_pFState       :: PFState
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
     , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
+
+    -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
+    -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
+    -- this is sort of just how it is right now, I wish it weren't so :_(
     , _potatoHandlerInput_selection   :: Selection
   }
 
@@ -101,6 +105,12 @@ class PotatoHandler h where
   -- NOTE, Escape key is never passed in, instead that goes to pHandleCancel
   -- return type of Nothing means input is not captured
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
+
+  -- TODO something like this?
+  --pSelectionUpdated :: h -> PotatoHandlerInput -> PotatoHandlerOutput
+
+  -- TODO there are actually two types of cancel, escape key cancel and click outside cancel
+  -- we want different behavior in these two cases in the case of text area
   pHandleCancel :: h -> PotatoHandlerInput -> PotatoHandlerOutput
 
   -- active manipulators will not be overwritten by new handlers via selection from backend
