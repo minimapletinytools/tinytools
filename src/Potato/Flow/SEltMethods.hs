@@ -97,9 +97,8 @@ getDrawer selt = case selt of
 
 modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
 modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
-  SEltBox SBox {..}  -> SEltBox $ SBox {
-      _sBox_box = modifyDelta isDo _sBox_box _cBoundingBox_deltaBox
-      , _sBox_style = _sBox_style
+  SEltBox sbox  -> SEltBox $ sbox {
+      _sBox_box = modifyDelta isDo (_sBox_box sbox) _cBoundingBox_deltaBox
     }
   -- TODO handle resize parameter
   SEltLine SLine {..} -> SEltLine $ SLine {
@@ -109,10 +108,8 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
         (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sLine_style = _sLine_style
     }
-  SEltText SText {..} -> SEltText $ SText {
-      _sText_box     = modifyDelta isDo _sText_box _cBoundingBox_deltaBox
-      , _sText_text  = _sText_text
-      , _sText_style = _sText_style
+  SEltText stext -> SEltText $ stext {
+      _sText_box     = modifyDelta isDo (_sText_box stext) _cBoundingBox_deltaBox
     }
   x          -> x
 

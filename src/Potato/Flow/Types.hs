@@ -76,13 +76,6 @@ instance Delta TextStyle DeltaTextStyle where
   minusDelta ts _ = ts
 
 
-
-
--- TODO you can prob delete this now
--- NOTE, this is no longer used in Reflex event so DSum is not necessary, but there's no reason to change it
-type Manipulator = DS.DSum MTag Identity
-
-
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
 } deriving (Eq, Generic, Show)
@@ -93,6 +86,7 @@ instance Delta SEltLabel CRename where
   plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_deltaLabel) selt
   minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_deltaLabel) selt
 
+-- TODO DELETE not needed, just use CBoundingBox
 data CBox = CBox {
   _cBox_deltaBox     :: Maybe DeltaLBox
   , _cBox_deltaStyle :: Maybe DeltaSuperStyle
@@ -201,12 +195,24 @@ data CBoundingBox = CBoundingBox {
 
 instance NFData CBoundingBox
 
+data CSuperStyle = CSuperStyle DeltaSuperStyle deriving (Eq, Generic, Show)
+
+instance NFData CSuperStyle
+
+data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
+
+instance NFData CTextStyle
+
 data CTag a where
   CTagRename :: CTag CRename
   CTagBox :: CTag CBox
   CTagLine :: CTag CLine
   CTagText :: CTag CText
   CTagBoundingBox :: CTag CBoundingBox
+
+  CTagSuperStyle :: CTag CSuperStyle
+  CTagTextStyle :: CTag CTextStyle
+
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
