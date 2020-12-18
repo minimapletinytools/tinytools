@@ -1,17 +1,15 @@
 
 ::NEWEST TODO::
--handle updating text zipper when the stext lbox gets updated
-
--figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
-  -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
+-TextArea stuff
+  -handle updating text zipper when the stext lbox gets updated
+  -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
+    -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
+  -clear out pSelectionChanged comments
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 -copy pasta
   -copy pasta test
   -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
--finish text area handler
-  DONE-kind of want to combine BoxHandler functionality D:
-    -if we don't allow box manipulation in text edit mode then we can have Boxhandler return a TextHandler :O
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag
@@ -31,10 +29,21 @@
   -drag select
   -decide where to store layer state
   DONE-layer drag interface (mouse position or more abstract?)
--text manipulators
+-broadphase tests
+-connect RenderedCanvas
+-cartesian lines spec
+-attached line spec
+-insert mode text area spec
+  -(how to handle resize??)
+
+
+DONE/IGNORE-finish text area handler
+  DONE-kind of want to combine BoxHandler functionality D:
+    -if we don't allow box manipulation in text edit mode then we can have Boxhandler return a TextHandler :O
+DONE/IGNORE-text manipulators
   DONE-idk D: make your own zip, how bad could it be
   DONE-decide how to handle wrap/overflow
-  -selecting text defines the text mainpulator that covers the whole place
+  DONE/IGNORE-selecting text defines the text mainpulator that covers the whole place
     -if not selected
       -click drag selects and drags
       -click selects
@@ -44,11 +53,6 @@
         -click drag does selects text
       -if not edit mode
         -click drag drags
--broadphase tests
--connect RenderedCanvas
--cartesian lines spec
--attached line spec
-
 DONE-new controller type sketch
   -controllers are universal
     -change style

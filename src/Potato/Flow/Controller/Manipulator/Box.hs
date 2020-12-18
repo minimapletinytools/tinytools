@@ -139,14 +139,6 @@ data BoxHandler = BoxHandler {
 
   }
 
-instance Default BoxHandler where
-  def = BoxHandler {
-      _boxHandler_handle       = BH_BR -- does this matter?
-      , _boxHandler_undoFirst  = False
-      , _boxHandler_isCreation = False
-      , _boxHandler_active = False
-    }
-
 makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> PFEventTag
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   selection = _potatoHandlerInput_selection
@@ -168,6 +160,16 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
     })
 
   op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+
+instance Default BoxHandler where
+  def = BoxHandler {
+      _boxHandler_handle       = BH_BR -- does this matter?
+      , _boxHandler_undoFirst  = False
+      , _boxHandler_isCreation = False
+      , _boxHandler_active = False
+      -- TODO whatever
+      --, _boxHandler_wasDragged = False
+    }
 
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
@@ -206,6 +208,8 @@ instance PotatoHandler BoxHandler where
         }
 
     MouseDragState_Up -> Just def
+      -- TODO click release on same spot + text area selection -> return text area handler
+
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
