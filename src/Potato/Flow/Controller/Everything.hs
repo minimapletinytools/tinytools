@@ -24,7 +24,9 @@ import           Potato.Flow.State
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
 import qualified Data.Sequence                  as Seq
+import qualified Data.IntMap                  as IM
 import           Potato.Flow.Entry              (PFEventTag)
+import Data.Aeson
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
@@ -117,3 +119,17 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
 
     , _everythingCombined_pFState = pfs
   }
+
+
+data ControllerMeta = ControllerMeta {
+  _controllerMeta_pan :: XY
+  , _controllerMeta_layers :: LayerMetaMap
+  , _controllerMeta_layerScrollPos :: Int
+} deriving (Show, Eq, Generic)
+
+instance FromJSON ControllerMeta
+instance ToJSON ControllerMeta
+
+-- TODO
+updateFrontEndFromMeta :: ControllerMeta -> EverythingFrontend -> EverythingFrontend
+updateFrontEndFromMeta = undefined
