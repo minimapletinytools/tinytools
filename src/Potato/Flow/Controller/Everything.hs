@@ -9,6 +9,7 @@ module Potato.Flow.Controller.Everything (
   , emptyEverythingBackend
   , EverythingCombined_DEBUG(..)
   , combineEverything
+  , ControllerMeta(..)
 
 ) where
 
@@ -52,6 +53,7 @@ everythingFrontend_isHandlerActive EverythingFrontend {..} = case _everythingFro
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection              :: Selection
   , _everythingBackend_broadPhaseState      :: BroadPhaseState
+  -- TODO DELETE this doesn't belong here because we don't know the rendered region
   , _everythingBackend_renderedCanvas       :: RenderedCanvas
   , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
 } deriving (Show)

@@ -1,5 +1,6 @@
 
 ::NEWEST TODO::
+-load test
 -test vty with non trivial initial state
   -maybe expose some test helpers for vty
 -figure out how you want to handle layer input using handlers

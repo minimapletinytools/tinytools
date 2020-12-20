@@ -57,6 +57,7 @@ everything_network_app
 everything_network_app pfs (AppIn _ ev) = do
   let ewc = EverythingWidgetConfig  {
       _everythingWidgetConfig_initialState = pfs
+      , _everythingWidgetConfig_load = never
       , _everythingWidgetConfig_setDebugLabel = fforMaybe ev $ \case
         EWCLabel x -> Just x
         _ -> Nothing

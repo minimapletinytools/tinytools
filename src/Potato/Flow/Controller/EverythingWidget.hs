@@ -44,8 +44,12 @@ import           Data.Tuple.Extra
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
+type EverythingLoadState = (PFState, ControllerMeta)
+
 data EverythingFrontendCmd =
   EFCmdTool Tool
+
+  | EFCmdLoad EverythingLoadState
 
   -- canvas direct input
   | EFCmdMouse LMouseData
@@ -56,10 +60,13 @@ data EverythingFrontendCmd =
   deriving (Show)
 
 data EverythingBackendCmd =
+
+  EBCmdLoad EverythingLoadState
+
   -- selection (first param is add to selection if true)
   -- it's a little weird that selection comes with all info about what's being selected
   -- but we have it already so may as well include it
-  EBCmdSelect Bool Selection
+  | EBCmdSelect Bool Selection
   | EBCmdChanges SEltLabelChangesWithLayerPos
   | EBCmdNothing
   deriving (Show)
@@ -67,6 +74,7 @@ data EverythingBackendCmd =
 
 
 data EverythingWidgetConfig t = EverythingWidgetConfig {
+  -- TODO should really also include ControllerMeta
   _everythingWidgetConfig_initialState    :: PFState
 
   -- canvas direct input
@@ -75,6 +83,7 @@ data EverythingWidgetConfig t = EverythingWidgetConfig {
 
   -- command based
   , _everythingWidgetConfig_selectTool    :: Event t Tool
+  , _everythingWidgetConfig_load          :: Event t EverythingLoadState
 
   -- TODO DELETE, selecting handled via SelectHandler and LayerHandler
   , _everythingWidgetConfig_selectNew     :: Event t Selection
@@ -88,6 +97,7 @@ emptyEverythingWidgetConfig :: (Reflex t) => EverythingWidgetConfig t
 emptyEverythingWidgetConfig = EverythingWidgetConfig {
     _everythingWidgetConfig_initialState = emptyPFState
     , _everythingWidgetConfig_selectTool  = never
+    , _everythingWidgetConfig_load = never
     , _everythingWidgetConfig_mouse     = never
     , _everythingWidgetConfig_keyboard = never
     , _everythingWidgetConfig_selectNew = never
@@ -148,6 +158,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     --everythingFrontendEvent = traceEventWith ((<>"\n\n") . show) $ leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
     everythingFrontendEvent = leftmostWarn "EverythingWidgetConfig_EverythingFrontend"
       [ EFCmdTool <$> _everythingWidgetConfig_selectTool
+      , EFCmdLoad <$> _everythingWidgetConfig_load
       , EFCmdMouse <$> _everythingWidgetConfig_mouse
       , EFCmdKeyboard <$> _everythingWidgetConfig_keyboard
       , EFCmdSetDebugLabel <$> _everythingWidgetConfig_setDebugLabel
@@ -196,6 +207,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         SomePotatoHandler handler -> case cmd of
           EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
           EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
+          EFCmdLoad (nextPFState, cm) -> undefined -- TODO
           --EFCmdMouse mouseData -> traceShow _everythingFrontend_handler $ do
           EFCmdMouse mouseData -> do
             let
@@ -356,7 +368,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     frontendOperation_select = fmapMaybe _everythingFrontend_select (updated everythingFrontendDyn)
 
     everythingBackendEvent' = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
-      [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
+      [ EBCmdLoad <$> _everythingWidgetConfig_load
+      , EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       , fmap (uncurry EBCmdSelect) frontendOperation_select
       , EBCmdChanges <$> _pfo_potato_changed
@@ -391,6 +404,17 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           else Just $ makeHandlerFromSelection selection
 
       case cmd of
+        EBCmdLoad (nextPFstate, _) -> do
+          let
+            oldbpt= _broadPhaseState_bPTree _everythingBackend_broadPhaseState
+            removeOld = fmap (const Nothing) (_bPTree_potato_tree oldbpt)
+            addNew = fmap Just (_pFState_directory nextPFstate)
+            nextBps = update_bPTree (IM.union addNew removeOld) oldbpt
+          return $ everything' {
+              _everythingBackend_selection = Seq.empty
+              , _everythingBackend_broadPhaseState = nextBps
+              --, _everythingBackend_renderedCanvas = undefined
+            }
         EBCmdSelect add sel -> do
           return $ assert (pFState_selectionIsValid pFStateMaybeStale (fmap snd3 (toList sel))) ()
           let
