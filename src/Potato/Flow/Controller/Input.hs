@@ -19,7 +19,6 @@ module Potato.Flow.Controller.Input (
 
   , Tool(..)
   , tool_isCreate
-  , LayerDisplay(..)
   , Selection
   , disjointUnionSelection
 
@@ -132,15 +131,6 @@ tool_isCreate = \case
   Tool_Select -> False
   Tool_Pan -> False
   _ -> True
-
--- LAYER
-data LayerDisplay = LayerDisplay {
-  _layerDisplay_isFolder :: Bool
-  , _layerDisplay_name   :: Text
-  , _layerDisplay_ident  :: Int
-  -- TODO hidden/locked states
-  -- TODO reverse mapping to selt
-} deriving (Show)
 
 -- SELECTION
 type Selection = Seq SuperSEltLabel

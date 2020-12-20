@@ -39,6 +39,7 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_select         :: Maybe (Bool, Selection) -- one shot
 
   , _everythingFrontend_layerScrollPos :: Int
+  , _everythingFrontend_layersState     :: LayersState
 
   , _everythingFrontend_debugLabel     :: Text
 } deriving (Show)
@@ -50,7 +51,6 @@ everythingFrontend_isHandlerActive EverythingFrontend {..} = case _everythingFro
 -- second pass, taking outputs from PFOutput
 data EverythingBackend = EverythingBackend {
   _everythingBackend_selection              :: Selection
-  , _everythingBackend_layers               :: Seq LayerDisplay
   , _everythingBackend_broadPhaseState      :: BroadPhaseState
   , _everythingBackend_renderedCanvas       :: RenderedCanvas
   , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
@@ -64,6 +64,7 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_handler = SomePotatoHandler EmptyHandler
     , _everythingFrontend_select = Nothing
     , _everythingFrontend_layerScrollPos = 0
+    , _everythingFrontend_layersState = (IM.empty, Seq.empty)
 
     , _everythingFrontend_debugLabel = ""
   }
@@ -71,12 +72,12 @@ emptyEverythingFrontend = EverythingFrontend {
 emptyEverythingBackend :: EverythingBackend
 emptyEverythingBackend = EverythingBackend {
     _everythingBackend_selection    = Seq.empty
-    , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
     , _everythingBackend_handlerFromSelection = Nothing
   }
 
+-- TODO just include stuff you actualy test, no need to include verything...
 -- combined output for convenient testing thx
 data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   _everythingCombined_selectedTool           :: Tool
@@ -91,7 +92,6 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_debugLabel           :: Text
 
   , _everythingCombined_selection            :: Selection
-  , _everythingCombined_layers               :: Seq LayerDisplay
   , _everythingCombined_broadPhase           :: BroadPhaseState
   , _everythingCombined_renderedCanvas       :: RenderedCanvas
   , _everythingCombined_handlerFromSelection :: Maybe SomePotatoHandler
@@ -112,13 +112,13 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     , _everythingCombined_debugLabel = _everythingFrontend_debugLabel
 
     , _everythingCombined_selection      = _everythingBackend_selection
-    , _everythingCombined_layers       = _everythingBackend_layers
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
     , _everythingCombined_handlerFromSelection = _everythingBackend_handlerFromSelection
 
     , _everythingCombined_pFState = pfs
   }
+
 
 
 data ControllerMeta = ControllerMeta {

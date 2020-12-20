@@ -4,6 +4,8 @@
 module Potato.Flow.Controller.Layers (
   LayerMeta(..)
   , LayerMetaMap
+  , LayerEntries
+  , LayersState
 
   -- exposed for testing
   , LockHiddenState(..)
@@ -13,7 +15,6 @@ module Potato.Flow.Controller.Layers (
   , toggleLayerEntry
   , updateLayers
   , generateLayersNew
-
 
 ) where
 
@@ -135,7 +136,7 @@ type LayerEntryPos = Int
 -- would have been smarter to store this as a Tree...
 type LayerEntries = Seq LayerEntry
 
-type LayerState = (LayerMetaMap, LayerEntries)
+type LayersState = (LayerMetaMap, LayerEntries)
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 
@@ -211,7 +212,7 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
       then le -- no changes to skipped elts
       else entryfn le
 
--- TODO change 'LayerMetaMap -> LayerEntries' to 'LayerState'
+-- TODO change 'LayerMetaMap -> LayerEntries' to 'LayersState'
 toggleLayerEntry :: PFState -> LayerMetaMap -> Seq LayerEntry -> LayerEntryPos -> LockHideCollapseOp -> (LayerMetaMap, Seq LayerEntry)
 toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   le = Seq.index lentries lepos
@@ -287,8 +288,8 @@ generateLayersNew pfs lmm = r where
 --updateLockHideState = undefined
 
 
--- TODO change 'LayerMetaMap -> LayerEntries' to 'LayerState'
-updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> LayerEntries -> LayerState
+-- TODO change 'LayerMetaMap -> LayerEntries' to 'LayersState'
+updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> LayerEntries -> LayersState
 updateLayers pfs changes lmm lentries = r where
   -- update lmm
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
@@ -329,11 +330,11 @@ data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos
 layerInputNew ::
   PFState
   -> Int -- ^ scroll state
-  -> LayerState
+  -> LayersState
   -> LayerDragState
   -> Selection -- ^ current selection
   -> MouseDrag -- ^ input to update with
-  -> (LayerDragState, LayerState, Maybe (Bool, LayerPos), Maybe PFEventTag)
+  -> (LayerDragState, LayersState, Maybe (Bool, LayerPos), Maybe PFEventTag)
 layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDrag {..} = let
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
   in case (_mouseDrag_state, lds) of

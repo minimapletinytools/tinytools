@@ -48,8 +48,8 @@ import qualified Data.Sequence           as Seq
 
 
 data PFState = PFState {
+  -- TODO someday change this to bimap so that we can get rid of _pfo_layerPosMap
   _pFState_layers      :: Seq REltId
-  -- TODO cache REltId -> Layers map with dirty flag probably
   , _pFState_directory :: REltIdMap SEltLabel
   , _pFState_canvas    :: SCanvas
 } deriving (Show, Generic)

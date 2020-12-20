@@ -42,6 +42,10 @@
 -attached line spec
 -insert mode text area spec
   -(how to handle resize??)
+-think of some way to make _pFState_directory type safe
+  -partial from accessing by REltId index
+  -partial from trying to operate on possibly incorrect type
+  -you can make it not partial if you get a selection to operate on and in the set operation it's always override (no modify)
 
 
 DONE-expose initial state

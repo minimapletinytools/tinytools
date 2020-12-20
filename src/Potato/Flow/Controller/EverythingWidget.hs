@@ -16,6 +16,7 @@ import           Reflex.Potato.Helpers
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
+import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
@@ -97,7 +98,7 @@ emptyEverythingWidgetConfig = EverythingWidgetConfig {
 data EverythingWidget t = EverythingWidget {
   _everythingWidget_tool                       :: Dynamic t Tool
   , _everythingWidget_selection                :: Dynamic t Selection
-  , _everythingWidget_layers                   :: Dynamic t (Seq LayerDisplay)
+  , _everythingWidget_layers                   :: Dynamic t LayerEntries
   , _everythingWidget_pan                      :: Dynamic t XY
   , _everythingWidget_broadPhase               :: Dynamic t BroadPhaseState
   , _everythingWidget_pFOutput :: PFOutput t
@@ -181,7 +182,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
         broadphase = _everythingBackend_broadPhaseState backend
 
-        potatoHandlerInput = PotatoHandlerInput pFState broadphase layerPosMap selection
+        potatoHandlerInput = PotatoHandlerInput {
+            _potatoHandlerInput_pFState       = pFState
+            , _potatoHandlerInput_broadPhase  = broadphase
+            , _potatoHandlerInput_layerPosMap = layerPosMap
+
+            , _potatoHandlerInput_layerScrollPos = _everythingFrontend_layerScrollPos
+            , _potatoHandlerInput_layersState     = _everythingFrontend_layersState
+            , _potatoHandlerInput_selection   = selection
+          }
 
       case someHandler of
         SomePotatoHandler handler -> case cmd of
@@ -463,6 +472,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
   r_broadphase <- holdUniqDyn $ fmap _everythingBackend_broadPhaseState everythingBackendDyn
   r_pan <- holdUniqDyn $ fmap _everythingFrontend_pan everythingFrontendDyn
+  r_layers <- holdUniqDyn $ fmap (fst . _everythingFrontend_layersState) everythingFrontendDyn
 
 
 

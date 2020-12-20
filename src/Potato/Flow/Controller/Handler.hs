@@ -24,6 +24,7 @@ import           Relude
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
@@ -55,10 +56,16 @@ instance Default PotatoHandlerOutput where
     }
 
 data PotatoHandlerInput = PotatoHandlerInput {
+    -- * from PFOutput
     _potatoHandlerInput_pFState       :: PFState
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
     , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
 
+    -- * from Frontend
+    , _potatoHandlerInput_layerScrollPos :: Int
+    , _potatoHandlerInput_layersState     :: LayersState
+
+    -- * from Backend
     -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
