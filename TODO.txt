@@ -8,6 +8,9 @@
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 -copy pasta
+  -ctrl-v/s/z/etc sent via keyboard,
+    -other kind of copy paste supported via KeyboardKey_Paste
+    -we'll prob need to do something different for web version...
   -copy pasta translate a little by default?
     -or attempt to place in middle of canvas viewport prob better
   -copy pasta test

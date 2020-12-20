@@ -74,6 +74,8 @@ data EverythingWidgetConfig t = EverythingWidgetConfig {
 
   -- command based
   , _everythingWidgetConfig_selectTool    :: Event t Tool
+
+  -- TODO DELETE, selecting handled via SelectHandler and LayerHandler
   , _everythingWidgetConfig_selectNew     :: Event t Selection
   , _everythingWidgetConfig_selectAdd     :: Event t Selection
 
@@ -262,6 +264,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
                 -- input not captured by handler
                 Nothing -> case x of
+                  -- ctrl-v
+                  KeyboardData (KeyboardKey_Char c) [KeyModifier_Ctrl] ->
+                    -- TODO copy
+                    undefined
+                  KeyboardData (KeyboardKey_Char v) [KeyModifier_Ctrl] ->
+                    -- TODO pasta
+                    undefined
                   -- tool hotkeys
                   KeyboardData (KeyboardKey_Char key) _ -> return r where
                     newTool = case key of
