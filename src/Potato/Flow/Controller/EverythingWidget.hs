@@ -100,6 +100,7 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_layers                   :: Dynamic t (Seq LayerDisplay)
   , _everythingWidget_pan                      :: Dynamic t XY
   , _everythingWidget_broadPhase               :: Dynamic t ([AABB], BPTree, SEltLabelChanges)
+  , _everythingWidget_pFOutput :: PFOutput t
 
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
@@ -264,7 +265,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
                 -- input not captured by handler
                 Nothing -> case x of
-                  -- ctrl-v
                   KeyboardData (KeyboardKey_Char c) [KeyModifier_Ctrl] ->
                     -- TODO copy
                     undefined
@@ -336,7 +336,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         _ -> Nothing
       , _pfc_save         = never
     }
-  PFOutput {..} <- holdPFWithInitialState _everythingWidgetConfig_initialState pFConfig
+  pFOutput@PFOutput {..} <- holdPFWithInitialState _everythingWidgetConfig_initialState pFConfig
 
 
   ------------------------
@@ -472,5 +472,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       , _everythingWidget_layers       = undefined
       , _everythingWidget_pan          = undefined
       , _everythingWidget_broadPhase   = undefined
+      , _everythingWidget_pFOutput     = pFOutput
       , _everythingWidget_everythingCombined_DEBUG = ffor3 everythingFrontendDyn everythingBackendDyn _pfo_pFState combineEverything
     }
