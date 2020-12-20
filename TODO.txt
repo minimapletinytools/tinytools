@@ -1,8 +1,17 @@
 
 ::NEWEST TODO::
--expose initial state
-  -canvas (pull from initial pfstate)
-  -pfstate
+-test vty with non trivial initial state
+  -maybe expose some test helpers for vty
+-figure out how you want to handle layer input using handlers
+  -seems like there's a handler stack....
+    -layers > override > normal > no capture select/select+drag
+-consider doing override handlers for
+  -this is needed so that when you cancel, you get back the original handler and state
+  -also creates good separation of normal handler cases and so called "override" cases
+  -cases:
+    -new element handler case
+    -pan handler case
+    -select and drag + select case
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
@@ -18,16 +27,6 @@
     -or attempt to place in middle of canvas viewport prob better
   -copy pasta test
   -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
--figure out how you want to handle layer input using handlers
-  -seems like there's a handler stack....
-    -layers > override > normal > no capture select/select+drag
--consider doing override handlers for
-  -this is needed so that when you cancel, you get back the original handler and state
-  -also creates good separation of normal handler cases and so called "override" cases
-  -cases:
-    -new element handler case
-    -pan handler case
-    -select and drag + select case
 -combine everything and entry 😱😱😱😱😱😱😱
   -maybe do this at the end, won't get that much harder prob...
 -layers
@@ -45,6 +44,9 @@
   -(how to handle resize??)
 
 
+DONE-expose initial state
+  -canvas (pull from initial pfstate)
+  -pfstate
 DONE/IGNORE-finish text area handler
   DONE-kind of want to combine BoxHandler functionality D:
     -if we don't allow box manipulation in text edit mode then we can have Boxhandler return a TextHandler :O
