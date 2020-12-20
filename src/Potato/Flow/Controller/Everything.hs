@@ -51,7 +51,6 @@ data EverythingBackend = EverythingBackend {
   , _everythingBackend_layers               :: Seq LayerDisplay
   , _everythingBackend_broadPhaseState      :: BroadPhaseState
   , _everythingBackend_renderedCanvas       :: RenderedCanvas
-
   , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
 } deriving (Show)
 
@@ -73,7 +72,6 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_layers       = Seq.empty
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
-
     , _everythingBackend_handlerFromSelection = Nothing
   }
 

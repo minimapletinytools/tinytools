@@ -99,7 +99,7 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_selection                :: Dynamic t Selection
   , _everythingWidget_layers                   :: Dynamic t (Seq LayerDisplay)
   , _everythingWidget_pan                      :: Dynamic t XY
-  , _everythingWidget_broadPhase               :: Dynamic t ([AABB], BPTree, SEltLabelChanges)
+  , _everythingWidget_broadPhase               :: Dynamic t BroadPhaseState
   , _everythingWidget_pFOutput :: PFOutput t
 
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
@@ -461,7 +461,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   r_tool <- holdUniqDyn $ fmap _everythingFrontend_selectedTool everythingFrontendDyn
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
-
+  let
+    r_broadphase = fmap _everythingBackend_broadPhaseState everythingBackendDyn
 
 
 
@@ -471,7 +472,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       , _everythingWidget_selection    = r_selection
       , _everythingWidget_layers       = undefined
       , _everythingWidget_pan          = undefined
-      , _everythingWidget_broadPhase   = undefined
+      , _everythingWidget_broadPhase   = r_broadphase
       , _everythingWidget_pFOutput     = pFOutput
       , _everythingWidget_everythingCombined_DEBUG = ffor3 everythingFrontendDyn everythingBackendDyn _pfo_pFState combineEverything
     }
