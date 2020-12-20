@@ -461,8 +461,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   r_tool <- holdUniqDyn $ fmap _everythingFrontend_selectedTool everythingFrontendDyn
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
-  let
-    r_broadphase = fmap _everythingBackend_broadPhaseState everythingBackendDyn
+  r_broadphase <- holdUniqDyn $ fmap _everythingBackend_broadPhaseState everythingBackendDyn
+  r_pan <- holdUniqDyn $ fmap _everythingFrontend_pan everythingFrontendDyn
 
 
 
@@ -471,7 +471,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       _everythingWidget_tool           = r_tool
       , _everythingWidget_selection    = r_selection
       , _everythingWidget_layers       = undefined
-      , _everythingWidget_pan          = undefined
+      , _everythingWidget_pan          = r_pan
       , _everythingWidget_broadPhase   = r_broadphase
       , _everythingWidget_pFOutput     = pFOutput
       , _everythingWidget_everythingCombined_DEBUG = ffor3 everythingFrontendDyn everythingBackendDyn _pfo_pFState combineEverything

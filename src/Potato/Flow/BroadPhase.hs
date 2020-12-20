@@ -27,7 +27,7 @@ type AABB = LBox
 -- TODO actual BroadPhase...
 data BPTree = BPTree {
   _bPTree_potato_tree :: REltIdMap AABB
-} deriving (Show)
+} deriving (Show, Eq)
 
 emptyBPTree :: BPTree
 emptyBPTree = BPTree IM.empty
@@ -38,7 +38,7 @@ data BroadPhaseState = BroadPhaseState {
   _broadPhaseState_needsUpdate :: [AABB] -- this is what changed since last time
   , _broadPhaseState_bPTree    :: BPTree -- updated BPTree
   , _broadPhaseState_changes   :: SEltLabelChanges -- I don't think I need this
-} deriving (Show)
+} deriving (Show, Eq)
 
 emptyBroadPhaseState :: BroadPhaseState
 emptyBroadPhaseState = BroadPhaseState [] emptyBPTree IM.empty

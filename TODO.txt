@@ -1,5 +1,8 @@
 
 ::NEWEST TODO::
+-expose initial state
+  -canvas (pull from initial pfstate)
+  -pfstate
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
