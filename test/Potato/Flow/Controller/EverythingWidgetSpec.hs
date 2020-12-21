@@ -94,14 +94,23 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
       , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
       , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
       , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow emptyPFState, emptyControllerMeta)
     ]
   expected = [
       LabelCheck "Load"
       , expectState pfstate_basic1
       , expectState pfstate_basic1
       , expectState pfstate_someValidState1
-      , expectState pfstate_basic1
+      , Combine [
+          expectState pfstate_basic1
+          -- intersects "b1" "b2" "b3" "b4" in pfstate_basic1
+          , numEltsInLBoxUsingBroadphasePredicate 4 (LBox 0 (V2 15 15))
+        ]
       , expectState pfstate_someValidState1
+      , Combine [
+          expectState emptyPFState
+          , numEltsInLBoxUsingBroadphasePredicate 0 (LBox 0 (V2 1000 1000))
+        ]
 
 
     ]

@@ -182,11 +182,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
         PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
         PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
         PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
-        PFELoad x -> pfts {
-          _pFTotalState_workspace = (_pFTotalState_workspace pfts) {
-            _pFWorkspace_state = sPotatoFlow_to_pFState x
-            , _pFWorkspace_actionStack = emptyActionStack }
-          }
+        PFELoad x -> pfts { _pFTotalState_workspace = loadPFStateIntoWorkspace (sPotatoFlow_to_pFState x) (_pFTotalState_workspace pfts) }
       afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
       isValidAfter = pFState_isValid afterState
       in
@@ -223,9 +219,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
 
       , _pfo_layerPosMap = r_layerPosMap
 
-      -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
-      -- probably just need to address TODO in loadPFStateIntoWorkspace
-      , _pfo_potato_changed     = leftmost [updated r_changes, pfevent $> IM.empty]
+      , _pfo_potato_changed     = updated r_changes
 
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow
       , _pfo_loaded = void _pfc_load

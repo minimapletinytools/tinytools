@@ -37,7 +37,7 @@ emptyBPTree = BPTree IM.empty
 data BroadPhaseState = BroadPhaseState {
   _broadPhaseState_needsUpdate :: [AABB] -- this is what changed since last time
   , _broadPhaseState_bPTree    :: BPTree -- updated BPTree
-  , _broadPhaseState_changes   :: SEltLabelChanges -- I don't think I need this
+  , _broadPhaseState_changes   :: SEltLabelChanges -- TODO DELETE I don't think I need this
 } deriving (Show, Eq)
 
 emptyBroadPhaseState :: BroadPhaseState

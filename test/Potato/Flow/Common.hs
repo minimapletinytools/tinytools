@@ -10,6 +10,7 @@ module Potato.Flow.Common
   , checkNumElts
   , checkHandlerName
   , checkHandlerNameAndState
+  , numEltsInLBoxUsingBroadphasePredicate
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperSEltLabelPredicate
   , firstSuperSEltLabelPredicate
@@ -117,6 +118,13 @@ checkNumElts n PFState {..} = (t,r) where
   ls = Seq.length _pFState_layers
   r = ds == n && ls == n
   t = "expected: " <> show n <> " dir: " <> show ds <> " layers: " <> show ls
+
+numEltsInLBoxUsingBroadphasePredicate :: Int -> LBox -> EverythingPredicate
+numEltsInLBoxUsingBroadphasePredicate n lbox = FunctionPredicate $
+  (\(BroadPhaseState _ bps _) ->
+    let gotn = length $ broadPhase_cull lbox bps
+    in ("BroadPhase passed: " <> show gotn <> " expected: " <> show n <> " broadphase: " <> show bps, gotn == n))
+  . _everythingCombined_broadPhase
 
 numSelectedEltsEqualPredicate :: Int -> EverythingPredicate
 numSelectedEltsEqualPredicate n = FunctionPredicate $
