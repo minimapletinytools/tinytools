@@ -52,7 +52,7 @@ data PFConfig t = PFConfig {
   , _pfc_resizeCanvas :: Event t DeltaLBox
   , _pfc_undo         :: Event t ()
   , _pfc_redo         :: Event t ()
-  , _pfc_load         :: Event t SPotatoFlow
+  , _pfc_load         :: Event t SPotatoFlow -- NOTE, this does not trigger _pfo_potato_changed
   , _pfc_save         :: Event t ()
 }
 
@@ -88,7 +88,6 @@ data PFOutput t = PFOutput {
   , _pfo_layerPosMap       :: Dynamic t (REltIdMap LayerPos)
 
   , _pfo_potato_changed    :: Event t SEltLabelChangesWithLayerPos
-
 
   , _pfo_loaded            :: Event t ()
   , _pfo_saved             :: Event t SPotatoFlow

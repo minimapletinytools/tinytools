@@ -13,6 +13,8 @@
     -new element handler case
     -pan handler case
     -select and drag + select case
+-having loading trigger _pfo_potato_changed rather than do manual reload...
+-resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap

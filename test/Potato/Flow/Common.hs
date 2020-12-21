@@ -47,7 +47,7 @@ data EverythingWidgetCmd =
   | EWCKeyboard KeyboardData
   | EWCTool Tool
   | EWCSelect Selection Bool -- true if add to selection
-  | EWCLoad (PFState, ControllerMeta)
+  | EWCLoad (SPotatoFlow, ControllerMeta)
   | EWCNothing
   | EWCLabel Text
 

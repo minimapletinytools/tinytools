@@ -16,8 +16,8 @@ import           Reflex.Potato.Helpers
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
-import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Line
@@ -40,11 +40,17 @@ import           Data.Maybe
 import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
 
+-- TODO move to your reflex helper lib
+-- DELETE you already have it :)
+--simultaneous :: (Reflex t) => Event a -> Event b -> Event (a,b)
+--simultaneous eva evb = fforMaybe (align eva evb) $ \case
+--  These x -> Just x
+--  _ -> Nothing
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
-type EverythingLoadState = (PFState, ControllerMeta)
+type EverythingLoadState = (SPotatoFlow, ControllerMeta)
 
 data EverythingFrontendCmd =
   EFCmdTool Tool
@@ -61,7 +67,7 @@ data EverythingFrontendCmd =
 
 data EverythingBackendCmd =
 
-  EBCmdLoad EverythingLoadState
+  EBCmdLoaded PFState
 
   -- selection (first param is add to selection if true)
   -- it's a little weird that selection comes with all info about what's being selected
@@ -207,7 +213,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         SomePotatoHandler handler -> case cmd of
           EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
           EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
-          EFCmdLoad (_, cm) -> return $ everything' -- TODO load cm stuff
+          EFCmdLoad (spf, cm) -> do
+            -- TODO load cm stuff
+            return $ everything' {
+                _everythingFrontend_pFEvent = Just $ PFELoad spf
+              }
+
+
           --EFCmdMouse mouseData -> traceShow _everythingFrontend_handler $ do
           EFCmdMouse mouseData -> do
             let
@@ -368,11 +380,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     frontendOperation_select = fmapMaybe _everythingFrontend_select (updated everythingFrontendDyn)
 
     everythingBackendEvent' = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
-      [ EBCmdLoad <$> _everythingWidgetConfig_load
-      , EBCmdSelect False <$> _everythingWidgetConfig_selectNew
+      [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       , fmap (uncurry EBCmdSelect) frontendOperation_select
       , EBCmdChanges <$> _pfo_potato_changed
+      -- TODO DELETE
+      --, EBCmdLoaded <$> (fmap snd (simultaneous _pfo_loaded (updated _pfo_pFState)))
       ]
 
 
@@ -404,11 +417,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           else Just $ makeHandlerFromSelection selection
 
       case cmd of
-        EBCmdLoad (nextPFstate, _) -> do
+        -- TODO DELETE
+        -- loading does not trigger EBCmdChanges so we have to manually reset broadPhase
+        EBCmdLoaded nextpfs -> do
           let
             oldbpt= _broadPhaseState_bPTree _everythingBackend_broadPhaseState
             removeOld = fmap (const Nothing) (_bPTree_potato_tree oldbpt)
-            addNew = fmap Just (_pFState_directory nextPFstate)
+            addNew = fmap Just (_pFState_directory nextpfs)
             nextBps = update_bPTree (IM.union addNew removeOld) oldbpt
           return $ everything' {
               _everythingBackend_selection = Seq.empty

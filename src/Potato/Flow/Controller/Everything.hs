@@ -25,10 +25,10 @@ import           Potato.Flow.Render
 import           Potato.Flow.State
 
 -- erhm, maybe move PFEventTag to somewhere else? Could just duplicate it in this file
+import           Data.Aeson
+import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
-import qualified Data.IntMap                  as IM
 import           Potato.Flow.Entry              (PFEventTag)
-import Data.Aeson
 
 -- first pass processing inputs
 data EverythingFrontend = EverythingFrontend {
@@ -41,7 +41,7 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_select         :: Maybe (Bool, Selection) -- one shot
 
   , _everythingFrontend_layerScrollPos :: Int
-  , _everythingFrontend_layersState     :: LayersState
+  , _everythingFrontend_layersState    :: LayersState
 
   , _everythingFrontend_debugLabel     :: Text
 } deriving (Show)
@@ -124,10 +124,13 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
 
 
 
+-- TODO this is a problem because LayerMetaMap
+-- I guess you can just reindex LayerMetaMap to index via LayerPos (which should be the same as REltId after loading I think)
+-- Alternatively, you could just have SPotatoFlow include REltId, that might be slightly better solution...
 data ControllerMeta = ControllerMeta {
-  _controllerMeta_pan :: XY
+  _controllerMeta_pan              :: XY
   , _controllerMeta_layerScrollPos :: Int
-  , _controllerMeta_layers :: LayerMetaMap
+  , _controllerMeta_layers         :: LayerMetaMap
 } deriving (Show, Eq, Generic)
 
 instance FromJSON ControllerMeta

@@ -52,7 +52,7 @@ data PFState = PFState {
   _pFState_layers      :: Seq REltId
   , _pFState_directory :: REltIdMap SEltLabel
   , _pFState_canvas    :: SCanvas
-} deriving (Show, Generic)
+} deriving (Eq, Show, Generic)
 
 instance FromJSON PFState
 instance ToJSON PFState

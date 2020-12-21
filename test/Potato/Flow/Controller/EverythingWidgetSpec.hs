@@ -80,19 +80,28 @@ select_test = TestLabel "select" $ TestCase $ do
   v <- liftIO run
   (join v) @?= expected
 
+expectState :: PFState -> EverythingPredicate
+expectState pfs = FunctionPredicate $
+  (\pfs' -> ("expected pfstate_basic1", pfs == pfs'))
+  . _everythingCombined_pFState
 
 everything_load_test :: Test
 everything_load_test = constructTest "load" emptyPFState bs expected where
   bs = [
       EWCLabel "Load"
-      , EWCLoad (pfstate_basic1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
+      , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
     ]
-
   expected = [
       LabelCheck "Load"
-      , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
-      , (EqPredicate _everythingCombined_pan (V2 0 0))
-      , (EqPredicate _everythingCombined_pan (V2 1 1))
+      , expectState pfstate_basic1
+      , expectState pfstate_basic1
+      , expectState pfstate_someValidState1
+      , expectState pfstate_basic1
+      , expectState pfstate_someValidState1
 
 
     ]
@@ -314,4 +323,5 @@ spec = do
   describe "EverythingWidget" $ do
     fromHUnitTest $ tool_test
     fromHUnitTest $ select_test
+    fromHUnitTest $ everything_load_test
     fromHUnitTest $ everything_basic_test
