@@ -1,6 +1,7 @@
 
 ::NEWEST TODO::
--load test
+DONE-load test
+-connect _pfo_potato_changed to load inside of workspace
 -test vty with non trivial initial state
   -maybe expose some test helpers for vty
 -figure out how you want to handle layer input using handlers
@@ -13,7 +14,6 @@
     -new element handler case
     -pan handler case
     -select and drag + select case
--having loading trigger _pfo_potato_changed rather than do manual reload...
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated

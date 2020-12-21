@@ -67,12 +67,10 @@ data EverythingFrontendCmd =
 
 data EverythingBackendCmd =
 
-  EBCmdLoaded PFState
-
   -- selection (first param is add to selection if true)
   -- it's a little weird that selection comes with all info about what's being selected
   -- but we have it already so may as well include it
-  | EBCmdSelect Bool Selection
+  EBCmdSelect Bool Selection
   | EBCmdChanges SEltLabelChangesWithLayerPos
   | EBCmdNothing
   deriving (Show)
@@ -384,8 +382,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       , fmap (uncurry EBCmdSelect) frontendOperation_select
       , EBCmdChanges <$> _pfo_potato_changed
-      -- TODO DELETE
-      --, EBCmdLoaded <$> (fmap snd (simultaneous _pfo_loaded (updated _pfo_pFState)))
       ]
 
 
@@ -417,19 +413,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
           else Just $ makeHandlerFromSelection selection
 
       case cmd of
-        -- TODO DELETE
-        -- loading does not trigger EBCmdChanges so we have to manually reset broadPhase
-        EBCmdLoaded nextpfs -> do
-          let
-            oldbpt= _broadPhaseState_bPTree _everythingBackend_broadPhaseState
-            removeOld = fmap (const Nothing) (_bPTree_potato_tree oldbpt)
-            addNew = fmap Just (_pFState_directory nextpfs)
-            nextBps = update_bPTree (IM.union addNew removeOld) oldbpt
-          return $ everything' {
-              _everythingBackend_selection = Seq.empty
-              , _everythingBackend_broadPhaseState = nextBps
-              --, _everythingBackend_renderedCanvas = undefined
-            }
         EBCmdSelect add sel -> do
           return $ assert (pFState_selectionIsValid pFStateMaybeStale (fmap snd3 (toList sel))) ()
           let
