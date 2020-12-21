@@ -8,8 +8,8 @@ import           Relude
 
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
@@ -56,5 +56,4 @@ instance PotatoHandler LayersHandler where
           _layersHandler_isActive = False
         }
     }
-  pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
   pIsHandlerActive = _layersHandler_isActive

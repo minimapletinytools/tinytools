@@ -44,5 +44,5 @@ instance PotatoHandler PanHandler where
 
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = Nothing
   pHandleCancel PanHandler {..} PotatoHandlerInput {..} = def { _potatoHandlerOutput_pan = Just $ - _panHandler_pan }
-  pRenderHandler _ PotatoHandlerInput {..} = HandlerRenderOutput
+  pRenderHandler _ PotatoHandlerInput {..} = def
   pIsHandlerActive _ = True

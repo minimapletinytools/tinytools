@@ -14,10 +14,10 @@ module Potato.Flow.TestStates (
 
 import           Relude
 
+import           Data.Default
 import qualified Data.IntMap   as IM
 import qualified Data.Sequence as Seq
 import           Potato.Flow
-import Data.Default
 
 folderStart :: SEltLabel
 folderStart = SEltLabel "folder" SEltFolderStart
@@ -29,7 +29,7 @@ someSEltLabel :: SEltLabel
 someSEltLabel = SEltLabel "some elt" SEltNone
 
 defaultCanvasLBox :: LBox
-defaultCanvasLBox = LBox (V2 0 0) (V2 100 50)
+defaultCanvasLBox = LBox (V2 0 0) (V2 50 25)
 
 someSCanvas :: SCanvas
 someSCanvas = SCanvas  defaultCanvasLBox

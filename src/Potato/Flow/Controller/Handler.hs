@@ -15,6 +15,7 @@ module Potato.Flow.Controller.Handler (
   , PotatoHandler(..)
   , PotatoHandlerInput(..)
   , HandlerRenderOutput(..)
+  , emptyHandlerRenderOutput
   , SomePotatoHandler(..)
   , captureWithNoChange
   , EmptyHandler(..)
@@ -32,11 +33,11 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 import           Data.Default
-import           Data.Dependent.Sum           (DSum ((:=>)))
-import qualified Data.IntMap                  as IM
-import qualified Data.List                    as L
-import qualified Data.Sequence                as Seq
-import qualified Data.Text                    as T
+import           Data.Dependent.Sum            (DSum ((:=>)))
+import qualified Data.IntMap                   as IM
+import qualified Data.List                     as L
+import qualified Data.Sequence                 as Seq
+import qualified Data.Text                     as T
 import           Data.Tuple.Extra
 import qualified Text.Show
 
@@ -57,22 +58,30 @@ instance Default PotatoHandlerOutput where
 
 data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
-    _potatoHandlerInput_pFState       :: PFState
-    , _potatoHandlerInput_broadPhase  :: BroadPhaseState
-    , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
+    _potatoHandlerInput_pFState          :: PFState
+    , _potatoHandlerInput_broadPhase     :: BroadPhaseState
+    , _potatoHandlerInput_layerPosMap    :: REltIdMap LayerPos
 
     -- * from Frontend
     , _potatoHandlerInput_layerScrollPos :: Int
-    , _potatoHandlerInput_layersState     :: LayersState
+    , _potatoHandlerInput_layersState    :: LayersState
 
     -- * from Backend
     -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
-    , _potatoHandlerInput_selection   :: Selection
+    , _potatoHandlerInput_selection      :: Selection
   }
 
-data HandlerRenderOutput = HandlerRenderOutput
+data HandlerRenderOutput = HandlerRenderOutput {
+    _handlerRenderOutput_temp :: [XY] -- list of coordinates where there are handles
+  }
+
+instance Default HandlerRenderOutput where
+  def = emptyHandlerRenderOutput
+
+emptyHandlerRenderOutput :: HandlerRenderOutput
+emptyHandlerRenderOutput = HandlerRenderOutput { _handlerRenderOutput_temp = [] }
 
 -- we check handler name for debug reasons so it's useful to have constants
 -- there should be no non-test code that depends on comparing pHandlerName
@@ -126,6 +135,7 @@ class PotatoHandler h where
   pIsHandlerActive _ = False
 
   pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
+  pRenderHandler _ _ = def
 
   -- helper method used to check that we aren't feeding invalid mouse states
   pValidateMouse :: h -> RelMouseDrag -> Bool
@@ -157,5 +167,5 @@ instance PotatoHandler EmptyHandler where
   pHandleMouse _ _ _ = Nothing
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel _ _ = def
-  pRenderHandler _ _ = HandlerRenderOutput
+  pRenderHandler _ _ = def
   pValidateMouse _ _ = True

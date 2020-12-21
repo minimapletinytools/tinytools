@@ -10,6 +10,7 @@ module Potato.Flow.Math (
   -- TODO rename this to lBox for consistency...
   , make_LBox_from_XYs
   , does_LBox_contains_XY
+  , lBox_tl
   , lBox_area
 
   , make_LBox_from_axis
@@ -75,7 +76,10 @@ nilLBox :: LBox
 nilLBox = LBox 0 0
 
 lBox_area :: LBox -> Int
-lBox_area (LBox (V2 _ _) (V2 w h)) = w*h
+lBox_area (LBox _ (V2 w h)) = w*h
+
+lBox_tl :: LBox -> XY
+lBox_tl (LBox p _) = p
 
 -- | always returns a canonical LBox
 make_LBox_from_XYs :: XY -> XY -> LBox

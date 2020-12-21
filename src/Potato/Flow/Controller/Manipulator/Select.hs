@@ -77,7 +77,7 @@ instance PotatoHandler SelectHandler where
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pHandleCancel sh PotatoHandlerInput {..} = def
-  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput
+  pRenderHandler sh PotatoHandlerInput {..} = def
   -- same as default?
   --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
   --  then _mouseDrag_state /= MouseDragState_Down

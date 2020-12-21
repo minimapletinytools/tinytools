@@ -1,10 +1,4 @@
-
 ::NEWEST TODO::
-DONE-load test
-DONE-connect _pfo_potato_changed to load inside of workspace
--test that loading actually triggered _pfo_potato_changed
--test vty with non trivial initial state
-  -maybe expose some test helpers for vty
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag
@@ -52,6 +46,11 @@ DONE-connect _pfo_potato_changed to load inside of workspace
   -you can make it not partial if you get a selection to operate on and in the set operation it's always override (no modify)
 
 
+DONE-load test
+DONE-connect _pfo_potato_changed to load inside of workspace
+DONE-test that loading actually triggered _pfo_potato_changed
+DONE-test vty with non trivial initial state
+  DONE-maybe expose some test helpers for vty
 DONE-expose initial state
   -canvas (pull from initial pfstate)
   -pfstate

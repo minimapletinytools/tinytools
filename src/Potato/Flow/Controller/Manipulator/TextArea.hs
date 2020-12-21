@@ -165,5 +165,5 @@ instance PotatoHandler TextAreaHandler where
   -- TODO if cancel was becaues of escape, undo the operation??
   pHandleCancel tah _ = def { _potatoHandlerOutput_nextHandler = Nothing }
 
-  pRenderHandler tah PotatoHandlerInput {..} = HandlerRenderOutput
+  pRenderHandler tah PotatoHandlerInput {..} = def
   pIsHandlerActive = _textAreaHandler_isActive

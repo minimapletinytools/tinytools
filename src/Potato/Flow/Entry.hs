@@ -218,7 +218,6 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
       , _pfo_pFState_canvas    = r_canvas
 
       , _pfo_layerPosMap = r_layerPosMap
-
       , _pfo_potato_changed     = updated r_changes
 
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow

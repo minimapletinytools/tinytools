@@ -93,5 +93,5 @@ instance PotatoHandler SimpleLineHandler where
   pHandleCancel slh _ = if pIsHandlerActive slh
     then def { _potatoHandlerOutput_event = Just PFEUndo }
     else def
-  pRenderHandler slh PotatoHandlerInput {..} = HandlerRenderOutput
+  pRenderHandler slh PotatoHandlerInput {..} = def
   pIsHandlerActive = _simpleLineHandler_isActive
