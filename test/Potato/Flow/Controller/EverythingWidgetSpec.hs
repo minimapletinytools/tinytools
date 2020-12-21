@@ -81,6 +81,22 @@ select_test = TestLabel "select" $ TestCase $ do
   (join v) @?= expected
 
 
+everything_load_test :: Test
+everything_load_test = constructTest "load" emptyPFState bs expected where
+  bs = [
+      EWCLabel "Load"
+      , EWCLoad (pfstate_basic1, emptyControllerMeta)
+    ]
+
+  expected = [
+      LabelCheck "Load"
+      , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
+      , (EqPredicate _everythingCombined_pan (V2 0 0))
+      , (EqPredicate _everythingCombined_pan (V2 1 1))
+
+
+    ]
+
 
 everything_basic_test :: Test
 everything_basic_test = constructTest "basic" emptyPFState bs expected where

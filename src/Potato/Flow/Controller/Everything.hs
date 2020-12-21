@@ -10,6 +10,7 @@ module Potato.Flow.Controller.Everything (
   , EverythingCombined_DEBUG(..)
   , combineEverything
   , ControllerMeta(..)
+  , emptyControllerMeta
 
 ) where
 
@@ -125,12 +126,15 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
 
 data ControllerMeta = ControllerMeta {
   _controllerMeta_pan :: XY
-  , _controllerMeta_layers :: LayerMetaMap
   , _controllerMeta_layerScrollPos :: Int
+  , _controllerMeta_layers :: LayerMetaMap
 } deriving (Show, Eq, Generic)
 
 instance FromJSON ControllerMeta
 instance ToJSON ControllerMeta
+
+emptyControllerMeta :: ControllerMeta
+emptyControllerMeta = ControllerMeta 0 0 IM.empty
 
 -- TODO
 updateFrontEndFromMeta :: ControllerMeta -> EverythingFrontend -> EverythingFrontend

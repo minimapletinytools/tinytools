@@ -47,6 +47,7 @@ data EverythingWidgetCmd =
   | EWCKeyboard KeyboardData
   | EWCTool Tool
   | EWCSelect Selection Bool -- true if add to selection
+  | EWCLoad (PFState, ControllerMeta)
   | EWCNothing
   | EWCLabel Text
 
@@ -57,7 +58,9 @@ everything_network_app
 everything_network_app pfs (AppIn _ ev) = do
   let ewc = EverythingWidgetConfig  {
       _everythingWidgetConfig_initialState = pfs
-      , _everythingWidgetConfig_load = never
+      , _everythingWidgetConfig_load = fforMaybe ev $ \case
+        EWCLoad x -> Just x
+        _ -> Nothing
       , _everythingWidgetConfig_setDebugLabel = fforMaybe ev $ \case
         EWCLabel x -> Just x
         _ -> Nothing

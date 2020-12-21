@@ -18,53 +18,15 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
-import           Potato.Flow.TestStates
+import           Potato.Flow.TestStates 
 
 import           Data.Default
 import qualified Data.IntMap                       as IM
 import qualified Data.Sequence                     as Seq
 
-basicState1 :: PFState
-basicState1 = PFState {
-      _pFState_layers = Seq.fromList [0..5]
-      , _pFState_directory = IM.fromList [
-          -- 4 boxes in a grid
-          (0, SEltLabel "b1" (SEltBox SBox {
-              _sBox_box = LBox (V2 0 0) (V2 5 5)
-              , _sBox_style = def
-            }))
-          , (1, SEltLabel "b2" (SEltBox SBox {
-              _sBox_box = LBox (V2 10 10) (V2 5 5)
-              , _sBox_style = def
-            }))
-          , (2, SEltLabel "b3" (SEltBox SBox {
-              _sBox_box = LBox (V2 0 10) (V2 5 5)
-              , _sBox_style = def
-            }))
-          , (3, SEltLabel "b4" (SEltBox SBox {
-              _sBox_box = LBox (V2 10 0) (V2 5 5)
-              , _sBox_style = def
-            }))
-
-          -- 2 lines sharing a start point at (0,100)
-          , (4, SEltLabel "sl1" (SEltLine SLine {
-              _sLine_start = V2 0 100
-              , _sLine_end = V2 0 110
-              , _sLine_style = def
-            }))
-          , (5, SEltLabel "sl2" (SEltLine SLine {
-              _sLine_start = V2 0 100
-              , _sLine_end = V2 10 100
-              , _sLine_style = def
-            }))
-
-        ]
-      , _pFState_canvas = SCanvas defaultCanvasLBox
-  }
-
 
 test_BoxHandler_drag :: Test
-test_BoxHandler_drag = constructTest "drag" basicState1 bs expected where
+test_BoxHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -143,7 +105,7 @@ test_BoxHandler_drag = constructTest "drag" basicState1 bs expected where
 
 -- TODO test this on non-SBox stuff too
 test_BoxHandler_select_and_drag :: Test
-test_BoxHandler_select_and_drag = constructTest "select and drag" basicState1 bs expected where
+test_BoxHandler_select_and_drag = constructTest "select and drag" pfstate_basic1 bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -170,7 +132,7 @@ test_BoxHandler_select_and_drag = constructTest "select and drag" basicState1 bs
 --test_BoxHandler_boundingbox
 
 test_BoxHandler_restrict8 :: Test
-test_BoxHandler_restrict8 = constructTest "restrict8" basicState1 bs expected where
+test_BoxHandler_restrict8 = constructTest "restrict8" pfstate_basic1 bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -199,7 +161,7 @@ test_BoxHandler_restrict8 = constructTest "restrict8" basicState1 bs expected wh
     ]
 
 test_LineHandler_drag :: Test
-test_LineHandler_drag = constructTest "drag" basicState1 bs expected where
+test_LineHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
   bs = [
       EWCTool Tool_Select
 
@@ -256,7 +218,7 @@ test_LineHandler_drag = constructTest "drag" basicState1 bs expected where
 
 -- this should work with any initial state so long as default names aren't used
 test_Common_create :: Test
-test_Common_create = constructTest "create" basicState1 bs expected where
+test_Common_create = constructTest "create" pfstate_basic1 bs expected where
   bs = [
 
       EWCLabel "create <box>"

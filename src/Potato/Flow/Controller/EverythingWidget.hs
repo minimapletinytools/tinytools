@@ -207,7 +207,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
         SomePotatoHandler handler -> case cmd of
           EFCmdSetDebugLabel x -> return everything' { _everythingFrontend_debugLabel = x }
           EFCmdTool x -> return $ everything' { _everythingFrontend_selectedTool = x }
-          EFCmdLoad (nextPFState, cm) -> undefined -- TODO
+          EFCmdLoad (_, cm) -> return $ everything' -- TODO load cm stuff
           --EFCmdMouse mouseData -> traceShow _everythingFrontend_handler $ do
           EFCmdMouse mouseData -> do
             let
