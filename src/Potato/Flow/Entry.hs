@@ -193,7 +193,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
         if isValidAfter then r else
           error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
 
-  pfTotalStateDyn <- foldDyn foldfn (PFTotalState (workspaceFromState initialState) []) pfevent
+  pfTotalStateDyn <- foldDyn foldfn (PFTotalState (loadPFStateIntoWorkspace initialState emptyWorkspace) []) pfevent
 
   let
     savepushfn _ = do
@@ -224,7 +224,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
       , _pfo_layerPosMap = r_layerPosMap
 
       -- TOOD remove 'pfevent $> IM.empty' once load/save is done properly
-      -- probably just need to address TODO in workspaceFromState
+      -- probably just need to address TODO in loadPFStateIntoWorkspace
       , _pfo_potato_changed     = leftmost [updated r_changes, pfevent $> IM.empty]
 
       , _pfo_saved              = r_saved -- :: Event t SPotatoFlow

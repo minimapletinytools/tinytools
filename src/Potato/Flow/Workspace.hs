@@ -4,7 +4,7 @@ module Potato.Flow.Workspace (
   PFWorkspace(..)
   , emptyWorkspace
   , emptyActionStack
-  , workspaceFromState
+  , loadPFStateIntoWorkspace
   , undoWorkspace
   , redoWorkspace
   , undoPermanentWorkspace
@@ -46,9 +46,12 @@ data PFWorkspace = PFWorkspace {
 
 instance NFData PFWorkspace
 
--- TODO add every element should get added to change list
-workspaceFromState :: PFState -> PFWorkspace
-workspaceFromState s = PFWorkspace s IM.empty emptyActionStack
+loadPFStateIntoWorkspace :: PFState -> PFWorkspace -> PFWorkspace
+loadPFStateIntoWorkspace pfs ws = r where
+  removeOld = fmap (const Nothing) (_pFState_directory . _pFWorkspace_state $ ws)
+  addNew = fmap Just (_pFState_directory pfs)
+  changes = IM.union addNew removeOld
+  r = PFWorkspace pfs changes emptyActionStack
 
 emptyWorkspace :: PFWorkspace
 emptyWorkspace = PFWorkspace emptyPFState IM.empty emptyActionStack

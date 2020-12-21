@@ -1,7 +1,8 @@
 
 ::NEWEST TODO::
 DONE-load test
--connect _pfo_potato_changed to load inside of workspace
+DONE-connect _pfo_potato_changed to load inside of workspace
+-test that loading actually triggered _pfo_potato_changed
 -test vty with non trivial initial state
   -maybe expose some test helpers for vty
 -figure out how you want to handle layer input using handlers
