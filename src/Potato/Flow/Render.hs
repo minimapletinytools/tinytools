@@ -21,6 +21,9 @@ import qualified Data.Text               as T
 import qualified Data.Vector.Unboxed     as V
 
 
+emptyChar :: PChar
+emptyChar = ' '
+
 -- TODO rename, this should mean the portion of the screen that is rendered, not the canvas
 data RenderedCanvas = RenderedCanvas {
   _renderedCanvas_box        :: LBox
@@ -64,6 +67,7 @@ potatoRender seltls RenderedCanvas {..} = r where
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvas
+-- caller is expected to provide all SElts that intersect the rendered LBox
 render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvas -> RenderedCanvas
 render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
   drawers = reverse $ map getDrawer seltls
@@ -73,9 +77,11 @@ render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
     pindex = toIndex _renderedCanvas_box pt
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
+    -- render what we found or empty otherwise
     newc' = case mdrawn of
       Just c  -> (pindex, c)
-      Nothing -> (pindex,' ')
+      Nothing -> (pindex,emptyChar)
+  -- go through each point in target LBox and render it
   newc = V.generate (lBox_area llbx) genfn
   r = RenderedCanvas {
       _renderedCanvas_box = _renderedCanvas_box

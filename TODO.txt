@@ -9,8 +9,18 @@
 3. NORMAL
 4. DEFAULT
 
+ANOTHER OPTION
+
+-handlers return their own overrides
+-ESC cancel on override returns back old handler
+-no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
+
 ::NEWEST TODO::
--make sure rendered canvas deletes deleted elements
+DONE-make sure rendered canvas deletes deleted elements
+-broadphase tests
+-incremental rendered canvas test
+  -i.e. add delete etc...
+    -better to extract renderedCanvas calls in EverythingWidget into its own module for easier testing
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag
@@ -46,8 +56,7 @@
   -drag select
   -decide where to store layer state
   DONE-layer drag interface (mouse position or more abstract?)
--broadphase tests
--connect RenderedCanvas
+IGNORE-connect RenderedCanvas
 -cartesian lines spec
 -attached line spec
 -insert mode text area spec
