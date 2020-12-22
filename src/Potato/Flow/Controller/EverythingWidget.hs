@@ -402,6 +402,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
       -- DOES NOT include latest changes!
       pFStateMaybeStale <- sample . current $ _pfo_pFState
+      layerPosMapMaybeStale <- sample. current $ _pfo_layerPosMap
       let
         everything' = everything {
             _everythingBackend_handlerFromSelection = Nothing
@@ -440,14 +441,15 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just aabb -> newrc where
                   slmap = _pFState_directory pFStateMaybeStale
                   rids = broadPhase_cull aabb bpt
-                  seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
+                  sseltls' = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
                     Nothing -> case IM.lookup rid slmap of
                       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-                      Just seltl -> seltl
+                      Just seltl -> (rid, seltl)
                     Just mseltl -> case mseltl of
                       Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-                      Just seltl -> seltl
-                  -- TODO need to order seltls by layer position oops
+                      Just seltl -> (rid, seltl)
+                  sseltls = fmap (\(rid, s) -> (rid, layerPosMapMaybeStale IM.! rid, s)) sseltls'
+                  seltls = fmap thd3 . sortOn snd3 $ sseltls
                   newrc = render aabb (map _sEltLabel_sElt seltls) rc
 
             -- new elt stuff

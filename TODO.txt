@@ -1,4 +1,16 @@
+::handler hierarchy 12/2020::
+
+-if layer above does not handle, input is passed on to layer below
+-if NORMAL handler is not active then new selection will set NORMAL handler
+-DEFAULT can set NORMAL handler, NORMAL can set OVERRIDE handler
+
+1. LAYERS
+2. OVERRIDE
+3. NORMAL
+4. DEFAULT
+
 ::NEWEST TODO::
+-make sure rendered canvas deletes deleted elements
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag
