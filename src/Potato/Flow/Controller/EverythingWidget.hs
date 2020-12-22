@@ -132,12 +132,12 @@ fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} frontend = fr
         -- in this case, backend will override the handler from the new selection
         Just _  -> SomePotatoHandler EmptyHandler
     , _everythingFrontend_select = _potatoHandlerOutput_select
-    , _everythingFrontend_pFEvent = _potatoHandlerOutput_event
+    , _everythingFrontend_pFEvent = _potatoHandlerOutput_pFEvent
     , _everythingFrontend_pan = case _potatoHandlerOutput_pan of
       Nothing -> _everythingFrontend_pan frontend
       Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
         V2 cx0 cy0 = _everythingFrontend_pan frontend
-    , _everythingFrontend_layersState = case _potatoHandlerOutput_layerState of
+    , _everythingFrontend_layersState = case _potatoHandlerOutput_layersState of
       Nothing -> _everythingFrontend_layersState frontend
       Just ls -> ls
 

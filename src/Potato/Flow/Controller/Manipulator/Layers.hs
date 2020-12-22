@@ -58,7 +58,7 @@ instance PotatoHandler LayersHandler where
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
               }
-            , _potatoHandlerOutput_layerState = mNextLayerState
+            , _potatoHandlerOutput_layersState = mNextLayerState
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, _) -> Just $ def {
@@ -85,7 +85,7 @@ instance PotatoHandler LayersHandler where
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None
               }
-            , _potatoHandlerOutput_event = mev
+            , _potatoHandlerOutput_pFEvent = mev
           }
       _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing

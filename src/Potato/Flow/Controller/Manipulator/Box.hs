@@ -204,7 +204,7 @@ instance PotatoHandler BoxHandler where
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
-          , _potatoHandlerOutput_event = Just op
+          , _potatoHandlerOutput_pFEvent = Just op
         }
 
     MouseDragState_Up -> Just def
@@ -217,7 +217,7 @@ instance PotatoHandler BoxHandler where
   -- TODO keyboard movement
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel bh _ = if pIsHandlerActive bh
-    then def { _potatoHandlerOutput_event = Just PFEUndo }
+    then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     else def
   pRenderHandler bh PotatoHandlerInput {..} = r where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection

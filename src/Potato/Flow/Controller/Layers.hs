@@ -314,8 +314,7 @@ updateLayers pfs changes lmm lentries = r where
 doesSelectionContainLayerPos :: LayerPos -> Selection -> Bool
 doesSelectionContainLayerPos lp = isJust . find (\(_,lp',_) -> lp' == lp)
 
--- TODO delete LDT_Drag
-data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal | LDT_Drag deriving (Show, Eq)
+data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
 
 clickLayerNew :: Selection -> Seq LayerEntry -> XY -> Maybe (LayerPos, LayerDownType)
 clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of

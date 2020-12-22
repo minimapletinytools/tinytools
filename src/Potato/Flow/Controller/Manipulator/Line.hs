@@ -85,13 +85,13 @@ instance PotatoHandler SimpleLineHandler where
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh
-          , _potatoHandlerOutput_event = Just op
+          , _potatoHandlerOutput_pFEvent = Just op
         }
     MouseDragState_Up -> Just def
     _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing
   pHandleCancel slh _ = if pIsHandlerActive slh
-    then def { _potatoHandlerOutput_event = Just PFEUndo }
+    then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     else def
   pRenderHandler slh PotatoHandlerInput {..} = def
   pIsHandlerActive = _simpleLineHandler_isActive
