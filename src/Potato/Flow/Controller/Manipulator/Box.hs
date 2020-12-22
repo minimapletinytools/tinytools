@@ -21,14 +21,12 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
-import           Control.Exception                         (assert)
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
 import qualified Data.List                                 as L
 import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
-
 
 -- TODO rework this stuff
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
@@ -153,7 +151,6 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   boxRestrictedDelta = if shiftClick
     then restrict8 dragDelta
     else dragDelta
-  selectedBox = selectionToSuperSEltLabel selection
 
   controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = makeDeltaBox m boxRestrictedDelta
@@ -219,7 +216,9 @@ instance PotatoHandler BoxHandler where
   pHandleCancel bh _ = if pIsHandlerActive bh
     then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     else def
-  pRenderHandler bh PotatoHandlerInput {..} = r where
+  pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
+    -- TODO highlight active manipulator if active
+    --if (_boxHandler_active)
     r = HandlerRenderOutput handlePoints
   pIsHandlerActive = _boxHandler_active

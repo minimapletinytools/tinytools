@@ -20,6 +20,7 @@ import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 
+
 data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool --either we are manipulating start, or we are manipulating end
     , _simpleLineHandler_undoFirst  :: Bool
@@ -36,10 +37,11 @@ instance Default SimpleLineHandler where
     }
 
 
+-- TODO rewrite using selectionToSuperSEltLabel
 findFirstLineManipulator :: RelMouseDrag -> Selection -> Maybe Bool
 findFirstLineManipulator (RelMouseDrag MouseDrag {..}) selection = assert (Seq.length selection == 1) $ case Seq.lookup 0 selection of
     Nothing -> error "expected selection"
-    Just (rid, lp, SEltLabel _ (SEltLine SLine {..})) ->
+    Just (_, _, SEltLabel _ (SEltLine SLine {..})) ->
       if _mouseDrag_to == _sLine_start then Just True
         else if _mouseDrag_to == _sLine_end then Just False
           else Nothing
