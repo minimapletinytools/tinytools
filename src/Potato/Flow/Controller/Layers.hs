@@ -6,6 +6,10 @@ module Potato.Flow.Controller.Layers (
   , LayerMetaMap
   , LayerEntries
   , LayersState
+  , LayerDragState(..)
+  , LayerDownType(..)
+  , clickLayerNew
+  , doesSelectionContainLayerPos
 
   -- exposed for testing
   , LockHiddenState(..)
@@ -325,8 +329,9 @@ clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentri
       lp = snd3 $ _layerEntry_superSEltLabel le
 
 -- TODO consider supporting single click dragging, should be easy to do (drag select if you click off label, select+drag if you click on label)
-data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos
+data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
+-- TODO DELETE
 layerInputNew ::
   PFState
   -> Int -- ^ scroll state

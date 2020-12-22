@@ -16,7 +16,11 @@ ANOTHER OPTION
 -no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
 
 ::NEWEST TODO::
+DONE-potatoHandlerOutput needs to handle layer hide/lock stuff
 DONE-make sure rendered canvas deletes deleted elements
+-cleanup
+  -make Layer/Layers consistent
+  -clear warnings
 -broadphase tests
 -incremental rendered canvas test
   -i.e. add delete etc...

@@ -137,6 +137,10 @@ fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} frontend = fr
       Nothing -> _everythingFrontend_pan frontend
       Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
         V2 cx0 cy0 = _everythingFrontend_pan frontend
+    , _everythingFrontend_layersState = case _potatoHandlerOutput_layerState of
+      Nothing -> _everythingFrontend_layersState frontend
+      Just ls -> ls
+
   }
 
 makeHandlerFromSelection :: Selection -> SomePotatoHandler

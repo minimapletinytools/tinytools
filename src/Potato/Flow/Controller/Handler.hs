@@ -42,10 +42,12 @@ import           Data.Tuple.Extra
 import qualified Text.Show
 
 data PotatoHandlerOutput = PotatoHandlerOutput {
-    _potatoHandlerOutput_nextHandler :: Maybe SomePotatoHandler
-    , _potatoHandlerOutput_select    :: Maybe (Bool, Selection)
-    , _potatoHandlerOutput_event     :: Maybe PFEventTag
-    , _potatoHandlerOutput_pan       :: Maybe XY
+    _potatoHandlerOutput_nextHandler  :: Maybe SomePotatoHandler
+    , _potatoHandlerOutput_select     :: Maybe (Bool, Selection)
+    -- TODO rename to pFEvent
+    , _potatoHandlerOutput_event      :: Maybe PFEventTag
+    , _potatoHandlerOutput_pan        :: Maybe XY
+    , _potatoHandlerOutput_layerState :: Maybe LayersState
   } deriving (Show)
 
 instance Default PotatoHandlerOutput where
@@ -54,6 +56,7 @@ instance Default PotatoHandlerOutput where
       , _potatoHandlerOutput_event = Nothing
       , _potatoHandlerOutput_pan = Nothing
       , _potatoHandlerOutput_select = Nothing
+      , _potatoHandlerOutput_layerState = Nothing
     }
 
 data PotatoHandlerInput = PotatoHandlerInput {
