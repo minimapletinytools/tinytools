@@ -24,18 +24,21 @@ import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
 
 data LayersHandler = LayersHandler {
-    _layersHandler_dragState :: LayerDragState
+    _layersHandler_dragState      :: LayerDragState
+    , _layersHandler_absCursorPos :: XY
   }
 
 instance Default LayersHandler where
   def = LayersHandler {
       _layersHandler_dragState = LDS_None
+      , _layersHandler_absCursorPos = 0
     }
 
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+    abspos = _mouseDrag_to
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 _potatoHandlerInput_layerScrollPos)
     selection = _potatoHandlerInput_selection
     (lmm, lentries) = _potatoHandlerInput_layersState
@@ -57,12 +60,15 @@ instance PotatoHandler LayersHandler where
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
+                , _layersHandler_absCursorPos = abspos
               }
             , _potatoHandlerOutput_layersState = mNextLayerState
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, _) -> Just $ def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
+              _layersHandler_absCursorPos = abspos
+            }
         }
       (MouseDragState_Up, LDS_Selecting leposdown) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
@@ -94,4 +100,7 @@ instance PotatoHandler LayersHandler where
           _layersHandler_dragState = LDS_None
         }
     }
+  pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
+    then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]
+    else emptyHandlerRenderOutput
   pIsHandlerActive lh@LayersHandler {..} = _layersHandler_dragState /= LDS_None
