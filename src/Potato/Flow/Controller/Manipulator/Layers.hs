@@ -9,18 +9,11 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
-import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
-import           Potato.Flow.State
-import           Potato.Flow.Types
 
-import           Control.Exception
 import           Data.Default
-import           Data.Dependent.Sum                        (DSum ((:=>)))
-import qualified Data.IntMap                               as IM
-import qualified Data.Sequence                             as Seq
+import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
 
 data LayersHandler = LayersHandler {
@@ -37,7 +30,7 @@ instance Default LayersHandler where
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine
-  pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
     abspos = _mouseDrag_to
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 _potatoHandlerInput_layerScrollPos)
     selection = _potatoHandlerInput_selection
@@ -95,7 +88,7 @@ instance PotatoHandler LayersHandler where
           }
       _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard _ _ _ = Nothing
-  pHandleCancel slh _ = def {
+  pHandleCancel _ _ = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler def {
           _layersHandler_dragState = LDS_None
         }
@@ -103,4 +96,4 @@ instance PotatoHandler LayersHandler where
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]
     else emptyHandlerRenderOutput
-  pIsHandlerActive lh@LayersHandler {..} = _layersHandler_dragState /= LDS_None
+  pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None

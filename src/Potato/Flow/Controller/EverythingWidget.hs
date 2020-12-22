@@ -33,9 +33,7 @@ import           Potato.Flow.Types
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
 import           Data.Default                              (def)
-import           Data.Foldable                             (minimum)
 import qualified Data.IntMap                               as IM
-import qualified Data.List                                 as L
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
@@ -126,7 +124,7 @@ fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} frontend = fr
     _everythingFrontend_handler = case _potatoHandlerOutput_nextHandler of
       Just sph -> sph
       Nothing  -> case _potatoHandlerOutput_select of
-        -- there was no selection, create a new handler to replace the finished one
+        -- there was no new handler, create a new handler from selection to replace the finished one
         -- alternatively, we could let backend do this??
         Nothing -> makeHandlerFromSelection selection
         -- in this case, backend will override the handler from the new selection
@@ -157,8 +155,6 @@ holdEverythingWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
   let
-
-
     -------------------------
     -- EVERYTHING FRONTEND --
     -------------------------
@@ -245,19 +241,20 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               -- special case, if mouse down and creation tool, we override with a new handler
               MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> do
                 let
+                  -- TODO do we need to cancel previous handler here?
+                  -- if we go with ALTERNATIVE, then no, and we should assert that previous handler is not active
                   -- cancel previous handler
-                  phoFromCancel = pHandleCancel handler potatoHandlerInput
-                  -- TODO should I do something if phoFromCancel is not nothing??
+                  --phoFromCancel = pHandleCancel handler potatoHandlerInput
 
-                  newHandler = case _everythingFrontend_selectedTool of
+                  someNewHandler = case _everythingFrontend_selectedTool of
                     Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
                     Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
                     Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
                     _           -> error "not implemented yet"
 
                 -- pass input onto newly created handler
-                return $ case newHandler of
-                  SomePotatoHandler handler -> case pHandleMouse handler potatoHandlerInput canvasDrag of
+                return $ case someNewHandler of
+                  SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
                     Just pho -> fillEverythingWithHandlerOutput selection pho everything''
                     Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
               -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
@@ -300,10 +297,10 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
                 -- input not captured by handler
                 Nothing -> case x of
-                  KeyboardData (KeyboardKey_Char c) [KeyModifier_Ctrl] ->
+                  KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
                     -- TODO copy
                     undefined
-                  KeyboardData (KeyboardKey_Char v) [KeyModifier_Ctrl] ->
+                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
                     -- TODO pasta
                     undefined
                   -- tool hotkeys
@@ -314,6 +311,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       'b'  -> Tool_Box
                       '\\' -> Tool_Line
                       't'  -> Tool_Text
+                      _    -> _everythingFrontend_selectedTool
                     r = everything' { _everythingFrontend_selectedTool = newTool }
 
                   -- TODO copy pasta, or maybe copy pasta lives outside of EverythingWidget?
@@ -460,14 +458,18 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             lastDir = _pFState_directory pFStateMaybeStale
             newEltFoldMapFn rid v = case v of
               Nothing     -> []
-              Just (lp,v) -> if IM.member rid lastDir then [] else [(rid,lp,v)]
+              Just (lp,seltl) -> if IM.member rid lastDir then [] else [(rid,lp,seltl)]
             newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
             newSelection = if null newlyCreatedSEltls
+              -- if there are no newly created elts, we still need to update the selection
               then catMaybesSeq . flip fmap _everythingBackend_selection $ \sseltl@(rid,_,seltl) ->
                 case IM.lookup rid cslmap of
+                  -- no changes means not deleted
                   Nothing                  -> Just sseltl
+                  -- if deleted, remove it
                   Just Nothing             -> Nothing
-                  Just (Just (lp, sseltl)) -> Just (rid, lp, sseltl)
+                  -- it was changed, update selection to newest version
+                  Just (Just (lp, seltl')) -> Just (rid, lp, seltl')
               else Seq.fromList newlyCreatedSEltls
 
           return $ everything' {
@@ -500,7 +502,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
   r_broadphase <- holdUniqDyn $ fmap _everythingBackend_broadPhaseState everythingBackendDyn
   r_pan <- holdUniqDyn $ fmap _everythingFrontend_pan everythingFrontendDyn
-  r_layers <- holdUniqDyn $ fmap (fst . _everythingFrontend_layersState) everythingFrontendDyn
+  --r_layers <- holdUniqDyn $ fmap (fst . _everythingFrontend_layersState) everythingFrontendDyn
 
 
 
@@ -508,7 +510,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     {
       _everythingWidget_tool           = r_tool
       , _everythingWidget_selection    = r_selection
-      , _everythingWidget_layers       = undefined
+      , _everythingWidget_layers       = undefined -- TODO
       , _everythingWidget_pan          = r_pan
       , _everythingWidget_broadPhase   = r_broadphase
       , _everythingWidget_pFOutput     = pFOutput
