@@ -220,6 +220,6 @@ instance PotatoHandler BoxHandler where
     then def { _potatoHandlerOutput_event = Just PFEUndo }
     else def
   pRenderHandler bh PotatoHandlerInput {..} = r where
-    handlePoints = fmap (\mm -> lBox_tl $ _mouseManipulator_box mm ). filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
+    handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
     r = HandlerRenderOutput handlePoints
   pIsHandlerActive = _boxHandler_active

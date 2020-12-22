@@ -74,7 +74,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
   }
 
 data HandlerRenderOutput = HandlerRenderOutput {
-    _handlerRenderOutput_temp :: [XY] -- list of coordinates where there are handles
+    _handlerRenderOutput_temp :: [LBox] -- list of coordinates where there are handles
   }
 
 instance Default HandlerRenderOutput where

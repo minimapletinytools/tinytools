@@ -58,12 +58,14 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
 
 -- TODO move to another file?
 data SelectHandler = SelectHandler {
-    _selectHandler_selecting :: Bool
+    _selectHandler_selecting    :: Bool
+    , _selectHandler_selectArea :: LBox
   }
 
 instance Default SelectHandler where
   def = SelectHandler {
       _selectHandler_selecting = False
+      , _selectHandler_selectArea = LBox 0 0
     }
 
 instance PotatoHandler SelectHandler where
@@ -77,7 +79,7 @@ instance PotatoHandler SelectHandler where
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pHandleCancel sh PotatoHandlerInput {..} = def
-  pRenderHandler sh PotatoHandlerInput {..} = def
+  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
   -- same as default?
   --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
   --  then _mouseDrag_state /= MouseDragState_Down
