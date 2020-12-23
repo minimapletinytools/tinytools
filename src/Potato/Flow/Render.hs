@@ -9,8 +9,12 @@ module Potato.Flow.Render (
   , renderedCanvasToText
   , renderedCanvasRegionToText
 
+  , renderWithBroadPhase
   , moveRenderedCanvas
   , updateCanvas
+
+  -- exposed for testing
+  , moveRenderedCanvasNoReRender
 ) where
 
 import           Relude
@@ -22,6 +26,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
 
+import qualified Data.IntMap             as IM
 import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
 import qualified Data.Vector.Unboxed     as V
@@ -123,17 +128,40 @@ renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, Fals
       pt = toPoint lbx i
       pindex = toIndex _renderedCanvas_box pt
 
-moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvasNoReRender (LBox pt@(V2 xt yt) (V2 wt ht)) RenderedCanvas {..} = r where
-  -- TODO
-  r' = RenderedCanvas {
-      _renderedCanvas_box = undefined
-      , _renderedCanvas_contents = undefined
-    }
-  r = r'
+renderWithBroadPhase :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
+renderWithBroadPhase bpt dir lbx rc = r where
+  rids = broadPhase_cull lbx bpt
+  seltls = flip fmap rids $ \rid -> case IM.lookup rid dir of
+      Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
+      Just seltl -> _sEltLabel_sElt seltl
+  r = render lbx seltls rc
 
-moveRenderedCanvas :: LBox -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvas = undefined
+
+-- UNTESTED :(
+moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
+  -- unnecessary to init with empty vector as moveRenderedCanvas will re-render those areas
+  -- but it's still nice to do and makes testing easier
+  emptyv = V.replicate (V.length _renderedCanvas_contents) ' '
+  newv = case intersect_LBox lbx _renderedCanvas_box of
+    Just intersectlbx -> copiedv where
+      (l,r,t,b) = lBox_to_axis intersectlbx
+      -- [(newIndex, oldIndex)]
+      indices = [(toIndex lbx (V2 x y), toIndex _renderedCanvas_box (V2 x y)) | x <- [l..(r-1)], y <- [t..(b-1)]]
+      indexedValues = fmap (\(idx, oldidx) -> (idx, _renderedCanvas_contents V.! oldidx)) indices
+      copiedv = (V.//) emptyv indexedValues
+    Nothing -> emptyv
+
+  r = RenderedCanvas {
+      _renderedCanvas_box = lbx
+      , _renderedCanvas_contents = newv
+    }
+
+-- TODO test
+moveRenderedCanvas :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvas bpt dir lbx rc = r where
+  r1 = moveRenderedCanvasNoReRender lbx rc
+  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_LBox lbx (_renderedCanvas_box rc))
 
 updateCanvas :: SEltLabelChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
 updateCanvas = undefined

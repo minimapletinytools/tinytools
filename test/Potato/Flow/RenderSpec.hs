@@ -62,3 +62,16 @@ spec = do
       --putTextLn $ canvas2Text
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` lBox_area renderBox
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2TextRegion) `shouldBe` lBox_area renderBox
+    it "moveRenderedCanvasNoReRender" $ do
+      let
+        -- fill the whole canvas
+        canvas1 = testCanvas 0 0 100 100
+        selt = SEltBox $ SBox {
+            _sBox_box    = LBox (V2 0 0) (V2 100 100)
+            , _sBox_style = def
+          }
+        canvas2 = potatoRender [selt] canvas1
+        target = LBox (V2 (-50) (-50)) (V2 100 100)
+        canvas3 = moveRenderedCanvasNoReRender target canvas2
+        canvas3Text = renderedCanvasToText canvas3
+      T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas3Text) `shouldBe` 50*50

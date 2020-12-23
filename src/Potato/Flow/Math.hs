@@ -13,6 +13,7 @@ module Potato.Flow.Math (
   , does_LBox_contains_XY
   , lBox_tl
   , lBox_area
+  , lBox_to_axis
 
   , make_LBox_from_axis
   , union_LBox
