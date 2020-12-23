@@ -194,7 +194,7 @@ instance PotatoHandler BoxHandler where
       --boxRestrictedDelta = if shiftClick then restrict8 dragDelta else dragDelta
 
       op = if _boxHandler_isCreation
-        then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox (_mouseDrag_from) (dragDelta)) def))
+        then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }

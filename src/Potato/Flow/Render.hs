@@ -8,13 +8,19 @@ module Potato.Flow.Render (
   , render
   , renderedCanvasToText
   , renderedCanvasRegionToText
+
+  , moveRenderedCanvas
+  , updateCanvas
 ) where
 
 import           Relude
 
+import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
+import           Potato.Flow.State
+import           Potato.Flow.Types
 
 import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
@@ -116,3 +122,18 @@ renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, Fals
     where
       pt = toPoint lbx i
       pindex = toIndex _renderedCanvas_box pt
+
+moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvasNoReRender (LBox pt@(V2 xt yt) (V2 wt ht)) RenderedCanvas {..} = r where
+  -- TODO
+  r' = RenderedCanvas {
+      _renderedCanvas_box = undefined
+      , _renderedCanvas_contents = undefined
+    }
+  r = r'
+
+moveRenderedCanvas :: LBox -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvas = undefined
+
+updateCanvas :: SEltLabelChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
+updateCanvas = undefined

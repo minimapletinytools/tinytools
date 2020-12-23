@@ -18,6 +18,7 @@ module Potato.Flow.Math (
   , union_LBox
   , intersect_LBox
   , does_LBox_intersect
+  , substract_LBox
 
   -- these helpers maybe belong in a different file, they have very specific usages
   , CanonicalLBox(..)
@@ -165,6 +166,30 @@ does_LBox_intersect lb1 lb2 = r where
     | t1 >= b2 = False
     | t2 >= b1 = False
     | otherwise = True
+
+
+-- | substract lb2 from lb1 and return [LBox] representing the difference
+substract_LBox :: LBox -> LBox -> [LBox]
+substract_LBox lb1@(LBox _ (V2 w1 h1)) lb2 = r where
+  (l1,r1,t1,b1) = lBox_to_axis lb1
+  (l2,r2,t2,b2) = lBox_to_axis lb2
+  mleft = if l1 < l2
+    then Just $ LBox (V2 l1 t1) (V2 (min (l2-l1) w1) h1)
+    else Nothing
+  mright = if r1 > r2
+    then Just $ LBox (V2 (max r2 l1) t1) (V2 (min (r1-r2) w1) h1)
+    else Nothing
+  mtop' =  if t1 < t2
+    then Just $ LBox (V2 l1 t1) (V2 w1 (min (t2-t1) h1))
+    else Nothing
+  mbot' = if b1 > b2
+    then Just $ LBox (V2 l1 (max b2 t1)) (V2 w1 (min (b1-b2) h1))
+    else Nothing
+  -- TODO crop away mleft/mright from mtop'/mbot'
+  mtop = mtop'
+  mbot = mbot'
+  r = catMaybes [mleft,mright,mtop, mbot]
+
 
 -- | CanonicalLBox is always has non-negative width/height
 -- and tracks which axis are flipped to return back to original LBox

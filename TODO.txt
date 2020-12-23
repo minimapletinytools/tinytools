@@ -16,15 +16,6 @@ ANOTHER OPTION
 -no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
 
 ::NEWEST TODO::
-DONE-potatoHandlerOutput needs to handle layer hide/lock stuff
-DONE-make sure rendered canvas deletes deleted elements
--cleanup
-  DONE-make Layer/Layers consistent
-  -clear warnings
--broadphase tests
--incremental rendered canvas test
-  -i.e. add delete etc...
-    -better to extract renderedCanvas calls in EverythingWidget into its own module for easier testing
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag
@@ -35,6 +26,15 @@ DONE-make sure rendered canvas deletes deleted elements
     -new element handler case
     -pan handler case
     -select and drag + select case
+-layer handler test
+-incremental render function
+  -moveRenderedCanvas :: LBox -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
+    -first do moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
+    -then call renderCanvas and rerender newly moved areas
+  -updateCanvas :: SEltLableChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
+
+
+  
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
@@ -61,6 +61,8 @@ DONE-make sure rendered canvas deletes deleted elements
   -decide where to store layer state
   DONE-layer drag interface (mouse position or more abstract?)
 IGNORE-connect RenderedCanvas
+-improved renderer spec
+  -kd tree in broadphase I guess
 -cartesian lines spec
 -attached line spec
 -insert mode text area spec
@@ -71,6 +73,15 @@ IGNORE-connect RenderedCanvas
   -you can make it not partial if you get a selection to operate on and in the set operation it's always override (no modify)
 
 
+IGNORE-broadphase tests
+IGNORE-incremental rendered canvas test
+  -i.e. add delete etc...
+    -better to extract renderedCanvas calls in EverythingWidget into its own module for easier testing
+DONE-potatoHandlerOutput needs to handle layer hide/lock stuff
+DONE-make sure rendered canvas deletes deleted elements
+DONE-cleanup
+  DONE-make Layer/Layers consistent
+  -clear warnings
 DONE-load test
 DONE-connect _pfo_potato_changed to load inside of workspace
 DONE-test that loading actually triggered _pfo_potato_changed
