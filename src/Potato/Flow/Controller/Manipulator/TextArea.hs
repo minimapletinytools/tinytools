@@ -131,7 +131,7 @@ instance PotatoHandler TextAreaHandler where
       validateFirst = assert (checkTextAreaHandlerStateIsConsistent _textAreaHandler_state stext)
     in validateFirst $ case _mouseDrag_state of
       MouseDragState_Down -> r where
-        clickOutside = does_LBox_contains_XY (_textAreaInputState_box _textAreaHandler_state) _mouseDrag_from
+        clickOutside = does_lBox_contains_XY (_textAreaInputState_box _textAreaHandler_state) _mouseDrag_from
         newState = mouseText (Just _textAreaHandler_state) stext rmd
         r = if clickOutside
           then Nothing

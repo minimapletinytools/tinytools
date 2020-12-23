@@ -27,9 +27,9 @@ getSEltBox selt = case selt of
   SEltFolderEnd   -> Nothing
   -- TODO return canonical
   SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
-  SEltLine x      -> Just $ union_LBox
-    (make_LBox_from_XYs (_sLine_start x) (_sLine_end x))
-    (make_LBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
+  SEltLine x      -> Just $ union_lBox
+    (make_lBox_from_XYs (_sLine_start x) (_sLine_end x))
+    (make_lBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
   SEltText x      -> Just $ canonicalLBox_from_lBox_ $ _sText_box x
 
 doesSEltIntersectBox :: LBox -> SElt -> Bool
@@ -37,17 +37,17 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltNone                     -> False
   SEltFolderStart              -> False
   SEltFolderEnd                -> False
-  SEltBox x                    -> does_LBox_intersect lbox (_sBox_box x)
-  SEltText x                   -> does_LBox_intersect lbox (_sText_box x)
+  SEltBox x                    -> does_lBox_intersect lbox (_sBox_box x)
+  SEltText x                   -> does_lBox_intersect lbox (_sText_box x)
   -- TODO this is wrong, do it correctly...
-  SEltLine (SLine start end style) -> does_LBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SLine start end style)))
+  SEltLine (SLine start end style) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SLine start end style)))
 
 
 
 type RenderFn = XY -> Maybe PChar
 
 makePotatoRenderer :: LBox -> RenderFn
-makePotatoRenderer lbox pt = if does_LBox_contains_XY lbox pt
+makePotatoRenderer lbox pt = if does_lBox_contains_XY lbox pt
   then Just '#'
   else Nothing
 
@@ -70,7 +70,7 @@ getDrawer selt = case selt of
   SEltBox SBox {..}       -> r where
     CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
     rfn pt@(V2 x' y')
-      | not (does_LBox_contains_XY lbox pt) = Nothing
+      | not (does_lBox_contains_XY lbox pt) = Nothing
       | w == 1 && h == 1 = Just $ _superStyle_point _sBox_style
       | w == 1 = Just $ _superStyle_vertical _sBox_style
       | h == 1 = Just $ _superStyle_horizontal _sBox_style

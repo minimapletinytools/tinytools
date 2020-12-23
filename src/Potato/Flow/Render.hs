@@ -143,7 +143,7 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
   -- unnecessary to init with empty vector as moveRenderedCanvas will re-render those areas
   -- but it's still nice to do and makes testing easier
   emptyv = V.replicate (V.length _renderedCanvas_contents) ' '
-  newv = case intersect_LBox lbx _renderedCanvas_box of
+  newv = case intersect_lBox lbx _renderedCanvas_box of
     Just intersectlbx -> copiedv where
       (l,r,t,b) = lBox_to_axis intersectlbx
       -- [(newIndex, oldIndex)]
@@ -161,7 +161,7 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
 moveRenderedCanvas :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
 moveRenderedCanvas bpt dir lbx rc = r where
   r1 = moveRenderedCanvasNoReRender lbx rc
-  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_LBox lbx (_renderedCanvas_box rc))
+  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_lBox lbx (_renderedCanvas_box rc))
 
 updateCanvas :: SEltLabelChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
 updateCanvas = undefined

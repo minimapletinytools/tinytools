@@ -8,18 +8,18 @@ module Potato.Flow.Math (
   , nilLBox
 
   -- TODO rename this to lBox for consistency...
-  , make_LBox_from_XY
-  , make_LBox_from_XYs
-  , does_LBox_contains_XY
+  , make_lBox_from_XY
+  , make_lBox_from_XYs
+  , does_lBox_contains_XY
   , lBox_tl
   , lBox_area
   , lBox_to_axis
 
-  , make_LBox_from_axis
-  , union_LBox
-  , intersect_LBox
-  , does_LBox_intersect
-  , substract_LBox
+  , make_lBox_from_axis
+  , union_lBox
+  , intersect_lBox
+  , does_lBox_intersect
+  , substract_lBox
 
   -- these helpers maybe belong in a different file, they have very specific usages
   , CanonicalLBox(..)
@@ -85,12 +85,12 @@ lBox_tl :: LBox -> XY
 lBox_tl (LBox p _) = p
 
 -- | returns a 1 area LBox
-make_LBox_from_XY :: XY -> LBox
-make_LBox_from_XY p = LBox p 1
+make_lBox_from_XY :: XY -> LBox
+make_lBox_from_XY p = LBox p 1
 
 -- | always returns a canonical LBox
-make_LBox_from_XYs :: XY -> XY -> LBox
-make_LBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
+make_lBox_from_XYs :: XY -> XY -> LBox
+make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
   LBox {
     _lBox_tl= V2 (min x1 x2) (min y1 y2)
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
@@ -105,13 +105,13 @@ add_XY_to_LBox (V2 px py) lbox = r where
     , _lBox_size  = V2 (max bw (abs (px-bx))) (max bh (abs (py-by)))
   }
 
-does_LBox_contains_XY :: LBox -> XY -> Bool
-does_LBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
+does_lBox_contains_XY :: LBox -> XY -> Bool
+does_lBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
 
 -- | right and bottom axis are non-inclusive
-make_LBox_from_axis :: (Int, Int, Int, Int) -> LBox
-make_LBox_from_axis (x1,x2,y1,y2) = LBox (V2 rx ry) (V2 rw rh) where
+make_lBox_from_axis :: (Int, Int, Int, Int) -> LBox
+make_lBox_from_axis (x1,x2,y1,y2) = LBox (V2 rx ry) (V2 rw rh) where
   rx = min x1 x2
   ry = min y1 y2
   rw = abs (x1-x2)
@@ -129,17 +129,17 @@ max4 :: (Ord a) => a -> a -> a -> a -> a
 max4 a1 a2 a3 a4 = max (max (max a1 a2) a3) a4
 
 -- | inverted LBox are treated as if not inverted
-union_LBox :: LBox -> LBox -> LBox
-union_LBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = combined where
+union_lBox :: LBox -> LBox -> LBox
+union_lBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = combined where
   cx1 = x1 + w1
   cy1 = y1 + h1
   cx2 = x2 + w2
   cy2 = y2 + h2
-  combined = make_LBox_from_axis (min4 x1 cx1 x2 cx2, max4 x1 cx1 x2 cx2, min4 y1 cy1 y2 cy2, max4 y1 cy1 y2 cy2)
+  combined = make_lBox_from_axis (min4 x1 cx1 x2 cx2, max4 x1 cx1 x2 cx2, min4 y1 cy1 y2 cy2, max4 y1 cy1 y2 cy2)
 
 -- | inverted LBox are treated as if not inverted
-intersect_LBox :: LBox -> LBox -> Maybe LBox
-intersect_LBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2)) = r where
+intersect_lBox :: LBox -> LBox -> Maybe LBox
+intersect_lBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2)) = r where
   cx1 = x1 + w1
   cy1 = y1 + h1
   cx2 = x2 + w2
@@ -152,12 +152,12 @@ intersect_LBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2))
   t2 = min cy2 y2
   b1 = max cy1 y1
   b2 = max cy2 y2
-  r = if does_LBox_intersect lb1 lb2
-    then Just $ make_LBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
+  r = if does_lBox_intersect lb1 lb2
+    then Just $ make_lBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
     else Nothing
 
-does_LBox_intersect :: LBox -> LBox -> Bool
-does_LBox_intersect lb1 lb2 = r where
+does_lBox_intersect :: LBox -> LBox -> Bool
+does_lBox_intersect lb1 lb2 = r where
   (l1,r1,t1,b1) = lBox_to_axis lb1
   (l2,r2,t2,b2) = lBox_to_axis lb2
   r | lBox_area lb1 == 0 = False
@@ -170,8 +170,8 @@ does_LBox_intersect lb1 lb2 = r where
 
 
 -- | substract lb2 from lb1 and return [LBox] representing the difference
-substract_LBox :: LBox -> LBox -> [LBox]
-substract_LBox lb1@(LBox _ (V2 w1 h1)) lb2 = r where
+substract_lBox :: LBox -> LBox -> [LBox]
+substract_lBox lb1@(LBox _ (V2 w1 h1)) lb2 = r where
   (l1,r1,t1,b1) = lBox_to_axis lb1
   (l2,r2,t2,b2) = lBox_to_axis lb2
   mleft = if l1 < l2
@@ -201,7 +201,7 @@ canonicalLBox_from_lBox :: LBox -> CanonicalLBox
 canonicalLBox_from_lBox (LBox (V2 x y) (V2 w h)) = r where
   fx = w < 0
   fy = h < 0
-  r = CanonicalLBox fx fy $ make_LBox_from_axis (x, x+w, y, y+h)
+  r = CanonicalLBox fx fy $ make_lBox_from_axis (x, x+w, y, y+h)
 
 -- | same as canonicalLBox_from_lBox but returns just the canonical LBox
 canonicalLBox_from_lBox_ :: LBox -> LBox

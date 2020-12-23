@@ -28,7 +28,7 @@ import qualified Data.Sequence                  as Seq
 
 selectMagic :: PFState -> REltIdMap LayerPos -> BroadPhaseState -> RelMouseDrag -> Selection
 selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
-  LBox pos' sz' = make_LBox_from_XYs _mouseDrag_to _mouseDrag_from
+  LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
   -- always expand selection by 1
   selectBox = LBox pos' (sz' + V2 1 1)
   boxSize = lBox_area selectBox

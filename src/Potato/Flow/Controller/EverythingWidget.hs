@@ -438,7 +438,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             rc = _everythingBackend_renderedCanvas
             newRenderedCanvas = case boxes of
               [] -> rc
-              (b:bs) -> case intersect_LBox (renderedCanvas_box rc) (foldl' union_LBox b bs) of
+              (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
                 Nothing -> rc
                 Just aabb -> newrc where
                   slmap = _pFState_directory pFStateMaybeStale

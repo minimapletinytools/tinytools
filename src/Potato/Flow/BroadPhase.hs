@@ -77,5 +77,5 @@ update_bPTree changes BPTree {..} = r where
 -- | returns list of REltIds that intersect with given AABB
 broadPhase_cull :: AABB -> BPTree -> [REltId]
 broadPhase_cull box BPTree {..} = r where
-  foldfn rid aabb cols = if does_LBox_intersect box aabb then rid:cols else cols
+  foldfn rid aabb cols = if does_lBox_intersect box aabb then rid:cols else cols
   r = IM.foldrWithKey foldfn [] _bPTree_potato_tree

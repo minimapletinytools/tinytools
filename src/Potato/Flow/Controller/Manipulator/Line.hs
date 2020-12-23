@@ -99,8 +99,8 @@ instance PotatoHandler SimpleLineHandler where
     boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
       (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_isActive
         -- TODO if active, color selected handler
-        then [make_LBox_from_XY _sLine_start, make_LBox_from_XY _sLine_end]
-        else [make_LBox_from_XY _sLine_start, make_LBox_from_XY _sLine_end]
+        then [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
+        else [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
       x -> error $ "expected SLine in selection but got " <> show x <> " instead"
     r = HandlerRenderOutput boxes
   pIsHandlerActive = _simpleLineHandler_isActive

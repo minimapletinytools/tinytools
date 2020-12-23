@@ -16,7 +16,7 @@ ANOTHER OPTION
 -no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
 
 ::NEWEST TODO::
--rename LBox methods to lBox
+DONE-rename LBox methods to lBox
 -figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....
     -layers > override > normal > no capture select/select+drag

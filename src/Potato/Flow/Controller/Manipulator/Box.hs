@@ -56,8 +56,8 @@ toMouseManipulators selection = if Seq.length selection > 1
           <> [(makeHandleBox BH_A _sText_box) { _mouseManipulator_type = MouseManipulatorType_Text }]
         _                   -> []
   else bb where
-    union_LBoxes :: NonEmpty LBox -> LBox
-    union_LBoxes (x:|xs) = foldl' union_LBox x xs
+    union_lBoxes :: NonEmpty LBox -> LBox
+    union_lBoxes (x:|xs) = foldl' union_lBox x xs
     fmapfn (_, _, seltl) = do
       box <- getSEltBox . _sEltLabel_sElt $ seltl
       return box
@@ -65,13 +65,13 @@ toMouseManipulators selection = if Seq.length selection > 1
     sboxes = catMaybes (toList msboxes)
     bb = case sboxes of
       [] -> []
-      x:xs  -> fmap (flip makeHandleBox (union_LBoxes (x:|xs))) [BH_TL .. BH_A]
+      x:xs  -> fmap (flip makeHandleBox (union_lBoxes (x:|xs))) [BH_TL .. BH_A]
 
 findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
   smt = computeSelectionType selection
-  normalSel = L.findIndex (\mm -> does_LBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
+  normalSel = L.findIndex (\mm -> does_lBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
   r = case smt of
     SMTText -> normalSel -- TODO figure out how to differentiate between area / text manipulator
     _       -> normalSel
