@@ -96,9 +96,6 @@ instance PotatoHandler SimpleLineHandler where
     KeyboardData KeyboardKey_Esc _ -> Just $ def
     -- TODO keyboard movement
     _                              -> Nothing
-  pHandleCancel slh _ = if pIsHandlerActive slh
-    then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
-    else def
   pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
       (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_isActive

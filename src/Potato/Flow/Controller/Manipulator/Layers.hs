@@ -92,11 +92,6 @@ instance PotatoHandler LayersHandler where
         _layersHandler_dragState = LDS_None
       }
     _ -> Nothing
-  pHandleCancel _ _ = def {
-      _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler def {
-          _layersHandler_dragState = LDS_None
-        }
-    }
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]
     else emptyHandlerRenderOutput

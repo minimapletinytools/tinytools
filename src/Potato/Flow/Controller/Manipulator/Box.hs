@@ -217,9 +217,6 @@ instance PotatoHandler BoxHandler where
     -- TODO keyboard movement
     _ -> Nothing
 
-  pHandleCancel bh _ = if pIsHandlerActive bh
-    then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
-    else def
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
     -- TODO highlight active manipulator if active

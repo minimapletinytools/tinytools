@@ -1,31 +1,13 @@
-::handler hierarchy 12/2020::
-
--if layer above does not handle, input is passed on to layer below
--if NORMAL handler is not active then new selection will set NORMAL handler
--DEFAULT can set NORMAL handler, NORMAL can set OVERRIDE handler
-
-1. LAYERS
-2. OVERRIDE
-3. NORMAL
-4. DEFAULT
-
-ANOTHER OPTION
-
--handlers return their own overrides
--ESC cancel on override returns back old handler
--no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
-
--if no input capture
-  -cancel current handler (assert it's not active is enough)
-  -create DefaultHandler
-  -pass onto DefaultHandler
-  -Default handler returns whatever handler as its own override
-  -ok but do I Really need to do this? current case statement is fine
--new selection overrides handler if handler is not active
-
 ::NEWEST TODO::
-DONE-implement override handler as per spec above (ANOTHER OPTION)
--layer handler test
+DONE-remove pHandleCancel
+-layers
+  -figure out how to handle layer inputs...
+  -connect layers
+  -layer handler test
+
+-connect handlers to vty
+-connect layers to vty
+
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
@@ -44,26 +26,29 @@ DONE-implement override handler as per spec above (ANOTHER OPTION)
   -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
 -combine everything and entry 😱😱😱😱😱😱😱
   -maybe do this at the end, won't get that much harder prob...
--layers
-  DONE-add selection to layerInputNew
-  -write method to update layers when moving elements around in layers
-  -add tests for layerInputNew
-  -drag select
-  -decide where to store layer state
-  DONE-layer drag interface (mouse position or more abstract?)
-IGNORE-connect RenderedCanvas
 -improved renderer spec
   -kd tree in broadphase I guess
 -cartesian lines spec
 -attached line spec
 -insert mode text area spec
   -(how to handle resize??)
--think of some way to make _pFState_directory type safe
+-layer bonus
+  -write method to update layers incrementally when there are changes + when moving elements around in layers
+    -write now you just inefficientlly call generateLayers every time...
+  -layer drag select
+
+IGNORE-connect RenderedCanvas
+IGNORE-think of some way to make _pFState_directory type safe
   -partial from accessing by REltId index
   -partial from trying to operate on possibly incorrect type
   -you can make it not partial if you get a selection to operate on and in the set operation it's always override (no modify)
-
-
+DONE/IGNORE-layers
+  DONE-add selection to layerInputNew
+  IGNORE-add tests for layerInputNew
+  IGNORE-drag select
+  DONE-decide where to store layer state
+  DONE-layer drag interface (mouse position or more abstract?)
+DONE-implement override handler as per spec above (ANOTHER OPTION)
 DONE-incremental render function
   -moveRenderedCanvas :: LBox -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
     -first do moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
@@ -217,6 +202,32 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+::handler hierarchy 12/2020::
+
+-if layer above does not handle, input is passed on to layer below
+-if NORMAL handler is not active then new selection will set NORMAL handler
+-DEFAULT can set NORMAL handler, NORMAL can set OVERRIDE handler
+
+1. LAYERS
+2. OVERRIDE
+3. NORMAL
+4. DEFAULT
+
+ANOTHER OPTION
+
+-handlers return their own overrides
+-ESC cancel on override returns back old handler
+-no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
+
+-if no input capture
+  -cancel current handler (assert it's not active is enough)
+  -create DefaultHandler
+  -pass onto DefaultHandler
+  -Default handler returns whatever handler as its own override
+  -ok but do I Really need to do this? current case statement is fine
+-new selection overrides handler if handler is not active
+
 
 
 ::Handler Notes 12/2020::

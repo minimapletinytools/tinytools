@@ -80,8 +80,6 @@ instance PotatoHandler SelectHandler where
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
     KeyboardData KeyboardKey_Esc _ -> Just $ def
     _                              -> Nothing
-
-  pHandleCancel sh PotatoHandlerInput {..} = def
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
   -- same as default?
   --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh

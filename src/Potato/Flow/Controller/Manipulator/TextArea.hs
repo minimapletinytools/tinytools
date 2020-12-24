@@ -160,10 +160,5 @@ instance PotatoHandler TextAreaHandler where
       -- TODO make this work...
       r = Just $ captureWithNoChange tah
 
-
-  -- in this case, cancel simply goes back to box handler and does not undo the operation
-  -- TODO if cancel was becaues of escape, undo the operation??
-  pHandleCancel tah _ = def { _potatoHandlerOutput_nextHandler = Nothing }
-
   pRenderHandler tah PotatoHandlerInput {..} = def
   pIsHandlerActive = _textAreaHandler_isActive
