@@ -57,22 +57,19 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
 
 data SelectHandler = SelectHandler {
-    -- TODO rename to active
-    _selectHandler_selecting    :: Bool
-    , _selectHandler_selectArea :: LBox
+    _selectHandler_selectArea :: LBox
   }
 
 instance Default SelectHandler where
   def = SelectHandler {
-      _selectHandler_selecting = False
-      , _selectHandler_selectArea = LBox 0 0
+      _selectHandler_selectArea = LBox 0 0
     }
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = handlerName_select
   pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag md) = Just $ case _mouseDrag_state md of
-    MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh { _selectHandler_selecting = True} }
-    MouseDragState_Dragging -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler sh }
+    MouseDragState_Down -> captureWithNoChange sh
+    MouseDragState_Dragging -> captureWithNoChange sh
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
@@ -81,8 +78,4 @@ instance PotatoHandler SelectHandler where
     KeyboardData KeyboardKey_Esc _ -> Just $ def
     _                              -> Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
-  -- same as default?
-  --pValidateMouse sh (RelMouseDrag MouseDrag {..}) = if _selectHandler_selecting sh
-  --  then _mouseDrag_state /= MouseDragState_Down
-  --  else _mouseDrag_state == MouseDragState_Down
-  pIsHandlerActive = _selectHandler_selecting
+  pIsHandlerActive _ = True

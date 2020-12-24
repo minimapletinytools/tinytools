@@ -1,15 +1,14 @@
 ::NEWEST TODO::
-DONE-remove pHandleCancel
 -layers
   -figure out how to handle layer inputs...
   -connect layers
   -layer handler test
-DONE-connect TextArea handler
-  -potato text area input
-  -text area tool should create a box and after box is finished it should go straight to edit mode in text area handler
+
 -connect handlers to vty
 -connect layers to vty
 
+-consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
+  -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
@@ -39,6 +38,10 @@ DONE-connect TextArea handler
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+DONE-remove pHandleCancel
+DONE-connect TextArea handler
+  -potato text area input
+  -text area tool should create a box and after box is finished it should go straight to edit mode in text area handler
 IGNORE-connect RenderedCanvas
 IGNORE-think of some way to make _pFState_directory type safe
   -partial from accessing by REltId index

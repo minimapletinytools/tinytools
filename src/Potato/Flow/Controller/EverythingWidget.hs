@@ -75,6 +75,10 @@ data EverythingBackendCmd =
 
 
 
+-- | invariants
+-- * TODO mouse input type can only change after a `_lMouseData_isRelease == True`
+-- * TODO non-mouse inputs can only happen after a `_lMouseData_isRelease == True` except for cancel
+
 data EverythingWidgetConfig t = EverythingWidgetConfig {
   -- TODO should really also include ControllerMeta
   _everythingWidgetConfig_initialState    :: PFState
@@ -118,9 +122,8 @@ data EverythingWidget t = EverythingWidget {
   , _everythingWidget_everythingCombined_DEBUG :: Dynamic t EverythingCombined_DEBUG
 }
 
--- TODO rename to fillEverythingFrontendWithHandlerOutput
-fillEverythingWithHandlerOutput :: Selection -> PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
-fillEverythingWithHandlerOutput selection PotatoHandlerOutput {..} frontend = frontend {
+fillEverythingFrontendWithHandlerOutput :: Selection -> PotatoHandlerOutput -> EverythingFrontend -> EverythingFrontend
+fillEverythingFrontendWithHandlerOutput selection PotatoHandlerOutput {..} frontend = frontend {
     _everythingFrontend_handler = case _potatoHandlerOutput_nextHandler of
       Just sph -> sph
       Nothing  -> case _potatoHandlerOutput_select of
@@ -242,7 +245,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 else everything'' -- still cancelled
               -- special case, if mouse down and pan tool, we override with a new handler
               MouseDragState_Down | _everythingFrontend_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
-                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
+                Just pho -> return $ fillEverythingFrontendWithHandlerOutput selection pho everything''
                 Nothing -> error "this should never happen"
               -- special case, if mouse down and creation tool, we override with a new handler
               MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> assert (not $ pIsHandlerActive handler) $ do
@@ -257,11 +260,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 -- pass input onto newly created handler
                 return $ case someNewHandler of
                   SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
-                    Just pho -> fillEverythingWithHandlerOutput selection pho everything''
+                    Just pho -> fillEverythingFrontendWithHandlerOutput selection pho everything''
                     Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
               -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev everything:" $ traceShow everything $ trace "handler" $ traceShow someHandler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
               _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
+                Just pho -> return $ fillEverythingFrontendWithHandlerOutput selection pho everything''
                 -- input not captured by handler, do select or drag+select
                 Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) $ do
                   let
@@ -274,18 +277,18 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     -- 2. if you let go of shift before mouse up, it just does a standard mouse selection
                     -- I think this is still better than letting BoxHandler handle this case
                     then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                      Just pho -> fillEverythingWithHandlerOutput selection pho everything''
+                      Just pho -> fillEverythingFrontendWithHandlerOutput selection pho everything''
                       Nothing -> error "handler was expected to capture this mouse state"
                     -- special drag + select case, override the selection
                     -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                     -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                     else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                       -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
-                      Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (fillEverythingWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
+                      Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (fillEverythingFrontendWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
                 Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
           EFCmdKeyboard kbd -> case pHandleKeyboard handler potatoHandlerInput kbd of
-            Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
+            Just pho -> return $ fillEverythingFrontendWithHandlerOutput selection pho everything'
             -- input not captured by handler
             Nothing -> case kbd of
               KeyboardData KeyboardKey_Esc _ -> do

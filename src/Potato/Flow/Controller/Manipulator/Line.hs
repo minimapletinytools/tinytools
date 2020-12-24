@@ -25,8 +25,7 @@ data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool --either we are manipulating start, or we are manipulating end
     , _simpleLineHandler_undoFirst  :: Bool
     , _simpleLineHandler_isCreation :: Bool
-    -- TODO rename to just active
-    , _simpleLineHandler_isActive   :: Bool
+    , _simpleLineHandler_active     :: Bool
   }
 
 instance Default SimpleLineHandler where
@@ -34,7 +33,7 @@ instance Default SimpleLineHandler where
       _simpleLineHandler_isStart = False
       , _simpleLineHandler_undoFirst = False
       , _simpleLineHandler_isCreation = False
-      , _simpleLineHandler_isActive = False
+      , _simpleLineHandler_active = False
     }
 
 
@@ -56,7 +55,7 @@ instance PotatoHandler SimpleLineHandler where
 
     MouseDragState_Down | _simpleLineHandler_isCreation -> Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-            _simpleLineHandler_isActive = True
+            _simpleLineHandler_active = True
           }
       }
     MouseDragState_Down -> r where
@@ -66,7 +65,7 @@ instance PotatoHandler SimpleLineHandler where
         Just isstart -> Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _simpleLineHandler_isStart = isstart
-                , _simpleLineHandler_isActive = True
+                , _simpleLineHandler_active = True
               }
           }
     MouseDragState_Dragging -> Just r where
@@ -98,10 +97,10 @@ instance PotatoHandler SimpleLineHandler where
     _                              -> Nothing
   pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-      (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_isActive
+      (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
         else [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
       x -> error $ "expected SLine in selection but got " <> show x <> " instead"
     r = HandlerRenderOutput boxes
-  pIsHandlerActive = _simpleLineHandler_isActive
+  pIsHandlerActive = _simpleLineHandler_active
