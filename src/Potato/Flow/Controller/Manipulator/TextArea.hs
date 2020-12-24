@@ -105,9 +105,11 @@ checkTextAreaHandlerStateIsConsistent TextAreaInputState {..} SText {..} = r whe
   r = _textAreaInputState_raw == _sText_text && w == bw
 
 data TextAreaHandler = TextAreaHandler {
+    -- TODO rename to handler
     _textAreaHandler_isActive      :: Bool
     , _textAreaHandler_state       :: TextAreaInputState
     , _textAreaHandler_prevHandler :: SomePotatoHandler
+    , _textAreaHandler_undoFirst   :: Bool
   }
 
 makeTextAreaHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> TextAreaHandler
@@ -115,12 +117,13 @@ makeTextAreaHandler prev selection rmd = TextAreaHandler {
       _textAreaHandler_isActive = False
       , _textAreaHandler_state = makeTextAreaInputState (getSText selection) rmd
       , _textAreaHandler_prevHandler = prev
+      , _textAreaHandler_undoFirst = False
     }
 
 updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
 updateTextAreaHandlerState selection tah@TextAreaHandler {..} = r where
   stext = getSText selection
-  -- TODO
+  -- TODO resize zipper
   r = tah {
     _textAreaHandler_state = undefined
   }
@@ -144,21 +147,34 @@ instance PotatoHandler TextAreaHandler where
                 }
             }
 
-      -- TODO drag select text
+      -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
+
       MouseDragState_Up -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _textAreaHandler_isActive = False
+              --, _textAreaHandler_undoFirst = False -- this variant adds new undo point each time cursor is moved
             }
         }
       _ -> error "unexpected mouse state passed to handler"
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah') }
-    _ -> r where
+    _ -> Just r where
       tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
-      -- TODO make this work...
-      r = Just $ captureWithNoChange tah
+      sseltl = selectionToSuperSEltLabel _potatoHandlerInput_selection
+      -- TODO decide what to do with mods
+      (nexttais, mev) = inputText _textAreaHandler_state _textAreaHandler_undoFirst sseltl k
+      r = def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+              _textAreaHandler_state  = nexttais
+              , _textAreaHandler_undoFirst = case mev of
+                Nothing -> _textAreaHandler_undoFirst
+                --Nothing -> False -- this variant adds new undo point each time cursoer is moved
+                Just _  -> True
+            }
+          , _potatoHandlerOutput_pFEvent = mev
+        }
 
   pRenderHandler tah PotatoHandlerInput {..} = def
   pIsHandlerActive = _textAreaHandler_isActive
