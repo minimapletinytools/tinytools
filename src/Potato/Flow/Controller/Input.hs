@@ -105,7 +105,10 @@ continueDrag LMouseData {..} md = md {
   }
 
 cancelDrag :: MouseDrag -> MouseDrag
-cancelDrag md = md { _mouseDrag_state = MouseDragState_Cancelled }
+cancelDrag md = md { _mouseDrag_state = case _mouseDrag_state md of
+    MouseDragState_Up -> MouseDragState_Up
+    _                 -> MouseDragState_Cancelled
+  }
 
 -- wats this for D:?
 mouseDragDelta :: MouseDrag -> MouseDrag -> XY

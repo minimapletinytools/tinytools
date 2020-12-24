@@ -186,6 +186,13 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
             -- update handler from backend (maybe)
             , _everythingFrontend_handler = someHandler
+
+            -- cancel mouse drag if ESC is pressed
+            -- maybe change this? Now that handler's handle their own ESC, it's a little weird to do cancelled mouse state in EverythingWidget
+            -- TODO move this up abov ewhen we create everytihng' I guess?
+            , _everythingFrontend_mouseDrag = case cmd of
+              EFCmdKeyboard (KeyboardData KeyboardKey_Esc _) -> cancelDrag _everythingFrontend_mouseDrag
+              _ -> _everythingFrontend_mouseDrag
           }
 
         selection = _everythingBackend_selection backend
@@ -216,8 +223,6 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             return $ everything' {
                 _everythingFrontend_pFEvent = Just $ PFELoad spf
               }
-
-
           --EFCmdMouse mouseData -> traceShow _everythingFrontend_handler $ do
           EFCmdMouse mouseData -> do
             let
@@ -239,13 +244,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
                 Nothing -> error "this should never happen"
               -- special case, if mouse down and creation tool, we override with a new handler
-              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> do
+              MouseDragState_Down | tool_isCreate _everythingFrontend_selectedTool -> assert (not $ pIsHandlerActive handler) $ do
                 let
-                  -- TODO do we need to cancel previous handler here?
-                  -- if we go with ALTERNATIVE, then no, and we should assert that previous handler is not active
-                  -- cancel previous handler
-                  --phoFromCancel = pHandleCancel handler potatoHandlerInput
-
                   someNewHandler = case _everythingFrontend_selectedTool of
                     Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
                     Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
@@ -261,7 +261,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
                 Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything''
                 -- input not captured by handler, do select or drag+select
-                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> do
+                Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) $ do
                   let
                     nextSelection = selectMagic pFState layerPosMap broadphase canvasDrag
                     shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
@@ -281,43 +281,43 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                       -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
                       Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (fillEverythingWithHandlerOutput selection pho everything'') { _everythingFrontend_select = Just (False, nextSelection) }
                       Nothing -> error "handler was expected to capture this mouse state"
-                Nothing -> error "handler was expected to capture this mouse state"
-          EFCmdKeyboard x -> case x of
-            KeyboardData KeyboardKey_Esc _ -> do
-              let
-                -- cancel handler
-                pho = pHandleCancel handler potatoHandlerInput
-              return $ (fillEverythingWithHandlerOutput selection pho everything') {
-                  _everythingFrontend_mouseDrag = cancelDrag _everythingFrontend_mouseDrag
-                }
-            kbd -> do
-              let
-                mpho = pHandleKeyboard handler potatoHandlerInput kbd
-              case mpho of
-                Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
-                -- input not captured by handler
-                Nothing -> case x of
-                  KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
-                    -- TODO copy
-                    undefined
-                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
-                    -- TODO pasta
-                    undefined
-                  -- tool hotkeys
-                  KeyboardData (KeyboardKey_Char key) _ -> return r where
-                    newTool = case key of
-                      'v'  -> Tool_Select
-                      -- 'p' -> Tool_Pan
-                      'b'  -> Tool_Box
-                      '\\' -> Tool_Line
-                      't'  -> Tool_Text
-                      _    -> _everythingFrontend_selectedTool
-                    r = everything' { _everythingFrontend_selectedTool = newTool }
+                Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
+          EFCmdKeyboard kbd -> case pHandleKeyboard handler potatoHandlerInput kbd of
+            Just pho -> return $ fillEverythingWithHandlerOutput selection pho everything'
+            -- input not captured by handler
+            Nothing -> case kbd of
+              KeyboardData KeyboardKey_Esc _ -> do
+                return everything' {
+                    -- TODO change tool back to select?
 
-                  -- TODO copy pasta, or maybe copy pasta lives outside of EverythingWidget?
+                    -- deselect everything if we weren't using mouse
+                    -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
+                    _everythingFrontend_select = case _mouseDrag_state _everythingFrontend_mouseDrag of
+                      MouseDragState_Up        -> Just (False, Seq.empty)
+                      MouseDragState_Cancelled -> Just (False, Seq.empty)
+                      _                        -> Nothing
+                  }
+              KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
+                -- TODO copy
+                undefined
+              KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
+                -- TODO pasta
+                undefined
+              -- tool hotkeys
+              KeyboardData (KeyboardKey_Char key) _ -> return r where
+                newTool = case key of
+                  'v'  -> Tool_Select
+                  -- 'p' -> Tool_Pan
+                  'b'  -> Tool_Box
+                  '\\' -> Tool_Line
+                  't'  -> Tool_Text
+                  _    -> _everythingFrontend_selectedTool
+                r = everything' { _everythingFrontend_selectedTool = newTool }
 
-                  -- unhandled input
-                  _ -> return everything'
+              -- TODO copy pasta, or maybe copy pasta lives outside of EverythingWidget?
+
+              -- unhandled input
+              _ -> return everything'
 
 
           _          -> undefined

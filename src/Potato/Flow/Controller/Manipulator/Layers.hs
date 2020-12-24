@@ -87,7 +87,11 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_pFEvent = mev
           }
       _ -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard _ _ _ = Nothing
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData KeyboardKey_Esc _ -> Just $ setHandlerOnly sh {
+        _layersHandler_dragState = LDS_None
+      }
+    _ -> Nothing
   pHandleCancel _ _ = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler def {
           _layersHandler_dragState = LDS_None

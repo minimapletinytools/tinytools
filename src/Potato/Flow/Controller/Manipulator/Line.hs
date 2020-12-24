@@ -25,6 +25,7 @@ data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool --either we are manipulating start, or we are manipulating end
     , _simpleLineHandler_undoFirst  :: Bool
     , _simpleLineHandler_isCreation :: Bool
+    -- TODO rename to just active
     , _simpleLineHandler_isActive   :: Bool
   }
 
@@ -91,7 +92,10 @@ instance PotatoHandler SimpleLineHandler where
         }
     MouseDragState_Up -> Just def
     _ -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard _ _ _ = Nothing
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData KeyboardKey_Esc _ -> Just $ def
+    -- TODO keyboard movement
+    _                              -> Nothing
   pHandleCancel slh _ = if pIsHandlerActive slh
     then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     else def

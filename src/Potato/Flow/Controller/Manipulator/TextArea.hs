@@ -105,14 +105,16 @@ checkTextAreaHandlerStateIsConsistent TextAreaInputState {..} SText {..} = r whe
   r = _textAreaInputState_raw == _sText_text && w == bw
 
 data TextAreaHandler = TextAreaHandler {
-    _textAreaHandler_isActive :: Bool
-    , _textAreaHandler_state  :: TextAreaInputState
+    _textAreaHandler_isActive      :: Bool
+    , _textAreaHandler_state       :: TextAreaInputState
+    , _textAreaHandler_prevHandler :: SomePotatoHandler
   }
 
-makeTextAreaHandler :: Selection -> RelMouseDrag -> TextAreaHandler
-makeTextAreaHandler selection rmd = TextAreaHandler {
+makeTextAreaHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> TextAreaHandler
+makeTextAreaHandler prev selection rmd = TextAreaHandler {
       _textAreaHandler_isActive = False
       , _textAreaHandler_state = makeTextAreaInputState (getSText selection) rmd
+      , _textAreaHandler_prevHandler = prev
     }
 
 updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
@@ -151,15 +153,13 @@ instance PotatoHandler TextAreaHandler where
         }
       _ -> error "unexpected mouse state passed to handler"
 
+  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of
+    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah') }
+    _ -> r where
+      tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
+      -- TODO make this work...
+      r = Just $ captureWithNoChange tah
 
-  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = r where
-    tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
-    -- TODO make this work...
-    r = Just $ captureWithNoChange tah
-
-  -- TODO figure this out
-  -- ok maybe I don't actually need tihs
-  --pSelectionUpdated tah@TextAreaHandler {..} PotatoHandlerInput {..} =
 
   -- in this case, cancel simply goes back to box handler and does not undo the operation
   -- TODO if cancel was becaues of escape, undo the operation??

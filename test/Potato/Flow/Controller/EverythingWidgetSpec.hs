@@ -149,7 +149,13 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
 
-      -- create elt B
+      , EWCLabel "press escape a bunch of times and make sure nothing breaks"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "create elt B"
       , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
@@ -243,7 +249,16 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
           , checkHandlerNameAndState handlerName_empty False -- handler defaults to empty selection after cancelling :(
         ]
 
-      -- create elt B
+      , LabelCheck "press escape a bunch of times and make sure nothing breaks"
+      , Combine [
+          numSelectedEltsEqualPredicate 0
+          , checkHandlerNameAndState handlerName_empty False
+        ]
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "create elt B"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box False

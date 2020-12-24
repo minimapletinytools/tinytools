@@ -211,8 +211,12 @@ instance PotatoHandler BoxHandler where
 
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
 
-  -- TODO keyboard movement
-  pHandleKeyboard _ _ _ = Nothing
+
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData KeyboardKey_Esc _ -> Just $ def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
+    -- TODO keyboard movement
+    _ -> Nothing
+
   pHandleCancel bh _ = if pIsHandlerActive bh
     then def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     else def

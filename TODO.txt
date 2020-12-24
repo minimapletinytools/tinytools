@@ -15,8 +15,16 @@ ANOTHER OPTION
 -ESC cancel on override returns back old handler
 -no capture input cancel is different than ESC cancel, can't actually undo anything, assert for inactive state
 
+-if no input capture
+  -cancel current handler (assert it's not active is enough)
+  -create DefaultHandler
+  -pass onto DefaultHandler
+  -Default handler returns whatever handler as its own override
+  -ok but do I Really need to do this? current case statement is fine
+-new selection overrides handler if handler is not active
+
 ::NEWEST TODO::
--implement override handler as per spec above (ANOTHER OPTION)
+DONE-implement override handler as per spec above (ANOTHER OPTION)
 -layer handler test
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff

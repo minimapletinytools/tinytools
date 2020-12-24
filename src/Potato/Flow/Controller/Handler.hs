@@ -18,6 +18,7 @@ module Potato.Flow.Controller.Handler (
   , emptyHandlerRenderOutput
   , SomePotatoHandler(..)
   , captureWithNoChange
+  , setHandlerOnly
   , EmptyHandler(..)
 ) where
 
@@ -128,6 +129,7 @@ class PotatoHandler h where
   -- I guess you don't need this, you can always check the selection for changes on each input, it's less efficient only in non-manipulate cases
   --pSelectionUpdated :: h -> PotatoHandlerInput -> PotatoHandlerOutput
 
+  -- TODO DELETE we don't do explicit cancel anymore
   -- TODO there are actually two types of cancel, escape key cancel and click outside cancel
   -- we want different behavior in these two cases in the case of text area
   pHandleCancel :: h -> PotatoHandlerInput -> PotatoHandlerOutput
@@ -155,6 +157,9 @@ captureWithNoChange h = def {
     _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
   }
 
+setHandlerOnly :: (PotatoHandler h) => h -> PotatoHandlerOutput
+setHandlerOnly = captureWithNoChange
+
 instance Show SomePotatoHandler where
   show (SomePotatoHandler h) = T.unpack $ "SomePotatoHandler " <> pHandlerName h <> " active: " <> show (pIsHandlerActive h)
 
@@ -171,3 +176,18 @@ instance PotatoHandler EmptyHandler where
   pHandleCancel _ _ = def
   pRenderHandler _ _ = def
   pValidateMouse _ _ = True
+
+
+{--
+-- you can do something like the below to have handlers share some functionality
+-- unfortuantely, the design below is not very composable, although maybe this isn't really something that can be composed
+data ActiveHandlerState s = ActiveHandlerState {
+    _activeHandlerState_isActive :: Bool
+    _activeHandlerState_userState :: s
+  }
+
+data ActiveHandler s = ActiveHandler {
+  _activeHandler_pHandleMouse :: s -> PotatoHandlerInput -> RelMouseDrag -> (Bool, Maybe PotatoHandlerOutput)
+  -- ...
+}
+--}

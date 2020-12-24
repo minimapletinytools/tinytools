@@ -56,8 +56,8 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
     else lps'
   r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
 
--- TODO move to another file?
 data SelectHandler = SelectHandler {
+    -- TODO rename to active
     _selectHandler_selecting    :: Bool
     , _selectHandler_selectArea :: LBox
   }
@@ -77,7 +77,10 @@ instance PotatoHandler SelectHandler where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData KeyboardKey_Esc _ -> Just $ def
+    _                              -> Nothing
+
   pHandleCancel sh PotatoHandlerInput {..} = def
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
   -- same as default?

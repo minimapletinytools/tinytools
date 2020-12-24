@@ -136,8 +136,6 @@ renderWithBroadPhase bpt dir lbx rc = r where
       Just seltl -> _sEltLabel_sElt seltl
   r = render lbx seltls rc
 
-
--- UNTESTED :(
 moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
 moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
   -- unnecessary to init with empty vector as moveRenderedCanvas will re-render those areas
