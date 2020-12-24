@@ -4,7 +4,7 @@ DONE-remove pHandleCancel
   -figure out how to handle layer inputs...
   -connect layers
   -layer handler test
--connect TextArea handler
+DONE-connect TextArea handler
   -potato text area input
   -text area tool should create a box and after box is finished it should go straight to edit mode in text area handler
 -connect handlers to vty

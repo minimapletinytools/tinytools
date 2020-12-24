@@ -208,6 +208,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             _potatoHandlerInput_pFState       = pFState
             , _potatoHandlerInput_broadPhase  = broadphase
             , _potatoHandlerInput_layerPosMap = layerPosMap
+            , _potatoHandlerInput_tool = _everythingFrontend_selectedTool
 
             , _potatoHandlerInput_layerScrollPos = _everythingFrontend_layerScrollPos
             , _potatoHandlerInput_layersState     = _everythingFrontend_layersState
@@ -250,7 +251,8 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
                     Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
                     Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
-                    _           -> error "not implemented yet"
+                    Tool_Text   -> SomePotatoHandler $ def { _boxHandler_isCreation = True, _boxHandler_isText = True }
+                    _           -> error "not valid tool"
 
                 -- pass input onto newly created handler
                 return $ case someNewHandler of

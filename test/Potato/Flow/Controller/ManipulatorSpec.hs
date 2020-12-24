@@ -18,7 +18,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
-import           Potato.Flow.TestStates 
+import           Potato.Flow.TestStates
 
 import           Data.Default
 import qualified Data.IntMap                       as IM
@@ -227,13 +227,18 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
       , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
 
-
-
       , EWCLabel "create <line>"
       , EWCTool Tool_Line
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
       , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+
+      , EWCLabel "create <text>"
+      , EWCTool Tool_Text
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 120 120) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 120 120) True MouseButton_Left [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
     ]
   expected = [
       LabelCheck "create <box>"
@@ -258,6 +263,18 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
           , numSelectedEltsEqualPredicate 1
         ]
 
+      , LabelCheck "create <text>"
+      , EqPredicate _everythingCombined_selectedTool Tool_Text
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltText (SText lbox _ _) -> lbox == LBox (V2 100 100) (V2 20 20)
+            _                         -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_textArea False
+        ]
+      , checkHandlerNameAndState handlerName_box False
 
 
 

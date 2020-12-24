@@ -3,6 +3,7 @@
 module Potato.Flow.Controller.Manipulator.TextArea (
   TextAreaHandler(..)
   , TextAreaInputState(..)
+  , makeTextAreaHandler
 
   -- exposed for testing
   , makeTextAreaInputState
@@ -105,7 +106,7 @@ checkTextAreaHandlerStateIsConsistent TextAreaInputState {..} SText {..} = r whe
   r = _textAreaInputState_raw == _sText_text && w == bw
 
 data TextAreaHandler = TextAreaHandler {
-    -- TODO rename to handler
+    -- TODO rename to active
     _textAreaHandler_isActive      :: Bool
     , _textAreaHandler_state       :: TextAreaInputState
     , _textAreaHandler_prevHandler :: SomePotatoHandler

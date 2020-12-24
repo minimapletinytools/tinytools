@@ -66,6 +66,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
     , _potatoHandlerInput_layerPosMap    :: REltIdMap LayerPos
 
     -- * from Frontend
+    , _potatoHandlerInput_tool           :: Tool
     , _potatoHandlerInput_layerScrollPos :: Int
     , _potatoHandlerInput_layersState    :: LayersState
 

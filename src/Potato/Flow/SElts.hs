@@ -129,6 +129,7 @@ instance FromJSON SText
 instance ToJSON SText
 instance NFData SText
 
+-- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
 data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Eq, Generic, Show)
 
 instance FromJSON SElt

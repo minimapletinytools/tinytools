@@ -15,6 +15,7 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
+import           Potato.Flow.Controller.Manipulator.TextArea
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
@@ -22,10 +23,10 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
 import           Data.Default
-import           Data.Dependent.Sum                        (DSum ((:=>)))
-import qualified Data.IntMap                               as IM
-import qualified Data.List                                 as L
-import qualified Data.Sequence                             as Seq
+import           Data.Dependent.Sum                          (DSum ((:=>)))
+import qualified Data.IntMap                                 as IM
+import qualified Data.List                                   as L
+import qualified Data.Sequence                               as Seq
 import           Data.Tuple.Extra
 
 -- TODO rework this stuff
@@ -125,6 +126,7 @@ makeDeltaBox bht (V2 dx dy) = case bht of
 
 
 
+
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
@@ -133,6 +135,7 @@ data BoxHandler = BoxHandler {
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
     , _boxHandler_isCreation :: Bool
+    , _boxHandler_isText     :: Bool
     , _boxHandler_active     :: Bool
 
   }
@@ -163,6 +166,7 @@ instance Default BoxHandler where
       _boxHandler_handle       = BH_BR -- does this matter?
       , _boxHandler_undoFirst  = False
       , _boxHandler_isCreation = False
+      , _boxHandler_isText = False
       , _boxHandler_active = False
       -- TODO whatever
       --, _boxHandler_wasDragged = False
@@ -194,7 +198,9 @@ instance PotatoHandler BoxHandler where
       --boxRestrictedDelta = if shiftClick then restrict8 dragDelta else dragDelta
 
       op = if _boxHandler_isCreation
-        then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
+        then if _boxHandler_isText
+          then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<text>" $ SEltText $ SText (LBox _mouseDrag_from dragDelta) "" def))
+          else PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }
@@ -204,7 +210,16 @@ instance PotatoHandler BoxHandler where
           , _potatoHandlerOutput_pFEvent = Just op
         }
 
-    MouseDragState_Up -> Just def
+    MouseDragState_Up -> Just r where
+      prevhandler = def {
+          _boxHandler_isText = True
+        }
+      r = if _boxHandler_isText
+        then def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeTextAreaHandler (SomePotatoHandler prevhandler) _potatoHandlerInput_selection rmd
+          }
+        else def
+
       -- TODO click release on same spot + text area selection -> return text area handler
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
