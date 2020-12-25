@@ -159,17 +159,6 @@ foldGoatFn cmd goatState@GoatState {..} = do
     -- TODO cache this in GoatState
     last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
 
-
-
-    -- TODO look into getting rid of this
-    goatState' = goatState {
-        -- cancel mouse drag if ESC is pressed
-        -- TODO is this the right place to do this?
-        _goatState_mouseDrag = case cmd of
-          GoatCmdKeyboard (KeyboardData KeyboardKey_Esc _) -> cancelDrag _goatState_mouseDrag
-          _ -> _goatState_mouseDrag
-      }
-
     potatoHandlerInput = PotatoHandlerInput {
         _potatoHandlerInput_pFState       = last_pFState
         , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
@@ -183,11 +172,11 @@ foldGoatFn cmd goatState@GoatState {..} = do
 
     (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
       SomePotatoHandler handler -> case cmd of
-        GoatCmdSetDebugLabel x -> (goatState' { _goatState_debugLabel = x }, def)
-        GoatCmdTool x -> (goatState' { _goatState_selectedTool = x }, def)
+        GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, def)
+        GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, def)
         GoatCmdLoad (spf, cm) ->
           -- TODO load ControllerMeta stuff
-          (goatState', def {
+          (goatState, def {
               _potatoHandlerOutput_pFEvent = Just $ PFELoad spf
             })
         --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
@@ -199,16 +188,16 @@ foldGoatFn cmd goatState@GoatState {..} = do
               _                        -> continueDrag mouseData _goatState_mouseDrag
 
             canvasDrag = toRelMouseDrag last_pFState mouseDrag
-            goatState'' = goatState' { _goatState_mouseDrag = mouseDrag }
+            goatState' = goatState { _goatState_mouseDrag = mouseDrag }
 
           in case _mouseDrag_state mouseDrag of
             -- if mouse was cancelled, update _goatState_mouseDrag accordingly
             MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-              then (goatState'' { _goatState_mouseDrag = emptyMouseDrag }, def)
-              else (goatState'', def) -- still cancelled
+              then (goatState' { _goatState_mouseDrag = emptyMouseDrag }, def)
+              else (goatState', def) -- still cancelled
             -- special case, if mouse down and pan tool, we override with a new handler
             MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
-              Just pho -> (goatState'', pho)
+              Just pho -> (goatState', pho)
               Nothing  -> error "this should never happen"
             -- special case, if mouse down and creation tool, we override with a new handler
             MouseDragState_Down | tool_isCreate _goatState_selectedTool -> assert (not $ pIsHandlerActive handler) r where
@@ -222,11 +211,11 @@ foldGoatFn cmd goatState@GoatState {..} = do
               -- pass input onto newly created handler
               r = case someNewHandler of
                 SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
-                  Just pho -> (goatState'', pho)
+                  Just pho -> (goatState', pho)
                   Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
             -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
             _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-              Just pho -> (goatState'', pho)
+              Just pho -> (goatState', pho)
               -- input not captured by handler, do select or drag+select
               Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
                 nextSelection = selectMagic last_pFState last_layerPosMap _goatState_broadPhaseState canvasDrag
@@ -238,52 +227,61 @@ foldGoatFn cmd goatState@GoatState {..} = do
                   -- 2. if you let go of shift before mouse up, it just does a standard mouse selection
                   -- I think this is still better than letting BoxHandler handle this case
                   then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                    Just pho -> (goatState'', pho)
+                    Just pho -> (goatState', pho)
                     Nothing -> error "handler was expected to capture this mouse state"
                   -- special drag + select case, override the selection
                   -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                   -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                   else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                     -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
-                    Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState'', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
+                    Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                     Nothing -> error "handler was expected to capture this mouse state"
               Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
-        GoatCmdKeyboard kbd -> case pHandleKeyboard handler potatoHandlerInput kbd of
-          Just pho -> (goatState', pho)
-          -- input not captured by handler
-          Nothing -> case kbd of
-            KeyboardData KeyboardKey_Esc _ ->
-              -- TODO change tool back to select?
-              (goatState', def {
+        GoatCmdKeyboard kbd -> let
+            goatState' = goatState {
+                -- TODO in this case consider passing in cancelled mouse event instead of keyboard event
+                -- i.e. if dragging escape cancels the drag and is considered a mouse event :o
+                -- cancel mouse drag if ESC is pressed
+                _goatState_mouseDrag = case kbd of
+                  KeyboardData KeyboardKey_Esc _ -> cancelDrag _goatState_mouseDrag
+                  _ -> _goatState_mouseDrag
+              }
+          in case pHandleKeyboard handler potatoHandlerInput kbd of
+            Just pho -> (goatState', pho)
+            -- input not captured by handler
+            Nothing -> case kbd of
+              KeyboardData KeyboardKey_Esc _ ->
+                -- TODO change tool back to select?
+                (goatState', def {
 
-                  -- deselect goatState if we weren't using mouse
-                  -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
-                  _potatoHandlerOutput_select = case _mouseDrag_state _goatState_mouseDrag of
-                    MouseDragState_Up        -> Just (False, Seq.empty)
-                    MouseDragState_Cancelled -> Just (False, Seq.empty)
-                    _                        -> Nothing
-                })
-            KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
-              -- TODO copy
-              undefined
-            KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
-              -- TODO pasta
-              undefined
-            -- tool hotkeys
-            KeyboardData (KeyboardKey_Char key) _ -> r where
-              newTool = case key of
-                'v'  -> Tool_Select
-                -- 'p' -> Tool_Pan
-                'b'  -> Tool_Box
-                '\\' -> Tool_Line
-                't'  -> Tool_Text
-                _    -> _goatState_selectedTool
-              r = (goatState' { _goatState_selectedTool = newTool }, def)
+                    -- deselect goatState if we weren't using mouse
+                    -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
+                    _potatoHandlerOutput_select = case _mouseDrag_state _goatState_mouseDrag of
+                      MouseDragState_Up        -> Just (False, Seq.empty)
+                      MouseDragState_Cancelled -> Just (False, Seq.empty)
+                      _                        -> Nothing
+                  })
+              KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
+                -- TODO copy
+                undefined
+              KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
+                -- TODO pasta
+                undefined
+              -- tool hotkeys
+              KeyboardData (KeyboardKey_Char key) _ -> r where
+                newTool = case key of
+                  'v'  -> Tool_Select
+                  -- 'p' -> Tool_Pan
+                  'b'  -> Tool_Box
+                  '\\' -> Tool_Line
+                  't'  -> Tool_Text
+                  _    -> _goatState_selectedTool
+                r = (goatState' { _goatState_selectedTool = newTool }, def)
 
-            -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
+              -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
 
-            -- unhandled input
-            _ -> (goatState', def)
+              -- unhandled input
+              _ -> (goatState', def)
         _          -> undefined
 
 
