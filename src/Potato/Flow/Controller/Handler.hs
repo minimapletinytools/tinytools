@@ -59,6 +59,7 @@ instance Default PotatoHandlerOutput where
       , _potatoHandlerOutput_layersState = Nothing
     }
 
+-- TODO replace this with just GoatState
 data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
     _potatoHandlerInput_pFState          :: PFState
@@ -79,7 +80,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
 
 data HandlerRenderOutput = HandlerRenderOutput {
     _handlerRenderOutput_temp :: [LBox] -- list of coordinates where there are handles
-  }
+  } deriving (Eq)
 
 instance Default HandlerRenderOutput where
   def = emptyHandlerRenderOutput
@@ -147,6 +148,15 @@ class PotatoHandler h where
 
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
+
+instance PotatoHandler SomePotatoHandler where
+  pHandlerName (SomePotatoHandler h) = pHandlerName h
+  pHandlerDebugShow (SomePotatoHandler h) = pHandlerDebugShow h
+  pHandleMouse (SomePotatoHandler h) = pHandleMouse h
+  pHandleKeyboard (SomePotatoHandler h) = pHandleKeyboard h
+  pIsHandlerActive (SomePotatoHandler h) = pIsHandlerActive h
+  pRenderHandler (SomePotatoHandler h) = pRenderHandler h
+  pValidateMouse (SomePotatoHandler h) = pValidateMouse h
 
 captureWithNoChange :: (PotatoHandler h) => h -> PotatoHandlerOutput
 captureWithNoChange h = def {

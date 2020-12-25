@@ -26,7 +26,7 @@ data SimpleLineHandler = SimpleLineHandler {
     , _simpleLineHandler_undoFirst  :: Bool
     , _simpleLineHandler_isCreation :: Bool
     , _simpleLineHandler_active     :: Bool
-  }
+  } deriving (Show)
 
 instance Default SimpleLineHandler where
   def = SimpleLineHandler {
@@ -95,12 +95,15 @@ instance PotatoHandler SimpleLineHandler where
     KeyboardData KeyboardKey_Esc _ -> Just $ def
     -- TODO keyboard movement
     _                              -> Nothing
-  pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
+  pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
       (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
         else [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
-      x -> error $ "expected SLine in selection but got " <> show x <> " instead"
+      x -> if _simpleLineHandler_isCreation && not _simpleLineHandler_undoFirst
+        -- awkward, in the creation case, we have a SimpleLineHandler but no Line has been created yet
+        then []
+        else error $ "expected SLine in selection but got " <> show x <> " instead"
     r = HandlerRenderOutput boxes
   pIsHandlerActive = _simpleLineHandler_active

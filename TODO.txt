@@ -1,16 +1,10 @@
 ::NEWEST TODO::
-DONE-move layer state to backend and connect to changes
-DONE-figure out how to get most current version of PFState
-IGNORE-figure out why some of the tests pass even though you used out of date PFState
-
 -layers
   -figure out how to handle layer inputs...
   -connect layers
   -layer handler test
-
 -connect handlers to vty
 -connect layers to vty
--broadphase stuff in backend needs latest layerPosMap and PFState ug
 -consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
   -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 -resolve ControllerMeta REltId synchronization issue
@@ -29,8 +23,6 @@ IGNORE-figure out why some of the tests pass even though you used out of date PF
     -or attempt to place in middle of canvas viewport prob better
   -copy pasta test
   -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
--combine everything and entry 😱😱😱😱😱😱😱
-  -maybe do this at the end, won't get that much harder prob...
 -improved renderer spec
   -kd tree in broadphase I guess
 -cartesian lines spec
@@ -42,6 +34,12 @@ IGNORE-figure out why some of the tests pass even though you used out of date PF
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+DONE-move layer state to backend and connect to changes
+DONE-figure out how to get most current version of PFState
+IGNORE-figure out why some of the tests pass even though you used out of date PFState
+IGNORE-broadphase stuff in backend needs latest layerPosMap and PFState ug
+DONE-combine everything and entry 😱😱😱😱😱😱😱
+  -maybe do this at the end, won't get that much harder prob...
 DONE-remove pHandleCancel
 DONE-connect TextArea handler
   -potato text area input

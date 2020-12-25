@@ -59,8 +59,6 @@ instance ToJSON ControllerMeta
 emptyControllerMeta :: ControllerMeta
 emptyControllerMeta = ControllerMeta 0 0 IM.empty
 
-
-
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
@@ -126,14 +124,15 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
   }
 
 data GoatWidget t = GoatWidget {
-  _goatWidget_tool              :: Dynamic t Tool
-  , _goatWidget_selection       :: Dynamic t Selection
-  , _goatWidget_layers          :: Dynamic t LayerEntries
-  , _goatWidget_pan             :: Dynamic t XY
-  , _goatWidget_broadPhase      :: Dynamic t BroadPhaseState
+  _goatWidget_tool                  :: Dynamic t Tool
+  , _goatWidget_selection           :: Dynamic t Selection
+  , _goatWidget_layers              :: Dynamic t LayerEntries
+  , _goatWidget_pan                 :: Dynamic t XY
+  , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
+  , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
 
   -- debug stuff prob
-  , _goatWidget_DEBUG_goatState :: Dynamic t GoatState
+  , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
 }
 
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
@@ -150,6 +149,23 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
     then sph
     else makeHandlerFromSelection selection
 
+potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
+potatoHandlerInputFromGoatState GoatState {..} = r where
+  last_workspace = _goatState_pFWorkspace
+  last_pFState = _pFWorkspace_state last_workspace
+  -- TODO cache this in GoatState
+  last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
+  r = PotatoHandlerInput {
+    _potatoHandlerInput_pFState       = last_pFState
+    , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
+    , _potatoHandlerInput_layerPosMap = last_layerPosMap
+    , _potatoHandlerInput_tool = _goatState_selectedTool
+
+    , _potatoHandlerInput_layerScrollPos = _goatState_layerScrollPos
+    , _potatoHandlerInput_layersState     = _goatState_layersState
+    , _potatoHandlerInput_selection   = _goatState_selection
+  }
+
 foldGoatFn :: (Reflex t) => GoatCmd -> GoatState -> PushM t GoatState
 foldGoatFn cmd goatState@GoatState {..} = do
   let
@@ -159,16 +175,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
     -- TODO cache this in GoatState
     last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
 
-    potatoHandlerInput = PotatoHandlerInput {
-        _potatoHandlerInput_pFState       = last_pFState
-        , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
-        , _potatoHandlerInput_layerPosMap = last_layerPosMap
-        , _potatoHandlerInput_tool = _goatState_selectedTool
-
-        , _potatoHandlerInput_layerScrollPos = _goatState_layerScrollPos
-        , _potatoHandlerInput_layersState     = _goatState_layersState
-        , _potatoHandlerInput_selection   = _goatState_selection
-      }
+    potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
     (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
       SomePotatoHandler handler -> case cmd of
@@ -389,11 +396,15 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     <- foldDynM foldGoatFn initialgoat goatEvent
 
   -- TODO make sure holdUniqDyn actually does what you think it does
+  -- I think it does, but it will prob still do full equality check after changes in goatDyn :(
+  -- TODO maybe you need to have special signals to control firing of each sub event instead
+  -- I guess the good news is that you can still do this without changing the interface
   r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
+  r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
 
   return GoatWidget
     {
