@@ -73,7 +73,6 @@ redoWorkspace pfw = r where
     c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_state pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
-
 undoPermanentWorkspace :: PFWorkspace -> PFWorkspace
 undoPermanentWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw

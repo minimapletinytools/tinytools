@@ -136,11 +136,12 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
     else makeHandlerFromSelection selection
 
 foldGoatFn :: (Reflex t) => GoatCmd -> GoatState -> PushM t GoatState
+-- TODO rename everything to goat
 foldGoatFn cmd everything@GoatState {..} = do
   let
 
     -- TODO set these
-    last_workspace = _pFTotalState_workspace next_pFTotalState
+    last_workspace = _pFTotalState_workspace _goatState_pFTotalState
     last_pFState = _pFWorkspace_state last_workspace
     -- TODO cache this in GoatState
     last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
@@ -278,14 +279,15 @@ foldGoatFn cmd everything@GoatState {..} = do
 
 
     -- update PFTotalState from pho
-    next_pFTotalState = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
-      Nothing   -> _goatState_pFTotalState
-      Just pfev -> updatePFTotalState pfev _goatState_pFTotalState
+    (next_pFTotalState, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
+      -- if there was no update, then changes are not valid
+      Nothing   -> (_goatState_pFTotalState, IM.empty)
+      Just pfev -> (r1,r2) where
+        r1 = updatePFTotalState pfev _goatState_pFTotalState
+        r2 = _pFWorkspace_lastChanges $ _pFTotalState_workspace r1
     next_workspace = _pFTotalState_workspace $ next_pFTotalState
     next_pFState = _pFWorkspace_state next_workspace
     next_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers next_pFState)
-
-    cslmapForBroadPhase = _pFWorkspace_lastChanges next_workspace
     cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
 
     -- update pan from pho
@@ -321,7 +323,7 @@ foldGoatFn cmd everything@GoatState {..} = do
     -- get selection from changes
     newEltFoldMapFn rid v = case v of
       Nothing     -> []
-      Just (lp,seltl) -> if IM.member rid (_pFState_directory next_pFState) then [] else [(rid,lp,seltl)]
+      Just (lp,seltl) -> if IM.member rid (_pFState_directory last_pFState) then [] else [(rid,lp,seltl)]
     mSelectionFromChanges = if IM.null cslmap
       then Nothing
       else Just r where
@@ -338,12 +340,10 @@ foldGoatFn cmd everything@GoatState {..} = do
               Just (Just (lp, seltl')) -> Just (rid, lp, seltl')
           else Seq.fromList newlyCreatedSEltls
 
-    next_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ case mSelectionFromPho of
-      Just s -> s
-      Nothing -> case mSelectionFromChanges of
-        Just s  -> s
-        Nothing -> _goatState_selection
-    next_handler = maybeUpdateHandlerFromSelection next_handler' next_selection
+    mnext_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ asum [mSelectionFromPho, mSelectionFromChanges]
+    (next_handler, next_selection) = case mnext_selection of
+      Just next_selection' -> (maybeUpdateHandlerFromSelection next_handler' next_selection', next_selection')
+      Nothing -> (next_handler', _goatState_selection)
     next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
     next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
@@ -374,7 +374,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialbp = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
     initiallayersstate = makeLayersStateFromPFState _goatWidgetConfig_initialState
     initialgoat = GoatState {
-        _goatState_pFTotalState      = undefined -- TODO make from initialState
+        _goatState_pFTotalState      = PFTotalState (loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace) []
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = emptyMouseDrag
