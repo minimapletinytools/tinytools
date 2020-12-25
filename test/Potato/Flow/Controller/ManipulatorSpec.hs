@@ -17,7 +17,7 @@ import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
-import           Potato.Flow.Common
+import           Potato.Flow.CommonOld
 import           Potato.Flow.TestStates
 
 import           Data.Default

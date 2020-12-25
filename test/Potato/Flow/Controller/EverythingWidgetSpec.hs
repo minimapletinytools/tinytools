@@ -24,7 +24,7 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 
 -- test imports
-import           Potato.Flow.Common
+import           Potato.Flow.CommonOld
 import           Potato.Flow.TestStates
 
 import qualified Data.IntMap                             as IM

@@ -5,6 +5,8 @@ module Potato.Flow.Controller.GoatWidget (
   GoatWidgetConfig(..)
   , emptyGoatWidgetConfig
   , GoatWidget(..)
+  , goatState_pFState
+  , GoatState(..)
   , holdGoatWidget
 ) where
 
@@ -61,6 +63,9 @@ data GoatState = GoatState {
     , _goatState_layersState     :: LayersState
   }
 
+goatState_pFState :: GoatState -> PFState
+goatState_pFState = _pFWorkspace_state . _pFTotalState_workspace . _goatState_pFTotalState
+
 -- TODO rename to GoatCmd
 data GoatCmd =
   GoatCmdTool Tool
@@ -106,14 +111,14 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
   }
 
 data GoatWidget t = GoatWidget {
-  _goatWidget_tool           :: Dynamic t Tool
-  , _goatWidget_selection    :: Dynamic t Selection
-  , _goatWidget_layers       :: Dynamic t LayerEntries
-  , _goatWidget_pan          :: Dynamic t XY
-  , _goatWidget_broadPhase   :: Dynamic t BroadPhaseState
+  _goatWidget_tool              :: Dynamic t Tool
+  , _goatWidget_selection       :: Dynamic t Selection
+  , _goatWidget_layers          :: Dynamic t LayerEntries
+  , _goatWidget_pan             :: Dynamic t XY
+  , _goatWidget_broadPhase      :: Dynamic t BroadPhaseState
 
   -- debug stuff prob
-  , _goatWidget_pFTotalState :: Dynamic t PFTotalState
+  , _goatWidget_DEBUG_goatState :: Dynamic t GoatState
 }
 
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
@@ -390,7 +395,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
-  r_total <- holdUniqDyn $ fmap _goatState_pFTotalState goatDyn
 
   return GoatWidget
     {
@@ -399,5 +403,5 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_layers       = r_layers
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase
-      , _goatWidget_pFTotalState = r_total
+      , _goatWidget_DEBUG_goatState = goatDyn
     }
