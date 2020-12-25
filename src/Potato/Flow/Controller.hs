@@ -7,14 +7,12 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.Manipulator.Select
   , module Potato.Flow.Controller.Manipulator.TextArea
   , module Potato.Flow.Controller.Manipulator.Common
-  , module Potato.Flow.Controller.Everything
-  , module Potato.Flow.Controller.EverythingWidget
+  , module Potato.Flow.Controller.GoatWidget
   , module Potato.Flow.Controller.Input
 
 ) where
 
-import           Potato.Flow.Controller.Everything
-import           Potato.Flow.Controller.EverythingWidget
+import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common

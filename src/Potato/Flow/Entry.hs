@@ -1,3 +1,5 @@
+-- TODO/NOTE this file is deprecated however we are keeping it around since EntrySpec does some rather useful testing of underlying functionality of this deprecated module
+
 -- TODO rename to PF or maybe PFWidget
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}

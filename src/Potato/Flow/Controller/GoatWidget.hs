@@ -2,7 +2,9 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.GoatWidget (
-  GoatWidgetConfig(..)
+  ControllerMeta(..)
+  , emptyControllerMeta
+  , GoatWidgetConfig(..)
   , emptyGoatWidgetConfig
   , GoatWidget(..)
   , goatState_pFState
@@ -16,7 +18,6 @@ import           Reflex
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
-import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
@@ -35,6 +36,7 @@ import           Potato.Flow.Workspace
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
+import           Data.Aeson
 import           Data.Default                              (def)
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
@@ -42,6 +44,25 @@ import           Data.Semialign
 import qualified Data.Sequence                             as Seq
 import           Data.These
 import           Data.Tuple.Extra
+
+
+
+-- TODO move this somewhere else
+-- TODO this is a problem because LayerMetaMap
+-- I guess you can just reindex LayerMetaMap to index via LayerPos (which should be the same as REltId after loading I think)
+-- Alternatively, you could just have SPotatoFlow include REltId, that might be slightly better solution...
+data ControllerMeta = ControllerMeta {
+  _controllerMeta_pan              :: XY
+  , _controllerMeta_layerScrollPos :: Int
+  , _controllerMeta_layers         :: LayerMetaMap
+} deriving (Show, Eq, Generic)
+
+instance FromJSON ControllerMeta
+instance ToJSON ControllerMeta
+
+emptyControllerMeta :: ControllerMeta
+emptyControllerMeta = ControllerMeta 0 0 IM.empty
+
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
