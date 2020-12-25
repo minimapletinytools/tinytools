@@ -73,9 +73,7 @@ instance PotatoHandler SelectHandler where
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
-    MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData KeyboardKey_Esc _ -> Just $ def
-    _                              -> Nothing
+    MouseDragState_Cancelled -> def
+  pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
   pIsHandlerActive _ = True

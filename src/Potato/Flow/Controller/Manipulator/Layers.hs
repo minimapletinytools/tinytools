@@ -63,6 +63,8 @@ instance PotatoHandler LayersHandler where
               _layersHandler_absCursorPos = abspos
             }
         }
+
+      -- TODO if mouse didn't move from lposdown, enter renaming mode (new handler I guess)
       (MouseDragState_Up, LDS_Selecting leposdown) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
         sel = _layerEntry_superSEltLabel $ Seq.index lentries leposdown
@@ -86,12 +88,11 @@ instance PotatoHandler LayersHandler where
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
+      (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
+          _layersHandler_dragState = LDS_None
+        }
       _ -> error "unexpected mouse state passed to handler"
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData KeyboardKey_Esc _ -> Just $ setHandlerOnly sh {
-        _layersHandler_dragState = LDS_None
-      }
-    _ -> Nothing
+  pHandleKeyboard _ _ _ = Nothing
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]
     else emptyHandlerRenderOutput

@@ -124,9 +124,10 @@ makeTextAreaHandler prev selection rmd = TextAreaHandler {
 updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
 updateTextAreaHandlerState selection tah@TextAreaHandler {..} = r where
   stext = getSText selection
+  nextstate = _textAreaHandler_state
   -- TODO resize zipper
   r = tah {
-    _textAreaHandler_state = undefined
+    _textAreaHandler_state = nextstate
   }
 
 instance PotatoHandler TextAreaHandler where
@@ -157,6 +158,7 @@ instance PotatoHandler TextAreaHandler where
               --, _textAreaHandler_undoFirst = False -- this variant adds new undo point each time cursor is moved
             }
         }
+      MouseDragState_Cancelled -> Just $ captureWithNoChange tah
       _ -> error "unexpected mouse state passed to handler"
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of

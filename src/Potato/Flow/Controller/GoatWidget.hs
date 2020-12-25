@@ -242,23 +242,23 @@ foldGoatFn cmd goatState@GoatState {..} = do
                     Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                     Nothing -> error "handler was expected to capture this mouse state"
               Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
-        GoatCmdKeyboard kbd -> let
-            goatState' = goatState {
-                -- TODO in this case consider passing in cancelled mouse event instead of keyboard event
-                -- i.e. if dragging escape cancels the drag and is considered a mouse event :o
-                -- cancel mouse drag if ESC is pressed
-                _goatState_mouseDrag = case kbd of
-                  KeyboardData KeyboardKey_Esc _ -> cancelDrag _goatState_mouseDrag
-                  _ -> _goatState_mouseDrag
+        GoatCmdKeyboard kbd -> case kbd of
+          -- special case, treat escape cancel mouse drag as a mouse input
+          KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive _goatState_mouseDrag -> r where
+            canceledMouse = cancelDrag _goatState_mouseDrag
+            rGoatState = goatState {
+                _goatState_mouseDrag = canceledMouse
               }
-          in case pHandleKeyboard handler potatoHandlerInput kbd of
-            Just pho -> (goatState', pho)
+            r = case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState canceledMouse) of
+              Just pho -> (rGoatState, pho)
+              Nothing  -> (rGoatState, def)
+          _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
+            Just pho -> (goatState, pho)
             -- input not captured by handler
             Nothing -> case kbd of
               KeyboardData KeyboardKey_Esc _ ->
-                -- TODO change tool back to select?
-                (goatState', def {
-
+                (goatState, def {
+                  -- TODO change tool back to select?
                     -- deselect goatState if we weren't using mouse
                     -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
                     _potatoHandlerOutput_select = case _mouseDrag_state _goatState_mouseDrag of
@@ -266,6 +266,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
                       MouseDragState_Cancelled -> Just (False, Seq.empty)
                       _                        -> Nothing
                   })
+
               KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
                 -- TODO copy
                 undefined
@@ -281,12 +282,12 @@ foldGoatFn cmd goatState@GoatState {..} = do
                   '\\' -> Tool_Line
                   't'  -> Tool_Text
                   _    -> _goatState_selectedTool
-                r = (goatState' { _goatState_selectedTool = newTool }, def)
+                r = (goatState { _goatState_selectedTool = newTool }, def)
 
               -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
 
               -- unhandled input
-              _ -> (goatState', def)
+              _ -> (goatState, def)
         _          -> undefined
 
 

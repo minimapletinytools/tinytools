@@ -8,6 +8,7 @@ module Potato.Flow.Controller.Input (
   , MouseDragState(..)
   , LMouseData(..)
   , MouseDrag(..)
+  , mouseDrag_isActive
   , emptyMouseDrag
   , newDrag
   , continueDrag
@@ -76,6 +77,13 @@ data MouseDrag = MouseDrag {
   , _mouseDrag_to        :: XY -- likely not needed as they will be in the input event, but whatever
   , _mouseDrag_state     :: MouseDragState
 } deriving (Show, Eq)
+
+mouseDrag_isActive :: MouseDrag -> Bool
+mouseDrag_isActive MouseDrag {..} = case _mouseDrag_state of
+  MouseDragState_Down     -> True
+  MouseDragState_Dragging -> True
+  _                       -> False
+
 
 emptyMouseDrag :: MouseDrag
 emptyMouseDrag = MouseDrag {

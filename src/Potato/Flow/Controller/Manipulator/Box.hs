@@ -224,11 +224,10 @@ instance PotatoHandler BoxHandler where
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
-    MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
+    MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
 
 
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData KeyboardKey_Esc _ -> Just $ def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
     -- TODO keyboard movement
     _ -> Nothing
 

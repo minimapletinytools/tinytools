@@ -23,7 +23,7 @@ instance Default PanHandler where
 instance PotatoHandler PanHandler where
   pHandlerName _ = handlerName_pan
   pHandleMouse ph@PanHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
-    MouseDragState_Cancelled -> error "unexpected mouse state passed to handler"
+    MouseDragState_Cancelled -> def { _potatoHandlerOutput_pan = Just $ - _panHandler_pan }
     MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler ph }
     _ -> def {
         _potatoHandlerOutput_nextHandler = case _mouseDrag_state of
@@ -33,8 +33,6 @@ instance PotatoHandler PanHandler where
         , _potatoHandlerOutput_pan = Just (delta - _panHandler_pan)
       } where delta = _mouseDrag_to - _mouseDrag_from
 
-  pHandleKeyboard PanHandler {..} PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData KeyboardKey_Esc _ -> Just $ def { _potatoHandlerOutput_pan = Just $ - _panHandler_pan }
-    _ -> Nothing
+  pHandleKeyboard PanHandler {..} PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler _ PotatoHandlerInput {..} = def
   pIsHandlerActive _ = True

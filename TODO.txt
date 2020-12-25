@@ -5,7 +5,7 @@
   -layer handler test
 -connect handlers to vty
 -connect layers to vty
--consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
+DONE-consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
   -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
