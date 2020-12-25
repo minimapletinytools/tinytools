@@ -4,11 +4,13 @@
 
 module Potato.Flow.Entry (
   PFConfig(..)
+  , PFTotalState(..)
   , neverPFConfig
   , PFOutput(..)
   , PFEventTag(..)
   , holdPF
   , holdPFWithInitialState
+  , updatePFTotalState
 ) where
 
 import           Relude
@@ -97,7 +99,7 @@ data PFTotalState = PFTotalState {
   _pFTotalState_workspace   :: PFWorkspace
   -- TODO can this move to Controller? In this case, controller just does new elt event instead
   , _pFTotalState_clipboard :: [SEltLabel]
-}
+} deriving (Show, Eq)
 
 debugPrintBeforeAfterState :: (IsString a) => PFState -> PFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintPFState stateBefore <> "\nAFTER: " <> debugPrintPFState stateAfter
@@ -120,6 +122,31 @@ doCmdPFTTotalStateUndoPermanentFirst cmdFn pfts = r where
   cmd = cmdFn undoedpfs
   r = pfts { _pFTotalState_workspace = doCmdWorkspace cmd undoedws }
 
+
+updatePFTotalState :: PFEventTag -> PFTotalState -> PFTotalState
+updatePFTotalState evt pfts = let
+  lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
+  r = case evt of
+    PFEAddElt (undo, x) -> if undo
+      then doCmdPFTTotalStateUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) pfts
+      else doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
+    PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
+    PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
+    PFEManipulate (undo, x) -> if undo
+      then doCmdPFTTotalStateUndoPermanentFirst (const (PFCManipulate ==> x)) pfts
+      else doCmdPFTotalState (PFCManipulate ==> x) pfts
+    PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
+    PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
+    PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
+    PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
+    PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
+    PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
+    PFELoad x -> pfts { _pFTotalState_workspace = loadPFStateIntoWorkspace (sPotatoFlow_to_pFState x) (_pFTotalState_workspace pfts) }
+  afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
+  isValidAfter = pFState_isValid afterState
+  in
+    if isValidAfter then r else
+      error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
 
 data PFEventTag =
   PFEAddElt (Bool, (LayerPos, SEltLabel))
@@ -164,32 +191,7 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
       , PFERedo <$ _pfc_redo
       , PFELoad <$> _pfc_load ]
 
-    foldfn :: PFEventTag -> PFTotalState -> PFTotalState
-    foldfn evt pfts = let
-      lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
-      r = case evt of
-        PFEAddElt (undo, x) -> if undo
-          then doCmdPFTTotalStateUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) pfts
-          else doCmdPFTotalState (pfc_addElt_to_newElts lastState x) pfts
-        PFEAddFolder x -> doCmdPFTotalState (pfc_addFolder_to_newElts lastState x) pfts
-        PFERemoveElt x -> doCmdPFTotalState (pfc_removeElt_to_deleteElts lastState x) pfts
-        PFEManipulate (undo, x) -> if undo
-          then doCmdPFTTotalStateUndoPermanentFirst (const (PFCManipulate ==> x)) pfts
-          else doCmdPFTotalState (PFCManipulate ==> x) pfts
-        PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
-        PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
-        PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
-        PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
-        PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
-        PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
-        PFELoad x -> pfts { _pFTotalState_workspace = loadPFStateIntoWorkspace (sPotatoFlow_to_pFState x) (_pFTotalState_workspace pfts) }
-      afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
-      isValidAfter = pFState_isValid afterState
-      in
-        if isValidAfter then r else
-          error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
-
-  pfTotalStateDyn <- foldDyn foldfn (PFTotalState (loadPFStateIntoWorkspace initialState emptyWorkspace) []) pfevent
+  pfTotalStateDyn <- foldDyn updatePFTotalState (PFTotalState (loadPFStateIntoWorkspace initialState emptyWorkspace) []) pfevent
 
   let
     savepushfn _ = do

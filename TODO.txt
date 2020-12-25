@@ -1,7 +1,7 @@
 ::NEWEST TODO::
--move layer state to backend and connect to changes
--figure out how to get most current version of PFState
--figure out why some of the tests pass even though you used out of date PFState
+DONE-move layer state to backend and connect to changes
+DONE-figure out how to get most current version of PFState
+IGNORE-figure out why some of the tests pass even though you used out of date PFState
 
 -layers
   -figure out how to handle layer inputs...
@@ -10,7 +10,7 @@
 
 -connect handlers to vty
 -connect layers to vty
-
+-broadphase stuff in backend needs latest layerPosMap and PFState ug
 -consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
   -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 -resolve ControllerMeta REltId synchronization issue

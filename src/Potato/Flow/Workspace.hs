@@ -31,7 +31,7 @@ import qualified Data.Sequence      as Seq
 data ActionStack = ActionStack {
   doStack     :: [PFCmd] -- maybe just do something lke [PFCmd, Maybe PFState] here for state based undo
   , undoStack :: [PFCmd]
-} deriving (Generic)
+} deriving (Show, Eq, Generic)
 
 instance NFData ActionStack
 
@@ -42,7 +42,7 @@ data PFWorkspace = PFWorkspace {
   _pFWorkspace_state         :: PFState
   , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack
-} deriving (Generic)
+} deriving (Show, Eq, Generic)
 
 instance NFData PFWorkspace
 
