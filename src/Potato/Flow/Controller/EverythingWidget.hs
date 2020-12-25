@@ -35,7 +35,9 @@ import           Control.Monad.Fix
 import           Data.Default                              (def)
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
+import           Data.Semialign
 import qualified Data.Sequence                             as Seq
+import           Data.These
 import           Data.Tuple.Extra
 
 -- TODO move to your reflex helper lib
@@ -44,6 +46,14 @@ import           Data.Tuple.Extra
 --simultaneous eva evb = fforMaybe (align eva evb) $ \case
 --  These x -> Just x
 --  _ -> Nothing
+
+
+-- second event must happen when first one happens
+mustLeftSimultaneous :: (Reflex t) => Event t a -> Event t b -> Event t (a,b)
+mustLeftSimultaneous eva evb = fforMaybe (align eva evb) $ \case
+  These x y -> Just (x, y)
+  This _ -> error "expected right event to fire as well"
+  _ -> Nothing
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
@@ -69,7 +79,8 @@ data EverythingBackendCmd =
   -- it's a little weird that selection comes with all info about what's being selected
   -- but we have it already so may as well include it
   EBCmdSelect Bool Selection
-  | EBCmdChanges SEltLabelChangesWithLayerPos
+  | EBCmdSetLayersState LayersState
+  | EBCmdChanges (SEltLabelChangesWithLayerPos, PFState)
   | EBCmdNothing
   deriving (Show)
 
@@ -138,9 +149,11 @@ fillEverythingFrontendWithHandlerOutput selection PotatoHandlerOutput {..} front
       Nothing -> _everythingFrontend_pan frontend
       Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
         V2 cx0 cy0 = _everythingFrontend_pan frontend
-    , _everythingFrontend_layersState = case _potatoHandlerOutput_layersState of
-      Nothing -> _everythingFrontend_layersState frontend
-      Just ls -> ls
+
+    , _everythingFrontend_setLayersState = case _potatoHandlerOutput_layersState of
+      Nothing -> Nothing
+      Just ls -> Just ls
+
 
   }
 
@@ -186,6 +199,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             -- clear one shot events
             _everythingFrontend_pFEvent = Nothing
             , _everythingFrontend_select = Nothing
+            , _everythingFrontend_setLayersState = Nothing
 
             -- update handler from backend (maybe)
             , _everythingFrontend_handler = someHandler
@@ -214,7 +228,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
             , _potatoHandlerInput_tool = _everythingFrontend_selectedTool
 
             , _potatoHandlerInput_layerScrollPos = _everythingFrontend_layerScrollPos
-            , _potatoHandlerInput_layersState     = _everythingFrontend_layersState
+            , _potatoHandlerInput_layersState     = _everythingBackend_layersState backend
             , _potatoHandlerInput_selection   = selection
           }
 
@@ -381,17 +395,16 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   -- EVERYTHING BACKEND --
   ------------------------
   let
-    -- TODO hook up to _everythingFrontend_select
     frontendOperation_select = fmapMaybe _everythingFrontend_select (updated everythingFrontendDyn)
+    frontendOperation_setLayersState = fmapMaybe _everythingFrontend_setLayersState (updated everythingFrontendDyn)
 
     everythingBackendEvent' = leftmostWarn "EverythingWidgetConfig_EverythingBackend"
       [ EBCmdSelect False <$> _everythingWidgetConfig_selectNew
       , EBCmdSelect True <$> _everythingWidgetConfig_selectAdd
       , fmap (uncurry EBCmdSelect) frontendOperation_select
-      , EBCmdChanges <$> _pfo_potato_changed
+      , EBCmdSetLayersState <$> frontendOperation_setLayersState
+      , EBCmdChanges <$> mustLeftSimultaneous _pfo_potato_changed (updated _pfo_pFState)
       ]
-
-
 
     -- we need the latest version of frontend. We could have done this using events as well, either
     -- 1. cherry picking just the events we need it each circumstance (currently few enough that this is very feasible)
@@ -431,8 +444,11 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               _everythingBackend_selection = newsel
               , _everythingBackend_handlerFromSelection = maybeSetHandler newsel
             }
-
-        EBCmdChanges cslmap -> do
+        EBCmdSetLayersState ls -> do
+          return $ everything' {
+              _everythingBackend_layersState = ls
+            }
+        EBCmdChanges (cslmap, pFState) -> do
           let
 
             -- broad phase stuff
@@ -446,6 +462,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
               (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
                 Nothing -> rc
                 Just aabb -> newrc where
+                  -- TODO I think you need non-stale PFState here
                   slmap = _pFState_directory pFStateMaybeStale
                   rids = broadPhase_cull aabb bpt
                   sseltls' = flip fmap rids $ \rid -> case IM.lookup rid cslmapForBroadPhase of
@@ -455,6 +472,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
                     Just mseltl -> case mseltl of
                       Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
                       Just seltl -> (rid, seltl)
+                  -- TODO you need non-stale layerPosMap here
                   sseltls = fmap (\(rid, s) -> (rid, layerPosMapMaybeStale IM.! rid, s)) sseltls'
                   seltls = fmap thd3 . sortOn snd3 $ sseltls
                   newrc = render aabb (map _sEltLabel_sElt seltls) rc
@@ -484,7 +502,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
 
               -- set new selection if there was a newly created elt
               , _everythingBackend_selection = newSelection
-
+              , _everythingBackend_layersState =  updateLayers pFState cslmapForBroadPhase _everythingBackend_layersState
 
               , _everythingBackend_handlerFromSelection = maybeSetHandler newSelection
               -- TODO possibly also call pSelectionUpdated
@@ -498,7 +516,12 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   let
     --initialize broadphase with initial state
     initialbp = update_bPTree (fmap Just (_pFState_directory _everythingWidgetConfig_initialState)) emptyBPTree
-    initialbackend = emptyEverythingBackend { _everythingBackend_broadPhaseState = initialbp }
+    initiallayersstate = makeLayersStateFromPFState _everythingWidgetConfig_initialState
+    initialbackend = emptyEverythingBackend {
+        _everythingBackend_broadPhaseState = initialbp
+        , _everythingBackend_layersState = initiallayersstate
+
+      }
   everythingBackendDyn :: Dynamic t EverythingBackend
     <- foldDynM foldEverythingBackendFn initialbackend everythingBackendEvent
 
@@ -507,7 +530,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
   r_selection <- holdUniqDyn $ fmap _everythingBackend_selection everythingBackendDyn
   r_broadphase <- holdUniqDyn $ fmap _everythingBackend_broadPhaseState everythingBackendDyn
   r_pan <- holdUniqDyn $ fmap _everythingFrontend_pan everythingFrontendDyn
-  --r_layers <- holdUniqDyn $ fmap (fst . _everythingFrontend_layersState) everythingFrontendDyn
+  r_layers <- holdUniqDyn $ fmap (snd . _everythingBackend_layersState) everythingBackendDyn
 
 
 
@@ -515,7 +538,7 @@ holdEverythingWidget EverythingWidgetConfig {..} = mdo
     {
       _everythingWidget_tool           = r_tool
       , _everythingWidget_selection    = r_selection
-      , _everythingWidget_layers       = undefined -- TODO
+      , _everythingWidget_layers       = r_layers
       , _everythingWidget_pan          = r_pan
       , _everythingWidget_broadPhase   = r_broadphase
       , _everythingWidget_pFOutput     = pFOutput

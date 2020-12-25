@@ -10,8 +10,11 @@ module Potato.Flow.Controller.Layers (
   , LayerDownType(..)
   , clickLayerNew
   , doesSelectionContainLayerPos
+  , makeLayersStateFromPFState
+
 
   -- exposed for testing
+  , layerEntry_layerPos
   , LockHiddenState(..)
   , LayerEntry(..)
   , LayerEntryPos
@@ -265,6 +268,7 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
     LHCO_ToggleLock -> togglefn _layerEntry_lockState (\le' x -> le' { _layerEntry_lockState = x })
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\le' x -> le' { _layerEntry_hideState = x })
 
+-- TODO rename to generateLayers
 generateLayersNew :: PFState -> LayerMetaMap -> Seq LayerEntry
 generateLayersNew pfs lmm = r where
   entryfn sseltl mparent = case mparent of
@@ -286,15 +290,16 @@ generateLayersNew pfs lmm = r where
       lm = lookupWithDefault (fst3 sseltl) lmm
   r = addUntilFolderEnd pfs lmm (_layerMeta_isCollapsed) entryfn Nothing 0
 
+makeLayersStateFromPFState :: PFState -> LayersState
+makeLayersStateFromPFState pfs = (IM.empty, generateLayersNew pfs IM.empty)
+
 -- updates lock and hide states (called after elements are added/removed from Seq LayerEntry)
 -- i.e. fixes LayerEntry based on contents of LayerMetaMap
 --updateLockHideState :: PFState -> LayerMetaMap -> Seq LayerEntry -> (LayerMetaMap, Seq LayerEntry)
 --updateLockHideState = undefined
 
-
--- TODO change 'LayerMetaMap -> LayerEntries' to 'LayersState'
-updateLayers :: PFState -> SEltLabelChanges -> LayerMetaMap -> LayerEntries -> LayersState
-updateLayers pfs changes lmm lentries = r where
+updateLayers :: PFState -> SEltLabelChanges -> LayersState -> LayersState
+updateLayers pfs changes (lmm, lentries) = r where
   -- update lmm
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
   newlmm = IM.difference (IM.union lmm (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
@@ -330,7 +335,7 @@ clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentri
 -- TODO consider supporting single click dragging, should be easy to do (drag select if you click off label, select+drag if you click on label)
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
--- TODO DELETE
+-- TODO DELETE moved to Manipulator.Layers
 layerInputNew ::
   PFState
   -> Int -- ^ scroll state

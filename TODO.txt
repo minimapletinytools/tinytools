@@ -1,4 +1,8 @@
 ::NEWEST TODO::
+-move layer state to backend and connect to changes
+-figure out how to get most current version of PFState
+-figure out why some of the tests pass even though you used out of date PFState
+
 -layers
   -figure out how to handle layer inputs...
   -connect layers

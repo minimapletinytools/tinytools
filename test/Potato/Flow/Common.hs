@@ -110,6 +110,7 @@ showEverythingPredicate (PFStateFunctionPredicate f) e = fst . f $ _everythingCo
 showEverythingPredicate AlwaysPass _ = "always pass"
 -- TODO actually set a label and pipe it through EverythingCombined_DEBUG?
 showEverythingPredicate (LabelCheck l) e = "expected label: " <> show l <> " got: " <> show (_everythingCombined_debugLabel e)
+-- TODO this should not print passing tests as well :(
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
 checkNumElts :: Int -> PFState -> (Text, Bool)

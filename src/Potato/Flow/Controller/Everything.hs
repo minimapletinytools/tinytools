@@ -36,12 +36,15 @@ data EverythingFrontend = EverythingFrontend {
   , _everythingFrontend_pan            :: XY -- panPos is position of upper left corner of canvas relative to screen
   , _everythingFrontend_mouseDrag      :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
 
+  -- NOTE, it would be more consistent if we passed this onto backend as a one shot like below but we're not gonna do that whatever
   , _everythingFrontend_handler        :: SomePotatoHandler
-  , _everythingFrontend_pFEvent        :: Maybe PFEventTag -- one shot event passed onto PF
-  , _everythingFrontend_select         :: Maybe (Bool, Selection) -- one shot
+
+  -- one shot stuff to pass onto backend
+  , _everythingFrontend_pFEvent        :: Maybe PFEventTag
+  , _everythingFrontend_select         :: Maybe (Bool, Selection)
+  , _everythingFrontend_setLayersState :: Maybe LayersState
 
   , _everythingFrontend_layerScrollPos :: Int
-  , _everythingFrontend_layersState    :: LayersState
 
   , _everythingFrontend_debugLabel     :: Text
 } deriving (Show)
@@ -57,6 +60,7 @@ data EverythingBackend = EverythingBackend {
   -- TODO DELETE this doesn't belong here because we don't know the rendered region
   , _everythingBackend_renderedCanvas       :: RenderedCanvas
   , _everythingBackend_handlerFromSelection :: Maybe SomePotatoHandler
+  , _everythingBackend_layersState          :: LayersState
 } deriving (Show)
 
 emptyEverythingFrontend :: EverythingFrontend
@@ -67,7 +71,6 @@ emptyEverythingFrontend = EverythingFrontend {
     , _everythingFrontend_handler = SomePotatoHandler EmptyHandler
     , _everythingFrontend_select = Nothing
     , _everythingFrontend_layerScrollPos = 0
-    , _everythingFrontend_layersState = (IM.empty, Seq.empty)
 
     , _everythingFrontend_debugLabel = ""
   }
@@ -78,6 +81,7 @@ emptyEverythingBackend = EverythingBackend {
     , _everythingBackend_broadPhaseState   = emptyBroadPhaseState
     , _everythingBackend_renderedCanvas = emptyRenderedCanvas nilLBox
     , _everythingBackend_handlerFromSelection = Nothing
+    , _everythingBackend_layersState = (IM.empty, Seq.empty)
   }
 
 -- TODO just include stuff you actualy test, no need to include verything...
@@ -91,13 +95,13 @@ data EverythingCombined_DEBUG = EverythingCombined_DEBUG {
   , _everythingCombined_pFEvent              :: Maybe PFEventTag -- one shot event passed onto PF
   , _everythingCombined_select               :: Maybe (Bool, Selection) -- one shot
   , _everythingCombined_layerScrollPos       :: Int
-
   , _everythingCombined_debugLabel           :: Text
 
   , _everythingCombined_selection            :: Selection
   , _everythingCombined_broadPhase           :: BroadPhaseState
   , _everythingCombined_renderedCanvas       :: RenderedCanvas
   , _everythingCombined_handlerFromSelection :: Maybe SomePotatoHandler
+  , _everythingCombined_layersState          :: LayersState
 
   -- from PFOutput, remember to set
   , _everythingCombined_pFState              :: PFState
@@ -118,6 +122,7 @@ combineEverything EverythingFrontend {..} EverythingBackend {..} pfs = Everythin
     , _everythingCombined_broadPhase   = _everythingBackend_broadPhaseState
     , _everythingCombined_renderedCanvas   = _everythingBackend_renderedCanvas
     , _everythingCombined_handlerFromSelection = _everythingBackend_handlerFromSelection
+    , _everythingCombined_layersState    = _everythingBackend_layersState
 
     , _everythingCombined_pFState = pfs
   }

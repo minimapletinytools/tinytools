@@ -166,5 +166,5 @@ spec = do
           lentries_0 = generateLayersNew state_0 lmm_0
 
           (state_1, changes) = do_deleteElts [(4,4,someSEltLabel)] state_0
-          (lmm_1, lentries_1) = updateLayers state_1 changes lmm_0 lentries_0
+          (lmm_1, lentries_1) = updateLayers state_1 changes (lmm_0, lentries_0)
         Seq.length lentries_1 `shouldBe` 4

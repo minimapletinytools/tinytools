@@ -99,6 +99,7 @@ dependencies:
 - data-ordlist
 - bimap
 - reflex-vty
+- semialign
 
 #- smash
 - deepseq

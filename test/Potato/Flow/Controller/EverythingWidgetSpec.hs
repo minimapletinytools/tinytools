@@ -21,13 +21,16 @@ import           Potato.Flow.Controller.Everything
 import           Potato.Flow.Controller.EverythingWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Layers
 
 -- test imports
 import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
 import qualified Data.IntMap                             as IM
+import qualified Data.List.Ordered                       as L
 import qualified Data.Sequence                           as Seq
+import           Data.Tuple.Extra
 
 someState1 :: PFState
 someState1 = PFState {
@@ -113,6 +116,51 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
         ]
 
 
+    ]
+
+validateLayersOrderPredicate :: EverythingPredicate
+validateLayersOrderPredicate = r where
+  sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
+  r = FunctionPredicate $
+    (\(_,lentries) -> ("expected LayerEntries in order " <> show (fmap (snd3 . _layerEntry_superSEltLabel) lentries), L.isSortedBy sortingfn (toList lentries)))
+    . _everythingCombined_layersState
+
+checkLayerEntriesNum :: Int -> EverythingPredicate
+checkLayerEntriesNum n = r where
+  r = FunctionPredicate $
+    (\(_,lentries) -> ("expected " <> show n <> " got " <> show (Seq.length lentries), Seq.length lentries == n))
+    . _everythingCombined_layersState
+
+everything_layers_test :: Test
+everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "Initial"
+      , EWCNothing -- dummy to check state
+
+      , EWCLabel "Create A"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCNothing -- dummy to check state
+    ]
+  expected = [
+      LabelCheck "Initial"
+      -- this isn't an especially useful/exciting test... but it's better than nothing
+      , Combine [
+        validateLayersOrderPredicate
+        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+      ]
+
+      , LabelCheck "Create A"
+      , (EqPredicate _everythingCombined_selectedTool Tool_Box)
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+      , Combine [
+        validateLayersOrderPredicate
+        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      ]
     ]
 
 
@@ -348,4 +396,5 @@ spec = do
     fromHUnitTest $ tool_test
     fromHUnitTest $ select_test
     fromHUnitTest $ everything_load_test
+    fromHUnitTest $ everything_layers_test
     fromHUnitTest $ everything_basic_test
