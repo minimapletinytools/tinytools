@@ -28,10 +28,8 @@ import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
-import           Potato.Flow.Render
 import           Potato.Flow.SElts
 import           Potato.Flow.State
-import           Potato.Flow.Types
 import           Potato.Flow.Workspace
 
 import           Control.Exception                         (assert)
@@ -40,9 +38,7 @@ import           Data.Aeson
 import           Data.Default                              (def)
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
-import           Data.Semialign
 import qualified Data.Sequence                             as Seq
-import           Data.These
 import           Data.Tuple.Extra
 
 
@@ -86,7 +82,6 @@ data GoatState = GoatState {
 goatState_pFState :: GoatState -> PFState
 goatState_pFState = _pFWorkspace_state . _goatState_pFWorkspace
 
--- TODO rename to GoatCmd
 data GoatCmd =
   GoatCmdTool Tool
 
@@ -145,8 +140,8 @@ makeHandlerFromSelection :: Selection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
-  SMTText        -> SomePotatoHandler $ EmptyHandler -- TODO
-  SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler) -- pretty sure this is OK?
+  SMTText        -> SomePotatoHandler $ (def { _boxHandler_isText = True }) -- pretty sure this is OK?
+  SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
   SMTNone        -> SomePotatoHandler EmptyHandler
 
 maybeUpdateHandlerFromSelection :: SomePotatoHandler -> Selection -> SomePotatoHandler
@@ -167,7 +162,6 @@ foldGoatFn cmd goatState@GoatState {..} = do
 
 
     -- TODO look into getting rid of this
-    -- clear per frame statuses for next frame
     goatState' = goatState {
         -- cancel mouse drag if ESC is pressed
         -- TODO is this the right place to do this?
@@ -187,9 +181,6 @@ foldGoatFn cmd goatState@GoatState {..} = do
         , _potatoHandlerInput_selection   = _goatState_selection
       }
 
-    -- just get PotatoHandlerOutput from this I guess?
-    -- or like... some other output class
-    --
     (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
       SomePotatoHandler handler -> case cmd of
         GoatCmdSetDebugLabel x -> (goatState' { _goatState_debugLabel = x }, def)
@@ -319,17 +310,6 @@ foldGoatFn cmd goatState@GoatState {..} = do
       Nothing -> _goatState_layersState
       Just ls -> ls
 
-    -- update handler from pho
-    next_handler' = case _potatoHandlerOutput_nextHandler phoAfterGoatCmd of
-      Just sph -> sph
-      Nothing  -> case _potatoHandlerOutput_select phoAfterGoatCmd of
-        -- TODO I don't think you need to do this anymore, this should be covered later on
-        -- there was no new handler, create a new handler from selection to replace the finished one
-        -- alternatively, we could let backend do this??
-        Nothing -> makeHandlerFromSelection _goatState_selection
-        -- in this case, backend will override the handler from the new selection
-        Just _  -> SomePotatoHandler EmptyHandler
-
     -- get selection from pho
     mSelectionFromPho = case _potatoHandlerOutput_select phoAfterGoatCmd of
       Nothing -> Nothing
@@ -348,7 +328,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
         newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
         r = if null newlyCreatedSEltls
           -- if there are no newly created elts, we still need to update the selection
-          then catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,seltl) ->
+          then catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,_) ->
             case IM.lookup rid cslmap of
               -- no changes means not deleted
               Nothing                  -> Just sseltl
@@ -359,9 +339,12 @@ foldGoatFn cmd goatState@GoatState {..} = do
           else Seq.fromList newlyCreatedSEltls
 
     mnext_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ asum [mSelectionFromPho, mSelectionFromChanges]
+    mHandlerFromPho = _potatoHandlerOutput_nextHandler phoAfterGoatCmd
+    tempHandlerForUpdateFromSelection = fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho
+    tempHandlerForUpdateFromPho = fromMaybe (makeHandlerFromSelection _goatState_selection) mHandlerFromPho
     (next_handler, next_selection) = case mnext_selection of
-      Just next_selection' -> (maybeUpdateHandlerFromSelection next_handler' next_selection', next_selection')
-      Nothing -> (next_handler', _goatState_selection)
+      Just next_selection' -> (maybeUpdateHandlerFromSelection tempHandlerForUpdateFromSelection next_selection', next_selection')
+      Nothing -> (tempHandlerForUpdateFromPho, _goatState_selection)
     next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
     next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
