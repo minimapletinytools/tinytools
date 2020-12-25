@@ -72,7 +72,7 @@ type EverythingLoadState = (SPotatoFlow, ControllerMeta)
 
 data GoatState = GoatState {
     -- TODO replace with PFWorkspace and we'll manage clipboard in GoatState directly
-    _goatState_pFTotalState      :: PFTotalState
+    _goatState_pFWorkspace       :: PFWorkspace
     , _goatState_selectedTool    :: Tool
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
@@ -85,7 +85,7 @@ data GoatState = GoatState {
   }
 
 goatState_pFState :: GoatState -> PFState
-goatState_pFState = _pFWorkspace_state . _pFTotalState_workspace . _goatState_pFTotalState
+goatState_pFState = _pFWorkspace_state . _goatState_pFWorkspace
 
 -- TODO rename to GoatCmd
 data GoatCmd =
@@ -161,8 +161,7 @@ foldGoatFn :: (Reflex t) => GoatCmd -> GoatState -> PushM t GoatState
 foldGoatFn cmd everything@GoatState {..} = do
   let
 
-    -- TODO set these
-    last_workspace = _pFTotalState_workspace _goatState_pFTotalState
+    last_workspace = _goatState_pFWorkspace
     last_pFState = _pFWorkspace_state last_workspace
     -- TODO cache this in GoatState
     last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
@@ -300,13 +299,13 @@ foldGoatFn cmd everything@GoatState {..} = do
 
 
     -- update PFTotalState from pho
-    (next_pFTotalState, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
+    (next_workspace, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
       -- if there was no update, then changes are not valid
-      Nothing   -> (_goatState_pFTotalState, IM.empty)
-      Just pfev -> (r1,r2) where
-        r1 = updatePFTotalState pfev _goatState_pFTotalState
-        r2 = _pFWorkspace_lastChanges $ _pFTotalState_workspace r1
-    next_workspace = _pFTotalState_workspace $ next_pFTotalState
+      Nothing   -> (_goatState_pFWorkspace, IM.empty)
+      Just pfev -> assert (pasta == []) (r1,r2) where
+        -- TODO extract updatePFTotalState and move into Workspace.hs since we don't need copy pasta functionality
+        PFTotalState r1 pasta = updatePFTotalState pfev (PFTotalState _goatState_pFWorkspace [])
+        r2 = _pFWorkspace_lastChanges r1
     next_pFState = _pFWorkspace_state next_workspace
     next_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers next_pFState)
     cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
@@ -369,7 +368,7 @@ foldGoatFn cmd everything@GoatState {..} = do
     next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
   return $ everythingAfterGoatCmd {
-      _goatState_pFTotalState      = next_pFTotalState
+      _goatState_pFWorkspace      = next_workspace
       , _goatState_pan             = next_pan
       , _goatState_handler         = next_handler
       , _goatState_selection       = next_selection
@@ -395,7 +394,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialbp = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
     initiallayersstate = makeLayersStateFromPFState _goatWidgetConfig_initialState
     initialgoat = GoatState {
-        _goatState_pFTotalState      = PFTotalState (loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace) []
+        _goatState_pFWorkspace      = (loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace)
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = emptyMouseDrag
