@@ -30,6 +30,7 @@ import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
+import           Potato.Flow.Types
 import           Potato.Flow.Workspace
 
 import           Control.Exception                         (assert)
@@ -66,6 +67,7 @@ type EverythingLoadState = (SPotatoFlow, ControllerMeta)
 
 data GoatState = GoatState {
     _goatState_pFWorkspace       :: PFWorkspace
+    , _goatState_layerPosMap     :: REltIdMap LayerPos
     , _goatState_selectedTool    :: Tool
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
@@ -153,12 +155,10 @@ potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
   last_workspace = _goatState_pFWorkspace
   last_pFState = _pFWorkspace_state last_workspace
-  -- TODO cache this in GoatState
-  last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
   r = PotatoHandlerInput {
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
-    , _potatoHandlerInput_layerPosMap = last_layerPosMap
+    , _potatoHandlerInput_layerPosMap = _goatState_layerPosMap
     , _potatoHandlerInput_tool = _goatState_selectedTool
 
     , _potatoHandlerInput_layerScrollPos = _goatState_layerScrollPos
@@ -172,8 +172,6 @@ foldGoatFn cmd goatState@GoatState {..} = do
 
     last_workspace = _goatState_pFWorkspace
     last_pFState = _pFWorkspace_state last_workspace
-    -- TODO cache this in GoatState
-    last_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers last_pFState)
 
     potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
@@ -225,7 +223,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
               Just pho -> (goatState', pho)
               -- input not captured by handler, do select or drag+select
               Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-                nextSelection = selectMagic last_pFState last_layerPosMap _goatState_broadPhaseState canvasDrag
+                nextSelection = selectMagic last_pFState _goatState_layerPosMap _goatState_broadPhaseState canvasDrag
                 shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
                 r = if Seq.null nextSelection || shiftClick
                   -- clicked on nothing or shift click, start SelectHandler
@@ -360,6 +358,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
       , _goatState_selection       = next_selection
       , _goatState_broadPhaseState = next_broadPhaseState
       , _goatState_layersState     = next_layersState
+      , _goatState_layerPosMap = next_layerPosMap
     }
 
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
