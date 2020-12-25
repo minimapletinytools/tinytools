@@ -6,10 +6,10 @@ module Potato.Flow.EntrySpec
   )
 where
 
-import           Relude                           hiding (empty, fromList)
+import           Relude                    hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit         (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit  (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
@@ -17,9 +17,9 @@ import           Reflex.Test.Host
 
 import           Control.Concurrent
 import           Data.Aeson
-import qualified Data.List                        as L (last)
-import           Data.Maybe                       (fromJust)
-import qualified Data.Text                        as T
+import qualified Data.List                 as L (last)
+import           Data.Maybe                (fromJust)
+import qualified Data.Text                 as T
 import           Data.These
 import           GHC.Stats
 --import           Text.Pretty.Simple       (pPrint)
@@ -219,6 +219,7 @@ spec = do
     fromHUnitTest $ pair_test "save8" save_network bs_save_8
 
     fromHUnitTest $ undoredo_test 10
+    fromHUnitTest $ nstep_test 100
     --fromHUnitTest $ nstep_test 10000
     fromHUnitTest $ serialization_test
     fromHUnitTest $ save_load_test

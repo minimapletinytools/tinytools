@@ -6,87 +6,35 @@ module Potato.Flow.Controller.EverythingWidgetSpec
   )
 where
 
-import           Relude                                  hiding (empty,
-                                                          fromList)
+import           Relude                            hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit                (fromHUnitTest)
+import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
 import           Reflex.Test.Host
 
 import           Potato.Flow
-import           Potato.Flow.Controller.Everything
-import           Potato.Flow.Controller.EverythingWidget
+import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 
 -- test imports
-import           Potato.Flow.CommonOld
+import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
-import qualified Data.IntMap                             as IM
-import qualified Data.List.Ordered                       as L
-import qualified Data.Sequence                           as Seq
+import qualified Data.IntMap                       as IM
+import qualified Data.List.Ordered                 as L
+import qualified Data.Sequence                     as Seq
 import           Data.Tuple.Extra
 
-someState1 :: PFState
-someState1 = PFState {
-      _pFState_layers = Seq.fromList [0..5]
-      , _pFState_directory = IM.fromList [(0, folderStart), (1, someSEltLabel), (2, someSEltLabel), (3, someSEltLabel), (4, someSEltLabel), (5, folderEnd)]
-      , _pFState_canvas = someSCanvas
-  }
-
--- simple bespoke testing
-tool_network
-  :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => (Event t Tool -> TestGuestT t m (Event t Tool))
-tool_network ev = do
-  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig { _everythingWidgetConfig_selectTool = ev }
-  return $ updated . _everythingWidget_tool $ everythingWidget
-
-tool_test :: Test
-tool_test = TestLabel "tool" $ TestCase $ do
-  let
-    -- note, starting value is TSelect
-    bs = [Tool_Pan, Tool_Select, Tool_Pan, Tool_Pan, Tool_Box, Tool_Line, Tool_Text]
-    expected = [Just Tool_Pan, Just Tool_Select, Just Tool_Pan, Nothing, Just Tool_Box, Just Tool_Line, Just Tool_Text]
-    run = runAppSimple tool_network bs
-  v <- liftIO run
-  (join v) @?= expected
-
-select_network
-  :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => Event t (Bool, Selection) -> TestGuestT t m (Event t Selection)
-select_network ev = do
-  let
-    addSelectEv = fmapMaybe (\(b,s) -> if b then Just s else Nothing) ev
-    newSelectEv = fmapMaybe (\(b,s) -> if not b then Just s else Nothing) ev
-  everythingWidget <- holdEverythingWidget $ emptyEverythingWidgetConfig {
-      _everythingWidgetConfig_initialState = someState1
-      , _everythingWidgetConfig_selectNew = newSelectEv
-      , _everythingWidgetConfig_selectAdd = addSelectEv
-    }
-  return $ updated . _everythingWidget_selection $ everythingWidget
-
-select_test :: Test
-select_test = TestLabel "select" $ TestCase $ do
-  let
-    mySelection1 = Seq.fromList [(1,1,someSEltLabel)]
-    mySelection2 = Seq.fromList [(2,2,someSEltLabel)]
-    combined = Seq.fromList [(1,1,someSEltLabel), (2,2,someSEltLabel)]
-    bs = [(False, mySelection1), (True, mySelection2), (True, mySelection1), (False, mySelection1), (True, Seq.empty), (False, Seq.empty)]
-    expected = [Just mySelection1, Just combined, Just mySelection2, Just mySelection1, Nothing, Just (Seq.empty)]
-    run = runAppSimple select_network bs
-  v <- liftIO run
-  (join v) @?= expected
 
 expectState :: PFState -> EverythingPredicate
 expectState pfs = FunctionPredicate $
   (\pfs' -> ("expected pfstate_basic1", pfs == pfs'))
-  . _everythingCombined_pFState
+  . goatState_pFState
 
 everything_load_test :: Test
 everything_load_test = constructTest "load" emptyPFState bs expected where
@@ -123,13 +71,13 @@ validateLayersOrderPredicate = r where
   sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
   r = FunctionPredicate $
     (\(_,lentries) -> ("expected LayerEntries in order " <> show (fmap (snd3 . _layerEntry_superSEltLabel) lentries), L.isSortedBy sortingfn (toList lentries)))
-    . _everythingCombined_layersState
+    . _goatState_layersState
 
 checkLayerEntriesNum :: Int -> EverythingPredicate
 checkLayerEntriesNum n = r where
   r = FunctionPredicate $
     (\(_,lentries) -> ("expected " <> show n <> " got " <> show (Seq.length lentries), Seq.length lentries == n))
-    . _everythingCombined_layersState
+    . _goatState_layersState
 
 everything_layers_test :: Test
 everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
@@ -153,7 +101,7 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
       ]
 
       , LabelCheck "Create A"
-      , (EqPredicate _everythingCombined_selectedTool Tool_Box)
+      , (EqPredicate _goatState_selectedTool Tool_Box)
       , AlwaysPass
       , AlwaysPass
       , AlwaysPass
@@ -267,18 +215,18 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
   expected = [
       LabelCheck "Pan"
-      , (EqPredicate _everythingCombined_selectedTool Tool_Pan)
-      , (EqPredicate _everythingCombined_pan (V2 0 0))
-      , (EqPredicate _everythingCombined_pan (V2 1 1))
-      , (EqPredicate _everythingCombined_pan (V2 1 1))
-      , (EqPredicate _everythingCombined_pan (V2 0 0))
-      , (EqPredicate _everythingCombined_pan (V2 10 15))
-      , (EqPredicate _everythingCombined_pan (V2 1 1))
+      , (EqPredicate _goatState_selectedTool Tool_Pan)
+      , (EqPredicate _goatState_pan (V2 0 0))
+      , (EqPredicate _goatState_pan (V2 1 1))
+      , (EqPredicate _goatState_pan (V2 1 1))
+      , (EqPredicate _goatState_pan (V2 0 0))
+      , (EqPredicate _goatState_pan (V2 10 15))
+      , (EqPredicate _goatState_pan (V2 1 1))
       , AlwaysPass
-      , (EqPredicate _everythingCombined_pan (V2 1 1))
+      , (EqPredicate _goatState_pan (V2 1 1))
 
       , LabelCheck "Create A"
-      , (EqPredicate _everythingCombined_selectedTool Tool_Box)
+      , (EqPredicate _goatState_selectedTool Tool_Box)
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box False
@@ -290,7 +238,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , LabelCheck "create another elt, but cancel it"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerNameAndState handlerName_box False
+      , checkHandlerNameAndState handlerName_empty False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
           , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
@@ -317,7 +265,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
         ]
 
       -- unselect
-      , (EqPredicate _everythingCombined_selectedTool Tool_Select)
+      , (EqPredicate _goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , Combine [
           numSelectedEltsEqualPredicate 0
@@ -389,12 +337,9 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
     ]
 
-
 spec :: Spec
 spec = do
   describe "EverythingWidget" $ do
-    fromHUnitTest $ tool_test
-    fromHUnitTest $ select_test
     fromHUnitTest $ everything_load_test
     fromHUnitTest $ everything_layers_test
     fromHUnitTest $ everything_basic_test

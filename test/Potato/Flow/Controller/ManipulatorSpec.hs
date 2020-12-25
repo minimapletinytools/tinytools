@@ -13,11 +13,11 @@ import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
-import           Potato.Flow.Controller.Everything
+import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
-import           Potato.Flow.CommonOld
+import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
 import           Data.Default
@@ -61,7 +61,7 @@ test_BoxHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
     ]
   expected = [
-      EqPredicate _everythingCombined_selectedTool Tool_Select
+      EqPredicate _goatState_selectedTool Tool_Select
 
       , LabelCheck "select b2"
       , checkHandlerNameAndState handlerName_box True
@@ -116,7 +116,7 @@ test_BoxHandler_select_and_drag = constructTest "select and drag" pfstate_basic1
 
     ]
   expected = [
-      EqPredicate _everythingCombined_selectedTool Tool_Select
+      EqPredicate _goatState_selectedTool Tool_Select
 
       , LabelCheck "select + drag b2"
       , checkHandlerNameAndState handlerName_box True
@@ -146,7 +146,7 @@ test_BoxHandler_restrict8 = constructTest "restrict8" pfstate_basic1 bs expected
       , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [KeyModifier_Shift])
     ]
   expected = [
-      EqPredicate _everythingCombined_selectedTool Tool_Select
+      EqPredicate _goatState_selectedTool Tool_Select
 
       , LabelCheck "select b2"
       , checkHandlerNameAndState handlerName_box True
@@ -184,7 +184,7 @@ test_LineHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       , EWCMouse (LMouseData (V2 0 90) True MouseButton_Left [])
     ]
   expected = [
-      EqPredicate _everythingCombined_selectedTool Tool_Select
+      EqPredicate _goatState_selectedTool Tool_Select
 
       , LabelCheck "select sl1"
       , checkHandlerNameAndState handlerName_box True
@@ -242,7 +242,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
     ]
   expected = [
       LabelCheck "create <box>"
-      , EqPredicate _everythingCombined_selectedTool Tool_Box
+      , EqPredicate _goatState_selectedTool Tool_Box
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -253,7 +253,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
         ]
 
       , LabelCheck "create <line>"
-      , EqPredicate _everythingCombined_selectedTool Tool_Line
+      , EqPredicate _goatState_selectedTool Tool_Line
       , checkHandlerNameAndState handlerName_simpleLine True
       , checkHandlerNameAndState handlerName_simpleLine True
       , Combine [
@@ -264,7 +264,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
         ]
 
       , LabelCheck "create <text>"
-      , EqPredicate _everythingCombined_selectedTool Tool_Text
+      , EqPredicate _goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
