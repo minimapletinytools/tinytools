@@ -187,10 +187,11 @@ foldGoatFn cmd goatState@GoatState {..} = do
         --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
         GoatCmdMouse mouseData ->
           let
+            sameSource = _mouseDrag_isLayerMouse _goatState_mouseDrag == _lMouseData_isLayerMouse mouseData
             mouseDrag = case _mouseDrag_state _goatState_mouseDrag of
               MouseDragState_Up        -> newDrag mouseData
-              MouseDragState_Cancelled -> (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
-              _                        -> continueDrag mouseData _goatState_mouseDrag
+              MouseDragState_Cancelled -> assert sameSource $ (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
+              _                        -> assert sameSource $ continueDrag mouseData _goatState_mouseDrag
 
             canvasDrag = toRelMouseDrag last_pFState mouseDrag
             goatState' = goatState { _goatState_mouseDrag = mouseDrag }
@@ -198,7 +199,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
           in case _mouseDrag_state mouseDrag of
             -- if mouse was cancelled, update _goatState_mouseDrag accordingly
             MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-              then (goatState' { _goatState_mouseDrag = emptyMouseDrag }, def)
+              then (goatState' { _goatState_mouseDrag = def }, def)
               else (goatState', def) -- still cancelled
             -- special case, if mouse down and pan tool, we override with a new handler
             MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
@@ -383,7 +384,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         _goatState_pFWorkspace      = (loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace)
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
-        , _goatState_mouseDrag       = emptyMouseDrag
+        , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layerScrollPos  = 0
         , _goatState_debugLabel      = ""

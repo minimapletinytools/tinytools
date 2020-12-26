@@ -9,7 +9,6 @@ module Potato.Flow.Controller.Input (
   , LMouseData(..)
   , MouseDrag(..)
   , mouseDrag_isActive
-  , emptyMouseDrag
   , newDrag
   , continueDrag
   , cancelDrag
@@ -32,6 +31,7 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 
 import           Control.Exception (assert)
+import           Data.Default
 import qualified Data.List         as L
 import qualified Data.Sequence     as Seq
 
@@ -64,18 +64,20 @@ data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragS
 -- TODO is there a way to optionally support more fidelity here?
 -- mouse drags are sent as click streams
 data LMouseData = LMouseData {
-  _lMouseData_position    :: XY
-  , _lMouseData_isRelease :: Bool
-  , _lMouseData_button    :: MouseButton
-  , _lMouseData_modifiers :: [KeyModifier]
+  _lMouseData_position       :: XY
+  , _lMouseData_isRelease    :: Bool
+  , _lMouseData_button       :: MouseButton
+  , _lMouseData_modifiers    :: [KeyModifier]
+  , _lMouseData_isLayerMouse :: Bool
 } deriving (Show, Eq)
 
 data MouseDrag = MouseDrag {
-  _mouseDrag_from        :: XY
-  , _mouseDrag_button    :: MouseButton -- tracks button on start of drag
-  , _mouseDrag_modifiers :: [KeyModifier] -- tracks modifiers held at current state of drag
-  , _mouseDrag_to        :: XY -- likely not needed as they will be in the input event, but whatever
-  , _mouseDrag_state     :: MouseDragState
+  _mouseDrag_from           :: XY
+  , _mouseDrag_button       :: MouseButton -- tracks button on start of drag
+  , _mouseDrag_modifiers    :: [KeyModifier] -- tracks modifiers held at current state of drag
+  , _mouseDrag_to           :: XY -- likely not needed as they will be in the input event, but whatever
+  , _mouseDrag_state        :: MouseDragState
+  , _mouseDrag_isLayerMouse :: Bool
 } deriving (Show, Eq)
 
 mouseDrag_isActive :: MouseDrag -> Bool
@@ -84,15 +86,15 @@ mouseDrag_isActive MouseDrag {..} = case _mouseDrag_state of
   MouseDragState_Dragging -> True
   _                       -> False
 
-
-emptyMouseDrag :: MouseDrag
-emptyMouseDrag = MouseDrag {
-    _mouseDrag_from  = 0
-    , _mouseDrag_button = MouseButton_Left
-    , _mouseDrag_modifiers = []
-    , _mouseDrag_to    = 0
-    , _mouseDrag_state = MouseDragState_Up -- if the last state was MouseDragState_Up we are ready to process more inputs fresh
-  }
+instance Default MouseDrag where
+  def = MouseDrag {
+      _mouseDrag_from  = 0
+      , _mouseDrag_button = MouseButton_Left
+      , _mouseDrag_modifiers = []
+      , _mouseDrag_to    = 0
+      , _mouseDrag_state = MouseDragState_Up -- if the last state was MouseDragState_Up we are ready to process more inputs fresh
+      , _mouseDrag_isLayerMouse = False
+    }
 
 newDrag :: LMouseData -> MouseDrag
 newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
@@ -101,6 +103,7 @@ newDrag LMouseData {..} = assert (not _lMouseData_isRelease) $ MouseDrag {
     , _mouseDrag_modifiers = _lMouseData_modifiers
     , _mouseDrag_to = _lMouseData_position
     , _mouseDrag_state = MouseDragState_Down
+    , _mouseDrag_isLayerMouse = _lMouseData_isLayerMouse
   }
 
 continueDrag :: LMouseData -> MouseDrag -> MouseDrag

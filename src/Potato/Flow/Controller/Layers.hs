@@ -118,7 +118,6 @@ data LayerEntry = LayerEntry {
   , _layerEntry_lockState      :: LockHiddenState
   , _layerEntry_hideState      :: LockHiddenState
   , _layerEntry_isCollapsed    :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
-
   , _layerEntry_superSEltLabel :: SuperSEltLabel
 } deriving (Eq, Show)
 

@@ -32,33 +32,33 @@ test_BoxHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
 
       , EWCLabel "select b2"
       -- Note, this is a little weird, even though we are just selecting (no dragging) it will still go to BoxHandler first to do the selection...
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
 
       , EWCLabel "resize tl corner b2"
-      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
 
       , EWCLabel "resize tr corner b2"
-      , EWCMouse (LMouseData (V2 15 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 15 8) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 15 8) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 15 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 15 8) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 15 8) True MouseButton_Left [] False)
 
       , EWCLabel "resize bl corner b2"
-      , EWCMouse (LMouseData (V2 10 15) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 7 15) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 7 15) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 15) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 7 15) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 7 15) True MouseButton_Left [] False)
 
       , EWCLabel "resize br corner b2"
-      , EWCMouse (LMouseData (V2 15 15) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 15 15) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
 
       , EWCLabel "area move b2"
-      , EWCMouse (LMouseData (V2 15 15) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 15 15) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
     ]
   expected = [
       EqPredicate _goatState_selectedTool Tool_Select
@@ -110,9 +110,9 @@ test_BoxHandler_select_and_drag = constructTest "select and drag" pfstate_basic1
       EWCTool Tool_Select
 
       , EWCLabel "select + drag b2"
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 11 11) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 11 11) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 11) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 11) True MouseButton_Left [] False)
 
     ]
   expected = [
@@ -137,13 +137,13 @@ test_BoxHandler_restrict8 = constructTest "restrict8" pfstate_basic1 bs expected
       EWCTool Tool_Select
 
       , EWCLabel "select b2"
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
 
       , EWCLabel "resize tl corner b2 while holding shift"
-      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [KeyModifier_Shift])
-      , EWCMouse (LMouseData (V2 10 0) False MouseButton_Left [KeyModifier_Shift])
-      , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [KeyModifier_Shift])
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [KeyModifier_Shift] False)
+      , EWCMouse (LMouseData (V2 10 0) False MouseButton_Left [KeyModifier_Shift] False)
+      , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [KeyModifier_Shift] False)
     ]
   expected = [
       EqPredicate _goatState_selectedTool Tool_Select
@@ -166,22 +166,22 @@ test_LineHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       EWCTool Tool_Select
 
       , EWCLabel "select sl1"
-      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 0 100) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 100) True MouseButton_Left [] False)
 
       , EWCLabel "move end of line"
-      , EWCMouse (LMouseData (V2 0 110) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 0 120) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 0 120) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 110) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 120) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 120) True MouseButton_Left [] False)
 
       , EWCLabel "select sl2"
-      , EWCMouse (LMouseData (V2 2 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 2 100) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 2 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 2 100) True MouseButton_Left [] False)
 
       , EWCLabel "move start of line"
-      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 0 90) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 0 90) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 90) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 90) True MouseButton_Left [] False)
     ]
   expected = [
       EqPredicate _goatState_selectedTool Tool_Select
@@ -223,21 +223,21 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
 
       EWCLabel "create <box>"
       , EWCTool Tool_Box
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
 
       , EWCLabel "create <line>"
       , EWCTool Tool_Line
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
 
       , EWCLabel "create <text>"
       , EWCTool Tool_Text
-      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 120 120) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 120 120) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 120 120) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 120 120) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
     ]
   expected = [

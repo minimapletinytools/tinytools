@@ -87,9 +87,9 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
 
       , EWCLabel "Create A"
       , EWCTool Tool_Box
-      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
       , EWCNothing -- dummy to check state
     ]
   expected = [
@@ -119,31 +119,31 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       EWCLabel "Pan"
       , EWCTool Tool_Pan
       -- drag to (1, 1) and release
-      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [] False)
       -- drag to (10, 15) and cancel without releasing
-      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 9 14) False MouseButton_Left [] False)
       -- cancel and keep tracking and make sure nothing changes
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
-      , EWCMouse (LMouseData (V2 9 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 (-20) 31) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 9 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-20) 31) True MouseButton_Left [] False)
 
       -- create elt A
       , EWCLabel "Create A"
       , EWCTool Tool_Box
       -- drag from (1,1) to (10,10) and release (actually (2,2) to (10,10))
-      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
       , EWCNothing -- dummy to check state
 
       , EWCLabel "create another elt, but cancel it"
-      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
 
       , EWCLabel "press escape a bunch of times and make sure nothing breaks"
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
@@ -152,61 +152,61 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
       , EWCLabel "create elt B"
-      , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
       , EWCNothing -- dummy to check state
 
       -- unselect
       , EWCTool Tool_Select
-      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [] False)
 
       , EWCLabel "single click select elt B"
-      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [] False)
 
       -- now select elts A + B
-      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [] False)
 
       , EWCLabel "begin selecting nothing and cancel"
-      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
-      , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [] False)
 
       , EWCLabel "single click shift unselect elt B"
-      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift])
-      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
+      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift] False)
+      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift] False)
 
       , EWCLabel "unselect"
-      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 100 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 100 100) True MouseButton_Left [] False)
 
       , EWCLabel "single click select elt A"
-      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [] False)
 
       , EWCLabel "manipulate A"
-      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [] False)
 
       , EWCLabel "single click shift select elt B"
-      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift])
-      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift])
+      , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift] False)
+      , EWCMouse (LMouseData (V2 1 21) True MouseButton_Left [KeyModifier_Shift] False)
 
       , EWCLabel "manipulate A+B"
-      , EWCMouse (LMouseData (V2 5 5) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 5 5) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [] False)
 
       , EWCLabel "Mainpulate A+B then cancel"
-      , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [])
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 7 5) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
-      , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [])
+      , EWCMouse (LMouseData (V2 7 5) True MouseButton_Left [] False)
 
 
       -- TODO delete the elt

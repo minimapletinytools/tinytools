@@ -31,7 +31,7 @@ testSText1 = SText {
   }
 
 testClick :: Int -> Int -> RelMouseDrag
-testClick x y = RelMouseDrag $ emptyMouseDrag {
+testClick x y = RelMouseDrag $ def {
     _mouseDrag_to = V2 x y
   }
 
