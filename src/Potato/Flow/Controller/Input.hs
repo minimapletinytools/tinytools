@@ -133,8 +133,6 @@ toRelMouseDrag pFState md = RelMouseDrag $ md {
     , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md)
   }
 
-
-
 -- TODO move out or rename this file to TYpes D:
 
 -- TOOL

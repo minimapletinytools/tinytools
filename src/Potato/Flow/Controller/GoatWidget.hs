@@ -23,6 +23,7 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
+import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
@@ -72,6 +73,7 @@ data GoatState = GoatState {
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_handler         :: SomePotatoHandler
+    , _goatState_layersHandler   :: SomePotatoHandler
     , _goatState_layerScrollPos  :: Int
     , _goatState_debugLabel      :: Text
     , _goatState_selection       :: Selection
@@ -196,11 +198,24 @@ foldGoatFn cmd goatState@GoatState {..} = do
             canvasDrag = toRelMouseDrag last_pFState mouseDrag
             goatState' = goatState { _goatState_mouseDrag = mouseDrag }
 
+            isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
+
           in case _mouseDrag_state mouseDrag of
             -- if mouse was cancelled, update _goatState_mouseDrag accordingly
             MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
               then (goatState' { _goatState_mouseDrag = def }, def)
               else (goatState', def) -- still cancelled
+            _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
+              Just pho -> (goatState'', pho') where
+                -- the returned PotatoHandlerOutput is used for regular handler so override it here to set just the layers handler
+                pho' = pho { _potatoHandlerOutput_nextHandler = Nothing }
+                goatState'' = goatState' {
+                    -- always expect
+                    _goatState_layersHandler = case _potatoHandlerOutput_nextHandler pho of
+                      Just h -> h
+                      Nothing -> error "expected LayersHandler to return a new handler"
+                  }
+              Nothing  -> (goatState', def)
             -- special case, if mouse down and pan tool, we override with a new handler
             MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
               Just pho -> (goatState', pho)
@@ -386,6 +401,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
+        , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
         , _goatState_layerScrollPos  = 0
         , _goatState_debugLabel      = ""
         , _goatState_selection       = Seq.empty

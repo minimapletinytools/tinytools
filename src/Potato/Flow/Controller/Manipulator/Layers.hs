@@ -30,6 +30,9 @@ instance Default LayersHandler where
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine
+
+  -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
+  -- make sure pan offset is 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
     abspos = _mouseDrag_to
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 _potatoHandlerInput_layerScrollPos)
@@ -88,10 +91,11 @@ instance PotatoHandler LayersHandler where
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
+      (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
           _layersHandler_dragState = LDS_None
         }
-      _ -> error "unexpected mouse state passed to handler"
+      _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
   pHandleKeyboard _ _ _ = Nothing
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]

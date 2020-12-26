@@ -1,8 +1,18 @@
 ::NEWEST TODO::
 -layers
-  -figure out how to handle layer inputs...
-  -connect layers
+  DONE-figure out how to handle layer inputs...
+  DONE-connect layers
   -layer handler test
+    -basic
+      -select
+      -shift select
+      -hide/lock folder
+      -drag move folder
+      -rename (when supported)
+    -advanced
+      -collaps folder
+      -drag omve collapsed folder
+      -select non-contiguous elements and drag+move
 -connect handlers to vty
 -connect layers to vty
 -resolve ControllerMeta REltId synchronization issue
