@@ -1,11 +1,17 @@
+::simple select compromise::
+-no distinguish between regular select and layer select
+-click drag on selected moves selected
+-folder is single selected and drag folder drags all children
+
+
 ::NEWEST TODO::
 -layers
   DONE-figure out how to handle layer inputs...
   DONE-connect layers
   -layer handler test
     -basic
-      -select
-      -shift select
+      DONE-select
+      DONE-shift select
       -hide/lock folder
       -drag move folder
       -rename (when supported)
@@ -13,6 +19,14 @@
       -collaps folder
       -drag omve collapsed folder
       -select non-contiguous elements and drag+move
+
+-select folder (I guess auto selects all children?)
+  -c.f. what illustrator does
+  -what happens if child is locked? (c.f. if illustrator lets you move parent with locked child)
+
+
+-do not create handlers when only folder is selected
+-rename master branch
 -connect handlers to vty
 -connect layers to vty
 -resolve ControllerMeta REltId synchronization issue

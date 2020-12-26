@@ -19,6 +19,7 @@ module Potato.Flow.Controller.Layers (
   , layerEntry_layerPos
   , LockHiddenState(..)
   , LayerEntry(..)
+  , layerEntriesToPrettyText
   , LayerEntryPos
   , LockHideCollapseOp(..)
   , toggleLayerEntry
@@ -144,6 +145,27 @@ type LayerEntryPos = Int
 -- would have been smarter to store this as a Tree...
 type LayerEntries = Seq LayerEntry
 
+layerEntriesToPrettyText :: LayerEntries -> Text
+layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
+  foldrfn le@LayerEntry {..} acc = r where
+    collapseText = if layerEntry_isFolderStart le
+      then if _layerEntry_isCollapsed
+        then "v"
+        else "<"
+      else " "
+    hideText = case _layerEntry_hideState of
+      LHS_True              -> "▓"
+      LHS_False             -> " "
+      LHS_True_InheritTrue  -> "▓"
+      LHS_False_InheritTrue -> "▒"
+    lockText = case _layerEntry_lockState of
+      LHS_True              -> "▓"
+      LHS_False             -> " "
+      LHS_True_InheritTrue  -> "▓"
+      LHS_False_InheritTrue -> "▒"
+    (_,_,SEltLabel name _) = _layerEntry_superSEltLabel
+    r = collapseText <> hideText <> lockText <> " " <> name <> "\n" <> acc
+
 type LayersState = (LayerMetaMap, LayerEntries)
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
@@ -234,12 +256,13 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   -- everything after childles
   backOfChildles = Seq.drop (lepos + 1 + Seq.length childles) lentries
 
-  togglefn fn setfn = (newlmm, newlentries) where
+  -- simple helper function for setting lock/hidden state
+  togglefn fn setlmfn setlefn = (newlmm, newlentries) where
     newlhsstate = toggleLockHiddenState $ fn le
-    newlmm = alterWithDefault (\le' -> le' { _layerMeta_isHidden = lockHiddenStateToBool newlhsstate }) lerid lmm
-    entryfn childle = setfn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
+    newlmm = alterWithDefault (\lm' -> setlmfn lm' (lockHiddenStateToBool newlhsstate)) lerid lmm
+    entryfn childle = setlefn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
     newchildles = doChildrenRecursive (lockHiddenStateToBool . fn) entryfn childles
-    newle = setfn le newlhsstate
+    newle = setlefn le newlhsstate
     newlentries = (frontOfLe |> newle) >< newchildles >< backOfChildles
 
   r = case op of
@@ -266,8 +289,8 @@ toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
         then (frontOfLe |> newle) >< backOfChildles
         else (frontOfLe |> newle) >< newchildles >< backOfChildles
 
-    LHCO_ToggleLock -> togglefn _layerEntry_lockState (\le' x -> le' { _layerEntry_lockState = x })
-    LHCO_ToggleHide -> togglefn _layerEntry_hideState (\le' x -> le' { _layerEntry_hideState = x })
+    LHCO_ToggleLock -> togglefn _layerEntry_lockState (\lm' x -> lm' { _layerMeta_isLocked = x }) (\le' x -> le' { _layerEntry_lockState = x })
+    LHCO_ToggleHide -> togglefn _layerEntry_hideState (\lm' x -> lm' { _layerMeta_isHidden = x }) (\le' x -> le' { _layerEntry_hideState = x })
 
 -- TODO rename to generateLayers
 generateLayersNew :: PFState -> LayerMetaMap -> Seq LayerEntry
@@ -327,8 +350,8 @@ clickLayerNew :: Selection -> Seq LayerEntry -> XY -> Maybe (LayerPos, LayerDown
 clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
   Nothing                      -> Nothing
   Just le -> Just . (,) lp $ case () of
-    () | _layerEntry_depth le == absx+1   -> LDT_Hide
-    () | _layerEntry_depth le == absx+2 -> LDT_Lock
+    () | _layerEntry_depth le + 1 == absx   -> LDT_Hide
+    () | _layerEntry_depth le + 2 == absx -> LDT_Lock
     () | layerEntry_isFolderStart le && _layerEntry_depth le == absx -> LDT_Collapse
     ()                       -> LDT_Normal
     where
