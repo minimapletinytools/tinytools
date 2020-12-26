@@ -322,6 +322,7 @@ doesSelectionContainLayerPos lp = isJust . find (\(_,lp',_) -> lp' == lp)
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
 
+-- TODO remove selection, not used
 clickLayerNew :: Selection -> Seq LayerEntry -> XY -> Maybe (LayerPos, LayerDownType)
 clickLayerNew selection lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
   Nothing                      -> Nothing

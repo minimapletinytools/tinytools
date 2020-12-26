@@ -41,14 +41,15 @@ instance PotatoHandler LayersHandler where
     pfs = _potatoHandlerInput_pFState
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
-
+        shift = elem KeyModifier_Shift _mouseDrag_modifiers
         (nextDragState, mNextLayerState) = case clickLayerNew selection lentries leposxy of
           Nothing -> (LDS_None, Nothing)
           -- (you can only click + drag selected elements)
           Just (downlp, ldtdown) -> case ldtdown of
-            LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
-              False -> (LDS_Selecting lepos, Nothing)
-              True  -> (LDS_Dragging, Nothing)
+            LDT_Normal -> if shift || (not $ doesSelectionContainLayerPos downlp selection)
+              -- if element wasn't selected or shift is held down, enter selection mode
+              then (LDS_Selecting lepos, Nothing)
+              else (LDS_Dragging, Nothing)
             LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleHide)
             LDT_Lock -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleLock)
             LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleCollapse)

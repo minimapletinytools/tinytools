@@ -36,12 +36,40 @@ test_LayersHandler_basic = constructTest "basic" pfstate_basic1 bs expected wher
       , EWCMouse (LMouseData (V2 5 0) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 5 0) True MouseButton_Left [] True)
 
-      -- TODO select and cancel
+      , EWCLabel "deselect"
+      , EWCMouse (LMouseData (V2 5 0) False MouseButton_Left [KeyModifier_Shift] True)
+      , EWCMouse (LMouseData (V2 5 0) True MouseButton_Left [KeyModifier_Shift] True)
+
+      , EWCLabel "select and cancel"
+      , EWCMouse (LMouseData (V2 5 0) False MouseButton_Left [] True)
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+      , EWCMouse (LMouseData (V2 5 0) True MouseButton_Left [] True)
+
+      , EWCLabel "shift select 2 elts"
+      , EWCMouse (LMouseData (V2 5 0) False MouseButton_Left [KeyModifier_Shift] True)
+      , EWCMouse (LMouseData (V2 5 0) True MouseButton_Left [KeyModifier_Shift] True)
+      , EWCMouse (LMouseData (V2 5 1) False MouseButton_Left [KeyModifier_Shift] True)
+      , EWCMouse (LMouseData (V2 5 1) True MouseButton_Left [KeyModifier_Shift] True)
     ]
   expected = [
       LabelCheck "select"
       , numSelectedEltsEqualPredicate 0
       , numSelectedEltsEqualPredicate 1
+
+      , LabelCheck "deselect"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 0
+
+      , LabelCheck "select and cancel"
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 0
+
+      , LabelCheck "shift select 2 elts"
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 2
     ]
 
 spec :: Spec
