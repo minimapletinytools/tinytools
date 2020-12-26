@@ -5,8 +5,6 @@
   -layer handler test
 -connect handlers to vty
 -connect layers to vty
-DONE-consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
-  -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 -resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
@@ -34,6 +32,8 @@ DONE-consider using a single MouseDragState_Cancelled to communicate cancelled i
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+DONE-consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
+  -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 DONE-move layer state to backend and connect to changes
 DONE-figure out how to get most current version of PFState
 IGNORE-figure out why some of the tests pass even though you used out of date PFState

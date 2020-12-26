@@ -12,6 +12,8 @@ module Potato.Flow.Controller.Layers (
   , doesSelectionContainLayerPos
   , makeLayersStateFromPFState
 
+  , layerEntry_isFolderStart
+  , lockHiddenStateToBool
 
   -- exposed for testing
   , layerEntry_layerPos

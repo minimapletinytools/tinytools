@@ -9,11 +9,13 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.Manipulator.Common
   , module Potato.Flow.Controller.GoatWidget
   , module Potato.Flow.Controller.Input
+  , module Potato.Flow.Controller.Layers
 
 ) where
 
 import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Line
