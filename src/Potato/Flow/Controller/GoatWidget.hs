@@ -264,6 +264,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
                     Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                     Nothing -> error "handler was expected to capture this mouse state"
               Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
+
         GoatCmdKeyboard kbd -> case kbd of
           -- special case, treat escape cancel mouse drag as a mouse input
           KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive _goatState_mouseDrag -> r where
@@ -279,6 +280,9 @@ foldGoatFn cmd goatState@GoatState {..} = do
                 Just pho -> (rGoatState, pho)
                 Nothing  -> (rGoatState, def)
 
+          -- TODO pass input to LayersHandler
+          -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
+          -- LayersHandler should only capture when donig renaming
           _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
             Just pho -> (goatState, pho)
             -- input not captured by handler

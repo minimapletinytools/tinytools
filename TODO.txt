@@ -24,21 +24,20 @@ IGNORE-simple select compromise
   - TODO spec
 
 ::NEWEST TODO::
--layers
-  DONE-figure out how to handle layer inputs...
-  DONE-connect layers
-  DONE-layer handler test
-    DONE-select
-    DONE-shift select
-    DONE-hide/lock folder
-    DONE-drag move folder
-    DONE-collaps folder
-
+-decide what to do about layers
+-decide how to handle params
+  -prob a view only thing, add hookup for params in goat widget I guess
+-sort out input hierarchies in vty
+  -support popups
+  -support params
+    -could be treated as a special popup?
+  -layers/canvas separate mouse input
+  -keyboard goes to popups/params first, then to goat
+  -am I missing anything??
 -layers test for the future
   -rename (when supported)
   -drag omve collapsed folder
   -select non-contiguous elements and drag+move
-
 -add deselect support to LayersHandler
 -do not create handlers when only folder is selected
 -rename master branch
@@ -60,6 +59,10 @@ IGNORE-simple select compromise
     -or attempt to place in middle of canvas viewport prob better
   -copy pasta test
   -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
+-group spec
+  -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
+  -you can select individuals group elts via layers
+  -eventually implement focus mode
 -improved renderer spec
   -kd tree in broadphase I guess
 -cartesian lines spec
@@ -71,6 +74,16 @@ IGNORE-simple select compromise
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+
+DONE-layers
+  DONE-figure out how to handle layer inputs...
+  DONE-connect layers
+  DONE-layer handler test
+    DONE-select
+    DONE-shift select
+    DONE-hide/lock folder
+    DONE-drag move folder
+    DONE-collaps folder
 DONE/IGNORE-select folder (I guess auto selects all children?)
   -c.f. what illustrator does
   -what happens if child is locked? (c.f. if illustrator lets you move parent with locked child)
