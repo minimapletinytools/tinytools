@@ -150,8 +150,8 @@ layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
   foldrfn le@LayerEntry {..} acc = r where
     collapseText = if layerEntry_isFolderStart le
       then if _layerEntry_isCollapsed
-        then "v"
-        else "<"
+        then ">"
+        else "v"
       else " "
     hideText = case _layerEntry_hideState of
       LHS_True              -> "▓"
@@ -247,7 +247,7 @@ toggleLayerEntry :: PFState -> LayerMetaMap -> Seq LayerEntry -> LayerEntryPos -
 toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   le = Seq.index lentries lepos
   ledepth = _layerEntry_depth le
-  lerid = Seq.index _pFState_layers lepos
+  (lerid,_,_) = _layerEntry_superSEltLabel le
   childFrom nextLayerEntry = _layerEntry_depth nextLayerEntry /= ledepth
   -- visible children of le
   childles = Seq.takeWhileL childFrom . Seq.drop (lepos+1) $ lentries
@@ -328,8 +328,6 @@ updateLayers pfs changes (lmm, lentries) = r where
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
   newlmm = IM.difference (IM.union lmm (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
   -- keep deleted elts so that folder state is preserved after undos/redos
-  -- this is bad, because dragging creates a whole bunch of new elts right now...
-    -- you could maybe fix this by changing the whole undoFirst thing to "undo permament" and not increase REltId counter
   --newlmm = IM.union lmm (fmap (const def) maybenewstuff)
 
   -- TODO incremental rather than regenerate...

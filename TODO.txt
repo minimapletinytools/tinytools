@@ -1,30 +1,45 @@
-::simple select compromise::
--no distinguish between regular select and layer select
--click drag on selected moves selected
--folder is single selected and drag folder drags all children
+stack test --test-arguments='--match "LayersHandler"'
 
+:: 12/26/2020 selection spec::
+IGNORE-simple select compromise
+  -no distinguish between regular select and layer select
+  -click drag on selected moves selected
+  -folder is single selected and drag folder drags all children
+    -during move, needs to add children to selection
+      -consider modifying PFMove to move all children as well by default
+    -must disallow dropping on an unselected child
+  -won't work due to folders
+-more complicated select
+  -layers has its own selection
+    -canvas selection = layer selection - locked/hidden stuff - folders
+  -moving folder auto moves all children
+  -selecting folder selects all children (including locked/hidden stuff)
+    -however, if any child is unselected this deselecst folder
+  -canvas selection
+    -regular selecting via canvas, overrides layer selection
+    -shift selecting via canvas adds to layer selection
+    -canvas selecting can never select folders
+-full select
+  -completely indpendent canvas and layer selection
+  - TODO spec
 
 ::NEWEST TODO::
 -layers
   DONE-figure out how to handle layer inputs...
   DONE-connect layers
-  -layer handler test
-    -basic
-      DONE-select
-      DONE-shift select
-      -hide/lock folder
-      -drag move folder
-      -rename (when supported)
-    -advanced
-      -collaps folder
-      -drag omve collapsed folder
-      -select non-contiguous elements and drag+move
+  DONE-layer handler test
+    DONE-select
+    DONE-shift select
+    DONE-hide/lock folder
+    DONE-drag move folder
+    DONE-collaps folder
 
--select folder (I guess auto selects all children?)
-  -c.f. what illustrator does
-  -what happens if child is locked? (c.f. if illustrator lets you move parent with locked child)
+-layers test for the future
+  -rename (when supported)
+  -drag omve collapsed folder
+  -select non-contiguous elements and drag+move
 
-
+-add deselect support to LayersHandler
 -do not create handlers when only folder is selected
 -rename master branch
 -connect handlers to vty
@@ -56,6 +71,9 @@
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+DONE/IGNORE-select folder (I guess auto selects all children?)
+  -c.f. what illustrator does
+  -what happens if child is locked? (c.f. if illustrator lets you move parent with locked child)
 DONE-consider using a single MouseDragState_Cancelled to communicate cancelled instead of escape key
   -this allows us to add an invariant at the handler level where no keyboard input happens until mouse was released
 DONE-move layer state to backend and connect to changes

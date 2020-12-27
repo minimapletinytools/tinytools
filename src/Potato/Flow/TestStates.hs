@@ -10,6 +10,7 @@ module Potato.Flow.TestStates (
   , pfstate_someInvalidState1
   , pfstate_someInvalidState2
   , pfstate_basic1
+  , pfstate_basic2
 ) where
 
 import           Relude
@@ -91,6 +92,49 @@ pfstate_basic1 = PFState {
             , _sLine_style = def
           }))
 
+      ]
+    , _pFState_canvas = SCanvas defaultCanvasLBox
+  }
+
+-- | same as pfstate_basic1 except with folders
+pfstate_basic2 :: PFState
+pfstate_basic2 = PFState {
+    _pFState_layers = Seq.fromList [0..11]
+    , _pFState_directory = IM.fromList [
+        (0, SEltLabel "fstart1" SEltFolderStart)
+        , (1, SEltLabel "fstart2" SEltFolderStart)
+        -- 4 boxes in a grid
+        , (2, SEltLabel "b1" (SEltBox SBox {
+            _sBox_box = LBox (V2 0 0) (V2 5 5)
+            , _sBox_style = def
+          }))
+        , (3, SEltLabel "b2" (SEltBox SBox {
+            _sBox_box = LBox (V2 10 10) (V2 5 5)
+            , _sBox_style = def
+          }))
+        , (4, SEltLabel "b3" (SEltBox SBox {
+            _sBox_box = LBox (V2 0 10) (V2 5 5)
+            , _sBox_style = def
+          }))
+        , (5, SEltLabel "b4" (SEltBox SBox {
+            _sBox_box = LBox (V2 10 0) (V2 5 5)
+            , _sBox_style = def
+          }))
+        , (6, SEltLabel "fend2" SEltFolderEnd)
+        , (7, SEltLabel "fstart3" SEltFolderStart)
+        -- 2 lines sharing a start point at (0,100)
+        , (8, SEltLabel "sl1" (SEltLine SLine {
+            _sLine_start = V2 0 100
+            , _sLine_end = V2 0 110
+            , _sLine_style = def
+          }))
+        , (9, SEltLabel "sl2" (SEltLine SLine {
+            _sLine_start = V2 0 100
+            , _sLine_end = V2 10 100
+            , _sLine_style = def
+          }))
+        , (10, SEltLabel "fend3" SEltFolderEnd)
+        , (11, SEltLabel "fend1" SEltFolderEnd)
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox
   }

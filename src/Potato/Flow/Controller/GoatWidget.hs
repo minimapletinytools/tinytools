@@ -170,6 +170,8 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 
 processLayersHandlerOutput :: GoatState -> PotatoHandlerOutput -> (GoatState, PotatoHandlerOutput)
 processLayersHandlerOutput goatState pho = (goatState', pho') where
+  -- TODO this is wrong, you want to persist the current handler
+  -- interacting with layers should not change canvas handler
   pho' = pho { _potatoHandlerOutput_nextHandler = Nothing }
   goatState' = goatState {
       _goatState_layersHandler = case _potatoHandlerOutput_nextHandler pho of
@@ -214,9 +216,12 @@ foldGoatFn cmd goatState@GoatState {..} = do
             MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
               then (goatState' { _goatState_mouseDrag = def }, def)
               else (goatState', def) -- still cancelled
+
+            -- if mouse is intended for layers
             _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
               Just pho -> processLayersHandlerOutput goatState' pho
               Nothing  -> (goatState', def)
+
             -- special case, if mouse down and pan tool, we override with a new handler
             MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
               Just pho -> (goatState', pho)

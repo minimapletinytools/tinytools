@@ -37,18 +37,25 @@ lockOffset :: Int
 lockOffset = 2
 
 
-
-numVisibleHiddenEltsEqualPredicate :: Int -> EverythingPredicate
-numVisibleHiddenEltsEqualPredicate n = FunctionPredicate $
+numLayerEntriesEqualPredicate :: Int -> EverythingPredicate
+numLayerEntriesEqualPredicate n = FunctionPredicate $
   (\(_, lentries) ->
-    let nhidden = length $ filter (lockHiddenStateToBool . _layerEntry_hideState) (toList lentries)
+    let nlentries = Seq.length lentries
+    in ("LayerEntries count: " <> show nlentries <> " expected: " <> show n <> " lentries:\n" <> layerEntriesToPrettyText lentries, nlentries == n))
+  . _goatState_layersState
+
+
+numVisibleHiddenLayerEntriesEqualPredicate :: Int -> EverythingPredicate
+numVisibleHiddenLayerEntriesEqualPredicate n = FunctionPredicate $
+  (\(_, lentries) ->
+    let nhidden = Seq.length $ Seq.filter (lockHiddenStateToBool . _layerEntry_hideState) lentries
     in ("Hidden: " <> show nhidden <> " expected: " <> show n <> " lentries: " <> layerEntriesToPrettyText lentries, nhidden == n))
   . _goatState_layersState
 
-numVisibleLockedEltsEqualPredicate :: Int -> EverythingPredicate
-numVisibleLockedEltsEqualPredicate n = FunctionPredicate $
+numVisibleLockedEltsLayerEntriesPredicate :: Int -> EverythingPredicate
+numVisibleLockedEltsLayerEntriesPredicate n = FunctionPredicate $
   (\(_, lentries) ->
-    let nlocked = length $ filter (lockHiddenStateToBool . _layerEntry_lockState) (toList lentries)
+    let nlocked = Seq.length $ Seq.filter (lockHiddenStateToBool . _layerEntry_lockState) lentries
     in ("Locked: " <> show nlocked <> " expected: " <> show n <> " lentries:\n" <> layerEntriesToPrettyText lentries, nlocked == n))
   . _goatState_layersState
 
@@ -75,6 +82,11 @@ test_LayersHandler_basic = constructTest "basic" pfstate_basic1 bs expected wher
       , EWCMouse (LMouseData (V2 moveOffset 0) True MouseButton_Left [KeyModifier_Shift] True)
       , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [KeyModifier_Shift] True)
       , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [KeyModifier_Shift] True)
+
+      , EWCLabel "out of bounds"
+      , EWCMouse (LMouseData (V2 124 10232) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 124 10234) True MouseButton_Left [] True)
+
     ]
   expected = [
       LabelCheck "select"
@@ -95,6 +107,10 @@ test_LayersHandler_basic = constructTest "basic" pfstate_basic1 bs expected wher
       , numSelectedEltsEqualPredicate 1
       , numSelectedEltsEqualPredicate 1
       , numSelectedEltsEqualPredicate 2
+
+      , LabelCheck "out of bounds"
+      , numSelectedEltsEqualPredicate 2
+      , numSelectedEltsEqualPredicate 2 -- TODO change to 0 once deselect via LayersHandler is supported
     ]
 
 test_LayersHandler_toggle :: Test
@@ -114,15 +130,59 @@ test_LayersHandler_toggle = constructTest "toggle" pfstate_basic1 bs expected wh
     ]
   expected = [
       LabelCheck "lock"
-      , numVisibleLockedEltsEqualPredicate 0
-      , numVisibleLockedEltsEqualPredicate 1
-      , numVisibleLockedEltsEqualPredicate 1
+      , numVisibleLockedEltsLayerEntriesPredicate 0
+      , numVisibleLockedEltsLayerEntriesPredicate 1
+      , numVisibleLockedEltsLayerEntriesPredicate 1
 
       , LabelCheck "hide"
-      , numVisibleHiddenEltsEqualPredicate 0
-      , numVisibleHiddenEltsEqualPredicate 1
-      , numVisibleHiddenEltsEqualPredicate 1
+      , numVisibleHiddenLayerEntriesEqualPredicate 0
+      , numVisibleHiddenLayerEntriesEqualPredicate 1
+      , numVisibleHiddenLayerEntriesEqualPredicate 1
     ]
+
+test_LayersHandler_collapse :: Test
+test_LayersHandler_collapse = constructTest "collapse" pfstate_basic2 bs expected where
+  bs = [
+
+      EWCLabel "expand fstart1"
+      , EWCNothing
+      , EWCMouse (LMouseData (V2 collapseOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 collapseOffset 0) True MouseButton_Left [] True)
+      , EWCLabel "expand fstart2"
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 1) True MouseButton_Left [] True)
+      , EWCLabel "collapse fstart2"
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 1) True MouseButton_Left [] True)
+      , EWCLabel "expand fstart3"
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 2) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 (1+collapseOffset) 2) True MouseButton_Left [] True)
+      , EWCLabel "collapse fstart1"
+      , EWCMouse (LMouseData (V2 collapseOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 collapseOffset 0) True MouseButton_Left [] True)
+
+      -- TODO select folder test (not support yet)
+
+    ]
+  expected = [
+      LabelCheck "expand fstart1"
+      , numLayerEntriesEqualPredicate 1
+      , numLayerEntriesEqualPredicate 3
+      , numLayerEntriesEqualPredicate 3
+      , LabelCheck "expand fstart2"
+      , numLayerEntriesEqualPredicate 7
+      , numLayerEntriesEqualPredicate 7
+      , LabelCheck "collapse fstart2"
+      , numLayerEntriesEqualPredicate 3
+      , numLayerEntriesEqualPredicate 3
+      , LabelCheck "expand fstart3"
+      , numLayerEntriesEqualPredicate 5
+      , numLayerEntriesEqualPredicate 5
+      , LabelCheck "collapse fstart1"
+      , numLayerEntriesEqualPredicate 1
+      , numLayerEntriesEqualPredicate 1
+    ]
+
 
 test_LayersHandler_move :: Test
 test_LayersHandler_move = constructTest "move" pfstate_basic1 bs expected where
@@ -136,6 +196,8 @@ test_LayersHandler_move = constructTest "move" pfstate_basic1 bs expected where
       , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 moveOffset 4) True MouseButton_Left [] True)
 
+      -- TODO folder drag/move
+
     ]
   expected = [
       LabelCheck "select b1"
@@ -143,14 +205,15 @@ test_LayersHandler_move = constructTest "move" pfstate_basic1 bs expected where
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "drag b1"
-      , AlwaysPass
-      , firstSelectedSuperSEltLabelPredicate (Just "b1") $
-        \(_,lp,_) -> lp == 3
+      , firstSelectedSuperSEltLabelPredicate (Just "b1") $ \(_,lp,_) -> lp == 0
+      , firstSelectedSuperSEltLabelPredicate (Just "b1") $ \(_,lp,_) -> lp == 3
     ]
+
 
 spec :: Spec
 spec = do
   describe "LayersHandler" $ do
     fromHUnitTest $ test_LayersHandler_basic
     fromHUnitTest $ test_LayersHandler_toggle
+    fromHUnitTest $ test_LayersHandler_collapse
     fromHUnitTest $ test_LayersHandler_move
