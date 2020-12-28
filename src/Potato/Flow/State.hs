@@ -9,6 +9,7 @@ module Potato.Flow.State (
   , pFState_getSuperSEltByPos
   , pFState_getSEltLabels
   , pFState_maxID
+  , pFState_getLayerPosMap
   , sPotatoFlow_to_pFState
   , pFState_to_sPotatoFlow
   , pFState_toCanvasCoordinates
@@ -102,6 +103,9 @@ pFState_getSEltLabels PFState {..} rids = foldr (\rid acc -> IM.insert rid (IM.l
 
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
+
+pFState_getLayerPosMap :: PFState -> REltIdMap LayerPos
+pFState_getLayerPosMap pfs = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers pfs)
 
 emptyPFState :: PFState
 emptyPFState = PFState Seq.empty IM.empty (SCanvas (LBox 0 0))

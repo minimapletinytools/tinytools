@@ -336,7 +336,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
         PFTotalState r1 pasta = updatePFTotalState pfev (PFTotalState _goatState_pFWorkspace [])
         r2 = _pFWorkspace_lastChanges r1
     next_pFState = _pFWorkspace_pFState next_workspace
-    next_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers next_pFState)
+    next_layerPosMap = pFState_getLayerPosMap next_pFState
     cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
 
     -- update pan from pho
@@ -427,6 +427,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_selection       = Seq.empty
         , _goatState_broadPhaseState = initialbp
         , _goatState_layersState     = initiallayersstate
+        , _goatState_layerPosMap = pFState_getLayerPosMap _goatWidgetConfig_initialState
       }
 
   goatDyn :: Dynamic t GoatState
