@@ -40,7 +40,7 @@ emptyActionStack = ActionStack [] []
 
 data PFWorkspace = PFWorkspace {
   -- TODO rename to pFState
-  _pFWorkspace_state         :: PFState
+  _pFWorkspace_pFState         :: PFState
   , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack
 } deriving (Show, Eq, Generic)
@@ -49,7 +49,7 @@ instance NFData PFWorkspace
 
 loadPFStateIntoWorkspace :: PFState -> PFWorkspace -> PFWorkspace
 loadPFStateIntoWorkspace pfs ws = r where
-  removeOld = fmap (const Nothing) (_pFState_directory . _pFWorkspace_state $ ws)
+  removeOld = fmap (const Nothing) (_pFState_directory . _pFWorkspace_pFState $ ws)
   addNew = fmap Just (_pFState_directory pfs)
   changes = IM.union addNew removeOld
   r = PFWorkspace pfs changes emptyActionStack
@@ -61,34 +61,34 @@ undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
-    c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_state pfw)) (ActionStack cs (c:undoStack))
+    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_pFState) (ActionStack cs (c:undoStack))
+    c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_pFState pfw)) (ActionStack cs (c:undoStack))
     _ -> pfw
 
 redoWorkspace :: PFWorkspace -> PFWorkspace
 redoWorkspace pfw = r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case undoStack of
-    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_state) (ActionStack (c:doStack) cs)
-    c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_state pfw)) (ActionStack (c:doStack) cs)
+    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_pFState) (ActionStack (c:doStack) cs)
+    c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_pFState pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
 undoPermanentWorkspace :: PFWorkspace -> PFWorkspace
 undoPermanentWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_state) (ActionStack cs (c:undoStack))
-    c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_state pfw)) (ActionStack cs undoStack)
+    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_pFState) (ActionStack cs (c:undoStack))
+    c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_pFState pfw)) (ActionStack cs undoStack)
     _ -> pfw
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
 --doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem
 -- deepseq here to force evaluation of workspace and prevent leaks
 doCmdWorkspace cmd pfw = force r where
-  newState = doCmdState cmd (_pFWorkspace_state pfw)
+  newState = doCmdState cmd (_pFWorkspace_pFState pfw)
   ActionStack {..} = (_pFWorkspace_actionStack pfw)
   newStack = ActionStack (cmd:doStack) []
-  --newMaxId = pFState_maxID _pFWorkspace_state
+  --newMaxId = pFState_maxID _pFWorkspace_pFState
   r = uncurry PFWorkspace newState newStack
 
 doCmdState :: PFCmd -> PFState -> (PFState, SEltLabelChanges)

@@ -82,7 +82,7 @@ data GoatState = GoatState {
   } deriving (Show)
 
 goatState_pFState :: GoatState -> PFState
-goatState_pFState = _pFWorkspace_state . _goatState_pFWorkspace
+goatState_pFState = _pFWorkspace_pFState . _goatState_pFWorkspace
 
 data GoatCmd =
   GoatCmdTool Tool
@@ -133,7 +133,9 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_layers              :: Dynamic t LayerEntries
   , _goatWidget_pan                 :: Dynamic t XY
   , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
+  -- TODO render here?
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
+  , _goatWidget_canvas              :: Dynamic t SCanvas
 
   -- debug stuff prob
   , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
@@ -156,7 +158,7 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
   last_workspace = _goatState_pFWorkspace
-  last_pFState = _pFWorkspace_state last_workspace
+  last_pFState = _pFWorkspace_pFState last_workspace
   r = PotatoHandlerInput {
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
@@ -184,7 +186,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
   let
 
     last_workspace = _goatState_pFWorkspace
-    last_pFState = _pFWorkspace_state last_workspace
+    last_pFState = _pFWorkspace_pFState last_workspace
 
     potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
@@ -333,7 +335,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
         -- TODO extract updatePFTotalState and move into Workspace.hs since we don't need copy pasta functionality
         PFTotalState r1 pasta = updatePFTotalState pfev (PFTotalState _goatState_pFWorkspace [])
         r2 = _pFWorkspace_lastChanges r1
-    next_pFState = _pFWorkspace_state next_workspace
+    next_pFState = _pFWorkspace_pFState next_workspace
     next_layerPosMap = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers next_pFState)
     cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
 
@@ -434,12 +436,15 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- I think it does, but it will prob still do full equality check after changes in goatDyn :(
   -- TODO maybe you need to have special signals to control firing of each sub event instead
   -- I guess the good news is that you can still do this without changing the interface
+  -- i.e. PFStateChangeFlag and have each PFState operation return a change flag as well
   r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
+
+  r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState . _goatState_pFWorkspace) goatDyn
 
   return GoatWidget
     {
@@ -448,5 +453,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_layers       = r_layers
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase
+      , _goatWidget_canvas = r_canvas
       , _goatWidget_DEBUG_goatState = goatDyn
     }

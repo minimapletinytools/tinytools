@@ -109,9 +109,9 @@ debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> d
 doCmdPFTotalState :: PFCmd -> PFTotalState -> PFTotalState
 doCmdPFTotalState cmd pfts = r where
   r = pfts { _pFTotalState_workspace = doCmdWorkspace cmd (_pFTotalState_workspace pfts) }
-  --stateBefore = (_pFWorkspace_state (_pFTotalState_workspace pfts))
+  --stateBefore = (_pFWorkspace_pFState (_pFTotalState_workspace pfts))
   --isValidBefore = pFState_isValid stateBefore
-  --stateAfter = (_pFWorkspace_state (_pFTotalState_workspace r))
+  --stateAfter = (_pFWorkspace_pFState (_pFTotalState_workspace r))
   --isValidAfter = pFState_isValid stateAfter
   --trace (show cmd <> "\n" <> debugPrintBeforeAfterState stateBefore stateAfter) r'
 
@@ -120,14 +120,14 @@ doCmdPFTTotalStateUndoPermanentFirst cmdFn pfts = r where
   ws = _pFTotalState_workspace pfts
   -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
   undoedws = undoPermanentWorkspace ws
-  undoedpfs = _pFWorkspace_state undoedws
+  undoedpfs = _pFWorkspace_pFState undoedws
   cmd = cmdFn undoedpfs
   r = pfts { _pFTotalState_workspace = doCmdWorkspace cmd undoedws }
 
 
 updatePFTotalState :: PFEventTag -> PFTotalState -> PFTotalState
 updatePFTotalState evt pfts = let
-  lastState = _pFWorkspace_state $ _pFTotalState_workspace pfts
+  lastState = _pFWorkspace_pFState $ _pFTotalState_workspace pfts
   r = case evt of
     PFEAddElt (undo, x) -> if undo
       then doCmdPFTTotalStateUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) pfts
@@ -140,11 +140,11 @@ updatePFTotalState evt pfts = let
     PFEMoveElt x -> doCmdPFTotalState (PFCMove ==> x) pfts
     PFEResizeCanvas x -> doCmdPFTotalState (PFCResizeCanvas ==> x) pfts
     PFEPaste x -> doCmdPFTotalState (pfc_paste_to_newElts lastState (_pFTotalState_clipboard pfts, x)) pfts
-    PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_state (_pFTotalState_workspace pfts)) x }
+    PFECopy x -> pfts { _pFTotalState_clipboard = pFState_copyElts (_pFWorkspace_pFState (_pFTotalState_workspace pfts)) x }
     PFEUndo -> pfts { _pFTotalState_workspace = undoWorkspace (_pFTotalState_workspace pfts) }
     PFERedo -> pfts { _pFTotalState_workspace = redoWorkspace (_pFTotalState_workspace pfts) }
     PFELoad x -> pfts { _pFTotalState_workspace = loadPFStateIntoWorkspace (sPotatoFlow_to_pFState x) (_pFTotalState_workspace pfts) }
-  afterState = (_pFWorkspace_state $ _pFTotalState_workspace r)
+  afterState = (_pFWorkspace_pFState $ _pFTotalState_workspace r)
   isValidAfter = pFState_isValid afterState
   in
     if isValidAfter then r else
@@ -198,16 +198,16 @@ holdPFWithInitialState initialState PFConfig {..} = mdo
   let
     savepushfn _ = do
       pfts <- sample . current $ pfTotalStateDyn
-      return $ pFState_to_sPotatoFlow $ _pFWorkspace_state (_pFTotalState_workspace pfts)
+      return $ pFState_to_sPotatoFlow $ _pFWorkspace_pFState (_pFTotalState_workspace pfts)
     r_saved = pushAlways savepushfn _pfc_save
-    r_state = fmap (_pFWorkspace_state . _pFTotalState_workspace) pfTotalStateDyn
+    r_state = fmap (_pFWorkspace_pFState . _pFTotalState_workspace) pfTotalStateDyn
 
   -- pull stuff uniquely out of state/workspace
   --TODO use https://hackage.haskell.org/package/reflex-0.7.1.0/docs/Reflex-Dynamic-Uniq.html do I just uniqDynamic . fromUniqDynamic ?
   r_changes' <- holdUniqDyn $ fmap (_pFWorkspace_lastChanges . _pFTotalState_workspace) pfTotalStateDyn
-  r_layers <- holdUniqDyn $ fmap (_pFState_layers . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
-  r_directory <- holdUniqDyn $ fmap (_pFState_directory . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
-  r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_state .  _pFTotalState_workspace) pfTotalStateDyn
+  r_layers <- holdUniqDyn $ fmap (_pFState_layers . _pFWorkspace_pFState .  _pFTotalState_workspace) pfTotalStateDyn
+  r_directory <- holdUniqDyn $ fmap (_pFState_directory . _pFWorkspace_pFState .  _pFTotalState_workspace) pfTotalStateDyn
+  r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState .  _pFTotalState_workspace) pfTotalStateDyn
 
   let
     r_layerPosMap = fmap (Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty) (r_layers)
