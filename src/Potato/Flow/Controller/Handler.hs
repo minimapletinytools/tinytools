@@ -62,20 +62,19 @@ instance Default PotatoHandlerOutput where
 -- TODO replace this with just GoatState
 data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
-    _potatoHandlerInput_pFState          :: PFState
-    , _potatoHandlerInput_broadPhase     :: BroadPhaseState
-    , _potatoHandlerInput_layerPosMap    :: REltIdMap LayerPos
+    _potatoHandlerInput_pFState       :: PFState
+    , _potatoHandlerInput_broadPhase  :: BroadPhaseState
+    , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
 
     -- * from Frontend
-    , _potatoHandlerInput_tool           :: Tool
-    , _potatoHandlerInput_layerScrollPos :: Int
-    , _potatoHandlerInput_layersState    :: LayersState
+    , _potatoHandlerInput_tool        :: Tool
+    , _potatoHandlerInput_layersState :: LayersState
 
     -- * from Backend
     -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
-    , _potatoHandlerInput_selection      :: Selection
+    , _potatoHandlerInput_selection   :: Selection
   }
 
 data HandlerRenderOutput = HandlerRenderOutput {

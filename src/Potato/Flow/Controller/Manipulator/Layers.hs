@@ -17,14 +17,14 @@ import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
 
 data LayersHandler = LayersHandler {
-    _layersHandler_dragState      :: LayerDragState
-    , _layersHandler_absCursorPos :: XY
+    _layersHandler_dragState   :: LayerDragState
+    , _layersHandler_cursorPos :: XY
   }
 
 instance Default LayersHandler where
   def = LayersHandler {
       _layersHandler_dragState = LDS_None
-      , _layersHandler_absCursorPos = 0
+      , _layersHandler_cursorPos = 0
     }
 
 
@@ -34,8 +34,7 @@ instance PotatoHandler LayersHandler where
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- make sure pan offset is 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
-    abspos = _mouseDrag_to
-    leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 _potatoHandlerInput_layerScrollPos)
+    leposxy@(V2 _ lepos) = _mouseDrag_to
     selection = _potatoHandlerInput_selection
     (lmm, lentries) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
@@ -57,14 +56,14 @@ instance PotatoHandler LayersHandler where
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
-                , _layersHandler_absCursorPos = abspos
+                , _layersHandler_cursorPos = _mouseDrag_to
               }
             , _potatoHandlerOutput_layersState = mNextLayerState
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, _) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
-              _layersHandler_absCursorPos = abspos
+              _layersHandler_cursorPos = _mouseDrag_to
             }
         }
 
@@ -99,6 +98,6 @@ instance PotatoHandler LayersHandler where
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
   pHandleKeyboard _ _ _ = Nothing
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
-    then HandlerRenderOutput [LBox _layersHandler_absCursorPos (V2 1 1)]
+    then HandlerRenderOutput [LBox _layersHandler_cursorPos (V2 1 1)]
     else emptyHandlerRenderOutput
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None

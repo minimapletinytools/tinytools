@@ -50,16 +50,15 @@ import           Data.Tuple.Extra
 -- I guess you can just reindex LayerMetaMap to index via LayerPos (which should be the same as REltId after loading I think)
 -- Alternatively, you could just have SPotatoFlow include REltId, that might be slightly better solution...
 data ControllerMeta = ControllerMeta {
-  _controllerMeta_pan              :: XY
-  , _controllerMeta_layerScrollPos :: Int
-  , _controllerMeta_layers         :: LayerMetaMap
+  _controllerMeta_pan      :: XY
+  , _controllerMeta_layers :: LayerMetaMap
 } deriving (Show, Eq, Generic)
 
 instance FromJSON ControllerMeta
 instance ToJSON ControllerMeta
 
 emptyControllerMeta :: ControllerMeta
-emptyControllerMeta = ControllerMeta 0 0 IM.empty
+emptyControllerMeta = ControllerMeta 0 IM.empty
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
@@ -74,7 +73,6 @@ data GoatState = GoatState {
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
-    , _goatState_layerScrollPos  :: Int
     , _goatState_debugLabel      :: Text
     , _goatState_selection       :: Selection
     , _goatState_broadPhaseState :: BroadPhaseState
@@ -165,7 +163,6 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_layerPosMap = _goatState_layerPosMap
     , _potatoHandlerInput_tool = _goatState_selectedTool
 
-    , _potatoHandlerInput_layerScrollPos = _goatState_layerScrollPos
     , _potatoHandlerInput_layersState     = _goatState_layersState
     , _potatoHandlerInput_selection   = _goatState_selection
   }
@@ -422,7 +419,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
-        , _goatState_layerScrollPos  = 0
         , _goatState_debugLabel      = ""
         , _goatState_selection       = Seq.empty
         , _goatState_broadPhaseState = initialbp

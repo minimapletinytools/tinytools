@@ -24,6 +24,10 @@ IGNORE-simple select compromise
   - TODO spec
 
 ::NEWEST TODO::
+-connect rendering
+DONE-remove scroll position from layersState
+-test for ignore keyboard inputs during mouse drag
+-do not create handlers when only folder is selected
 -decide what to do about layers
 -decide how to handle params
   -prob a view only thing, add hookup for params in goat widget I guess
@@ -38,10 +42,12 @@ IGNORE-simple select compromise
   -rename (when supported)
   -drag omve collapsed folder
   -select non-contiguous elements and drag+move
--remove scroll position from layersState
--test for ignore keyboard inputs during mouse drag
+-mega refactor
+  -consider making REltId serialized (you'll need this to do connections)
+    -remember to support copy pasta of connected elts
+  -consider doing tree structure for folders
+  -think through what additional data is needed to validate for undo/redo in multi user mode
 -add deselect support to LayersHandler
--do not create handlers when only folder is selected
 -PFStateChangeFlag and have each PFState operation return a change flag as well
 -rename master branch
 -connect handlers to vty
