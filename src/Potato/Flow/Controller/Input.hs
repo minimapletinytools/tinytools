@@ -49,6 +49,9 @@ data KeyboardKey =
   | KeyboardKey_Right
   | KeyboardKey_Up
   | KeyboardKey_Down
+  | KeyboardKey_Delete
+  | KeyboardKey_Home
+  | KeyboardKey_End
   | KeyboardKey_Char Char
   -- not really a keypress but it's fine to put it here
   | KeyboardKey_Paste Text

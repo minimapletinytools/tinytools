@@ -38,6 +38,7 @@ IGNORE-simple select compromise
   -rename (when supported)
   -drag omve collapsed folder
   -select non-contiguous elements and drag+move
+-test for ignore keyboard inputs during mouse drag
 -add deselect support to LayersHandler
 -do not create handlers when only folder is selected
 -rename master branch

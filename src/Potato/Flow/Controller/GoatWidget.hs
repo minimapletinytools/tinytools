@@ -280,6 +280,9 @@ foldGoatFn cmd goatState@GoatState {..} = do
                 Just pho -> (rGoatState, pho)
                 Nothing  -> (rGoatState, def)
 
+          -- we are in the middle of mouse drag, ignore all keyboard inputs
+          _ | mouseDrag_isActive _goatState_mouseDrag -> (goatState, def)
+
           -- TODO pass input to LayersHandler
           -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
           -- LayersHandler should only capture when donig renaming
