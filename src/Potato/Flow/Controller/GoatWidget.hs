@@ -443,7 +443,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
-
   r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState . _goatState_pFWorkspace) goatDyn
 
   return GoatWidget
@@ -454,5 +453,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase
       , _goatWidget_canvas = r_canvas
+      , _goatWidget_handlerRenderOutput =  r_handlerRenderOutput
       , _goatWidget_DEBUG_goatState = goatDyn
     }

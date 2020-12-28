@@ -5,6 +5,7 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.Manipulator.Line
   , module Potato.Flow.Controller.Manipulator.Pan
   , module Potato.Flow.Controller.Manipulator.Select
+  , module Potato.Flow.Controller.Handler
   , module Potato.Flow.Controller.Manipulator.TextArea
   , module Potato.Flow.Controller.Manipulator.Common
   , module Potato.Flow.Controller.GoatWidget
@@ -14,6 +15,7 @@ module Potato.Flow.Controller(
 ) where
 
 import           Potato.Flow.Controller.GoatWidget
+import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Manipulator.Box
