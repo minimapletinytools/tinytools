@@ -130,10 +130,10 @@ mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
 newtype RelMouseDrag = RelMouseDrag MouseDrag deriving (Show)
 
-toRelMouseDrag :: PFState -> MouseDrag -> RelMouseDrag
-toRelMouseDrag pFState md = RelMouseDrag $ md {
-    _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md)
-    , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md)
+toRelMouseDrag :: PFState -> XY -> MouseDrag -> RelMouseDrag
+toRelMouseDrag pFState pan md = RelMouseDrag $ md {
+    _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md) - pan
+    , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md) - pan
   }
 
 -- TODO move out or rename this file to TYpes D:

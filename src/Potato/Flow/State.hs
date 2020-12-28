@@ -124,7 +124,7 @@ pFState_to_sPotatoFlow PFState {..} = r where
   r = SPotatoFlow _pFState_canvas selttree
 
 pFState_toCanvasCoordinates :: PFState -> XY -> XY
-pFState_toCanvasCoordinates PFState {..} (V2 x y) = V2 (x+sx) (y+sy) where
+pFState_toCanvasCoordinates PFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
   LBox (V2 sx sy) _ = _sCanvas_box _pFState_canvas
 
 -- expects LayerPos to be valid in PFState

@@ -133,7 +133,6 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       -- create elt A
       , EWCLabel "Create A"
       , EWCTool Tool_Box
-      -- drag from (1,1) to (10,10) and release (actually (2,2) to (10,10))
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
@@ -190,8 +189,8 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
       , EWCLabel "manipulate A"
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 (-1) (-1)) True MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-2) (-2)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 (-2) (-2)) True MouseButton_Left [] False)
 
       , EWCLabel "single click shift select elt B"
       , EWCMouse (LMouseData (V2 1 21) False MouseButton_Left [KeyModifier_Shift] False)
@@ -306,7 +305,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       -- check that it got moved to 0 0
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == 0
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == (-2) && y == (-2)
         _                                  -> False)
 
       , LabelCheck "single click shift select elt B"
@@ -319,19 +318,19 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
         _                                  -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
       , checkHandlerNameAndState handlerName_box True
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 5 && y == 5
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 3 && y == 3
         _                                  -> False)
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
         _                                  -> False)
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 2 && y == 0
+        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
         _                                  -> False)
 
 

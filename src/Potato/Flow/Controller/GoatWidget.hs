@@ -208,7 +208,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
               MouseDragState_Cancelled -> assert sameSource $ (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
               _                        -> assert sameSource $ continueDrag mouseData _goatState_mouseDrag
 
-            canvasDrag = toRelMouseDrag last_pFState mouseDrag
+            canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
             goatState' = goatState { _goatState_mouseDrag = mouseDrag }
 
             isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
@@ -278,7 +278,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
               then case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag canceledMouse) of
                 Just pho -> processLayersHandlerOutput rGoatState pho
                 Nothing  -> (rGoatState, def)
-              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState canceledMouse) of
+              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState _goatState_pan canceledMouse) of
                 Just pho -> (rGoatState, pho)
                 Nothing  -> (rGoatState, def)
 

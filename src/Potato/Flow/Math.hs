@@ -14,6 +14,7 @@ module Potato.Flow.Math (
   , lBox_tl
   , lBox_area
   , lBox_to_axis
+  , add_XY_to_LBox
 
   , make_lBox_from_axis
   , union_lBox
