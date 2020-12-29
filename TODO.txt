@@ -26,7 +26,7 @@ IGNORE-simple select compromise
 ::NEWEST TODO::
 -connect rendering
 DONE-remove scroll position from layersState
--test for ignore keyboard inputs during mouse drag
+DONE-test for ignore keyboard inputs during mouse drag
 -do not create handlers when only folder is selected
 -decide what to do about layers
 -decide how to handle params

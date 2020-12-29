@@ -111,6 +111,36 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
       ]
     ]
 
+everything_keyboard_test :: Test
+everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "Create A with random keyboard inputs in between"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [])
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char '\\') [])
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+      , EWCNothing -- dummy to check state
+    ]
+  expected = [
+      LabelCheck "Create A with random keyboard inputs in between"
+      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , Combine [
+        validateLayersOrderPredicate
+        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      ]
+    ]
+
 
 everything_basic_test :: Test
 everything_basic_test = constructTest "basic" emptyPFState bs expected where
@@ -341,4 +371,5 @@ spec = do
   describe "EverythingWidget" $ do
     fromHUnitTest $ everything_load_test
     fromHUnitTest $ everything_layers_test
+    fromHUnitTest $ everything_keyboard_test
     fromHUnitTest $ everything_basic_test

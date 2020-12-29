@@ -280,7 +280,8 @@ foldGoatFn cmd goatState@GoatState {..} = do
                 Nothing  -> (rGoatState, def)
 
           -- we are in the middle of mouse drag, ignore all keyboard inputs
-          _ | mouseDrag_isActive _goatState_mouseDrag -> (goatState, def)
+          -- perhaps a better way to do this is to have handlers capture all inputs when active
+          _ | mouseDrag_isActive _goatState_mouseDrag -> (goatState, captureWithNoChange handler)
 
           -- TODO pass input to LayersHandler
           -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
