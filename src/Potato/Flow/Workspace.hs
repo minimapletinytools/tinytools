@@ -156,6 +156,7 @@ pfc_paste_to_newElts pfs (seltls, lp) = r where
 -- TODO rename to WSEvent
 data WSEvent =
   WSEAddElt (Bool, (LayerPos, SEltLabel))
+  | WSEAddRelative SEltTree
   | WSEAddFolder (LayerPos, Text)
   | WSERemoveElt [LayerPos]
   | WSEMoveElt ([LayerPos], LayerPos)
@@ -185,6 +186,7 @@ updatePFWorkspace evt ws = let
     WSEAddElt (undo, x) -> if undo
       then doCmdPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState x) ws
+    WSEAddRelative x -> error "not implemented"
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo

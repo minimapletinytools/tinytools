@@ -61,6 +61,7 @@ data GoatState = GoatState {
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
+    , _goatState_clipboard       :: Maybe SEltTree
     , _goatState_debugLabel      :: Text
 
   } deriving (Show)
@@ -154,6 +155,17 @@ makeCanvasSelectionFromSelection PFState {..} lmm selection = flip Seq.filter se
     Nothing             -> True
     Just LayerMeta {..} -> True
 
+potatoHandlerOutputNoHandlerChange :: GoatState -> PotatoHandlerOutput
+potatoHandlerOutputNoHandlerChange GoatState {..} = def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
+
+potatoHandlerOutputDeleteSelection :: GoatState -> PotatoHandlerOutput
+potatoHandlerOutputDeleteSelection goatState@GoatState {..} = r where
+  deleteEv = if Seq.null _goatState_selection
+    then Nothing
+    else Just $ WSERemoveElt (toList . fmap snd3 $ _goatState_selection)
+  r = (potatoHandlerOutputNoHandlerChange goatState) {
+      _potatoHandlerOutput_pFEvent = deleteEv
+    }
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
@@ -303,12 +315,24 @@ foldGoatFn cmd goatState@GoatState {..} = do
                       _                        -> Nothing
                   })
 
-              KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] ->
+              KeyboardData (KeyboardKey_Delete) [KeyModifier_Ctrl] -> r where
+                r = (goatState, potatoHandlerOutputDeleteSelection goatState)
+              KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
                 -- TODO copy
-                undefined
-              KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] ->
-                -- TODO pasta
-                undefined
+                -- TODO extract selection (or canvas selection?)
+                -- TODO validate selection just for funzies I guess
+                -- TODO convert selection into SEltTree (keep same REltIds at this stage)
+                copied = Nothing -- TODO
+                r = (goatState { _goatState_clipboard = copied }, def)
+              KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
+                -- TODO cut, same as copy
+                copied = Nothing -- TODO
+                r = (goatState { _goatState_clipboard = copied }, potatoHandlerOutputDeleteSelection goatState)
+              KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
+                pastaEv = case _goatState_clipboard of
+                  Nothing    -> Nothing
+                  Just stree -> Just $ WSEAddRelative stree
+                r = (goatState, (potatoHandlerOutputNoHandlerChange goatState) { _potatoHandlerOutput_pFEvent = pastaEv })
               -- tool hotkeys
               KeyboardData (KeyboardKey_Char key) _ -> r where
                 newTool = case key of
