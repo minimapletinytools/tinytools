@@ -185,7 +185,7 @@ randomXY = do
 
 -- | correct selection to include folder pairs
 folderizeSelection :: SEltTree -> [LayerPos] -> [LayerPos]
-folderizeSelection stree lps = scopeSelection scopeFn (Seq.fromList stree) lps where
+folderizeSelection stree lps = scopeSelection scopeFn (Seq.fromList (fmap snd stree)) lps where
   scopeFn :: SEltLabel -> Maybe Bool
   scopeFn (SEltLabel _ selt)= case selt of
     SEltFolderStart -> Just True
@@ -201,7 +201,7 @@ randomActionFCmd doundo stree = do
     nElts = length stree
     -- if we ever want to do this with elements only I guess, not sure why I commented this out
     --eltsOnly = filter (isElement . snd) $  L.indexed stree
-    eltsOnly = L.indexed stree
+    eltsOnly = L.indexed (fmap snd stree)
     startCmd = if doundo then 0 else 2
     -- TODO we need to be able to test copy paste, but copy is not an undoable action..
     -- so really we need some cute trick to copy and paste in one command for the sake of testing...

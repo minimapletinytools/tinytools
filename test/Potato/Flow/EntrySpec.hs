@@ -90,18 +90,19 @@ bs_save_8 =
 
 -- TODO maybe drop the `t ~ SpiderTimeline Global` constraint
 -- you'll need to modify reflex-test-host for this
-pair_test :: forall t m a. (t ~ SpiderTimeline Global, m ~ SpiderHost Global, Eq a, Show a)
+pair_test :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => Text
-  -> (Event t FCmd -> TestGuestT t m (Event t a))
+  -> (Event t FCmd -> TestGuestT t m (Event t [(REltId, SEltLabel)]))
   -> ([FCmd],[FCmd])
   -> Test
 pair_test name network (bs1, bs2) = TestLabel ("pairs: " ++ T.unpack name) $ TestCase $ do
   let
     run1 = runAppSimple network bs1
     run2 = runAppSimple network bs2
+    simplify = fmap snd . fromJust . L.last . join
   v1 <- liftIO run1
   v2 <- liftIO run2
-  L.last (join v1) @?= L.last (join v2)
+  simplify v1 @?= simplify v2
 
 
 

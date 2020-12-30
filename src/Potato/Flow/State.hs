@@ -112,7 +112,7 @@ emptyPFState = PFState Seq.empty IM.empty (SCanvas (LBox 0 0))
 
 sPotatoFlow_to_pFState :: SPotatoFlow -> PFState
 sPotatoFlow_to_pFState SPotatoFlow {..} = r where
-  elts = zip [0..] _sPotatoFlow_sEltTree
+  elts = _sPotatoFlow_sEltTree
   dir = foldr (\(rid, e) acc -> IM.insert rid e acc) IM.empty elts
   layers = Seq.fromList (map fst elts)
   r = PFState layers dir _sPotatoFlow_sCanvas
@@ -120,7 +120,7 @@ sPotatoFlow_to_pFState SPotatoFlow {..} = r where
 pFState_to_sPotatoFlow :: PFState -> SPotatoFlow
 --pFState_to_sPotatoFlow pfs@PFState {..} = trace ("SAVING: " <> debugPrintPFState pfs) $r where
 pFState_to_sPotatoFlow PFState {..} = r where
-  selttree = toList . fmap (fromJust . \rid -> IM.lookup rid _pFState_directory) $ _pFState_layers
+  selttree = toList . fmap (\rid -> (rid, _pFState_directory IM.! rid)) $ _pFState_layers
   r = SPotatoFlow _pFState_canvas selttree
 
 pFState_toCanvasCoordinates :: PFState -> XY -> XY

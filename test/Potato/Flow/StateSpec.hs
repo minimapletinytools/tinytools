@@ -44,7 +44,7 @@ spec = do
   describe "Layers" $ do
     it "SPotatoFlow <-> PFState conversion passes basic tests" $ do
       let
-        orig = SPotatoFlow (SCanvas (LBox 10 123)) [SEltLabel "some selt" SEltNone]
+        orig = SPotatoFlow (SCanvas (LBox 10 123)) [(0,SEltLabel "some selt" SEltNone)]
       pFState_to_sPotatoFlow (sPotatoFlow_to_pFState orig) `shouldBe` orig
     it "pFState_isValid" $ do
       pFState_isValid someValidState1 `shouldBe` True

@@ -179,7 +179,7 @@ type ControllersWithId = IntMap Controller
 
 
 
-type SEltTree = [(SEltLabel)]
+type SEltTree = [(REltId,SEltLabel)]
 
 data SCanvas = SCanvas {
   _sCanvas_box :: LBox
