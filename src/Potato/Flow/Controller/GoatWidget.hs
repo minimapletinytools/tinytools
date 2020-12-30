@@ -2,9 +2,7 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.GoatWidget (
-  ControllerMeta(..)
-  , emptyControllerMeta
-  , GoatWidgetConfig(..)
+  GoatWidgetConfig(..)
   , emptyGoatWidgetConfig
   , GoatWidget(..)
   , goatState_pFState
@@ -27,7 +25,7 @@ import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
@@ -44,26 +42,9 @@ import qualified Data.Sequence                             as Seq
 import           Data.Tuple.Extra
 
 
-
--- TODO move this somewhere else
--- TODO this is a problem because LayerMetaMap
--- I guess you can just reindex LayerMetaMap to index via LayerPos (which should be the same as REltId after loading I think)
--- Alternatively, you could just have SPotatoFlow include REltId, that might be slightly better solution...
-data ControllerMeta = ControllerMeta {
-  _controllerMeta_pan      :: XY
-  , _controllerMeta_layers :: LayerMetaMap
-} deriving (Show, Eq, Generic)
-
-instance FromJSON ControllerMeta
-instance ToJSON ControllerMeta
-
-emptyControllerMeta :: ControllerMeta
-emptyControllerMeta = ControllerMeta 0 IM.empty
-
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
-type EverythingLoadState = (SPotatoFlow, ControllerMeta)
 
 data GoatState = GoatState {
 
@@ -89,7 +70,6 @@ goatState_pFState = _pFWorkspace_pFState . _goatState_pFWorkspace
 
 data GoatCmd =
   GoatCmdTool Tool
-
   | GoatCmdLoad EverythingLoadState
 
   -- canvas direct input
@@ -118,7 +98,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- TODO someday add this to support multi-user mode :O
   -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
-  --, _goatWidgetConfig_externalPFEvent :: Event t PFEvent
+  --, _goatWidgetConfig_externalWSEvent :: Event t WSEventTag
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel :: Event t Text
@@ -216,7 +196,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
         GoatCmdLoad (spf, cm) ->
           -- TODO load ControllerMeta stuff
           (goatState, def {
-              _potatoHandlerOutput_pFEvent = Just $ PFELoad spf
+              _potatoHandlerOutput_pFEvent = Just $ WSELoad spf
             })
         --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
         GoatCmdMouse mouseData ->
@@ -351,9 +331,8 @@ foldGoatFn cmd goatState@GoatState {..} = do
     (next_workspace, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
       -- if there was no update, then changes are not valid
       Nothing   -> (_goatState_pFWorkspace, IM.empty)
-      Just pfev -> assert (pasta == []) (r1,r2) where
-        -- TODO extract updatePFTotalState and move into Workspace.hs since we don't need copy pasta functionality
-        PFTotalState r1 pasta = updatePFTotalState pfev (PFTotalState _goatState_pFWorkspace [])
+      Just wsev -> (r1,r2) where
+        r1 = updatePFWorkspace wsev _goatState_pFWorkspace
         r2 = _pFWorkspace_lastChanges r1
     next_pFState = _pFWorkspace_pFState next_workspace
     next_layerPosMap = pFState_getLayerPosMap next_pFState

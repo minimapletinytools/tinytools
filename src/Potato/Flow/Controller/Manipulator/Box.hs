@@ -16,11 +16,12 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.TextArea
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Data.Default
 import           Data.Dependent.Sum                          (DSum ((:=>)))
@@ -140,7 +141,7 @@ data BoxHandler = BoxHandler {
 
   }
 
-makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> PFEventTag
+makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEventTag
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   selection = _potatoHandlerInput_selection
   RelMouseDrag MouseDrag {..} = rmd
@@ -159,7 +160,7 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
       _cBoundingBox_deltaBox = makeDeltaBox m boxRestrictedDelta
     })
 
-  op = PFEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+  op = WSEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
 
 instance Default BoxHandler where
   def = BoxHandler {
@@ -199,8 +200,8 @@ instance PotatoHandler BoxHandler where
 
       op = if _boxHandler_isCreation
         then if _boxHandler_isText
-          then PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<text>" $ SEltText $ SText (LBox _mouseDrag_from dragDelta) "" def))
-          else PFEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
+          then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<text>" $ SEltText $ SText (LBox _mouseDrag_from dragDelta) "" def))
+          else WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }
@@ -224,7 +225,7 @@ instance PotatoHandler BoxHandler where
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
-    MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just PFEUndo }
+    MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just WSEUndo }
 
 
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of

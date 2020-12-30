@@ -16,10 +16,11 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Control.Exception
 import           Data.Default
@@ -74,7 +75,7 @@ mouseText mtais stext rmd = r where
       newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) dl ogtz
 
 -- TODO support shift selecting text someday meh
-inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe PFEventTag)
+inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe WSEventTag)
 inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZip }, mop) where
 
   oldZip = _textAreaInputState_zipper tais
@@ -95,7 +96,7 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
       _cText_deltaText = (_textAreaInputState_original tais, TZ.value newZip)
     })
   mop = if changed
-    then Just $ PFEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])
+    then Just $ WSEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])
     else Nothing
 
 -- text area handler state and the text it represents are updated independently and they should always be consistent

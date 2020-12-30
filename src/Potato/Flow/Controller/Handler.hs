@@ -27,11 +27,12 @@ import           Relude
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Data.Default
 import           Data.Dependent.Sum            (DSum ((:=>)))
@@ -45,7 +46,7 @@ import qualified Text.Show
 data PotatoHandlerOutput = PotatoHandlerOutput {
     _potatoHandlerOutput_nextHandler   :: Maybe SomePotatoHandler
     , _potatoHandlerOutput_select      :: Maybe (Bool, Selection)
-    , _potatoHandlerOutput_pFEvent     :: Maybe PFEventTag
+    , _potatoHandlerOutput_pFEvent     :: Maybe WSEventTag
     , _potatoHandlerOutput_pan         :: Maybe XY
     , _potatoHandlerOutput_layersState :: Maybe LayersState
   } deriving (Show)

@@ -155,8 +155,11 @@ data PFEventTag =
   | PFEAddFolder (LayerPos, Text)
   | PFERemoveElt [LayerPos]
   | PFEMoveElt ([LayerPos], LayerPos)
+
+  -- TODO DELETE THESE
   | PFECopy [LayerPos]
   | PFEPaste LayerPos
+
   -- | PFEDuplicate [LayerPos]
   | PFEManipulate (Bool, ControllersWithId)
   | PFEResizeCanvas DeltaLBox

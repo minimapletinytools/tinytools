@@ -16,6 +16,7 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Data.Default
 import           Data.Dependent.Sum             (DSum ((:=>)))

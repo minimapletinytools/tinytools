@@ -9,8 +9,9 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
+import           Potato.Flow.Workspace
 
 import           Data.Default
 import qualified Data.Sequence                  as Seq
@@ -84,7 +85,7 @@ instance PotatoHandler LayersHandler where
           Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
             -- dropping on a selected element does onthing
             True  ->  Nothing
-            False -> Just $ PFEMoveElt (toList (fmap snd3 selection), uplp)
+            False -> Just $ WSEMoveElt (toList (fmap snd3 selection), uplp)
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None

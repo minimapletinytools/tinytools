@@ -12,6 +12,7 @@ module Potato.Flow.Controller.Manipulator.Common (
 import           Relude
 
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types

@@ -2,9 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Potato.Flow.Controller.Layers (
-  LayerMeta(..)
-  , LayerMetaMap
-  , LayerEntries
+  LayerEntries
   , LayersState
   , LayerDragState(..)
   , LayerDownType(..)
@@ -31,11 +29,12 @@ module Potato.Flow.Controller.Layers (
 import           Relude
 
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Data.Aeson
 import           Data.Default
@@ -43,29 +42,6 @@ import qualified Data.IntMap                  as IM
 import           Data.Sequence                ((<|), (><), (|>))
 import qualified Data.Sequence                as Seq
 import           Data.Tuple.Extra
-
-
-
-data LayerMeta = LayerMeta {
-  -- if False, these will inherit from parent
-  _layerMeta_isLocked      :: Bool
-  , _layerMeta_isHidden    :: Bool
-  , _layerMeta_isCollapsed :: Bool
-
-} deriving (Eq, Generic, Show)
-
-instance FromJSON LayerMeta
-instance ToJSON LayerMeta
-instance NFData LayerMeta
-
-instance Default LayerMeta where
-  def = LayerMeta {
-      _layerMeta_isLocked = False
-      , _layerMeta_isHidden = False
-      , _layerMeta_isCollapsed = True
-    }
-
-type LayerMetaMap = REltIdMap LayerMeta
 
 data LockHiddenState = LHS_True | LHS_False | LHS_True_InheritTrue | LHS_False_InheritTrue deriving (Eq, Show)
 
@@ -366,7 +342,7 @@ layerInputNew ::
   -> LayerDragState
   -> Selection -- ^ current selection
   -> MouseDrag -- ^ input to update with
-  -> (LayerDragState, LayersState, Maybe (Bool, LayerPos), Maybe PFEventTag)
+  -> (LayerDragState, LayersState, Maybe (Bool, LayerPos), Maybe WSEventTag)
 layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDrag {..} = let
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
   in case (_mouseDrag_state, lds) of
@@ -392,7 +368,7 @@ layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDra
       Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
         -- dropping on a selected element does onthing
         True ->  (LDS_None, layerstate, Nothing, Nothing)
-        False -> (LDS_None, layerstate, Nothing, Just $ PFEMoveElt (toList (fmap snd3 selection), uplp))
+        False -> (LDS_None, layerstate, Nothing, Just $ WSEMoveElt (toList (fmap snd3 selection), uplp))
 
     -- TODO make sure this is the right way to cancel...
     (MouseDragState_Cancelled, _) -> (LDS_None, layerstate, Nothing, Nothing)

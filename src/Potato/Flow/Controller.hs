@@ -11,6 +11,7 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.GoatWidget
   , module Potato.Flow.Controller.Input
   , module Potato.Flow.Controller.Layers
+  , module Potato.Flow.Controller.Types
 
 ) where
 
@@ -24,3 +25,4 @@ import           Potato.Flow.Controller.Manipulator.Line
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Controller.Manipulator.TextArea
+import           Potato.Flow.Controller.Types

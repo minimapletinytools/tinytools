@@ -13,11 +13,14 @@ module Potato.Flow.Workspace (
   , pfc_addFolder_to_newElts
   , pfc_removeElt_to_deleteElts
   , pfc_paste_to_newElts
+  , WSEventTag(..)
+  , updatePFWorkspace
 ) where
 
 import           Relude
 
 import           Potato.Flow.Cmd
+import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
@@ -40,7 +43,7 @@ emptyActionStack = ActionStack [] []
 
 data PFWorkspace = PFWorkspace {
   -- TODO rename to pFState
-  _pFWorkspace_pFState         :: PFState
+  _pFWorkspace_pFState       :: PFState
   , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack
 } deriving (Show, Eq, Generic)
@@ -148,3 +151,55 @@ pfc_paste_to_newElts pfs (seltls, lp) = r where
 --pfc_duplicate_to_duplicate pfs lps = r where
 --  rids = map (Seq.index _pFState_layers) lps
 --  r = PFCFDuplicate ==> rids
+
+------ update functions via commands
+
+-- TODO rename to WSEvent
+data WSEventTag =
+  WSEAddElt (Bool, (LayerPos, SEltLabel))
+  | WSEAddFolder (LayerPos, Text)
+  | WSERemoveElt [LayerPos]
+  | WSEMoveElt ([LayerPos], LayerPos)
+  | WSECopy [LayerPos]
+  | WSEPaste LayerPos
+  -- | WSEDuplicate [LayerPos]
+  | WSEManipulate (Bool, ControllersWithId)
+  | WSEResizeCanvas DeltaLBox
+  | WSEUndo
+  | WSERedo
+  | WSELoad SPotatoFlow
+  deriving (Show, Eq)
+
+debugPrintBeforeAfterState :: (IsString a) => PFState -> PFState -> a
+debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintPFState stateBefore <> "\nAFTER: " <> debugPrintPFState stateAfter
+
+doCmdPFWorkspaceUndoPermanentFirst :: (PFState -> PFCmd) -> PFWorkspace -> PFWorkspace
+doCmdPFWorkspaceUndoPermanentFirst cmdFn ws = r where
+  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
+  undoedws = undoPermanentWorkspace ws
+  undoedpfs = _pFWorkspace_pFState undoedws
+  cmd = cmdFn undoedpfs
+  r = doCmdWorkspace cmd undoedws
+
+updatePFWorkspace :: WSEventTag -> PFWorkspace -> PFWorkspace
+updatePFWorkspace evt ws = let
+  lastState = _pFWorkspace_pFState ws
+  r = case evt of
+    WSEAddElt (undo, x) -> if undo
+      then doCmdPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) ws
+      else doCmdWorkspace (pfc_addElt_to_newElts lastState x) ws
+    WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
+    WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
+    WSEManipulate (undo, x) -> if undo
+      then doCmdPFWorkspaceUndoPermanentFirst (const (PFCManipulate ==> x)) ws
+      else doCmdWorkspace (PFCManipulate ==> x) ws
+    WSEMoveElt x -> doCmdWorkspace (PFCMove ==> x) ws
+    WSEResizeCanvas x -> doCmdWorkspace (PFCResizeCanvas ==> x) ws
+    WSEUndo -> undoWorkspace ws
+    WSERedo -> redoWorkspace ws
+    WSELoad x -> loadPFStateIntoWorkspace (sPotatoFlow_to_pFState x) ws
+  afterState = _pFWorkspace_pFState r
+  isValidAfter = pFState_isValid afterState
+  in
+    if isValidAfter then r else
+      error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)

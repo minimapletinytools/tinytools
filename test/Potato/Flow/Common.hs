@@ -31,6 +31,7 @@ import           Potato.Flow
 import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.TestStates
 
 import           Control.Monad.Fix

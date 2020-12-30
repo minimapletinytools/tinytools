@@ -9,10 +9,11 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Entry
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 
 import           Control.Exception
 import           Data.Default
@@ -82,8 +83,8 @@ instance PotatoHandler SimpleLineHandler where
         else def { _cLine_deltaEnd = Just $ DeltaXY dragDelta })
 
       op = if _simpleLineHandler_isCreation
-        then PFEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SLine _mouseDrag_from _mouseDrag_to def))
-        else PFEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
+        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SLine _mouseDrag_from _mouseDrag_to def))
+        else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh

@@ -83,6 +83,7 @@ IGNORE-simple select compromise
   -write method to update layers incrementally when there are changes + when moving elements around in layers
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
+-rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
 DONE-remove scroll position from layersState
 DONE-test for ignore keyboard inputs during mouse drag
