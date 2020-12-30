@@ -1,3 +1,4 @@
+-- TODO/NOTE this file is deprecated however we are keeping it around since it does some rather useful testing of underlying functionality of this deprecated module
 {-# LANGUAGE RecordWildCards #-}
 
 import           Relude
@@ -7,7 +8,7 @@ import           GHC.Stats
 import           Reflex
 import           Reflex.Test.Host
 
-import qualified Data.List               as L
+import qualified Data.List                 as L
 import           Data.These
 
 import           Control.Concurrent
