@@ -179,6 +179,8 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Down | _boxHandler_isCreation -> Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
       }
+    -- if shift is held down, ignore inputs
+    MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
       mmi = findFirstMouseManipulator rmd _potatoHandlerInput_selection
       r = case mmi of

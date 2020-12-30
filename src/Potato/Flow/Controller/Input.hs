@@ -15,13 +15,6 @@ module Potato.Flow.Controller.Input (
   , mouseDragDelta
   , RelMouseDrag(..)
   , toRelMouseDrag
-
-
-  , Tool(..)
-  , tool_isCreate
-  , Selection
-  , disjointUnionSelection
-
 ) where
 
 import           Relude
@@ -135,26 +128,3 @@ toRelMouseDrag pFState pan md = RelMouseDrag $ md {
     _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md) - pan
     , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md) - pan
   }
-
--- TODO move out or rename this file to TYpes D:
-
--- TOOL
-data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
-
-tool_isCreate :: Tool -> Bool
-tool_isCreate = \case
-  Tool_Select -> False
-  Tool_Pan -> False
-  _ -> True
-
--- SELECTION
-type Selection = Seq SuperSEltLabel
-
--- TODO move to its own file
--- selection helpers
-disjointUnion :: (Eq a) => [a] -> [a] -> [a]
-disjointUnion a b = L.union a b L.\\ L.intersect a b
-
--- TODO real implementation...
-disjointUnionSelection :: Selection -> Selection -> Selection
-disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)

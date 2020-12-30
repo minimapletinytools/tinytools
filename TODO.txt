@@ -62,13 +62,14 @@ IGNORE-simple select compromise
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 -copy pasta
-  -ctrl-v/s/z/etc sent via keyboard,
-    -other kind of copy paste supported via KeyboardKey_Paste
-    -we'll prob need to do something different for web version...
   -copy pasta translate a little by default?
     -or attempt to place in middle of canvas viewport prob better
-  -copy pasta test
-  -I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
+  -implement copy
+  DONE-ctrl-v/s/z/etc sent via keyboard,
+    -other kind of copy paste supported via KeyboardKey_Paste
+    -we'll prob need to do something different for web version...
+  DONE-copy pasta test
+  IGNORE-I think the way it's handled right now (PFEventTag operations) is correct, because then you can intercept copy pasta events to do copy pasta during text selection etc.
 -group spec
   -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
   -you can select individuals group elts via layers

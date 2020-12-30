@@ -44,6 +44,7 @@ import           Potato.Flow.Types
 import           Control.Exception       (assert)
 import           Data.Aeson
 import qualified Data.IntMap.Strict      as IM
+import           Data.List.Ordered       (isSorted)
 import           Data.Maybe
 import qualified Data.Sequence           as Seq
 
@@ -75,9 +76,10 @@ pFState_isValid pfs@PFState {..} = pFState_selectionIsValid pfs ([0..Seq.length 
 -}
 
 pFState_selectionIsValid :: PFState -> [LayerPos] -> Bool
-pFState_selectionIsValid PFState {..} lps = validElts && validScope where
+pFState_selectionIsValid PFState {..} lps = validElts && validScope && sorted where
   validElts = all isJust . toList $ fmap ((IM.!?) _pFState_directory) _pFState_layers
   validScope = selectionHasScopingProperty scopeFn _pFState_layers lps
+  sorted = isSorted lps
   scopeFn x = case IM.lookup x _pFState_directory of
     Nothing                            -> Nothing -- this will fail in vaildElts case so it doesn't matter what we do here
     Just (SEltLabel _ SEltFolderStart) -> Just True

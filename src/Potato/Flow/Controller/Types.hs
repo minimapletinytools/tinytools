@@ -1,7 +1,15 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Types (
-  LayerMeta(..)
+
+  Tool(..)
+  , tool_isCreate
+  , Selection
+  , disjointUnionSelection
+  , validateSelection
+  , selectionToSEltTree
+
+  , LayerMeta(..)
   , LayerMetaMap
   , ControllerMeta(..)
   , emptyControllerMeta
@@ -14,6 +22,7 @@ import           Reflex
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
+import           Potato.Flow.Layers     (selectionHasScopingProperty)
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
@@ -25,10 +34,46 @@ import           Control.Monad.Fix
 import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap            as IM
+import qualified Data.List              as L
+import qualified Data.List.Ordered      as L (isSortedBy)
 import           Data.Maybe
 import qualified Data.Sequence          as Seq
 import           Data.Tuple.Extra
 
+-- TOOL
+data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)
+
+tool_isCreate :: Tool -> Bool
+tool_isCreate = \case
+  Tool_Select -> False
+  Tool_Pan -> False
+  _ -> True
+
+type Selection = Seq SuperSEltLabel
+
+-- selection helpers
+disjointUnion :: (Eq a) => [a] -> [a] -> [a]
+disjointUnion a b = L.union a b L.\\ L.intersect a b
+
+-- TODO real implementation...
+disjointUnionSelection :: Selection -> Selection -> Selection
+disjointUnionSelection s1 s2 = Seq.fromList $ disjointUnion (toList s1) (toList s2)
+
+validateSelection :: Selection -> Bool
+validateSelection selection = r1 && r2 where
+  -- validate lps in order
+  sortingfn (_,lp1,_) (_,lp2,_) = lp1 < lp2
+  r1 = L.isSortedBy sortingfn (toList selection)
+  -- validate scoping property
+  r2 = selectionHasScopingProperty scopeFn selection [0..Seq.length selection - 1]
+  scopeFn (_,_,seltl) = case seltl of
+    (SEltLabel _ SEltFolderStart) -> Just True
+    (SEltLabel _ SEltFolderEnd)   -> Just False
+    _                             -> Nothing
+
+selectionToSEltTree :: Selection -> SEltTree
+selectionToSEltTree selection = assert (validateSelection selection) r where
+  r = fmap (\(rid,_,seltl) -> (rid, seltl)) (toList selection)
 
 
 data LayerMeta = LayerMeta {

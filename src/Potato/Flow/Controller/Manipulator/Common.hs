@@ -31,6 +31,10 @@ computeSelectionType = foldl' foldfn SMTNone where
       SEltBox _  -> SMTBox
       SEltLine _ -> SMTLine
       SEltText _ -> SMTText
+      -- TODO
+      --SEltFolderStart _ -> SMTNone
+      --SEltFolderEnd _ -> SMTNone
+      --SEltNone -> SMTNone
       _          -> SMTBoundingBox
     _ -> SMTBoundingBox
 

@@ -90,8 +90,8 @@ findMatchingScope scopeTypeFn xs i = r where
       Nothing -> error "pairmap missing elements, this means scopes were mismatched"
       Just x -> x
 
--- | converts selection so that it satisfies the scoping property
--- assumes input sequence satisfies scoping property
+-- | converts selection so that it satisfies the scoping property by adding matching folders
+-- assumes input sequence satisfies scoping property???
 -- simple and inefficient implementation, do not use in prod
 scopeSelection :: (a -> Maybe Bool) -> Seq a -> [Int] -> [Int]
 scopeSelection scopeTypeFn xs is = r where
@@ -107,8 +107,6 @@ scopeSelection scopeTypeFn xs is = r where
       Just x -> x:acc
   newElts = foldr foldfn [] is
   r = sortUnique (newElts <> is)
-
-
 
 
 -- | inserts ys at index i into xs

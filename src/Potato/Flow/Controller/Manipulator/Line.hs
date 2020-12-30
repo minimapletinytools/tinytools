@@ -59,6 +59,8 @@ instance PotatoHandler SimpleLineHandler where
             _simpleLineHandler_active = True
           }
       }
+    -- if shift is held down, ignore inputs
+    MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
       mistart = findFirstLineManipulator rmd _potatoHandlerInput_selection
       r = case mistart of

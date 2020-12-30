@@ -203,6 +203,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
 
     (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
       SomePotatoHandler handler -> case cmd of
+        --GoatCmdSetDebugLabel x -> traceShow x $ (goatState { _goatState_debugLabel = x }, def)
         GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, def)
         GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, def)
         GoatCmdLoad (spf, cm) ->
@@ -319,15 +320,14 @@ foldGoatFn cmd goatState@GoatState {..} = do
               KeyboardData (KeyboardKey_Delete) [] -> r where
                 r = (goatState, potatoHandlerOutputDeleteSelection goatState)
               KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
-                -- TODO copy
-                -- TODO extract selection (or canvas selection?)
-                -- TODO validate selection just for funzies I guess
-                -- TODO convert selection into SEltTree (keep same REltIds at this stage)
-                copied = Nothing -- TODO
+                copied = if Seq.null _goatState_selection
+                  then _goatState_clipboard
+                  else Just $ selectionToSEltTree _goatState_selection
                 r = (goatState { _goatState_clipboard = copied }, def)
               KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
-                -- TODO cut, same as copy
-                copied = Nothing -- TODO
+                copied = if Seq.null _goatState_selection
+                  then _goatState_clipboard
+                  else Just $ selectionToSEltTree _goatState_selection
                 r = (goatState { _goatState_clipboard = copied }, potatoHandlerOutputDeleteSelection goatState)
               KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
                 pastaEv = case _goatState_clipboard of
@@ -377,10 +377,13 @@ foldGoatFn cmd goatState@GoatState {..} = do
     -- get selection from pho
     mSelectionFromPho = case _potatoHandlerOutput_select phoAfterGoatCmd of
       Nothing -> Nothing
-      Just (add, sel) -> assert (pFState_selectionIsValid next_pFState (fmap snd3 (toList sel))) $ Just r where
-        r = if add
+      Just (add, sel) -> assert (pFState_selectionIsValid next_pFState (fmap snd3 (toList r))) $ Just r where
+        r' = if add
           then disjointUnionSelection _goatState_selection sel
           else sel
+        sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
+        r = Seq.sortBy sortfn r'
+
 
     -- get selection from changes
     newEltFoldMapFn rid v = case v of
@@ -404,13 +407,12 @@ foldGoatFn cmd goatState@GoatState {..} = do
 
     mnext_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ asum [mSelectionFromPho, mSelectionFromChanges]
     mHandlerFromPho = _potatoHandlerOutput_nextHandler phoAfterGoatCmd
-    tempHandlerForUpdateFromSelection = fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho
-
-    -- TODO makeHandlerFromSelection takes canvasSelection
-    tempHandlerForUpdateFromPho = fromMaybe (makeHandlerFromSelection _goatState_selection) mHandlerFromPho
     (next_handler, next_selection) = case mnext_selection of
-      Just next_selection' -> (maybeUpdateHandlerFromSelection tempHandlerForUpdateFromSelection next_selection', next_selection')
-      Nothing -> (tempHandlerForUpdateFromPho, _goatState_selection)
+      Just next_selection' -> (maybeUpdateHandlerFromSelection tempHandlerForUpdateFromSelection next_selection', next_selection') where
+        tempHandlerForUpdateFromSelection = fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho
+      Nothing -> (tempHandlerForUpdateFromPho, _goatState_selection) where
+        -- TODO makeHandlerFromSelection takes canvasSelection
+        tempHandlerForUpdateFromPho = fromMaybe (makeHandlerFromSelection _goatState_selection) mHandlerFromPho
     next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
     next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
@@ -453,6 +455,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_broadPhaseState = initialbp
         , _goatState_layersState     = initiallayersstate
         , _goatState_layerPosMap = pFState_getLayerPosMap _goatWidgetConfig_initialState
+        , _goatState_clipboard = Nothing
       }
 
   goatDyn :: Dynamic t GoatState

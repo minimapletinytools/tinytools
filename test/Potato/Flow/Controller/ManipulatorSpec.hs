@@ -141,7 +141,7 @@ test_BoxHandler_restrict8 = constructTest "restrict8" pfstate_basic1 bs expected
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
 
       , EWCLabel "resize tl corner b2 while holding shift"
-      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [KeyModifier_Shift] False)
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 0) False MouseButton_Left [KeyModifier_Shift] False)
       , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [KeyModifier_Shift] False)
     ]

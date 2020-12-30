@@ -10,6 +10,7 @@ import           Relude
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Entry
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods

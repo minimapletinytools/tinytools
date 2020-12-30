@@ -114,7 +114,11 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
 everything_keyboard_test :: Test
 everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected where
   bs = [
-      EWCLabel "Create A with random keyboard inputs in between"
+      EWCLabel "Copy pasta nothing"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+
+      , EWCLabel "Create A with random keyboard inputs in between"
       , EWCTool Tool_Box
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [])
@@ -133,9 +137,7 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , EWCLabel "Delete A using Delete key"
       , EWCKeyboard (KeyboardData (KeyboardKey_Delete) [])
 
-      , EWCLabel "Copy pasta nothing"
-      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
-      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+
 
       , EWCLabel "Select everything"
       , EWCTool Tool_Select
@@ -150,7 +152,11 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
 
   -- I can't remember why we're using checkLayerEntriesNum instead of counting number of entries in PFState but it doesn't matter, should be the same
   expected = [
-      LabelCheck "Create A with random keyboard inputs in between"
+      LabelCheck "Copy pasta nothing"
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+
+      , LabelCheck "Create A with random keyboard inputs in between"
       , (EqPredicate _goatState_selectedTool Tool_Box)
       , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
       , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
@@ -165,42 +171,35 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
         , numSelectedEltsEqualPredicate 1
       ]
 
-
       , LabelCheck "Copy pasta A"
       , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
       , Combine [
           -- TODO copy not implemented yet so this doesn't work
-          --checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
-          --numSelectedEltsEqualPredicate 1
+          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
+          , numSelectedEltsEqualPredicate 1
         ]
       , Combine [
-          -- TODO copy not implemented yet so this doesn't work
-          --checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 3)
-          --numSelectedEltsEqualPredicate 1
+          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 3)
+          , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "Delete A using Delete key"
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
+          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
           , numSelectedEltsEqualPredicate 0
         ]
-
-      , LabelCheck "Copy pasta nothing"
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
 
       , LabelCheck "Select everything"
       , (EqPredicate _goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , checkHandlerNameAndState handlerName_select True
-      , numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 0)
+      , numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 2)
 
       , LabelCheck "Cut pasta everything"
       , checkLayerEntriesNum 0
       , Combine [
-          -- TODO copy not implemented yet so this doesn't work
-          --numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 0)
-          --, checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
+          numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 2)
+          , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
         ]
     ]
 
