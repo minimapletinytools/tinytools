@@ -315,7 +315,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
                       _                        -> Nothing
                   })
 
-              KeyboardData (KeyboardKey_Delete) [KeyModifier_Ctrl] -> r where
+              KeyboardData (KeyboardKey_Delete) [] -> r where
                 r = (goatState, potatoHandlerOutputDeleteSelection goatState)
               KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
                 -- TODO copy

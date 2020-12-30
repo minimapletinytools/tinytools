@@ -124,6 +124,9 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , EWCKeyboard (KeyboardData (KeyboardKey_Char '\\') [])
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
       , EWCNothing -- dummy to check state
+
+      , EWCLabel "Delete A using Delete key"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Delete) [])
     ]
   expected = [
       LabelCheck "Create A with random keyboard inputs in between"
@@ -138,7 +141,14 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , Combine [
         validateLayersOrderPredicate
         , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+        , numSelectedEltsEqualPredicate 1
       ]
+
+      , LabelCheck "Delete A using Delete key"
+      , Combine [
+          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+          , numSelectedEltsEqualPredicate 0
+        ]
     ]
 
 
