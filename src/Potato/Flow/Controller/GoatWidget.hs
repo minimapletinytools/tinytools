@@ -66,17 +66,22 @@ catMaybesSeq = fmap fromJust . Seq.filter isJust
 type EverythingLoadState = (SPotatoFlow, ControllerMeta)
 
 data GoatState = GoatState {
+
+    -- TODO Refactor these out into GoatTab or something like that
+    -- TODO consider including handlers (vs regenerating from selection each time you switch tabs)
     _goatState_pFWorkspace       :: PFWorkspace
     , _goatState_layerPosMap     :: REltIdMap LayerPos
-    , _goatState_selectedTool    :: Tool
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
+    , _goatState_selection       :: Selection
+    , _goatState_broadPhaseState :: BroadPhaseState
+    , _goatState_layersState     :: LayersState
+
+    , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
     , _goatState_debugLabel      :: Text
-    , _goatState_selection       :: Selection
-    , _goatState_broadPhaseState :: BroadPhaseState
-    , _goatState_layersState     :: LayersState
+
   } deriving (Show)
 
 goatState_pFState :: GoatState -> PFState
@@ -111,6 +116,10 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_selectTool    :: Event t Tool
   , _goatWidgetConfig_load          :: Event t EverythingLoadState
 
+  -- TODO someday add this to support multi-user mode :O
+  -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
+  --, _goatWidgetConfig_externalPFEvent :: Event t PFEvent
+
   -- debugging
   , _goatWidgetConfig_setDebugLabel :: Event t Text
 }
@@ -139,6 +148,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
 }
 
+-- TODO rename to makeHandlerFromCanvasSelection
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
@@ -152,6 +162,18 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
   SomePotatoHandler h -> if pIsHandlerActive h
     then sph
     else makeHandlerFromSelection selection
+
+-- TODO fix me
+-- LayerMetaMap isn't enough to figure out if elt is hidden/locked
+-- you need to check its parents as well... and we don't have an easy way to get to parents atm
+makeCanvasSelectionFromSelection :: PFState -> LayerMetaMap -> Selection -> Selection
+makeCanvasSelectionFromSelection PFState {..} lmm selection = flip Seq.filter selection $ \(rid,_,seltl) -> case seltl of
+  SEltLabel _ SEltFolderStart -> False
+  SEltLabel _ SEltFolderEnd -> False
+  _ -> case IM.lookup rid lmm of
+    Nothing             -> True
+    Just LayerMeta {..} -> True
+
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
@@ -379,6 +401,8 @@ foldGoatFn cmd goatState@GoatState {..} = do
     mnext_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ asum [mSelectionFromPho, mSelectionFromChanges]
     mHandlerFromPho = _potatoHandlerOutput_nextHandler phoAfterGoatCmd
     tempHandlerForUpdateFromSelection = fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho
+
+    -- TODO makeHandlerFromSelection takes canvasSelection
     tempHandlerForUpdateFromPho = fromMaybe (makeHandlerFromSelection _goatState_selection) mHandlerFromPho
     (next_handler, next_selection) = case mnext_selection of
       Just next_selection' -> (maybeUpdateHandlerFromSelection tempHandlerForUpdateFromSelection next_selection', next_selection')

@@ -163,6 +163,8 @@ undo_deleteElts = do_newElts
 
 do_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) (r, changes) where
+  -- TODO something like this
+  --lps' = addChildren lps pfs
   r = PFState (moveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
   changes = pFState_getSEltLabels pfs (fmap (Seq.index _pFState_layers) lps)
 {--
@@ -176,6 +178,8 @@ do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) 
 
 undo_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 undo_move (lps, dst) pfs@PFState {..} =  (r, changes) where
+  -- TODO something like this
+  --lps' = addChildren lps pfs
   r = PFState (undoMoveEltList lps dst _pFState_layers) _pFState_directory _pFState_canvas
   changes = pFState_getSEltLabels pfs (fmap (Seq.index _pFState_layers) lps)
 {--

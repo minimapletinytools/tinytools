@@ -24,11 +24,17 @@ IGNORE-simple select compromise
   - TODO spec
 
 ::NEWEST TODO::
+-mega refactor
+  -consider making REltId serialized (you'll need this to do connections)
+    -remember to support copy pasta of connected elts
+  -consider doing tree structure for folders
+  DONE/IGNORE-think through what additional data is needed to validate for undo/redo in multi user mode
+-layers
+  -layers selection and actual selection are different
+  IGNORE-select folder start also selects folder end in layers
+  -render selection in layers (add to lentry)
+  -PFEMove moves all children if folder was moved
 -connect rendering
-DONE-remove scroll position from layersState
-DONE-test for ignore keyboard inputs during mouse drag
--do not create handlers when only folder is selected
--decide what to do about layers
 -decide how to handle params
   -prob a view only thing, add hookup for params in goat widget I guess
 -sort out input hierarchies in vty
@@ -42,11 +48,6 @@ DONE-test for ignore keyboard inputs during mouse drag
   -rename (when supported)
   -drag omve collapsed folder
   -select non-contiguous elements and drag+move
--mega refactor
-  -consider making REltId serialized (you'll need this to do connections)
-    -remember to support copy pasta of connected elts
-  -consider doing tree structure for folders
-  -think through what additional data is needed to validate for undo/redo in multi user mode
 -add deselect support to LayersHandler
 -PFStateChangeFlag and have each PFState operation return a change flag as well
 -rename master branch
@@ -83,7 +84,8 @@ DONE-test for ignore keyboard inputs during mouse drag
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
-
+DONE-remove scroll position from layersState
+DONE-test for ignore keyboard inputs during mouse drag
 DONE-layers
   DONE-figure out how to handle layer inputs...
   DONE-connect layers

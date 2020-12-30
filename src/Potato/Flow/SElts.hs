@@ -1,7 +1,11 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Potato.Flow.SElts (
   PChar
   , FillStyle(..)
   , SuperStyle(..)
+  , superStyle_fromListFormat
+  , superStyle_toListFormat
   , TextStyle(..)
   , SBox(..)
   , SLine(..)
@@ -17,8 +21,10 @@ import           Relude
 
 import           Potato.Flow.Math
 
+import           Control.Exception (assert)
 import           Data.Aeson
 import           Data.Default
+import qualified Data.List         as L
 
 type PChar = Char
 
@@ -59,6 +65,38 @@ instance Default SuperStyle where
     , _superStyle_point = '█'
     , _superStyle_fill = def
   }
+
+superStyle_fromListFormat :: [PChar] -> SuperStyle
+superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
+  l = length chars
+  r = SuperStyle {
+    _superStyle_tl = chars L.!! 0
+    , _superStyle_tr = chars L.!! 1
+    , _superStyle_bl = chars L.!! 2
+    , _superStyle_br = chars L.!! 3
+    , _superStyle_vertical   = chars L.!! 4
+    , _superStyle_horizontal = chars L.!! 5
+    , _superStyle_point = chars L.!! 6
+    , _superStyle_fill = if l == 7 then def else FillStyle_Simple (chars L.!! 7)
+  }
+
+-- TODO test
+-- superStyle_fromListFormat "╔╗╚╝║═█" `shouldBe` def
+
+superStyle_toListFormat :: SuperStyle -> [PChar]
+superStyle_toListFormat SuperStyle {..} = r where
+  start = case _superStyle_fill of
+    FillStyle_Blank    -> []
+    FillStyle_Simple c -> [c]
+  r = start <> [
+      _superStyle_tl
+      , _superStyle_tr
+      , _superStyle_bl
+      , _superStyle_br
+      , _superStyle_vertical
+      , _superStyle_horizontal
+      , _superStyle_point
+    ]
 
 data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign_Justify deriving (Eq, Generic, Show)
 
