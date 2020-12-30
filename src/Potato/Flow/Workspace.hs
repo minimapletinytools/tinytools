@@ -159,8 +159,6 @@ data WSEvent =
   | WSEAddFolder (LayerPos, Text)
   | WSERemoveElt [LayerPos]
   | WSEMoveElt ([LayerPos], LayerPos)
-  | WSECopy [LayerPos]
-  | WSEPaste LayerPos
   -- | WSEDuplicate [LayerPos]
   | WSEManipulate (Bool, ControllersWithId)
   | WSEResizeCanvas DeltaLBox

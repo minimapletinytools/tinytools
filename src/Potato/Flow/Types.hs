@@ -23,6 +23,11 @@ module Potato.Flow.Types (
   , DeltaText
   , DeltaSuperStyle(..)
   , DeltaTextStyle(..)
+
+  -- serialized types
+  , SEltTree
+  , SCanvas(..)
+  , SPotatoFlow(..)
 ) where
 
 import           Relude
@@ -31,6 +36,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 
 import           Control.Exception         (assert)
+import           Data.Aeson
 import           Data.Constraint.Extras.TH
 import           Data.Default
 import qualified Data.Dependent.Sum        as DS
@@ -141,6 +147,7 @@ data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
 
 instance NFData CTextStyle
 
+-- TODO pretty sure you can delete this now
 data CTag a where
   CTagRename :: CTag CRename
   CTagLine :: CTag CLine
@@ -169,3 +176,25 @@ instance NFData Controller where
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller
+
+
+
+type SEltTree = [(SEltLabel)]
+
+data SCanvas = SCanvas {
+  _sCanvas_box :: LBox
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SCanvas
+instance ToJSON SCanvas
+instance NFData SCanvas
+
+-- TODO serialize PFState instead
+data SPotatoFlow = SPotatoFlow {
+  _sPotatoFlow_sCanvas    :: SCanvas
+  , _sPotatoFlow_sEltTree :: SEltTree
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SPotatoFlow
+instance ToJSON SPotatoFlow
+instance NFData SPotatoFlow

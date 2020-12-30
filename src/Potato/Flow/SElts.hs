@@ -12,9 +12,6 @@ module Potato.Flow.SElts (
   , SText(..)
   , SElt(..)
   , SEltLabel(..)
-  , SEltTree
-  , SCanvas(..)
-  , SPotatoFlow(..)
 ) where
 
 import           Relude
@@ -182,23 +179,3 @@ data SEltLabel = SEltLabel {
 instance FromJSON SEltLabel
 instance ToJSON SEltLabel
 instance NFData SEltLabel
-
-type SEltTree = [SEltLabel]
-
-data SCanvas = SCanvas {
-  _sCanvas_box :: LBox
-} deriving (Eq, Generic, Show)
-
-instance FromJSON SCanvas
-instance ToJSON SCanvas
-instance NFData SCanvas
-
--- TODO serialize PFState instead
-data SPotatoFlow = SPotatoFlow {
-  _sPotatoFlow_sCanvas    :: SCanvas
-  , _sPotatoFlow_sEltTree :: SEltTree
-} deriving (Eq, Generic, Show)
-
-instance FromJSON SPotatoFlow
-instance ToJSON SPotatoFlow
-instance NFData SPotatoFlow
