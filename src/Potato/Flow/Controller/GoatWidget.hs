@@ -303,6 +303,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
           _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
             Just pho -> (goatState, pho)
             -- input not captured by handler
+            -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState in a what that PotatoHandlerOutput can't atm
             Nothing -> case kbd of
               KeyboardData KeyboardKey_Esc _ ->
                 (goatState, def {
@@ -331,7 +332,7 @@ foldGoatFn cmd goatState@GoatState {..} = do
               KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
                 pastaEv = case _goatState_clipboard of
                   Nothing    -> Nothing
-                  Just stree -> Just $ WSEAddRelative stree
+                  Just stree -> Just $ WSEAddRelative (lastPositionInSelection _goatState_selection, stree)
                 r = (goatState, (potatoHandlerOutputNoHandlerChange goatState) { _potatoHandlerOutput_pFEvent = pastaEv })
               -- tool hotkeys
               KeyboardData (KeyboardKey_Char key) _ -> r where

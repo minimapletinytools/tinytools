@@ -125,9 +125,30 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
       , EWCNothing -- dummy to check state
 
+      , EWCLabel "Copy pasta A"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+
       , EWCLabel "Delete A using Delete key"
       , EWCKeyboard (KeyboardData (KeyboardKey_Delete) [])
+
+      , EWCLabel "Copy pasta nothing"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+
+      , EWCLabel "Select everything"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 (-100) (-100)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 200 200) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 200 200) True MouseButton_Left [] False)
+
+      , EWCLabel "Cut pasta everything"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
     ]
+
+  -- I can't remember why we're using checkLayerEntriesNum instead of counting number of entries in PFState but it doesn't matter, should be the same
   expected = [
       LabelCheck "Create A with random keyboard inputs in between"
       , (EqPredicate _goatState_selectedTool Tool_Box)
@@ -144,10 +165,42 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
         , numSelectedEltsEqualPredicate 1
       ]
 
+
+      , LabelCheck "Copy pasta A"
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , Combine [
+          -- TODO copy not implemented yet so this doesn't work
+          --checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
+          --numSelectedEltsEqualPredicate 1
+        ]
+      , Combine [
+          -- TODO copy not implemented yet so this doesn't work
+          --checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 3)
+          --numSelectedEltsEqualPredicate 1
+        ]
+
       , LabelCheck "Delete A using Delete key"
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
           , numSelectedEltsEqualPredicate 0
+        ]
+
+      , LabelCheck "Copy pasta nothing"
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
+      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
+
+      , LabelCheck "Select everything"
+      , (EqPredicate _goatState_selectedTool Tool_Select)
+      , checkHandlerNameAndState handlerName_select True
+      , checkHandlerNameAndState handlerName_select True
+      , numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 0)
+
+      , LabelCheck "Cut pasta everything"
+      , checkLayerEntriesNum 0
+      , Combine [
+          -- TODO copy not implemented yet so this doesn't work
+          --numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 0)
+          --, checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 0)
         ]
     ]
 

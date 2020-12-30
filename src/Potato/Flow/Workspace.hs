@@ -20,6 +20,7 @@ module Potato.Flow.Workspace (
 import           Relude
 
 import           Potato.Flow.Cmd
+import           Potato.Flow.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.State
@@ -142,10 +143,23 @@ pfc_removeElt_to_deleteElts PFState {..} lps = r where
   seltls = map ((IM.!) _pFState_directory) rids
   r = PFCDeleteElts ==> (zip3 rids lps seltls)
 
+-- TODO DELETE
 pfc_paste_to_newElts :: PFState -> ([SEltLabel], LayerPos) -> PFCmd
 pfc_paste_to_newElts pfs (seltls, lp) = r where
   rid = pFState_maxID pfs + 1
   r = PFCNewElts ==> zip3 [rid..] [lp..] seltls
+
+pfc_addRelative_to_newElts :: PFState -> (LayerPos, SEltTree) -> PFCmd
+pfc_addRelative_to_newElts pfs (lp, stree) = assert validScope $ r where
+  validScope = selectionHasScopingProperty scopeFn (Seq.fromList stree) [0..length stree - 1]
+  scopeFn (_,seltl) = case seltl of
+    (SEltLabel _ SEltFolderStart) -> Just True
+    (SEltLabel _ SEltFolderEnd)   -> Just False
+    _                             -> Nothing
+  -- TODO reposition/offset (could just offset by 1? or maybe need to add new arg)
+  -- TODO reindex SEltTree maintaing connections
+  rid = pFState_maxID pfs + 1
+  r = PFCNewElts ==> zip3 [rid..] [lp..] (fmap snd stree)
 
 --pfc_duplicate_to_duplicate :: PFState -> [LayerPos] -> PFCmd
 --pfc_duplicate_to_duplicate pfs lps = r where
@@ -156,7 +170,8 @@ pfc_paste_to_newElts pfs (seltls, lp) = r where
 -- TODO rename to WSEvent
 data WSEvent =
   WSEAddElt (Bool, (LayerPos, SEltLabel))
-  | WSEAddRelative SEltTree
+  -- TODO some sort of position/offset arg
+  | WSEAddRelative (LayerPos, SEltTree)
   | WSEAddFolder (LayerPos, Text)
   | WSERemoveElt [LayerPos]
   | WSEMoveElt ([LayerPos], LayerPos)
@@ -186,7 +201,7 @@ updatePFWorkspace evt ws = let
     WSEAddElt (undo, x) -> if undo
       then doCmdPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState x) ws
-    WSEAddRelative x -> error "not implemented"
+    WSEAddRelative x -> doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo
