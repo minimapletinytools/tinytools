@@ -75,7 +75,7 @@ mouseText mtais stext rmd = r where
       newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) dl ogtz
 
 -- TODO support shift selecting text someday meh
-inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe WSEventTag)
+inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe WSEvent)
 inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZip }, mop) where
 
   oldZip = _textAreaInputState_zipper tais

@@ -141,7 +141,7 @@ data BoxHandler = BoxHandler {
 
   }
 
-makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEventTag
+makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   selection = _potatoHandlerInput_selection
   RelMouseDrag MouseDrag {..} = rmd

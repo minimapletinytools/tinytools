@@ -342,7 +342,7 @@ layerInputNew ::
   -> LayerDragState
   -> Selection -- ^ current selection
   -> MouseDrag -- ^ input to update with
-  -> (LayerDragState, LayersState, Maybe (Bool, LayerPos), Maybe WSEventTag)
+  -> (LayerDragState, LayersState, Maybe (Bool, LayerPos), Maybe WSEvent)
 layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDrag {..} = let
     leposxy@(V2 _ lepos) = _mouseDrag_to + (V2 0 scrollPos)
   in case (_mouseDrag_state, lds) of

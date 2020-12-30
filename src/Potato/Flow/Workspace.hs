@@ -13,7 +13,7 @@ module Potato.Flow.Workspace (
   , pfc_addFolder_to_newElts
   , pfc_removeElt_to_deleteElts
   , pfc_paste_to_newElts
-  , WSEventTag(..)
+  , WSEvent(..)
   , updatePFWorkspace
 ) where
 
@@ -153,9 +153,8 @@ pfc_paste_to_newElts pfs (seltls, lp) = r where
 --  r = PFCFDuplicate ==> rids
 
 ------ update functions via commands
-
 -- TODO rename to WSEvent
-data WSEventTag =
+data WSEvent =
   WSEAddElt (Bool, (LayerPos, SEltLabel))
   | WSEAddFolder (LayerPos, Text)
   | WSERemoveElt [LayerPos]
@@ -181,7 +180,7 @@ doCmdPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   cmd = cmdFn undoedpfs
   r = doCmdWorkspace cmd undoedws
 
-updatePFWorkspace :: WSEventTag -> PFWorkspace -> PFWorkspace
+updatePFWorkspace :: WSEvent -> PFWorkspace -> PFWorkspace
 updatePFWorkspace evt ws = let
   lastState = _pFWorkspace_pFState ws
   r = case evt of

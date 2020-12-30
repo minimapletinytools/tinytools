@@ -98,7 +98,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- TODO someday add this to support multi-user mode :O
   -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
-  --, _goatWidgetConfig_externalWSEvent :: Event t WSEventTag
+  --, _goatWidgetConfig_externalWSEvent :: Event t WSEvent
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel :: Event t Text

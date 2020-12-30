@@ -46,7 +46,7 @@ import qualified Text.Show
 data PotatoHandlerOutput = PotatoHandlerOutput {
     _potatoHandlerOutput_nextHandler   :: Maybe SomePotatoHandler
     , _potatoHandlerOutput_select      :: Maybe (Bool, Selection)
-    , _potatoHandlerOutput_pFEvent     :: Maybe WSEventTag
+    , _potatoHandlerOutput_pFEvent     :: Maybe WSEvent
     , _potatoHandlerOutput_pan         :: Maybe XY
     , _potatoHandlerOutput_layersState :: Maybe LayersState
   } deriving (Show)
