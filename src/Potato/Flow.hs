@@ -9,6 +9,7 @@ module Potato.Flow (
   , module Potato.Flow.Entry
   , module Potato.Flow.State
   , module Potato.Flow.Controller
+  , module Potato.Flow.Workspace
 ) where
 
 import           Potato.Flow.BroadPhase
@@ -20,4 +21,5 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
+import           Potato.Flow.Workspace
 import           Reflex.Data.Directory
