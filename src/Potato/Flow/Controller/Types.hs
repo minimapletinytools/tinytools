@@ -97,10 +97,6 @@ instance Default LayerMeta where
 
 type LayerMetaMap = REltIdMap LayerMeta
 
-
--- TODO this is a problem because LayerMetaMap
--- I guess you can just reindex LayerMetaMap to index via LayerPos (which should be the same as REltId after loading I think)
--- Alternatively, you could just have SPotatoFlow include REltId, that might be slightly better solution...
 data ControllerMeta = ControllerMeta {
   _controllerMeta_pan      :: XY
   , _controllerMeta_layers :: LayerMetaMap

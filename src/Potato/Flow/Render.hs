@@ -161,5 +161,21 @@ moveRenderedCanvas bpt dir lbx rc = r where
   r1 = moveRenderedCanvasNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_lBox lbx (_renderedCanvas_box rc))
 
+-- TODO test
 updateCanvas :: SEltLabelChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
-updateCanvas = undefined
+updateCanvas cslmap BroadPhaseState {..} PFState {..} rc = case _broadPhaseState_needsUpdate of
+  [] -> rc
+  -- TODO incremental rendering
+  (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
+    Nothing -> rc
+    Just aabb -> r where
+      rids = broadPhase_cull aabb _broadPhaseState_bPTree
+      seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+        Nothing -> case IM.lookup rid _pFState_directory of
+          Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
+          Just seltl -> seltl
+        Just mseltl -> case mseltl of
+          Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
+          Just seltl -> seltl
+      -- TODO need to order seltls by layer position oops
+      r = render aabb (map _sEltLabel_sElt seltls) rc

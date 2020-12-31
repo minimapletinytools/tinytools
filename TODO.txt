@@ -24,21 +24,18 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
--mega refactor
-  DONE-consider making REltId serialized (you'll need this to do connections)
-    -remember to support copy pasta of connected elts
-  DONE/IGNORE-think through what additional data is needed to validate for undo/redo in multi user mode
+-layer crap
   -consider doing tree structure for folders
--layers
-  -layers selection and actual selection are different
-  IGNORE-select folder start also selects folder end in layers
-  -render selection in layers (add to lentry)
-  -PFEMove moves all children if folder was moved
+  -layers
+    -layers selection and actual selection are different
+    IGNORE-select folder start also selects folder end in layers
+    -render selection in layers (add selected state to lentry)
+    -PFEMove moves all children if folder was moved
 -connect rendering
 -decide how to handle params
   -prob a view only thing, add hookup for params in goat widget I guess
 -sort out input hierarchies in vty
-  -support popups
+  DONE-support popups
   -support params
     -could be treated as a special popup?
   -layers/canvas separate mouse input
@@ -48,12 +45,10 @@ IGNORE-simple select compromise
   -rename (when supported)
   -drag omve collapsed folder
   -select non-contiguous elements and drag+move
--add deselect support to LayersHandler
+-add deselect support to LayersHandler ???
 -PFStateChangeFlag and have each PFState operation return a change flag as well
--rename master branch
 -connect handlers to vty
 -connect layers to vty
--resolve ControllerMeta REltId synchronization issue
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
@@ -79,6 +74,11 @@ IGNORE-simple select compromise
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+DONE-consider making REltId serialized (you'll need this to do connections)
+  -remember to support copy pasta of connected elts
+DONE/IGNORE-think through what additional data is needed to validate for undo/redo in multi user mode
+DONE-rename master branch
+DONE-resolve ControllerMeta REltId synchronization issue
 DONE-copy pasta
   DONE-implement copy
   DONE-ctrl-v/s/z/etc sent via keyboard,
