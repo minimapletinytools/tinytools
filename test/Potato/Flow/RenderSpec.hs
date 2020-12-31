@@ -4,14 +4,16 @@ module Potato.Flow.RenderSpec(
   spec
 ) where
 
-import           Relude       hiding (empty, fromList)
+import           Relude                 hiding (empty, fromList)
 
 import           Test.Hspec
 
-import           Data.Default (def)
-import qualified Data.Text    as T
+import           Data.Default           (def)
+import qualified Data.IntMap            as IM
+import qualified Data.Text              as T
 
 import           Potato.Flow
+import           Potato.Flow.TestStates
 
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
 testCanvas x y w h = emptyRenderedCanvas (LBox (V2 x y) (V2 w h))
@@ -75,3 +77,16 @@ spec = do
         canvas3 = moveRenderedCanvasNoReRender target canvas2
         canvas3Text = renderedCanvasToText canvas3
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas3Text) `shouldBe` 50*50
+    it "updateCanvas - basic" $ do
+      let
+        makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def))
+        canvas0 = testCanvas 0 0 100 100
+        state0 = pfstate_basic1
+        bpt0 = bPTreeFromPFState state0
+        -- TODO actual changes
+        changes1 = IM.empty
+        bps1 = update_bPTree IM.empty bpt0
+        state1 = state0
+        canvas1 = updateCanvas changes1 bps1 state1 (pFState_getLayerPosMap state1) canvas0
+      -- TODO test something
+      0 `shouldBe` 0

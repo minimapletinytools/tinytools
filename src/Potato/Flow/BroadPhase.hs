@@ -3,6 +3,7 @@
 module Potato.Flow.BroadPhase (
   AABB
   , BPTree(..)
+  , bPTreeFromPFState
   , emptyBPTree
   , broadPhase_cull
 
@@ -18,6 +19,7 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
+import           Potato.Flow.State
 import           Potato.Flow.Types
 
 import qualified Data.IntMap.Strict      as IM
@@ -32,8 +34,12 @@ data BPTree = BPTree {
 emptyBPTree :: BPTree
 emptyBPTree = BPTree IM.empty
 
+bPTreeFromPFState :: PFState -> BPTree
+bPTreeFromPFState PFState {..} = r where
+  potato_tree = IM.mapMaybe (getSEltBox . _sEltLabel_sElt) _pFState_directory
+  r = BPTree potato_tree
 
-
+-- TODO split contents apart, these should be tracked separately
 data BroadPhaseState = BroadPhaseState {
   _broadPhaseState_needsUpdate :: [AABB] -- this is what changed since last time
   , _broadPhaseState_bPTree    :: BPTree -- updated BPTree
@@ -41,6 +47,8 @@ data BroadPhaseState = BroadPhaseState {
 
 emptyBroadPhaseState :: BroadPhaseState
 emptyBroadPhaseState = BroadPhaseState [] emptyBPTree
+
+
 
 
 -- | updates a BPTree and returns list of AABBs that were affected
