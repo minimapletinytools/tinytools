@@ -9,7 +9,7 @@ IGNORE-simple select compromise
       -consider modifying PFMove to move all children as well by default
     -must disallow dropping on an unselected child
   -won't work due to folders
--more complicated select
+-more complicated select (prob ok?)
   -layers has its own selection
     -canvas selection = layer selection - locked/hidden stuff - folders
   -moving folder auto moves all children
@@ -50,6 +50,9 @@ IGNORE-simple select compromise
     -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
 
 ::NEWEST TODO::
+-custom serializers for SEltLabel
+  DONE-prob just use Data.Binary
+  -thought you could do something more efficient to omit optional parameters
 -layer crap
   -consider doing tree structure for folders
   -layers (probably go with "more complicated select")
@@ -62,57 +65,68 @@ IGNORE-simple select compromise
     -PFEMove moves all children if folder was moved
       -addAllChildrenToSelection
     IGNORE-select folder start also selects folder end in layers
+    -shift deselect test
+    -add deselect support to LayersHandler ???
 -rendering crap
   -finish TODOs in updateCanvas
   -layer show/hide needs to return SEltLabelChanges
   -rendering happens in GoatWidget??
     -or just make sure utility functions make it easy enough to do this outside of GoatWidget
     -I guess this can take a _goatWidgetConfig_screen Dynamic t (Int,Int)
--decide how to handle params
+-params
   -prob a view only thing, add hookup for params in goat widget I guess
--sort out input hierarchies in vty
-  DONE-support popups
-  -support params
-    -could be treated as a special popup?
-  -layers/canvas separate mouse input
-  -keyboard goes to popups/params first, then to goat
-  -am I missing anything??
+  -need common methods for reading style of multi-select stuff
+  -is there a way to systemize different types of styles
+    -SuperStyle
+    -TextStyle
+    -LineStyle
+      -make this part of SuperStyle
+      -when displaying, show simplified version of it
 -layers test for the future
   -rename (when supported)
-  -drag omve collapsed folder
+  -drag move collapsed folder
   -select non-contiguous elements and drag+move
--add deselect support to LayersHandler ???
+-need narrow phase selection methods, i.e. can't just do it using boxes
+  -make sure to test :)
+-copy pasta translate a little by default?
+  -or attempt to place in middle of canvas viewport prob better
 -PFStateChangeFlag and have each PFState operation return a change flag as well
--connect handlers to vty
--connect layers to vty
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
     -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
   -clear out pSelectionChanged comments
--need narrow phase selection methods, i.e. can't just do it using boxes
-  -make sure to test :)
--copy pasta translate a little by default?
-  -or attempt to place in middle of canvas viewport prob better
--group spec
-  -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
-  -you can select individuals group elts via layers
-  -eventually implement focus mode
--improved renderer spec
-  -kd tree in broadphase I guess
--cartesian lines spec
--connections spec
-  -there may be missing/invalid connections, that's ok, just figure out a way to handle them
-    -note, you must still be able to manipulate things with invalid connections so this could get messy
-    -this way if you undo, the connection gets restored
--insert mode text area spec
-  -(how to handle resize??)
+-SimpleSEltLine
+  -renderer
+  -prototoype connections
+-refactor for ordering service spec D:
+-SPECS
+  -cartesian lines spec
+  -group spec
+    -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
+    -you can select individuals group elts via layers
+    -eventually implement focus mode
+  -improved renderer spec
+    -kd tree in broadphase I guess
+  -connections spec
+    -there may be missing/invalid connections, that's ok, just figure out a way to handle them
+      -note, you must still be able to manipulate things with invalid connections so this could get messy
+      -this way if you undo, the connection gets restored
+  -insert mode text area spec
+    -(how to handle resize??)
 -layer bonus
   -write method to update layers incrementally when there are changes + when moving elements around in layers
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+DONE-connect handlers to vty
+DONE-connect layers to vty
+DONE-sort out input hierarchies in vty
+  DONE-support popups
+  DONE-layers/canvas separate mouse input
+  DONE-keyboard goes to popups/params first, then to goat
+  IGNORE-am I missing anything??
 DONE-consider making REltId serialized (you'll need this to do connections)
   -remember to support copy pasta of connected elts
 DONE/IGNORE-think through what additional data is needed to validate for undo/redo in multi user mode

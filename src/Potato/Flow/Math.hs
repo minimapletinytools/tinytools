@@ -40,6 +40,7 @@ import           Relude
 
 import           Control.Exception (assert)
 import           Data.Aeson
+import           Data.Binary
 import           Linear.V2
 import qualified Text.Show
 
@@ -74,6 +75,7 @@ instance Show LBox where
 
 instance FromJSON LBox
 instance ToJSON LBox
+instance Binary LBox
 instance NFData LBox
 
 nilLBox :: LBox

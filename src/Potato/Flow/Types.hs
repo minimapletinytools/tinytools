@@ -37,6 +37,7 @@ import           Potato.Flow.SElts
 
 import           Control.Exception         (assert)
 import           Data.Aeson
+import           Data.Binary
 import           Data.Constraint.Extras.TH
 import           Data.Default
 import qualified Data.Dependent.Sum        as DS
@@ -187,6 +188,7 @@ data SCanvas = SCanvas {
 
 instance FromJSON SCanvas
 instance ToJSON SCanvas
+instance Binary SCanvas
 instance NFData SCanvas
 
 -- TODO serialize PFState instead
@@ -197,4 +199,5 @@ data SPotatoFlow = SPotatoFlow {
 
 instance FromJSON SPotatoFlow
 instance ToJSON SPotatoFlow
+instance Binary SPotatoFlow
 instance NFData SPotatoFlow

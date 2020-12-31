@@ -20,6 +20,7 @@ import           Potato.Flow.Math
 
 import           Control.Exception (assert)
 import           Data.Aeson
+import           Data.Binary
 import           Data.Default
 import qualified Data.List         as L
 
@@ -29,6 +30,7 @@ data FillStyle = FillStyle_Blank | FillStyle_Simple PChar deriving (Eq, Generic,
 
 instance FromJSON FillStyle
 instance ToJSON FillStyle
+instance Binary FillStyle
 instance NFData FillStyle
 
 instance Default FillStyle where
@@ -49,6 +51,7 @@ data SuperStyle = SuperStyle {
 
 instance FromJSON SuperStyle
 instance ToJSON SuperStyle
+instance Binary SuperStyle
 instance NFData SuperStyle
 
 instance Default SuperStyle where
@@ -99,6 +102,7 @@ data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign
 
 instance FromJSON TextAlign
 instance ToJSON TextAlign
+instance Binary TextAlign
 instance NFData TextAlign
 
 instance Default TextAlign where
@@ -112,6 +116,7 @@ data TextStyle = TextStyle {
 
 instance FromJSON TextStyle
 instance ToJSON TextStyle
+instance Binary TextStyle
 instance NFData TextStyle
 
 instance Default TextStyle where
@@ -125,6 +130,7 @@ data SBox = SBox {
 
 instance FromJSON SBox
 instance ToJSON SBox
+instance Binary SBox
 instance NFData SBox
 
 -- |
@@ -137,6 +143,7 @@ data SLine = SLine {
 
 instance FromJSON SLine
 instance ToJSON SLine
+instance Binary SLine
 instance NFData SLine
 
 -- TODO make manipulator
@@ -150,6 +157,7 @@ data SCartLines = SCartLines {
 
 instance FromJSON SCartLines
 instance ToJSON SCartLines
+instance Binary SCartLines
 instance NFData SCartLines
 
 
@@ -162,6 +170,7 @@ data SText = SText {
 
 instance FromJSON SText
 instance ToJSON SText
+instance Binary SText
 instance NFData SText
 
 -- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
@@ -169,6 +178,7 @@ data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine
 
 instance FromJSON SElt
 instance ToJSON SElt
+instance Binary SElt
 instance NFData SElt
 
 data SEltLabel = SEltLabel {
@@ -178,4 +188,5 @@ data SEltLabel = SEltLabel {
 
 instance FromJSON SEltLabel
 instance ToJSON SEltLabel
+instance Binary SEltLabel
 instance NFData SEltLabel
