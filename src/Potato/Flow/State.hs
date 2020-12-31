@@ -106,7 +106,7 @@ pFState_getSEltLabels PFState {..} rids = foldr (\rid acc -> IM.insert rid (IM.l
 pFState_maxID :: PFState -> REltId
 pFState_maxID s = maybe 0 fst (IM.lookupMax (_pFState_directory s))
 
-pFState_getLayerPosMap :: PFState -> REltIdMap LayerPos
+pFState_getLayerPosMap :: PFState -> LayerPosMap
 pFState_getLayerPosMap pfs = Seq.foldrWithIndex (\lp rid acc -> IM.insert rid lp acc) IM.empty (_pFState_layers pfs)
 
 emptyPFState :: PFState

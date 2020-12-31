@@ -65,7 +65,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
     _potatoHandlerInput_pFState       :: PFState
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
-    , _potatoHandlerInput_layerPosMap :: REltIdMap LayerPos
+    , _potatoHandlerInput_layerPosMap :: LayerPosMap
 
     -- * from Frontend
     , _potatoHandlerInput_tool        :: Tool

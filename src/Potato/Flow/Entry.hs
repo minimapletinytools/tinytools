@@ -89,7 +89,7 @@ data PFOutput t = PFOutput {
   , _pfo_pFState_canvas    :: Dynamic t (SCanvas)
 
   -- takes REltId to LayerPos
-  , _pfo_layerPosMap       :: Dynamic t (REltIdMap LayerPos)
+  , _pfo_layerPosMap       :: Dynamic t (LayerPosMap)
 
   , _pfo_potato_changed    :: Event t SEltLabelChangesWithLayerPos
 

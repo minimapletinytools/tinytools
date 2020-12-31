@@ -51,7 +51,7 @@ data GoatState = GoatState {
     -- TODO Refactor these out into GoatTab or something like that
     -- TODO consider including handlers (vs regenerating from selection each time you switch tabs)
     _goatState_pFWorkspace       :: PFWorkspace
-    , _goatState_layerPosMap     :: REltIdMap LayerPos
+    , _goatState_layerPosMap     :: LayerPosMap
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection       :: Selection
     , _goatState_broadPhaseState :: BroadPhaseState

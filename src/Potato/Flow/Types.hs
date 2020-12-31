@@ -9,6 +9,7 @@ module Potato.Flow.Types (
   , ControllersWithId
   , SEltLabelChanges
   , SEltLabelChangesWithLayerPos
+  , LayerPosMap
 
   -- * controllers
   , CRename(..)
@@ -53,6 +54,7 @@ type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
 type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
+type LayerPosMap = REltIdMap LayerPos
 
 -- | (old text, new text)
 type DeltaText = (Text,Text)

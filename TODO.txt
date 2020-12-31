@@ -23,7 +23,7 @@ IGNORE-simple select compromise
   -completely independent canvas and layer selection
   -TODO spec
 
-:: 12/30/2020 orderering service (OS) spec::
+::12/30/2020 orderering service (OS) spec::
   -OS has complete control over PFState
     -insert between PFWorkspace and PFState I guess?
   -OS tracks stack starting from initial state followed by series of actions
@@ -445,7 +445,7 @@ _sEltLayerTree_view         :: Dynamic t (Seq REltId)
 , _sEltLayerTree_changeView :: Event t (REltIdMap (Maybe SEltLabel, Maybe SEltLabel)) -- elements that were added, moved, or deleted
 , _directory_contents   :: Dynamic t (REltIdMap SEltLabel)
 
-, _sEltLayerTree_reverseMap   :: Dynamic t (REltIdMap LayerPos)
+, _sEltLayerTree_reverseMap   :: Dynamic t (LayerPosMap)
 , _sEltLayerTree_copied     :: Dynamic t (Seq SEltLabel)
 , _sEltLayerTree_potato_state :: Dynamic t [SEltLabel]
 
