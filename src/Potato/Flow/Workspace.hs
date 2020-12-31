@@ -207,6 +207,7 @@ updatePFWorkspace evt ws = let
     WSEManipulate (undo, x) -> if undo
       then doCmdPFWorkspaceUndoPermanentFirst (const (PFCManipulate ==> x)) ws
       else doCmdWorkspace (PFCManipulate ==> x) ws
+    -- TODO add children to selection before moving
     WSEMoveElt x -> doCmdWorkspace (PFCMove ==> x) ws
     WSEResizeCanvas x -> doCmdWorkspace (PFCResizeCanvas ==> x) ws
     WSEUndo -> undoWorkspace ws

@@ -155,6 +155,18 @@ makeCanvasSelectionFromSelection PFState {..} lmm selection = flip Seq.filter se
     Nothing             -> True
     Just LayerMeta {..} -> True
 
+
+makeClipboard :: GoatState -> Maybe SEltTree
+makeClipboard GoatState {..} = r where
+  -- TODO if there are connections that aren't included in selection, convert SElt
+  selectionToSEltTree :: Selection -> SEltTree
+  selectionToSEltTree selection = assert (validateSelection selection)
+    $ fmap (\(rid,_,seltl) -> (rid, seltl)) (toList selection)
+
+  r = if Seq.null _goatState_selection
+    then _goatState_clipboard
+    else Just $ selectionToSEltTree _goatState_selection
+
 potatoHandlerOutputNoHandlerChange :: GoatState -> PotatoHandlerOutput
 potatoHandlerOutputNoHandlerChange GoatState {..} = def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
 
@@ -320,14 +332,10 @@ foldGoatFn cmd goatState@GoatState {..} = do
               KeyboardData (KeyboardKey_Delete) [] -> r where
                 r = (goatState, potatoHandlerOutputDeleteSelection goatState)
               KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
-                copied = if Seq.null _goatState_selection
-                  then _goatState_clipboard
-                  else Just $ selectionToSEltTree _goatState_selection
+                copied = makeClipboard goatState
                 r = (goatState { _goatState_clipboard = copied }, def)
               KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
-                copied = if Seq.null _goatState_selection
-                  then _goatState_clipboard
-                  else Just $ selectionToSEltTree _goatState_selection
+                copied = makeClipboard goatState
                 r = (goatState { _goatState_clipboard = copied }, potatoHandlerOutputDeleteSelection goatState)
               KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
                 pastaEv = case _goatState_clipboard of

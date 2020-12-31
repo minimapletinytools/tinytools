@@ -218,7 +218,7 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
       then le -- no changes to skipped elts
       else entryfn le
 
--- TODO change 'LayerMetaMap -> LayerEntries' to 'LayersState'
+-- TODO we also need SEltLabelChanges so we know to render/hide elts that were shown/hidden
 toggleLayerEntry :: PFState -> LayerMetaMap -> Seq LayerEntry -> LayerEntryPos -> LockHideCollapseOp -> (LayerMetaMap, Seq LayerEntry)
 toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
   le = Seq.index lentries lepos

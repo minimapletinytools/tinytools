@@ -7,8 +7,6 @@ module Potato.Flow.Controller.Types (
   , Selection
   , disjointUnionSelection
   , validateSelection
-  , selectionToSEltTree
-
   , LayerMeta(..)
   , LayerMetaMap
   , ControllerMeta(..)
@@ -71,9 +69,6 @@ validateSelection selection = r1 && r2 where
     (SEltLabel _ SEltFolderEnd)   -> Just False
     _                             -> Nothing
 
-selectionToSEltTree :: Selection -> SEltTree
-selectionToSEltTree selection = assert (validateSelection selection) r where
-  r = fmap (\(rid,_,seltl) -> (rid, seltl)) (toList selection)
 
 
 data LayerMeta = LayerMeta {

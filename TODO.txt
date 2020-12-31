@@ -23,15 +23,51 @@ IGNORE-simple select compromise
   -completely independent canvas and layer selection
   -TODO spec
 
+:: 12/30/2020 orderering service (OS) spec::
+  -OS has complete control over PFState
+    -insert between PFWorkspace and PFState I guess?
+  -OS tracks stack starting from initial state followed by series of actions
+  -OS has "previewApply :: Action -> OS -> OS"
+  -OS internally has "finalize :: [Action] -> OS -> OS" (acts on last finalized point in history)
+    -probably should also return [ActionRef] as list of invalidated Actions
+  -PFWorkspace interface
+    -userActions :: ActionStack
+    -invalidateUserAction :: ActionRef -> ActionStack -> ActionStack
+    -undo/redoAction :: ActionStack -> (Action, ActionStack)
+  -??? Some way to detect invalid actions ??
+    -e.g.
+      -A moves X (action A1)
+      -B moves X (action B1)
+      -A1 should now be invalid action?
+    -alternatively, actions are never invalidated, and undo restores SElt state rather than tries to undo the action
+  -checkTransitivity :: Action -> Action -> Bool
+    -simple implementation to return False if the 2 actions share the same REltId
+      -connections can probably be ignored, they can be tested for too
+  -prob need to sync layers as well D:?
+    -though doesn't matter if these go out of sync.. still it would be nice to keep these in sync
+    -can use same ordering service for this I guess, no need to worry about invalidating actions
+    -OS can output LayersState that needs to update GoatState
+    -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
+
 ::NEWEST TODO::
 -layer crap
   -consider doing tree structure for folders
-  -layers
+  -layers (probably go with "more complicated select")
     -layers selection and actual selection are different
-    IGNORE-select folder start also selects folder end in layers
+      -need a way to figure out parent
+        -refactor layers to use tree structure
+        -maintain an IntMap LayerEntry for non-visible LayerEntry as well
+        -maintain IntMap REltId parent map
     -render selection in layers (add selected state to lentry)
     -PFEMove moves all children if folder was moved
--connect rendering
+      -addAllChildrenToSelection
+    IGNORE-select folder start also selects folder end in layers
+-rendering crap
+  -finish TODOs in updateCanvas
+  -layer show/hide needs to return SEltLabelChanges
+  -rendering happens in GoatWidget??
+    -or just make sure utility functions make it easy enough to do this outside of GoatWidget
+    -I guess this can take a _goatWidgetConfig_screen Dynamic t (Int,Int)
 -decide how to handle params
   -prob a view only thing, add hookup for params in goat widget I guess
 -sort out input hierarchies in vty
@@ -65,7 +101,10 @@ IGNORE-simple select compromise
 -improved renderer spec
   -kd tree in broadphase I guess
 -cartesian lines spec
--attached line spec
+-connections spec
+  -there may be missing/invalid connections, that's ok, just figure out a way to handle them
+    -note, you must still be able to manipulate things with invalid connections so this could get messy
+    -this way if you undo, the connection gets restored
 -insert mode text area spec
   -(how to handle resize??)
 -layer bonus

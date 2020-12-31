@@ -163,6 +163,7 @@ do_deleteElts = undo_newElts
 undo_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 undo_deleteElts = do_newElts
 
+-- TODO assert selection has all children
 do_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) (r, changes) where
   -- TODO something like this
