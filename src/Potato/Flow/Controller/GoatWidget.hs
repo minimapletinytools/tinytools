@@ -397,11 +397,14 @@ foldGoatFn cmd goatState@GoatState {..} = do
     newEltFoldMapFn rid v = case v of
       Nothing     -> []
       Just (lp,seltl) -> if IM.member rid (_pFState_directory last_pFState) then [] else [(rid,lp,seltl)]
+
+    -- TODO don't select changes on load
+    wasLoad = False
     mSelectionFromChanges = if IM.null cslmap
       then Nothing
       else Just r where
         newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
-        r = if null newlyCreatedSEltls
+        r = if wasLoad || null newlyCreatedSEltls
           -- if there are no newly created elts, we still need to update the selection
           then catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,_) ->
             case IM.lookup rid cslmap of

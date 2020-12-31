@@ -4,8 +4,17 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Potato.Flow.Controller.Monad (
-  GoatWidgetTest
+  checkSingle
+  , checkSingleMaybe
+  , GoatWidgetTest(..)
+  , AppInputTriggerRefs(..)
+  , AppInputEvents(..)
+  , AppOutput(..)
   , runGoatTestApp
+
+  -- you will always need methods from these modules in order to use this module
+  , module Reflex.Test.Monad.Host
+  , module Reflex.Host.Class
 ) where
 
 import           Relude                            hiding (empty, fromList)
@@ -23,6 +32,17 @@ import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.TestStates
 
 import           Control.Monad.Fix
+
+-- TODO check that there was only 1 output
+checkSingle :: (HasCallStack, Eq a, Show a) => [a] -> a -> Assertion
+checkSingle values a = case nonEmpty values of
+  Nothing -> assertFailure "empty list"
+  Just x  -> a @=? head x
+
+checkSingleMaybe :: (HasCallStack, Eq a, Show a) => [Maybe a] -> a -> Assertion
+checkSingleMaybe values a = case nonEmpty values of
+  Nothing -> assertFailure "empty list"
+  Just x  -> Just a @=? head x
 
 data GoatWidgetTest t (m :: Type -> Type)
 
@@ -46,7 +66,7 @@ instance (TestGuestConstraints t m) => ReflexTestApp (GoatWidgetTest t m) t m wh
     (inload, intrefload) <- newEventWithTriggerRef
     (indebug, intrefdebug) <- newEventWithTriggerRef
     return (
-        GoatWidgetTest_InputEvents (GoatWidgetConfig undefined inmouse inkb intool inload indebug)
+        GoatWidgetTest_InputEvents (GoatWidgetConfig emptyPFState inmouse inkb intool inload indebug)
         , GoatWidgetTest_InputTriggerRefs intrefmouse intrefkb intreftool intrefload intrefdebug
       )
 

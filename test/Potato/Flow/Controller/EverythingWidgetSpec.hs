@@ -23,6 +23,7 @@ import           Potato.Flow.Controller.Layers
 
 -- test imports
 import           Potato.Flow.Common
+import           Potato.Flow.Controller.Monad
 import           Potato.Flow.TestStates
 
 import qualified Data.IntMap                       as IM
@@ -428,6 +429,61 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
 
     ]
 
+everything_basic_monad_test :: Test
+everything_basic_monad_test = TestLabel "basic monad" $ TestCase $ runSpiderHost $
+  runReflexTestApp @ (GoatWidgetTest (SpiderTimeline Global) (SpiderHost Global)) $ do
+
+    -- get our app's input triggers
+    GoatWidgetTest_InputTriggerRefs {..} <- inputTriggerRefs
+
+    -- TODO move this into a helper
+    -- get our app's output events and subscribe to them
+    GoatWidgetTest_Output (GoatWidget {..}) <- outputs
+    toolH <- subscribeEvent (updated _goatWidget_tool)
+
+    -- TODO move this into a helper
+    -- setup common ReadPhases
+    let
+      readToolEv = sequence =<< readEvent toolH
+
+    -- fire an empty event
+    fireQueuedEventsAndRead (return ())
+
+    -- set the tool
+    queueEventTriggerRef _goatWidgetTest_inputTriggerRefs_selectTool Tool_Pan
+    fireQueuedEventsAndRead readToolEv >>= \a -> liftIO (checkSingleMaybe a Tool_Pan)
+
+
+
+everything_saveload_monadtest :: Test
+everything_saveload_monadtest = TestLabel "saveload" $ TestCase $ runSpiderHost $
+  runReflexTestApp @ (GoatWidgetTest (SpiderTimeline Global) (SpiderHost Global)) $ do
+
+    -- get our app's input triggers
+    GoatWidgetTest_InputTriggerRefs {..} <- inputTriggerRefs
+
+    -- TODO move this into a helper
+    -- get our app's output events and subscribe to them
+    GoatWidgetTest_Output (GoatWidget {..}) <- outputs
+    --goatStateH <- subscribeEvent (updated _goatWidget_DEBUG_goatState)
+    toolH <- subscribeEvent (updated _goatWidget_tool)
+
+    -- TODO move this into a helper
+    -- setup common ReadPhases
+    let
+      --readGoatState = sample . current $ _goatWidget_DEBUG_goatState
+      --readGoatStateEv = sequence =<< readEvent goatStateH
+      --readTool = sample . current $ _goatWidget_tool
+      readToolEv = sequence =<< readEvent toolH
+
+    -- fire an empty event
+    fireQueuedEventsAndRead (return ())
+
+    -- set the tool
+    queueEventTriggerRef _goatWidgetTest_inputTriggerRefs_selectTool Tool_Pan
+    fireQueuedEventsAndRead readToolEv >>= \a -> liftIO (checkSingleMaybe a Tool_Pan)
+
+
 spec :: Spec
 spec = do
   describe "EverythingWidget" $ do
@@ -435,3 +491,5 @@ spec = do
     fromHUnitTest $ everything_layers_test
     fromHUnitTest $ everything_keyboard_test
     fromHUnitTest $ everything_basic_test
+    fromHUnitTest $ everything_saveload_monadtest
+    fromHUnitTest $ everything_basic_monad_test
