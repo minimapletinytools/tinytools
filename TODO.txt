@@ -53,6 +53,7 @@ IGNORE-simple select compromise
 -custom serializers for SEltLabel
   DONE-prob just use Data.Binary
   -thought you could do something more efficient to omit optional parameters
+  -save load test
 -layer crap
   -consider doing tree structure for folders
   -layers (probably go with "more complicated select")
