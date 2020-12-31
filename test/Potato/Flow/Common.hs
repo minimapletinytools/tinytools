@@ -114,7 +114,7 @@ checkNumElts n PFState {..} = (t,r) where
 
 numEltsInLBoxUsingBroadphasePredicate :: Int -> LBox -> EverythingPredicate
 numEltsInLBoxUsingBroadphasePredicate n lbox = FunctionPredicate $
-  (\(BroadPhaseState _ bps _) ->
+  (\(BroadPhaseState _ bps) ->
     let gotn = length $ broadPhase_cull lbox bps
     in ("BroadPhase passed: " <> show gotn <> " expected: " <> show n <> " broadphase: " <> show bps, gotn == n))
   . _goatState_broadPhaseState

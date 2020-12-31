@@ -37,11 +37,10 @@ emptyBPTree = BPTree IM.empty
 data BroadPhaseState = BroadPhaseState {
   _broadPhaseState_needsUpdate :: [AABB] -- this is what changed since last time
   , _broadPhaseState_bPTree    :: BPTree -- updated BPTree
-  , _broadPhaseState_changes   :: SEltLabelChanges -- TODO DELETE I don't think I need this
 } deriving (Show, Eq)
 
 emptyBroadPhaseState :: BroadPhaseState
-emptyBroadPhaseState = BroadPhaseState [] emptyBPTree IM.empty
+emptyBroadPhaseState = BroadPhaseState [] emptyBPTree
 
 
 -- | updates a BPTree and returns list of AABBs that were affected
@@ -68,7 +67,7 @@ update_bPTree changes BPTree {..} = r where
     ([],[])
     (IM.toList changes)
   (aabbs', nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods
-  r = BroadPhaseState aabbs' (BPTree nbpt) changes
+  r = BroadPhaseState aabbs' (BPTree nbpt)
 
 -- TODO prob don't need this, DELETE
 --update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
