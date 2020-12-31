@@ -103,32 +103,32 @@ spec = do
         let
           lmm_0 = IM.empty -- everything collapsed
           lentries_0 = generateLayersNew someState1 lmm_0
-          (lmm_1, lentries_1) = toggleLayerEntry someState1 lmm_0 lentries_0 0 LHCO_ToggleCollapse
+          (lmm_1, lentries_1) = toggleLayerEntry someState1 (lmm_0, lentries_0) 0 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
 
         -- hide 0
         let
-          (lmm_2, lentries_2) = toggleLayerEntry someState1 lmm_1 lentries_1 0 LHCO_ToggleHide
+          (lmm_2, lentries_2) = toggleLayerEntry someState1 (lmm_1, lentries_1) 0 LHCO_ToggleHide
         _layerEntry_hideState (Seq.index lentries_2 0) `shouldBe` LHS_True
         forM_ [1,2,3,4] $ \i -> do
           _layerEntry_hideState (Seq.index lentries_2 i) `shouldBe` LHS_False_InheritTrue
 
         -- hide 1, show 0
         let
-          (lmm_3, lentries_3) = toggleLayerEntry someState1 lmm_2 lentries_2 1 LHCO_ToggleHide
-          (lmm_4, lentries_4) = toggleLayerEntry someState1 lmm_3 lentries_3 0 LHCO_ToggleHide
+          (lmm_3, lentries_3) = toggleLayerEntry someState1 (lmm_2, lentries_2) 1 LHCO_ToggleHide
+          (lmm_4, lentries_4) = toggleLayerEntry someState1 (lmm_3, lentries_3) 0 LHCO_ToggleHide
         forM_ [0,2,3,4] $ \i -> do
           _layerEntry_hideState (Seq.index lentries_4 i) `shouldBe` LHS_False
         _layerEntry_hideState (Seq.index lentries_4 1) `shouldBe` LHS_True
 
         -- lock 4
         let
-          (lmm_5, lentries_5) = toggleLayerEntry someState1 lmm_4 lentries_4 4 LHCO_ToggleLock
+          (lmm_5, lentries_5) = toggleLayerEntry someState1 (lmm_4, lentries_4) 4 LHCO_ToggleLock
         _layerEntry_lockState (Seq.index lentries_5 4) `shouldBe` LHS_True
 
         -- close first folder
         let
-          (lmm_final, lentries_final) = toggleLayerEntry someState1 lmm_5 lentries_5 0 LHCO_ToggleCollapse
+          (lmm_final, lentries_final) = toggleLayerEntry someState1 (lmm_5, lentries_5) 0 LHCO_ToggleCollapse
         Seq.length lentries_final `shouldBe` 1
         lentries_final `shouldBe` lentries_0
       it "basic2" $ do
@@ -142,7 +142,7 @@ spec = do
 
         -- collapse layer entry 7, which should do nothing because it's an empty folder
         let
-          (lmm_1, lentries_1) = toggleLayerEntry someState1 lmm_0 lentries_0 7 LHCO_ToggleCollapse
+          (lmm_1, lentries_1) = toggleLayerEntry someState1 (lmm_0, lentries_0) 7 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 8
 
       it "basic3" $ do
@@ -156,7 +156,7 @@ spec = do
 
         -- expand last folder, there should be one more element
         let
-          (lmm_1, lentries_1) = toggleLayerEntry someState3 lmm_0 lentries_0 3 LHCO_ToggleCollapse
+          (lmm_1, lentries_1) = toggleLayerEntry someState3 (lmm_0, lentries_0) 3 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
     describe "updateLayers" $ do
       it "basic" $ do

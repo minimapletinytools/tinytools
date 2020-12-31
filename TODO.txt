@@ -69,7 +69,7 @@ IGNORE-simple select compromise
     -shift deselect test
     -add deselect support to LayersHandler ???
 -rendering crap
-  -finish TODOs in updateCanvas
+  DONE/IGNORe-finish TODOs in updateCanvas
   -layer show/hide needs to return SEltLabelChanges
   -rendering happens in GoatWidget??
     -or just make sure utility functions make it easy enough to do this outside of GoatWidget

@@ -9,6 +9,7 @@ module Potato.Flow.Controller.Layers (
   , clickLayerNew
   , doesSelectionContainLayerPos
   , makeLayersStateFromPFState
+  , changesFromToggleHide
 
   , layerEntry_isFolderStart
   , lockHiddenStateToBool
@@ -36,6 +37,7 @@ import           Potato.Flow.State
 import           Potato.Flow.Types
 import           Potato.Flow.Workspace
 
+import           Control.Lens                 (over, _2)
 import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap                  as IM
@@ -218,9 +220,25 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
       then le -- no changes to skipped elts
       else entryfn le
 
--- TODO we also need SEltLabelChanges so we know to render/hide elts that were shown/hidden
-toggleLayerEntry :: PFState -> LayerMetaMap -> Seq LayerEntry -> LayerEntryPos -> LockHideCollapseOp -> (LayerMetaMap, Seq LayerEntry)
-toggleLayerEntry pfs@PFState {..} lmm lentries lepos op = r where
+-- TODO test
+-- | assumes LayersState is after hide state of given lepos has just been toggled
+changesFromToggleHide :: PFState -> LayersState -> LayerEntryPos -> SEltLabelChanges
+changesFromToggleHide PFState {..} (lmm, lentries) lepos = r where
+  le = Seq.index lentries lepos
+  (lerid,_,leseltl) = _layerEntry_superSEltLabel le
+  lm = lookupWithDefault lerid lmm
+  isHidden = _layerMeta_isHidden lm
+  -- TODO find all unhidden children
+  -- not doing this right now becaues I haven't decided if I want to do layers refactor or not.
+  unhiddenChildren = []
+  r = if isHidden
+    then IM.fromList $ (lerid, Nothing) : (fmap (over _2 (const Nothing)) unhiddenChildren)
+    else IM.fromList $ (lerid,Just leseltl) : (fmap (over _2 Just) unhiddenChildren)
+
+
+
+toggleLayerEntry :: PFState -> LayersState -> LayerEntryPos -> LockHideCollapseOp -> LayersState
+toggleLayerEntry pfs@PFState {..} (lmm, lentries) lepos op = r where
   le = Seq.index lentries lepos
   ledepth = _layerEntry_depth le
   (lerid,_,_) = _layerEntry_superSEltLabel le
@@ -353,9 +371,9 @@ layerInputNew pfs scrollPos layerstate@(lmm, lentries) lds selection md@MouseDra
         LDT_Normal -> case doesSelectionContainLayerPos downlp selection of
           False -> (LDS_Selecting lepos, layerstate, Nothing, Nothing)
           True  -> (LDS_Dragging, layerstate, Nothing, Nothing)
-        LDT_Hide -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleHide, Nothing, Nothing)
-        LDT_Lock -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleLock, Nothing, Nothing)
-        LDT_Collapse -> (LDS_None, toggleLayerEntry pfs lmm lentries undefined LHCO_ToggleCollapse, Nothing, Nothing)
+        LDT_Hide -> (LDS_None, toggleLayerEntry pfs (lmm, lentries) undefined LHCO_ToggleHide, Nothing, Nothing)
+        LDT_Lock -> (LDS_None, toggleLayerEntry pfs (lmm, lentries) undefined LHCO_ToggleLock, Nothing, Nothing)
+        LDT_Collapse -> (LDS_None, toggleLayerEntry pfs (lmm, lentries) undefined LHCO_ToggleCollapse, Nothing, Nothing)
     (MouseDragState_Down, _)       -> error "unexpected, LayerDragState should have been reset on last mouse up"
     (MouseDragState_Up, LDS_None) -> error "unexpected, layer input handler should not have been created"
     -- TODO support drag selecting

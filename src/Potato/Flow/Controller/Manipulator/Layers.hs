@@ -14,6 +14,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Workspace
 
 import           Data.Default
+import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
 
@@ -42,18 +43,23 @@ instance PotatoHandler LayersHandler where
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
-        (nextDragState, mNextLayerState) = case clickLayerNew selection lentries leposxy of
-          Nothing -> (LDS_None, Nothing)
+        (nextDragState, mNextLayerState, changes) = case clickLayerNew selection lentries leposxy of
+          Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
           Just (downlp, ldtdown) -> case ldtdown of
             LDT_Normal -> if shift || (not $ doesSelectionContainLayerPos downlp selection)
               -- if element wasn't selected or shift is held down, enter selection mode
-              then (LDS_Selecting lepos, Nothing)
-              else (LDS_Dragging, Nothing)
-            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleHide)
-            LDT_Lock -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleLock)
-            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs lmm lentries lepos LHCO_ToggleCollapse)
+              then (LDS_Selecting lepos, Nothing, IM.empty)
+              else (LDS_Dragging, Nothing, IM.empty)
+            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleHide, IM.empty)
+            LDT_Lock -> r' where
+              nextLayersState = toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleLock
+              hideChanges = changesFromToggleHide pfs nextLayersState lepos
+              r' = (LDS_None, Just $ nextLayersState, hideChanges)
+            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleCollapse, IM.empty)
 
+        -- TODO also return changes
+        -- NOTE, need to finish changesFromToggleHide first
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
