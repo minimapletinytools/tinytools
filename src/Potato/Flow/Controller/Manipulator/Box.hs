@@ -203,8 +203,8 @@ instance PotatoHandler BoxHandler where
       boxToAdd = def {
           _sBox_box     = LBox _mouseDrag_from dragDelta
           , _sBox_text  = if _boxHandler_isText
-            then Just def
-            else Nothing
+            then def { _sBoxText_text = "" }
+            else def
           --, _sBox_style :: SuperStyle -- TODO pull from params
           --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
         }

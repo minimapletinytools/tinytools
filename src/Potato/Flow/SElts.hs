@@ -129,7 +129,7 @@ instance Default TextStyle where
 
 -- |
 data SBoxTitle = SBoxTitle {
-  _sBoxTitle_title   :: Text
+  _sBoxTitle_title   :: Maybe Text
   , _sBoxTitle_align :: TextAlign
 } deriving (Eq, Generic, Show)
 
@@ -140,7 +140,7 @@ instance NFData SBoxTitle
 
 instance Default SBoxTitle where
   def = SBoxTitle {
-      _sBoxTitle_title = ""
+      _sBoxTitle_title = Nothing
       , _sBoxTitle_align = def
     }
 
@@ -163,10 +163,11 @@ instance Default SBoxText where
 
 -- |
 data SBox = SBox {
-  _sBox_box     :: LBox
-  , _sBox_style :: SuperStyle
-  , _sBox_title :: Maybe SBoxTitle
-  , _sBox_text  :: Maybe SBoxText
+  _sBox_box         :: LBox
+  , _sBox_style     :: SuperStyle
+  , _sBox_title     :: SBoxTitle
+  , _sBox_text      :: SBoxText
+  , _sBox_isTextBox :: Bool
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
@@ -178,8 +179,9 @@ instance Default SBox where
   def = SBox {
       _sBox_box     = LBox 0 0
       , _sBox_style = def
-      , _sBox_title = Nothing
-      , _sBox_text  = Nothing
+      , _sBox_title = def
+      , _sBox_text  = def
+      , _sBox_isTextBox = False
     }
 
 -- |

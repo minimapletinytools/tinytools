@@ -51,9 +51,7 @@ data BoxTextInputState = BoxTextInputState {
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
 makeBoxTextInputState :: SBox -> RelMouseDrag -> BoxTextInputState
 makeBoxTextInputState sbox rmd = r where
-  ogtext = case _sBox_text sbox of
-    Nothing             -> error "expected text"
-    Just (SBoxText x _) -> x
+  ogtext = _sBoxText_text . _sBox_text $ sbox
   ogtz = TZ.fromText ogtext
   box@(LBox _ (V2 width _)) = _sBox_box sbox
   r' = BoxTextInputState {
@@ -120,12 +118,10 @@ makeBoxTextHandler prev selection rmd = BoxTextHandler {
     }
 
 updateBoxTextHandlerState :: Selection -> BoxTextHandler -> BoxTextHandler
-updateBoxTextHandlerState selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
+updateBoxTextHandlerState selection tah@BoxTextHandler {..} = trace "TZ" $ traceShow oldtz $ traceShow recomputetz $ assert tzIsCorrect r where
   sbox = getSBox selection
 
-  newText = case _sBox_text sbox of
-    Nothing             -> error "expected text"
-    Just (SBoxText x _) -> x
+  newText = _sBoxText_text . _sBox_text $ sbox
 
   recomputetz = TZ.fromText newText
   oldtz = _boxTextInputState_zipper _boxTextHandler_state
