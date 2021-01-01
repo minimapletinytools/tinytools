@@ -71,36 +71,36 @@ test_BoxHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       , AlwaysPass
       , AlwaysPass
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 11 11) (V2 4 4)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 11) (V2 4 4)
+        _                           -> False
 
       , LabelCheck "resize tr corner b2"
       , AlwaysPass
       , AlwaysPass
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 11 9) (V2 4 6)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 9) (V2 4 6)
+        _                           -> False
 
       , LabelCheck "resize bl corner b2"
       , AlwaysPass
       , AlwaysPass
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 8 9) (V2 7 6)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 8 9) (V2 7 6)
+        _                           -> False
 
       , LabelCheck "resize br corner b2"
       , AlwaysPass
       , AlwaysPass
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 8 9) (V2 12 11)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 8 9) (V2 12 11)
+        _                           -> False
 
       , LabelCheck "area move b2"
       , AlwaysPass
       , AlwaysPass
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 13 14) (V2 12 11)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 13 14) (V2 12 11)
+        _                           -> False
     ]
 
 -- TODO test this on non-SBox stuff too
@@ -122,8 +122,8 @@ test_BoxHandler_select_and_drag = constructTest "select and drag" pfstate_basic1
       , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 11 11) (V2 5 5)
-        _                         -> False
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 11) (V2 5 5)
+        _                           -> False
 
     ]
 
@@ -156,8 +156,8 @@ test_BoxHandler_restrict8 = constructTest "restrict8" pfstate_basic1 bs expected
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , firstSuperSEltLabelPredicate (Just "b2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == 10 && y == 1
-        _                                      -> False
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 10 && y == 1
+        _                                        -> False
     ]
 
 test_LineHandler_drag :: Test
@@ -247,8 +247,8 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_box True
       , Combine [
           firstSuperSEltLabelPredicate (Just "<box>") $ \(_,_,SEltLabel _ selt) -> case selt of
-            SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
-            _                         -> False
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
+            _                           -> False
           , numSelectedEltsEqualPredicate 1
         ]
 
@@ -269,7 +269,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_box True
       , Combine [
           firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
-            SEltBox (SBox lbox _ _ _) -> lbox == LBox (V2 100 100) (V2 20 20)
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 100 100) (V2 20 20)
             _                         -> False
           , numSelectedEltsEqualPredicate 1
           , checkHandlerNameAndState handlerName_boxText False

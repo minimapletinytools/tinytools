@@ -35,7 +35,7 @@ import           Potato.Flow.Layers
 
 
 simpleSBox :: SBox
-simpleSBox = SBox (LBox (V2 5 5) (V2 5 5)) def def def
+simpleSBox = SBox (LBox (V2 5 5) (V2 5 5)) def def def False
 
 data FCmd =
   FCNone
@@ -224,8 +224,9 @@ randomActionFCmd doundo stree = do
           SBox {
             _sBox_box = LBox p1 p2
             , _sBox_style = def
-            , _sBox_title = Nothing
-            , _sBox_text = Nothing
+            , _sBox_title = def
+            , _sBox_text = def
+            , _sBox_isTextBox = False
           }
         1 -> return $ FCAddElt pos $ SEltLine
           SLine {

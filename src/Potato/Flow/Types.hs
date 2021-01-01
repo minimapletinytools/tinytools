@@ -134,6 +134,15 @@ instance Delta SText CText where
       _sText_text   = minusDelta _sText_text _cText_deltaText
     }
 
+instance Delta SBoxText CText where
+  plusDelta sboxtext@SBoxText {..} CText {..} = sboxtext {
+      _sBoxText_text   = plusDelta _sBoxText_text _cText_deltaText
+    }
+  minusDelta sboxtext@SBoxText {..} CText {..} = sboxtext {
+      _sBoxText_text   = minusDelta _sBoxText_text _cText_deltaText
+    }
+
+
 -- | transforms object based on a reference point
 -- used for multi-selection
 data CBoundingBox = CBoundingBox {
