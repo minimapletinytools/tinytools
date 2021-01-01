@@ -22,20 +22,20 @@ import qualified Data.List                    as L
 import qualified Data.Sequence                as Seq
 import           Data.Tuple.Extra
 
-data SelectionManipulatorType = SMTNone | SMTBox | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
+data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
 
 computeSelectionType :: Selection -> SelectionManipulatorType
 computeSelectionType = foldl' foldfn SMTNone where
   foldfn accType (_,_,SEltLabel _ selt) = case accType of
     SMTNone -> case selt of
-      SEltBox _  -> SMTBox
-      SEltLine _ -> SMTLine
-      SEltText _ -> SMTText
+      SEltBox sbox -> if _sBox_isTextBox sbox then SMTBoxText else SMTBox
+      SEltLine _   -> SMTLine
+      SEltText _   -> SMTText
       -- TODO
       --SEltFolderStart _ -> SMTNone
       --SEltFolderEnd _ -> SMTNone
       --SEltNone -> SMTNone
-      _          -> SMTBoundingBox
+      _            -> SMTBoundingBox
     _ -> SMTBoundingBox
 
 restrict4 :: XY -> XY

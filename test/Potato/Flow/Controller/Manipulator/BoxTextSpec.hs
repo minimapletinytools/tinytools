@@ -64,11 +64,7 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
 
-      -- select it
-      , EWCLabel "select <text>"
-      , EWCTool Tool_Select
-      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+
 
       , EWCLabel "modify <text>"
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
@@ -77,9 +73,18 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
 
       , EWCLabel "move cursor <text>"
+      , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 11 10) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 11 10) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
+
+      , EWCLabel "exit BoxText"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "select <text> at end of line"
+      , EWCMouse (LMouseData (V2 10 18) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 18) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'b') [])
 
     ]
   expected = [
@@ -92,15 +97,8 @@ test_basic = constructTest "basic" emptyPFState bs expected where
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
-
-          -- TODO we will change this so we go straight to text edit mode at some point
-          , checkHandlerNameAndState handlerName_box False
         ]
 
-      , LabelCheck "select <text>"
-      , EqPredicate _goatState_selectedTool Tool_Select
-      , checkHandlerNameAndState handlerName_box True
-      , checkHandlerNameAndState handlerName_boxText False
 
       , LabelCheck "modify <text>"
       , checkHandlerNameAndState handlerName_boxText False
@@ -109,9 +107,19 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , checkSBoxText "<text>" "poop"
 
       , LabelCheck "move cursor <text>"
+      , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "paoop"
+
+      , LabelCheck "exit BoxText"
+      , checkHandlerNameAndState handlerName_box False
+
+
+      , LabelCheck "select <text> at end of line"
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkSBoxText "<text>" "paoopb"
     ]
 
 spec :: Spec

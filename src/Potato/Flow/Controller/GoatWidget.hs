@@ -135,8 +135,8 @@ data GoatWidget t = GoatWidget {
 -- TODO rename to makeHandlerFromCanvasSelection
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
-  -- TODO if this was a newly created element, we want to create a BoxText handler
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
+  SMTBoxText     -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
   SMTText        -> SomePotatoHandler EmptyHandler -- TODO
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
@@ -295,13 +295,16 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
                   Just pho -> (goatState', pho)
                   Nothing -> error "handler was expected to capture this mouse state"
+
                 -- special drag + select case, override the selection
                 -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                 -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
+                -- also NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case GoatWidget will set the correct handler type
                 else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                   -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
                   Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                   Nothing -> error "handler was expected to capture this mouse state"
+
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 
       GoatCmdKeyboard kbd -> case kbd of
