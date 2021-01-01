@@ -50,11 +50,18 @@ IGNORE-simple select compromise
     -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
 
 ::NEWEST TODO::
--custom serializers for SEltLabel
-  DONE-prob just use Data.Binary
-  -thought you could do something more efficient to omit optional parameters
-  -save load test
--layer crap
+
+-rendering
+  -get rid of BroadPhaseState (carry changes around separately)
+  -layer show/hide needs to return SEltLabelChanges
+  -render based on screen not canvas
+    -add _goatWidgetConfig_screen Dynamic t (Int,Int)
+  -wrap initial render into helper function
+  DONE/IGNORE-finish TODOs in updateCanvas
+  DONE-rendering happens in GoatWidget??
+    -or just make sure utility functions make it easy enough to do this outside of GoatWidget
+
+-layers
   -consider doing tree structure for folders
   -layers (probably go with "more complicated select")
     -layers selection and actual selection are different
@@ -68,12 +75,11 @@ IGNORE-simple select compromise
     IGNORE-select folder start also selects folder end in layers
     -shift deselect test
     -add deselect support to LayersHandler ???
--rendering crap
-  DONE/IGNORe-finish TODOs in updateCanvas
-  -layer show/hide needs to return SEltLabelChanges
-  -rendering happens in GoatWidget??
-    -or just make sure utility functions make it easy enough to do this outside of GoatWidget
-    -I guess this can take a _goatWidgetConfig_screen Dynamic t (Int,Int)
+  -selectMagic should ignore locked elements
+    -test it
+  -finish changesFromToggleHide
+    -test it
+
 -params
   -prob a view only thing, add hookup for params in goat widget I guess
   -need common methods for reading style of multi-select stuff
@@ -121,6 +127,10 @@ IGNORE-simple select compromise
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+DONE/IGNORE-custom serializers for SEltLabel
+  DONE-prob just use Data.Binary
+  IGNORE-thought you could do something more efficient to omit optional parameters
+  IGNORE-save load test
 DONE-connect handlers to vty
 DONE-connect layers to vty
 DONE-sort out input hierarchies in vty

@@ -27,6 +27,7 @@ import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
+import           Potato.Flow.Render
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
@@ -56,6 +57,7 @@ data GoatState = GoatState {
     , _goatState_selection       :: Selection
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
+    , _goatState_renderedCanvas  :: RenderedCanvas
 
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
@@ -124,6 +126,7 @@ data GoatWidget t = GoatWidget {
   -- TODO render here?
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
   , _goatWidget_canvas              :: Dynamic t SCanvas
+  , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvas
 
   -- debug stuff prob
   , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
@@ -392,7 +395,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
       r = Seq.sortBy sortfn r'
 
-
   -- get selection from changes
   newEltFoldMapFn rid v = case v of
     Nothing     -> []
@@ -427,6 +429,20 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
+  -- TODO render the scene if the screen moved
+  --moveRenderedCanvas :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
+  next_renderedCanvas' = _goatState_renderedCanvas
+
+
+  -- render the scene if there were changes
+  cslmapFromHide = IM.empty -- TODO
+  cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
+  next_renderedCanvas = if IM.null cslmapForRendering
+    then next_renderedCanvas'
+    else updateCanvas cslmapForRendering next_broadPhaseState next_pFState next_layerPosMap next_renderedCanvas'
+
+
+
   finalGoatState = goatStateAfterGoatCmd {
       _goatState_pFWorkspace      = next_workspace
       , _goatState_pan             = next_pan
@@ -454,8 +470,15 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     --initialize broadphase with initial state
     initialbp = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
     initiallayersstate = makeLayersStateFromPFState _goatWidgetConfig_initialState
+
+    -- TODO wrap this in a helper function in Render
+    -- TODO we want to render the whole screen, not just the canvas
+    initialCanvasBox = _sCanvas_box $ _pFState_canvas _goatWidgetConfig_initialState
+    initialselts = fmap (\(SEltLabel _ selt) -> selt) $ toList $ _pFState_directory _goatWidgetConfig_initialState
+    initialrc = render initialCanvasBox initialselts (emptyRenderedCanvas initialCanvasBox)
+
     initialgoat = GoatState {
-        _goatState_pFWorkspace      = (loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace)
+        _goatState_pFWorkspace      = loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = def
@@ -464,6 +487,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_debugLabel      = ""
         , _goatState_selection       = Seq.empty
         , _goatState_broadPhaseState = initialbp
+        , _goatState_renderedCanvas = initialrc
         , _goatState_layersState     = initiallayersstate
         , _goatState_layerPosMap = pFState_getLayerPosMap _goatWidgetConfig_initialState
         , _goatState_clipboard = Nothing
@@ -484,6 +508,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState . _goatState_pFWorkspace) goatDyn
+  let
+    r_renderedCanvas = fmap _goatState_renderedCanvas goatDyn
 
   return GoatWidget
     {
@@ -493,6 +519,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase
       , _goatWidget_canvas = r_canvas
+      , _goatWidget_renderedCanvas = r_renderedCanvas
       , _goatWidget_handlerRenderOutput =  r_handlerRenderOutput
       , _goatWidget_DEBUG_goatState = goatDyn
     }

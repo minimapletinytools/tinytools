@@ -28,6 +28,8 @@ import qualified Data.Sequence                  as Seq
 
 
 
+-- TODO ignore locked elements
+-- NOTE hidden stuff is already removed from BroadPhaseState
 selectMagic :: PFState -> LayerPosMap -> BroadPhaseState -> RelMouseDrag -> Selection
 selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
