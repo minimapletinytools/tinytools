@@ -1,13 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
 -- TODO probably move this to Manipulator.Box.Text
-module Potato.Flow.Controller.Manipulator.TextArea (
-  TextAreaHandler(..)
-  , TextAreaInputState(..)
-  , makeTextAreaHandler
+module Potato.Flow.Controller.Manipulator.BoxText (
+  BoxTextHandler(..)
+  , BoxTextInputState(..)
+  , makeBoxTextHandler
 
   -- exposed for testing
-  , makeTextAreaInputState
+  , makeBoxTextInputState
   , mouseText
 
 ) where
@@ -36,49 +36,49 @@ getSText selection = case selectionToSuperSEltLabel selection of
   (_,_,SEltLabel _ (SEltText stext)) -> stext
   (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
 
-data TextAreaInputState = TextAreaInputState {
-  _textAreaInputState_original       :: Text -- needed to properly create DeltaText for undo
-  , _textAreaInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
-  , _textAreaInputState_zipper       :: TZ.TextZipper
-  , _textAreaInputState_displayLines :: TZ.DisplayLines ()
-  --, _textAreaInputState_selected :: Int -- WIP
+data BoxTextInputState = BoxTextInputState {
+  _boxTextInputState_original       :: Text -- needed to properly create DeltaText for undo
+  , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
+  , _boxTextInputState_zipper       :: TZ.TextZipper
+  , _boxTextInputState_displayLines :: TZ.DisplayLines ()
+  --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
---instance Default TextAreaInputState where
---  def = TextAreaInputState "" (LBox 0 0) TZ.empty undefined 0
+--instance Default BoxTextInputState where
+--  def = BoxTextInputState "" (LBox 0 0) TZ.empty undefined 0
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
-makeTextAreaInputState :: SText -> RelMouseDrag -> TextAreaInputState
-makeTextAreaInputState stext rmd = r where
+makeBoxTextInputState :: SText -> RelMouseDrag -> BoxTextInputState
+makeBoxTextInputState stext rmd = r where
   ogtz = TZ.fromText (_sText_text stext)
   box@(LBox _ (V2 width _)) = _sText_box stext
-  r' = TextAreaInputState {
-      _textAreaInputState_original   = _sText_text stext
-      , _textAreaInputState_box = box
-      , _textAreaInputState_zipper   = ogtz
-      , _textAreaInputState_displayLines = TZ.displayLines width () () ogtz
-      --, _textAreaInputState_selected = 0
+  r' = BoxTextInputState {
+      _boxTextInputState_original   = _sText_text stext
+      , _boxTextInputState_box = box
+      , _boxTextInputState_zipper   = ogtz
+      , _boxTextInputState_displayLines = TZ.displayLines width () () ogtz
+      --, _boxTextInputState_selected = 0
     }
   r = mouseText (Just r') stext rmd
 
 -- TODO define behavior for when you click outside box or assert
-mouseText :: Maybe TextAreaInputState -> SText -> RelMouseDrag -> TextAreaInputState
+mouseText :: Maybe BoxTextInputState -> SText -> RelMouseDrag -> BoxTextInputState
 mouseText mtais stext rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   r = case mtais of
-    Nothing -> makeTextAreaInputState stext rmd
-    Just tais -> tais { _textAreaInputState_zipper = newtz } where
-      ogtz = _textAreaInputState_zipper tais
+    Nothing -> makeBoxTextInputState stext rmd
+    Just tais -> tais { _boxTextInputState_zipper = newtz } where
+      ogtz = _boxTextInputState_zipper tais
       LBox (V2 x y) (V2 w _) = _sText_box stext
       V2 mousex mousey = _mouseDrag_to
-      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_textAreaInputState_displayLines tais) ogtz
+      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_boxTextInputState_displayLines tais) ogtz
 
 -- TODO support shift selecting text someday meh
-inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe WSEvent)
-inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZip }, mop) where
+inputText :: BoxTextInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZip }, mop) where
 
-  oldZip = _textAreaInputState_zipper tais
+  oldZip = _boxTextInputState_zipper tais
   (changed, newZip) = case kk of
     KeyboardKey_Left    -> (False, TZ.left oldZip)
     KeyboardKey_Right   -> (False, TZ.right oldZip)
@@ -93,66 +93,66 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
   controller = CTagText :=> (Identity $ CText {
-      _cText_deltaText = (_textAreaInputState_original tais, TZ.value newZip)
+      _cText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
     })
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])
     else Nothing
 
 -- TODO rename to BoxTextHandler
-data TextAreaHandler = TextAreaHandler {
+data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
-    _textAreaHandler_isActive      :: Bool
-    , _textAreaHandler_state       :: TextAreaInputState
-    , _textAreaHandler_prevHandler :: SomePotatoHandler
-    , _textAreaHandler_undoFirst   :: Bool
+    _boxTextHandler_isActive      :: Bool
+    , _boxTextHandler_state       :: BoxTextInputState
+    , _boxTextHandler_prevHandler :: SomePotatoHandler
+    , _boxTextHandler_undoFirst   :: Bool
   }
 
-makeTextAreaHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> TextAreaHandler
-makeTextAreaHandler prev selection rmd = TextAreaHandler {
-      _textAreaHandler_isActive = False
-      , _textAreaHandler_state = makeTextAreaInputState (getSText selection) rmd
-      , _textAreaHandler_prevHandler = prev
-      , _textAreaHandler_undoFirst = False
+makeBoxTextHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> BoxTextHandler
+makeBoxTextHandler prev selection rmd = BoxTextHandler {
+      _boxTextHandler_isActive = False
+      , _boxTextHandler_state = makeBoxTextInputState (getSText selection) rmd
+      , _boxTextHandler_prevHandler = prev
+      , _boxTextHandler_undoFirst = False
     }
 
-updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
-updateTextAreaHandlerState selection tah@TextAreaHandler {..} = assert tzIsCorrect r where
+updateBoxTextHandlerState :: Selection -> BoxTextHandler -> BoxTextHandler
+updateBoxTextHandlerState selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
   stext = getSText selection
 
   newText = _sText_text stext
   recomputetz = TZ.fromText (newText)
-  oldtz = _textAreaInputState_zipper _textAreaHandler_state
+  oldtz = _boxTextInputState_zipper _boxTextHandler_state
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
 
-  -- TODO refactor out into updateTextAreaStateNoTextZipper from SEltText
+  -- TODO refactor out into updateBoxTextStateNoTextZipper from SEltText
   newBox@(LBox _ (V2 width _)) = _sText_box stext
-  nextstate = _textAreaHandler_state {
-      _textAreaInputState_box = newBox
-      , _textAreaInputState_displayLines = TZ.displayLines width () () oldtz
+  nextstate = _boxTextHandler_state {
+      _boxTextInputState_box = newBox
+      , _boxTextInputState_displayLines = TZ.displayLines width () () oldtz
     }
 
   r = tah {
-    _textAreaHandler_state = nextstate
+    _boxTextHandler_state = nextstate
   }
 
-instance PotatoHandler TextAreaHandler where
-  pHandlerName _ = handlerName_textArea
+instance PotatoHandler BoxTextHandler where
+  pHandlerName _ = handlerName_boxText
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
+      tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
       stext = getSText _potatoHandlerInput_selection
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
-        clickOutside = does_lBox_contains_XY (_textAreaInputState_box _textAreaHandler_state) _mouseDrag_from
-        newState = mouseText (Just _textAreaHandler_state) stext rmd
+        clickOutside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_from
+        newState = mouseText (Just _boxTextHandler_state) stext rmd
         r = if clickOutside
           then Nothing
           else Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _textAreaHandler_isActive = True
-                  , _textAreaHandler_state = newState
+                  _boxTextHandler_isActive = True
+                  , _boxTextHandler_state = newState
                 }
             }
 
@@ -161,25 +161,25 @@ instance PotatoHandler TextAreaHandler where
 
       MouseDragState_Up -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-              _textAreaHandler_isActive = False
-              --, _textAreaHandler_undoFirst = False -- this variant adds new undo point each time cursor is moved
+              _boxTextHandler_isActive = False
+              --, _boxTextHandler_undoFirst = False -- this variant adds new undo point each time cursor is moved
             }
         }
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
       _ -> error "unexpected mouse state passed to handler"
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of
-    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah') }
+    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxTextHandler_prevHandler tah') }
     _ -> Just r where
-      tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
+      tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
       sseltl = selectionToSuperSEltLabel _potatoHandlerInput_selection
       -- TODO decide what to do with mods
-      (nexttais, mev) = inputText _textAreaHandler_state _textAreaHandler_undoFirst sseltl k
+      (nexttais, mev) = inputText _boxTextHandler_state _boxTextHandler_undoFirst sseltl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-              _textAreaHandler_state  = nexttais
-              , _textAreaHandler_undoFirst = case mev of
-                Nothing -> _textAreaHandler_undoFirst
+              _boxTextHandler_state  = nexttais
+              , _boxTextHandler_undoFirst = case mev of
+                Nothing -> _boxTextHandler_undoFirst
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
@@ -187,4 +187,4 @@ instance PotatoHandler TextAreaHandler where
         }
 
   pRenderHandler tah PotatoHandlerInput {..} = def
-  pIsHandlerActive = _textAreaHandler_isActive
+  pIsHandlerActive = _boxTextHandler_isActive
