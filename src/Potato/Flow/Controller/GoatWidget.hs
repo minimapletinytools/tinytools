@@ -469,6 +469,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       , _goatState_handler         = next_handler
       , _goatState_selection       = next_selection
       , _goatState_broadPhaseState = next_broadPhaseState
+      , _goatState_renderedCanvas = next_renderedCanvas
       , _goatState_layersState     = next_layersState
       , _goatState_layerPosMap = next_layerPosMap
     }
