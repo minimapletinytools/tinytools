@@ -101,6 +101,8 @@ dependencies:
 - reflex-vty
 - semialign
 - binary
+- mtl
+- text-icu
 
 #- smash
 - deepseq

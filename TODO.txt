@@ -1,6 +1,15 @@
 stack test --test-arguments='--match "LayersHandler"'
 
 :: 12/26/2020 selection spec::
+
+-get basic box working using existing text zipper
+-add alignment to text zipper
+-add text functionality to SEltBox
+-convert textarea into free form
+  -implement or at least add stubs for this
+-add BoxTitle
+  -maybe left/right/center text
+
 IGNORE-simple select compromise
   -no distinguish between regular select and layer select
   -click drag on selected moves selected
@@ -89,6 +98,7 @@ IGNORE-simple select compromise
     -LineStyle
       -make this part of SuperStyle
       -when displaying, show simplified version of it
+    -BoxTitle
 -layers test for the future
   -rename (when supported)
   -drag move collapsed folder
