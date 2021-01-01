@@ -135,9 +135,10 @@ data GoatWidget t = GoatWidget {
 -- TODO rename to makeHandlerFromCanvasSelection
 makeHandlerFromSelection :: Selection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
+  -- TODO if this was a newly created element, we want to create a BoxText handler
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
-  SMTText        -> SomePotatoHandler $ (def { _boxHandler_isText = True }) -- pretty sure this is OK?
+  SMTText        -> SomePotatoHandler EmptyHandler -- TODO
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
   SMTNone        -> SomePotatoHandler EmptyHandler
 
@@ -216,11 +217,20 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
+  -- persist the handler if it's not a canvas input
+  -- we need to this because of our incorrect use of PotatoHandlerOutput as the intermediary return type of the proceeding case statement
+  -- i.e. the values of PotatoHandlerOutput are interpreted slightly differently here than intended
+  -- intended interpretation: isNothing _potatoHandlerOutput_nextHandler -> handler does not capture input
+  -- interpretation here when non-canvas input: isNothing _potatoHandlerOutput_nextHandler -> event not related to canvas handler
+  -- this really sucks, maybe you should fix it D:
+  -- NOTE for now, this type of input is not allowed when handler is active (may want to change this in the future?)
+  persistHandlerNoCanvasInput = assert (not $ pIsHandlerActive _goatState_handler ) def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
+
   (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
     SomePotatoHandler handler -> case cmd of
-      --GoatCmdSetDebugLabel x -> traceShow x $ (goatState { _goatState_debugLabel = x }, def)
-      GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, def)
-      GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, def)
+      --GoatCmdSetDebugLabel x -> traceShow x $ (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
+      GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
+      GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, persistHandlerNoCanvasInput)
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff
         (goatState, def {
@@ -243,13 +253,13 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         in case _mouseDrag_state mouseDrag of
           -- if mouse was cancelled, update _goatState_mouseDrag accordingly
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-            then (goatState' { _goatState_mouseDrag = def }, def)
-            else (goatState', def) -- still cancelled
+            then (goatState' { _goatState_mouseDrag = def }, persistHandlerNoCanvasInput)
+            else (goatState', persistHandlerNoCanvasInput) -- still cancelled
 
           -- if mouse is intended for layers
           _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
             Just pho -> processLayersHandlerOutput goatState' pho
-            Nothing  -> (goatState', def)
+            Nothing  -> (goatState', persistHandlerNoCanvasInput)
 
           -- special case, if mouse down and pan tool, we override with a new handler
           MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
@@ -258,10 +268,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
           -- special case, if mouse down and creation tool, we override with a new handler
           MouseDragState_Down | tool_isCreate _goatState_selectedTool -> assert (not $ pIsHandlerActive handler) r where
             someNewHandler = case _goatState_selectedTool of
-              Tool_Box    -> SomePotatoHandler $ def { _boxHandler_isCreation = True }
+              Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
               Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
               Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
-              Tool_Text   -> SomePotatoHandler $ def { _boxHandler_isCreation = True, _boxHandler_isText = True }
+              Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
               _           -> error "not valid tool"
 
             -- pass input onto newly created handler
@@ -359,7 +369,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
 
             -- unhandled input
-            _ -> (goatState, def)
+            _ -> (goatState, persistHandlerNoCanvasInput)
       _          -> undefined
 
 
@@ -402,13 +412,14 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   -- TODO don't select changes on load
   wasLoad = False
-  mSelectionFromChanges = if IM.null cslmap
-    then Nothing
-    else Just r where
+  -- update selection based on changes from updating PFState
+  (isNewSelection', selectionAfterChanges) = if IM.null cslmap
+    then (False, _goatState_selection)
+    else r where
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
-        then catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,_) ->
+        then (\x -> (False, x)) $ catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,_) ->
           case IM.lookup rid cslmap of
             -- no changes means not deleted
             Nothing                  -> Just sseltl
@@ -416,16 +427,22 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             Just Nothing             -> Nothing
             -- it was changed, update selection to newest version
             Just (Just (lp, seltl')) -> Just (rid, lp, seltl')
-        else Seq.fromList newlyCreatedSEltls
+        else (True, Seq.fromList newlyCreatedSEltls)
 
-  mnext_selection = assert (isNothing mSelectionFromPho || isNothing mSelectionFromChanges) $ asum [mSelectionFromPho, mSelectionFromChanges]
+  (isNewSelection, next_selection) = case mSelectionFromPho of
+    Just x  -> assert (not isNewSelection') (True, x)
+    -- better/more expensive check to ensure mSelectionFromPho stuff is mutually exclusive to selectionAfterChanges
+    --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
+    Nothing -> (isNewSelection', selectionAfterChanges)
+
   mHandlerFromPho = _potatoHandlerOutput_nextHandler phoAfterGoatCmd
-  (next_handler, next_selection) = case mnext_selection of
-    Just next_selection' -> (maybeUpdateHandlerFromSelection tempHandlerForUpdateFromSelection next_selection', next_selection') where
-      tempHandlerForUpdateFromSelection = fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho
-    Nothing -> (tempHandlerForUpdateFromPho, _goatState_selection) where
-      -- TODO makeHandlerFromSelection takes canvasSelection
-      tempHandlerForUpdateFromPho = fromMaybe (makeHandlerFromSelection _goatState_selection) mHandlerFromPho
+
+  next_handler = if isNewSelection
+    -- if there is a new selection, update the handler with new selection if handler wasn't active
+    then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_selection
+    -- otherwise, use the returned handler or make a new one from selection
+    else fromMaybe (makeHandlerFromSelection next_selection) mHandlerFromPho
+
   next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
@@ -459,6 +476,7 @@ holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
+    --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
     goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
       [ GoatCmdTool <$> _goatWidgetConfig_selectTool
       , GoatCmdLoad <$> _goatWidgetConfig_load

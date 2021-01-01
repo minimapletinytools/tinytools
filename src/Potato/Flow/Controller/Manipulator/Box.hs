@@ -4,6 +4,7 @@ module Potato.Flow.Controller.Manipulator.Box (
   computeSelectionType
   , BoxHandleType(..)
   , BoxHandler(..)
+  , BoxCreationType(..)
   , makeHandleBox
   , makeDeltaBox
   --, MouseManipulator(..)
@@ -127,17 +128,17 @@ makeDeltaBox bht (V2 dx dy) = case bht of
 
 
 
+data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationType_Text deriving (Show, Eq)
 
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
-    _boxHandler_handle       :: BoxHandleType -- the current handle we are dragging, TODO should this be Maybe BoxHandleType?
-    , _boxHandler_undoFirst  :: Bool
+    _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging, TODO should this be Maybe BoxHandleType?
+    , _boxHandler_undoFirst :: Bool
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
-    , _boxHandler_isCreation :: Bool
-    , _boxHandler_isText     :: Bool
-    , _boxHandler_active     :: Bool
+    , _boxHandler_creation  :: BoxCreationType
+    , _boxHandler_active    :: Bool
 
   }
 
@@ -166,8 +167,7 @@ instance Default BoxHandler where
   def = BoxHandler {
       _boxHandler_handle       = BH_BR -- does this matter?
       , _boxHandler_undoFirst  = False
-      , _boxHandler_isCreation = False
-      , _boxHandler_isText = False
+      , _boxHandler_creation = BoxCreationType_None
       , _boxHandler_active = False
       -- TODO whatever
       --, _boxHandler_wasDragged = False
@@ -176,7 +176,7 @@ instance Default BoxHandler where
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
   pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Down | _boxHandler_isCreation -> Just $ def {
+    MouseDragState_Down | _boxHandler_creation /= BoxCreationType_None -> Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
       }
     -- if shift is held down, ignore inputs
@@ -202,20 +202,20 @@ instance PotatoHandler BoxHandler where
 
       boxToAdd = def {
           _sBox_box     = LBox _mouseDrag_from dragDelta
-          , _sBox_text  = if _boxHandler_isText
-            then def { _sBoxText_text = "" }
-            else def
+          , _sBox_isTextBox  = _boxHandler_creation == BoxCreationType_Text
           --, _sBox_style :: SuperStyle -- TODO pull from params
           --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
         }
 
-      nameToAdd = if _boxHandler_isText then "<text>" else "<box>"
+      nameToAdd = if _boxHandler_creation == BoxCreationType_Text then "<text>" else "<box>"
 
-      op = if _boxHandler_isCreation
+      op = if _boxHandler_creation /= BoxCreationType_None
         then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel nameToAdd $ SEltBox $ boxToAdd))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }
+
+      -- NOTE, that if we did create a new box, it wil get auto selected and a new BoxHandler will be created for it
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
@@ -223,12 +223,16 @@ instance PotatoHandler BoxHandler where
         }
 
     MouseDragState_Up -> Just r where
-      prevhandler = def {
-          _boxHandler_isText = True
-        }
-      r = if _boxHandler_isText
+      isText = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
+        (_,_,SEltLabel _ (SEltBox SBox{..})) -> _sBox_isTextBox
+        _                                    -> error "unexpected type"
+
+      -- HACK if _boxHandler_undoFirst is false, that means we didn't actually do anything since the last time we clicked
+      -- which means we want to enter BoxText mode rather than move/modify the box
+      r = if isText && not _boxHandler_undoFirst
         then def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeBoxTextHandler (SomePotatoHandler prevhandler) _potatoHandlerInput_selection rmd
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler
+              $ makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd
           }
         else def
 

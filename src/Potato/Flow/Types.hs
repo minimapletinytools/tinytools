@@ -126,12 +126,12 @@ data CText = CText {
 
 instance NFData CText
 
-instance Delta SText CText where
-  plusDelta stext@SText {..} CText {..} = stext {
-      _sText_text   = plusDelta _sText_text _cText_deltaText
+instance Delta SBox CText where
+  plusDelta sbox@SBox {..} ctext = sbox {
+      _sBox_text   = plusDelta _sBox_text ctext
     }
-  minusDelta stext@SText {..} CText {..} = stext {
-      _sText_text   = minusDelta _sText_text _cText_deltaText
+  minusDelta sbox@SBox {..} ctext = sbox {
+      _sBox_text   = minusDelta _sBox_text ctext
     }
 
 instance Delta SBoxText CText where

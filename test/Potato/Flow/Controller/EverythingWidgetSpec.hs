@@ -329,11 +329,16 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , LabelCheck "create another elt, but cancel it"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerNameAndState handlerName_empty False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
           , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
           , checkHandlerNameAndState handlerName_empty False -- handler defaults to empty selection after cancelling :(
+        ]
+      -- same as above
+      , Combine [
+          PFStateFunctionPredicate (checkNumElts 1)
+          , numSelectedEltsEqualPredicate 0
+          , checkHandlerNameAndState handlerName_empty False
         ]
 
       , LabelCheck "press escape a bunch of times and make sure nothing breaks"
