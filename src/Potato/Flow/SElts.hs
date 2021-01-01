@@ -7,6 +7,8 @@ module Potato.Flow.SElts (
   , superStyle_fromListFormat
   , superStyle_toListFormat
   , TextStyle(..)
+  , SBoxTitle(..)
+  , SBoxText(..)
   , SBox(..)
   , SLine(..)
   , SText(..)

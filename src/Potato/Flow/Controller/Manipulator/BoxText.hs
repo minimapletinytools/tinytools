@@ -31,10 +31,10 @@ import qualified Data.Sequence                             as Seq
 import qualified Data.Text.Zipper                          as TZ
 import           Data.Tuple.Extra
 
-getSText :: Selection -> SText
-getSText selection = case selectionToSuperSEltLabel selection of
-  (_,_,SEltLabel _ (SEltText stext)) -> stext
-  (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
+getSBox :: Selection -> SBox
+getSBox selection = case selectionToSuperSEltLabel selection of
+  (_,_,SEltLabel _ (SEltBox sbox)) -> sbox
+  (_,_,SEltLabel _ selt) -> error $ "expected SBox, got " <> show selt
 
 data BoxTextInputState = BoxTextInputState {
   _boxTextInputState_original       :: Text -- needed to properly create DeltaText for undo
@@ -49,28 +49,31 @@ data BoxTextInputState = BoxTextInputState {
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
-makeBoxTextInputState :: SText -> RelMouseDrag -> BoxTextInputState
-makeBoxTextInputState stext rmd = r where
-  ogtz = TZ.fromText (_sText_text stext)
-  box@(LBox _ (V2 width _)) = _sText_box stext
+makeBoxTextInputState :: SBox -> RelMouseDrag -> BoxTextInputState
+makeBoxTextInputState sbox rmd = r where
+  ogtext = case _sBox_text sbox of
+    Nothing             -> error "expected text"
+    Just (SBoxText x _) -> x
+  ogtz = TZ.fromText ogtext
+  box@(LBox _ (V2 width _)) = _sBox_box sbox
   r' = BoxTextInputState {
-      _boxTextInputState_original   = _sText_text stext
+      _boxTextInputState_original   = ogtext
       , _boxTextInputState_box = box
       , _boxTextInputState_zipper   = ogtz
       , _boxTextInputState_displayLines = TZ.displayLines width () () ogtz
       --, _boxTextInputState_selected = 0
     }
-  r = mouseText (Just r') stext rmd
+  r = mouseText (Just r') sbox rmd
 
 -- TODO define behavior for when you click outside box or assert
-mouseText :: Maybe BoxTextInputState -> SText -> RelMouseDrag -> BoxTextInputState
-mouseText mtais stext rmd = r where
+mouseText :: Maybe BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
+mouseText mtais sbox rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   r = case mtais of
-    Nothing -> makeBoxTextInputState stext rmd
+    Nothing -> makeBoxTextInputState sbox rmd
     Just tais -> tais { _boxTextInputState_zipper = newtz } where
       ogtz = _boxTextInputState_zipper tais
-      LBox (V2 x y) (V2 w _) = _sText_box stext
+      LBox (V2 x y) (V2 w _) = _sBox_box sbox
       V2 mousex mousey = _mouseDrag_to
       newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_boxTextInputState_displayLines tais) ogtz
 
@@ -111,24 +114,27 @@ data BoxTextHandler = BoxTextHandler {
 makeBoxTextHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> BoxTextHandler
 makeBoxTextHandler prev selection rmd = BoxTextHandler {
       _boxTextHandler_isActive = False
-      , _boxTextHandler_state = makeBoxTextInputState (getSText selection) rmd
+      , _boxTextHandler_state = makeBoxTextInputState (getSBox selection) rmd
       , _boxTextHandler_prevHandler = prev
       , _boxTextHandler_undoFirst = False
     }
 
 updateBoxTextHandlerState :: Selection -> BoxTextHandler -> BoxTextHandler
 updateBoxTextHandlerState selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
-  stext = getSText selection
+  sbox = getSBox selection
 
-  newText = _sText_text stext
-  recomputetz = TZ.fromText (newText)
+  newText = case _sBox_text sbox of
+    Nothing             -> error "expected text"
+    Just (SBoxText x _) -> x
+
+  recomputetz = TZ.fromText newText
   oldtz = _boxTextInputState_zipper _boxTextHandler_state
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
 
   -- TODO refactor out into updateBoxTextStateNoTextZipper from SEltText
-  newBox@(LBox _ (V2 width _)) = _sText_box stext
+  newBox@(LBox _ (V2 width _)) = _sBox_box sbox
   nextstate = _boxTextHandler_state {
       _boxTextInputState_box = newBox
       , _boxTextInputState_displayLines = TZ.displayLines width () () oldtz
@@ -142,11 +148,11 @@ instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
-      stext = getSText _potatoHandlerInput_selection
+      sbox = getSBox _potatoHandlerInput_selection
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickOutside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_from
-        newState = mouseText (Just _boxTextHandler_state) stext rmd
+        newState = mouseText (Just _boxTextHandler_state) sbox rmd
         r = if clickOutside
           then Nothing
           else Just $ def {

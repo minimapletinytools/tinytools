@@ -22,11 +22,10 @@ import qualified Data.Text.Zipper                           as TZ
 testText1 :: Text
 testText1 = "aoeu\nhi\n12345wrapping"
 
-testSText1 :: SText
-testSText1 = SText {
-    _sText_box = LBox (V2 5 5) (V2 5 10)
-    , _sText_text = testText1
-    , _sText_style = def
+testSText1 :: SBox
+testSText1 = def {
+    _sBox_box = LBox (V2 5 5) (V2 5 10)
+    , _sBox_text = Just $ SBoxText testText1 def
   }
 
 testClick :: Int -> Int -> RelMouseDrag
