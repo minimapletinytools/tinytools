@@ -225,11 +225,11 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Up -> Just r where
       isText = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
         (_,_,SEltLabel _ (SEltBox SBox{..})) -> _sBox_isTextBox
-        _                                    -> error "unexpected type"
+        _                                    -> False
 
       -- HACK if _boxHandler_undoFirst is false, that means we didn't actually do anything since the last time we clicked
       -- which means we want to enter BoxText mode rather than move/modify the box
-      r = if isText && not _boxHandler_undoFirst
+      r = if isText && (not _boxHandler_undoFirst || _boxHandler_creation == BoxCreationType_Text)
         then def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler
               $ makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd
