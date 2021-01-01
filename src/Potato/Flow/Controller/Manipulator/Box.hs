@@ -200,10 +200,19 @@ instance PotatoHandler BoxHandler where
       --shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
       --boxRestrictedDelta = if shiftClick then restrict8 dragDelta else dragDelta
 
+      boxToAdd = def {
+          _sBox_box     = LBox _mouseDrag_from dragDelta
+          , _sBox_text  = if _boxHandler_isText
+            then Just def
+            else Nothing
+          --, _sBox_style :: SuperStyle -- TODO pull from params
+          --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
+        }
+
+      nameToAdd = if _boxHandler_isText then "<text>" else "<box>"
+
       op = if _boxHandler_isCreation
-        then if _boxHandler_isText
-          then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<text>" $ SEltText $ SText (LBox _mouseDrag_from dragDelta) "" def))
-          else WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel "<box>" $ SEltBox $ SBox (LBox _mouseDrag_from dragDelta) def))
+        then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel nameToAdd $ SEltBox $ boxToAdd))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }

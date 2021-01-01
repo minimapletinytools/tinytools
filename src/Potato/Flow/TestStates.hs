@@ -63,21 +63,17 @@ pfstate_basic1 = PFState {
     _pFState_layers = Seq.fromList [0..5]
     , _pFState_directory = IM.fromList [
         -- 4 boxes in a grid
-        (0, SEltLabel "b1" (SEltBox SBox {
+        (0, SEltLabel "b1" (SEltBox def {
             _sBox_box = LBox (V2 0 0) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (1, SEltLabel "b2" (SEltBox SBox {
+        , (1, SEltLabel "b2" (SEltBox def {
             _sBox_box = LBox (V2 10 10) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (2, SEltLabel "b3" (SEltBox SBox {
+        , (2, SEltLabel "b3" (SEltBox def {
             _sBox_box = LBox (V2 0 10) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (3, SEltLabel "b4" (SEltBox SBox {
+        , (3, SEltLabel "b4" (SEltBox def {
             _sBox_box = LBox (V2 10 0) (V2 5 5)
-            , _sBox_style = def
           }))
 
         -- 2 lines sharing a start point at (0,100)
@@ -104,21 +100,17 @@ pfstate_basic2 = PFState {
         (0, SEltLabel "fstart1" SEltFolderStart)
         , (1, SEltLabel "fstart2" SEltFolderStart)
         -- 4 boxes in a grid
-        , (2, SEltLabel "b1" (SEltBox SBox {
+        , (2, SEltLabel "b1" (SEltBox def {
             _sBox_box = LBox (V2 0 0) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (3, SEltLabel "b2" (SEltBox SBox {
+        , (3, SEltLabel "b2" (SEltBox def {
             _sBox_box = LBox (V2 10 10) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (4, SEltLabel "b3" (SEltBox SBox {
+        , (4, SEltLabel "b3" (SEltBox def {
             _sBox_box = LBox (V2 0 10) (V2 5 5)
-            , _sBox_style = def
           }))
-        , (5, SEltLabel "b4" (SEltBox SBox {
+        , (5, SEltLabel "b4" (SEltBox def {
             _sBox_box = LBox (V2 10 0) (V2 5 5)
-            , _sBox_style = def
           }))
         , (6, SEltLabel "fend2" SEltFolderEnd)
         , (7, SEltLabel "fstart3" SEltFolderStart)

@@ -37,7 +37,9 @@ instance Default FillStyle where
   def = FillStyle_Simple '@'
 
 
--- TODO maybe rename to SuperStyle?
+-- TODO add line ends?
+-- TODO add line thickness?
+-- TODO add line fill?
 data SuperStyle = SuperStyle {
   _superStyle_tl           :: PChar
   , _superStyle_tr         :: PChar
@@ -98,6 +100,7 @@ superStyle_toListFormat SuperStyle {..} = r where
       , _superStyle_point
     ]
 
+-- |
 data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign_Justify deriving (Eq, Generic, Show)
 
 instance FromJSON TextAlign
@@ -108,9 +111,9 @@ instance NFData TextAlign
 instance Default TextAlign where
   def = TextAlign_Left
 
+-- |
 data TextStyle = TextStyle {
   -- margins
-  -- alignment
   _textStyle_alignment :: TextAlign
 } deriving (Eq, Generic, Show)
 
@@ -123,15 +126,59 @@ instance Default TextStyle where
   def = TextStyle { _textStyle_alignment = def }
 
 -- |
+data SBoxTitle = SBoxTitle {
+  _sBoxTitle_title   :: Text
+  , _sBoxTitle_align :: TextAlign
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SBoxTitle
+instance ToJSON SBoxTitle
+instance Binary SBoxTitle
+instance NFData SBoxTitle
+
+instance Default SBoxTitle where
+  def = SBoxTitle {
+      _sBoxTitle_title = ""
+      , _sBoxTitle_align = def
+    }
+
+-- |
+data SBoxText = SBoxText {
+  _sBoxText_text    :: Text
+  , _sBoxText_style :: TextStyle
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SBoxText
+instance ToJSON SBoxText
+instance Binary SBoxText
+instance NFData SBoxText
+
+instance Default SBoxText where
+  def = SBoxText {
+      _sBoxText_text = ""
+      , _sBoxText_style = def
+    }
+
+-- |
 data SBox = SBox {
   _sBox_box     :: LBox
   , _sBox_style :: SuperStyle
+  , _sBox_title :: Maybe SBoxTitle
+  , _sBox_text  :: Maybe SBoxText
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
 instance ToJSON SBox
 instance Binary SBox
 instance NFData SBox
+
+instance Default SBox where
+  def = SBox {
+      _sBox_box     = LBox 0 0
+      , _sBox_style = def
+      , _sBox_title = Nothing
+      , _sBox_text  = Nothing
+    }
 
 -- |
 data SLine = SLine {
@@ -161,6 +208,7 @@ instance Binary SCartLines
 instance NFData SCartLines
 
 
+-- TODO convert to box with arbitrary text
 -- | abitrary text confined to a box
 data SText = SText {
   _sText_box     :: LBox

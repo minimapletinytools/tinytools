@@ -51,6 +51,7 @@ emptyRenderedCanvas lb@(LBox _ (V2 w h)) = RenderedCanvas {
     , _renderedCanvas_contents = V.replicate (w*h) ' '
   }
 
+-- TODO move these methods to Math
 -- | input index must be contained in the box
 toPoint :: LBox -> Int -> XY
 toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + x) (i `div` w + y)
