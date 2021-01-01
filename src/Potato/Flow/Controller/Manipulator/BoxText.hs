@@ -86,10 +86,10 @@ inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZi
     KeyboardKey_Up      -> (False, TZ.up oldZip)
     KeyboardKey_Down    -> (False, TZ.down oldZip)
 
-    KeyboardKey_Return  -> (False, TZ.insertChar '\n' oldZip)
-    KeyboardKey_Space   -> (False, TZ.insertChar ' ' oldZip)
-    KeyboardKey_Char c  -> (False, TZ.insertChar c oldZip)
-    KeyboardKey_Paste t -> (False, TZ.insert t oldZip)
+    KeyboardKey_Return  -> (True, TZ.insertChar '\n' oldZip)
+    KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
+    KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
+    KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
 
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
@@ -105,6 +105,7 @@ data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
     , _boxTextHandler_state       :: BoxTextInputState
+    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
     , _boxTextHandler_prevHandler :: SomePotatoHandler
     , _boxTextHandler_undoFirst   :: Bool
   }
@@ -118,7 +119,7 @@ makeBoxTextHandler prev selection rmd = BoxTextHandler {
     }
 
 updateBoxTextHandlerState :: Selection -> BoxTextHandler -> BoxTextHandler
-updateBoxTextHandlerState selection tah@BoxTextHandler {..} = trace "TZ" $ traceShow oldtz $ traceShow recomputetz $ assert tzIsCorrect r where
+updateBoxTextHandlerState selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
   sbox = getSBox selection
 
   newText = _sBoxText_text . _sBox_text $ sbox
@@ -145,18 +146,18 @@ instance PotatoHandler BoxTextHandler where
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
       sbox = getSBox _potatoHandlerInput_selection
-    in case _mouseDrag_state of
+    in trace "box mouse input" $ case _mouseDrag_state of
       MouseDragState_Down -> r where
-        clickOutside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_from
+        clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
         newState = mouseText (Just _boxTextHandler_state) sbox rmd
-        r = if clickOutside
-          then Nothing
-          else Just $ def {
+        r = if clickInside
+          then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                   _boxTextHandler_isActive = True
                   , _boxTextHandler_state = newState
                 }
             }
+          else Nothing
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
@@ -175,7 +176,9 @@ instance PotatoHandler BoxTextHandler where
     _ -> Just r where
       tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
       sseltl = selectionToSuperSEltLabel _potatoHandlerInput_selection
+
       -- TODO decide what to do with mods
+
       (nexttais, mev) = inputText _boxTextHandler_state _boxTextHandler_undoFirst sseltl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {

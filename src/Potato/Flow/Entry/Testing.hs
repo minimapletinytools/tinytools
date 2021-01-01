@@ -296,10 +296,14 @@ randomActionFCmd doundo stree = do
                   _cLine_deltaStart = Just (DeltaXY p1)
                   , _cLine_deltaEnd = Just (DeltaXY p2)
                 }
-              SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
-                CText {
-                  _cText_deltaText = (before, "meow meow")
-                }
+
+              -- SEltText no longer what it use to be so this is not relevant anymore
+              -- and I won't update this test for new SEltText because whatever
+              --SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
+              --  CText {
+              --    _cText_deltaText = (before, "meow meow")
+              --  }
+
               -- TODO maybe add a CTagDoNothing?
               _ -> return $ (,) pos $ CTagBoundingBox ==> CBoundingBox {
                   _cBoundingBox_deltaBox = DeltaLBox p1 p2
