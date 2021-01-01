@@ -79,7 +79,7 @@ spec = do
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas3Text) `shouldBe` 50*50
     it "updateCanvas - basic" $ do
       let
-        makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def))
+        makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def def def))
         canvas0 = testCanvas 0 0 100 100
         state0 = pfstate_basic1
         bpt0 = bPTreeFromPFState state0

@@ -397,8 +397,8 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       -- check that it got moved to 0 0
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == (-2) && y == (-2)
-        _                                  -> False)
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == (-2) && y == (-2)
+        _                                      -> False)
 
       , LabelCheck "single click shift select elt B"
       , checkHandlerNameAndState handlerName_select True -- single click shift unselect case uses select handler
@@ -410,20 +410,20 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
-        _                                  -> False)
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == 0 && y == (-2)
+        _                                      -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
       , checkHandlerNameAndState handlerName_box True
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 3 && y == 3
-        _                                  -> False)
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == 3 && y == 3
+        _                                      -> False)
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
-        _                                  -> False)
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == 0 && y == (-2)
+        _                                      -> False)
       , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
-        SEltBox (SBox (LBox (V2 x y) _) _) -> x == 0 && y == (-2)
-        _                                  -> False)
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _) -> x == 0 && y == (-2)
+        _                                      -> False)
 
 
     ]
