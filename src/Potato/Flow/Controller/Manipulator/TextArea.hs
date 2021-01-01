@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
+-- TODO probably move this to Manipulator.Box.Text
 module Potato.Flow.Controller.Manipulator.TextArea (
   TextAreaHandler(..)
   , TextAreaInputState(..)
@@ -36,27 +37,28 @@ getSText selection = case selectionToSuperSEltLabel selection of
   (_,_,SEltLabel _ selt) -> error $ "expected SEltText, got " <> show selt
 
 data TextAreaInputState = TextAreaInputState {
-  _textAreaInputState_original   :: Text -- needed to properly create DeltaText for undo
-  , _textAreaInputState_raw      :: Text -- we can always pull this from selection, but may as well store it (useful for validation)
-  , _textAreaInputState_box      :: LBox -- we can always pull this from selection, but may as well store it
-  , _textAreaInputState_zipper   :: TZ.TextZipper
-  , _textAreaInputState_selected :: Int -- WIP
+  _textAreaInputState_original       :: Text -- needed to properly create DeltaText for undo
+  , _textAreaInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
+  , _textAreaInputState_zipper       :: TZ.TextZipper
+  , _textAreaInputState_displayLines :: TZ.DisplayLines ()
+  --, _textAreaInputState_selected :: Int -- WIP
 } deriving (Show)
 
-instance Default TextAreaInputState where
-  def = TextAreaInputState "" "" (LBox 0 0) TZ.empty 0
+--instance Default TextAreaInputState where
+--  def = TextAreaInputState "" (LBox 0 0) TZ.empty undefined 0
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
 makeTextAreaInputState :: SText -> RelMouseDrag -> TextAreaInputState
 makeTextAreaInputState stext rmd = r where
   ogtz = TZ.fromText (_sText_text stext)
+  box@(LBox _ (V2 width _)) = _sText_box stext
   r' = TextAreaInputState {
       _textAreaInputState_original   = _sText_text stext
-      , _textAreaInputState_raw = _sText_text stext
-      , _textAreaInputState_box = _sText_box stext
+      , _textAreaInputState_box = box
       , _textAreaInputState_zipper   = ogtz
-      , _textAreaInputState_selected = 0
+      , _textAreaInputState_displayLines = TZ.displayLines width () () ogtz
+      --, _textAreaInputState_selected = 0
     }
   r = mouseText (Just r') stext rmd
 
@@ -69,10 +71,8 @@ mouseText mtais stext rmd = r where
     Just tais -> tais { _textAreaInputState_zipper = newtz } where
       ogtz = _textAreaInputState_zipper tais
       LBox (V2 x y) (V2 w _) = _sText_box stext
-      -- TODO clip/overflow/wrap mode
-      dl = TZ.displayLines w () () ogtz
       V2 mousex mousey = _mouseDrag_to
-      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) dl ogtz
+      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_textAreaInputState_displayLines tais) ogtz
 
 -- TODO support shift selecting text someday meh
 inputText :: TextAreaInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (TextAreaInputState, Maybe WSEvent)
@@ -99,13 +99,7 @@ inputText tais undoFirst selected kk = (tais { _textAreaInputState_zipper = newZ
     then Just $ WSEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])
     else Nothing
 
--- text area handler state and the text it represents are updated independently and they should always be consistent
-checkTextAreaHandlerStateIsConsistent :: TextAreaInputState -> SText -> Bool
-checkTextAreaHandlerStateIsConsistent TextAreaInputState {..} SText {..} = r where
-  LBox _ (V2 w _) = _sText_box
-  LBox _ (V2 bw _) = _textAreaInputState_box
-  r = _textAreaInputState_raw == _sText_text && w == bw
-
+-- TODO rename to BoxTextHandler
 data TextAreaHandler = TextAreaHandler {
     -- TODO rename to active
     _textAreaHandler_isActive      :: Bool
@@ -123,10 +117,23 @@ makeTextAreaHandler prev selection rmd = TextAreaHandler {
     }
 
 updateTextAreaHandlerState :: Selection -> TextAreaHandler -> TextAreaHandler
-updateTextAreaHandlerState selection tah@TextAreaHandler {..} = r where
+updateTextAreaHandlerState selection tah@TextAreaHandler {..} = assert tzIsCorrect r where
   stext = getSText selection
-  nextstate = _textAreaHandler_state
-  -- TODO resize zipper
+
+  newText = _sText_text stext
+  recomputetz = TZ.fromText (newText)
+  oldtz = _textAreaInputState_zipper _textAreaHandler_state
+  -- NOTE that recomputetz won't have the same cursor position
+  -- TODO delete this check, not very meaningful, but good for development purposes I guess
+  tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
+
+  -- TODO refactor out into updateTextAreaStateNoTextZipper from SEltText
+  newBox@(LBox _ (V2 width _)) = _sText_box stext
+  nextstate = _textAreaHandler_state {
+      _textAreaInputState_box = newBox
+      , _textAreaInputState_displayLines = TZ.displayLines width () () oldtz
+    }
+
   r = tah {
     _textAreaHandler_state = nextstate
   }
@@ -136,8 +143,7 @@ instance PotatoHandler TextAreaHandler where
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@TextAreaHandler {..} = updateTextAreaHandlerState _potatoHandlerInput_selection tah'
       stext = getSText _potatoHandlerInput_selection
-      validateFirst = assert (checkTextAreaHandlerStateIsConsistent _textAreaHandler_state stext)
-    in validateFirst $ case _mouseDrag_state of
+    in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickOutside = does_lBox_contains_XY (_textAreaInputState_box _textAreaHandler_state) _mouseDrag_from
         newState = mouseText (Just _textAreaHandler_state) stext rmd

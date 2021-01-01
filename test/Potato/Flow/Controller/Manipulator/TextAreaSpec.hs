@@ -43,9 +43,8 @@ makeTextAreaInputState_basic_test = let
     it "makeTextAreaInputState_basic" $ do
       --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
       _textAreaInputState_original tais1 `shouldBe` testText1
-      _textAreaInputState_selected tais1 `shouldBe` 0
       _textAreaInputState_original tais2 `shouldBe` testText1
-      -- whatever
+      -- TZ has no Eq instance but show works fine, whatever
       show (TZ.right (_textAreaInputState_zipper tais1)) `shouldBe` show (_textAreaInputState_zipper tais2)
 
 -- this causes infinite loop :(
