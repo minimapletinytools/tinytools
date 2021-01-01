@@ -3,6 +3,7 @@ stack test --test-arguments='--match "LayersHandler"'
 :: 12/26/2020 selection spec::
 
 -get basic box working using existing text zipper
+  -add UTs (assume align left for now so they'll work when you add alignment)
 -add alignment to text zipper
 -add text functionality to SEltBox
 -convert textarea into free form
