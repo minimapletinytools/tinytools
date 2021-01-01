@@ -6,7 +6,7 @@ module Potato.Flow.Controller.Handler (
   handlerName_box
   , handlerName_simpleLine
   , handlerName_cartesianLine
-  , handlerName_textArea
+  , handlerName_boxText
   , handlerName_pan
   , handlerName_select
   , handlerName_empty
@@ -96,8 +96,8 @@ handlerName_simpleLine :: Text
 handlerName_simpleLine = "SimpleLineHandler"
 handlerName_cartesianLine :: Text
 handlerName_cartesianLine = "CartesianLineHandler"
-handlerName_textArea :: Text
-handlerName_textArea = "TextAreaHandler"
+handlerName_boxText :: Text
+handlerName_boxText = "TextAreaHandler"
 handlerName_pan :: Text
 handlerName_pan = "PanHandler"
 handlerName_select :: Text

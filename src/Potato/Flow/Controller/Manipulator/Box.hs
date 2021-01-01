@@ -14,8 +14,8 @@ import           Relude
 
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Manipulator.BoxText
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Controller.Manipulator.TextArea
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
@@ -24,10 +24,10 @@ import           Potato.Flow.Types
 import           Potato.Flow.Workspace
 
 import           Data.Default
-import           Data.Dependent.Sum                          (DSum ((:=>)))
-import qualified Data.IntMap                                 as IM
-import qualified Data.List                                   as L
-import qualified Data.Sequence                               as Seq
+import           Data.Dependent.Sum                         (DSum ((:=>)))
+import qualified Data.IntMap                                as IM
+import qualified Data.List                                  as L
+import qualified Data.Sequence                              as Seq
 import           Data.Tuple.Extra
 
 -- TODO rework this stuff
@@ -219,7 +219,7 @@ instance PotatoHandler BoxHandler where
         }
       r = if _boxHandler_isText
         then def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeTextAreaHandler (SomePotatoHandler prevhandler) _potatoHandlerInput_selection rmd
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeBoxTextHandler (SomePotatoHandler prevhandler) _potatoHandlerInput_selection rmd
           }
         else def
 

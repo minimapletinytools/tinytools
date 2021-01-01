@@ -272,7 +272,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
             SEltText (SText lbox _ _) -> lbox == LBox (V2 100 100) (V2 20 20)
             _                         -> False
           , numSelectedEltsEqualPredicate 1
-          , checkHandlerNameAndState handlerName_textArea False
+          , checkHandlerNameAndState handlerName_boxText False
         ]
       , checkHandlerNameAndState handlerName_box False
 
