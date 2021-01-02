@@ -53,6 +53,7 @@ IGNORE-simple select compromise
 ::NEWEST TODO::
 DONE-box border offset/no offset stuff D:
 DONE-box text renderer lol
+-render cursor position (have displayLines return cursor pos)
 -tests for box text renderer
 -default don't fill boxes pls
 -add alignment to text zipper

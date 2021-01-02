@@ -26,8 +26,8 @@ makeDisplayLinesFromSBox sbox = r where
   text = _sBoxText_text . _sBox_text $ sbox
   box@(LBox _ (V2 width' _)) = _sBox_box sbox
   width = case _sBox_boxType sbox of
-    SBoxType_BoxText   -> width'
-    SBoxType_NoBoxText -> max 0 (width'-2)
+    SBoxType_BoxText   -> max 0 (width'-2)
+    SBoxType_NoBoxText -> width'
     _                  -> error "wrong type"
   r = TZ.displayLines width () () (TZ.fromText text)
 
@@ -80,6 +80,7 @@ nilDrawer = SEltDrawer {
     , _sEltDrawer_renderFn = const Nothing
   }
 
+-- TODO split up so it's not one big case statement...
 getDrawer :: SElt -> SEltDrawer
 getDrawer selt = case selt of
   SEltNone        -> nilDrawer
@@ -100,18 +101,20 @@ getDrawer selt = case selt of
         (xoff,yoff) = case _sBox_boxType of
           SBoxType_NoBoxText -> (0,0)
           _                  -> (1,1)
-        outputChar = case spans !!? (x'-xoff) of
+        outputChar = case spans !!? (y'-yoff) of
           Nothing -> Nothing
           Just row -> outputChar' where
             rowText = concatSpans row
-            yidx = y'-yoff
-            outputChar' = if T.length rowText > yidx
-              then Just $ T.index rowText yidx
+            xidx = x'-xoff
+            outputChar' = if T.length rowText > xidx
+              then Just $ T.index rowText xidx
               else Nothing
 
-    rfnnoborder pt = case rfntext pt of
-      Just x  -> Just x
-      Nothing -> fillfn pt
+    rfnnoborder pt
+      | not (does_lBox_contains_XY lbox pt) = Nothing
+      | otherwise = case rfntext pt of
+        Just x  -> Just x
+        Nothing -> fillfn pt
 
     rfnborder pt@(V2 x' y')
       | not (does_lBox_contains_XY lbox pt) = Nothing
