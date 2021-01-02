@@ -9,6 +9,8 @@ module Potato.Flow.SElts (
   , TextStyle(..)
   , SBoxTitle(..)
   , SBoxText(..)
+  , SBoxType(..)
+  , sBoxType_isText
   , SBox(..)
   , SLine(..)
   , SText(..)
@@ -161,13 +163,23 @@ instance Default SBoxText where
       , _sBoxText_style = def
     }
 
+data SBoxType = SBoxType_Box | SBoxType_BoxText | SBoxType_NoBoxText deriving (Eq, Generic, Show)
+
+instance FromJSON SBoxType
+instance ToJSON SBoxType
+instance Binary SBoxType
+instance NFData SBoxType
+
+sBoxType_isText :: SBoxType -> Bool
+sBoxType_isText = (/=) SBoxType_Box
+
 -- |
 data SBox = SBox {
-  _sBox_box         :: LBox
-  , _sBox_style     :: SuperStyle
-  , _sBox_title     :: SBoxTitle
-  , _sBox_text      :: SBoxText
-  , _sBox_isTextBox :: Bool
+  _sBox_box       :: LBox
+  , _sBox_style   :: SuperStyle
+  , _sBox_title   :: SBoxTitle
+  , _sBox_text    :: SBoxText
+  , _sBox_boxType :: SBoxType
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SBox
@@ -181,7 +193,7 @@ instance Default SBox where
       , _sBox_style = def
       , _sBox_title = def
       , _sBox_text  = def
-      , _sBox_isTextBox = False
+      , _sBox_boxType = SBoxType_Box
     }
 
 -- |

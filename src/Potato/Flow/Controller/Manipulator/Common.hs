@@ -28,7 +28,7 @@ computeSelectionType :: Selection -> SelectionManipulatorType
 computeSelectionType = foldl' foldfn SMTNone where
   foldfn accType (_,_,SEltLabel _ selt) = case accType of
     SMTNone -> case selt of
-      SEltBox sbox -> if _sBox_isTextBox sbox then SMTBoxText else SMTBox
+      SEltBox sbox -> if sBoxType_isText (_sBox_boxType sbox) then SMTBoxText else SMTBox
       SEltLine _   -> SMTLine
       SEltText _   -> SMTText
       -- TODO

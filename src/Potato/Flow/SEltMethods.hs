@@ -68,6 +68,7 @@ getDrawer selt = case selt of
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
   SEltBox SBox {..}       -> r where
+    hasBorder = True -- TODO
     CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
     rfn pt@(V2 x' y')
       | not (does_lBox_contains_XY lbox pt) = Nothing
