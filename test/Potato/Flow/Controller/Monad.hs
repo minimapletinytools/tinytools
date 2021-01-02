@@ -81,7 +81,7 @@ instance (TestGuestConstraints t m) => ReflexTestApp (GoatWidgetTest t m) t m wh
     (inload, intrefload) <- newEventWithTriggerRef
     (indebug, intrefdebug) <- newEventWithTriggerRef
     return (
-        GoatWidgetTest_InputEvents (GoatWidgetConfig emptyPFState inmouse inkb intool inload indebug)
+        GoatWidgetTest_InputEvents (GoatWidgetConfig emptyPFState inmouse inkb intool inload never indebug)
         , GoatWidgetTest_InputTriggerRefs intrefmouse intrefkb intreftool intrefload intrefdebug
       )
 

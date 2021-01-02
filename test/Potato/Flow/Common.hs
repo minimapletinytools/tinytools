@@ -46,6 +46,7 @@ data GoatWidgetCmd =
   EWCMouse LMouseData
   | EWCKeyboard KeyboardData
   | EWCTool Tool
+  | EWCSetParams ControllersWithId
   | EWCLoad (SPotatoFlow, ControllerMeta)
   | EWCNothing
   | EWCLabel Text
@@ -71,6 +72,9 @@ everything_network_app pfs (AppIn _ ev) = do
         _ -> Nothing
       , _goatWidgetConfig_selectTool = fforMaybe ev $ \case
         EWCTool x -> Just x
+        _ -> Nothing
+      , _goatWidgetConfig_paramsEvent = fforMaybe ev $ \case
+        EWCSetParams x -> Just x
         _ -> Nothing
     }
   everythingWidget <- holdGoatWidget ewc

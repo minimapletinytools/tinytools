@@ -229,6 +229,7 @@ data STextArea = STextArea {
   _sTextArea_box           :: LBox
   -- TODO probably Map (Int,Int) Char
   , _sTextArea_text        :: Text
+  -- TODO consider using SuperStyle here instead and using Fill property only
   , _sTextArea_transparent :: Bool
 } deriving (Eq, Generic, Show)
 
