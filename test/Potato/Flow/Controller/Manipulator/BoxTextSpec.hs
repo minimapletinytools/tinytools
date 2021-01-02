@@ -28,7 +28,7 @@ testSBoxWithText1 :: SBox
 testSBoxWithText1 = def {
     _sBox_box = LBox (V2 5 5) (V2 5 10)
     , _sBox_text = SBoxText testText1 def
-    , _sBox_isTextBox = True
+    , _sBox_boxType = SBoxType_NoBoxText
   }
 
 testClick :: Int -> Int -> RelMouseDrag

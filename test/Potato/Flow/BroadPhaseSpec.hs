@@ -18,7 +18,7 @@ spec :: Spec
 spec = do
   describe "BroadPhase" $ do
     let
-      makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def def def False))
+      makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def def def SBoxType_Box))
     it "passes basic test" $ do
       let
         lb1_2 = LBox (V2 0 0) (V2 5 5)

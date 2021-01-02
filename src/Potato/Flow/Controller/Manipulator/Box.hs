@@ -206,7 +206,9 @@ instance PotatoHandler BoxHandler where
 
       boxToAdd = def {
           _sBox_box     = LBox _mouseDrag_from dragDelta
-          , _sBox_isTextBox  = _boxHandler_creation == BoxCreationType_Text
+          , _sBox_boxType  = if _boxHandler_creation == BoxCreationType_Text
+            then SBoxType_BoxText -- TODO pull from params
+            else SBoxType_Box
           --, _sBox_style :: SuperStyle -- TODO pull from params
           --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
         }
@@ -228,7 +230,7 @@ instance PotatoHandler BoxHandler where
 
     MouseDragState_Up -> Just r where
       isText = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-        (_,_,SEltLabel _ (SEltBox SBox{..})) -> _sBox_isTextBox
+        (_,_,SEltLabel _ (SEltBox SBox{..})) -> sBoxType_isText _sBox_boxType
         _                                    -> False
 
 

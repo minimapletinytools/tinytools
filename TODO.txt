@@ -52,12 +52,10 @@ IGNORE-simple select compromise
 
 ::NEWEST TODO::
 
-DONE-right now if you click realease on a text box it will go straight into BoxText handler, only do this if it was already selected
+-box border offset/no offset stuff D:
+
 -box text renderer lol
 -default don't fill boxes pls
-DONE-get basic box working using existing text zipper
-  DONE-add UTs (assume align left for now so they'll work when you add alignment)
-DONE-add text functionality to SEltBox
 -add alignment to text zipper
 -convert textarea into free form
   -implement or at least add stubs for this
@@ -141,6 +139,11 @@ DONE-add text functionality to SEltBox
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+
+DONE-right now if you click realease on a text box it will go straight into BoxText handler, only do this if it was already selected
+DONE-get basic box working using existing text zipper
+  DONE-add UTs (assume align left for now so they'll work when you add alignment)
+DONE-add text functionality to SEltBox
 DONE/IGNORE-custom serializers for SEltLabel
   DONE-prob just use Data.Binary
   IGNORE-thought you could do something more efficient to omit optional parameters
