@@ -54,7 +54,6 @@ checkSBoxText label text = firstSuperSEltLabelPredicate (Just label) $ \(_,_,SEl
   SEltBox (SBox lbox _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
--- this should work with any initial state so long as default names aren't used
 test_basic :: Test
 test_basic = constructTest "basic" emptyPFState bs expected where
   bs = [
@@ -97,8 +96,8 @@ test_basic = constructTest "basic" emptyPFState bs expected where
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_boxText False
         ]
-
 
       , LabelCheck "modify <text>"
       , checkHandlerNameAndState handlerName_boxText False
@@ -115,11 +114,72 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , LabelCheck "exit BoxText"
       , checkHandlerNameAndState handlerName_box False
 
-
       , LabelCheck "select <text> at end of line"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "paoopb"
+    ]
+
+test_handler_state :: Test
+test_handler_state = constructTest "handler state" emptyPFState bs expected where
+  bs = [
+      EWCLabel "create <text>"
+      , EWCTool Tool_Text
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
+
+      , EWCLabel "exit BoxText"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "deselect <text>"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 0) True MouseButton_Left [] False)
+
+      , EWCLabel "select + drag <text>"
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 11) True MouseButton_Left [] False)
+
+      , EWCLabel "enter edit mode"
+      , EWCMouse (LMouseData (V2 11 15) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 15) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char '😱') [])
+
+    ]
+  expected = [
+      LabelCheck "create <text>"
+      , EqPredicate _goatState_selectedTool Tool_Text
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
+            _                           -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_boxText False
+        ]
+
+      , LabelCheck "exit BoxText"
+      , checkHandlerNameAndState handlerName_box False
+
+      , LabelCheck "deselect <text>"
+      , EqPredicate _goatState_selectedTool Tool_Select
+      , checkHandlerNameAndState handlerName_select True
+      , Combine [
+          checkHandlerNameAndState handlerName_empty False
+          , numSelectedEltsEqualPredicate 0
+        ]
+
+      , LabelCheck "select + drag <text>"
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box False
+
+      , LabelCheck "enter edit mode"
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkSBoxText "<text>" "😱"
+
     ]
 
 spec :: Spec
@@ -127,3 +187,4 @@ spec = do
   describe "BoxText" $ do
     makeBoxTextInputState_basic_test
     fromHUnitTest $ test_basic
+    fromHUnitTest $ test_handler_state

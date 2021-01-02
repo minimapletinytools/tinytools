@@ -128,7 +128,11 @@ makeDeltaBox bht (V2 dx dy) = case bht of
 
 
 
-data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationType_Text deriving (Show, Eq)
+-- TODO rename to BoxHandlerType or something
+data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationType_Text | BoxCreationType_DragSelect deriving (Show, Eq)
+
+boxCreationType_isCreation :: BoxCreationType -> Bool
+boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreationType_DragSelect
 
 -- new handler stuff
 data BoxHandler = BoxHandler {
@@ -140,7 +144,7 @@ data BoxHandler = BoxHandler {
     , _boxHandler_creation  :: BoxCreationType
     , _boxHandler_active    :: Bool
 
-  }
+  } deriving (Show)
 
 makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
@@ -176,7 +180,7 @@ instance Default BoxHandler where
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
   pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
-    MouseDragState_Down | _boxHandler_creation /= BoxCreationType_None -> Just $ def {
+    MouseDragState_Down | boxCreationType_isCreation _boxHandler_creation ->  Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
       }
     -- if shift is held down, ignore inputs
@@ -209,7 +213,7 @@ instance PotatoHandler BoxHandler where
 
       nameToAdd = if _boxHandler_creation == BoxCreationType_Text then "<text>" else "<box>"
 
-      op = if _boxHandler_creation /= BoxCreationType_None
+      op = if boxCreationType_isCreation _boxHandler_creation
         then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel nameToAdd $ SEltBox $ boxToAdd))
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
@@ -227,16 +231,22 @@ instance PotatoHandler BoxHandler where
         (_,_,SEltLabel _ (SEltBox SBox{..})) -> _sBox_isTextBox
         _                                    -> False
 
-      -- HACK if _boxHandler_undoFirst is false, that means we didn't actually do anything since the last time we clicked
-      -- which means we want to enter BoxText mode rather than move/modify the box
-      r = if isText && (not _boxHandler_undoFirst || _boxHandler_creation == BoxCreationType_Text)
+
+
+      -- TODO right now if you click realease on a text box it will go straight into BoxText handler
+      -- TODO only do this if it was already selected
+
+
+      r = if isText
+          -- HACK if _boxHandler_undoFirst is false, that means we didn't actually do anything since the last time we clicked which means we want to enter BoxText mode
+          && (not _boxHandler_undoFirst || _boxHandler_creation == BoxCreationType_Text)
+          -- if we are drag selecting, then don't enter BoxText mode
+          && not (_boxHandler_creation == BoxCreationType_DragSelect)
         then def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler
               $ makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd
           }
         else def
-
-      -- TODO click release on same spot + text area selection -> return text area handler
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 

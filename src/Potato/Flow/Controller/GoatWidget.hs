@@ -300,9 +300,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                 -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                 -- also NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case GoatWidget will set the correct handler type
-                else case pHandleMouse (def :: BoxHandler) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
+                else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                   -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
-                  Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho) $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
+                  Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
+                    $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                   Nothing -> error "handler was expected to capture this mouse state"
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
