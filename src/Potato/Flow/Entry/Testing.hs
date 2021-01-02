@@ -234,11 +234,11 @@ randomActionFCmd doundo stree = do
             , _sLine_end = p2
             , _sLine_style = def
           }
-        2 -> return $ FCAddElt pos $ SEltText
-          SText {
-            _sText_box = LBox p1 p2
-            , _sText_text = "moo"
-            , _sText_style = def
+        2 -> return $ FCAddElt pos $ SEltTextArea
+          STextArea {
+            _sTextArea_box = LBox p1 p2
+            , _sTextArea_text = "moo"
+            , _sTextArea_transparent = False
           }
         3 -> return $ FCAddElt pos $ SEltFolderStart
     -- resize the canvas
@@ -297,11 +297,11 @@ randomActionFCmd doundo stree = do
                   , _cLine_deltaEnd = Just (DeltaXY p2)
                 }
 
-              -- SEltText no longer what it use to be so this is not relevant anymore
-              -- and I won't update this test for new SEltText because whatever
-              --SEltText (SText _ before _) -> return $ (,) pos $ CTagText ==>
-              --  CText {
-              --    _cText_deltaText = (before, "meow meow")
+              -- SEltTextArea no longer what it use to be so this is not relevant anymore
+              -- and I won't update this test for new SEltTextArea because whatever
+              --SEltTextArea (STextArea _ before _) -> return $ (,) pos $ CTagText ==>
+              --  CBoxText {
+              --    _cBoxText_deltaText = (before, "meow meow")
               --  }
 
               -- TODO maybe add a CTagDoNothing?

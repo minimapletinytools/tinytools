@@ -108,8 +108,8 @@ inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZi
 
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
-  controller = CTagText :=> (Identity $ CText {
-      _cText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
+  controller = CTagText :=> (Identity $ CBoxText {
+      _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
     })
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])

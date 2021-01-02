@@ -30,7 +30,7 @@ computeSelectionType = foldl' foldfn SMTNone where
     SMTNone -> case selt of
       SEltBox sbox -> if sBoxType_isText (_sBox_boxType sbox) then SMTBoxText else SMTBox
       SEltLine _   -> SMTLine
-      SEltText _   -> SMTText
+      SEltTextArea _   -> SMTText
       -- TODO
       --SEltFolderStart _ -> SMTNone
       --SEltFolderEnd _ -> SMTNone

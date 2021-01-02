@@ -13,7 +13,7 @@ module Potato.Flow.SElts (
   , sBoxType_isText
   , SBox(..)
   , SLine(..)
-  , SText(..)
+  , STextArea(..)
   , SElt(..)
   , SEltLabel(..)
 ) where
@@ -224,21 +224,21 @@ instance Binary SCartLines
 instance NFData SCartLines
 
 
--- TODO convert to box with arbitrary text
 -- | abitrary text confined to a box
-data SText = SText {
-  _sText_box     :: LBox
-  , _sText_text  :: Text
-  , _sText_style :: TextStyle
+data STextArea = STextArea {
+  _sTextArea_box           :: LBox
+  -- TODO probably Map (Int,Int) Char
+  , _sTextArea_text        :: Text
+  , _sTextArea_transparent :: Bool
 } deriving (Eq, Generic, Show)
 
-instance FromJSON SText
-instance ToJSON SText
-instance Binary SText
-instance NFData SText
+instance FromJSON STextArea
+instance ToJSON STextArea
+instance Binary STextArea
+instance NFData STextArea
 
 -- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
-data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltText SText deriving (Eq, Generic, Show)
+data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltTextArea STextArea deriving (Eq, Generic, Show)
 
 instance FromJSON SElt
 instance ToJSON SElt
