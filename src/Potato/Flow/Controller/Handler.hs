@@ -112,6 +112,7 @@ handlerName_empty = "EmptyHandler"
 class PotatoHandler h where
   pHandlerName :: h -> Text
 
+  -- TODO do the generic thing where (Show h) whatever
   pHandlerDebugShow :: h -> Text
   pHandlerDebugShow _ = "<no debug info>"
 

@@ -146,7 +146,7 @@ instance PotatoHandler BoxTextHandler where
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState _potatoHandlerInput_selection tah'
       sbox = getSBox _potatoHandlerInput_selection
-    in trace "box mouse input" $ case _mouseDrag_state of
+    in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
         newState = mouseText (Just _boxTextHandler_state) sbox rmd
