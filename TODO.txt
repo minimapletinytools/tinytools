@@ -53,14 +53,17 @@ IGNORE-simple select compromise
 ::NEWEST TODO::
 DONE-box border offset/no offset stuff D:
 DONE-box text renderer lol
--render cursor position (have displayLines return cursor pos)
--tests for box text renderer
--default don't fill boxes pls
+-box with border test D:
+  -pretty sure there is a bug with this in BoxText
+-figure out why sbox doesn't render right in vty
+-render cursor position (get cursor pos from displayLines)
+IGNORE-default don't fill boxes pls
 -add alignment to text zipper
 -convert textarea into free form
   -implement or at least add stubs for this
 -add BoxTitle
   -maybe left/right/center text
+-add padding to BoxText
 
 -rendering
   -get rid of BroadPhaseState (carry changes around separately)

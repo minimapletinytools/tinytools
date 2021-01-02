@@ -14,7 +14,7 @@ module Potato.Flow.Types (
   -- * controllers
   , CRename(..)
   , CLine(..)
-  , CText(..)
+  , CBoxText(..)
   , CBoundingBox(..)
   , CTag(..)
   , CTextStyle(..)
@@ -120,13 +120,13 @@ instance Delta SLine CLine where
           Just d  -> minusDelta _sLine_end d
     }
 
-data CText = CText {
-  _cText_deltaText      :: DeltaText
+data CBoxText = CBoxText {
+  _cBoxText_deltaText      :: DeltaText
 } deriving (Eq, Generic, Show)
 
-instance NFData CText
+instance NFData CBoxText
 
-instance Delta SBox CText where
+instance Delta SBox CBoxText where
   plusDelta sbox@SBox {..} ctext = sbox {
       _sBox_text   = plusDelta _sBox_text ctext
     }
@@ -134,17 +134,14 @@ instance Delta SBox CText where
       _sBox_text   = minusDelta _sBox_text ctext
     }
 
-instance Delta SBoxText CText where
-  plusDelta sboxtext@SBoxText {..} CText {..} = sboxtext {
-      _sBoxText_text   = plusDelta _sBoxText_text _cText_deltaText
+instance Delta SBoxText CBoxText where
+  plusDelta sboxtext@SBoxText {..} CBoxText {..} = sboxtext {
+      _sBoxText_text   = plusDelta _sBoxText_text _cBoxText_deltaText
     }
-  minusDelta sboxtext@SBoxText {..} CText {..} = sboxtext {
-      _sBoxText_text   = minusDelta _sBoxText_text _cText_deltaText
+  minusDelta sboxtext@SBoxText {..} CBoxText {..} = sboxtext {
+      _sBoxText_text   = minusDelta _sBoxText_text _cBoxText_deltaText
     }
 
-
--- | transforms object based on a reference point
--- used for multi-selection
 data CBoundingBox = CBoundingBox {
   _cBoundingBox_deltaBox    :: DeltaLBox
 } deriving (Eq, Generic, Show)
@@ -159,23 +156,20 @@ data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
 
 instance NFData CTextStyle
 
--- TODO pretty sure you can delete this now
 data CTag a where
   CTagRename :: CTag CRename
   CTagLine :: CTag CLine
-  CTagText :: CTag CText
+  CTagText :: CTag CBoxText
   CTagBoundingBox :: CTag CBoundingBox
-
   CTagSuperStyle :: CTag CSuperStyle
   CTagTextStyle :: CTag CTextStyle
-
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
 deriveGShow ''CTag
 deriveArgDict ''CTag
 
--- | Controllers represent changes to SELts
+-- | Controllers represent changes to SElts
 type Controller = DS.DSum CTag Identity
 
 instance NFData Controller where
@@ -188,8 +182,6 @@ instance NFData Controller where
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller
-
-
 
 type SEltTree = [(REltId,SEltLabel)]
 

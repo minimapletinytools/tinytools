@@ -40,7 +40,7 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
 
   isboxshaped = \case
     SEltLabel _ (SEltBox _) -> True
-    SEltLabel _ (SEltText _) -> True
+    SEltLabel _ (SEltTextArea _) -> True
     _ -> False
 
   unculledRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)

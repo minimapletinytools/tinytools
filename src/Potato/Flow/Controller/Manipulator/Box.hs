@@ -54,9 +54,9 @@ toMouseManipulators selection = if Seq.length selection > 1
         SEltLine SLine {..} -> undefined
           --_sLine_start
           --_sLine_end
-        SEltText SText {..} -> fmap (flip makeHandleBox _sText_box) [BH_TL .. BH_A]
+        SEltTextArea STextArea {..} -> fmap (flip makeHandleBox _sTextArea_box) [BH_TL .. BH_A]
           -- add at end to preserve indexing of [BH_TL .. BH_A]
-          <> [(makeHandleBox BH_A _sText_box) { _mouseManipulator_type = MouseManipulatorType_Text }]
+          <> [(makeHandleBox BH_A _sTextArea_box) { _mouseManipulator_type = MouseManipulatorType_Text }]
         _                   -> []
   else bb where
     union_lBoxes :: NonEmpty LBox -> LBox

@@ -48,7 +48,7 @@ getSEltBox selt = case selt of
   SEltLine x      -> Just $ union_lBox
     (make_lBox_from_XYs (_sLine_start x) (_sLine_end x))
     (make_lBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
-  SEltText x      -> Just $ canonicalLBox_from_lBox_ $ _sText_box x
+  SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
 doesSEltIntersectBox :: LBox -> SElt -> Bool
 doesSEltIntersectBox lbox selt = case selt of
@@ -56,7 +56,7 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltFolderStart              -> False
   SEltFolderEnd                -> False
   SEltBox x                    -> does_lBox_intersect lbox (_sBox_box x)
-  SEltText x                   -> does_lBox_intersect lbox (_sText_box x)
+  SEltTextArea x                   -> does_lBox_intersect lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
   SEltLine (SLine start end style) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SLine start end style)))
 
@@ -87,7 +87,6 @@ getDrawer selt = case selt of
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
   SEltBox sbox@SBox {..}       -> r where
-    hasBorder = True -- TODO
     CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
 
     fillfn _ = case _superStyle_fill _sBox_style of
@@ -136,7 +135,7 @@ getDrawer selt = case selt of
           _                  -> rfnborder
       }
   SEltLine _      -> potatoDrawer
-  SEltText _      -> potatoDrawer
+  SEltTextArea _      -> potatoDrawer
   where
     potatoDrawer = SEltDrawer {
         _sEltDrawer_box = fromJust (getSEltBox selt)
@@ -156,8 +155,8 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
         (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sLine_style = _sLine_style
     }
-  SEltText stext -> SEltText $ stext {
-      _sText_box     = modifyDelta isDo (_sText_box stext) _cBoundingBox_deltaBox
+  SEltTextArea stext -> SEltTextArea $ stext {
+      _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox
     }
   x          -> x
 
