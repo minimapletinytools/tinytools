@@ -51,10 +51,9 @@ IGNORE-simple select compromise
     -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
 
 ::NEWEST TODO::
-
--box border offset/no offset stuff D:
-
--box text renderer lol
+DONE-box border offset/no offset stuff D:
+DONE-box text renderer lol
+-tests for box text renderer
 -default don't fill boxes pls
 -add alignment to text zipper
 -convert textarea into free form

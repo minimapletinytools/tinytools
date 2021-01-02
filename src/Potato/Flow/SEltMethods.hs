@@ -17,6 +17,24 @@ import           Potato.Flow.Types
 
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
 import           Data.Maybe         (fromJust)
+import qualified Data.Text          as T
+import qualified Data.Text.Zipper   as TZ
+
+
+makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines ()
+makeDisplayLinesFromSBox sbox = r where
+  text = _sBoxText_text . _sBox_text $ sbox
+  box@(LBox _ (V2 width' _)) = _sBox_box sbox
+  width = case _sBox_boxType sbox of
+    SBoxType_BoxText   -> width'
+    SBoxType_NoBoxText -> max 0 (width'-2)
+    _                  -> error "wrong type"
+  r = TZ.displayLines width () () (TZ.fromText text)
+
+concatSpans :: [TZ.Span ()] -> Text
+concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
+
+
 
 -- TODO rename to getSEltBoundingBox or something
 -- | gets an 'LBox' that contains the entire RElt
@@ -67,10 +85,35 @@ getDrawer selt = case selt of
   SEltNone        -> nilDrawer
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
-  SEltBox SBox {..}       -> r where
+  SEltBox sbox@SBox {..}       -> r where
     hasBorder = True -- TODO
     CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
-    rfn pt@(V2 x' y')
+
+    fillfn _ = case _superStyle_fill _sBox_style of
+      FillStyle_Simple c -> Just c
+      FillStyle_Blank    -> Nothing
+
+    rfntext pt@(V2 x' y') = case _sBox_boxType of
+      SBoxType_Box -> Nothing
+      _ -> outputChar where
+        spans = TZ._displayLines_spans $ makeDisplayLinesFromSBox sbox
+        (xoff,yoff) = case _sBox_boxType of
+          SBoxType_NoBoxText -> (0,0)
+          _                  -> (1,1)
+        outputChar = case spans !!? (x'-xoff) of
+          Nothing -> Nothing
+          Just row -> outputChar' where
+            rowText = concatSpans row
+            yidx = y'-yoff
+            outputChar' = if T.length rowText > yidx
+              then Just $ T.index rowText yidx
+              else Nothing
+
+    rfnnoborder pt = case rfntext pt of
+      Just x  -> Just x
+      Nothing -> fillfn pt
+
+    rfnborder pt@(V2 x' y')
       | not (does_lBox_contains_XY lbox pt) = Nothing
       | w == 1 && h == 1 = Just $ _superStyle_point _sBox_style
       | w == 1 = Just $ _superStyle_vertical _sBox_style
@@ -81,12 +124,13 @@ getDrawer selt = case selt of
       | x' == x+w-1 && y' == y+h-1 = Just $ _superStyle_br _sBox_style
       | x' == x || x' == x+w-1 = Just $ _superStyle_vertical _sBox_style
       | y' == y || y' == y+h-1 = Just $ _superStyle_horizontal _sBox_style
-      | otherwise = case _superStyle_fill _sBox_style of
-        FillStyle_Simple c -> Just c
-        FillStyle_Blank    -> Nothing
+      | otherwise = rfnnoborder pt
+
     r = SEltDrawer {
         _sEltDrawer_box = lbox
-        , _sEltDrawer_renderFn = rfn
+        , _sEltDrawer_renderFn = case _sBox_boxType of
+          SBoxType_NoBoxText -> rfnnoborder
+          _                  -> rfnborder
       }
   SEltLine _      -> potatoDrawer
   SEltText _      -> potatoDrawer

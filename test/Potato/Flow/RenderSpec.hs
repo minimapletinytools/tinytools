@@ -31,9 +31,8 @@ spec = do
         canvas1 = testCanvas (-12) (-44) 100 100
         n = 10
         selts = flip map [1..n] $ \i ->
-          SEltBox $ SBox {
+          SEltBox $ def {
               _sBox_box    = LBox (V2 (i*2) 0) (V2 2 2)
-              , _sBox_style = def
             }
         canvas2 = potatoRender selts canvas1
         canvas2Text = renderedCanvasToText canvas2
@@ -42,9 +41,8 @@ spec = do
     it "renders negative LBox" $ do
       let
         canvas1 = testCanvas 0 0 20 20
-        selt = SEltBox $ SBox {
+        selt = SEltBox $ def {
             _sBox_box    = LBox (V2 10 10) (V2 (-10) (-10))
-            , _sBox_style = def
           }
         canvas2 = potatoRender [selt] canvas1
         canvas2Text = renderedCanvasToText canvas2
@@ -54,9 +52,8 @@ spec = do
         fillBox = LBox (V2 (-12) (-44)) (V2 100 100)
         renderBox = LBox (V2 (-1) 10) (V2 10 10)
         canvas1 = emptyRenderedCanvas fillBox
-        selt = SEltBox $ SBox {
+        selt = SEltBox $ def {
             _sBox_box    = fillBox
-            , _sBox_style = def
           }
         canvas2 = render renderBox [selt] canvas1
         canvas2Text = renderedCanvasToText canvas2
@@ -68,9 +65,8 @@ spec = do
       let
         -- fill the whole canvas
         canvas1 = testCanvas 0 0 100 100
-        selt = SEltBox $ SBox {
+        selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
-            , _sBox_style = def
           }
         canvas2 = potatoRender [selt] canvas1
         target = LBox (V2 (-50) (-50)) (V2 100 100)
