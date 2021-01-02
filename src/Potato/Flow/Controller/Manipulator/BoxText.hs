@@ -44,8 +44,18 @@ data BoxTextInputState = BoxTextInputState {
   --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
---instance Default BoxTextInputState where
---  def = BoxTextInputState "" (LBox 0 0) TZ.empty undefined 0
+
+updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
+updateBoxTextInputStateWithSBox sbox btis = r where
+  newBox@(LBox _ (V2 width' _)) = _sBox_box sbox
+  width = case _sBox_boxType sbox of
+    SBoxType_BoxText   -> width'
+    SBoxType_NoBoxText -> max 0 (width'-2)
+    _                  -> error "wrong type"
+  r = btis {
+      _boxTextInputState_box = newBox
+      , _boxTextInputState_displayLines = TZ.displayLines width () () (_boxTextInputState_zipper btis)
+    }
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
@@ -53,15 +63,14 @@ makeBoxTextInputState :: SBox -> RelMouseDrag -> BoxTextInputState
 makeBoxTextInputState sbox rmd = r where
   ogtext = _sBoxText_text . _sBox_text $ sbox
   ogtz = TZ.fromText ogtext
-  box@(LBox _ (V2 width _)) = _sBox_box sbox
+  -- missing fields get updated in next pass
   r' = BoxTextInputState {
       _boxTextInputState_original   = ogtext
-      , _boxTextInputState_box = box
       , _boxTextInputState_zipper   = ogtz
-      , _boxTextInputState_displayLines = TZ.displayLines width () () ogtz
       --, _boxTextInputState_selected = 0
     }
-  r = mouseText (Just r') sbox rmd
+  r'' = updateBoxTextInputStateWithSBox sbox r'
+  r = mouseText (Just r'') sbox rmd
 
 -- TODO define behavior for when you click outside box or assert
 mouseText :: Maybe BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
@@ -73,7 +82,13 @@ mouseText mtais sbox rmd = r where
       ogtz = _boxTextInputState_zipper tais
       LBox (V2 x y) (V2 w _) = _sBox_box sbox
       V2 mousex mousey = _mouseDrag_to
-      newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_boxTextInputState_displayLines tais) ogtz
+
+      (xoffset, yoffset) = case _sBox_boxType sbox of
+        SBoxType_BoxText   -> (1,1)
+        SBoxType_NoBoxText -> (0,0)
+        _                  -> error "wrong type"
+
+      newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
 
 -- TODO support shift selecting text someday meh
 inputText :: BoxTextInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
@@ -130,12 +145,7 @@ updateBoxTextHandlerState selection tah@BoxTextHandler {..} = assert tzIsCorrect
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
 
-  -- TODO refactor out into updateBoxTextStateNoTextZipper from SEltText
-  newBox@(LBox _ (V2 width _)) = _sBox_box sbox
-  nextstate = _boxTextHandler_state {
-      _boxTextInputState_box = newBox
-      , _boxTextInputState_displayLines = TZ.displayLines width () () oldtz
-    }
+  nextstate = updateBoxTextInputStateWithSBox sbox _boxTextHandler_state
 
   r = tah {
     _boxTextHandler_state = nextstate

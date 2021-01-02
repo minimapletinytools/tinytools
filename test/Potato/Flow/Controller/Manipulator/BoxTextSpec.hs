@@ -73,16 +73,16 @@ test_basic = constructTest "basic" emptyPFState bs expected where
 
       , EWCLabel "move cursor <text>"
       , EWCTool Tool_Select
-      , EWCMouse (LMouseData (V2 11 10) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 11 10) True MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 11) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 11) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
 
       , EWCLabel "exit BoxText"
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
       , EWCLabel "select <text> at end of line"
-      , EWCMouse (LMouseData (V2 10 18) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 10 18) True MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 18) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 18) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'b') [])
 
     ]
