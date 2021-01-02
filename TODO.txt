@@ -1,4 +1,4 @@
-stack test --test-arguments='--match "LayersHandler"'
+stack test --test-arguments='--match "BoxText"' --file-watch
 
 :: 12/26/2020 selection spec::
 
@@ -51,6 +51,11 @@ IGNORE-simple select compromise
     -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
 
 ::NEWEST TODO::
+-if you get an event while BoxText handler is open, it will break undoFirst stuff
+  -you need to track when non-handler events come in...
+    -you'll have to do this anyways for multi-user mode right?
+    -maybe just remake the handler, or perhaps add a reset method to handler??
+      -should reset method take SEltLabelChanges... it probably should D:
 DONE-box border offset/no offset stuff D:
 DONE-box text renderer lol
 -box with border test D:
@@ -64,6 +69,11 @@ IGNORE-default don't fill boxes pls
 -add BoxTitle
   -maybe left/right/center text
 -add padding to BoxText
+
+-tests
+  -more params tests
+  -undo redo of text
+    -you should really set up a 1000 undo redo sorta thing again
 
 -rendering
   -get rid of BroadPhaseState (carry changes around separately)

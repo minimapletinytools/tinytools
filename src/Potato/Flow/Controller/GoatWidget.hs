@@ -74,6 +74,7 @@ goatState_pFState = _pFWorkspace_pFState . _goatState_pFWorkspace
 data GoatCmd =
   GoatCmdTool Tool
   | GoatCmdLoad EverythingLoadState
+  | GoatCmdWSEvent WSEvent
 
   -- canvas direct input
   | GoatCmdMouse LMouseData
@@ -103,6 +104,9 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
   --, _goatWidgetConfig_externalWSEvent :: Event t WSEvent
 
+  -- only intended for setting params
+  , _goatWidgetConfig_paramsEvent   :: Event t ControllersWithId
+
   -- debugging
   , _goatWidgetConfig_setDebugLabel :: Event t Text
 }
@@ -114,6 +118,7 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_load = never
     , _goatWidgetConfig_mouse     = never
     , _goatWidgetConfig_keyboard = never
+    , _goatWidgetConfig_paramsEvent = never
     , _goatWidgetConfig_setDebugLabel = never
   }
 
@@ -231,6 +236,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       --GoatCmdSetDebugLabel x -> traceShow x $ (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
       GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
       GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, persistHandlerNoCanvasInput)
+      GoatCmdWSEvent x -> (goatState, persistHandlerNoCanvasInput { _potatoHandlerOutput_pFEvent = Just x })
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff
         (goatState, def {
@@ -377,7 +383,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       _          -> undefined
 
 
-  -- update PFTotalState from pho
+  -- update PFWorkspace from pho
   (next_workspace, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_pFWorkspace, IM.empty)
@@ -488,6 +494,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , GoatCmdMouse <$> _goatWidgetConfig_mouse
       , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
       , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
+      , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       ]
 
     --initialize broadphase with initial state
@@ -529,6 +536,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
+  -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState . _goatState_pFWorkspace) goatDyn
   let

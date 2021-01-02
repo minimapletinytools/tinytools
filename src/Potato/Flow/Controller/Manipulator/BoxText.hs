@@ -108,7 +108,7 @@ inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZi
 
     KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
 
-  controller = CTagText :=> (Identity $ CBoxText {
+  controller = CTagBoxText :=> (Identity $ CBoxText {
       _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
     })
   mop = if changed

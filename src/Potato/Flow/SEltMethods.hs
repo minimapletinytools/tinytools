@@ -184,9 +184,12 @@ updateFnFromController isDo = \case
   (CTagLine :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
     SEltLine s -> SEltLabel sname (SEltLine $ modifyDelta isDo s d)
     _ -> error $ "Controller - SElt type mismatch: CTagLine - " <> show selt
-  (CTagText :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
+  (CTagBoxText :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
     SEltBox s -> SEltLabel sname (SEltBox $ modifyDelta isDo s d)
-    _ -> error $ "Controller - SElt type mismatch: CTagText - " <> show selt
+    _ -> error $ "Controller - SElt type mismatch: CTagBoxText - " <> show selt
+  (CTagBoxType :=> Identity d) -> \(SEltLabel sname selt) -> case selt of
+    SEltBox s -> SEltLabel sname (SEltBox $ modifyDelta isDo s d)
+    _ -> error $ "Controller - SElt type mismatch: CTagBoxText - " <> show selt
   (CTagBoundingBox :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   (CTagSuperStyle :=> Identity d) -> \(SEltLabel sname selt) ->

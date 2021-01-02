@@ -19,6 +19,8 @@ import           Potato.Flow.Controller.Manipulator.BoxText
 import           Potato.Flow.Common
 
 import           Data.Default
+import           Data.Dependent.Sum                         (DSum ((:=>)))
+import qualified Data.IntMap                                as IM
 import qualified Data.Text.Zipper                           as TZ
 
 testText1 :: Text
@@ -63,8 +65,6 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
 
-
-
       , EWCLabel "modify <text>"
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
@@ -84,6 +84,13 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , EWCMouse (LMouseData (V2 11 18) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 11 18) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'b') [])
+
+      , EWCLabel "set noborder"
+      , EWCSetParams $ IM.singleton 1 (CTagBoxType :=> Identity (CBoxType (SBoxType_BoxText, SBoxType_NoBoxText)))
+      -- there is no border so click location is offset by (-1,-1) from before
+      , EWCMouse (LMouseData (V2 11 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 10) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char '🥔') [])
 
     ]
   expected = [
@@ -118,8 +125,19 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "paoopb"
-    ]
 
+      , Combine [
+          LabelCheck "set noborder"
+          -- make sure REltId is 0 because next step we will modify using it
+          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+        ]
+      , firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
+        _                                 -> False
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkSBoxText "<text>" "p🥔aoopb"
+    ]
 test_handler_state :: Test
 test_handler_state = constructTest "handler state" emptyPFState bs expected where
   bs = [

@@ -7,6 +7,7 @@ module Potato.Flow.Types (
   , REltIdMap
   , SuperSEltLabel
   , ControllersWithId
+  , controllerWithId_isParams
   , SEltLabelChanges
   , SEltLabelChangesWithLayerPos
   , LayerPosMap
@@ -15,6 +16,7 @@ module Potato.Flow.Types (
   , CRename(..)
   , CLine(..)
   , CBoxText(..)
+  , CBoxType(..)
   , CBoundingBox(..)
   , CTag(..)
   , CTextStyle(..)
@@ -57,11 +59,21 @@ type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
 type LayerPosMap = REltIdMap LayerPos
 
 -- | (old text, new text)
+
 type DeltaText = (Text,Text)
+
+{-
 -- TODO more efficient to do this with zippers prob?
 -- is there a way to make this more generic?
 instance Delta Text DeltaText where
   plusDelta s (b, a) = assert (b == s) a
+  minusDelta s (b, a) = assert (a == s) b
+-}
+
+instance (Show a, Eq a) => Delta a (a,a) where
+  plusDelta s (b, a) = if b /= s
+    then traceShow b $ traceShow s $ assert (b == s) a
+    else assert (b == s) a
   minusDelta s (b, a) = assert (a == s) b
 
 -- TODO
@@ -142,6 +154,18 @@ instance Delta SBoxText CBoxText where
       _sBoxText_text   = minusDelta _sBoxText_text _cBoxText_deltaText
     }
 
+data CBoxType = CBoxType (SBoxType, SBoxType) deriving (Eq, Generic, Show)
+
+instance NFData CBoxType
+
+instance Delta SBox CBoxType where
+  plusDelta sbox@SBox {..} (CBoxType deltatype) = sbox {
+      _sBox_boxType   = plusDelta _sBox_boxType deltatype
+    }
+  minusDelta sbox@SBox {..} (CBoxType deltatype) = sbox {
+      _sBox_boxType   = minusDelta _sBox_boxType deltatype
+    }
+
 data CBoundingBox = CBoundingBox {
   _cBoundingBox_deltaBox    :: DeltaLBox
 } deriving (Eq, Generic, Show)
@@ -159,10 +183,11 @@ instance NFData CTextStyle
 data CTag a where
   CTagRename :: CTag CRename
   CTagLine :: CTag CLine
-  CTagText :: CTag CBoxText
+  CTagBoxText :: CTag CBoxText
+  CTagBoxType :: CTag CBoxType
   CTagBoundingBox :: CTag CBoundingBox
   CTagSuperStyle :: CTag CSuperStyle
-  CTagTextStyle :: CTag CTextStyle
+  CTagBoxTextStyle :: CTag CTextStyle
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
@@ -173,15 +198,25 @@ deriveArgDict ''CTag
 type Controller = DS.DSum CTag Identity
 
 instance NFData Controller where
-  rnf (CTagRename DS.:=> Identity a)      = rnf a
-  rnf (CTagLine DS.:=> Identity a)        = rnf a
-  rnf (CTagText DS.:=> Identity a)        = rnf a
-  rnf (CTagBoundingBox DS.:=> Identity a) = rnf a
-  rnf (CTagSuperStyle DS.:=> Identity a)  = rnf a
-  rnf (CTagTextStyle DS.:=> Identity a)   = rnf a
+  rnf (CTagRename DS.:=> Identity a)       = rnf a
+  rnf (CTagLine DS.:=> Identity a)         = rnf a
+  rnf (CTagBoxText DS.:=> Identity a)      = rnf a
+  rnf (CTagBoxType DS.:=> Identity a)      = rnf a
+  rnf (CTagBoundingBox DS.:=> Identity a)  = rnf a
+  rnf (CTagSuperStyle DS.:=> Identity a)   = rnf a
+  rnf (CTagBoxTextStyle DS.:=> Identity a) = rnf a
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller
+
+controller_isParams :: Controller -> Bool
+controller_isParams (CTagBoxType DS.:=> Identity a)      = True
+controller_isParams (CTagSuperStyle DS.:=> Identity a)   = True
+controller_isParams (CTagBoxTextStyle DS.:=> Identity a) = True
+controller_isParams _                                    = False
+
+controllerWithId_isParams :: ControllersWithId -> Bool
+controllerWithId_isParams = all controller_isParams
 
 type SEltTree = [(REltId,SEltLabel)]
 

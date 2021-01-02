@@ -299,7 +299,7 @@ randomActionFCmd doundo stree = do
 
               -- SEltTextArea no longer what it use to be so this is not relevant anymore
               -- and I won't update this test for new SEltTextArea because whatever
-              --SEltTextArea (STextArea _ before _) -> return $ (,) pos $ CTagText ==>
+              --SEltTextArea (STextArea _ before _) -> return $ (,) pos $ CTagBoxText ==>
               --  CBoxText {
               --    _cBoxText_deltaText = (before, "meow meow")
               --  }
