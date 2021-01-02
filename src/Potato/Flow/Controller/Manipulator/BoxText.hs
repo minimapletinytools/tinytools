@@ -49,8 +49,8 @@ updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputStat
 updateBoxTextInputStateWithSBox sbox btis = r where
   newBox@(LBox _ (V2 width' _)) = _sBox_box sbox
   width = case _sBox_boxType sbox of
-    SBoxType_BoxText   -> width'
-    SBoxType_NoBoxText -> max 0 (width'-2)
+    SBoxType_BoxText   -> max 0 (width'-2)
+    SBoxType_NoBoxText -> width'
     _                  -> error "wrong type"
   r = btis {
       _boxTextInputState_box = newBox
