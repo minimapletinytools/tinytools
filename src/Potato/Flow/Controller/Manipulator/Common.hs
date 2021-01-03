@@ -7,6 +7,8 @@ module Potato.Flow.Controller.Manipulator.Common (
   , restrict8
   , selectionToSuperSEltLabel
   , selectionToMaybeSuperSEltLabel
+  , selectionToFirstSuperSEltLabel
+  , selectionToMaybeFirstSuperSEltLabel
   , lastPositionInSelection
 ) where
 
@@ -59,6 +61,12 @@ selectionToSuperSEltLabel selection = assert (Seq.length selection == 1) $ Seq.i
 
 selectionToMaybeSuperSEltLabel :: Selection -> Maybe SuperSEltLabel
 selectionToMaybeSuperSEltLabel selection = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
+
+selectionToFirstSuperSEltLabel :: Selection -> SuperSEltLabel
+selectionToFirstSuperSEltLabel selection = assert (Seq.length selection > 0) $ Seq.index selection 0
+
+selectionToMaybeFirstSuperSEltLabel :: Selection -> Maybe SuperSEltLabel
+selectionToMaybeFirstSuperSEltLabel selection = Seq.lookup 0 selection
 
 lastPositionInSelection :: Selection -> LayerPos
 lastPositionInSelection selection = r where

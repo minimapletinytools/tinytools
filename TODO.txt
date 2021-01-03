@@ -24,8 +24,8 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
--toMouseManipulators broken
--SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
+DONE-toMouseManipulators broken
+DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
 -undo/redo test
 -write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
   -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
