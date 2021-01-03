@@ -101,14 +101,11 @@ instance PotatoHandler SimpleLineHandler where
     -- TODO keyboard movement
     _                              -> Nothing
   pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
-    boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-      (_,_,SEltLabel _ (SEltLine SSimpleLine {..})) -> if _simpleLineHandler_active
+    boxes = case selectionToMaybeSuperSEltLabel _potatoHandlerInput_selection of
+      Just (_,_,SEltLabel _ (SEltLine SSimpleLine {..})) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
         else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
-      x -> if _simpleLineHandler_isCreation && not _simpleLineHandler_undoFirst
-        -- awkward, in the creation case, we have a SimpleLineHandler but no Line has been created yet
-        then []
-        else error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
+      _ -> []
     r = HandlerRenderOutput boxes
   pIsHandlerActive = _simpleLineHandler_active
