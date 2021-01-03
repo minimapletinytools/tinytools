@@ -114,22 +114,22 @@ instance NFData CLine
 instance Default CLine where
   def = CLine Nothing Nothing
 
-instance Delta SLine CLine where
-  plusDelta sline@SLine {..} CLine {..} = sline {
-      _sLine_start   = case _cLine_deltaStart of
-        Nothing -> _sLine_start
-        Just d  -> plusDelta _sLine_start d
-      , _sLine_end   =  case _cLine_deltaEnd of
-        Nothing -> _sLine_end
-        Just d  -> plusDelta _sLine_end d
+instance Delta SSimpleLine CLine where
+  plusDelta sline@SSimpleLine {..} CLine {..} = sline {
+      _sSimpleLine_start   = case _cLine_deltaStart of
+        Nothing -> _sSimpleLine_start
+        Just d  -> plusDelta _sSimpleLine_start d
+      , _sSimpleLine_end   =  case _cLine_deltaEnd of
+        Nothing -> _sSimpleLine_end
+        Just d  -> plusDelta _sSimpleLine_end d
     }
-  minusDelta sline@SLine {..} CLine {..} = sline {
-      _sLine_start   = case _cLine_deltaStart of
-        Nothing -> _sLine_start
-        Just d  -> minusDelta _sLine_start d
-        , _sLine_end   =  case _cLine_deltaEnd of
-          Nothing -> _sLine_end
-          Just d  -> minusDelta _sLine_end d
+  minusDelta sline@SSimpleLine {..} CLine {..} = sline {
+      _sSimpleLine_start   = case _cLine_deltaStart of
+        Nothing -> _sSimpleLine_start
+        Just d  -> minusDelta _sSimpleLine_start d
+        , _sSimpleLine_end   =  case _cLine_deltaEnd of
+          Nothing -> _sSimpleLine_end
+          Just d  -> minusDelta _sSimpleLine_end d
     }
 
 data CBoxText = CBoxText {

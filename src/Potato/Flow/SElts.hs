@@ -12,7 +12,7 @@ module Potato.Flow.SElts (
   , SBoxType(..)
   , sBoxType_isText
   , SBox(..)
-  , SLine(..)
+  , SSimpleLine(..)
   , STextArea(..)
   , SElt(..)
   , SEltLabel(..)
@@ -197,17 +197,17 @@ instance Default SBox where
     }
 
 -- |
-data SLine = SLine {
-  _sLine_start   :: XY
-  , _sLine_end   :: XY
-  , _sLine_style :: SuperStyle
+data SSimpleLine = SSimpleLine {
+  _sSimpleLine_start   :: XY
+  , _sSimpleLine_end   :: XY
+  , _sSimpleLine_style :: SuperStyle
   -- TODO arrows heads (maybe just make it part of SuperStyle?)
 } deriving (Eq, Generic, Show)
 
-instance FromJSON SLine
-instance ToJSON SLine
-instance Binary SLine
-instance NFData SLine
+instance FromJSON SSimpleLine
+instance ToJSON SSimpleLine
+instance Binary SSimpleLine
+instance NFData SSimpleLine
 
 -- TODO make manipulator
 -- TODO rename
@@ -239,7 +239,7 @@ instance Binary STextArea
 instance NFData STextArea
 
 -- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
-data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SLine | SEltTextArea STextArea deriving (Eq, Generic, Show)
+data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SSimpleLine | SEltTextArea STextArea deriving (Eq, Generic, Show)
 
 instance FromJSON SElt
 instance ToJSON SElt

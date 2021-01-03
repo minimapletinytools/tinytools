@@ -51,9 +51,9 @@ toMouseManipulators selection = if Seq.length selection > 1
       Nothing -> []
       Just (_, _, SEltLabel _ selt) -> case selt of
         SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
-        SEltLine SLine {..} -> undefined
-          --_sLine_start
-          --_sLine_end
+        SEltLine SSimpleLine {..} -> undefined
+          --_sSimpleLine_start
+          --_sSimpleLine_end
         SEltTextArea STextArea {..} -> fmap (flip makeHandleBox _sTextArea_box) [BH_TL .. BH_A]
           -- add at end to preserve indexing of [BH_TL .. BH_A]
           <> [(makeHandleBox BH_A _sTextArea_box) { _mouseManipulator_type = MouseManipulatorType_Text }]

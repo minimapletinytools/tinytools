@@ -42,12 +42,12 @@ instance Default SimpleLineHandler where
 findFirstLineManipulator :: RelMouseDrag -> Selection -> Maybe Bool
 findFirstLineManipulator (RelMouseDrag MouseDrag {..}) selection = assert (Seq.length selection == 1) $ case Seq.lookup 0 selection of
     Nothing -> error "expected selection"
-    Just (_, _, SEltLabel _ (SEltLine SLine {..})) ->
-      if _mouseDrag_to == _sLine_start then Just True
-        else if _mouseDrag_to == _sLine_end then Just False
+    Just (_, _, SEltLabel _ (SEltLine SSimpleLine {..})) ->
+      if _mouseDrag_to == _sSimpleLine_start then Just True
+        else if _mouseDrag_to == _sSimpleLine_end then Just False
           else Nothing
 
-    Just x -> error $ "expected SLine in selection but got " <> show x <> " instead"
+    Just x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
 
 
 instance PotatoHandler SimpleLineHandler where
@@ -85,7 +85,7 @@ instance PotatoHandler SimpleLineHandler where
         else def { _cLine_deltaEnd = Just $ DeltaXY dragDelta })
 
       op = if _simpleLineHandler_isCreation
-        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SLine _mouseDrag_from _mouseDrag_to def))
+        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def))
         else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {
@@ -100,13 +100,13 @@ instance PotatoHandler SimpleLineHandler where
     _                              -> Nothing
   pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     boxes = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-      (_,_,SEltLabel _ (SEltLine SLine {..})) -> if _simpleLineHandler_active
+      (_,_,SEltLabel _ (SEltLine SSimpleLine {..})) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
-        then [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
-        else [make_lBox_from_XY _sLine_start, make_lBox_from_XY _sLine_end]
+        then [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
+        else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
       x -> if _simpleLineHandler_isCreation && not _simpleLineHandler_undoFirst
         -- awkward, in the creation case, we have a SimpleLineHandler but no Line has been created yet
         then []
-        else error $ "expected SLine in selection but got " <> show x <> " instead"
+        else error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
     r = HandlerRenderOutput boxes
   pIsHandlerActive = _simpleLineHandler_active

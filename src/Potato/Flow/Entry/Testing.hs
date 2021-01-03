@@ -229,10 +229,10 @@ randomActionFCmd doundo stree = do
             , _sBox_boxType = SBoxType_Box
           }
         1 -> return $ FCAddElt pos $ SEltLine
-          SLine {
-            _sLine_start = p1
-            , _sLine_end = p2
-            , _sLine_style = def
+          SSimpleLine {
+            _sSimpleLine_start = p1
+            , _sSimpleLine_end = p2
+            , _sSimpleLine_style = def
           }
         2 -> return $ FCAddElt pos $ SEltTextArea
           STextArea {
