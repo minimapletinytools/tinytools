@@ -148,6 +148,9 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , EWCLabel "Cut pasta everything"
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl])
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl])
+
+      , EWCLabel "Esc deselect everything"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Esc) [])
     ]
 
   -- I can't remember why we're using checkLayerEntriesNum instead of counting number of entries in PFState but it doesn't matter, should be the same
@@ -201,6 +204,10 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
           numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 2)
           , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
         ]
+
+      , LabelCheck "Esc deselect everything"
+      , numSelectedEltsEqualPredicate 0
+
     ]
 
 
