@@ -433,6 +433,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 Nothing    -> Nothing
                 Just stree -> Just $ WSEAddRelative (lastPositionInSelection _goatState_selection, stree)
               r = makeGoatCmdTempOutputFromMaybeEvent goatState mPastaEv
+            KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
+              r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
+            KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
+              r = makeGoatCmdTempOutputFromEvent goatState WSERedo
             -- tool hotkeys
             KeyboardData (KeyboardKey_Char key) _ -> r where
               newTool = case key of
