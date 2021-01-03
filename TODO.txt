@@ -24,6 +24,8 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
+-toMouseManipulators broken
+-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
 -undo/redo test
 -write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
   -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
@@ -126,7 +128,7 @@ IGNORE-simple select compromise
   -insert mode text area spec
     -(how to handle resize??)
   -line intersection renderer
-    -connects to lines, renders their line intersections 
+    -connects to lines, renders their line intersections
 -layer bonus
   -write method to update layers incrementally when there are changes + when moving elements around in layers
     -write now you just inefficientlly call generateLayers every time...
