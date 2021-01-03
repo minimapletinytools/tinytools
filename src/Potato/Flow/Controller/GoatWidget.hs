@@ -407,13 +407,11 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
           Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
           -- input not captured by handler
-          -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState in a what that PotatoHandlerOutput can't atm
+          -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState which PotatoHandlerOutput can't atm
           Nothing -> case kbd of
             KeyboardData KeyboardKey_Esc _ ->
               (makeGoatCmdTempOutputFromNothing goatState) {
                   -- TODO change tool back to select?
-                  -- deselect goatState if we weren't using mouse
-                  -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
                   _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
                     MouseDragState_Up        -> Just (False, Seq.empty)
                     MouseDragState_Cancelled -> Just (False, Seq.empty)
