@@ -56,6 +56,14 @@ IGNORE-simple select compromise
     -you'll have to do this anyways for multi-user mode right?
     -maybe just remake the handler, or perhaps add a reset method to handler??
       -should reset method take SEltLabelChanges... it probably should D:
+-make flowchart diagram of handler setting rules
+  -non-canvas event
+  -external event (calls new reset function)
+  -capture + active + changes
+  -(capture/no capture) + not active + changes
+  -no capture (must not be active)
+  -returns Nothing handler
+-assert handler is inactive if it does not capture
 DONE-box border offset/no offset stuff D:
 DONE-box text renderer lol
 -box with border test D:

@@ -36,7 +36,7 @@ import           Potato.Flow.Workspace
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
 import           Data.Aeson
-import           Data.Default                              (def)
+import           Data.Default
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
@@ -83,6 +83,104 @@ data GoatCmd =
   -- debug nonsense
   | GoatCmdSetDebugLabel Text
   deriving (Show)
+
+
+
+-- Ok, don't think this needs to be a part of GoatCmdTempOutput but does need to be a part of GoatState
+-- TODO do this later
+{-
+data DynGoatFlags = DynGoatFlags {
+  _dynGoatFlags_tool           = r_tool
+  , _dynGoatFlags_selection    = r_selection
+  , _dynGoatFlags_layers       = r_layers
+  , _dynGoatFlags_pan          = r_pan
+  , _dynGoatFlags_broadPhase   = r_broadphase
+  , _dynGoatFlags_canvas = r_canvas
+  , _dynGoatFlags_renderedCanvas = r_renderedCanvas
+  , _dynGoatFlags_handlerRenderOutput =  r_handlerRenderOutput
+} deriving (Show)
+
+data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFlag_Layers | GoatStateFlag_Pan | GoatStateFlag_BroadPhase | GoatStateFlag_Canvas | GoatStateFlag_RenderedCanvas | GoatStateFlag_HandlerRenderOutput deriving (Show, Eq)
+-}
+
+
+data GoatCmdTempOutput = GoatCmdTempOutput {
+  _goatCmdTempOutput_goatState     :: GoatState
+  --, _goatCmdTempOutput_wasCanvasInput :: Bool
+  --, _goatCmdTempOutput_wasLayerInput :: Bool
+
+  -- NOTE the value of _potatoHandlerOutput_nextHandler is not directly translated here
+  -- PotatoHandlerOutput interpretation: isNothing _potatoHandlerOutput_nextHandler => handler does not capture input
+  -- GoatCmdTempOutput interpretation (when non-canvas input):
+  --    -isNothing _potatoHandlerOutput_nextHandler => event not related to canvas handler
+  --    -so we set _goatCmdTempOutput_nextHandler = Just _goatState_handler
+  , _goatCmdTempOutput_nextHandler :: Maybe SomePotatoHandler
+
+  , _goatCmdTempOutput_select      :: Maybe (Bool, Selection)
+  , _goatCmdTempOutput_pFEvent     :: Maybe WSEvent
+  , _goatCmdTempOutput_pan         :: Maybe XY
+  , _goatCmdTempOutput_layersState :: Maybe LayersState
+} deriving (Show)
+
+instance Default GoatCmdTempOutput where
+  def = GoatCmdTempOutput {
+      _goatCmdTempOutput_goatState = undefined
+      , _goatCmdTempOutput_nextHandler  = Nothing
+      , _goatCmdTempOutput_select      = Nothing
+      , _goatCmdTempOutput_pFEvent     = Nothing
+      , _goatCmdTempOutput_pan         = Nothing
+      , _goatCmdTempOutput_layersState = Nothing
+    }
+
+makeGoatCmdTempOutputFromNothing :: GoatState -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromNothing goatState = def {
+    _goatCmdTempOutput_goatState = goatState
+    , _goatCmdTempOutput_nextHandler = Just (_goatState_handler goatState)
+  }
+
+makeGoatCmdTempOutputFromNothingClearHandler :: GoatState -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromNothingClearHandler goatState = def {
+    _goatCmdTempOutput_goatState = goatState
+  }
+
+makeGoatCmdTempOutputFromExternalEvent :: GoatState -> WSEvent -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromExternalEvent goatState wsev = (makeGoatCmdTempOutputFromNothing goatState) {
+    -- TODO flag that this was not canvas input
+    _goatCmdTempOutput_pFEvent = Just wsev
+  }
+
+makeGoatCmdTempOutputFromMaybeExternalEvent :: GoatState -> Maybe WSEvent -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromMaybeExternalEvent goatState mwsev = (makeGoatCmdTempOutputFromNothing goatState) {
+    -- TODO flag that this was not canvas input
+    _goatCmdTempOutput_pFEvent = mwsev
+  }
+
+makeGoatCmdTempOutputFromPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} =  def {
+    _goatCmdTempOutput_goatState = goatState
+    , _goatCmdTempOutput_nextHandler = _potatoHandlerOutput_nextHandler
+    , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
+    , _goatCmdTempOutput_pFEvent     = _potatoHandlerOutput_pFEvent
+    , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
+    , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
+  }
+
+
+makeGoatCmdTempOutputFromLayersPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput {..} =  def {
+    _goatCmdTempOutput_goatState = goatState {
+        _goatState_layersHandler = case _potatoHandlerOutput_nextHandler of
+          Just h  -> h
+          Nothing -> error "expected LayersHandler to return a new handler"
+      }
+    -- TODO flag that this was not canvas input
+    , _goatCmdTempOutput_nextHandler = Nothing
+    , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
+    , _goatCmdTempOutput_pFEvent     = _potatoHandlerOutput_pFEvent
+    , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
+    , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
+  }
+
 
 -- | invariants
 -- * TODO mouse input type can only change after a `_lMouseData_isRelease == True`
@@ -176,9 +274,11 @@ makeClipboard GoatState {..} = r where
     then _goatState_clipboard
     else Just $ selectionToSEltTree _goatState_selection
 
+-- TODO DELETE
 potatoHandlerOutputNoHandlerChange :: GoatState -> PotatoHandlerOutput
 potatoHandlerOutputNoHandlerChange GoatState {..} = def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
 
+-- TODO DELETE
 potatoHandlerOutputDeleteSelection :: GoatState -> PotatoHandlerOutput
 potatoHandlerOutputDeleteSelection goatState@GoatState {..} = r where
   deleteEv = if Seq.null _goatState_selection
@@ -187,6 +287,11 @@ potatoHandlerOutputDeleteSelection goatState@GoatState {..} = r where
   r = (potatoHandlerOutputNoHandlerChange goatState) {
       _potatoHandlerOutput_pFEvent = deleteEv
     }
+
+deleteSelectionEvent :: GoatState -> Maybe WSEvent
+deleteSelectionEvent GoatState {..} = if Seq.null _goatState_selection
+  then Nothing
+  else Just $ WSERemoveElt (toList . fmap snd3 $ _goatState_selection)
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
@@ -202,17 +307,6 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_selection   = _goatState_selection
   }
 
-processLayersHandlerOutput :: GoatState -> PotatoHandlerOutput -> (GoatState, PotatoHandlerOutput)
-processLayersHandlerOutput goatState pho = (goatState', pho') where
-  -- TODO this is wrong, you want to persist the current handler
-  -- interacting with layers should not change canvas handler
-  pho' = pho { _potatoHandlerOutput_nextHandler = Nothing }
-  goatState' = goatState {
-      _goatState_layersHandler = case _potatoHandlerOutput_nextHandler pho of
-        Just h  -> h
-        Nothing -> error "expected LayersHandler to return a new handler"
-    }
-
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
@@ -222,26 +316,15 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
-  -- persist the handler if it's not a canvas input
-  -- we need to this because of our incorrect use of PotatoHandlerOutput as the intermediary return type of the proceeding case statement
-  -- i.e. the values of PotatoHandlerOutput are interpreted slightly differently here than intended
-  -- intended interpretation: isNothing _potatoHandlerOutput_nextHandler -> handler does not capture input
-  -- interpretation here when non-canvas input: isNothing _potatoHandlerOutput_nextHandler -> event not related to canvas handler
-  -- this really sucks, maybe you should fix it D:
-  -- NOTE for now, this type of input is not allowed when handler is active (may want to change this in the future?)
-  persistHandlerNoCanvasInput = assert (not $ pIsHandlerActive _goatState_handler ) def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
-
-  (goatStateAfterGoatCmd, phoAfterGoatCmd) = case _goatState_handler of
+  (goatCmdTempOutput) = case _goatState_handler of
     SomePotatoHandler handler -> case cmd of
-      --GoatCmdSetDebugLabel x -> traceShow x $ (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
-      GoatCmdSetDebugLabel x -> (goatState { _goatState_debugLabel = x }, persistHandlerNoCanvasInput)
-      GoatCmdTool x -> (goatState { _goatState_selectedTool = x }, persistHandlerNoCanvasInput)
-      GoatCmdWSEvent x -> (goatState, persistHandlerNoCanvasInput { _potatoHandlerOutput_pFEvent = Just x })
+      --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
+      GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
+      GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
+      GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromExternalEvent goatState x
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff
-        (goatState, def {
-            _potatoHandlerOutput_pFEvent = Just $ WSELoad spf
-          })
+        makeGoatCmdTempOutputFromExternalEvent goatState (WSELoad spf)
       --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
       GoatCmdMouse mouseData ->
         let
@@ -253,23 +336,24 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
           canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
           goatState' = goatState { _goatState_mouseDrag = mouseDrag }
+          noChangeOutput = makeGoatCmdTempOutputFromNothing goatState'
 
           isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
 
         in case _mouseDrag_state mouseDrag of
           -- if mouse was cancelled, update _goatState_mouseDrag accordingly
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-            then (goatState' { _goatState_mouseDrag = def }, persistHandlerNoCanvasInput)
-            else (goatState', persistHandlerNoCanvasInput) -- still cancelled
+            then makeGoatCmdTempOutputFromNothing $ goatState' { _goatState_mouseDrag = def }
+            else noChangeOutput -- still cancelled
 
           -- if mouse is intended for layers
           _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
-            Just pho -> processLayersHandlerOutput goatState' pho
-            Nothing  -> (goatState', persistHandlerNoCanvasInput)
+            Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
+            Nothing  -> noChangeOutput
 
           -- special case, if mouse down and pan tool, we override with a new handler
           MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
-            Just pho -> (goatState', pho)
+            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
             Nothing  -> error "this should never happen"
           -- special case, if mouse down and creation tool, we override with a new handler
           MouseDragState_Down | tool_isCreate _goatState_selectedTool -> assert (not $ pIsHandlerActive handler) r where
@@ -283,11 +367,11 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             -- pass input onto newly created handler
             r = case someNewHandler of
               SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
-                Just pho -> (goatState', pho)
+                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
                 Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
           -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-            Just pho -> (goatState', pho)
+            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
             -- input not captured by handler, do select or drag+select
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               nextSelection = selectMagic last_pFState _goatState_layerPosMap _goatState_broadPhaseState canvasDrag
@@ -299,7 +383,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 -- 2. if you let go of shift before mouse up, it just does a standard mouse selection
                 -- I think this is still better than letting BoxHandler handle this case
                 then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                  Just pho -> (goatState', pho)
+                  Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
                   Nothing -> error "handler was expected to capture this mouse state"
 
                 -- special drag + select case, override the selection
@@ -309,7 +393,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
                   -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
                   Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
-                    $ (goatState', pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
+                    $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' (pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                   Nothing -> error "handler was expected to capture this mouse state"
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
@@ -318,53 +402,53 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         -- special case, treat escape cancel mouse drag as a mouse input
         KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive _goatState_mouseDrag -> r where
           canceledMouse = cancelDrag _goatState_mouseDrag
-          rGoatState = goatState {
+          goatState' = goatState {
               _goatState_mouseDrag = canceledMouse
             }
           r = if _mouseDrag_isLayerMouse _goatState_mouseDrag
             then case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag canceledMouse) of
-              Just pho -> processLayersHandlerOutput rGoatState pho
-              Nothing  -> (rGoatState, def)
+              Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
+              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState'
             else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState _goatState_pan canceledMouse) of
-              Just pho -> (rGoatState, pho)
-              Nothing  -> (rGoatState, def)
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState'
 
         -- we are in the middle of mouse drag, ignore all keyboard inputs
         -- perhaps a better way to do this is to have handlers capture all inputs when active
-        _ | mouseDrag_isActive _goatState_mouseDrag -> (goatState, captureWithNoChange handler)
+        _ | mouseDrag_isActive _goatState_mouseDrag -> makeGoatCmdTempOutputFromNothing goatState
 
         -- TODO pass input to LayersHandler
         -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
         -- LayersHandler should only capture when donig renaming
         _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
-          Just pho -> (goatState, pho)
+          Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
           -- input not captured by handler
           -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState in a what that PotatoHandlerOutput can't atm
           Nothing -> case kbd of
             KeyboardData KeyboardKey_Esc _ ->
-              (goatState, def {
-                -- TODO change tool back to select?
+              (makeGoatCmdTempOutputFromNothing goatState) {
+                  -- TODO change tool back to select?
                   -- deselect goatState if we weren't using mouse
                   -- TODO actually probably don't bother checking for this condition, mouse should have been captured in this case
-                  _potatoHandlerOutput_select = case _mouseDrag_state _goatState_mouseDrag of
+                  _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
                     MouseDragState_Up        -> Just (False, Seq.empty)
                     MouseDragState_Cancelled -> Just (False, Seq.empty)
                     _                        -> Nothing
-                })
+                }
 
             KeyboardData (KeyboardKey_Delete) [] -> r where
-              r = (goatState, potatoHandlerOutputDeleteSelection goatState)
+              r = makeGoatCmdTempOutputFromMaybeExternalEvent goatState (deleteSelectionEvent goatState)
             KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState
-              r = (goatState { _goatState_clipboard = copied }, def)
+              r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
             KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState
-              r = (goatState { _goatState_clipboard = copied }, potatoHandlerOutputDeleteSelection goatState)
+              r = makeGoatCmdTempOutputFromMaybeExternalEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
             KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
-              pastaEv = case _goatState_clipboard of
+              mPastaEv = case _goatState_clipboard of
                 Nothing    -> Nothing
                 Just stree -> Just $ WSEAddRelative (lastPositionInSelection _goatState_selection, stree)
-              r = (goatState, (potatoHandlerOutputNoHandlerChange goatState) { _potatoHandlerOutput_pFEvent = pastaEv })
+              r = makeGoatCmdTempOutputFromMaybeExternalEvent goatState mPastaEv
             -- tool hotkeys
             KeyboardData (KeyboardKey_Char key) _ -> r where
               newTool = case key of
@@ -374,17 +458,18 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 '\\' -> Tool_Line
                 't'  -> Tool_Text
                 _    -> _goatState_selectedTool
-              r = (goatState { _goatState_selectedTool = newTool }, def)
+              -- TODO consider clearing/resetting the handler?
+              r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }
 
             -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
 
             -- unhandled input
-            _ -> (goatState, persistHandlerNoCanvasInput)
+            _ -> makeGoatCmdTempOutputFromNothing goatState
       _          -> undefined
 
 
   -- update PFWorkspace from pho
-  (next_workspace, cslmapForBroadPhase) = case _potatoHandlerOutput_pFEvent phoAfterGoatCmd of
+  (next_workspace, cslmapForBroadPhase) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_pFWorkspace, IM.empty)
     Just wsev -> (r1,r2) where
@@ -395,18 +480,18 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
 
   -- update pan from pho
-  next_pan = case _potatoHandlerOutput_pan phoAfterGoatCmd of
+  next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
     Nothing -> _goatState_pan
     Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
       V2 cx0 cy0 = _goatState_pan
 
   -- update layersState from pho
-  next_layersState' = case _potatoHandlerOutput_layersState phoAfterGoatCmd of
+  next_layersState' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
     Nothing -> _goatState_layersState
     Just ls -> ls
 
   -- get selection from pho
-  mSelectionFromPho = case _potatoHandlerOutput_select phoAfterGoatCmd of
+  mSelectionFromPho = case _goatCmdTempOutput_select goatCmdTempOutput of
     Nothing -> Nothing
     Just (add, sel) -> assert (pFState_selectionIsValid next_pFState (fmap snd3 (toList r))) $ Just r where
       r' = if add
@@ -445,7 +530,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
     Nothing -> (isNewSelection', selectionAfterChanges)
 
-  mHandlerFromPho = _potatoHandlerOutput_nextHandler phoAfterGoatCmd
+  mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
 
   next_handler = if isNewSelection
     -- if there is a new selection, update the handler with new selection if handler wasn't active
@@ -470,7 +555,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
 
 
-  finalGoatState = goatStateAfterGoatCmd {
+  finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
       _goatState_pFWorkspace      = next_workspace
       , _goatState_pan             = next_pan
       , _goatState_handler         = next_handler
