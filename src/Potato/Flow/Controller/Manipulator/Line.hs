@@ -85,7 +85,7 @@ instance PotatoHandler SimpleLineHandler where
         else def { _cLine_deltaEnd = Just $ DeltaXY dragDelta })
 
       op = if _simpleLineHandler_isCreation
-        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def))
+        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def def))
         else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {

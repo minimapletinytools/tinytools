@@ -58,7 +58,7 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltBox x                    -> does_lBox_intersect lbox (_sBox_box x)
   SEltTextArea x                   -> does_lBox_intersect lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
-  SEltLine (SSimpleLine start end style) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SSimpleLine start end style)))
+  SEltLine (SSimpleLine start end style lineStyle) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SSimpleLine start end style lineStyle)))
 
 
 
@@ -151,12 +151,11 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
       _sBox_box = modifyDelta isDo (_sBox_box sbox) _cBoundingBox_deltaBox
     }
   -- TODO handle resize parameter
-  SEltLine SSimpleLine {..} -> SEltLine $ SSimpleLine {
+  SEltLine sline@SSimpleLine {..} -> SEltLine $ sline {
       _sSimpleLine_start = modifyDelta isDo _sSimpleLine_start
         (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sSimpleLine_end = modifyDelta isDo _sSimpleLine_end
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sSimpleLine_style = _sSimpleLine_style
     }
   SEltTextArea stext -> SEltTextArea $ stext {
       _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox
