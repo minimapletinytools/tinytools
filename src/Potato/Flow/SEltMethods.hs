@@ -157,12 +157,13 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
   barr = T.reverse $ _lineStyle_downArrows _sSimpleLine_lineStyle
 
   horizrenderfn pt@(V2 x' y')
+    | not (does_lBox_contains_XY lbox pt) = Nothing
     | w <= 1 = vertrenderfn pt
     -- render as much of the left arrow as you can and then render the rest
     | isLeft && isLeftHoriz && x'-x < (T.length larr) = Just $ T.index larr (x'-x)
     | isLeft && isLeftHoriz = Just $ _superStyle_horizontal _sSimpleLine_style
     -- render as much of the right arrow as you can and then render the rest
-    | isRight && isRightHoriz && endx-x' < (T.length larr) = Just $ T.index rarr (endx-x')
+    | isRight && isRightHoriz && endx-x' < (T.length rarr) = Just $ T.index rarr (endx-x')
     | isRight && isRightHoriz = Just $ _superStyle_horizontal _sSimpleLine_style
     -- render the corners
     | isCenter && isTop && isLeftHoriz = Just $ _superStyle_tr _sSimpleLine_style
@@ -182,6 +183,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
       isBot = (y' == endy && starty < endy) || (y' == starty && starty > endy)
 
   vertrenderfn pt@(V2 x' y')
+    | not (does_lBox_contains_XY lbox pt) = Nothing
     | w <= 1 && h <= 1 = Just $ _superStyle_point _sSimpleLine_style
     | h <= 1 = horizrenderfn pt
     -- render as much of the top arrow as you can and then render the rest
