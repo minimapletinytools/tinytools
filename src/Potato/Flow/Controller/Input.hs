@@ -38,11 +38,12 @@ data KeyboardKey =
   KeyboardKey_Esc
   | KeyboardKey_Return
   | KeyboardKey_Space
+  | KeyboardKey_Delete
+  | KeyboardKey_Backspace
   | KeyboardKey_Left
   | KeyboardKey_Right
   | KeyboardKey_Up
   | KeyboardKey_Down
-  | KeyboardKey_Delete
   | KeyboardKey_Home
   | KeyboardKey_End
   | KeyboardKey_PageUp
