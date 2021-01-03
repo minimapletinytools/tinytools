@@ -97,7 +97,7 @@ handlerName_simpleLine = "SimpleLineHandler"
 handlerName_cartesianLine :: Text
 handlerName_cartesianLine = "CartesianLineHandler"
 handlerName_boxText :: Text
-handlerName_boxText = "TextAreaHandler"
+handlerName_boxText = "BoxTextHandler"
 handlerName_pan :: Text
 handlerName_pan = "PanHandler"
 handlerName_select :: Text
@@ -128,9 +128,14 @@ class PotatoHandler h where
   -- return type of Nothing means input is not captured
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
 
-  -- TODO something like this?
-  -- I guess you don't need this, you can always check the selection for changes on each input, it's less efficient only in non-manipulate cases
-  --pSelectionUpdated :: h -> PotatoHandlerInput -> PotatoHandlerOutput
+  -- reset handler if an event came in in between
+  -- FOR NOW we expect this to only be called if handler is not active
+  -- FOR NOW this is only allowed to return the existing handler
+  -- when we have multi-user, this may return actions, and may happen when a handler is active
+  pResetHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
+  -- prob not correct behavior, if you delete an elt (say), then you don't want to persist the handler
+  --pResetHandler h _ = Just $ SomePotatoHandler h
+  pResetHandler h _ = Nothing
 
   -- active manipulators will not be overwritten by new handlers via selection from backend
   pIsHandlerActive :: h -> Bool
@@ -156,6 +161,7 @@ instance PotatoHandler SomePotatoHandler where
   pHandleMouse (SomePotatoHandler h) = pHandleMouse h
   pHandleKeyboard (SomePotatoHandler h) = pHandleKeyboard h
   pIsHandlerActive (SomePotatoHandler h) = pIsHandlerActive h
+  pResetHandler (SomePotatoHandler h) = pResetHandler h
   pRenderHandler (SomePotatoHandler h) = pRenderHandler h
   pValidateMouse (SomePotatoHandler h) = pValidateMouse h
 
