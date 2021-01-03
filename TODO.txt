@@ -24,6 +24,8 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
+-write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
+  -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
 -make flowchart diagram of handler setting rules
   -non-canvas event (does this reset?)
   -external event (calls new reset function)
