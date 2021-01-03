@@ -209,7 +209,7 @@ instance PotatoHandler BoxHandler where
           , _sBox_boxType  = if _boxHandler_creation == BoxCreationType_Text
             then SBoxType_BoxText -- TODO pull from params
             else SBoxType_Box
-          --, _sBox_style :: SuperStyle -- TODO pull from params
+          , _sBox_style = def { _superStyle_fill = FillStyle_Simple ' '}
           --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
         }
 

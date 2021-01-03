@@ -97,14 +97,17 @@ getDrawer selt = case selt of
       SBoxType_Box -> Nothing
       _ -> outputChar where
         spans = TZ._displayLines_spans $ makeDisplayLinesFromSBox sbox
+
+        (LBox (V2 bx by) _) = _sBox_box
         (xoff,yoff) = case _sBox_boxType of
           SBoxType_NoBoxText -> (0,0)
           _                  -> (1,1)
-        outputChar = case spans !!? (y'-yoff) of
+
+        outputChar = case spans !!? (y'-by-yoff) of
           Nothing -> Nothing
           Just row -> outputChar' where
             rowText = concatSpans row
-            xidx = x'-xoff
+            xidx = x'-bx- xoff
             outputChar' = if T.length rowText > xidx
               then Just $ T.index rowText xidx
               else Nothing
