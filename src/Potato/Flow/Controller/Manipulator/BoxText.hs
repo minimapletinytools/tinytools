@@ -99,6 +99,10 @@ inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZi
     KeyboardKey_Right   -> (False, TZ.right oldZip)
     KeyboardKey_Up      -> (False, TZ.up oldZip)
     KeyboardKey_Down    -> (False, TZ.down oldZip)
+    KeyboardKey_Home    -> (False, TZ.home oldZip)
+    KeyboardKey_End -> (False, TZ.end oldZip)
+    KeyboardKey_PageUp -> (False, TZ.pageUp 5 oldZip)
+    KeyboardKey_PageDown -> (False, TZ.pageDown 5 oldZip)
 
     KeyboardKey_Return  -> (True, TZ.insertChar '\n' oldZip)
     KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
