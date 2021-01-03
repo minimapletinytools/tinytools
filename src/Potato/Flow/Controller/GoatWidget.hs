@@ -117,7 +117,7 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   , _goatCmdTempOutput_nextHandler :: Maybe SomePotatoHandler
 
   , _goatCmdTempOutput_select      :: Maybe (Bool, Selection)
-  , _goatCmdTempOutput_pFEvent     :: Maybe WSEvent
+  , _goatCmdTempOutput_pFEvent     :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
   , _goatCmdTempOutput_pan         :: Maybe XY
   , _goatCmdTempOutput_layersState :: Maybe LayersState
 } deriving (Show)
@@ -143,16 +143,14 @@ makeGoatCmdTempOutputFromNothingClearHandler goatState = def {
     _goatCmdTempOutput_goatState = goatState
   }
 
-makeGoatCmdTempOutputFromExternalEvent :: GoatState -> WSEvent -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromExternalEvent goatState wsev = (makeGoatCmdTempOutputFromNothing goatState) {
-    -- TODO flag that this was not canvas input
-    _goatCmdTempOutput_pFEvent = Just wsev
+makeGoatCmdTempOutputFromEvent :: GoatState -> WSEvent -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromEvent goatState wsev = (makeGoatCmdTempOutputFromNothing goatState) {
+    _goatCmdTempOutput_pFEvent = Just (False, wsev)
   }
 
-makeGoatCmdTempOutputFromMaybeExternalEvent :: GoatState -> Maybe WSEvent -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromMaybeExternalEvent goatState mwsev = (makeGoatCmdTempOutputFromNothing goatState) {
-    -- TODO flag that this was not canvas input
-    _goatCmdTempOutput_pFEvent = mwsev
+makeGoatCmdTempOutputFromMaybeEvent :: GoatState -> Maybe WSEvent -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromMaybeEvent goatState mwsev = (makeGoatCmdTempOutputFromNothing goatState) {
+    _goatCmdTempOutput_pFEvent = fmap (\x -> (False,x)) mwsev
   }
 
 makeGoatCmdTempOutputFromPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput -> GoatCmdTempOutput
@@ -160,7 +158,7 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
     _goatCmdTempOutput_goatState = goatState
     , _goatCmdTempOutput_nextHandler = _potatoHandlerOutput_nextHandler
     , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
-    , _goatCmdTempOutput_pFEvent     = _potatoHandlerOutput_pFEvent
+    , _goatCmdTempOutput_pFEvent     = fmap (\x -> (True,x)) _potatoHandlerOutput_pFEvent
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
   }
@@ -176,7 +174,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     -- TODO flag that this was not canvas input
     , _goatCmdTempOutput_nextHandler = Nothing
     , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
-    , _goatCmdTempOutput_pFEvent     = _potatoHandlerOutput_pFEvent
+    , _goatCmdTempOutput_pFEvent     = fmap (\x -> (False,x)) _potatoHandlerOutput_pFEvent
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
   }
@@ -307,10 +305,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
       GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
-      GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromExternalEvent goatState x
+      GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff
-        makeGoatCmdTempOutputFromExternalEvent goatState (WSELoad spf)
+        makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)
       --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
       GoatCmdMouse mouseData ->
         let
@@ -423,18 +421,18 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 }
 
             KeyboardData (KeyboardKey_Delete) [] -> r where
-              r = makeGoatCmdTempOutputFromMaybeExternalEvent goatState (deleteSelectionEvent goatState)
+              r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
             KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState
               r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
             KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState
-              r = makeGoatCmdTempOutputFromMaybeExternalEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
+              r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
             KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
               mPastaEv = case _goatState_clipboard of
                 Nothing    -> Nothing
                 Just stree -> Just $ WSEAddRelative (lastPositionInSelection _goatState_selection, stree)
-              r = makeGoatCmdTempOutputFromMaybeExternalEvent goatState mPastaEv
+              r = makeGoatCmdTempOutputFromMaybeEvent goatState mPastaEv
             -- tool hotkeys
             KeyboardData (KeyboardKey_Char key) _ -> r where
               newTool = case key of
@@ -458,7 +456,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   (next_workspace, cslmapForBroadPhase) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_pFWorkspace, IM.empty)
-    Just wsev -> (r1,r2) where
+    Just (_, wsev) -> (r1,r2) where
       r1 = updatePFWorkspace wsev _goatState_pFWorkspace
       r2 = _pFWorkspace_lastChanges r1
   next_pFState = _pFWorkspace_pFState next_workspace
@@ -518,11 +516,21 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
 
-  next_handler = if isNewSelection
+  nextHandlerFromSelection = makeHandlerFromSelection next_selection
+
+  next_handler' = if isNewSelection
     -- if there is a new selection, update the handler with new selection if handler wasn't active
     then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_selection
     -- otherwise, use the returned handler or make a new one from selection
-    else fromMaybe (makeHandlerFromSelection next_selection) mHandlerFromPho
+    else fromMaybe nextHandlerFromSelection mHandlerFromPho
+
+
+  next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+    -- TODO you only need to do this if handler is one that came from mHandlerFromPho
+    -- if there was a non-canvas event, reset the handler D:
+    -- since we don't have multi-user events, the handler should never be active when this happens
+    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pResetHandler next_handler' potatoHandlerInput)
+    _ -> next_handler'
 
   next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'

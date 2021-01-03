@@ -57,7 +57,7 @@ IGNORE-simple select compromise
     -maybe just remake the handler, or perhaps add a reset method to handler??
       -should reset method take SEltLabelChanges... it probably should D:
 -make flowchart diagram of handler setting rules
-  -non-canvas event
+  -non-canvas event (does this reset?)
   -external event (calls new reset function)
   -capture + active + changes
   -(capture/no capture) + not active + changes

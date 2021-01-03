@@ -40,8 +40,8 @@ testClick x y = RelMouseDrag $ def {
 
 makeBoxTextInputState_basic_test :: Spec
 makeBoxTextInputState_basic_test = let
-    tais1 = makeBoxTextInputState testSBoxWithText1 (testClick 5 5)
-    tais2 = mouseText (Just tais1) testSBoxWithText1 (testClick 6 5)
+    tais1 = makeBoxTextInputState 0 testSBoxWithText1 (testClick 5 5)
+    tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5)
   in
     it "makeBoxTextInputState_basic" $ do
       --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
@@ -134,7 +134,7 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox lbox _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
         _                                 -> False
-      , checkHandlerNameAndState handlerName_boxText False
+      , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "p🥔aoopb"
     ]
