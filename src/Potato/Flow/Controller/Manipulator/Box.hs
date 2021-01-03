@@ -8,7 +8,6 @@ module Potato.Flow.Controller.Manipulator.Box (
   , makeHandleBox
   , makeDeltaBox
   --, MouseManipulator(..)
-  , toMouseManipulators
 ) where
 
 import           Relude
@@ -31,7 +30,7 @@ import qualified Data.List                                  as L
 import qualified Data.Sequence                              as Seq
 import           Data.Tuple.Extra
 
--- TODO rework this stuff
+-- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
 data MouseManipulator = MouseManipulator {
   _mouseManipulator_box    :: LBox
@@ -42,33 +41,18 @@ data MouseManipulator = MouseManipulator {
 type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
-
--- TODO finish
 toMouseManipulators :: Selection -> MouseManipulatorSet
-toMouseManipulators selection = if Seq.length selection > 1
-  then
-    case Seq.lookup 0 selection of
-      Nothing -> []
-      Just (_, _, SEltLabel _ selt) -> case selt of
-        SEltBox SBox {..}   -> fmap (flip makeHandleBox _sBox_box) [BH_TL .. BH_A]
-        SEltLine SSimpleLine {..} -> undefined
-          --_sSimpleLine_start
-          --_sSimpleLine_end
-        SEltTextArea STextArea {..} -> fmap (flip makeHandleBox _sTextArea_box) [BH_TL .. BH_A]
-          -- add at end to preserve indexing of [BH_TL .. BH_A]
-          <> [(makeHandleBox BH_A _sTextArea_box) { _mouseManipulator_type = MouseManipulatorType_Text }]
-        _                   -> []
-  else bb where
-    union_lBoxes :: NonEmpty LBox -> LBox
-    union_lBoxes (x:|xs) = foldl' union_lBox x xs
-    fmapfn (_, _, seltl) = do
-      box <- getSEltBox . _sEltLabel_sElt $ seltl
-      return box
-    msboxes = fmap fmapfn selection
-    sboxes = catMaybes (toList msboxes)
-    bb = case sboxes of
-      [] -> []
-      x:xs  -> fmap (flip makeHandleBox (union_lBoxes (x:|xs))) [BH_TL .. BH_A]
+toMouseManipulators selection = bb where
+  union_lBoxes :: NonEmpty LBox -> LBox
+  union_lBoxes (x:|xs) = foldl' union_lBox x xs
+  fmapfn (_, _, seltl) = do
+    box <- getSEltBox . _sEltLabel_sElt $ seltl
+    return box
+  msboxes = fmap fmapfn selection
+  sboxes = catMaybes (toList msboxes)
+  bb = case sboxes of
+    []   -> []
+    x:xs -> fmap (flip makeHandleBox (union_lBoxes (x:|xs))) [BH_TL .. BH_A]
 
 findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
@@ -80,9 +64,6 @@ findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
     _       -> normalSel
 
 
-
--- BOX MANIPULATOR STUFF
--- TODO move to diff file
 -- order is manipulator index
 data BoxHandleType = BH_TL | BH_TR | BH_BL | BH_BR | BH_A | BH_T | BH_B | BH_L | BH_R  deriving (Show, Eq, Enum)
 
@@ -229,8 +210,8 @@ instance PotatoHandler BoxHandler where
         }
 
     MouseDragState_Up -> Just r where
-      isText = case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-        (_,_,SEltLabel _ (SEltBox SBox{..})) -> sBoxType_isText _sBox_boxType
+      isText = case selectionToMaybeFirstSuperSEltLabel _potatoHandlerInput_selection of
+        Just (_,_,SEltLabel _ (SEltBox SBox{..})) -> sBoxType_isText _sBox_boxType
         _                                    -> False
 
 

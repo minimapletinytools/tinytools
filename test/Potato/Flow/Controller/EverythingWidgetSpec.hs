@@ -137,8 +137,6 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , EWCLabel "Delete A using Delete key"
       , EWCKeyboard (KeyboardData (KeyboardKey_Delete) [])
 
-
-
       , EWCLabel "Select everything"
       , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 (-100) (-100)) False MouseButton_Left [] False)
@@ -249,7 +247,13 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
+      , EWCLabel "select elt A"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 9 9) True MouseButton_Left [] False)
+
       , EWCLabel "create elt B"
+      , EWCTool Tool_Text
       , EWCMouse (LMouseData (V2 0 20) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 20 30) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
@@ -357,14 +361,20 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , AlwaysPass
       , AlwaysPass
 
+      , LabelCheck "select elt A"
+      , EqPredicate _goatState_selectedTool Tool_Select
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 1
+
       , LabelCheck "create elt B"
+      , EqPredicate _goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerNameAndState handlerName_box False
+      , checkHandlerNameAndState handlerName_boxText False
       , Combine [
           PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
           , numSelectedEltsEqualPredicate 1
-          , checkHandlerNameAndState handlerName_box False
+          , checkHandlerNameAndState handlerName_boxText False
         ]
 
       -- unselect
@@ -421,19 +431,19 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
-      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
       , checkHandlerNameAndState handlerName_box True
-      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 3 && y == 3
         _                                        -> False)
-      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
-      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 
