@@ -233,6 +233,7 @@ randomActionFCmd doundo stree = do
             _sSimpleLine_start = p1
             , _sSimpleLine_end = p2
             , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
           }
         2 -> return $ FCAddElt pos $ SEltTextArea
           STextArea {

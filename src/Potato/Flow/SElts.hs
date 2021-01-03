@@ -51,7 +51,7 @@ data SuperStyle = SuperStyle {
   , _superStyle_br         :: PChar
   , _superStyle_vertical   :: PChar
   , _superStyle_horizontal :: PChar
-  , _superStyle_point      :: PChar
+  , _superStyle_point      :: PChar -- used for 1x1 boxes and 1x lines
   , _superStyle_fill       :: FillStyle
 } deriving (Eq, Generic, Show)
 
@@ -176,6 +176,7 @@ sBoxType_isText = (/=) SBoxType_Box
 -- |
 data SBox = SBox {
   _sBox_box       :: LBox
+  -- TODO Rename to _superStyle
   , _sBox_style   :: SuperStyle
   , _sBox_title   :: SBoxTitle
   , _sBox_text    :: SBoxText
@@ -196,12 +197,50 @@ instance Default SBox where
       , _sBox_boxType = SBoxType_Box
     }
 
+data LineAutoStyle =
+  LineAutoStyle_Auto
+  | LineAutoStyle_AutoStraight
+  | LineAutoStyle_StraightAlwaysHorizontal
+  | LineAutoStyle_StraightAlwaysVertical
+  deriving (Eq, Generic, Show)
+
+instance FromJSON LineAutoStyle
+instance ToJSON LineAutoStyle
+instance Binary LineAutoStyle
+instance NFData LineAutoStyle
+
+instance Default LineAutoStyle where
+  def = LineAutoStyle_AutoStraight
+
+data LineStyle = LineStyle {
+  _lineStyle_leftArrows    :: Text
+  , _lineStyle_rightArrows :: Text
+  , _lineStyle_upArrows    :: Text
+  , _lineStyle_downArrows  :: Text
+  , _lineStyle_autoStyle   :: LineAutoStyle
+} deriving (Eq, Generic, Show)
+
+instance FromJSON LineStyle
+instance ToJSON LineStyle
+instance Binary LineStyle
+instance NFData LineStyle
+
+instance Default LineStyle where
+  def = LineStyle {
+      _lineStyle_leftArrows    = ""
+      , _lineStyle_rightArrows = ""
+      , _lineStyle_upArrows    = ""
+      , _lineStyle_downArrows  = ""
+      , _lineStyle_autoStyle   = def
+    }
+
 -- |
 data SSimpleLine = SSimpleLine {
-  _sSimpleLine_start   :: XY
-  , _sSimpleLine_end   :: XY
-  , _sSimpleLine_style :: SuperStyle
-  -- TODO arrows heads (maybe just make it part of SuperStyle?)
+  _sSimpleLine_start       :: XY
+  , _sSimpleLine_end       :: XY
+  -- TODO Rename to _superStyle
+  , _sSimpleLine_style     :: SuperStyle
+  , _sSimpleLine_lineStyle :: LineStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SSimpleLine

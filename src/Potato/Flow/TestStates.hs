@@ -81,11 +81,13 @@ pfstate_basic1 = PFState {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 0 110
             , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
           }))
         , (5, SEltLabel "sl2" (SEltLine SSimpleLine {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 10 100
             , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
           }))
 
       ]
@@ -119,11 +121,13 @@ pfstate_basic2 = PFState {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 0 110
             , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
           }))
         , (9, SEltLabel "sl2" (SEltLine SSimpleLine {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 10 100
             , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
           }))
         , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)
