@@ -89,7 +89,9 @@ instance PotatoHandler SimpleLineHandler where
         else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+              _simpleLineHandler_undoFirst = True
+            }
           , _potatoHandlerOutput_pFEvent = Just op
         }
     MouseDragState_Up -> Just def
