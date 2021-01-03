@@ -1,7 +1,6 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
 
 :: 12/26/2020 selection spec::
-
 IGNORE-simple select compromise
   -no distinguish between regular select and layer select
   -click drag on selected moves selected
@@ -24,38 +23,7 @@ IGNORE-simple select compromise
   -completely independent canvas and layer selection
   -TODO spec
 
-::12/30/2020 orderering service (OS) spec::
-  -OS has complete control over PFState
-    -insert between PFWorkspace and PFState I guess?
-  -OS tracks stack starting from initial state followed by series of actions
-  -OS has "previewApply :: Action -> OS -> OS"
-  -OS internally has "finalize :: [Action] -> OS -> OS" (acts on last finalized point in history)
-    -probably should also return [ActionRef] as list of invalidated Actions
-  -PFWorkspace interface
-    -userActions :: ActionStack
-    -invalidateUserAction :: ActionRef -> ActionStack -> ActionStack
-    -undo/redoAction :: ActionStack -> (Action, ActionStack)
-  -??? Some way to detect invalid actions ??
-    -e.g.
-      -A moves X (action A1)
-      -B moves X (action B1)
-      -A1 should now be invalid action?
-    -alternatively, actions are never invalidated, and undo restores SElt state rather than tries to undo the action
-  -checkTransitivity :: Action -> Action -> Bool
-    -simple implementation to return False if the 2 actions share the same REltId
-      -connections can probably be ignored, they can be tested for too
-  -prob need to sync layers as well D:?
-    -though doesn't matter if these go out of sync.. still it would be nice to keep these in sync
-    -can use same ordering service for this I guess, no need to worry about invalidating actions
-    -OS can output LayersState that needs to update GoatState
-    -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
-
 ::NEWEST TODO::
--if you get an event while BoxText handler is open, it will break undoFirst stuff
-  -you need to track when non-handler events come in...
-    -you'll have to do this anyways for multi-user mode right?
-    -maybe just remake the handler, or perhaps add a reset method to handler??
-      -should reset method take SEltLabelChanges... it probably should D:
 -make flowchart diagram of handler setting rules
   -non-canvas event (does this reset?)
   -external event (calls new reset function)
@@ -63,14 +31,8 @@ IGNORE-simple select compromise
   -(capture/no capture) + not active + changes
   -no capture (must not be active)
   -returns Nothing handler
--assert handler is inactive if it does not capture
-DONE-box border offset/no offset stuff D:
-DONE-box text renderer lol
--box with border test D:
-  -pretty sure there is a bug with this in BoxText
 -figure out why sbox doesn't render right in vty
 -render cursor position (get cursor pos from displayLines)
-IGNORE-default don't fill boxes pls
 -add alignment to text zipper
 -convert textarea into free form
   -implement or at least add stubs for this
@@ -113,7 +75,7 @@ IGNORE-default don't fill boxes pls
     -test it
 
 -params
-  -prob a view only thing, add hookup for params in goat widget I guess
+  DONE-prob a view only thing, add hookup for params in goat widget I guess
   -need common methods for reading style of multi-select stuff
   -is there a way to systemize different types of styles
     -SuperStyle
@@ -122,6 +84,12 @@ IGNORE-default don't fill boxes pls
       -make this part of SuperStyle
       -when displaying, show simplified version of it
     -BoxTitle
+-mouse select should select 0 size elts
+  -although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
+-if you are in BoxTextHandler mode and you have Text tool selected
+  -then you click and release outside box, you will go back to boxtext handler
+  -so I guess click release with any creation tool should deselect everything
+  -or not, maybe this is ok...
 -layers test for the future
   -rename (when supported)
   -drag move collapsed folder
@@ -160,7 +128,17 @@ IGNORE-default don't fill boxes pls
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
-
+DONE-if you get an event while BoxText handler is open, it will break undoFirst stuff
+  -you need to track when non-handler events come in...
+    -you'll have to do this anyways for multi-user mode right?
+    -maybe just remake the handler, or perhaps add a reset method to handler??
+      -should reset method take SEltLabelChanges... it probably should D:
+IGNORE-assert handler is inactive if it does not capture
+DONE-box border offset/no offset stuff D:
+DONE-box text renderer lol
+DONE-box with border test D:
+  -pretty sure there is a bug with this in BoxText
+IGNORE-default don't fill boxes pls
 DONE-right now if you click realease on a text box it will go straight into BoxText handler, only do this if it was already selected
 DONE-get basic box working using existing text zipper
   DONE-add UTs (assume align left for now so they'll work when you add alignment)
@@ -379,6 +357,33 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+
+::12/30/2020 orderering service (OS) spec::
+  -OS has complete control over PFState
+    -insert between PFWorkspace and PFState I guess?
+  -OS tracks stack starting from initial state followed by series of actions
+  -OS has "previewApply :: Action -> OS -> OS"
+  -OS internally has "finalize :: [Action] -> OS -> OS" (acts on last finalized point in history)
+    -probably should also return [ActionRef] as list of invalidated Actions
+  -PFWorkspace interface
+    -userActions :: ActionStack
+    -invalidateUserAction :: ActionRef -> ActionStack -> ActionStack
+    -undo/redoAction :: ActionStack -> (Action, ActionStack)
+  -??? Some way to detect invalid actions ??
+    -e.g.
+      -A moves X (action A1)
+      -B moves X (action B1)
+      -A1 should now be invalid action?
+    -alternatively, actions are never invalidated, and undo restores SElt state rather than tries to undo the action
+  -checkTransitivity :: Action -> Action -> Bool
+    -simple implementation to return False if the 2 actions share the same REltId
+      -connections can probably be ignored, though they can be tested for too
+  -prob need to sync layers as well D:?
+    -though doesn't matter if these go out of sync.. still it would be nice to keep these in sync
+    -OS can output LayersState that needs to update GoatState
+    -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
+
 
 ::handler hierarchy 12/2020::
 
