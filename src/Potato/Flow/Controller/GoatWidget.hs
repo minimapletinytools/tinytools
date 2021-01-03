@@ -274,20 +274,6 @@ makeClipboard GoatState {..} = r where
     then _goatState_clipboard
     else Just $ selectionToSEltTree _goatState_selection
 
--- TODO DELETE
-potatoHandlerOutputNoHandlerChange :: GoatState -> PotatoHandlerOutput
-potatoHandlerOutputNoHandlerChange GoatState {..} = def { _potatoHandlerOutput_nextHandler = Just _goatState_handler }
-
--- TODO DELETE
-potatoHandlerOutputDeleteSelection :: GoatState -> PotatoHandlerOutput
-potatoHandlerOutputDeleteSelection goatState@GoatState {..} = r where
-  deleteEv = if Seq.null _goatState_selection
-    then Nothing
-    else Just $ WSERemoveElt (toList . fmap snd3 $ _goatState_selection)
-  r = (potatoHandlerOutputNoHandlerChange goatState) {
-      _potatoHandlerOutput_pFEvent = deleteEv
-    }
-
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent GoatState {..} = if Seq.null _goatState_selection
   then Nothing
