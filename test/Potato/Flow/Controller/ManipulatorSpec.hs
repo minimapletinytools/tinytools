@@ -197,7 +197,7 @@ test_LineHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , checkHandlerNameAndState handlerName_simpleLine True
       , firstSuperSEltLabelPredicate (Just "sl1") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltLine (SLine start end _) -> start == (V2 0 100) && end == (V2 0 120)
+        SEltLine (SSimpleLine start end _) -> start == (V2 0 100) && end == (V2 0 120)
         _                                  -> False
 
       , LabelCheck "select sl2"
@@ -211,7 +211,7 @@ test_LineHandler_drag = constructTest "drag" pfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , checkHandlerNameAndState handlerName_simpleLine True
       , firstSuperSEltLabelPredicate (Just "sl2") $ \(_,_,SEltLabel _ selt) -> case selt of
-        SEltLine (SLine start end _) -> start == (V2 0 90) && end == (V2 10 100)
+        SEltLine (SSimpleLine start end _) -> start == (V2 0 90) && end == (V2 10 100)
         _                                  -> False
     ]
 
@@ -258,7 +258,7 @@ test_Common_create = constructTest "create" pfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , Combine [
           firstSuperSEltLabelPredicate (Just "<line>") $ \(_,_,SEltLabel _ selt) -> case selt of
-            SEltLine (SLine start end _) -> start == (V2 10 10) && end == (V2 20 20)
+            SEltLine (SSimpleLine start end _) -> start == (V2 10 10) && end == (V2 20 20)
             _                    -> False
           , numSelectedEltsEqualPredicate 1
         ]

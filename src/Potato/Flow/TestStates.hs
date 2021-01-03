@@ -77,15 +77,15 @@ pfstate_basic1 = PFState {
           }))
 
         -- 2 lines sharing a start point at (0,100)
-        , (4, SEltLabel "sl1" (SEltLine SLine {
-            _sLine_start = V2 0 100
-            , _sLine_end = V2 0 110
-            , _sLine_style = def
+        , (4, SEltLabel "sl1" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 0 100
+            , _sSimpleLine_end = V2 0 110
+            , _sSimpleLine_style = def
           }))
-        , (5, SEltLabel "sl2" (SEltLine SLine {
-            _sLine_start = V2 0 100
-            , _sLine_end = V2 10 100
-            , _sLine_style = def
+        , (5, SEltLabel "sl2" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 0 100
+            , _sSimpleLine_end = V2 10 100
+            , _sSimpleLine_style = def
           }))
 
       ]
@@ -115,15 +115,15 @@ pfstate_basic2 = PFState {
         , (6, SEltLabel "fend2" SEltFolderEnd)
         , (7, SEltLabel "fstart3" SEltFolderStart)
         -- 2 lines sharing a start point at (0,100)
-        , (8, SEltLabel "sl1" (SEltLine SLine {
-            _sLine_start = V2 0 100
-            , _sLine_end = V2 0 110
-            , _sLine_style = def
+        , (8, SEltLabel "sl1" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 0 100
+            , _sSimpleLine_end = V2 0 110
+            , _sSimpleLine_style = def
           }))
-        , (9, SEltLabel "sl2" (SEltLine SLine {
-            _sLine_start = V2 0 100
-            , _sLine_end = V2 10 100
-            , _sLine_style = def
+        , (9, SEltLabel "sl2" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 0 100
+            , _sSimpleLine_end = V2 10 100
+            , _sSimpleLine_style = def
           }))
         , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)

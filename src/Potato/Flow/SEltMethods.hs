@@ -46,8 +46,8 @@ getSEltBox selt = case selt of
   -- TODO return canonical
   SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
   SEltLine x      -> Just $ union_lBox
-    (make_lBox_from_XYs (_sLine_start x) (_sLine_end x))
-    (make_lBox_from_XYs (_sLine_start x + 1) (_sLine_end x + 1))
+    (make_lBox_from_XYs (_sSimpleLine_start x) (_sSimpleLine_end x))
+    (make_lBox_from_XYs (_sSimpleLine_start x + 1) (_sSimpleLine_end x + 1))
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
 doesSEltIntersectBox :: LBox -> SElt -> Bool
@@ -58,7 +58,7 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltBox x                    -> does_lBox_intersect lbox (_sBox_box x)
   SEltTextArea x                   -> does_lBox_intersect lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
-  SEltLine (SLine start end style) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SLine start end style)))
+  SEltLine (SSimpleLine start end style) -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine (SSimpleLine start end style)))
 
 
 
@@ -151,12 +151,12 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
       _sBox_box = modifyDelta isDo (_sBox_box sbox) _cBoundingBox_deltaBox
     }
   -- TODO handle resize parameter
-  SEltLine SLine {..} -> SEltLine $ SLine {
-      _sLine_start = modifyDelta isDo _sLine_start
+  SEltLine SSimpleLine {..} -> SEltLine $ SSimpleLine {
+      _sSimpleLine_start = modifyDelta isDo _sSimpleLine_start
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sLine_end = modifyDelta isDo _sLine_end
+      , _sSimpleLine_end = modifyDelta isDo _sSimpleLine_end
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sLine_style = _sLine_style
+      , _sSimpleLine_style = _sSimpleLine_style
     }
   SEltTextArea stext -> SEltTextArea $ stext {
       _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox
@@ -169,8 +169,8 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
       _sBox_style = modifyDelta isDo (_sBox_style sbox) style
     }
   -- TODO handle resize parameter
-  SEltLine sline -> SEltLine $ SLine {
-      _sLine_style = modifyDelta isDo (_sLine_style sline) style
+  SEltLine sline -> SEltLine $ SSimpleLine {
+      _sSimpleLine_style = modifyDelta isDo (_sSimpleLine_style sline) style
     }
   _ -> error $ "Controller - SElt type mismatch: CTagSuperStyle - " <> show selt
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
