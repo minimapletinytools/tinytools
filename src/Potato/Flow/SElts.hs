@@ -229,10 +229,10 @@ instance NFData LineStyle
 
 instance Default LineStyle where
   def = LineStyle {
-      _lineStyle_leftArrows    = ""
-      , _lineStyle_rightArrows = ""
-      , _lineStyle_upArrows    = ""
-      , _lineStyle_downArrows  = ""
+      _lineStyle_leftArrows    = "<"
+      , _lineStyle_rightArrows = ">"
+      , _lineStyle_upArrows    = "^"
+      , _lineStyle_downArrows  = "v"
       , _lineStyle_autoStyle   = def
     }
 

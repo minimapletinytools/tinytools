@@ -41,21 +41,28 @@ spec = do
           _sEltDrawer_renderFn (V2 4 4) `shouldBe` Just '@'
       describe "SSimpleLine" $ do
         let
-          someline style = SSimpleLine {
+          somelinestyle autoStyle = LineStyle {
+              _lineStyle_leftArrows    = "<="
+              , _lineStyle_rightArrows = "->"
+              , _lineStyle_upArrows    = "^|*"
+              , _lineStyle_downArrows  = "V"
+              , _lineStyle_autoStyle   = autoStyle
+            }
+          someline1 autoStyle = SSimpleLine {
               _sSimpleLine_start       = V2 10 10
               , _sSimpleLine_end       = V2 20 20
               , _sSimpleLine_style     = def
-              , _sSimpleLine_lineStyle = LineStyle {
-                  _lineStyle_leftArrows    = "<="
-                  , _lineStyle_rightArrows = "->"
-                  , _lineStyle_upArrows    = "^|*"
-                  , _lineStyle_downArrows  = "V"
-                  , _lineStyle_autoStyle   = style
-                }
+              , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
-        it "LineAutoStyle_AutoStraight" $ do
+          someline2 autoStyle = SSimpleLine {
+              _sSimpleLine_start       = V2 10 10
+              , _sSimpleLine_end       = V2 10 20
+              , _sSimpleLine_style     = def
+              , _sSimpleLine_lineStyle = somelinestyle autoStyle
+            }
+        it "LineAutoStyle_AutoStraight - 1" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline LineAutoStyle_AutoStraight)
+            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline1 LineAutoStyle_AutoStraight)
           --forM_ (sEltDrawer_renderToLines sd) putTextLn
           _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '<'
           _sEltDrawer_renderFn (V2 11 10) `shouldBe` Just '='
@@ -64,3 +71,12 @@ spec = do
           _sEltDrawer_renderFn (V2 15 10) `shouldBe` Just (_superStyle_tr def)
           _sEltDrawer_renderFn (V2 15 15) `shouldBe` Just (_superStyle_vertical def)
           _sEltDrawer_renderFn (V2 20 20) `shouldBe` Just '>'
+        it "LineAutoStyle_AutoStraight - 2" $ do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline2 LineAutoStyle_AutoStraight)
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '^'
+          _sEltDrawer_renderFn (V2 10 12) `shouldBe` Just '*'
+          _sEltDrawer_renderFn (V2 16 10) `shouldBe` Nothing
+          _sEltDrawer_renderFn (V2 10 20) `shouldBe` Just 'V'
+          _sEltDrawer_renderFn (V2 10 15) `shouldBe` Just (_superStyle_vertical def)
