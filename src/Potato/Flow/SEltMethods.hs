@@ -163,13 +163,15 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
     | isLeft && isLeftHoriz && x'-x < (T.length larr) = Just $ T.index larr (x'-x)
     | isLeft && isLeftHoriz = Just $ _superStyle_horizontal _sSimpleLine_style
     -- render as much of the right arrow as you can and then render the rest
-    | isRight && isRightHoriz && endx-x' < (T.length rarr) = Just $ T.index rarr (endx-x')
+    | isRight && isRightHoriz && farend-x' < (T.length rarr) = Just $ T.index rarr (farend-x')
     | isRight && isRightHoriz = Just $ _superStyle_horizontal _sSimpleLine_style
     -- render the corners
     | isCenter && isTop && isLeftHoriz = Just $ _superStyle_tr _sSimpleLine_style
     | isCenter && isBot && isLeftHoriz = Just $ _superStyle_br _sSimpleLine_style
     | isCenter && isTop && isRightHoriz = Just $ _superStyle_tl _sSimpleLine_style
     | isCenter && isBot && isRightHoriz = Just $ _superStyle_bl _sSimpleLine_style
+    -- special case
+    | h == 1 = Just $ _superStyle_horizontal _sSimpleLine_style
     -- render the vertical line
     | isCenter = Just $ _superStyle_vertical _sSimpleLine_style
     | otherwise = Nothing
@@ -181,6 +183,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
       isCenter = x' == xsplit
       isTop = (y' == starty && starty < endy) || (y' == endy && starty > endy)
       isBot = (y' == endy && starty < endy) || (y' == starty && starty > endy)
+      farend = max startx endx
 
   vertrenderfn pt@(V2 x' y')
     | not (does_lBox_contains_XY lbox pt) = Nothing
@@ -190,15 +193,17 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
     | isTop && isTopVert && y'-y < (T.length tarr) = Just $ T.index tarr (y'-y)
     | isTop && isTopVert = Just $ _superStyle_vertical _sSimpleLine_style
     -- render as much of the right arrow as you can and then render the rest
-    | isBot && isBotVert && endy-y' < (T.length barr) = Just $ T.index barr (endy-y')
+    | isBot && isBotVert && farend-y' < (T.length barr) = Just $ T.index barr (farend-y')
     | isBot && isBotVert = Just $ _superStyle_vertical _sSimpleLine_style
     -- render the corners
     | isCenter && isLeft && isTopVert = Just $ _superStyle_bl _sSimpleLine_style
     | isCenter && isRight && isTopVert = Just $ _superStyle_br _sSimpleLine_style
     | isCenter && isLeft && isBotVert = Just $ _superStyle_tl _sSimpleLine_style
     | isCenter && isRight && isBotVert = Just $ _superStyle_tr _sSimpleLine_style
-    -- render the vertical line
-    | isCenter = Just $ _superStyle_vertical _sSimpleLine_style
+    -- special case
+    | w == 1 = Just $ _superStyle_vertical _sSimpleLine_style
+    -- render the horizontal line
+    | isCenter = Just $ _superStyle_horizontal _sSimpleLine_style
     | otherwise = Nothing
     where
       isLeft = (x' == startx && startx < endx) || (x' == endx && startx > endx)
@@ -208,6 +213,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
       isCenter = y' == ysplit
       isTop = y' < ysplit
       isBot = y' > ysplit
+      farend = (max starty endy)
 
   autorenderfn = if w >= h then horizrenderfn else vertrenderfn
 
