@@ -7,6 +7,8 @@ module Potato.Flow.SElts (
   , superStyle_fromListFormat
   , superStyle_toListFormat
   , TextStyle(..)
+  , LineStyle(..)
+  , LineAutoStyle(..)
   , SBoxTitle(..)
   , SBoxText(..)
   , SBoxType(..)
@@ -278,7 +280,14 @@ instance Binary STextArea
 instance NFData STextArea
 
 -- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
-data SElt = SEltNone | SEltFolderStart | SEltFolderEnd | SEltBox SBox | SEltLine SSimpleLine | SEltTextArea STextArea deriving (Eq, Generic, Show)
+data SElt =
+  SEltNone
+  | SEltFolderStart
+  | SEltFolderEnd
+  | SEltBox SBox
+  | SEltLine SSimpleLine -- TODO rename to SEltSimpleLine?
+  | SEltTextArea STextArea
+  deriving (Eq, Generic, Show)
 
 instance FromJSON SElt
 instance ToJSON SElt
