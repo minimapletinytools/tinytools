@@ -20,16 +20,26 @@ spec = do
   describe "SEltMethod" $ do
     describe "getDrawer" $ do
       describe "SBox" $ do
+        let
+          somesbox1 style = def {
+              _sBox_box       = LBox 0 (V2 5 5)
+              , _sBox_text    = def {
+                  _sBoxText_text = "m ow meow meow"
+                }
+              , _sBox_boxType = style
+            }
+          somesbox2 style = def {
+              _sBox_box       = LBox 0 (V2 1 1)
+              , _sBox_boxType = style
+            }
+        it "SBoxType_Box" $ do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox2 SBoxType_Box))
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just (_superStyle_point def)
         it "SBoxType_NoBoxText" $ do
           let
-            somesbox = def {
-                _sBox_box       = LBox 0 (V2 5 5)
-                , _sBox_text    = def {
-                    _sBoxText_text = "m ow meow meow"
-                  }
-                , _sBox_boxType = SBoxType_NoBoxText
-              }
-            SEltDrawer {..} = getDrawer (SEltBox somesbox)
+            SEltDrawer {..} = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
           _sEltDrawer_renderFn (V2 100 0) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 (-1) 0) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just 'm'
