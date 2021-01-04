@@ -12,6 +12,14 @@ jobs:
             - potato-flow-v1-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
             - potato-flow-v1-{{ checksum "stack.yaml" }}
       - run:
+          command: |
+            while true; do
+              sleep 5
+              ps auxwwf
+              echo "======"
+            done
+          background: true
+      - run:
           name: Resolve/Update Dependencies
           command: stack --no-terminal setup
       - run:

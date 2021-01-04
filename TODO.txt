@@ -1,4 +1,5 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
+[![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 :: 12/26/2020 selection spec::
 IGNORE-simple select compromise
