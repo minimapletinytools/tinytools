@@ -48,7 +48,7 @@ data BoxTextInputState = BoxTextInputState {
 
 updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxTextInputStateWithSBox sbox btis = r where
-  newBox@(LBox _ (V2 width' _)) = _sBox_box sbox
+  CanonicalLBox _ _ newBox@(LBox _ (V2 width' _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   width = case _sBox_boxType sbox of
     SBoxType_BoxText   -> max 0 (width'-2)
     SBoxType_NoBoxText -> width'
@@ -79,7 +79,7 @@ mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
 mouseText tais sbox rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   ogtz = _boxTextInputState_zipper tais
-  LBox (V2 x y) (V2 w _) = _sBox_box sbox
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   V2 mousex mousey = _mouseDrag_to
   (xoffset, yoffset) = case _sBox_boxType sbox of
     SBoxType_BoxText   -> (1,1)
