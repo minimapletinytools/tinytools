@@ -24,8 +24,8 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
-DONE-toMouseManipulators broken
-DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
+-go over box sizing semantics
+  -it seems you may be off by one, (i.e. a 2x2 size box renders as a dot D:)
 -undo/redo test
 -write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
   -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
@@ -36,7 +36,6 @@ DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow he
   -(capture/no capture) + not active + changes
   -no capture (must not be active)
   -returns Nothing handler
--figure out why sbox doesn't render right in vty
 -render cursor position (get cursor pos from displayLines)
 -add alignment to text zipper
 -convert textarea into free form
@@ -135,6 +134,10 @@ DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow he
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+
+DONE-figure out why sbox doesn't render right in vty
+DONE-toMouseManipulators broken
+DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
 DONE-if you get an event while BoxText handler is open, it will break undoFirst stuff
   -you need to track when non-handler events come in...
     -you'll have to do this anyways for multi-user mode right?

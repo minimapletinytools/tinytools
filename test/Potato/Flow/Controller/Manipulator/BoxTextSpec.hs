@@ -200,9 +200,108 @@ test_handler_state = constructTest "handler state" emptyPFState bs expected wher
 
     ]
 
+-- same test as basic except box is inverted
+test_negative :: Test
+test_negative = constructTest "negative" emptyPFState bs expected where
+  bs = [
+      EWCLabel "create <text>"
+      , EWCTool Tool_Text
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 0) True MouseButton_Left [] False)
+
+      , EWCLabel "modify <text>"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'g') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+
+      , EWCLabel "move cursor <text>"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 2 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 2 1) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
+
+
+    ]
+  expected = [
+      LabelCheck "create <text>"
+      , EqPredicate _goatState_selectedTool Tool_Text
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 (-10) (-10))
+            _                           -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_boxText False
+        ]
+
+      , LabelCheck "modify <text>"
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkSBoxText "<text>" "goop"
+
+      , LabelCheck "move cursor <text>"
+      , EqPredicate _goatState_selectedTool Tool_Select
+      , checkHandlerNameAndState handlerName_boxText True
+      , checkHandlerNameAndState handlerName_boxText False
+      , checkSBoxText "<text>" "gaoop"
+
+    ]
+
+test_zero :: Test
+test_zero = constructTest "zero" emptyPFState bs expected where
+  bs = [
+      EWCLabel "create <text>"
+      , EWCTool Tool_Text
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 12) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 12) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char '🥔') [])
+
+      , EWCLabel "exit BoxText"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "resize box to 0"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 12 12) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+    ]
+  expected = [
+      LabelCheck "create <text>"
+      , EqPredicate _goatState_selectedTool Tool_Text
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 2 2)
+            _                           -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_boxText False
+        ]
+      , checkSBoxText "<text>" "🥔"
+
+      , LabelCheck "exit BoxText"
+      , checkHandlerNameAndState handlerName_box False
+
+      , LabelCheck "resize box to 0"
+      , EqPredicate _goatState_selectedTool Tool_Select
+      , AlwaysPass
+      , AlwaysPass
+      , firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 0 0)
+        _                           -> False
+
+    ]
+
 spec :: Spec
 spec = do
   describe "BoxText" $ do
     makeBoxTextInputState_basic_test
     fromHUnitTest $ test_basic
     fromHUnitTest $ test_handler_state
+    fromHUnitTest $ test_negative
+    fromHUnitTest $ test_zero
