@@ -24,8 +24,6 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
--go over box sizing semantics
-  -it seems you may be off by one, (i.e. a 2x2 size box renders as a dot D:)
 -undo/redo test
 -write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
   -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
@@ -134,7 +132,8 @@ IGNORE-simple select compromise
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
-
+DONE/IGNORE-go over box sizing semantics
+  -it seems you may be off by one, (i.e. a 2x2 size box renders as a dot D:)
 DONE-figure out why sbox doesn't render right in vty
 DONE-toMouseManipulators broken
 DONE-SEltLine drawer broken when arrow goes in wrong way (indexing into arrow heads wrong)
