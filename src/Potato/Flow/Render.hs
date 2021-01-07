@@ -164,8 +164,8 @@ moveRenderedCanvas bpt dir lbx rc = r where
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_lBox lbx (_renderedCanvas_box rc))
 
 -- TODO test
-updateCanvas :: SEltLabelChanges -> BroadPhaseState -> PFState -> LayerPosMap -> RenderedCanvas -> RenderedCanvas
-updateCanvas cslmap BroadPhaseState {..} PFState {..} layerPosMap rc = case _broadPhaseState_needsUpdate of
+updateCanvas :: SEltLabelChanges -> NeedsUpdateSet -> BroadPhaseState -> PFState -> LayerPosMap -> RenderedCanvas -> RenderedCanvas
+updateCanvas cslmap needsUpdate BroadPhaseState {..} PFState {..} layerPosMap rc = case needsUpdate of
   [] -> rc
   -- TODO incremental rendering
   (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of

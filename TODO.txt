@@ -28,7 +28,7 @@ IGNORE-simple select compromise
 -hook up unicode width fn
   -add hook for it in renderer
   -maybe need it in brodphase too? Prob not
--get rid of broadphase state
+DONE-get rid of broadphase state
 DONE-generate vty char width table
 DONE-see if unicode combining marks work after you generate the table
 -need narrow phase selection methods, i.e. can't just do it using boxes

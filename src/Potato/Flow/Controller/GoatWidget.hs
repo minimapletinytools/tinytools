@@ -190,22 +190,22 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
   -- canvas direct input
-  , _goatWidgetConfig_mouse         :: Event t LMouseData
-  , _goatWidgetConfig_keyboard      :: Event t KeyboardData
+  , _goatWidgetConfig_mouse          :: Event t LMouseData
+  , _goatWidgetConfig_keyboard       :: Event t KeyboardData
 
   -- command based
-  , _goatWidgetConfig_selectTool    :: Event t Tool
-  , _goatWidgetConfig_load          :: Event t EverythingLoadState
+  , _goatWidgetConfig_selectTool     :: Event t Tool
+  , _goatWidgetConfig_load           :: Event t EverythingLoadState
 
   -- TODO someday add this to support multi-user mode :O
   -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
   --, _goatWidgetConfig_externalWSEvent :: Event t WSEvent
 
   -- only intended for setting params
-  , _goatWidgetConfig_paramsEvent   :: Event t ControllersWithId
+  , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
 
   -- debugging
-  , _goatWidgetConfig_setDebugLabel :: Event t Text
+  , _goatWidgetConfig_setDebugLabel  :: Event t Text
 }
 
 emptyGoatWidgetConfig :: (Reflex t) => GoatWidgetConfig t
@@ -535,7 +535,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pResetHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
-  next_broadPhaseState = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
   -- TODO render the scene if the screen moved
@@ -548,7 +548,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'
-    else updateCanvas cslmapForRendering next_broadPhaseState next_pFState next_layerPosMap next_renderedCanvas'
+    else updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_layerPosMap next_renderedCanvas'
 
 
 
@@ -580,7 +580,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       ]
 
     --initialize broadphase with initial state
-    initialbp = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
+    (_, initialbp) = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
     initiallayersstate = makeLayersStateFromPFState _goatWidgetConfig_initialState
 
     -- TODO wrap this in a helper function in Render

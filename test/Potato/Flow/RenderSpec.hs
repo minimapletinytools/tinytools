@@ -81,8 +81,8 @@ spec = do
         bpt0 = bPTreeFromPFState state0
         -- TODO actual changes
         changes1 = IM.empty
-        bps1 = update_bPTree IM.empty bpt0
+        (aabbs1, bps1) = update_bPTree IM.empty bpt0
         state1 = state0
-        canvas1 = updateCanvas changes1 bps1 state1 (pFState_getLayerPosMap state1) canvas0
+        canvas1 = updateCanvas changes1 aabbs1 bps1 state1 (pFState_getLayerPosMap state1) canvas0
       -- TODO test something
       0 `shouldBe` 0
