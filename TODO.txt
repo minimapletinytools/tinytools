@@ -31,8 +31,7 @@ IGNORE-simple select compromise
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 -add screen size support to GoatWidget (for rendering OOB)
--mouse select should select 0 size elts
-  -although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
+
 -params
   DONE-prob a view only thing, add hookup for params in goat widget I guess
   -need common methods for reading style of multi-select stuff
@@ -137,6 +136,8 @@ IGNORE-simple select compromise
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
 
+IGNORE-although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
+DONE-mouse select should select 0 size elts
 DONE-copy pasta translate a little by default?
   -or attempt to place in middle of canvas viewport prob better
 DONE-get rid of broadphase state

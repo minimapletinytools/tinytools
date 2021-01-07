@@ -20,6 +20,7 @@ module Potato.Flow.Math (
   , union_lBox
   , intersect_lBox
   , does_lBox_intersect
+  , does_lBox_intersect_include_zero_area
   , substract_lBox
 
   -- these helpers maybe belong in a different file, they have very specific usages
@@ -166,6 +167,16 @@ does_lBox_intersect lb1 lb2 = r where
   r | lBox_area lb1 == 0 = False
     | lBox_area lb2 == 0 = False
     | l1 >= r2 = False
+    | l2 >= r1 = False
+    | t1 >= b2 = False
+    | t2 >= b1 = False
+    | otherwise = True
+
+does_lBox_intersect_include_zero_area :: LBox -> LBox -> Bool
+does_lBox_intersect_include_zero_area lb1 lb2 = r where
+  (l1,r1,t1,b1) = lBox_to_axis lb1
+  (l2,r2,t2,b2) = lBox_to_axis lb2
+  r | l1 >= r2 = False
     | l2 >= r1 = False
     | t1 >= b2 = False
     | t2 >= b1 = False

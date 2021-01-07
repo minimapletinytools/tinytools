@@ -43,10 +43,11 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
     SEltLabel _ (SEltTextArea _) -> True
     _ -> False
 
-  unculledRids = broadPhase_cull selectBox (_broadPhaseState_bPTree bps)
+  unculledRids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
   selectedRids = flip filter unculledRids $ \rid -> case IM.lookup rid (_pFState_directory pFState) of
     Nothing -> error $ "expected to find rid in directory " <> show rid
-    Just seltl | isboxshaped seltl -> True
+    -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
+    Just seltl | isboxshaped seltl -> trace "auto added" $ traceShow seltl $ True
     Just (SEltLabel _ selt) -> doesSEltIntersectBox selectBox selt
 
   mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))

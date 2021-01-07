@@ -11,6 +11,7 @@ module Potato.Flow.TestStates (
   , pfstate_someInvalidState2
   , pfstate_basic1
   , pfstate_basic2
+  , pfstate_zero
 ) where
 
 import           Relude
@@ -131,6 +132,24 @@ pfstate_basic2 = PFState {
           }))
         , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)
+      ]
+    , _pFState_canvas = SCanvas defaultCanvasLBox
+  }
+
+-- contains SElts of size 0
+pfstate_zero :: PFState
+pfstate_zero = PFState {
+    _pFState_layers = Seq.fromList [0..1]
+    , _pFState_directory = IM.fromList [
+        (0, SEltLabel "b1" (SEltBox def {
+            _sBox_box = LBox (V2 0 0) (V2 0 0)
+          }))
+        , (1, SEltLabel "sl1" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 10 10
+            , _sSimpleLine_end = V2 10 10
+            , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
+          }))
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox
   }
