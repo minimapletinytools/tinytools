@@ -1,8 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Types (
-
-  Tool(..)
+  UnicodeWidthFn(..)
+  , Tool(..)
   , tool_isCreate
   , Selection
   , disjointUnionSelection
@@ -37,6 +37,12 @@ import qualified Data.List.Ordered      as L (isSortedBy)
 import           Data.Maybe
 import qualified Data.Sequence          as Seq
 import           Data.Tuple.Extra
+
+
+-- someday it would be nice to support graphene clusters and RTL 😭
+data UnicodeWidthFn = UnicodeWidthFn {
+    unicodeWidth_wcwidth :: PChar -> Int
+  }
 
 -- TOOL
 data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)

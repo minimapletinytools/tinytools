@@ -186,7 +186,8 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
 data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- TODO should really also include ControllerMeta
-  _goatWidgetConfig_initialState    :: PFState
+  _goatWidgetConfig_initialState     :: PFState
+  , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
   -- canvas direct input
   , _goatWidgetConfig_mouse         :: Event t LMouseData

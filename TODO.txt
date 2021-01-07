@@ -25,9 +25,29 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
--undo/redo test
--write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
-  -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
+-hook up unicode width fn
+  -add hook for it in renderer
+  -maybe need it in brodphase too? Prob not
+-get rid of broadphase state
+DONE-generate vty char width table
+DONE-see if unicode combining marks work after you generate the table
+-need narrow phase selection methods, i.e. can't just do it using boxes
+  -make sure to test :)
+-copy pasta translate a little by default?
+  -or attempt to place in middle of canvas viewport prob better
+-mouse select should select 0 size elts
+  -although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
+-params
+  DONE-prob a view only thing, add hookup for params in goat widget I guess
+  -need common methods for reading style of multi-select stuff
+  -is there a way to systemize different types of styles
+    -SuperStyle
+    -TextStyle
+    -LineStyle
+      -make this part of SuperStyle
+      -when displaying, show simplified version of it
+    -BoxTitle
+
 -make flowchart diagram of handler setting rules
   -non-canvas event (does this reset?)
   -external event (calls new reset function)
@@ -44,6 +64,7 @@ IGNORE-simple select compromise
 -add padding to BoxText
 
 -tests
+  -undo/redo test
   -more params tests
   -undo redo of text
     -you should really set up a 1000 undo redo sorta thing again
@@ -77,18 +98,6 @@ IGNORE-simple select compromise
   -finish changesFromToggleHide
     -test it
 
--params
-  DONE-prob a view only thing, add hookup for params in goat widget I guess
-  -need common methods for reading style of multi-select stuff
-  -is there a way to systemize different types of styles
-    -SuperStyle
-    -TextStyle
-    -LineStyle
-      -make this part of SuperStyle
-      -when displaying, show simplified version of it
-    -BoxTitle
--mouse select should select 0 size elts
-  -although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
 -if you are in BoxTextHandler mode and you have Text tool selected
   -then you click and release outside box, you will go back to boxtext handler
   -so I guess click release with any creation tool should deselect everything
@@ -97,10 +106,6 @@ IGNORE-simple select compromise
   -rename (when supported)
   -drag move collapsed folder
   -select non-contiguous elements and drag+move
--need narrow phase selection methods, i.e. can't just do it using boxes
-  -make sure to test :)
--copy pasta translate a little by default?
-  -or attempt to place in middle of canvas viewport prob better
 -PFStateChangeFlag and have each PFState operation return a change flag as well
 -TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
@@ -108,7 +113,7 @@ IGNORE-simple select compromise
     -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
   -clear out pSelectionChanged comments
 -SimpleSEltLine
-  -renderer
+  DONE-renderer
   -prototoype connections
 -refactor for ordering service spec D:
 -SPECS
@@ -127,12 +132,16 @@ IGNORE-simple select compromise
     -(how to handle resize??)
   -line intersection renderer
     -connects to lines, renders their line intersections
+  -unicode spec
+    -wide chars and graphene clusters
 -layer bonus
   -write method to update layers incrementally when there are changes + when moving elements around in layers
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+DONE-write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
+  -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
 DONE/IGNORE-go over box sizing semantics
   -it seems you may be off by one, (i.e. a 2x2 size box renders as a dot D:)
 DONE-figure out why sbox doesn't render right in vty

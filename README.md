@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
+
 # potato-flow
 `potato-flow` is a mono-space text flow-chart editor written in Haskell. It is currently a work in progress and an ALPHA release should be available soon.
 
@@ -19,16 +21,17 @@ The View is connected to the reflex interface defined by `GoatWidget`. The MC/V 
 - proper save/load interface (this is actually implemented in purely in the "view")
 - text alignment
 - free form text-area input
+- UNICODE wide character support
 
 ## v2
 - multi-segment line input
 - attached line support
 - multi-document support
 - refactor PFWorkspace to handle non-linear action do/undo operations in preparation for multi-user mode
-- UNICODE wide character support
 
 
 ## v3
+- graphene clusters support
 - multi-user mode
   - ordering service interface
   - basic single client authoritative implementation of ordering service interface (for now)
