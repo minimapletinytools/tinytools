@@ -47,7 +47,7 @@ selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
   selectedRids = flip filter unculledRids $ \rid -> case IM.lookup rid (_pFState_directory pFState) of
     Nothing -> error $ "expected to find rid in directory " <> show rid
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
-    Just seltl | isboxshaped seltl -> trace "auto added" $ traceShow seltl $ True
+    Just seltl | isboxshaped seltl -> True
     Just (SEltLabel _ selt) -> doesSEltIntersectBox selectBox selt
 
   mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))

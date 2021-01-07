@@ -76,23 +76,21 @@ instance (Show a, Eq a) => Delta a (a,a) where
     else assert (b == s) a
   minusDelta s (b, a) = assert (a == s) b
 
--- TODO
-data DeltaSuperStyle = DeltaSuperStyle deriving (Eq, Generic, Show)
+data DeltaSuperStyle = DeltaSuperStyle (SuperStyle, SuperStyle) deriving (Eq, Generic, Show)
+
 instance NFData DeltaSuperStyle
 
--- TODO
 instance Delta SuperStyle DeltaSuperStyle where
-  plusDelta ss _ = ss
-  minusDelta ss _ = ss
+  plusDelta ss (DeltaSuperStyle d) = plusDelta ss d
+  minusDelta ss (DeltaSuperStyle d) = minusDelta ss d
 
--- TODO
-data DeltaTextStyle = DeltaTextStyle deriving (Eq, Generic, Show)
+data DeltaTextStyle = DeltaTextStyle (TextStyle, TextStyle) deriving (Eq, Generic, Show)
+
 instance NFData DeltaTextStyle
 
--- TODO
 instance Delta TextStyle DeltaTextStyle where
-  plusDelta ts _ = ts
-  minusDelta ts _ = ts
+  plusDelta ts (DeltaTextStyle d) = plusDelta ts d
+  minusDelta ts (DeltaTextStyle d) = minusDelta ts d
 
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText

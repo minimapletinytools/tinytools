@@ -15,7 +15,7 @@ IGNORE-simple select compromise
     -canvas selection = layer selection - locked/hidden stuff - folders
   -moving folder auto moves all children
   -selecting folder selects all children (including locked/hidden stuff)
-    -however, if any child is unselected this deselecst folder
+    -however, if any child is unselected this deselect folder
   -canvas selection
     -regular selecting via canvas, overrides layer selection
     -shift selecting via canvas adds to layer selection
@@ -30,7 +30,6 @@ IGNORE-simple select compromise
   -maybe need it in brodphase too? Prob not
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
--add screen size support to GoatWidget (for rendering OOB)
 
 -params
   DONE-prob a view only thing, add hookup for params in goat widget I guess
@@ -51,12 +50,15 @@ IGNORE-simple select compromise
   -no capture (must not be active)
   -returns Nothing handler
 -render cursor position (get cursor pos from displayLines)
--add alignment to text zipper
+
 -convert textarea into free form
   -implement or at least add stubs for this
--add BoxTitle
-  -maybe left/right/center text
--add padding to BoxText
+-BoxText
+  -add alignment to text zipper
+  -add BoxTitle
+    -maybe left/right/center text
+    -add padding to BoxText
+-add screen size support to GoatWidget (for rendering OOB)
 
 -tests
   -undo/redo test

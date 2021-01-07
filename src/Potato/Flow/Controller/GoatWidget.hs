@@ -187,6 +187,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
 -- * TODO non-mouse inputs can only happen after a `_lMouseData_isRelease == True` except for cancel
 data GoatWidgetConfig t = GoatWidgetConfig {
 
+  -- initialization parameters
   -- TODO should really also include ControllerMeta
   _goatWidgetConfig_initialState     :: PFState
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
@@ -195,14 +196,12 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_mouse          :: Event t LMouseData
   , _goatWidgetConfig_keyboard       :: Event t KeyboardData
 
+  -- other canvas stuff
+  --, _goatWidgetConfig_screenSize     :: Dynamic t (Int, Int)
+
   -- command based
   , _goatWidgetConfig_selectTool     :: Event t Tool
   , _goatWidgetConfig_load           :: Event t EverythingLoadState
-
-  -- TODO someday add this to support multi-user mode :O
-  -- the only thing tricky about this is that this may invalidate active handlers and that needs to be accounted for (just check if active REltId shows up in changes)
-  --, _goatWidgetConfig_externalWSEvent :: Event t WSEvent
-
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
 
