@@ -170,7 +170,6 @@ pfc_addRelative_to_newElts pfs (lp, stree) = assert validScope $ r where
 -- TODO rename to WSEvent
 data WSEvent =
   WSEAddElt (Bool, (LayerPos, SEltLabel))
-  -- TODO some sort of position/offset arg
   | WSEAddRelative (LayerPos, SEltTree)
   | WSEAddFolder (LayerPos, Text)
   | WSERemoveElt [LayerPos]

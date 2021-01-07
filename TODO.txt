@@ -28,13 +28,9 @@ IGNORE-simple select compromise
 -hook up unicode width fn
   -add hook for it in renderer
   -maybe need it in brodphase too? Prob not
-DONE-get rid of broadphase state
-DONE-generate vty char width table
-DONE-see if unicode combining marks work after you generate the table
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
--copy pasta translate a little by default?
-  -or attempt to place in middle of canvas viewport prob better
+-add screen size support to GoatWidget (for rendering OOB)
 -mouse select should select 0 size elts
   -although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
 -params
@@ -140,6 +136,12 @@ DONE-see if unicode combining marks work after you generate the table
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+
+DONE-copy pasta translate a little by default?
+  -or attempt to place in middle of canvas viewport prob better
+DONE-get rid of broadphase state
+DONE-generate vty char width table
+DONE-see if unicode combining marks work after you generate the table
 DONE-write a UT for negative area box text as this is causing a negative index issue somewhere with the text zipper probably
   -you prob want to short circuit if box is negative and just display nothing or whatever and stop updating TZ
 DONE/IGNORE-go over box sizing semantics

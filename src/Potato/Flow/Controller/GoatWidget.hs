@@ -28,6 +28,7 @@ import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.Render
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.State
 import           Potato.Flow.Types
@@ -178,6 +179,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
   }
+
 
 
 -- | invariants
@@ -427,11 +429,12 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState
               r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
-            KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> r where
-              mPastaEv = case _goatState_clipboard of
-                Nothing    -> Nothing
-                Just stree -> Just $ WSEAddRelative (lastPositionInSelection _goatState_selection, stree)
-              r = makeGoatCmdTempOutputFromMaybeEvent goatState mPastaEv
+            KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard of
+              Nothing    -> makeGoatCmdTempOutputFromNothing goatState
+              Just stree -> r where
+                offsetstree = offsetSEltTree (V2 1 1) stree
+                pastaEv = WSEAddRelative (lastPositionInSelection _goatState_selection, offsetstree)
+                r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) pastaEv
             KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
               r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
             KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where

@@ -8,6 +8,7 @@ module Potato.Flow.SEltMethods (
   , SEltDrawer(..)
   , sEltDrawer_renderToLines
   , getDrawer
+  , offsetSEltTree
 ) where
 
 import           Relude
@@ -292,3 +293,11 @@ updateFnFromController isDo = \case
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   (CTagSuperStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cSuperStyle isDo selt d)
+
+
+-- | helper method used in copy pasta
+offsetSEltTree :: XY -> SEltTree -> SEltTree
+offsetSEltTree offset stree = r where
+  op = CBoundingBox (DeltaLBox offset 0)
+  offsetfn (rid, seltl) = (rid, updateFnFromController True (CTagBoundingBox :=> Identity op) seltl)
+  r = fmap offsetfn stree
