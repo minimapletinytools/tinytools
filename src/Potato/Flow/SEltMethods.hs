@@ -2,6 +2,9 @@
 
 module Potato.Flow.SEltMethods (
   getSEltBox
+  , getSEltLabelBox
+  , getSEltSuperStyle
+  , getSEltLabelSuperStyle
   , doesSEltIntersectBox
   , updateFnFromController
   , RenderFn
@@ -52,6 +55,9 @@ getSEltBox selt = case selt of
     (make_lBox_from_XYs (_sSimpleLine_start x + 1) (_sSimpleLine_end x + 1))
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
+getSEltLabelBox :: SEltLabel -> Maybe LBox
+getSEltLabelBox (SEltLabel _ x) = getSEltBox x
+
 doesSEltIntersectBox :: LBox -> SElt -> Bool
 doesSEltIntersectBox lbox selt = case selt of
   SEltNone                     -> False
@@ -63,7 +69,14 @@ doesSEltIntersectBox lbox selt = case selt of
   -- we use does_lBox_intersect since it's impossibl efor a SSimpleLine to have zero sized box
   SEltLine sline@SSimpleLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
 
+getSEltSuperStyle :: SElt -> Maybe SuperStyle
+getSEltSuperStyle selt = case selt of
+  SEltBox SBox {..}         -> Just _sBox_style
+  SEltLine SSimpleLine {..} -> Just _sSimpleLine_style
+  _                         -> Nothing
 
+getSEltLabelSuperStyle :: SEltLabel -> Maybe SuperStyle
+getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
 
 type RenderFn = XY -> Maybe PChar
 

@@ -178,6 +178,8 @@ data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
 
 instance NFData CTextStyle
 
+-- NOTE, in some previous (very flawed) design, these were fanned out in a Reflex event hence the `DSum CTag` thing
+-- we don't do this anymore, but DSum is still a nice alternative to using an ADT so we keep it.
 data CTag a where
   CTagRename :: CTag CRename
   CTagLine :: CTag CLine
