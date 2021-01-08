@@ -114,6 +114,7 @@ sBox_drawer sbox@SBox {..} = r where
 
   rfntext pt@(V2 x' y') = case _sBox_boxType of
     SBoxType_Box -> Nothing
+    SBoxType_NoBox -> Nothing
     _ -> outputChar where
       spans = TZ._displayLines_spans $ makeDisplayLinesFromSBox sbox
 
@@ -147,6 +148,7 @@ sBox_drawer sbox@SBox {..} = r where
     | x' == x+w-1 && y' == y = Just $ _superStyle_tr _sBox_style
     | x' == x+w-1 && y' == y+h-1 = Just $ _superStyle_br _sBox_style
     | x' == x || x' == x+w-1 = Just $ _superStyle_vertical _sBox_style
+    -- TODO box title
     | y' == y || y' == y+h-1 = Just $ _superStyle_horizontal _sBox_style
     | otherwise = rfnnoborder pt
 
@@ -279,7 +281,7 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
       _sBox_style = modifyDelta isDo (_sBox_style sbox) style
     }
   -- TODO handle resize parameter
-  SEltLine sline -> SEltLine $ SSimpleLine {
+  SEltLine sline -> SEltLine $ sline {
       _sSimpleLine_style = modifyDelta isDo (_sSimpleLine_style sline) style
     }
   _ -> error $ "Controller - SElt type mismatch: CTagSuperStyle - " <> show selt

@@ -165,7 +165,7 @@ instance Default SBoxText where
       , _sBoxText_style = def
     }
 
-data SBoxType = SBoxType_Box | SBoxType_BoxText | SBoxType_NoBoxText deriving (Eq, Generic, Show)
+data SBoxType = SBoxType_Box | SBoxType_NoBox | SBoxType_BoxText | SBoxType_NoBoxText deriving (Eq, Generic, Show)
 
 instance FromJSON SBoxType
 instance ToJSON SBoxType

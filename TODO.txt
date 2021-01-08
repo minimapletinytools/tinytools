@@ -25,22 +25,27 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
+
+-box title support D:
+DONE-no border box support
+  -I guess you can make border and text two separat toggles?
+-params MVP
+  -scan params and look for same stuff
+    -don't need to do anything with this yet, just put the methods in there
+  -figure out how to do invis fill?
+    -maybe just add an invis fill button
+    -fill should be separat from rest of stuff in preset params
+  -toggle box border?
+  -line style??
+
 -hook up unicode width fn
   -add hook for it in renderer
   -maybe need it in brodphase too? Prob not
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 
--params
-  DONE-prob a view only thing, add hookup for params in goat widget I guess
-  -need common methods for reading style of multi-select stuff
-  -is there a way to systemize different types of styles
-    -SuperStyle
-    -TextStyle
-    -LineStyle
-      -make this part of SuperStyle
-      -when displaying, show simplified version of it
-    -BoxTitle
+-decide what to do about layouts (mouse needs pane2)
+  -think about doing docking windows or whatever
 
 -make flowchart diagram of handler setting rules
   -non-canvas event (does this reset?)
@@ -104,16 +109,12 @@ IGNORE-simple select compromise
   -drag move collapsed folder
   -select non-contiguous elements and drag+move
 -PFStateChangeFlag and have each PFState operation return a change flag as well
--TextArea stuff
-  -handle updating text zipper when the stext lbox gets updated
-  -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
-    -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
-  -clear out pSelectionChanged comments
 -SimpleSEltLine
   DONE-renderer
   -prototoype connections
 -refactor for ordering service spec D:
 -SPECS
+  -params spec
   -cartesian lines spec
   -group spec
     -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
@@ -137,7 +138,21 @@ IGNORE-simple select compromise
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
-
+DONE/IGNORE-TextArea stuff
+  -handle updating text zipper when the stext lbox gets updated
+  -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
+    -you'll need to store a second piece of data alongside TZ to track this (i.e. raw string)
+  -clear out pSelectionChanged comments
+IGNORE-params
+  DONE-prob a view only thing, add hookup for params in goat widget I guess
+  -need common methods for reading style of multi-select stuff
+  -is there a way to systemize different types of styles
+    -SuperStyle
+    -TextStyle
+    IGNORE-LineStyle
+      -make this part of SuperStyle
+      -when displaying, show simplified version of it
+    -BoxTitle
 IGNORE-although maybe you'd be better off just disallowing these from being created (in creation/modify, just ignore if result is 0 size box)
 DONE-mouse select should select 0 size elts
 DONE-copy pasta translate a little by default?
