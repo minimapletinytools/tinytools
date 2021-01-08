@@ -9,6 +9,7 @@ module Potato.Flow.TestStates (
   , pfstate_someValidState1
   , pfstate_someInvalidState1
   , pfstate_someInvalidState2
+  , pfstate_basic0
   , pfstate_basic1
   , pfstate_basic2
   , pfstate_zero
@@ -57,6 +58,27 @@ pfstate_someInvalidState2 = PFState {
       _pFState_layers = Seq.fromList [0..5]
       , _pFState_directory = IM.fromList [(0, folderStart), (1, folderStart), (2, someSEltLabel), (3, someSEltLabel), (4, someSEltLabel)]
       , _pFState_canvas = SCanvas defaultCanvasLBox
+  }
+
+pfstate_basic0 :: PFState
+pfstate_basic0 = PFState {
+    _pFState_layers = Seq.fromList [0..2]
+    , _pFState_directory = IM.fromList [
+        (0, SEltLabel "box" (SEltBox def {
+            _sBox_box = LBox (V2 1 1) (V2 5 5)
+          }))
+        , (1, SEltLabel "line" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 7 2
+            , _sSimpleLine_end = V2 20 18
+            , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
+          }))
+        , (2, SEltLabel "text" (SEltBox def {
+            _sBox_box = LBox (V2 0 10) (V2 15 5)
+            , _sBox_boxType = SBoxType_NoBoxText
+          }))
+      ]
+    , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
 pfstate_basic1 :: PFState
