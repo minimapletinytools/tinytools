@@ -1,6 +1,57 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+:: reflex vty fork spec::
+-Data.Text.Zipper uses wcwidth from recent version of vty instead of using ICU to determine char width
+-slightly different version of pane/drag which IMO has better expected behavior https://github.com/reflex-frp/reflex-vty/pull/27
+-add reflex-vty test monad host to make testing easier https://github.com/pdlla/reflex-test-host
+-changes to layout, specifically
+  -fix an issue with tab focus not working as expected when you have layouts within layouts
+  -have layouts generate an optional region tree for the purpose of generating mouse clicks on the layout in the test monad host
+  -note, it's currently not possible for a layout to be aware of a child layout. I have to find a creative solution for this or add new interfaces for doing sub-layouts.
+-dockable window system
+  -this could really be a separate package, however I will be building it on top of my changes above
+
+Hi, I'm going to be making a fork of reflex-vty with some big-ish changes/additions that I need for this ascii flowchart editor I'm working on. I think these are pretty nice changes to reflex-vty. Is there anyone I can talk to about potentially merging the fork someday?
+
+Also, entirely unrelated question. Sometimes I find it best to do `foldDyn` with
+`foldDynFn :: SomeBigCommandType -> SomeBigState -> SomeBigState`
+where SomeBigCommandType is an ADT or DSum and the event is created using `leftmost` (say) on all the "command" input events that effect the dynamic.
+I don't really see this in any of the reflex examples I've seen however. Is there any particular reason to avoid this pattern?
+
+
+:: 1/8/2020 layout spec::
+
+we need return types from Layout to do the following
+- get a shiftfocus event for tab focus to work correctly on nested layout
+- create region tree for testability
+
+problem is nested layouts are accomplished by doing runLayout which returns a VtyWidget and therefore we need a way to tell a widget that is a layout from a widget that isn't
+
+We could have runLayout return
+
+
+::1/6/2020 windows spec::
+
+data Window = Window {
+  innerWidget :: VtyWidget
+  , tabName :: Text
+}
+
+-- allows dragging/docking windows in the full region
+data DockManager = DockManager {
+  dockList :: Dynamic [Dock]
+  , floatingWindows :: Dynamic [(LBox,Window)]
+}
+
+data Tab = OnlyWindow | Tab [Window]
+
+-- only grows vertically because tabs don't make sense horizontally
+data Dock = Dock {
+  windows :: Dynamic [Tab]
+  , location :: LBox
+}
+
 :: 12/26/2020 selection spec::
 IGNORE-simple select compromise
   -no distinguish between regular select and layer select
@@ -114,6 +165,7 @@ DONE-no border box support
   -prototoype connections
 -refactor for ordering service spec D:
 -SPECS
+  -vty attr spec
   -params spec
   -cartesian lines spec
   -group spec
