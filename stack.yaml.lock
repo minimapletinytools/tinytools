@@ -75,6 +75,27 @@ packages:
   original:
     hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
 - completed:
+    hackage: constraints-0.11.2@sha256:d028005d93f891b48b61ff0c82c6f868859eb728010dea3e355b0c55d0f57cf9,2219
+    pantry-tree:
+      size: 867
+      sha256: 3c71f74be6758642190c7d116d43eb980f4128e1595a849af4295610f752745c
+  original:
+    hackage: constraints-0.11.2@sha256:d028005d93f891b48b61ff0c82c6f868859eb728010dea3e355b0c55d0f57cf9,2219
+- completed:
+    hackage: haskell-src-exts-1.22.0@sha256:f558923a9c8f57402c33a8cc871b934027a5c65414404c87239f6cbd7357d54e,4541
+    pantry-tree:
+      size: 96940
+      sha256: 597b6f48bd409a4d0da013c4e356945c42e0d098966035d3aa68cd4a3ccd66c9
+  original:
+    hackage: haskell-src-exts-1.22.0@sha256:f558923a9c8f57402c33a8cc871b934027a5c65414404c87239f6cbd7357d54e,4541
+- completed:
+    hackage: these-1.0.1@sha256:58dba2446b57dde711c5e7f63910d18bc28b9a5831a89772986bb184a3e7851b,3266
+    pantry-tree:
+      size: 351
+      sha256: dd785882a522b6c76ee97fdd5e0e8cbca15b2fc951985bbecc76d0dd6e456aae
+  original:
+    hackage: these-1.0.1@sha256:58dba2446b57dde711c5e7f63910d18bc28b9a5831a89772986bb184a3e7851b,3266
+- completed:
     hackage: reflex-vty-0.1.4.0@sha256:46dcb043c39532e85c08e7098ac2e1237d5f7d018183b3f758f5ef87e06f51d4,2377
     pantry-tree:
       size: 1106
@@ -91,9 +112,6 @@ packages:
 - completed:
     size: 11213
     url: https://github.com/pdlla/reflex-test-host/archive/8b12d1963162dda636afac0551768d2e00f34c8a.tar.gz
-    cabal-file:
-      size: 3160
-      sha256: 99c71424d7e35fb6ab9ec66bcf6bc836a8e931545cdd7d83a15f2140aa222d67
     name: reflex-test-host
     version: 0.1.2.1
     sha256: c7c545207c50b509426c02a2842bc39d54d62cd0e0fe54bf57ce07d46fc65e1a
@@ -105,9 +123,6 @@ packages:
 - completed:
     size: 19369
     url: https://github.com/pdlla/reflex-dynamic-containers/archive/607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba.tar.gz
-    cabal-file:
-      size: 3407
-      sha256: 1ee1dd6e74ebb811e8f140d12b2b6d4b91087b1524af4bdc3084897d5ad99a1a
     name: reflex-dynamic-containers
     version: 0.1.0.0
     sha256: d8db8d2eaae62525d1e21366a270debf1cebde39f87099b2fa1770747b693ad0
@@ -119,9 +134,6 @@ packages:
 - completed:
     size: 10503
     url: https://github.com/pdlla/reflex-potatoes/archive/ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5.tar.gz
-    cabal-file:
-      size: 3018
-      sha256: 68f4f7c671405161cd029f491e8449f688705fcdb5df13d2e600fc5f2aea2899
     name: reflex-potatoes
     version: 0.1.0.0
     sha256: d8cf99ad67fd7f87dea783bf50b647192aa3aec411431e0f12a747de5eb5f804
@@ -132,7 +144,7 @@ packages:
     url: https://github.com/pdlla/reflex-potatoes/archive/ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5.tar.gz
 snapshots:
 - completed:
-    size: 491389
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/7.yaml
-    sha256: 92ab6303fe20ec928461c82ce0980b4d17c06f4e66205a2967e476474f686c17
-  original: lts-15.7
+    size: 533252
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/27.yaml
+    sha256: c2aaae52beeacf6a5727c1010f50e89d03869abfab6d2c2658ade9da8ed50c73
+  original: lts-16.27

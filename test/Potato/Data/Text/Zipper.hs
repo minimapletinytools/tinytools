@@ -431,10 +431,90 @@ widthI (Stream next s0 _len) = loop_length 0 s0
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- NEW TEXT ALIGNMENT STUFF BELOW
+
+data Iter = Iter {-# UNPACK #-} !Char {-# UNPACK #-} !Int
+
+-- | /O(1)/ Iterate (unsafely) one step forwards through a UTF-16
+-- array, returning the current character and the delta to add to give
+-- the next offset to iterate at.
+iter :: Text -> Int -> Iter
+iter (Text arr off _len) i
+    | m < 0xD800 || m > 0xDBFF = Iter (unsafeChr m) 1
+    | otherwise                = Iter (chr2 m n) 2
+  where m = A.unsafeIndex arr j
+        n = A.unsafeIndex arr k
+        j = off + i
+        k = j + 1
+{-# INLINE iter #-}
+
+
+-- | /O(n)/ Breaks a 'Text' up into a list of words, delimited by and including
+-- 'Char's representing white space.
+wordsWithWhitespace :: Text -> [Text]
+wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
+  where
+    loop !start !n !wasSpace
+        | n >= len = if start == n
+                     then []
+                     else [Text arr (start+off) (n-start)]
+        | isSpace c = loop start (n+d) True
+        | wasSpace c = Text arr (start+off) (n-start) : loop (n+d) (n+d)
+        | otherwise = loop start (n+d) False
+        where Iter c d = iter t n
+{-# INLINE wordsWithWhitespace #-}
+
+
+-- take sum of word length
+-- TODO FINISH
+splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
+splitWordsAtDisplayWidth maxWidth wordsWithWhitespace = loop wordsWithWhitespace 0 [] where
+  -- remember to reverse results when done, but don't reverse too much :)
+  appendOut [] t b = [(t,b)]
+  appendOut (t',_):ts' t b = (t:t',b) : ts'
+  loop [] _ out = out
+  loop x:xs cumw out = r where
+    newWidth = textWidth x + cumw
+    if newWidth > maxWidth
+      then if isSpace $ T.index x (maxWidth - cumw)
+        then
+          let (t1,t2) = splitAtWidth (maxWidth - cumw) x
+          in loop (T.drop 1 t2:xs) 0 [] : appendOut out t1 True
+        else loop xs 0 [] : appendOut out x False
+      else loop xs newWidth $ appendOut out x False
+
+
+
+      --
+      -- because the first character has a width of two (see 'charWidth' for more on that).
+      splitAtWidth :: Int -> Text -> (Text, Text)
+
+
 data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Center
 
 -- A map from the index (row) of display line to
--- fst: leading empty spaces from left (may be negative) to adjust for alginment
+-- fst: leading empty spaces from left (may be negative) to adjust for alignment
 -- snd: the text offset from the beginning of the document
 -- to the first character of the display line
 type OffsetMapWithAlignment = Map Int (Int, Int)
@@ -448,6 +528,24 @@ data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   }
   deriving (Show)
 
+-- | Wraps a logical line of text to fit within the given width. The first
+-- wrapped line is offset by the number of columns provided. Subsequent wrapped
+-- lines are not.
+-- TODO split at character
+wrapWithOffsetAndAlignment
+  :: TextAlignment
+  -> Int -- ^ Maximum width
+  -> Int -- ^ Offset for first line
+  -> Text -- ^ Text to be wrapped
+  -> ([(Text,Bool,Int)]) -- (words on that line, hidden space char, offset from beginning of line)
+wrapWithOffsetAndAlignment _ maxWidth _ _ | maxWidth <= 0 = []
+wrapWithOffsetAndAlignment alignment maxWidth n text = r where
+  aswords = T.words tex
+{-wrapWithOffsetAndAlignment TextAlignment_Left maxWidth n xs =
+  let (firstLine, rest) = splitAtWidth (maxWidth - n) xs
+  in fmap (\x->(0,x)) $ firstLine : (fmap (takeWidth maxWidth) . takeWhile (not . T.null) . iterate (dropWidth maxWidth) $ rest)
+wrapWithOffsetAndAlignment TextAlignment_Right = undefined
+wrapWithOffsetAndAlignment TextAlignment_Left = undefined-}
 
 -- | Given a width and a 'TextZipper', produce a list of display lines
 -- (i.e., lines of wrapped text) with special attributes applied to
@@ -463,13 +561,13 @@ displayLinesWithAlignment
   -> DisplayLinesWithAlignment tag
 displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
   let linesBefore :: [[Text]] -- The wrapped lines before the cursor line
-      linesBefore = map (wrapWithOffset width 0) $ reverse lb
+      linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
       linesAfter :: [[Text]] -- The wrapped lines after the cursor line
-      linesAfter = map (wrapWithOffset width 0) la
+      linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) la
       offsets :: OffsetMapWithAlignment
       offsets = offsetMapWithAlignment alignment $ mconcat
         [ linesBefore
-        , [wrapWithOffset width 0 $ b <> a]
+        , [wrapWithOffsetAndAlignment alignment width 0 $ b <> a]
         , linesAfter
         ]
       spansBefore = map ((:[]) . Span tag) $ concat linesBefore
@@ -477,8 +575,10 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- Separate the spans before the cursor into
       -- * spans that are on earlier display lines (though on the same logical line), and
       -- * spans that are on the same display line
+
+      -- TODO may need rejiggering
       (spansCurrentBefore, spansCurLineBefore) = fromMaybe ([], []) $
-        initLast $ map ((:[]) . Span tag) (wrapWithOffset width 0 b)
+        initLast $ map ((:[]) . Span tag) (wrapWithOffsetAndAlignment alignment width 0 b)
       -- Calculate the number of columns on the cursor's display line before the cursor
       curLineOffset = spansWidth spansCurLineBefore
       -- Check whether the spans on the current display line are long enough that
@@ -487,16 +587,19 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       cursorCharWidth = case T.uncons a of
         Nothing     -> 1
         Just (c, _) -> charWidth c
+
       -- Separate the span after the cursor into
       -- * spans that are on the same display line, and
       -- * spans that are on later display lines (though on the same logical line)
+
+      -- TODO may need rejiggering
       (spansCurLineAfter, spansCurrentAfter) = fromMaybe ([], []) $
         headTail $ case T.uncons a of
           Nothing -> [[Span cursorTag " "]]
           Just (c, rest) ->
             let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
                 cursor = Span cursorTag (T.singleton c)
-            in  case map ((:[]) . Span tag) (wrapWithOffset width o rest) of
+            in  case map ((:[]) . Span tag) (wrapWithOffsetAndAlignment alignment width o rest) of
                   []     -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
   in  DisplayLinesWithAlignment
