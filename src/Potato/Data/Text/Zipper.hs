@@ -21,6 +21,7 @@ import           Prelude
 
 import qualified Relude as R
 
+import Control.Exception (assert)
 import           Control.Monad.State             (evalState, forM, get, put)
 import           Data.Char                       (isSpace)
 import           Data.Map                        (Map)
@@ -476,7 +477,7 @@ splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
 splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   appendOut :: [(Text,Bool)] -> Text -> Bool -> [(Text,Bool)]
   appendOut [] t b = [(t,b)]
-  appendOut ((t',_):ts') t b = (t<>t',b) : ts'
+  appendOut ((t',_):ts') t b = (t'<>t,b) : ts'
   loop :: [Text] -> Int -> [(Text,Bool)] -> [(Text,Bool)]
   loop [] _ out = out
   loop (x:xs) cumw out = r where
@@ -512,11 +513,10 @@ data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   deriving (Show)
 
 
-{-
+-- TODO when aligning right, you need to remove 1 trailing whitespace or something like that
 -- | Wraps a logical line of text to fit within the given width. The first
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
 -- lines are not.
--- TODO split at character
 wrapWithOffsetAndAlignment
   :: TextAlignment
   -> Int -- ^ Maximum width
@@ -524,14 +524,18 @@ wrapWithOffsetAndAlignment
   -> Text -- ^ Text to be wrapped
   -> ([(Text,Bool,Int)]) -- (words on that line, hidden space char, offset from beginning of line)
 wrapWithOffsetAndAlignment _ maxWidth _ _ | maxWidth <= 0 = []
-wrapWithOffsetAndAlignment alignment maxWidth n text = r where
-  aswords = T.words tex
-{-wrapWithOffsetAndAlignment TextAlignment_Left maxWidth n xs =
-  let (firstLine, rest) = splitAtWidth (maxWidth - n) xs
-  in fmap (\x->(0,x)) $ firstLine : (fmap (takeWidth maxWidth) . takeWhile (not . T.null) . iterate (dropWidth maxWidth) $ rest)
-wrapWithOffsetAndAlignment TextAlignment_Right = undefined
-wrapWithOffsetAndAlignment TextAlignment_Left = undefined-}
+wrapWithOffsetAndAlignment alignment maxWidth n text = assert (n <= maxWidth) r where
+  r' = splitWordsAtDisplayWidth maxWidth $ T.replicate n " " : wordsWithWhitespace text
+  fmapfn (t,b) = case alignment of
+    TextAlignment_Left -> (t,b,0)
+    TextAlignment_Right -> (t,b,maxWidth-l)
+    TextAlignment_Center -> (t,b, (maxWidth-l) `div` 2)
+    where l = T.length t
+  r = fmap fmapfn r'
 
+
+
+{-
 -- | Given a width and a 'TextZipper', produce a list of display lines
 -- (i.e., lines of wrapped text) with special attributes applied to
 -- certain segments (e.g., the cursor). Additionally, produce the current
