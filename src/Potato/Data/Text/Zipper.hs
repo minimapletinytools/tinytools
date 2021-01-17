@@ -2,7 +2,7 @@
 -- adds alignment support
 
 {-|
-Module: Data.Text.Zipper
+Module: Potato.Data.Text.Zipper
 Description: A zipper for text documents that allows convenient editing and navigation
 
 'TextZipper' is designed to be help manipulate the contents of a text input field. It keeps track of the logical lines of text (i.e., lines separated by user-entered newlines) and the current cursor position. Several functions are defined in this module to navigate and edit the TextZipper from the cursor position.
@@ -18,6 +18,8 @@ Description: A zipper for text documents that allows convenient editing and navi
 module Potato.Data.Text.Zipper where
 
 import           Prelude
+
+import qualified Relude as R
 
 import           Control.Monad.State             (evalState, forM, get, put)
 import           Data.Char                       (isSpace)
@@ -454,23 +456,7 @@ widthI (Stream next s0 _len) = loop_length 0 s0
 
 -- NEW TEXT ALIGNMENT STUFF BELOW
 
-data Iter = Iter {-# UNPACK #-} !Char {-# UNPACK #-} !Int
 
--- | /O(1)/ Iterate (unsafely) one step forwards through a UTF-16
--- array, returning the current character and the delta to add to give
--- the next offset to iterate at.
-iter :: Text -> Int -> Iter
-iter (Text arr off _len) i
-    | m < 0xD800 || m > 0xDBFF = Iter (unsafeChr m) 1
-    | otherwise                = Iter (chr2 m n) 2
-  where m = A.unsafeIndex arr j
-        n = A.unsafeIndex arr k
-        j = off + i
-        k = j + 1
-{-# INLINE iter #-}
-
-
--- TODO test
 -- 'Char's representing white space.
 wordsWithWhitespace :: Text -> [Text]
 wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
@@ -480,30 +466,33 @@ wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
                      then []
                      else [Text arr (start+off) (n-start)]
         | isSpace c = loop start (n+d) True
-        | wasSpace c = Text arr (start+off) (n-start) : loop (n+d) (n+d)
+        | wasSpace = Text arr (start+off) (n-start) : loop n n False
         | otherwise = loop start (n+d) False
         where Iter c d = iter t n
 {-# INLINE wordsWithWhitespace #-}
 
-
--- TODO test
 -- take sum of word length, returns True if ends with trailng space
 splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
-splitWordsAtDisplayWidth maxWidth wordsWithWhitespace = reverse $ loop wordsWithWhitespace 0 [] where
-  -- remember to reverse results when done, but don't reverse too much :)
+splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
+  appendOut :: [(Text,Bool)] -> Text -> Bool -> [(Text,Bool)]
   appendOut [] t b = [(t,b)]
-  appendOut (t',_):ts' t b = (t:t',b) : ts'
+  appendOut ((t',_):ts') t b = (t<>t',b) : ts'
+  loop :: [Text] -> Int -> [(Text,Bool)] -> [(Text,Bool)]
   loop [] _ out = out
-  loop x:xs cumw out = r where
+  loop (x:xs) cumw out = r where
     newWidth = textWidth x + cumw
-    if newWidth > maxWidth
+    r = if newWidth > maxWidth
       then if isSpace $ T.index x (maxWidth - cumw)
-        then
-          let (t1,t2) = splitAtWidth (maxWidth - cumw) x
-          in loop (T.drop 1 t2:xs) 0 [] : appendOut out t1 True
-        else loop xs 0 [] : appendOut out x False
-      else loop xs newWidth $ appendOut out  False
-
+        -- if line runs over but character of splitting is whitespace then split on the whitespace
+        then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
+          in loop (T.drop 1 t2:xs) 0 [] <> appendOut out t1 True
+        else if cumw == 0
+          -- single word exceeds max width, so just split on the word
+          then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
+            in loop (t2:xs) 0 [] <> appendOut out t1 False
+          -- otherwise start a new line
+          else loop (x:xs) 0 [] <> out
+      else loop xs newWidth $ appendOut out x False
 
 data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Center
 
@@ -522,6 +511,8 @@ data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   }
   deriving (Show)
 
+
+{-
 -- | Wraps a logical line of text to fit within the given width. The first
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
 -- lines are not.
@@ -662,3 +653,4 @@ goToDisplayLineWithAlignmentPosition x y dl tz =
                 []    -> x
                 (s:_) -> spansWidth s
           in  rightN (o + min displayLineLength x) $ top tz
+-}
