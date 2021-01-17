@@ -470,7 +470,7 @@ iter (Text arr off _len) i
 {-# INLINE iter #-}
 
 
--- | /O(n)/ Breaks a 'Text' up into a list of words, delimited by and including
+-- TODO test
 -- 'Char's representing white space.
 wordsWithWhitespace :: Text -> [Text]
 wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
@@ -486,10 +486,10 @@ wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
 {-# INLINE wordsWithWhitespace #-}
 
 
--- take sum of word length
--- TODO FINISH
+-- TODO test
+-- take sum of word length, returns True if ends with trailng space
 splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
-splitWordsAtDisplayWidth maxWidth wordsWithWhitespace = loop wordsWithWhitespace 0 [] where
+splitWordsAtDisplayWidth maxWidth wordsWithWhitespace = reverse $ loop wordsWithWhitespace 0 [] where
   -- remember to reverse results when done, but don't reverse too much :)
   appendOut [] t b = [(t,b)]
   appendOut (t',_):ts' t b = (t:t',b) : ts'
@@ -502,13 +502,7 @@ splitWordsAtDisplayWidth maxWidth wordsWithWhitespace = loop wordsWithWhitespace
           let (t1,t2) = splitAtWidth (maxWidth - cumw) x
           in loop (T.drop 1 t2:xs) 0 [] : appendOut out t1 True
         else loop xs 0 [] : appendOut out x False
-      else loop xs newWidth $ appendOut out x False
-
-
-
-      --
-      -- because the first character has a width of two (see 'charWidth' for more on that).
-      splitAtWidth :: Int -> Text -> (Text, Text)
+      else loop xs newWidth $ appendOut out  False
 
 
 data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Center
