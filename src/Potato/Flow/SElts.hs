@@ -6,6 +6,7 @@ module Potato.Flow.SElts (
   , SuperStyle(..)
   , superStyle_fromListFormat
   , superStyle_toListFormat
+  , TextAlign(..)
   , TextStyle(..)
   , LineStyle(..)
   , LineAutoStyle(..)
@@ -107,7 +108,7 @@ superStyle_toListFormat SuperStyle {..} = r where
     ]
 
 -- |
-data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center | TextAlign_Justify deriving (Eq, Generic, Show)
+data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center deriving (Eq, Generic, Show)
 
 instance FromJSON TextAlign
 instance ToJSON TextAlign

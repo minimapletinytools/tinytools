@@ -41,13 +41,22 @@ data BoxTextInputState = BoxTextInputState {
   , _boxTextInputState_original     :: Text -- needed to properly create DeltaText for undo
   , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
   , _boxTextInputState_zipper       :: TZ.TextZipper
-  , _boxTextInputState_displayLines :: TZ.DisplayLines ()
+  , _boxTextInputState_displayLines :: TZ.DisplayLinesWithAlignment ()
   --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
 
+convertTextAlignment :: TextAlign -> TZ.TextAlignment
+convertTextAlignment = \case
+  TextAlign_Left -> TZ.TextAlignment_Left
+  TextAlign_Right -> TZ.TextAlignment_Right
+  TextAlign_Center -> TZ.TextAlignment_Center
+
+
 updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxTextInputStateWithSBox sbox btis = r where
+  alignment = convertTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
+
   CanonicalLBox _ _ newBox@(LBox _ (V2 width' _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   width = case _sBox_boxType sbox of
     SBoxType_BoxText   -> max 0 (width'-2)
@@ -55,7 +64,7 @@ updateBoxTextInputStateWithSBox sbox btis = r where
     _                  -> error "wrong type"
   r = btis {
       _boxTextInputState_box = newBox
-      , _boxTextInputState_displayLines = TZ.displayLines width () () (_boxTextInputState_zipper btis)
+      , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
     }
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
@@ -85,7 +94,7 @@ mouseText tais sbox rmd = r where
     SBoxType_BoxText   -> (1,1)
     SBoxType_NoBoxText -> (0,0)
     _                  -> error "wrong type"
-  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
+  newtz = TZ.goToDisplayLineWithAlignmentPosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
   r = tais { _boxTextInputState_zipper = newtz }
 
 
