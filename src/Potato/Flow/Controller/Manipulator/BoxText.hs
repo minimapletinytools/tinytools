@@ -28,7 +28,7 @@ import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
-import qualified Data.Text.Zipper                          as TZ
+import qualified Potato.Data.Text.Zipper                          as TZ
 import           Data.Tuple.Extra
 
 getSBox :: Selection -> (REltId, SBox)

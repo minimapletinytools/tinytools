@@ -55,10 +55,10 @@ extra-deps:
 - these-1.0.1@sha256:58dba2446b57dde711c5e7f63910d18bc28b9a5831a89772986bb184a3e7851b,3266
 
 
-# reflex-vty for Data.Text.Zipper and some annoying stuff to get deps to work
 # TODO DELETE THIS
-- reflex-vty-0.1.4.0@sha256:46dcb043c39532e85c08e7098ac2e1237d5f7d018183b3f758f5ef87e06f51d4,2377
-- bimap-0.3.3@sha256:232518c0410990665b9c8677eb9318ee355c001d58945ddcbedec3baa30b4160,1475
+# reflex-vty for Data.Text.Zipper and some annoying stuff to get deps to work
+# - reflex-vty-0.1.4.0@sha256:46dcb043c39532e85c08e7098ac2e1237d5f7d018183b3f758f5ef87e06f51d4,2377
+# - bimap-0.3.3@sha256:232518c0410990665b9c8677eb9318ee355c001d58945ddcbedec3baa30b4160,1475
 
 - github: pdlla/reflex-test-host
   commit: 8b12d1963162dda636afac0551768d2e00f34c8a
@@ -67,12 +67,13 @@ extra-deps:
 - github: pdlla/reflex-potatoes
   commit: ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5
 
+# TODO CAN DELETE
 # needed for vty
 # see https://github.com/agda/agda/issues/3017
-extra-include-dirs:
-- /usr/local/opt/icu4c/include
-extra-lib-dirs:
-- /usr/local/opt/icu4c/lib
+# extra-include-dirs:
+# - /usr/local/opt/icu4c/include
+# extra-lib-dirs:
+# - /usr/local/opt/icu4c/lib
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

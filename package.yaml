@@ -98,11 +98,10 @@ dependencies:
 - listsafe
 - data-ordlist
 - bimap
-- reflex-vty
 - semialign
 - binary
 - mtl
-- text-icu
+- vty
 
 #- smash
 - deepseq

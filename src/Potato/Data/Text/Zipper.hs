@@ -22,6 +22,7 @@ import           Prelude
 import qualified Relude as R
 
 import Control.Exception (assert)
+import Control.Monad (join)
 import           Control.Monad.State             (evalState, forM, get, put)
 import           Data.Char                       (isSpace)
 import           Data.Map                        (Map)
@@ -29,31 +30,16 @@ import qualified Data.Map                        as Map
 import           Data.Maybe                      (fromMaybe)
 import           Data.String
 
+import qualified Data.List as L
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
-import           Data.Text.ICU.Char
 import           Data.Text.Internal              (Text (..), text)
 import           Data.Text.Internal.Fusion       (stream)
 import           Data.Text.Internal.Fusion.Types (Step (..), Stream (..))
 import           Data.Text.Unsafe
 
 
-
-
--- | Get the display width of a 'Char'. "Full width" and "wide" characters
--- take two columns and everything else takes a single column. See
--- <https://www.unicode.org/reports/tr11/> for more information.
-charWidth :: Char -> Int
-charWidth c = case property EastAsianWidth c of
-  EAFull -> 2
-  EAWide -> 2
-  _      -> 1
-
-
---charWidth :: Char -> Int
---charWidth c = 1
-
-
+import Graphics.Text.Width (wcwidth)
 
 -- | A zipper of the logical text input contents (the "document"). The lines
 -- before the line containing the cursor are stored in reverse order.
@@ -63,9 +49,9 @@ charWidth c = case property EastAsianWidth c of
 -- a given viewport width).
 data TextZipper = TextZipper
   { _textZipper_linesBefore :: [Text] -- reversed
-  , _textZipper_before      :: Text
-  , _textZipper_after       :: Text -- The cursor is on top of the first character of this text
-  , _textZipper_linesAfter  :: [Text]
+  , _textZipper_before :: Text
+  , _textZipper_after :: Text -- The cursor is on top of the first character of this text
+  , _textZipper_linesAfter :: [Text]
   }
   deriving (Show)
 
@@ -150,7 +136,7 @@ end (TextZipper lb b a la) = TextZipper lb (b <> a) "" la
 -- | Move the cursor to the top of the document
 top :: TextZipper -> TextZipper
 top (TextZipper lb b a la) = case reverse lb of
-  []           -> TextZipper [] "" (b <> a) la
+  [] -> TextZipper [] "" (b <> a) la
   (start:rest) -> TextZipper [] "" start (rest <> [b <> a] <> la)
 
 -- | Insert a character at the current cursor position
@@ -162,14 +148,14 @@ insert :: Text -> TextZipper -> TextZipper
 insert i z@(TextZipper lb b a la) = case T.split (=='\n') i of
   [] -> z
   (start:rest) -> case reverse rest of
-    []     -> TextZipper lb (b <> start) a la
+    [] -> TextZipper lb (b <> start) a la
     (l:ls) -> TextZipper (ls <> [b <> start] <> lb) l a la
 
 -- | Delete the character to the left of the cursor
 deleteLeft :: TextZipper-> TextZipper
 deleteLeft z@(TextZipper lb b a la) = case T.unsnoc b of
   Nothing -> case lb of
-    []     -> z
+    [] -> z
     (l:ls) -> TextZipper ls l a la
   Just (b', _) -> TextZipper lb b' a la
 
@@ -177,7 +163,7 @@ deleteLeft z@(TextZipper lb b a la) = case T.unsnoc b of
 deleteRight :: TextZipper -> TextZipper
 deleteRight z@(TextZipper lb b a la) = case T.uncons a of
   Nothing -> case la of
-    []     -> z
+    [] -> z
     (l:ls) -> TextZipper lb b l ls
   Just (_, a') -> TextZipper lb b a' la
 
@@ -189,7 +175,7 @@ deleteLeftWord (TextZipper lb b a la) =
   let b' = T.dropWhileEnd isSpace b
   in  if T.null b'
         then case lb of
-          []     -> TextZipper [] b' a la
+          [] -> TextZipper [] b' a la
           (l:ls) -> deleteLeftWord $ TextZipper ls l a la
         else TextZipper lb (T.dropWhileEnd (not . isSpace) b') a la
 
@@ -221,12 +207,11 @@ data Span tag = Span tag Text
 
 -- | Information about the document as it is displayed (i.e., post-wrapping)
 data DisplayLines tag = DisplayLines
-  { _displayLines_spans     :: [[Span tag]]
+  { _displayLines_spans :: [[Span tag]]
   , _displayLines_offsetMap :: Map Int Int
-  , _displayLines_cursorY   :: Int
+  , _displayLines_cursorY :: Int
   }
   deriving (Show)
-
 
 -- | Given a width and a 'TextZipper', produce a list of display lines
 -- (i.e., lines of wrapped text) with special attributes applied to
@@ -263,7 +248,7 @@ displayLines width tag cursorTag (TextZipper lb b a la) =
       -- the cursor has to go to the next line
       cursorAfterEOL = curLineOffset == width
       cursorCharWidth = case T.uncons a of
-        Nothing     -> 1
+        Nothing -> 1
         Just (c, _) -> charWidth c
       -- Separate the span after the cursor into
       -- * spans that are on the same display line, and
@@ -275,7 +260,7 @@ displayLines width tag cursorTag (TextZipper lb b a la) =
             let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
                 cursor = Span cursorTag (T.singleton c)
             in  case map ((:[]) . Span tag) (wrapWithOffset width o rest) of
-                  []     -> [[cursor]]
+                  [] -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
   in  DisplayLines
         { _displayLines_spans = concat
@@ -299,7 +284,7 @@ displayLines width tag cursorTag (TextZipper lb b a la) =
     initLast = \case
       [] -> Nothing
       (x:xs) -> case initLast xs of
-        Nothing      -> Just ([], x)
+        Nothing -> Just ([], x)
         Just (ys, y) -> Just (x:ys, y)
     headTail :: [a] -> Maybe (a, [a])
     headTail = \case
@@ -357,6 +342,16 @@ takeWidth n = fst . splitAtWidth n
 dropWidth :: Int -> Text -> Text
 dropWidth n = snd . splitAtWidth n
 
+-- | Get the display width of a 'Char'. "Full width" and "wide" characters
+-- take two columns and everything else takes a single column. See
+-- <https://www.unicode.org/reports/tr11/> for more information
+-- This is implemented using wcwidth from Vty such that it matches what will
+-- be displayed on the terminal. Note that this method can change depending
+-- on how vty is configed. Please see vty documentation for details.
+charWidth :: Char -> Int
+charWidth = wcwidth
+
+
 -- | For a given set of wrapped logical lines, computes a map
 -- from display line index to text offset in the original text.
 -- This is used to help determine how interactions with the displayed
@@ -399,10 +394,12 @@ goToDisplayLinePosition x y dl tz =
   in  case offset of
         Nothing -> tz
         Just o ->
-          let displayLineLength = case drop y $ _displayLines_spans dl of
+          let
+            moveRight = case drop y $ _displayLines_spans dl of
                 []    -> x
-                (s:_) -> spansWidth s
-          in  rightN (o + min displayLineLength x) $ top tz
+                (s:_) -> charIndexAt x . stream . mconcat . fmap (\(Span _ t) -> t) $ s
+          in  rightN (o + min moveRight x) $ top tz
+
 
 -- | Get the width of the text in a set of 'Span's, taking into account unicode character widths
 spansWidth :: [Span tag] -> Int
@@ -428,11 +425,17 @@ widthI (Stream next s0 _len) = loop_length 0 s0
                            Yield c s' -> loop_length (z + charWidth c) s'
 {-# INLINE[0] widthI #-}
 
-
-
-
-
-
+-- | Compute the logical index position of a stream of characters from a visual
+-- position taking into account fullwidth unicode forms.
+charIndexAt :: Int -> Stream Char -> Int
+charIndexAt pos (Stream next s0 _len) = loop_length 0 0 s0
+    where
+      loop_length i !z s  = case next s of
+                           Done       -> i
+                           Skip    s' -> loop_length i z s'
+                           Yield c s' -> if w > pos then i else loop_length (i+1) w s' where
+                             w = z + charWidth c
+{-# INLINE[0] charIndexAt #-}
 
 
 
@@ -533,9 +536,32 @@ wrapWithOffsetAndAlignment alignment maxWidth n text = assert (n <= maxWidth) r 
     where l = T.length t
   r = fmap fmapfn r'
 
+-- converts deleted eol spaces into logical lines
+eolSpacesToLogicalLines :: [[(Text, Bool, Int)]] -> [[(Text, Int)]]
+eolSpacesToLogicalLines = fmap (fmap (\(a, b, c) -> (a,c))) . join . fmap (L.groupBy (\(_,b,_) _ -> not b))
+
+offsetMapWithAlignmentInternal :: [[(Text, Bool, Int)]] -> OffsetMapWithAlignment
+offsetMapWithAlignmentInternal = offsetMapWithAlignment . eolSpacesToLogicalLines
+
+offsetMapWithAlignment
+  :: [[(Text, Int)]] -- ^ The outer list represents logical lines, inner list represents wrapped lines
+  -> OffsetMapWithAlignment
+offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
+  where
+    offsetMap' xs = fmap Map.unions $ forM xs $ \x -> do
+      maps <- forM x $ \(line,align) -> do
+        let l = T.length line
+        (dl, o) <- get
+        put (dl + 1, o + l)
+        return $ Map.singleton dl (align, o)
+      (dl, o) <- get
+      put (dl, o + 1)
+      -- add additional offset to last line in wrapped lines (for newline char)
+      return $ Map.adjust (\(align,_)->(align,o+1)) dl $ Map.unions maps
 
 
 {-
+
 -- | Given a width and a 'TextZipper', produce a list of display lines
 -- (i.e., lines of wrapped text) with special attributes applied to
 -- certain segments (e.g., the cursor). Additionally, produce the current
@@ -549,9 +575,9 @@ displayLinesWithAlignment
   -> TextZipper -- ^ The text input contents and cursor state
   -> DisplayLinesWithAlignment tag
 displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
-  let linesBefore :: [[Text]] -- The wrapped lines before the cursor line
+  let linesBefore :: [[(Text, Bool, Int)]] -- The wrapped lines before the cursor line
       linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
-      linesAfter :: [[Text]] -- The wrapped lines after the cursor line
+      linesAfter :: [[(Text, Bool, Int)]] -- The wrapped lines after the cursor line
       linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) la
       offsets :: OffsetMapWithAlignment
       offsets = offsetMapWithAlignment alignment $ mconcat
@@ -620,27 +646,14 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       [] -> Nothing
       x:xs -> Just (x, xs)
 
+-}
 
 
--- TODO
-offsetMapWithAlignment
-  :: TextAlignment
-  -> [[Text]] -- ^ The outer list represents logical lines, and the
-              -- inner list represents the display lines into which
-              -- the logical line has been wrapped
-  -> OffsetMapWithAlignment
-offsetMapWithAlignment alignment ts = evalState (offsetMap' ts) (0, 0)
-  where
-    align = 0 -- TODO
-    offsetMap' xs = fmap Map.unions $ forM xs $ \x -> do
-      maps <- forM x $ \line -> do
-        let l = T.length line
-        (dl, o) <- get
-        put (dl + 1, o + l)
-        return $ Map.singleton dl (align, o)
-      (dl, o) <- get
-      put (dl, o + 1)
-      return $ Map.insert dl (align, o + 1) $ Map.unions maps
+
+
+
+
+
 
 -- | Move the cursor of the given 'TextZipper' to the logical position indicated
 -- by the given display line coordinates, using the provided 'DisplayLines'
@@ -657,4 +670,3 @@ goToDisplayLineWithAlignmentPosition x y dl tz =
                 []    -> x
                 (s:_) -> spansWidth s
           in  rightN (o + min displayLineLength x) $ top tz
--}

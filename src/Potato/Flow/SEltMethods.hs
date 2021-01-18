@@ -23,7 +23,7 @@ import           Potato.Flow.Types
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
 import           Data.Maybe         (fromJust)
 import qualified Data.Text          as T
-import qualified Data.Text.Zipper   as TZ
+import qualified Potato.Data.Text.Zipper   as TZ
 
 
 makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines ()

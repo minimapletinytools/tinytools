@@ -7,8 +7,7 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.IntMap            as IM
-import qualified Data.Sequence          as Seq
+import qualified Data.Map            as Map
 
 import Potato.Data.Text.Zipper
 
@@ -37,3 +36,32 @@ spec = do
       wrapWithOffsetAndAlignment TextAlignment_Left 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 0)]
       wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 3)]
       wrapWithOffsetAndAlignment TextAlignment_Center 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 1)]
+    it "eolSpacesToLogicalLines" $ do
+      eolSpacesToLogicalLines
+        [
+          [ ("😱",True,1), ("😱",False,2), ("😱",False,3) ]
+          , [ ("aa",True,1), ("aa",True,2), ("aa",False,3) ]
+        ]
+        `shouldBe`
+        [
+          [ ("😱",1) ]
+          , [ ("😱",2), ("😱",3) ]
+          , [ ("aa",1) ]
+          , [ ("aa",2) ]
+          , [ ("aa",3) ]
+        ]
+    it "offsetMapWithAlignmentInternal" $ do
+      offsetMapWithAlignmentInternal
+        [
+          [ ("😱",True,1), ("😱",False,2), ("😱",False,3) ]
+          , [ ("aa",True,1), ("aa",True,2), ("aa",False,3) ]
+        ]
+        `shouldBe`
+        Map.fromList
+        [ (0, (1,0))
+        , (1, (2,2)) -- jump by 1 for char and 1 for space
+        , (2, (3,3)) -- jump by 1 for char
+        , (3, (1,5)) -- jump by 1 for char and 1 for newline
+        , (4, (2,8)) -- jump by 2 for char and 1 for space
+        , (5, (3,11)) -- jump by 2 for char and 1 for space
+        ]

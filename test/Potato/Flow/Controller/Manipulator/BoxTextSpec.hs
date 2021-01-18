@@ -21,7 +21,7 @@ import           Potato.Flow.Common
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
 import qualified Data.IntMap                                as IM
-import qualified Data.Text.Zipper                           as TZ
+import qualified Potato.Data.Text.Zipper                           as TZ
 
 testText1 :: Text
 testText1 = "aoeu\nhi\n12345wrapping"
