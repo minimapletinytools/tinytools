@@ -28,14 +28,14 @@ spec = do
     it "splitWordsAtDisplayWidth" $ do
       fmap fst (splitSentenceAtDisplayWidth 5 "123456") `shouldBe` ["12345","6"]
       fmap fst (splitSentenceAtDisplayWidth 5 "12345 6") `shouldBe` ["12345","6"]
-      fmap fst (splitSentenceAtDisplayWidth 5 "1234 56") `shouldBe` ["1234 ","56"]
+      fmap fst (splitSentenceAtDisplayWidth 5 "1234 56") `shouldBe` ["1234","56"]
       fmap fst (splitSentenceAtDisplayWidth 5 "12345678912345") `shouldBe` ["12345","67891","2345"]
       fmap fst (splitSentenceAtDisplayWidth 5 "1234   56") `shouldBe` ["1234 "," 56"]
-      fmap fst (splitSentenceAtDisplayWidth 8 "1 2 3 4 5 6 7 8 9 1") `shouldBe` ["1 2 3 4 ","5 6 7 8 ", "9 1"]
+      fmap fst (splitSentenceAtDisplayWidth 8 "1 2 3 4 5 6 7 8 9 1") `shouldBe` ["1 2 3 4","5 6 7 8", "9 1"]
     it "wrapWithOffsetAndAlignment" $ do
-      wrapWithOffsetAndAlignment TextAlignment_Left 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 0)]
-      wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 3)]
-      wrapWithOffsetAndAlignment TextAlignment_Center 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234 ", False, 0), ("12", False, 1)]
+      wrapWithOffsetAndAlignment TextAlignment_Left 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 0)]
+      wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 3)]
+      wrapWithOffsetAndAlignment TextAlignment_Center 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 1)]
     it "eolSpacesToLogicalLines" $ do
       eolSpacesToLogicalLines
         [
@@ -65,3 +65,8 @@ spec = do
         , (4, (2,8)) -- jump by 2 for char and 1 for space
         , (5, (3,11)) -- jump by 2 for char and 1 for space
         ]
+
+    {-it "displayLinesWithAlignment" $ do
+      let
+        dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu ansthe\naoeuo\naone , aoentuh ao anhno ao ao ou unh sarc.,as eohaun oeuoeu nthoeu noeuhnooeu")
+      traceShow dl True `shouldBe` True-}

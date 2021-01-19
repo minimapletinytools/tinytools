@@ -462,6 +462,7 @@ charIndexAt pos (Stream next s0 _len) = loop_length 0 0 s0
 -- NEW TEXT ALIGNMENT STUFF BELOW
 
 
+-- same as T.words except whitespace characters are included at end (i.e. ["line1 ", ...])
 -- 'Char's representing white space.
 wordsWithWhitespace :: Text -> [Text]
 wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
@@ -482,6 +483,14 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   appendOut :: [(Text,Bool)] -> Text -> Bool -> [(Text,Bool)]
   appendOut [] t b = [(t,b)]
   appendOut ((t',_):ts') t b = (t'<>t,b) : ts'
+
+  -- remove the last whitespace in output
+  modifyOutForNewLine :: [(Text,Bool)] -> [(Text,Bool)]
+  modifyOutForNewLine [] = error "should never happen"
+  modifyOutForNewLine ((t',_):ts) = case T.unsnoc t' of
+    Nothing -> error "should never happen"
+    Just (t,lastChar) -> assert (isSpace lastChar) $ (t,True):ts -- assume last char is whitespace
+
   loop :: [Text] -> Int -> [(Text,Bool)] -> [(Text,Bool)]
   loop [] _ out = out
   loop (x:xs) cumw out = r where
@@ -495,8 +504,9 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
           -- single word exceeds max width, so just split on the word
           then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
             in loop (t2:xs) 0 [] <> appendOut out t1 False
+
           -- otherwise start a new line
-          else loop (x:xs) 0 [] <> out
+          else loop (x:xs) 0 [] <> modifyOutForNewLine out
       else loop xs newWidth $ appendOut out x False
 
 data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Center
@@ -516,8 +526,6 @@ data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   }
   deriving (Show)
 
-
--- TODO when aligning right, you need to remove 1 trailing whitespace or something like that
 -- | Wraps a logical line of text to fit within the given width. The first
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
 -- lines are not.
@@ -533,9 +541,12 @@ wrapWithOffsetAndAlignment alignment maxWidth n text = assert (n <= maxWidth) r 
   fmapfn (t,b) = case alignment of
     TextAlignment_Left -> (t,b,0)
     TextAlignment_Right -> (t,b,maxWidth-l)
-    TextAlignment_Center -> (t,b, (maxWidth-l) `div` 2)
+    TextAlignment_Center -> (t,b,(maxWidth-l) `div` 2)
     where l = T.length t
-  r = fmap fmapfn r'
+  r'' = case r' of
+    [] -> []
+    (x,b):xs -> (T.drop n x,b):xs
+  r = fmap fmapfn r''
 
 -- converts deleted eol spaces into logical lines
 eolSpacesToLogicalLines :: [[(Text, Bool, Int)]] -> [[(Text, Int)]]
@@ -567,7 +578,7 @@ offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLinesWithAlignment
-  :: TextAlignment
+  :: (R.HasCallStack) => TextAlignment
   -> Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
