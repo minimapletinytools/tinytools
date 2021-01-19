@@ -5,6 +5,8 @@ module Potato.Flow.SEltMethods (
   , getSEltLabelBox
   , getSEltSuperStyle
   , getSEltLabelSuperStyle
+  , getSEltBoxTextStyle
+  , getSEltLabelBoxTextStyle
   , doesSEltIntersectBox
   , updateFnFromController
   , RenderFn
@@ -77,6 +79,13 @@ getSEltSuperStyle selt = case selt of
 
 getSEltLabelSuperStyle :: SEltLabel -> Maybe SuperStyle
 getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
+
+getSEltBoxTextStyle :: SElt -> Maybe TextStyle
+getSEltBoxTextStyle = \case
+  SEltBox SBox {..}         -> Just . _sBoxText_style $ _sBox_text
+
+getSEltLabelBoxTextStyle :: SEltLabel -> Maybe TextStyle
+getSEltLabelBoxTextStyle (SEltLabel _ x) = getSEltBoxTextStyle x
 
 type RenderFn = XY -> Maybe PChar
 

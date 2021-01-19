@@ -72,7 +72,7 @@ instance Delta Text DeltaText where
 
 instance (Show a, Eq a) => Delta a (a,a) where
   plusDelta s (b, a) = if b /= s
-    then traceShow b $ traceShow s $ assert (b == s) a
+    then assert (b == s) a
     else assert (b == s) a
   minusDelta s (b, a) = assert (a == s) b
 
