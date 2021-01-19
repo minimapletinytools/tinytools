@@ -7,6 +7,7 @@ module Potato.Flow.SElts (
   , superStyle_fromListFormat
   , superStyle_toListFormat
   , TextAlign(..)
+  , convertTextAlignToTextZipperTextAlignment
   , TextStyle(..)
   , LineStyle(..)
   , LineAutoStyle(..)
@@ -30,6 +31,7 @@ import           Data.Aeson
 import           Data.Binary
 import           Data.Default
 import qualified Data.List         as L
+import qualified Potato.Data.Text.Zipper                          as TZ
 
 type PChar = Char
 
@@ -117,6 +119,12 @@ instance NFData TextAlign
 
 instance Default TextAlign where
   def = TextAlign_Left
+
+convertTextAlignToTextZipperTextAlignment :: TextAlign -> TZ.TextAlignment
+convertTextAlignToTextZipperTextAlignment = \case
+  TextAlign_Left -> TZ.TextAlignment_Left
+  TextAlign_Right -> TZ.TextAlignment_Right
+  TextAlign_Center -> TZ.TextAlignment_Center
 
 -- |
 data TextStyle = TextStyle {

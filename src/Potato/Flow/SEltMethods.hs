@@ -22,23 +22,29 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 
+import qualified Data.Map as Map
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
 import           Data.Maybe         (fromJust)
 import qualified Data.Text          as T
 import qualified Potato.Data.Text.Zipper   as TZ
 
 
-makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines ()
+makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLinesWithAlignment Int
 makeDisplayLinesFromSBox sbox = r where
+  alignment = _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
   text = _sBoxText_text . _sBox_text $ sbox
   box@(LBox _ (V2 width' _)) = _sBox_box sbox
   width = case _sBox_boxType sbox of
     SBoxType_BoxText   -> max 0 (width'-2)
     SBoxType_NoBoxText -> width'
     _                  -> error "wrong type"
-  r = TZ.displayLines width () () (TZ.fromText text)
+  -- force TZ to top so that displayLinesWithAlignment doesn't create trailing space for cursor
+  tz = TZ.top (TZ.fromText text)
 
-concatSpans :: [TZ.Span ()] -> Text
+  -- TODO probably need to do early exit if text is "" (otherwise there will be a trailing space cursor thingy...)
+  r = TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
+
+concatSpans :: [TZ.Span a] -> Text
 concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
 
 
@@ -97,6 +103,8 @@ makePotatoRenderer lbox pt = if does_lBox_contains_XY lbox pt
 data SEltDrawer = SEltDrawer {
   _sEltDrawer_box        :: LBox
   , _sEltDrawer_renderFn :: RenderFn -- switch to [RenderFn] for better performance
+
+  --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance
 }
 
 nilDrawer :: SEltDrawer
@@ -112,7 +120,6 @@ sEltDrawer_renderToLines SEltDrawer {..} = r where
   r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn (V2 (sx+x) (sy+y))))) pts
   r = fmap T.pack r'
 
-
 sBox_drawer :: SBox -> SEltDrawer
 sBox_drawer sbox@SBox {..} = r where
   CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
@@ -121,23 +128,33 @@ sBox_drawer sbox@SBox {..} = r where
     FillStyle_Simple c -> Just c
     FillStyle_Blank    -> Nothing
 
+
   rfntext pt@(V2 x' y') = case _sBox_boxType of
     SBoxType_Box -> Nothing
     SBoxType_NoBox -> Nothing
     _ -> outputChar where
-      spans = TZ._displayLines_spans $ makeDisplayLinesFromSBox sbox
+
+      -- 😰😰😰 for now we just do the below for every cell
+      dl = makeDisplayLinesFromSBox sbox
+      spans = TZ._displayLinesWithAlignment_spans dl
+      offsetMap = TZ._displayLinesWithAlignment_offsetMap dl
 
       (LBox (V2 bx by) _) = _sBox_box
       (xoff,yoff) = case _sBox_boxType of
         SBoxType_NoBoxText -> (0,0)
         _                  -> (1,1)
 
-      outputChar = case spans !!? (y'-by-yoff) of
+      y = y' - by - yoff
+      xalignoffset = case Map.lookup y offsetMap of
+        Nothing -> error "should not happen"
+        Just (offset,_) -> offset
+
+      outputChar = case spans !!? y of
         Nothing -> Nothing
         Just row -> outputChar' where
           rowText = concatSpans row
-          xidx = x'-bx- xoff
-          outputChar' = if T.length rowText > xidx
+          xidx = x' - bx - xoff - xalignoffset
+          outputChar' = if T.length rowText > xidx && xidx >= 0
             then Just $ T.index rowText xidx
             else Nothing
 

@@ -45,17 +45,9 @@ data BoxTextInputState = BoxTextInputState {
   --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
-
-convertTextAlignment :: TextAlign -> TZ.TextAlignment
-convertTextAlignment = \case
-  TextAlign_Left -> TZ.TextAlignment_Left
-  TextAlign_Right -> TZ.TextAlignment_Right
-  TextAlign_Center -> TZ.TextAlignment_Center
-
-
 updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxTextInputStateWithSBox sbox btis = r where
-  alignment = convertTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
+  alignment = convertTextAlignToTextZipperTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
 
   CanonicalLBox _ _ newBox@(LBox _ (V2 width' _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   width = case _sBox_boxType sbox of

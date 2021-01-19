@@ -32,11 +32,14 @@ spec = do
               _sBox_box       = LBox 0 (V2 1 1)
               , _sBox_boxType = style
             }
-        it "SBoxType_Box" $ do
-          let
-            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox2 SBoxType_Box))
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just (_superStyle_point def)
+          somesbox3 style = def {
+              _sBox_box       = LBox 0 (V2 10 10)
+              , _sBox_text    = def {
+                  _sBoxText_text = "m ow meeuew ee  meow hello boop no12 meow whatever"
+                  , _sBoxText_style = TextStyle TextAlign_Right
+                }
+              , _sBox_boxType = style
+            }
         it "SBoxType_NoBoxText" $ do
           let
             SEltDrawer {..} = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
@@ -49,6 +52,16 @@ spec = do
           --_sEltDrawer_renderFn (V2 3 0) `shouldBe` Just ' '
           _sEltDrawer_renderFn (V2 1 1) `shouldBe` Just 'e'
           _sEltDrawer_renderFn (V2 4 4) `shouldBe` Just '@'
+        it "SBoxType_Box" $ do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox2 SBoxType_Box))
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just (_superStyle_point def)
+        it "SBoxType_NoBoxText_alignRight" $ do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '@'
       describe "SSimpleLine" $ do
         let
           somelinestyle autoStyle = LineStyle {
