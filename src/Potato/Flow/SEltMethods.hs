@@ -288,6 +288,17 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
   --x -> x
 
+modify_sElt_with_cTextStyle :: Bool -> SElt -> CTextStyle -> SElt
+modify_sElt_with_cTextStyle isDo selt (CTextStyle style) = case selt of
+  SEltBox sbox -> SEltBox $ sbox {
+      _sBox_text = (_sBox_text sbox) {
+          _sBoxText_style = modifyDelta isDo (_sBoxText_style . _sBox_text $ sbox) style
+        }
+    }
+  _ -> error $ "Controller - SElt type mismatch: CTagBoxTextStyle - " <> show selt
+  -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
+  --x -> x
+
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -309,6 +320,9 @@ updateFnFromController isDo = \case
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   (CTagSuperStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cSuperStyle isDo selt d)
+  (CTagBoxTextStyle :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sElt_with_cTextStyle isDo selt d)
+
 
 
 -- | helper method used in copy pasta
