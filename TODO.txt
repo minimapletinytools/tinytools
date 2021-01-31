@@ -1,18 +1,14 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
-:: 1/8/2020 layout spec::
 
-we need return types from Layout to do the following
-- get a shift focus event for tab focus to work correctly on nested layout
-- create region tree for testability
 
-problem is nested layouts are accomplished by doing runLayout which returns a VtyWidget and therefore we need a way to tell a widget that is a layout from a widget that isn't
-
-We could have runLayout return
-
+---------------
 
 ::1/6/2020 windows spec::
+
+-drag from one window to another?
+-
 
 data Window = Window {
   innerWidget :: VtyWidget
@@ -58,8 +54,59 @@ IGNORE-simple select compromise
 
 ::NEWEST TODO::
 
+DONE-do popup fancy :O
+
+-finish params widget
+  -create set of Params modifying widget, something that ultimately does
+    Dynamic t Selection -> VtyWidget t m (Event t WSEvent)
+  DONE-create something like
+    layoutDump :: DMap ParamTypeTag (MinDimensions, VtyWidget t ???) -> VtyWidget (DMap ParamTypeTag ???)
+  DONE-although tbh, you can just replace DMap with [] since every params widget returns the same type prob?
+
+sample
+
+---PARAMS----
+box type: {text} box
+border: border {label} none
+label: <insert label>
+alignment: {left} center right
+style:
+  ╔═╗
+  ║@║ █
+  ╚═╝
+line-ends:
+<-  ->
+^   |
+|   v
+dimensions:
+x: 0  w: 100
+y: 50 h: 50
+
+
+-------------
+
+-setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
+-try vscode again :O https://github.com/haskell/haskell-language-server
+
+- try stacktrace omg
+$ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
+./stacktrace +RTS -xc
+
+
+-new vty layout stuff
+  DONE-get rid of post build dependency
+  DONE-fixed/stretch take regular VtyWidget
+  DONE-make typedef for (,,,) thing
+  -document
+  -probably get rid of IsLayoutResult class
+  -finish LayoutDebugTree (rename)
+
+
+-new vty window stuff
+  -MVP is some floating windows that modify something in base window
+
 -BoxText
-  -add alignment to text zipper
+  DONE-add alignment to text zipper
   -add BoxTitle
     -maybe left/right/center text
     -add padding to BoxText
@@ -67,15 +114,28 @@ IGNORE-simple select compromise
 DONE-no border box support
   -I guess you can make border and text two separate toggles?
 
+-change SuperStyle to Maybe PChar :scream:
+
 -params MVP
-  -do layout improvement in vty D:
-  -scan params and look for same stuff
+  DONE-do layout improvement in vty D:
+  DONE-scan params and look for same stuff
     -don't need to do anything with this yet, just put the methods in there
-  -figure out how to do invis fill?
-    -maybe just add an invis fill button
-    -fill should be separat from rest of stuff in preset params
+  -add Dynamic Int output to params widget
+  -add Maybe to params widget so they don't get displayed if no such option exists
+  -switch style to maybe PChar 😱
   -toggle box border?
   -line style??
+  -figure out how to do invis fill?
+    -erase and hit escape or return 👍🏽
+    -maybe just add an invis fill button
+    -fill should be separate from rest of stuff in preset params
+  -make a UT for setting params
+
+-menu bar?
+  -open/save/load/quit/about
+    -maybe don't worry about submenus for now 😱
+  -you probably want to build in input hierarchy
+    -popup > menu > rest
 
 -hook up unicode width fn
   -add hook for it in renderer
@@ -456,6 +516,122 @@ DONE-manipulatingDyn can be moved into backend
     -though doesn't matter if these go out of sync.. still it would be nice to keep these in sync
     -OS can output LayersState that needs to update GoatState
     -can store non-existing entries in LayerMeta so it doesn't need to stay in sync with PFState actions
+
+
+:: 1/8/2020 layout spec::
+
+## Problem Outline
+
+Tab navigation in the current Layout system does not work when Layouts are nested
+
+For example:
+
+```
+col $ do
+  -- row 1
+  fixed 5 $ row $ do
+    fixed 1 $ someWidget1
+    fixed 1 $ someWidget2
+    fixed 1 $ someWidget3
+  -- row 2
+  fixed 5 $ row $ do
+    fixed 1 $ someWidget4
+    fixed 1 $ someWidget5
+    fixed 1 $ someWidget6
+```
+assume `row1` + `someWidget1` are in focus
+
+The desired behavior is:
+  - pressing "tab" will focus `row1` and `someWidget2`
+  - pressing "tab" will switch focus from `someWidget<n>` to `someWidget<n+1 mod 6>` and switch focus between `row1` and `row2` as necessary
+
+However, instead we have:
+  - pressing "tab" will focus `row2` and `someWidget2`
+  - in addition, pressing `tab` again will focus `row1` and `someWidget2`
+
+## Challenges
+
+Broadly speaking, Layout alternates between Layout and VtyWidget and we need to pass data across this boundary in order for tabbing to work as desired.
+
+Using the existing `Layout` module as a starting point, there are 2 major challenges to support the desired behavior outlined above:
+
+1. `runLayout` needs to be aware of nested layout nodes in order to focus the correct tile
+2. `tile` needs to be aware of when a particular nested node index should be focus
+
+
+## Solution
+
+1. is addressed by introducing the new class below. NOTE, `LayoutDebugTree` is discussed later.
+
+```
+class IsLayoutReturn t b a where
+  getLayoutResult :: b -> a
+  getLayoutNumChildren :: b -> Int
+  getLayoutFocussedDyn :: b -> Dynamic t (Maybe Int)
+  getLayoutTree :: b -> LayoutDebugTree t
+
+instance IsLayoutReturn t (LayoutDebugTree t, Dynamic t (Maybe Int), Int, a) a where
+  getLayoutResult (_,_,_,a) = a
+  getLayoutNumChildren (_,_,d,_) = d
+  getLayoutFocussedDyn (_,d,_,_) = d
+  getLayoutTree (tree,_,_,_) = tree
+
+instance Reflex t => IsLayoutReturn t a a where
+  getLayoutResult = id
+  getLayoutNumChildren _ = 1
+  getLayoutFocussedDyn _ = constDyn Nothing
+  getLayoutTree _ = emptyLayoutDebugTree
+```
+
+2. is address by wrapping the VtyWidget monad with additional contextual information
+
+```
+class IsLayoutVtyWidget l t (m :: * -> *) where
+  runIsLayoutVtyWidget :: l t m a -> Event t (Maybe Int) -> VtyWidget t m a
+
+newtype LayoutVtyWidget t m a = LayoutVtyWidget {
+    unLayoutVtyWidget :: ReaderT (Event t (Maybe Int)) (VtyWidget t m) a
+  } deriving (...)
+
+instance MonadTrans (LayoutVtyWidget t) where
+  lift x = LayoutVtyWidget $ lift $ lift x
+
+instance IsLayoutVtyWidget VtyWidget t m where
+  runIsLayoutVtyWidget w _ = w
+
+instance IsLayoutVtyWidget LayoutVtyWidget t m where
+  runIsLayoutVtyWidget = runReaderT . unLayoutVtyWidget
+```
+
+Note that since we have `instance LayoutReturn t a a` in 1. and `instance IsLayoutVtyWidget VtyWidget t m` in 2. they work with both layout and non-layout nodes.
+
+## Interface Changes
+
+Since focus events now come from the top level layout node, a new method is needed:
+
+```
+beginLayout :: LayoutVtyWidget -> VtyWidget
+beginLayout child = do
+  tab <- tabNavigation
+  runLayoutVtyWidget child tab
+``
+
+Unfortunately, the interface is not seamless in the case of 1. as the desired monadic return value type is ambiguous as we have both
+
+`IsLayoutReturn t (LayoutDebugTree t, Dynamic t (Maybe Int), Int, a) a`
+`IsLayoutReturn t (LayoutDebugTree t, Dynamic t (Maybe Int), Int, a) (LayoutDebugTree t, Dynamic t (Maybe Int), Int, a)`
+
+So we introduce new variants `fixedD` and `stretchD` that make the type deductions above explicit.
+
+## Testing
+
+`LayoutDebugTree` is an optional returned object that contains DynRegion objects of all the children. The intent is to use for automated testing (e.g. get me the absolute coordinates of (5,7) in relative coordinates of the third node of the second node of some `LayoutDebugTree`). I imagine it might be useful in non-testing scenarios as well.
+
+## Code
+
+I've opened up the following draft PR that implements most of the above for discussion.
+
+
 
 
 ::handler hierarchy 12/2020::

@@ -89,6 +89,7 @@ getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
 getSEltBoxTextStyle :: SElt -> Maybe TextStyle
 getSEltBoxTextStyle = \case
   SEltBox SBox {..}         -> Just . _sBoxText_style $ _sBox_text
+  _ -> Nothing
 
 getSEltLabelBoxTextStyle :: SEltLabel -> Maybe TextStyle
 getSEltLabelBoxTextStyle (SEltLabel _ x) = getSEltBoxTextStyle x

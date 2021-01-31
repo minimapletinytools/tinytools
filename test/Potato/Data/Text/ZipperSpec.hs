@@ -34,7 +34,7 @@ spec = do
       fmap fst (splitSentenceAtDisplayWidth 8 "1 2 3 4 5 6 7 8 9 1") `shouldBe` ["1 2 3 4","5 6 7 8", "9 1"]
     it "wrapWithOffsetAndAlignment" $ do
       wrapWithOffsetAndAlignment TextAlignment_Left 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 0)]
-      wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 3)]
+      wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 1), ("12", False, 3)]
       wrapWithOffsetAndAlignment TextAlignment_Center 5 0 someSentence `shouldBe` [("12345", True, 0), ("1234", True, 0), ("12", False, 1)]
     it "eolSpacesToLogicalLines" $ do
       eolSpacesToLogicalLines

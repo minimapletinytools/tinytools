@@ -517,7 +517,6 @@ data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Ce
 -- to the first character of the display line
 type OffsetMapWithAlignment = Map Int (Int, Int)
 
--- TODO
 -- | Information about the document as it is displayed (i.e., post-wrapping)
 data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   { _displayLinesWithAlignment_spans     :: [[Span tag]]
@@ -658,9 +657,6 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       x:xs -> Just (x, xs)
 
 
-
-
--- TODO test
 -- | Move the cursor of the given 'TextZipper' to the logical position indicated
 -- by the given display line coordinates, using the provided 'DisplayLinesWithAlignment'
 -- information.  If the x coordinate is beyond the end of a line, the cursor is
