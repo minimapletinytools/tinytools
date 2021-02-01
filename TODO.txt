@@ -53,76 +53,40 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
-
-DONE-do popup fancy :O
-
--finish params widget
-  -create set of Params modifying widget, something that ultimately does
-    Dynamic t Selection -> VtyWidget t m (Event t WSEvent)
-  DONE-create something like
-    layoutDump :: DMap ParamTypeTag (MinDimensions, VtyWidget t ???) -> VtyWidget (DMap ParamTypeTag ???)
-  DONE-although tbh, you can just replace DMap with [] since every params widget returns the same type prob?
-
-sample
-
----PARAMS----
-box type: {text} box
-border: border {label} none
-label: <insert label>
-alignment: {left} center right
-style:
-  ╔═╗
-  ║@║ █
-  ╚═╝
-line-ends:
-<-  ->
-^   |
-|   v
-dimensions:
-x: 0  w: 100
-y: 50 h: 50
-
-
--------------
-
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 -try vscode again :O https://github.com/haskell/haskell-language-server
-
-- try stacktrace omg
-$ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
-./stacktrace +RTS -xc
-
-
+-try stacktrace omg
+  $ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
+  ./stacktrace +RTS -xc
 -new vty layout stuff
   DONE-get rid of post build dependency
   DONE-fixed/stretch take regular VtyWidget
   DONE-make typedef for (,,,) thing
-  -document
-  -probably get rid of IsLayoutResult class
+  DONE-document
+  IGNORE-probably get rid of IsLayoutResult class
   -finish LayoutDebugTree (rename)
-
-
+-glpyh selector-search widget
+  -at least basic version which has a tab listing standard ASCII stuff
+  -and then tab for all the best emojis :O
 -new vty window stuff
   -MVP is some floating windows that modify something in base window
-
 -BoxText
   DONE-add alignment to text zipper
   -add BoxTitle
     -maybe left/right/center text
     -add padding to BoxText
-
-DONE-no border box support
-  -I guess you can make border and text two separate toggles?
-
 -change SuperStyle to Maybe PChar :scream:
-
+-rethink keyboard input capture
+  -params needs to capture keyboard input
+  -params need to receiev events from glpyh selector
 -params MVP
   DONE-do layout improvement in vty D:
   DONE-scan params and look for same stuff
     -don't need to do anything with this yet, just put the methods in there
-  -add Dynamic Int output to params widget
-  -add Maybe to params widget so they don't get displayed if no such option exists
-  -switch style to maybe PChar 😱
+  DONE-add Dynamic Int output to params widget
+  DONE-add Maybe to params widget so they don't get displayed if no such option exists
+  -fix tab widget recreation issue preventing you for tabbing accross style widget
+    DONE-also need to reset cursor to start
   -toggle box border?
   -line style??
   -figure out how to do invis fill?
@@ -130,22 +94,16 @@ DONE-no border box support
     -maybe just add an invis fill button
     -fill should be separate from rest of stuff in preset params
   -make a UT for setting params
-
 -menu bar?
   -open/save/load/quit/about
     -maybe don't worry about submenus for now 😱
   -you probably want to build in input hierarchy
     -popup > menu > rest
-
 -hook up unicode width fn
   -add hook for it in renderer
   -maybe need it in brodphase too? Prob not
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
-
-DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
-  -think about doing docking windows or whatever
-
 -make flowchart diagram of handler setting rules
   -non-canvas event (does this reset?)
   -external event (calls new reset function)
@@ -157,13 +115,11 @@ DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
 -convert textarea into free form
   -implement or at least add stubs for this
 -add screen size support to GoatWidget (for rendering OOB)
-
 -tests
   -undo/redo test
   -more params tests
   -undo redo of text
     -you should really set up a 1000 undo redo sorta thing again
-
 -rendering
   -get rid of BroadPhaseState (carry changes around separately)
   -layer show/hide needs to return SEltLabelChanges
@@ -173,7 +129,6 @@ DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
   DONE/IGNORE-finish TODOs in updateCanvas
   DONE-rendering happens in GoatWidget??
     -or just make sure utility functions make it easy enough to do this outside of GoatWidget
-
 -layers
   -consider doing tree structure for folders
   -layers (probably go with "more complicated select")
@@ -192,7 +147,6 @@ DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
     -test it
   -finish changesFromToggleHide
     -test it
-
 -if you are in BoxTextHandler mode and you have Text tool selected
   -then you click and release outside box, you will go back to boxtext handler
   -so I guess click release with any creation tool should deselect everything
@@ -232,6 +186,18 @@ DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
+
+DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
+  -think about doing docking windows or whatever
+DONE-no border box support
+  -I guess you can make border and text two separate toggles?
+DONE-do popup fancy :O
+DONE-finish params widget
+  DONE-create set of Params modifying widget, something that ultimately does
+    Dynamic t Selection -> VtyWidget t m (Event t WSEvent)
+  DONE-create something like
+    layoutDump :: DMap ParamTypeTag (MinDimensions, VtyWidget t ???) -> VtyWidget (DMap ParamTypeTag ???)
+  DONE-although tbh, you can just replace DMap with [] since every params widget returns the same type prob?
 DONE/IGNORE-TextArea stuff
   -handle updating text zipper when the stext lbox gets updated
   -figure out how to handle funny case where space and newline characters get hidden if they happen right at the end of a wrap
@@ -490,6 +456,25 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+
+
+::1/2020 PARAMS::
+box type: {text} box
+border: border {label} none
+label: <insert label>
+alignment: {left} center right
+style:
+  ╔═╗
+  ║@║ █
+  ╚═╝
+line-ends:
+<-  ->
+^   |
+|   v
+dimensions:
+x: 0  w: 100
+y: 50 h: 50
 
 
 ::12/30/2020 orderering service (OS) spec::

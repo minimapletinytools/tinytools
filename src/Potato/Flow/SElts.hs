@@ -2,6 +2,7 @@
 
 module Potato.Flow.SElts (
   PChar
+  , MPChar
   , FillStyle(..)
   , SuperStyle(..)
   , superStyle_fromListFormat
@@ -34,6 +35,7 @@ import qualified Data.List         as L
 import qualified Potato.Data.Text.Zipper                          as TZ
 
 type PChar = Char
+type MPChar = Maybe PChar
 
 data FillStyle = FillStyle_Blank | FillStyle_Simple PChar deriving (Eq, Generic, Show)
 
@@ -50,13 +52,13 @@ instance Default FillStyle where
 -- TODO add line thickness?
 -- TODO add line fill?
 data SuperStyle = SuperStyle {
-  _superStyle_tl           :: PChar
-  , _superStyle_tr         :: PChar
-  , _superStyle_bl         :: PChar
-  , _superStyle_br         :: PChar
-  , _superStyle_vertical   :: PChar
-  , _superStyle_horizontal :: PChar
-  , _superStyle_point      :: PChar -- used for 1x1 boxes and 1x lines
+  _superStyle_tl           :: MPChar
+  , _superStyle_tr         :: MPChar
+  , _superStyle_bl         :: MPChar
+  , _superStyle_br         :: MPChar
+  , _superStyle_vertical   :: MPChar
+  , _superStyle_horizontal :: MPChar
+  , _superStyle_point      :: MPChar -- used for 1x1 boxes and 1x lines
   , _superStyle_fill       :: FillStyle
 } deriving (Eq, Generic, Show)
 
@@ -67,13 +69,13 @@ instance NFData SuperStyle
 
 instance Default SuperStyle where
   def = SuperStyle {
-    _superStyle_tl = '╔'
-    , _superStyle_tr = '╗'
-    , _superStyle_bl = '╚'
-    , _superStyle_br = '╝'
-    , _superStyle_vertical   = '║'
-    , _superStyle_horizontal = '═'
-    , _superStyle_point = '█'
+    _superStyle_tl = Just '╔'
+    , _superStyle_tr = Just '╗'
+    , _superStyle_bl = Just '╚'
+    , _superStyle_br = Just '╝'
+    , _superStyle_vertical   = Just '║'
+    , _superStyle_horizontal = Just '═'
+    , _superStyle_point = Just '█'
     , _superStyle_fill = def
   }
 
@@ -81,32 +83,32 @@ superStyle_fromListFormat :: [PChar] -> SuperStyle
 superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
   l = length chars
   r = SuperStyle {
-    _superStyle_tl = chars L.!! 0
-    , _superStyle_tr = chars L.!! 1
-    , _superStyle_bl = chars L.!! 2
-    , _superStyle_br = chars L.!! 3
-    , _superStyle_vertical   = chars L.!! 4
-    , _superStyle_horizontal = chars L.!! 5
-    , _superStyle_point = chars L.!! 6
+    _superStyle_tl = Just $ chars L.!! 0
+    , _superStyle_tr = Just $ chars L.!! 1
+    , _superStyle_bl = Just $ chars L.!! 2
+    , _superStyle_br = Just $ chars L.!! 3
+    , _superStyle_vertical   = Just $ chars L.!! 4
+    , _superStyle_horizontal = Just $ chars L.!! 5
+    , _superStyle_point = Just $ chars L.!! 6
     , _superStyle_fill = if l == 7 then def else FillStyle_Simple (chars L.!! 7)
   }
 
 -- TODO test
 -- superStyle_fromListFormat "╔╗╚╝║═█" `shouldBe` def
-
+-- empty styles are converted to space character
 superStyle_toListFormat :: SuperStyle -> [PChar]
 superStyle_toListFormat SuperStyle {..} = r where
   start = case _superStyle_fill of
     FillStyle_Blank    -> []
     FillStyle_Simple c -> [c]
   r = start <> [
-      _superStyle_tl
-      , _superStyle_tr
-      , _superStyle_bl
-      , _superStyle_br
-      , _superStyle_vertical
-      , _superStyle_horizontal
-      , _superStyle_point
+      fromMaybe ' ' _superStyle_tl
+      ,fromMaybe ' ' _superStyle_tr
+      ,fromMaybe ' ' _superStyle_bl
+      ,fromMaybe ' ' _superStyle_br
+      ,fromMaybe ' ' _superStyle_vertical
+      ,fromMaybe ' ' _superStyle_horizontal
+      ,fromMaybe ' ' _superStyle_point
     ]
 
 -- |

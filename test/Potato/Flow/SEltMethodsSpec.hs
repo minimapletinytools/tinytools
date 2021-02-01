@@ -56,7 +56,7 @@ spec = do
           let
             sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox2 SBoxType_Box))
           --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just (_superStyle_point def)
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` _superStyle_point def
         it "SBoxType_NoBoxText_alignRight" $ do
           let
             sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
@@ -96,9 +96,9 @@ spec = do
           _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '<'
           _sEltDrawer_renderFn (V2 11 10) `shouldBe` Just '='
           _sEltDrawer_renderFn (V2 16 10) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 12 10) `shouldBe` Just (_superStyle_horizontal def)
-          _sEltDrawer_renderFn (V2 15 10) `shouldBe` Just (_superStyle_tr def)
-          _sEltDrawer_renderFn (V2 15 15) `shouldBe` Just (_superStyle_vertical def)
+          _sEltDrawer_renderFn (V2 12 10) `shouldBe` _superStyle_horizontal def
+          _sEltDrawer_renderFn (V2 15 10) `shouldBe` _superStyle_tr def
+          _sEltDrawer_renderFn (V2 15 15) `shouldBe` _superStyle_vertical def
           _sEltDrawer_renderFn (V2 20 20) `shouldBe` Just '>'
         it "LineAutoStyle_AutoStraight - 2" $ do
           let
@@ -108,12 +108,12 @@ spec = do
           _sEltDrawer_renderFn (V2 10 12) `shouldBe` Just '*'
           _sEltDrawer_renderFn (V2 16 10) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 10 20) `shouldBe` Just 'V'
-          _sEltDrawer_renderFn (V2 10 15) `shouldBe` Just (_superStyle_vertical def)
+          _sEltDrawer_renderFn (V2 10 15) `shouldBe` _superStyle_vertical def
         it "LineAutoStyle_AutoStraight - 3" $ do
           let
             sd@SEltDrawer {..} = getDrawer (SEltLine $ someline3 LineAutoStyle_AutoStraight)
           --forM_ (sEltDrawer_renderToLines sd) putTextLn
           _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '^'
           _sEltDrawer_renderFn (V2 9 10) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 10 14) `shouldBe` Just (_superStyle_vertical def)
-          _sEltDrawer_renderFn (V2 10 15) `shouldBe` Just (_superStyle_br def)
+          _sEltDrawer_renderFn (V2 10 14) `shouldBe` _superStyle_vertical def
+          _sEltDrawer_renderFn (V2 10 15) `shouldBe` _superStyle_br def
