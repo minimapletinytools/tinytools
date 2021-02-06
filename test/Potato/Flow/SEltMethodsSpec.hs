@@ -73,7 +73,7 @@ spec = do
         it "SBoxType_NoBoxText_widechar" $ do
           let
             sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
-          forM_ (sEltDrawer_renderToLines sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
           _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just 'ｔ'
           _sEltDrawer_renderFn (V2 1 0) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'ｈ'

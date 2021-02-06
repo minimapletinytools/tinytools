@@ -113,6 +113,8 @@ renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
         then Just $ (_renderedCanvas_contents V.! i, (i+1, True))
         else Just $ (_renderedCanvas_contents V.! i, (i+1, False))
 
+
+-- TODO this does not handle wide chars at all fack
 -- | assumes region LBox is strictly contained in _renderedCanvas_box
 renderedCanvasRegionToText :: LBox -> RenderedCanvas -> Text
 renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where

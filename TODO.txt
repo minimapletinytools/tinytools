@@ -129,6 +129,7 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
   -put up PR :O
 -hook up unicode width fn
   -add hook for it in renderer
+    -erhh, this may need some refactoring...
   -maybe need it in brodphase too? Prob not
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)

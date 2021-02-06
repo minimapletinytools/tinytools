@@ -355,9 +355,20 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
               SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
                 Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
                 Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
+
+
           -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+            Just pho -> r where
+              -- reset the tool back to Select after creating a new elt
+              goatState'' = goatState' {
+                  _goatState_selectedTool =
+                    -- NOTE we only want to reset back to Tool_Select if a SElt was actually created. This condition might be too weak in the future.
+                    if _mouseDrag_state mouseDrag == MouseDragState_Up && tool_isCreate _goatState_selectedTool
+                      then Tool_Select
+                      else _goatState_selectedTool
+                }
+              r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
             -- input not captured by handler, do select or drag+select
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               nextSelection = selectMagic last_pFState _goatState_layerPosMap _goatState_broadPhaseState canvasDrag

@@ -124,6 +124,8 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -with-rtsopts=-T
+    # parrallel builds woo
+    - -j
     dependencies:
     - potato-flow
 
@@ -136,6 +138,17 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     - -fno-ignore-asserts
+    # parrallel builds woo
+    - -j
+
+    # enable stack traces
+    # - O0
+    # - -rtsopts=all
+    # - -prof
+    # - -auto-all
+    # - -with-rtsopts= +RTS -xc
+
+
     dependencies:
     - potato-flow
     - HUnit

@@ -236,6 +236,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , EWCNothing -- dummy to check state
 
       , EWCLabel "create another elt, but cancel it"
+      , EWCTool Tool_Box
       , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
@@ -338,6 +339,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
         ]
 
       , LabelCheck "create another elt, but cancel it"
+      , (EqPredicate _goatState_selectedTool Tool_Box)
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
