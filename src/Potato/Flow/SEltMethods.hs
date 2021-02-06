@@ -163,12 +163,15 @@ sBox_drawer sbox@SBox {..} = r where
         Just row -> outputChar' where
           rowText = subWidth $ concatSpans row
           xidx = x' - bx - xoff - xalignoffset
-          outputChar' = join $ rowText !!? xidx
+          outputChar' = case rowText !!? xidx of
+            Nothing -> Nothing
+            Just x -> Just x
 
   rfnnoborder pt
     | not (does_lBox_contains_XY lbox pt) = Nothing
     | otherwise = case rfntext pt of
-      Just x  -> Just x
+      -- 'Just Nothing' means don't use fill char (this happens when there are wide chars)
+      Just mx  -> mx
       Nothing -> fillfn pt
 
   rfnborder pt@(V2 x' y')
