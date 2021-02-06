@@ -53,21 +53,43 @@ IGNORE-simple select compromise
   -TODO spec
 
 ::NEWEST TODO::
+
+-delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
--try vscode again :O https://github.com/haskell/haskell-language-server
+IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
 -try stacktrace omg
   $ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
   ./stacktrace +RTS -xc
--new vty layout stuff
-  DONE-get rid of post build dependency
-  DONE-fixed/stretch take regular VtyWidget
-  DONE-make typedef for (,,,) thing
-  DONE-document
-  IGNORE-probably get rid of IsLayoutResult class
-  -finish LayoutDebugTree (rename)
+
+
+-rethink keyboard input capture
+  -params needs to capture keyboard input
+  -params need to receiev events from glpyh selector
+-you probably want to build in input hierarchy
+  -popup > menu > params etc > rest
+  -make widget wrappers
+    -ignore input when simulataneous with another event
+    -some focus widgets??
+    -find a place to put all these
+
+-render cursor position in text area (get cursor pos from displayLines)
+-single line text area
+  -max width?
+  -reset to start
+  -colors
+-color config object
+  -entry box valid
+  -entry box entering
+  -entry box grayed
+  -background
+  -text
+  -etc
+
 -glpyh selector-search widget
   -at least basic version which has a tab listing standard ASCII stuff
   -and then tab for all the best emojis :O
+  -prob take symbol list + lookup table for searching
+  -save recently used on exit
 -new vty window stuff
   -MVP is some floating windows that modify something in base window
 -BoxText
@@ -75,17 +97,21 @@ IGNORE-simple select compromise
   -add BoxTitle
     -maybe left/right/center text
     -add padding to BoxText
--change SuperStyle to Maybe PChar :scream:
--rethink keyboard input capture
-  -params needs to capture keyboard input
-  -params need to receiev events from glpyh selector
+
+-layout
+  -make interface create layout with different tab events
+  -cleanup exported stuff in layout
+  DONE-consider making number of kids dynamic
+  DONE-tests for vty layout
+    -helper for reading Dynamics in test monad
+
 -params MVP
   DONE-do layout improvement in vty D:
   DONE-scan params and look for same stuff
     -don't need to do anything with this yet, just put the methods in there
   DONE-add Dynamic Int output to params widget
   DONE-add Maybe to params widget so they don't get displayed if no such option exists
-  -fix tab widget recreation issue preventing you for tabbing accross style widget
+  DONE-fix tab widget recreation issue preventing you for tabbing accross style widget
     DONE-also need to reset cursor to start
   -toggle box border?
   -line style??
@@ -97,8 +123,10 @@ IGNORE-simple select compromise
 -menu bar?
   -open/save/load/quit/about
     -maybe don't worry about submenus for now 😱
-  -you probably want to build in input hierarchy
-    -popup > menu > rest
+-text zipper
+  -text alignment UTs
+  -test with wide chars (in vty)
+  -put up PR :O
 -hook up unicode width fn
   -add hook for it in renderer
   -maybe need it in brodphase too? Prob not
@@ -111,7 +139,6 @@ IGNORE-simple select compromise
   -(capture/no capture) + not active + changes
   -no capture (must not be active)
   -returns Nothing handler
--render cursor position (get cursor pos from displayLines)
 -convert textarea into free form
   -implement or at least add stubs for this
 -add screen size support to GoatWidget (for rendering OOB)
@@ -186,7 +213,14 @@ IGNORE-simple select compromise
   -layer drag select
 -rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
-
+DONE-new vty layout stuff
+  DONE-get rid of post build dependency
+  DONE-fixed/stretch take regular VtyWidget
+  DONE-make typedef for (,,,) thing
+  DONE-document
+  IGNORE-probably get rid of IsLayoutResult class
+  DONE-finish LayoutDebugTree (rename)
+DONE-change SuperStyle to Maybe PChar :scream:
 DONE/IGNORE-decide what to do about layouts (mouse needs pane2)
   -think about doing docking windows or whatever
 DONE-no border box support

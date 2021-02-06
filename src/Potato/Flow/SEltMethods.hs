@@ -17,6 +17,7 @@ module Potato.Flow.SEltMethods (
 ) where
 
 import           Relude
+import  qualified         Relude.Unsafe
 
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
@@ -46,6 +47,13 @@ makeDisplayLinesFromSBox sbox = r where
 
 concatSpans :: [TZ.Span a] -> Text
 concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
+
+subWidth :: Text -> [Maybe Char]
+subWidth t = join . fmap fn . T.unpack $ t where
+  fn c = case TZ.charWidth c of
+    1 -> [Just c]
+    2 -> [Just c, Nothing]
+    n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
 
 
 
@@ -153,11 +161,9 @@ sBox_drawer sbox@SBox {..} = r where
       outputChar = case spans !!? y of
         Nothing -> Nothing
         Just row -> outputChar' where
-          rowText = concatSpans row
+          rowText = subWidth $ concatSpans row
           xidx = x' - bx - xoff - xalignoffset
-          outputChar' = if T.length rowText > xidx && xidx >= 0
-            then Just $ T.index rowText xidx
-            else Nothing
+          outputChar' = join $ rowText !!? xidx
 
   rfnnoborder pt
     | not (does_lBox_contains_XY lbox pt) = Nothing

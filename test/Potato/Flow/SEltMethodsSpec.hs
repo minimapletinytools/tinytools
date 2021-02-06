@@ -40,6 +40,14 @@ spec = do
                 }
               , _sBox_boxType = style
             }
+          somesbox4 style = def {
+              _sBox_box       = LBox 0 (V2 10 10)
+              , _sBox_text    = def {
+                  _sBoxText_text = "ｔｈｅｒｅ　ａｒｅ　ｎｏ　ｓｐａｃｅ　ｂｅｔｗｅｅｎ　ａｄｊａｃｅｎｔ　ｃｈａｒａｃｔｅｒｓ"
+                  , _sBoxText_style = TextStyle TextAlign_Left
+                }
+              , _sBox_boxType = style
+            }
         it "SBoxType_NoBoxText" $ do
           let
             SEltDrawer {..} = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
@@ -62,6 +70,14 @@ spec = do
             sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
           --forM_ (sEltDrawer_renderToLines sd) putTextLn
           _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '@'
+        it "SBoxType_NoBoxText_widechar" $ do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just 'ｔ'
+          _sEltDrawer_renderFn (V2 1 0) `shouldBe` Just '@'
+          _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'ｈ'
+          _sEltDrawer_renderFn (V2 3 0) `shouldBe` Just '@'
       describe "SSimpleLine" $ do
         let
           somelinestyle autoStyle = LineStyle {

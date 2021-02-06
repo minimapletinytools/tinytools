@@ -260,7 +260,7 @@ displayLines width tag cursorTag (TextZipper lb b a la) =
           Just (c, rest) ->
             let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
                 cursor = Span cursorTag (T.singleton c)
-            in  case map ((:[]) . Span tag) (wrapWithOffset width o rest) of
+            in case map ((:[]) . Span tag) (wrapWithOffset width o rest) of
                   [] -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
   in  DisplayLines
@@ -314,16 +314,16 @@ splitAtWidth :: Int -> Text -> (Text, Text)
 splitAtWidth n t@(Text arr off len)
     | n <= 0 = (T.empty, t)
     | n >= textWidth t = (t, T.empty)
-    | otherwise = let k = iterNWidth n t
+    | otherwise = let k = toLogicalIndex n t
                   in (text arr off k, text arr (off+k) (len-k))
-  where
-    iterNWidth :: Int -> Text -> Int
-    iterNWidth n' t'@(Text _ _ len') = loop 0 0
-      where loop !i !cnt
-                | i >= len' || cnt + w > n' = i
-                | otherwise = loop (i+d) (cnt + w)
-              where Iter c d = iter t' i
-                    w = charWidth c
+
+toLogicalIndex :: Int -> Text -> Int
+toLogicalIndex n' t'@(Text _ _ len') = loop 0 0
+  where loop !i !cnt
+            | i >= len' || cnt + w > n' = i
+            | otherwise = loop (i+d) (cnt + w)
+          where Iter c d = iter t' i
+                w = charWidth c
 
 -- | Takes the given number of columns of characters. For example
 --
@@ -477,6 +477,7 @@ wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
         where Iter c d = iter t n
 {-# INLINE wordsWithWhitespace #-}
 
+-- TODO Check that this handles EOL space/newline stuff correctly
 -- take sum of word length, returns True if ends with trailng space
 splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
 splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
@@ -496,7 +497,7 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   loop (x:xs) cumw out = r where
     newWidth = textWidth x + cumw
     r = if newWidth > maxWidth
-      then if isSpace $ T.index x (maxWidth - cumw)
+      then if isSpace $ T.index x (toLogicalIndex (maxWidth - cumw) x)
         -- if line runs over but character of splitting is whitespace then split on the whitespace
         then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
           in loop (T.drop 1 t2:xs) 0 [] <> appendOut out t1 True
@@ -541,8 +542,8 @@ wrapWithOffsetAndAlignment alignment maxWidth n text = assert (n <= maxWidth) r 
     TextAlignment_Left -> (t,b,0)
     TextAlignment_Right -> (t,b,maxWidth-l)
     TextAlignment_Center -> (t,b,(maxWidth-l) `div` 2)
-    where l = T.length t
-  r'' = case r' of
+    where l = textWidth t
+  r'' =  case r' of
     [] -> []
     (x,b):xs -> (T.drop n x,b):xs
   r = fmap fmapfn r''
@@ -577,7 +578,7 @@ offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLinesWithAlignment
-  :: (R.HasCallStack) => TextAlignment
+  :: (Show tag) => TextAlignment
   -> Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
@@ -624,7 +625,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
           Just (c, rest) ->
             let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
                 cursor = Span cursorTag (T.singleton c)
-            in  case map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width o rest) of
+            in case map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width o rest) of
                   []     -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
   in  DisplayLinesWithAlignment
