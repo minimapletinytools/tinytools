@@ -34,6 +34,7 @@ import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
 import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
+import Control.Exception (assert)
 
 
 emptyChar :: PChar
@@ -155,10 +156,11 @@ renderWithBroadPhase bpt dir lbx rc = r where
   r = render lbx seltls rc
 
 moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
+moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = assert (area >= 0) r where
   -- unnecessary to init with empty vector as moveRenderedCanvas will re-render those areas
   -- but it's still nice to do and makes testing easier
-  emptyv = V.replicate (V.length _renderedCanvas_contents) ' '
+  area = lBox_area lbx
+  emptyv = V.replicate area ' '
   newv = case intersect_lBox lbx _renderedCanvas_box of
     Just intersectlbx -> copiedv where
       (l,r,t,b) = lBox_to_axis intersectlbx

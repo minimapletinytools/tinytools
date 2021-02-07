@@ -113,7 +113,8 @@ spec = do
         -- only thing changed is the canvas size
         canvas1 = moveRenderedCanvas bps0 (_pFState_directory state0) target canvas0
       --liftIO $ printRenderedCanvas canvas0
-      liftIO $ printRenderedCanvas canvas1
+      --liftIO $ printRenderedCanvas canvas1
+      -- TODO test something
       canvas1 `shouldBe` canvas1
     it "updateCanvas - basic" $ do
       let
