@@ -60,6 +60,12 @@ toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + x) (i `div` w + y)
 toIndex :: LBox -> XY -> Int
 toIndex (LBox (V2 x y) (V2 w _)) (V2 px py) = (py-y)*w+(px-x)
 
+-- | same as above but does bounds checking
+toIndexSafe :: LBox -> XY -> Maybe Int
+toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
+  then Just $ toIndex lbx xy
+  else Nothing
+
 -- | brute force renders a RenderedCanvas
 potatoRender :: [SElt] -> RenderedCanvas -> RenderedCanvas
 potatoRender seltls RenderedCanvas {..} = r where
@@ -149,7 +155,8 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
     Just intersectlbx -> copiedv where
       (l,r,t,b) = lBox_to_axis intersectlbx
       -- [(newIndex, oldIndex)]
-      indices = [(toIndex lbx (V2 x y), toIndex _renderedCanvas_box (V2 x y)) | x <- [l..(r-1)], y <- [t..(b-1)]]
+      indices' = [toIndexSafe _renderedCanvas_box (V2 x y) >>= return . (toIndex lbx (V2 x y),) | x <- [l..(r-1)], y <- [t..(b-1)]]
+      indices = catMaybes indices'
       indexedValues = fmap (\(idx, oldidx) -> (idx, _renderedCanvas_contents V.! oldidx)) indices
       copiedv = (V.//) emptyv indexedValues
     Nothing -> emptyv
