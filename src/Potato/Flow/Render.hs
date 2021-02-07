@@ -4,7 +4,9 @@ module Potato.Flow.Render (
   RenderedCanvas(..)
   , renderedCanvas_box
   , emptyRenderedCanvas
+  , printRenderedCanvas
   , potatoRender
+  , potatoRenderPFState
   , render
   , renderedCanvasToText
   , renderedCanvasRegionToText
@@ -30,6 +32,7 @@ import qualified Data.IntMap             as IM
 import qualified Data.List.Ordered       as L
 import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
+import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
 
 
@@ -40,7 +43,7 @@ emptyChar = ' '
 data RenderedCanvas = RenderedCanvas {
   _renderedCanvas_box        :: LBox
   , _renderedCanvas_contents :: V.Vector PChar -- ^ row major
-} deriving (Show)
+} deriving (Eq, Show)
 
 renderedCanvas_box :: RenderedCanvas -> LBox
 renderedCanvas_box = _renderedCanvas_box
@@ -83,6 +86,8 @@ potatoRender seltls RenderedCanvas {..} = r where
       , _renderedCanvas_contents = newc
     }
 
+potatoRenderPFState :: PFState -> RenderedCanvas -> RenderedCanvas
+potatoRenderPFState PFState {..} = potatoRender (fmap (\(SEltLabel _ selt) -> selt) $ toList _pFState_directory)
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvas
@@ -138,6 +143,9 @@ renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, Fals
       pt = toPoint lbx i
       pindex = toIndex _renderedCanvas_box pt
 
+printRenderedCanvas :: RenderedCanvas -> IO ()
+printRenderedCanvas rc@RenderedCanvas {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvas_box rc
+
 renderWithBroadPhase :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
 renderWithBroadPhase bpt dir lbx rc = r where
   rids = broadPhase_cull lbx bpt
@@ -170,7 +178,7 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
 moveRenderedCanvas :: BroadPhaseState -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
 moveRenderedCanvas (BroadPhaseState bpt) dir lbx rc = r where
   r1 = moveRenderedCanvasNoReRender lbx rc
-  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_lBox lbx (_renderedCanvas_box rc))
+  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) r1 (substract_lBox lbx (_renderedCanvas_box rc))
 
 -- TODO test
 updateCanvas :: SEltLabelChanges -> NeedsUpdateSet -> BroadPhaseState -> PFState -> LayerPosMap -> RenderedCanvas -> RenderedCanvas

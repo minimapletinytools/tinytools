@@ -6,6 +6,7 @@ module Potato.Flow.TestStates (
   , someSEltLabel
   , someSCanvas
   , defaultCanvasLBox
+  , pFState_fromSElts
   , pfstate_someValidState1
   , pfstate_someInvalidState1
   , pfstate_someInvalidState2
@@ -36,6 +37,13 @@ defaultCanvasLBox = LBox (V2 0 0) (V2 50 25)
 
 someSCanvas :: SCanvas
 someSCanvas = SCanvas  defaultCanvasLBox
+
+pFState_fromSElts :: [SElt] -> LBox -> PFState
+pFState_fromSElts selts lbox = PFState {
+    _pFState_layers = Seq.fromList [1..length selts]
+    , _pFState_directory = IM.fromList $ fmap (\(i,selt) -> (i, SEltLabel (show i) selt)) $ zip [0..] selts
+    , _pFState_canvas = SCanvas lbox
+  }
 
 pfstate_someValidState1 :: PFState
 pfstate_someValidState1 = PFState {
