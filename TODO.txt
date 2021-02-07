@@ -1,7 +1,37 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+-------------
 
+>File
+  >New (closes current doc for now, eventually opens new tab)
+  >Open
+  >Save
+  >Save As
+  -------
+  >Theme D:
+  --------
+  >Quit
+>Tabs
+  >next tab
+  >prev tab
+  >close all
+  >close current
+  >close all but current
+  ><list all tabs>
+>Windows
+  >default preset
+  ><presets>
+  >edit presets
+  --------
+  >Info
+  >Params
+  >Layers
+  >Tools
+>Halp
+  >About (popup)
+  ---------
+  >Open Tutorial
 
 ---------------
 
@@ -61,6 +91,13 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
   $ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
   ./stacktrace +RTS -xc
 
+-TINY TODY`
+  -do keybord capture for params
+    -relayout widgets so it's easy to pass returned values around or whatever
+    -maybe make your own Reader/DynWriter monad pls
+  -canvas size param (shows when nothing is selected)
+
+-why does loading file select stuff?
 
 -rethink keyboard input capture
   -params needs to capture keyboard input
@@ -125,7 +162,7 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
     -maybe don't worry about submenus for now 😱
 -text zipper
   -text alignment UTs
-  -test with wide chars (in vty)
+  DONE😭-test with wide chars (in vty)
   -put up PR :O
 -hook up unicode width fn
   -add hook for it in renderer

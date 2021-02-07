@@ -293,6 +293,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_selection   = _goatState_selection
   }
 
+-- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
@@ -505,8 +506,9 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     Nothing     -> []
     Just (lp,seltl) -> if IM.member rid (_pFState_directory last_pFState) then [] else [(rid,lp,seltl)]
 
-  -- TODO don't select changes on load
-  wasLoad = False
+  wasLoad = case cmd of
+    GoatCmdLoad _ -> True
+    _ -> False
   -- update selection based on changes from updating PFState
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
     then (False, _goatState_selection)
