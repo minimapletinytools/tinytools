@@ -513,6 +513,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
     then (False, _goatState_selection)
     else r where
+      -- TODO need to sort by LayerPos I think
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
@@ -553,9 +554,12 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
-  -- TODO render the scene if the screen moved
-  --moveRenderedCanvas :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
-  next_renderedCanvas' = _goatState_renderedCanvas
+  -- TODO crop/expand to screen
+  newBox = _sCanvas_box . _pFState_canvas $ next_pFState
+  next_renderedCanvas' = if _renderedCanvas_box _goatState_renderedCanvas /= newBox
+    then moveRenderedCanvas next_broadPhaseState (_pFState_directory next_pFState) newBox _goatState_renderedCanvas
+    else _goatState_renderedCanvas
+
 
 
   -- render the scene if there were changes

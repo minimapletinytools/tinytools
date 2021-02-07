@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Render (
-  RenderedCanvas
+  RenderedCanvas(..)
   , renderedCanvas_box
   , emptyRenderedCanvas
   , potatoRender
@@ -160,8 +160,8 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = r where
     }
 
 -- TODO test
-moveRenderedCanvas :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvas bpt dir lbx rc = r where
+moveRenderedCanvas :: BroadPhaseState -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvas (BroadPhaseState bpt) dir lbx rc = r where
   r1 = moveRenderedCanvasNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) rc (substract_lBox lbx (_renderedCanvas_box rc))
 

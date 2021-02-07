@@ -96,6 +96,7 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
     -relayout widgets so it's easy to pass returned values around or whatever
     -maybe make your own Reader/DynWriter monad pls
   -canvas size param (shows when nothing is selected)
+  -update render area based on canvas size
 
 -why does loading file select stuff?
 
