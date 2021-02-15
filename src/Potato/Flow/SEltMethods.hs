@@ -47,7 +47,7 @@ makeDisplayLinesFromSBox sbox = r where
     then TZ.DisplayLinesWithAlignment {
         _displayLinesWithAlignment_spans = []
         , _displayLinesWithAlignment_offsetMap = Map.empty
-        , _displayLinesWithAlignment_cursorY   = 0
+        , _displayLinesWithAlignment_cursorPos   = (0,0)
       }
     else TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
 

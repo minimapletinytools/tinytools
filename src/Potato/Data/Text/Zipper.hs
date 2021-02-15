@@ -522,7 +522,7 @@ type OffsetMapWithAlignment = Map Int (Int, Int)
 data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
   { _displayLinesWithAlignment_spans     :: [[Span tag]]
   , _displayLinesWithAlignment_offsetMap :: OffsetMapWithAlignment
-  , _displayLinesWithAlignment_cursorY   :: Int -- not sure what this is for?
+  , _displayLinesWithAlignment_cursorPos   :: (Int, Int) -- cursor position relative to upper left hand corner
   }
   deriving (Show)
 
@@ -628,6 +628,15 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
             in case map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width o rest) of
                   []     -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
+
+      cursorY = sum
+        [ length spansBefore
+        , length spansCurrentBefore
+        , if cursorAfterEOL then 1 else 0
+        ]
+      -- a little silly to convert back to text but whatever, it works
+      cursorX = if cursorAfterEOL then 0 else textWidth (mconcat $ fmap (\(Span _ t) -> t) spansCurLineBefore)
+
   in  DisplayLinesWithAlignment
         { _displayLinesWithAlignment_spans = concat
           [ spansBefore
@@ -639,11 +648,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
           , spansAfter
           ]
         , _displayLinesWithAlignment_offsetMap = offsets
-        , _displayLinesWithAlignment_cursorY = sum
-          [ length spansBefore
-          , length spansCurrentBefore
-          , if cursorAfterEOL then cursorCharWidth else 0
-          ]
+        , _displayLinesWithAlignment_cursorPos = (cursorX, cursorY)
         }
   where
     initLast :: [a] -> Maybe ([a], a)
