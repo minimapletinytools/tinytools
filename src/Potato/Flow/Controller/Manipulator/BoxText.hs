@@ -26,7 +26,9 @@ import           Potato.Flow.Workspace
 import           Control.Exception
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
+import Data.Maybe (catMaybes)
 import qualified Data.IntMap                               as IM
+import qualified Data.Map as Map
 import qualified Data.Sequence                             as Seq
 import qualified Potato.Data.Text.Zipper                          as TZ
 import           Data.Tuple.Extra
@@ -235,10 +237,20 @@ instance PotatoHandler BoxTextHandler where
 
   pRenderHandler tah' PotatoHandlerInput {..} = r where
     tah = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
-    (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state tah
-    LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
-    offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
-    -- TODO also need to add in alignment offset
-    -- TODO consider factoring cursorCharWidth here
-    r = HandlerRenderOutput [LBox (p + (V2 x y) + offset) (V2 1 1)]
+    dls = _boxTextInputState_displayLines $ _boxTextHandler_state tah
+    origBox = _boxTextInputState_box $ _boxTextHandler_state tah
+    (x, y) = TZ._displayLinesWithAlignment_cursorPos dls
+    offsetMap = TZ._displayLinesWithAlignment_offsetMap dls
+    
+    mlbox = do
+      guard $ lBox_area origBox > 0
+
+      -- TODO would be nice to assert that this exists...
+      (alignxoff,_) <- Map.lookup y offsetMap
+      let
+        LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
+        offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
+      return $ [LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)]
+
+    r = HandlerRenderOutput $ fromMaybe [] mlbox
   pIsHandlerActive = _boxTextHandler_isActive

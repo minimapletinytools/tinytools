@@ -56,6 +56,20 @@ checkSBoxText label text = firstSuperSEltLabelPredicate (Just label) $ \(_,_,SEl
   SEltBox (SBox lbox _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
+-- | check the position of the cursor
+checkHandlerPos :: XY -> EverythingPredicate
+checkHandlerPos pos = FunctionPredicate $ \gs ->
+  let
+    h = _goatState_handler gs
+    phi = potatoHandlerInputFromGoatState gs
+    HandlerRenderOutput hs = pRenderHandler h phi
+  in case hs of
+    [] -> ("no handler outputs", False)
+    (LBox p _):[] -> if p == pos
+      then ("", True)
+      else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
+    _ -> ("too many handler outputs", False)
+
 test_basic :: Test
 test_basic = constructTest "basic" emptyPFState bs expected where
   bs = [
@@ -138,6 +152,7 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "p🥔aoopb"
     ]
+
 test_handler_state :: Test
 test_handler_state = constructTest "handler state" emptyPFState bs expected where
   bs = [
@@ -297,6 +312,103 @@ test_zero = constructTest "zero" emptyPFState bs expected where
 
     ]
 
+test_output :: Test
+test_output = constructTest "output" emptyPFState bs expected where
+  bs = [
+      EWCLabel "create <text>"
+      , EWCTool Tool_Text
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
+
+      , EWCLabel "modify <text>"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+
+      , EWCLabel "move cursor <text>"
+      , EWCTool Tool_Select
+      , EWCMouse (LMouseData (V2 12 11) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 11) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
+
+      , EWCLabel "exit BoxText"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "select <text> at end of line"
+      , EWCMouse (LMouseData (V2 11 18) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 11 18) True MouseButton_Left [] False)
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'b') [])
+
+      , EWCLabel "navigate"
+      , EWCKeyboard (KeyboardData KeyboardKey_Left [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Left [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Home [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Right [])
+      , EWCKeyboard (KeyboardData KeyboardKey_Right [])
+      , EWCKeyboard (KeyboardData KeyboardKey_End [])
+
+      , EWCLabel "set noborder"
+      , EWCSetParams $ IM.singleton 1 (CTagBoxType :=> Identity (CBoxType (SBoxType_BoxText, SBoxType_NoBoxText)))
+      , EWCKeyboard (KeyboardData KeyboardKey_Backspace [])
+
+      , EWCLabel "align right"
+      , EWCSetParams $ IM.singleton 1 (CTagBoxTextStyle :=> Identity (CTextStyle $ DeltaTextStyle (TextStyle TextAlign_Left, TextStyle TextAlign_Right)))
+
+    ]
+  expected = [
+      LabelCheck "create <text>"
+      , EqPredicate _goatState_selectedTool Tool_Text
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerPos (V2 11 11)
+
+      , LabelCheck "modify <text>"
+      , checkHandlerPos (V2 12 11)
+      , checkHandlerPos (V2 13 11)
+      , checkHandlerPos (V2 14 11)
+      , checkHandlerPos (V2 15 11)
+
+      , LabelCheck "move cursor <text>"
+      , EqPredicate _goatState_selectedTool Tool_Select
+      , checkHandlerNameAndState handlerName_boxText True
+      , checkHandlerPos (V2 12 11)
+      , checkHandlerPos (V2 13 11)
+
+      , LabelCheck "exit BoxText"
+      , checkHandlerNameAndState handlerName_box False
+
+      , LabelCheck "select <text> at end of line"
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerPos (V2 16 11)
+      , checkHandlerPos (V2 17 11)
+
+      , LabelCheck "navigate"
+      , checkHandlerPos (V2 16 11)
+      , checkHandlerPos (V2 15 11)
+      , checkHandlerPos (V2 11 11)
+      , checkHandlerPos (V2 12 11)
+      , checkHandlerPos (V2 13 11)
+      , checkHandlerPos (V2 17 11)
+
+
+      , Combine [
+          LabelCheck "set noborder"
+          -- make sure REltId is 0 because next step we will modify using it
+          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+        ]
+      , checkHandlerPos (V2 16 10)
+      , checkHandlerPos (V2 15 10)
+
+      , Combine [
+          LabelCheck "align right"
+          -- make sure REltId is 0 because next step we will modify using it
+          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+        ]
+      , checkHandlerPos (V2 20 10)
+    ]
+
 spec :: Spec
 spec = do
   describe "BoxText" $ do
@@ -305,3 +417,4 @@ spec = do
     fromHUnitTest $ test_handler_state
     fromHUnitTest $ test_negative
     fromHUnitTest $ test_zero
+    fromHUnitTest $ test_output

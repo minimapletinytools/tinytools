@@ -8,6 +8,9 @@ module Potato.Flow.Controller.GoatWidget (
   , goatState_pFState
   , GoatState(..)
   , holdGoatWidget
+
+  -- exposed for testing
+  , potatoHandlerInputFromGoatState
 ) where
 
 import           Relude
