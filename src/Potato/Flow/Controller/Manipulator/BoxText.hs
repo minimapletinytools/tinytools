@@ -75,6 +75,12 @@ makeBoxTextInputState rid sbox rmd = r where
   r'' = updateBoxTextInputStateWithSBox sbox r'
   r = mouseText r'' sbox rmd
 
+getOffset :: SBox -> XY
+getOffset sbox =  case _sBox_boxType sbox of
+  SBoxType_BoxText   -> V2 1 1
+  SBoxType_NoBoxText -> 0
+  _                  -> error "wrong type"
+
 -- TODO define behavior for when you click outside box or assert
 mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
 mouseText tais sbox rmd = r where
@@ -82,10 +88,7 @@ mouseText tais sbox rmd = r where
   ogtz = _boxTextInputState_zipper tais
   CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   V2 mousex mousey = _mouseDrag_to
-  (xoffset, yoffset) = case _sBox_boxType sbox of
-    SBoxType_BoxText   -> (1,1)
-    SBoxType_NoBoxText -> (0,0)
-    _                  -> error "wrong type"
+  V2 xoffset yoffset = getOffset sbox
   newtz = TZ.goToDisplayLineWithAlignmentPosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
   r = tais { _boxTextInputState_zipper = newtz }
 
@@ -229,6 +232,7 @@ instance PotatoHandler BoxTextHandler where
   pRenderHandler BoxTextHandler{..} PotatoHandlerInput {..} = r where
     (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state
     LBox p _ = _boxTextInputState_box _boxTextHandler_state
+    offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
     -- TODO consider factoring cursorCharWidth here
-    r = HandlerRenderOutput [LBox (p + (V2 x y)) (V2 1 1)]
+    r = HandlerRenderOutput [LBox (p + (V2 x y) + offset) (V2 1 1)]
   pIsHandlerActive = _boxTextHandler_isActive
