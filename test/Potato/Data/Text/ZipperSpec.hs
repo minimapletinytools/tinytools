@@ -76,10 +76,16 @@ spec = do
         dl1 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu")
         dl2 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n")
         dl3 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "0123456789")
+        dl4 = displayLinesWithAlignment TextAlignment_Right 10 () () (insertChar 'a' $ fromText "aoeu")
+        dl5 = displayLinesWithAlignment TextAlignment_Right 10 () () (left $ insertChar 'a' $ fromText "aoeu")
+        dl6 = displayLinesWithAlignment TextAlignment_Right 10 () () (deleteLeft $ insertChar 'a' $ fromText "aoeu")
       _displayLinesWithAlignment_cursorPos dl0 `shouldBe` (0,0)
       _displayLinesWithAlignment_cursorPos dl1 `shouldBe` (4,0)
       _displayLinesWithAlignment_cursorPos dl2 `shouldBe` (0,1)
       _displayLinesWithAlignment_cursorPos dl3 `shouldBe` (0,1)
+      _displayLinesWithAlignment_cursorPos dl4 `shouldBe` (5,0)
+      _displayLinesWithAlignment_cursorPos dl5 `shouldBe` (4,0)
+      _displayLinesWithAlignment_cursorPos dl6 `shouldBe` (4,0)
     --it "displayLinesWithAlignment" $ do
       --let
         --dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu ansthe\naoeuo\naone , aoentuh ao anhno ao ao ou unh sarc.,as eohaun oeuoeu nthoeu noeuhnooeu")

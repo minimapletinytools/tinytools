@@ -111,6 +111,9 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
     -etc
   -seems to be some weirdness in computing cursore position in TextZipper
 
+-click to focus on text handler shouldalso pass in input so you can focus TZ cursor at spot where you clicked
+-fix handles being rendered too late IDK how D:
+
 IGNORE-why does loading file select stuff?
 
 DONE-first character of left align text box is incorrect (seems to be space character instead of Nothing)
