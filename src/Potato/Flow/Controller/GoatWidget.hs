@@ -205,6 +205,8 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
 
+  -- TODO command for updating canvas size
+
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
 }

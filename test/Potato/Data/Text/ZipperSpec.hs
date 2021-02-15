@@ -65,8 +65,13 @@ spec = do
         , (4, (2,8)) -- jump by 2 for char and 1 for space
         , (5, (3,11)) -- jump by 2 for char and 1 for space
         ]
-
-    {-it "displayLinesWithAlignment" $ do
-      let
-        dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu ansthe\naoeuo\naone , aoentuh ao anhno ao ao ou unh sarc.,as eohaun oeuoeu nthoeu noeuhnooeu")
-      traceShow dl True `shouldBe` True-}
+    --it "displayLinesWithAlignment - empty" $ do
+      --let
+      --  dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "")
+      -- fails, produces [Span () "", Span () " "] because it creates an space character to for the cursor
+      --_displayLinesWithAlignment_spans dl `shouldBe` [Span () "", Span () ""]
+    --it "displayLinesWithAlignment" $ do
+      --let
+        --dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu ansthe\naoeuo\naone , aoentuh ao anhno ao ao ou unh sarc.,as eohaun oeuoeu nthoeu noeuhnooeu")
+        --dl = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "")
+      --traceShow (_displayLinesWithAlignment_spans dl) (True `shouldBe` True)

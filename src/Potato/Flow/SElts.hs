@@ -45,7 +45,9 @@ instance Binary FillStyle
 instance NFData FillStyle
 
 instance Default FillStyle where
+  -- TODO change to ' ' prob
   def = FillStyle_Simple '@'
+
 
 
 -- TODO add line ends?
@@ -90,7 +92,7 @@ superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
     , _superStyle_vertical   = Just $ chars L.!! 4
     , _superStyle_horizontal = Just $ chars L.!! 5
     , _superStyle_point = Just $ chars L.!! 6
-    , _superStyle_fill = if l == 7 then def else FillStyle_Simple (chars L.!! 7)
+    , _superStyle_fill = if l == 7 then FillStyle_Blank else FillStyle_Simple (chars L.!! 7)
   }
 
 -- TODO test
@@ -98,10 +100,10 @@ superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
 -- empty styles are converted to space character
 superStyle_toListFormat :: SuperStyle -> [PChar]
 superStyle_toListFormat SuperStyle {..} = r where
-  start = case _superStyle_fill of
+  mfill = case _superStyle_fill of
     FillStyle_Blank    -> []
     FillStyle_Simple c -> [c]
-  r = start <> [
+  r = [
       fromMaybe ' ' _superStyle_tl
       ,fromMaybe ' ' _superStyle_tr
       ,fromMaybe ' ' _superStyle_bl
@@ -109,7 +111,7 @@ superStyle_toListFormat SuperStyle {..} = r where
       ,fromMaybe ' ' _superStyle_vertical
       ,fromMaybe ' ' _superStyle_horizontal
       ,fromMaybe ' ' _superStyle_point
-    ]
+    ] <> mfill
 
 -- |
 data TextAlign = TextAlign_Left | TextAlign_Right | TextAlign_Center deriving (Eq, Generic, Show)

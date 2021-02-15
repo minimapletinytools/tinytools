@@ -42,8 +42,14 @@ makeDisplayLinesFromSBox sbox = r where
   -- force TZ to top so that displayLinesWithAlignment doesn't create trailing space for cursor
   tz = TZ.top (TZ.fromText text)
 
-  -- TODO probably need to do early exit if text is "" (otherwise there will be a trailing space cursor thingy...)
-  r = TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
+  -- hack to get rid of trailing cursor if text is ""
+  r = if T.null text
+    then TZ.DisplayLinesWithAlignment {
+        _displayLinesWithAlignment_spans = []
+        , _displayLinesWithAlignment_offsetMap = Map.empty
+        , _displayLinesWithAlignment_cursorY   = 0
+      }
+    else TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
 
 concatSpans :: [TZ.Span a] -> Text
 concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans

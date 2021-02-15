@@ -91,14 +91,24 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
   $ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
   ./stacktrace +RTS -xc
 
--TINY TODY`
+-TINY TODO
   -do keybord capture for params
     -relayout widgets so it's easy to pass returned values around or whatever
     -maybe make your own Reader/DynWriter monad pls
+  DONE-update render area based on canvas size
+  DONE-a few more presets
+  IGNORE-redo cellInput pls
+  DONE-also create numInput
   -canvas size param (shows when nothing is selected)
-  -update render area based on canvas size
+  -clicking onto canvas from params will trigger 2x goat events (1 to modify params due to focus change, and 1 canvas event)
+    -could resolve using Endo 😱
 
--why does loading file select stuff?
+IGNORE-why does loading file select stuff?
+
+DONE-first character of left align text box is incorrect (seems to be space character instead of Nothing)
+DONE-why does large canvas slow down stuff so much. Rendering shouldn't be that bad???
+  -doesn't seem to be taking advantage of laziness either
+  -seems to just be a profiling mode thing...
 
 -rethink keyboard input capture
   -params needs to capture keyboard input
@@ -213,6 +223,7 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
     -test it
   -finish changesFromToggleHide
     -test it
+-saved SuperStyle presets
 -if you are in BoxTextHandler mode and you have Text tool selected
   -then you click and release outside box, you will go back to boxtext handler
   -so I guess click release with any creation tool should deselect everything
