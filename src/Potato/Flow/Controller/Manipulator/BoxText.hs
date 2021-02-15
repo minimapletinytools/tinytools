@@ -226,6 +226,9 @@ instance PotatoHandler BoxTextHandler where
           _ -> Nothing
 
 
-  pRenderHandler tah PotatoHandlerInput {..} = def
-
+  pRenderHandler BoxTextHandler{..} PotatoHandlerInput {..} = r where
+    (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state
+    LBox p _ = _boxTextInputState_box _boxTextHandler_state
+    -- TODO consider factoring cursorCharWidth here
+    r = HandlerRenderOutput [LBox (p + (V2 x y)) (V2 1 1)]
   pIsHandlerActive = _boxTextHandler_isActive
