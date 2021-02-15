@@ -196,12 +196,17 @@ undo_move (lps, dst) pfs@PFState {..} =  (r, changes) where
   r = PFState newLayers _pFState_directory _pFState_canvas
 --}
 
+-- | check if the SCanvas is valid or not
+-- for now, canvas offset must always be 0, I forget why it's even an option to offset the SCanvas, probably potatoes.
+isValidCanvas :: SCanvas -> Bool
+isValidCanvas (SCanvas (LBox p (V2 w h))) = p == 0 && w > 0 && h > 0
+
 do_resizeCanvas :: DeltaLBox -> PFState -> PFState
-do_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
+do_resizeCanvas d pfs = assert (isValidCanvas newCanvas) $ pfs { _pFState_canvas = newCanvas } where
   newCanvas = SCanvas $ plusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
 undo_resizeCanvas :: DeltaLBox -> PFState -> PFState
-undo_resizeCanvas d pfs = pfs { _pFState_canvas = newCanvas } where
+undo_resizeCanvas d pfs = assert (isValidCanvas newCanvas) $ pfs { _pFState_canvas = newCanvas } where
   newCanvas = SCanvas $ minusDelta (_sCanvas_box (_pFState_canvas pfs)) d
 
 manipulate :: Bool -> ControllersWithId -> PFState -> (PFState, SEltLabelChanges)

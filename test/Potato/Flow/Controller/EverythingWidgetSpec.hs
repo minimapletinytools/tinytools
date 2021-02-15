@@ -111,6 +111,25 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
       ]
     ]
 
+everything_canvasSize_test :: Test
+everything_canvasSize_test = constructTest "canvas resize" pfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "Initial"
+      , EWCNothing -- dummy to check state
+
+      , EWCLabel "Resize Canvas By"
+      , EWCCanvasResize (V2 100 100)
+    ]
+  expected = [
+      LabelCheck "Initial"
+      -- TODO test canvas size (expect 50 25)
+      , AlwaysPass
+
+      , LabelCheck "Resize Canvas By"
+      -- TODO test canvas size (expect 150 125)
+      , AlwaysPass
+    ]
+
 everything_keyboard_test :: Test
 everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected where
   bs = [
@@ -457,5 +476,6 @@ spec = do
   describe "EverythingWidget" $ do
     fromHUnitTest $ everything_load_test
     fromHUnitTest $ everything_layers_test
+    fromHUnitTest $ everything_canvasSize_test
     fromHUnitTest $ everything_keyboard_test
     fromHUnitTest $ everything_basic_test

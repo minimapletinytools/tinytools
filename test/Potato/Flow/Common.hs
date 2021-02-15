@@ -50,6 +50,7 @@ data GoatWidgetCmd =
   | EWCLoad (SPotatoFlow, ControllerMeta)
   | EWCNothing
   | EWCLabel Text
+  | EWCCanvasResize XY
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -76,6 +77,10 @@ everything_network_app pfs (AppIn _ ev) = do
       , _goatWidgetConfig_paramsEvent = fforMaybe ev $ \case
         EWCSetParams x -> Just x
         _ -> Nothing
+      , _goatWidgetConfig_canvasSize = fforMaybe ev $ \case
+        EWCCanvasResize x -> Just x
+        _ -> Nothing
+
     }
   everythingWidget <- holdGoatWidget ewc
   let rDyn = _goatWidget_DEBUG_goatState everythingWidget

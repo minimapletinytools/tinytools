@@ -204,6 +204,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_load           :: Event t EverythingLoadState
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
+  , _goatWidgetConfig_canvasSize :: Event t XY
 
   -- TODO command for updating canvas size
 
@@ -598,6 +599,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
       , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
+      , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
       ]
 
     --initialize broadphase with initial state

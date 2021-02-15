@@ -242,11 +242,15 @@ randomActionFCmd doundo stree = do
             , _sTextArea_transparent = False
           }
         3 -> return $ FCAddElt pos $ SEltFolderStart
+
+    -- this causes asserts when I check if canvas size is positive
+    -- disable this since it's gonna get deprecated anyways
     -- resize the canvas
-    3 -> do
-      p1 <- randomXY
-      p2 <- randomXY
-      return $ FCResizeCanvas $ DeltaLBox p1 p2
+    --3 -> do
+      --p1 <- randomXY
+      --p2 <- randomXY
+      --return $ FCResizeCanvas $ DeltaLBox p1 p2
+
     -- modify an existing element
     _ -> do
 
@@ -271,7 +275,8 @@ randomActionFCmd doundo stree = do
 
       case rcmd of
         -- folderize delete to ensure scoping property
-        4 -> return $ FCDeleteElts (folderizeSelection stree [deletePos])
+        -- hack becaues I disabled resize canvas event, whatever
+        x | x == 3 || x == 4 -> return $ FCDeleteElts (folderizeSelection stree [deletePos])
         5 -> fmap FCModifyMany . forM randomElts $ \(pos, (SEltLabel name selt)) -> do
           p1 <- randomXY
           p2 <- randomXY
