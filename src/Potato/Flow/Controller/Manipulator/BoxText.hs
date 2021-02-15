@@ -171,7 +171,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
 
 instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
-  pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShow _boxTextHandler_state
+  pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxTextHandler_state
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
       (_, sbox) = getSBox _potatoHandlerInput_selection
