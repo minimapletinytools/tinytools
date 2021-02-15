@@ -161,6 +161,7 @@ sBox_drawer sbox@SBox {..} = r where
 
       y = y' - by - yoff
       xalignoffset = case Map.lookup y offsetMap of
+        -- TODO this happens when you have a double inverted box TODO figure out why
         Nothing -> error "should not happen"
         Just (offset,_) -> offset
 

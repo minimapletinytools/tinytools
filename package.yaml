@@ -102,6 +102,7 @@ dependencies:
 - binary
 - mtl
 - vty
+- pretty-simple
 
 #- smash
 - deepseq

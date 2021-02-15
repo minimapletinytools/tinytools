@@ -30,6 +30,8 @@ import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 import qualified Potato.Data.Text.Zipper                          as TZ
 import           Data.Tuple.Extra
+import qualified Text.Pretty.Simple as Pretty
+import qualified Data.Text.Lazy as LT
 
 getSBox :: Selection -> (REltId, SBox)
 getSBox selection = case selectionToSuperSEltLabel selection of
@@ -169,6 +171,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
 
 instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
+  pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShow _boxTextHandler_state
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
       (_, sbox) = getSBox _potatoHandlerInput_selection
@@ -233,6 +236,7 @@ instance PotatoHandler BoxTextHandler where
     (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state
     LBox p _ = _boxTextInputState_box _boxTextHandler_state
     offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
+    -- TODO also need to add in alignment offset
     -- TODO consider factoring cursorCharWidth here
     r = HandlerRenderOutput [LBox (p + (V2 x y) + offset) (V2 1 1)]
   pIsHandlerActive = _boxTextHandler_isActive

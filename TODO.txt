@@ -91,6 +91,11 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
   $ ghc -O0 -rtsopts=all -prof -auto-all --make stacktrace.hs
   ./stacktrace +RTS -xc
 
+-add output to main to figure out how many ticks fire per event (and what frame # it's at)
+-do alignment offset in boxtext
+-click to focus on text handler shouldalso pass in input so you can focus TZ cursor at spot where you clicked
+-fix handles being rendered too late IDK how D:
+
 -TINY TODO
   -do keybord capture for params
     -relayout widgets so it's easy to pass returned values around or whatever
@@ -109,10 +114,7 @@ IGNORE-try vscode again :O https://github.com/haskell/haskell-language-server
     -background
     -text
     -etc
-  -seems to be some weirdness in computing cursore position in TextZipper
 
--click to focus on text handler shouldalso pass in input so you can focus TZ cursor at spot where you clicked
--fix handles being rendered too late IDK how D:
 
 IGNORE-why does loading file select stuff?
 

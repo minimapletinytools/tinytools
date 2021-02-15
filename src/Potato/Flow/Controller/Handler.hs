@@ -112,7 +112,7 @@ handlerName_empty = "EmptyHandler"
 class PotatoHandler h where
   pHandlerName :: h -> Text
 
-  -- TODO do the generic thing where (Show h) whatever
+  -- TODO do the generic thing where (Show h) whatever (I guess this only works when you use deriving or something though?)
   pHandlerDebugShow :: h -> Text
   pHandlerDebugShow _ = "<no debug info>"
 
