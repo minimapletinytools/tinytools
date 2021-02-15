@@ -209,7 +209,7 @@ instance PotatoHandler BoxHandler where
           , _potatoHandlerOutput_pFEvent = Just op
         }
 
-    MouseDragState_Up -> Just r where
+    MouseDragState_Up -> r where
       isText = case selectionToMaybeFirstSuperSEltLabel _potatoHandlerInput_selection of
         Just (_,_,SEltLabel _ (SEltBox SBox{..})) -> sBoxType_isText _sBox_boxType
         _                                    -> False
@@ -225,11 +225,9 @@ instance PotatoHandler BoxHandler where
           && (not _boxHandler_undoFirst || _boxHandler_creation == BoxCreationType_Text)
           -- if we are drag selecting, then don't enter BoxText mode
           && not (_boxHandler_creation == BoxCreationType_DragSelect)
-        then def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler
-              $ makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd
-          }
-        else def
+        -- create box handler and pass on the input
+        then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd) phi rmd
+        else Just def
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 

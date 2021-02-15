@@ -203,6 +203,7 @@ instance PotatoHandler BoxTextHandler where
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxTextHandler_prevHandler tah') }
     _ -> Just r where
+      -- this regenerates displayLines unecessarily but who cares
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
       sseltl = selectionToSuperSEltLabel _potatoHandlerInput_selection
 
@@ -232,9 +233,10 @@ instance PotatoHandler BoxTextHandler where
           _ -> Nothing
 
 
-  pRenderHandler BoxTextHandler{..} PotatoHandlerInput {..} = r where
-    (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state
-    LBox p _ = _boxTextInputState_box _boxTextHandler_state
+  pRenderHandler tah' PotatoHandlerInput {..} = r where
+    tah = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
+    (x, y) = TZ._displayLinesWithAlignment_cursorPos . _boxTextInputState_displayLines $ _boxTextHandler_state tah
+    LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
     offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
     -- TODO also need to add in alignment offset
     -- TODO consider factoring cursorCharWidth here
