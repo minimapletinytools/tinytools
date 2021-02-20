@@ -602,7 +602,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- * spans that are on earlier display lines (though on the same logical line), and
       -- * spans that are on the same display line
 
-      -- TODO may need rejiggering
+      -- TODO cursor goes here if align right
       (spansCurrentBefore, spansCurLineBefore) = fromMaybe ([], []) $
         initLast $ map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width 0 b)
       -- Calculate the number of columns on the cursor's display line before the cursor
@@ -618,7 +618,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- * spans that are on the same display line, and
       -- * spans that are on later display lines (though on the same logical line)
 
-      -- TODO may need rejiggering
+      -- TODO do not show cursor if align right
       (spansCurLineAfter, spansCurrentAfter) = fromMaybe ([], []) $
         headTail $ case T.uncons a of
           Nothing -> [[Span cursorTag " "]]
