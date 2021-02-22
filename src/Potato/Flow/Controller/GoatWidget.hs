@@ -207,7 +207,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_load           :: Event t EverythingLoadState
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
-  , _goatWidgetConfig_canvasSize :: Event t XY
+  , _goatWidgetConfig_canvasSize     :: Event t XY
 
   -- TODO command for updating canvas size
 
@@ -514,7 +514,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   wasLoad = case cmd of
     GoatCmdLoad _ -> True
-    _ -> False
+    _             -> False
   -- update selection based on changes from updating PFState
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
     then (False, _goatState_selection)
