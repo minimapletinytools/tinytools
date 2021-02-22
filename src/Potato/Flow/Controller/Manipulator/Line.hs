@@ -59,7 +59,8 @@ instance PotatoHandler SimpleLineHandler where
             _simpleLineHandler_active = True
           }
       }
-    -- if shift is held down, ignore inputs
+    -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
+    -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
       mistart = findFirstLineManipulator rmd _potatoHandlerInput_selection

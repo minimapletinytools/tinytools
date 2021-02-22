@@ -27,7 +27,7 @@ emptyAnchorZipper :: AnchorZipper
 emptyAnchorZipper = AnchorZipper [] []
 
 data CartLineHandler = CartLineHandler {
-    _cartLineHandler_anchors :: AnchorZipper
+    _cartLineHandler_anchors      :: AnchorZipper
     , _cartLineHandler_undoFirst  :: Bool
     , _cartLineHandler_isCreation :: Bool
     , _cartLineHandler_active     :: Bool
@@ -56,7 +56,8 @@ instance PotatoHandler CartLineHandler where
             _cartLineHandler_active = True
           }
       }
-    -- if shift is held down, ignore inputs
+    -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
+    -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> undefined
     MouseDragState_Dragging -> undefined

@@ -164,7 +164,8 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Down | boxCreationType_isCreation _boxHandler_creation ->  Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
       }
-    -- if shift is held down, ignore inputs
+    -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
+    -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
       mmi = findFirstMouseManipulator rmd _potatoHandlerInput_selection

@@ -86,8 +86,6 @@ IGNORE-simple select compromise
 
 -delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
-
--offset cursor by 1 left for align right?
 -switch to use git submodules ffs
 
 -TINY TODO
@@ -112,14 +110,11 @@ IGNORE-simple select compromise
     -etc
   -switch to endo style folding in goatwidget so you don't need to use ignoreMouseUnlessFocused
 
--figur out why I wrote the comment -- if shift is held down, ignore inputs
-
-
 -text zipper
-  -fix cursor pos on right alignment D:
+  -fix cursor pos on right alignment D: (easy way to fix is just to offset right by 1)
   -text alignment UTs
   DONE😭-test with wide chars (in vty)
-  -put up PR :O
+  DONE-put up PR :O
 
 
 -params MVP
@@ -156,13 +151,9 @@ IGNORE-simple select compromise
 -new vty window stuff
   -MVP is some floating windows that modify something in base window
 
-DONE-layout
-  -make interface create layout with different tab events
-  -cleanup exported stuff in layout
-  DONE-consider making number of kids dynamic
-  DONE-tests for vty layout
-    -helper for reading Dynamics in test monad
-
+-consider adding second cursor type, "v" and "a" equivalent (probably ignore)
+-handlers should render as background fill color
+  -and to be even more awesome, you could render on top for when moving things is background I guess
 
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
@@ -247,6 +238,13 @@ DONE-layout
 
 
 
+DONE-figur out why I wrote the comment -- if shift is held down, ignore inputs
+DONE-layout
+  -make interface create layout with different tab events
+  -cleanup exported stuff in layout
+  DONE-consider making number of kids dynamic
+  DONE-tests for vty layout
+    -helper for reading Dynamics in test monad
 DONE-params MVP old
   DONE-do layout improvement in vty D:
   DONE-scan params and look for same stuff
