@@ -213,6 +213,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
+  , _goatWidgetConfig_bypassEvent :: Event t WSEvent
 }
 
 emptyGoatWidgetConfig :: (Reflex t) => GoatWidgetConfig t
@@ -603,6 +604,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
+      , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
       ]
 
     --initialize broadphase with initial state
