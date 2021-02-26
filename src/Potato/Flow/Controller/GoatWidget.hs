@@ -595,14 +595,16 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
     --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
-    goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
+    goatEvents = mergeList
       [ GoatCmdTool <$> _goatWidgetConfig_selectTool
       , GoatCmdLoad <$> _goatWidgetConfig_load
-      , GoatCmdMouse <$> _goatWidgetConfig_mouse
+
       , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
       , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
+
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
+      , GoatCmdMouse <$> _goatWidgetConfig_mouse
       ]
 
     --initialize broadphase with initial state
@@ -632,7 +634,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       }
 
   goatDyn :: Dynamic t GoatState
-    <- foldDyn foldGoatFn initialgoat goatEvent
+    <- foldDyn (\cmds gs -> foldr foldGoatFn gs (toList cmds)) initialgoat goatEvents
 
   -- TODO make sure holdUniqDyn actually does what you think it does
   -- I think it does, but it will prob still do full equality check after changes in goatDyn :(
