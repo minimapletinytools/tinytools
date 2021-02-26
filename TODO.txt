@@ -108,7 +108,8 @@ IGNORE-simple select compromise
     -background
     -text
     -etc
-  -switch to endo style folding in goatwidget so you don't need to use ignoreMouseUnlessFocused
+
+-make a set of Goat verifiers for testing in vty UTs
 
 -text zipper
   -fix cursor pos on right alignment D: (easy way to fix is just to offset right by 1)
@@ -133,6 +134,8 @@ IGNORE-simple select compromise
     -add padding to BoxText
 
 -do multiline stuff :D
+
+-switch to endo style folding in goatwidget so you don't need to use ignoreMouseUnlessFocused
 
 -hook up unicode width fn
   -add hook for it in renderer
