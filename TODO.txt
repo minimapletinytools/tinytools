@@ -108,6 +108,9 @@ IGNORE-simple select compromise
     -background
     -text
     -etc
+  -prep for testing
+    DONE-get rid of PFWidgetCtx and use specific instances
+    -write harness for testing Params, Tools, etc...
 
 -make a set of Goat verifiers for testing in vty UTs
 
@@ -132,6 +135,15 @@ IGNORE-simple select compromise
   -add BoxTitle
     -maybe left/right/center text
     -add padding to BoxText
+
+-proposal for adding modifiable context object to VtyWidgetCtx
+  -also takes config function to modify inside of pane or something
+
+-DisplayLineConfig
+  -Wrap Words
+  -Wrap Characters
+  -Overflow
+  -Clip
 
 -do multiline stuff :D
 
