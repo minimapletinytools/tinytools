@@ -142,12 +142,26 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
     then restrict8 dragDelta
     else dragDelta
 
-  controller = CTagBoundingBox :=> (Identity $ CBoundingBox {
-      _cBoundingBox_deltaBox = makeDeltaBox m boxRestrictedDelta
+  dbox = makeDeltaBox m boxRestrictedDelta
+
+  makeController (_,_,SEltLabel _ selt) dbox = cmd where
+    DeltaLBox tr (V2 dw dh) = dbox
+    mlbox = getSEltBox selt
+    -- do not allow negative boxes for now
+    modifieddbox = case mlbox of
+      Nothing -> dbox -- TODO we should really just remove from list of modified elts...
+      Just (LBox _ (V2 w h)) -> DeltaLBox tr (V2 (max 1 (w+dw)) (max 1 (h+dh)))
+
+    cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
+      -- TODO modify result so that it will not produce a negative box
+      _cBoundingBox_deltaBox = dbox
     })
 
-  op = WSEManipulate (undoFirst, IM.fromList (fmap (,controller) (toList . fmap fst3 $ selection)))
+  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (fst3 s, makeController s dbox)) (toList selection)))
 
+-- TODO split this handler in two handlers
+-- one for resizing selection (including boxes)
+-- and one exclusively for creating boxes
 instance Default BoxHandler where
   def = BoxHandler {
       _boxHandler_handle       = BH_BR -- does this matter?
