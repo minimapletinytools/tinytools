@@ -88,7 +88,7 @@ IGNORE-simple select compromise
 
 -delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
--switch to use git submodules ffs
+DONE-switch to use git submodules ffs
 
 -TINY TODO
   DONE-do keybord capture for params
@@ -117,6 +117,7 @@ IGNORE-simple select compromise
   -add rename support to layers
   -multi-line handler
   -block inverted squares (how to handle multi-select?)
+    -you broke it, fix pls
     -write a UT for this
   -still getting same source assert when dragging to/from layers/canvas
     -(write Ut for this)

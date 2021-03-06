@@ -147,14 +147,17 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   makeController (_,_,SEltLabel _ selt) dbox = cmd where
     DeltaLBox tr (V2 dw dh) = dbox
     mlbox = getSEltBox selt
+    -- ensures delta does not create negative box (does allow for 0 size boxes though)
+    clampDelta orig delta = - (min orig (-delta))
+    -- this version enforces 1 size boxes (orig box must be not be a 0 size box though, can we enforce this invariant?)
+    --clampDelta orig delta = - (min (orig-1) (-delta))
     -- do not allow negative boxes for now
     modifieddbox = case mlbox of
       Nothing -> dbox -- TODO we should really just remove from list of modified elts...
-      Just (LBox _ (V2 w h)) -> DeltaLBox tr (V2 (max 1 (w+dw)) (max 1 (h+dh)))
+      Just (LBox _ (V2 w h)) -> DeltaLBox tr (V2 (clampDelta w dw) (clampDelta h dh))
 
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
-      -- TODO modify result so that it will not produce a negative box
-      _cBoundingBox_deltaBox = dbox
+      _cBoundingBox_deltaBox = modifieddbox
     })
 
   op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (fst3 s, makeController s dbox)) (toList selection)))
