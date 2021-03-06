@@ -246,7 +246,9 @@ test_negative = constructTest "negative" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , Combine [
           firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
-            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 (-10) (-10))
+            -- old non-canonical version, keeping here in case we ever decide to go back to non-canonical version
+            --SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 (-10) (-10))
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 0 0) (V2 (10) (10))
             _                           -> False
           , numSelectedEltsEqualPredicate 1
           , checkHandlerNameAndState handlerName_boxText False

@@ -1,3 +1,5 @@
+
+----------
 stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
@@ -111,6 +113,11 @@ IGNORE-simple select compromise
   -prep for testing
     DONE-get rid of PFWidgetCtx and use specific instances
     -write harness for testing Params, Tools, etc...
+  -add character to handlers and show highlighted text
+  -add rename support to layers
+  -multi-line handler
+  -block inverted squares (how to handle multi-select?)
+  -still getting same source assert when dragging to/from layers/canvas
 
 -make a set of Goat verifiers for testing in vty UTs
 

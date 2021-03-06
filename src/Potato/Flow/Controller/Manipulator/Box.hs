@@ -187,7 +187,7 @@ instance PotatoHandler BoxHandler where
       --boxRestrictedDelta = if shiftClick then restrict8 dragDelta else dragDelta
 
       boxToAdd = def {
-          _sBox_box     = LBox _mouseDrag_from dragDelta
+          _sBox_box     = canonicalLBox_from_lBox_ $ LBox _mouseDrag_from dragDelta
           , _sBox_boxType  = if _boxHandler_creation == BoxCreationType_Text
             then SBoxType_BoxText -- TODO pull from params
             else SBoxType_Box
