@@ -80,6 +80,7 @@ everything_network_app pfs (AppIn _ ev) = do
       , _goatWidgetConfig_canvasSize = fforMaybe ev $ \case
         EWCCanvasResize x -> Just x
         _ -> Nothing
+      , _goatWidgetConfig_bypassEvent = never
 
     }
   everythingWidget <- holdGoatWidget ewc
