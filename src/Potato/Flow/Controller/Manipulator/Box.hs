@@ -144,7 +144,8 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 
   dbox = makeDeltaBox m boxRestrictedDelta
 
-  makeController (_,_,SEltLabel _ selt) dbox = cmd where
+  -- TODO STILL BROKEN ;__; only works if yo uscale from BR oops
+  makeControllerNoNeg (_,_,SEltLabel _ selt) dbox = cmd where
     DeltaLBox tr (V2 dw dh) = dbox
     mlbox = getSEltBox selt
     -- ensures delta does not create negative box (does allow for 0 size boxes though)
@@ -158,6 +159,11 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = modifieddbox
+    })
+
+  makeController (_,_,SEltLabel _ selt) dbox = cmd where
+    cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
+      _cBoundingBox_deltaBox = dbox
     })
 
   op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (fst3 s, makeController s dbox)) (toList selection)))
