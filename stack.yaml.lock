@@ -96,17 +96,6 @@ packages:
   original:
     hackage: these-1.0.1@sha256:58dba2446b57dde711c5e7f63910d18bc28b9a5831a89772986bb184a3e7851b,3266
 - completed:
-    size: 11213
-    url: https://github.com/pdlla/reflex-test-host/archive/8b12d1963162dda636afac0551768d2e00f34c8a.tar.gz
-    name: reflex-test-host
-    version: 0.1.2.1
-    sha256: c7c545207c50b509426c02a2842bc39d54d62cd0e0fe54bf57ce07d46fc65e1a
-    pantry-tree:
-      size: 818
-      sha256: 1bb43fdf8af8dc2430dafd40f38e4ba0d3408b134ee47ce9ffba60fab41869b4
-  original:
-    url: https://github.com/pdlla/reflex-test-host/archive/8b12d1963162dda636afac0551768d2e00f34c8a.tar.gz
-- completed:
     size: 19369
     url: https://github.com/pdlla/reflex-dynamic-containers/archive/607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba.tar.gz
     name: reflex-dynamic-containers
@@ -117,17 +106,6 @@ packages:
       sha256: f5e5aa7bfcae190d2a9dad0ed2ac6f7bd4e1f3cf2e887ab73c793b2e3a18c609
   original:
     url: https://github.com/pdlla/reflex-dynamic-containers/archive/607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba.tar.gz
-- completed:
-    size: 10503
-    url: https://github.com/pdlla/reflex-potatoes/archive/ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5.tar.gz
-    name: reflex-potatoes
-    version: 0.1.0.0
-    sha256: d8cf99ad67fd7f87dea783bf50b647192aa3aec411431e0f12a747de5eb5f804
-    pantry-tree:
-      size: 683
-      sha256: a2ecdb2122ec11105216c97ecdf7e0f939cd3f4aec93cea2300b197b2e89d7b8
-  original:
-    url: https://github.com/pdlla/reflex-potatoes/archive/ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5.tar.gz
 snapshots:
 - completed:
     size: 533252

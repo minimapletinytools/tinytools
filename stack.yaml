@@ -65,7 +65,7 @@ extra-deps:
 - github: pdlla/reflex-dynamic-containers
   commit: 607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba
 - github: pdlla/reflex-potatoes
-  commit: c21674d06c3dacc8b9a41cd7ba7dc71d4e315205
+  commit: c7a77eafa2212de4b36fa351cdb18852a42e5d2b
 
 # TODO CAN DELETE
 # needed for vty
