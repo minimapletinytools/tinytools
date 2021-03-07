@@ -61,11 +61,11 @@ extra-deps:
 # - bimap-0.3.3@sha256:232518c0410990665b9c8677eb9318ee355c001d58945ddcbedec3baa30b4160,1475
 
 - github: pdlla/reflex-test-host
-  commit: 8b12d1963162dda636afac0551768d2e00f34c8a
+  commit: ab29da3af975a37b96964a10d4877588773cabb6
 - github: pdlla/reflex-dynamic-containers
   commit: 607cf12fe2b0df1eb3bf3ccdc49e62744cba95ba
 - github: pdlla/reflex-potatoes
-  commit: ca25ecfcf6a651f7ee91f4c278ac8035fd48d9a5
+  commit: c21674d06c3dacc8b9a41cd7ba7dc71d4e315205
 
 # TODO CAN DELETE
 # needed for vty

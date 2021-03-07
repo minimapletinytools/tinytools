@@ -596,7 +596,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
     --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
-    goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
+    goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
       [ GoatCmdTool <$> _goatWidgetConfig_selectTool
       , GoatCmdLoad <$> _goatWidgetConfig_load
       , GoatCmdMouse <$> _goatWidgetConfig_mouse
