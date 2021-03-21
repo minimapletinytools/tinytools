@@ -21,6 +21,9 @@ data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt derivi
 -- TODO no owl prefix prob
 type SemiPos = Int
 
+topOwlParent :: REltId
+topOwlParent = -1
+
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId
   , _owlEltMeta_depth :: Int
@@ -41,14 +44,18 @@ superOwl_id f sowl = fmap (\rid -> sowl { _superOwl_id = rid }) (f (_superOwl_id
 
 -- TODO rest of lenses
 
-
 superOwl_isTopOwl :: SuperOwl -> Bool
 superOwl_isTopOwl SuperOwl {..} = _owlEltMeta_depth _superOwl_meta == 0
+
+-- | same as superOwl_isTopOwl except checks all conditions, intended to be used in asserts
+superOwl_isTopOwlSurely :: SuperOwl -> Bool
+superOwl_isTopOwlSurely SuperOwl {..}  = _owlEltMeta_depth _superOwl_meta == 0 &&_owlEltMeta_parent _superOwl_meta == topOwlParent
 
 data OwlDirectory = OwlDirectory {
   _owlDirectory_directory :: REltIdMap (OwlEltMeta, OwlElt)
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
+
 
 emptyDirectory :: OwlDirectory
 emptyDirectory = OwlDirectory {
@@ -72,6 +79,9 @@ owlDirectory_topSuperOwls od = r where
   areOwlsInFactSuper = all superOwl_isTopOwl sowls
   r = assert areOwlsInFactSuper sowls
 
+--owlDirectory_numberOwls :: OwlDirectory -> Int
+--owlDirectory_numberOwls
+
 -- TODO
 -- | iterates an element and all its children
 owliterateat :: OwlDirectory -> REltId -> Seq SuperOwl
@@ -92,40 +102,46 @@ owlDirectory_addSuperOwl OwlDirectory{..} sowl@SuperOwl {..} = assert (superOwl_
       , _owlDirectory_topOwls = _owlDirectory_topOwls |> _superOwl_id
     }
 
--- TODO
-{-
+-- | use to convert old style layers to Owl
 addUntilFolderEndRecursive ::
   REltIdMap SEltLabel
   -> Seq REltId
   -> LayerPos -- ^ current layer position we are adding
-  -> [LayerEntry] -- ^ accumulator
-  -> (LayerPos, [LayerEntry]) -- ^ (next lp, accumulator)
-addUntilFolderEndRecursive directory layers lp added = let
-    rid = Seq.index _pFState_layers lp
-    seltl =  _pFState_directory IM.! rid
-    sseltl = (rid, lp, seltl)
-    selfEntry = eltfn sseltl parent
-    combined = if skip then added else selfEntry:added
-  in if lp >= Seq.length _pFState_layers
+  -> REltId -- ^ parent
+  -> Int -- ^ depth
+  -> REltIdMap (OwlEltMeta, OwlElt) -- ^ accumulated directory
+  -> Seq REltId -- ^ accumulated children at current level
+  -> (LayerPos, REltIdMap (OwlEltMeta, OwlElt), Seq REltId) -- ^ (next lp, accumulated directory, children of current level)
+addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings = let
+    recurfn = addUntilFolderEndRecursive oldDir oldLayers
+    -- the elt we want to add
+    rid = Seq.index oldLayers lp
+    SEltLabel name selt =  oldDir IM.! rid
+    selfMeta = OwlEltMeta parent depth (Seq.length accSiblings)
+    newSiblings = accSiblings |> rid
+  in if lp >= Seq.length oldLayers
     -- this means we've reached the end of layers, nothing to do
-    then (lp+1, added)
+    then (lp+1, accDir, accSiblings)
     -- normal case
-    else case seltl of
-      SEltLabel _ SEltFolderStart -> if not skip && skipfn (lookupWithDefault rid lmm)
-          -- recurse through children (skipping) and the continue where it left off
-          then uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn True (Just selfEntry) (lp+1) combined
-          -- recurse through children (possibly skipping), and then continue where it left off
-          else uncurry (addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent) $ addUntilFolderEndRecursive pfs lmm skipfn eltfn skip (Just selfEntry) (lp+1) combined
-      -- we're done!
-      SEltLabel _ SEltFolderEnd -> (lp+1, added)
+    else case selt of
+      SEltFolderStart -> r where
+          (lp', accDir', accSiblings') = recurfn (lp+1) rid (depth+1) accDir Seq.empty
+          selfOwl = OwlEltFolder (OwlInfo name) accSiblings'
+          r = recurfn (lp'+1) parent depth (IM.insert rid (selfMeta, selfOwl) accDir) newSiblings
+      -- we're done! throw out this elt
+      SEltFolderEnd -> (lp+1, accDir, accSiblings)
       -- nothing special, keep going
-      _ ->addUntilFolderEndRecursive pfs lmm skipfn eltfn skip parent (lp+1) combined
+      _ -> recurfn (lp+1) parent depth (IM.insert rid (selfMeta, OwlEltSElt (OwlInfo name) selt) accDir) newSiblings
 
 
 owlDirectory_fromOldState :: REltIdMap SEltLabel -> Seq REltId -> OwlDirectory
-owlDirectory_fromOldState directory layers = r where
-  r = undefined
--}
+owlDirectory_fromOldState oldDir oldLayers = r where
+  (_, newDir, topOwls) = addUntilFolderEndRecursive oldDir oldLayers 0 topOwlParent 0 IM.empty Seq.empty
+  r = OwlDirectory {
+      _owlDirectory_directory = newDir
+      , _owlDirectory_topOwls = topOwls
+    }
+
 
 --type SuperOwl = (REltId, OwlEltMeta, OwlElt)
 
