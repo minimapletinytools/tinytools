@@ -169,6 +169,7 @@ pfc_addRelative_to_newElts pfs (lp, stree) = assert validScope $ r where
 ------ update functions via commands
 -- TODO rename to WSEvent
 data WSEvent =
+  -- CHANGE TODO FIGURE IT OUT
   WSEAddElt (Bool, (LayerPos, SEltLabel))
   | WSEAddRelative (LayerPos, SEltTree)
   | WSEAddFolder (LayerPos, Text)

@@ -11,9 +11,12 @@ import           Control.Exception (assert)
 import qualified Data.IntMap       as IM
 import           Data.Sequence     ((|>))
 import qualified Data.Sequence     as Seq
+import Data.Foldable (foldl)
 import Data.Maybe (fromJust)
+import qualified Data.Text as T
 
 
+-- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
@@ -56,7 +59,6 @@ data OwlDirectory = OwlDirectory {
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
 
-
 emptyDirectory :: OwlDirectory
 emptyDirectory = OwlDirectory {
     _owlDirectory_directory = IM.empty
@@ -79,8 +81,28 @@ owlDirectory_topSuperOwls od = r where
   areOwlsInFactSuper = all superOwl_isTopOwl sowls
   r = assert areOwlsInFactSuper sowls
 
---owlDirectory_numberOwls :: OwlDirectory -> Int
---owlDirectory_numberOwls
+owlDirectory_fold :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> a
+owlDirectory_fold f acc0 od = r where
+  foldlOwlElt acc sowl = case _superOwl_elt sowl of
+    OwlEltFolder _ children -> foldl (\acc' rid' -> foldlOwlElt acc' (owlDirectory_mustFindSuperOwl rid' od)) (f acc sowl) children
+    _ -> f acc sowl
+  r = foldl (\acc rid -> foldlOwlElt acc (owlDirectory_mustFindSuperOwl rid od)) acc0 $ _owlDirectory_topOwls od
+
+owlDirectory_owlCount :: OwlDirectory -> Int
+owlDirectory_owlCount od = owlDirectory_fold (\acc _ -> acc+1) 0 od
+
+owlDirectory_prettyPrint :: OwlDirectory -> [Text]
+owlDirectory_prettyPrint od = reverse $ owlDirectory_fold f [] od where
+  f acc (SuperOwl rid OwlEltMeta {..} oelt) = r:acc where
+    -- TODO make helper for this
+    name = case oelt of
+      OwlEltFolder (OwlInfo name) _ -> name
+      OwlEltSElt (OwlInfo name) _ -> name
+    depth = _owlEltMeta_depth
+    r = T.replicate depth "  " <> show rid <> " " <> name
+
+
+
 
 -- TODO
 -- | iterates an element and all its children
@@ -127,7 +149,7 @@ addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings =
       SEltFolderStart -> r where
           (lp', accDir', accSiblings') = recurfn (lp+1) rid (depth+1) accDir Seq.empty
           selfOwl = OwlEltFolder (OwlInfo name) accSiblings'
-          r = recurfn (lp'+1) parent depth (IM.insert rid (selfMeta, selfOwl) accDir) newSiblings
+          r = recurfn lp' parent depth (IM.insert rid (selfMeta, selfOwl) accDir') newSiblings
       -- we're done! throw out this elt
       SEltFolderEnd -> (lp+1, accDir, accSiblings)
       -- nothing special, keep going

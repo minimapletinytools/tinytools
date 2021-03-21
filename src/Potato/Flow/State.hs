@@ -139,6 +139,7 @@ pfState_layerPos_to_superSEltLabel PFState {..} lp = (rid, lp, seltl) where
 pFState_to_superSEltLabelSeq :: PFState -> Seq SuperSEltLabel
 pFState_to_superSEltLabelSeq PFState {..} = Seq.mapWithIndex (\lp rid -> (rid, lp, fromJust $ IM.lookup rid _pFState_directory)) $ _pFState_layers
 
+-- CHANGE [SuperOwl] -> PFState -> (PFState, SEltLabelChanges)
 do_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_newElts seltls PFState {..} = (r, fmap Just changes) where
   poss = map (\(x,y,_) -> (y,x)) seltls
@@ -148,6 +149,7 @@ do_newElts seltls PFState {..} = (r, fmap Just changes) where
   newDir = changes `IM.union` _pFState_directory
   r = PFState newLayers newDir _pFState_canvas
 
+-- CHANGE [SuperOwl] -> PFState -> (PFState, SEltLabelChanges)
 undo_newElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 undo_newElts seltls PFState {..} = (r, changes) where
   poss = map (\(_,y,_) -> y) seltls
@@ -157,12 +159,18 @@ undo_newElts seltls PFState {..} = (r, changes) where
   r = PFState newLayers newDir _pFState_canvas
   changes = IM.fromList $ map (\(x,y)->(x,Nothing)) els
 
+-- CHANGE [SuperOwl] -> PFState -> (PFState, SEltLabelChanges)
 do_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 do_deleteElts = undo_newElts
 
+-- CHANGE [SuperOwl] -> PFState -> (PFState, SEltLabelChanges)
 undo_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)
 undo_deleteElts = do_newElts
 
+--
+-- CHANGE
+-- | (list of parents (assert no repeats), target (placed after or as first child if top owl (no parent)))
+--do_move :: ([REltId], Maybe REltId) -> PFState  -> (PFState, SEltLabelChanges)
 -- TODO assert selection has all children
 do_move :: ([LayerPos], LayerPos) -> PFState -> (PFState, SEltLabelChanges)
 do_move (lps, dst) pfs@PFState {..} = assert (pFState_selectionIsValid pfs lps) (r, changes) where

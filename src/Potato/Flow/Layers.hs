@@ -1,3 +1,5 @@
+-- DEPRECATED, we will switch to Owl :O
+
 module Potato.Flow.Layers (
   reindexSEltLayerPosForRemoval
   , reindexSEltLayerPosForInsertion
