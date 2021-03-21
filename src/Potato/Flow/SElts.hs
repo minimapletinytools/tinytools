@@ -292,7 +292,7 @@ instance ToJSON STextArea
 instance Binary STextArea
 instance NFData STextArea
 
--- TODO consider changing this to DSum? Nah probably not, just asking for trouble for making pattern matching not actually any simpler
+-- TODO consider removing Folder
 data SElt =
   SEltNone
   | SEltFolderStart
@@ -307,6 +307,7 @@ instance ToJSON SElt
 instance Binary SElt
 instance NFData SElt
 
+-- TODO consider removing this all together and serializing Owl stuff directly
 data SEltLabel = SEltLabel {
  _sEltLabel_name   :: Text
  , _sEltLabel_sElt :: SElt

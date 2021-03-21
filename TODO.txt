@@ -37,6 +37,19 @@ stack test --test-arguments='--match "BoxText"' --file-watch
 
 ---------------
 
+::3/7/2021 layers::
+
+data LayerElt = LayerEltFolder Text (Seq LayerElt) | LayerEltSElt Text SElt
+
+-- may need true position within peers
+SemiPos = Int
+
+LayerEltRef = (REltId, LayerDepth, SemiPos) -- parent, depth in tree, relposition
+
+REltIdMap (LayerEltRef, SEltLabel)
+
+
+
 ::1/6/2020 windows spec::
 
 -drag from one window to another?
