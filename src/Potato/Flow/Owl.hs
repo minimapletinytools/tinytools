@@ -81,12 +81,16 @@ owlDirectory_topSuperOwls od = r where
   areOwlsInFactSuper = all superOwl_isTopOwl sowls
   r = assert areOwlsInFactSuper sowls
 
+owlDirectory_foldAt' :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> SuperOwl -> a
+owlDirectory_foldAt' f acc od sowl = case _superOwl_elt sowl of
+  OwlEltFolder _ children -> foldl (\acc' rid' -> owlDirectory_foldAt' f acc' od (owlDirectory_mustFindSuperOwl rid' od)) (f acc sowl) children
+  _ -> f acc sowl
+
+owlDirectory_foldAt :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> REltId -> a
+owlDirectory_foldAt f acc od rid = owlDirectory_foldAt' f acc od (owlDirectory_mustFindSuperOwl rid od)
+
 owlDirectory_fold :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> a
-owlDirectory_fold f acc0 od = r where
-  foldlOwlElt acc sowl = case _superOwl_elt sowl of
-    OwlEltFolder _ children -> foldl (\acc' rid' -> foldlOwlElt acc' (owlDirectory_mustFindSuperOwl rid' od)) (f acc sowl) children
-    _ -> f acc sowl
-  r = foldl (\acc rid -> foldlOwlElt acc (owlDirectory_mustFindSuperOwl rid od)) acc0 $ _owlDirectory_topOwls od
+owlDirectory_fold f acc0 od = foldl (\acc rid -> owlDirectory_foldAt f acc od rid) acc0 $ _owlDirectory_topOwls od
 
 owlDirectory_owlCount :: OwlDirectory -> Int
 owlDirectory_owlCount od = owlDirectory_fold (\acc _ -> acc+1) 0 od
@@ -102,16 +106,13 @@ owlDirectory_prettyPrint od = reverse $ owlDirectory_fold f [] od where
     r = T.replicate depth "  " <> show rid <> " " <> name
 
 
-
-
--- TODO
 -- | iterates an element and all its children
 owliterateat :: OwlDirectory -> REltId -> Seq SuperOwl
-owliterateat = undefined
+owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 
--- | iterates everything inthe directory
+-- | iterates everything in the directory
 owliterateall :: OwlDirectory -> Seq SuperOwl
-owliterateall od = join $ fmap (owliterateat od) (_owlDirectory_topOwls od)
+owliterateall od = owlDirectory_fold (|>) Seq.empty od
 
 -- TODO need rel position to insert at I guess
 owlDirectory_addSuperOwl :: OwlDirectory -> SuperOwl -> OwlDirectory
