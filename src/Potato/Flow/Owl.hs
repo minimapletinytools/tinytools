@@ -9,7 +9,7 @@ import           Potato.Flow.SElts
 
 import           Control.Exception (assert)
 import qualified Data.IntMap       as IM
-import           Data.Sequence     ((|>))
+import           Data.Sequence     ((|>), (><))
 import qualified Data.Sequence     as Seq
 import Data.Foldable (foldl)
 import Data.Maybe (fromJust)
@@ -21,25 +21,57 @@ data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 
--- TODO no owl prefix prob
+type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
+
+owlElt_name :: OwlElt -> Text
+owlElt_name (OwlEltFolder (OwlInfo name) _) = name
+owlElt_name (OwlEltSElt (OwlInfo name) _) = name
+
+-- TODO decide if we want some relative position index or if we just want to use true index (and recompute on move/add/delete)
 type SemiPos = Int
 
-topOwlParent :: REltId
-topOwlParent = -1
+-- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
+locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
+locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
+
+owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
+owlMappingSemiPosLookup om rid = case IM.lookup rid om of
+  Nothing -> error $ "expected to find rid " <> show rid
+  Just (oem,_) -> _owlEltMeta_relPosition oem
+
+locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
+locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
+
+-- in this case, we remove only if there is an exact match
+removeAtSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Seq a
+removeAtSemiPos f s sp = r where
+  (front, back) = Seq.breakl (\a -> f a == sp) s
+  r = front >< Seq.drop 1 back
+
+removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
+removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
+  sp = _owlEltMeta_relPosition . _superOwl_meta $ so
+  r = removeAtSemiPos (owlMappingSemiPosLookup om) s sp
+
 
 data OwlEltMeta = OwlEltMeta {
-  _owlEltMeta_parent :: REltId
+  _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
   , _owlEltMeta_depth :: Int
   , _owlEltMeta_relPosition :: SemiPos
 } deriving (Show, Generic)
 
+-- a simpler version of OwlEltMeta used for inserting new Owls
+data OwlSpot = OwlSpot {
+  _owlSpot_parent :: REltId
+  -- TODO is this what we want?
+  , _owlSpot_leftSibling :: REltId
+} deriving (Show, Generic)
 
 data SuperOwl = SuperOwl {
   _superOwl_id :: REltId
   , _superOwl_meta :: OwlEltMeta
   , _superOwl_elt :: OwlElt
 } deriving (Show, Generic)
-
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl
@@ -52,12 +84,42 @@ superOwl_isTopOwl SuperOwl {..} = _owlEltMeta_depth _superOwl_meta == 0
 
 -- | same as superOwl_isTopOwl except checks all conditions, intended to be used in asserts
 superOwl_isTopOwlSurely :: SuperOwl -> Bool
-superOwl_isTopOwlSurely SuperOwl {..}  = _owlEltMeta_depth _superOwl_meta == 0 &&_owlEltMeta_parent _superOwl_meta == topOwlParent
+superOwl_isTopOwlSurely SuperOwl {..}  = _owlEltMeta_depth _superOwl_meta == 0 &&_owlEltMeta_parent _superOwl_meta == noOwl
 
+noOwl :: REltId
+noOwl = -1
+
+-- if parent is selected, then so are all its kiddos
+newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId }
+newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl }
+
+-- TODO
+owlSuperParliament_isValid :: SuperOwlParliament -> Bool
+owlSuperParliament_isValid (SuperOwlParliament owls) = undefined
+
+-- ???
+--makeSuperOwlParliament :: [REltId] -> SuperOwlParliament
+
+-- TODO rename to OwlTree
 data OwlDirectory = OwlDirectory {
-  _owlDirectory_directory :: REltIdMap (OwlEltMeta, OwlElt)
+  -- TODO rename to mapping
+  _owlDirectory_directory :: OwlMapping
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
+
+-- reorganize the children of the given parent
+-- i.e. update their relPosition in the directory
+reorgChildren :: OwlDirectory -> REltId -> OwlDirectory
+reorgChildren od prid = od { _owlDirectory_directory = om } where
+  childrenToUpdate = case prid of
+    -1 -> _owlDirectory_topOwls od
+    _ -> case IM.lookup prid (_owlDirectory_directory od) of
+      Just (_, OwlEltFolder _ children) -> children
+      Just _ -> Seq.empty
+      Nothing -> error $ "expected to find parent with REltId " <> show prid
+  setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
+  om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlDirectory_directory od) childrenToUpdate
+
 
 emptyDirectory :: OwlDirectory
 emptyDirectory = OwlDirectory {
@@ -72,7 +134,7 @@ owlDirectory_findSuperOwl rid OwlDirectory {..} = do
 
 owlDirectory_mustFindSuperOwl :: REltId -> OwlDirectory -> SuperOwl
 owlDirectory_mustFindSuperOwl rid od = fromJust $ owlDirectory_findSuperOwl rid od
--- inlining... hope this will tell me where caller came from when fromJust fails
+-- inlining... hope this will tell me where caller came from when fromJust fails.. I don't think it works...
 {-# INLINE owlDirectory_mustFindSuperOwl #-}
 
 owlDirectory_topSuperOwls :: OwlDirectory -> Seq SuperOwl
@@ -114,14 +176,33 @@ owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 owliterateall :: OwlDirectory -> Seq SuperOwl
 owliterateall od = owlDirectory_fold (|>) Seq.empty od
 
+owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
+owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
+  -- TODO finish
+  newDirectory = undefined
+  newTopOwls = if superOwl_isTopOwl sowl
+    then _owlDirectory_topOwls -- TODO
+    else _owlDirectory_topOwls -- TODO we also need to remove from parent
+  r = OwlDirectory {
+      _owlDirectory_directory = newDirectory
+      , _owlDirectory_topOwls = newTopOwls
+    }
+
+-- TODO
+owlDirectory_moveSuperOwl :: SuperOwl -> OwlSpot -> OwlDirectory -> OwlDirectory
+owlDirectory_moveSuperOwl = undefined
+
 -- TODO need rel position to insert at I guess
-owlDirectory_addSuperOwl :: OwlDirectory -> SuperOwl -> OwlDirectory
-owlDirectory_addSuperOwl OwlDirectory{..} sowl@SuperOwl {..} = assert (superOwl_isTopOwl sowl) r where
+-- TODO SuperOwl probably the wrong type
+owlDirectory_addSuperOwl :: OwlSpot -> SuperOwl -> OwlDirectory -> OwlDirectory
+owlDirectory_addSuperOwl OwlSpot{..} sowl@SuperOwl {..} OwlDirectory{..} = assert (superOwl_isTopOwl sowl) r where
   newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_directory
   --newDirectoryNoAssert = IM.insert _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_directory
   r = OwlDirectory {
       _owlDirectory_directory = newDirectory
       -- TODO insert at provided position
+      -- if sibling is Nothing then insert at 0 position otherwise find the sibling owl
+      -- then figure out sibling owl index (binary search on rel pos) OR just use actual position you know..
       , _owlDirectory_topOwls = _owlDirectory_topOwls |> _superOwl_id
     }
 
@@ -159,30 +240,8 @@ addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings =
 
 owlDirectory_fromOldState :: REltIdMap SEltLabel -> Seq REltId -> OwlDirectory
 owlDirectory_fromOldState oldDir oldLayers = r where
-  (_, newDir, topOwls) = addUntilFolderEndRecursive oldDir oldLayers 0 topOwlParent 0 IM.empty Seq.empty
+  (_, newDir, topOwls) = addUntilFolderEndRecursive oldDir oldLayers 0 noOwl 0 IM.empty Seq.empty
   r = OwlDirectory {
       _owlDirectory_directory = newDir
       , _owlDirectory_topOwls = topOwls
     }
-
-
---type SuperOwl = (REltId, OwlEltMeta, OwlElt)
-
---type OwlDirectory = REltIdMap (OwlEltMeta, OwlElt)
-
---emptyDirectory :: OwlDirectory
---emptyDirectory = IM.singleton (topOwlId, OwlEltFolder (OwlInfo "top owl") Seq.empty)
-
-
--- | get the top owl
--- every OwlDirectory is expected to have a topOwl, fails if no topOwl
---topOwl :: OwlDirectory ->
--- top owl
--- you can either have dummy REltId 0 node in tree OR you can carry around a list of all top level owls with the directory
--- prob way easier to do it the first way...
-
-
-toSElt :: OwlElt -> SElt
-toSElt = undefined
-
---getChildren :: OwlElt -> Seq

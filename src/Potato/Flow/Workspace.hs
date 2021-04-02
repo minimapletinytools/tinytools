@@ -170,6 +170,14 @@ pfc_addRelative_to_newElts pfs (lp, stree) = assert validScope $ r where
 -- TODO rename to WSEvent
 data WSEvent =
   -- CHANGE TODO FIGURE IT OUT
+  --WSEAddElt (Bool, OwlSpot, OwlElt)
+  -- | WSEAddRelative (OwlSpot, Seq OwlElt)
+  -- | WSEAddFolder (OwlSpot, Text)
+  -- | WSERemoveElt [REltId] -- removed kiddos get adopted by grandparents or w/e?
+  -- | WSEMoveElt (OwlSpot, [REltId]) -- also moves kiddos?
+  -- | WSEDuplicate [REltId] -- kiddos get duplicated??
+
+
   WSEAddElt (Bool, (LayerPos, SEltLabel))
   | WSEAddRelative (LayerPos, SEltTree)
   | WSEAddFolder (LayerPos, Text)
