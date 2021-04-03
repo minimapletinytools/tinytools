@@ -30,24 +30,29 @@ owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 -- TODO decide if we want some relative position index or if we just want to use true index (and recompute on move/add/delete)
 type SemiPos = Int
 
+-- TODO test
 -- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
 locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
 locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
 
+-- TODO test
 owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
 owlMappingSemiPosLookup om rid = case IM.lookup rid om of
   Nothing -> error $ "expected to find rid " <> show rid
   Just (oem,_) -> _owlEltMeta_relPosition oem
 
+-- TODO test
 locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
 locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
 
+-- TODO test
 -- in this case, we remove only if there is an exact match
 removeAtSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Seq a
 removeAtSemiPos f s sp = r where
   (front, back) = Seq.breakl (\a -> f a == sp) s
   r = front >< Seq.drop 1 back
 
+-- TODO test
 removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
 removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
   sp = _owlEltMeta_relPosition . _superOwl_meta $ so
@@ -103,33 +108,33 @@ owlSuperParliament_isValid (SuperOwlParliament owls) = undefined
 -- TODO rename to OwlTree
 data OwlDirectory = OwlDirectory {
   -- TODO rename to mapping
-  _owlDirectory_directory :: OwlMapping
+  _owlDirectory_mapping :: OwlMapping
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
 
 -- reorganize the children of the given parent
 -- i.e. update their relPosition in the directory
 reorgChildren :: OwlDirectory -> REltId -> OwlDirectory
-reorgChildren od prid = od { _owlDirectory_directory = om } where
+reorgChildren od prid = od { _owlDirectory_mapping = om } where
   childrenToUpdate = case prid of
-    -1 -> _owlDirectory_topOwls od
-    _ -> case IM.lookup prid (_owlDirectory_directory od) of
+    x | x == noOwl -> _owlDirectory_topOwls od
+    _ -> case IM.lookup prid (_owlDirectory_mapping od) of
       Just (_, OwlEltFolder _ children) -> children
       Just _ -> Seq.empty
       Nothing -> error $ "expected to find parent with REltId " <> show prid
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
-  om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlDirectory_directory od) childrenToUpdate
+  om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlDirectory_mapping od) childrenToUpdate
 
 
 emptyDirectory :: OwlDirectory
 emptyDirectory = OwlDirectory {
-    _owlDirectory_directory = IM.empty
+    _owlDirectory_mapping = IM.empty
     , _owlDirectory_topOwls = Seq.empty
   }
 
 owlDirectory_findSuperOwl :: REltId -> OwlDirectory -> Maybe SuperOwl
 owlDirectory_findSuperOwl rid OwlDirectory {..} = do
-  (meta, elt) <- IM.lookup rid _owlDirectory_directory
+  (meta, elt) <- IM.lookup rid _owlDirectory_mapping
   return $ SuperOwl rid meta elt
 
 owlDirectory_mustFindSuperOwl :: REltId -> OwlDirectory -> SuperOwl
@@ -176,15 +181,22 @@ owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 owliterateall :: OwlDirectory -> Seq SuperOwl
 owliterateall od = owlDirectory_fold (|>) Seq.empty od
 
+-- TODO test
 owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
 owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
-  -- TODO finish
-  newDirectory = undefined
+  relPosToRemove = _owlEltMeta_relPosition _superOwl_meta
+  removeChildFn parent = case parent of
+    (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlDirectory_mapping children sowl))
+    _ -> error "expected parent to be a folder"
+  newMapping' = IM.delete _superOwl_id _owlDirectory_mapping
+  newMapping = case _superOwl_id of
+    x | x == noOwl -> newMapping'
+    rid -> IM.adjust removeChildFn rid newMapping'
   newTopOwls = if superOwl_isTopOwl sowl
-    then _owlDirectory_topOwls -- TODO
-    else _owlDirectory_topOwls -- TODO we also need to remove from parent
+    then removeSuperOwlFromSeq _owlDirectory_mapping _owlDirectory_topOwls sowl
+    else _owlDirectory_topOwls
   r = OwlDirectory {
-      _owlDirectory_directory = newDirectory
+      _owlDirectory_mapping = newMapping
       , _owlDirectory_topOwls = newTopOwls
     }
 
@@ -196,10 +208,10 @@ owlDirectory_moveSuperOwl = undefined
 -- TODO SuperOwl probably the wrong type
 owlDirectory_addSuperOwl :: OwlSpot -> SuperOwl -> OwlDirectory -> OwlDirectory
 owlDirectory_addSuperOwl OwlSpot{..} sowl@SuperOwl {..} OwlDirectory{..} = assert (superOwl_isTopOwl sowl) r where
-  newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_directory
-  --newDirectoryNoAssert = IM.insert _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_directory
+  newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_mapping
+  --newDirectoryNoAssert = IM.insert _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_mapping
   r = OwlDirectory {
-      _owlDirectory_directory = newDirectory
+      _owlDirectory_mapping = newDirectory
       -- TODO insert at provided position
       -- if sibling is Nothing then insert at 0 position otherwise find the sibling owl
       -- then figure out sibling owl index (binary search on rel pos) OR just use actual position you know..
@@ -242,6 +254,6 @@ owlDirectory_fromOldState :: REltIdMap SEltLabel -> Seq REltId -> OwlDirectory
 owlDirectory_fromOldState oldDir oldLayers = r where
   (_, newDir, topOwls) = addUntilFolderEndRecursive oldDir oldLayers 0 noOwl 0 IM.empty Seq.empty
   r = OwlDirectory {
-      _owlDirectory_directory = newDir
+      _owlDirectory_mapping = newDir
       , _owlDirectory_topOwls = topOwls
     }
