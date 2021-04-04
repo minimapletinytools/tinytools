@@ -19,6 +19,7 @@ import qualified Data.Text as T
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
+--data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
@@ -36,6 +37,7 @@ locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
 locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
 
 -- TODO test
+-- TODO make an owlDirectory method?
 owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
 owlMappingSemiPosLookup om rid = case IM.lookup rid om of
   Nothing -> error $ "expected to find rid " <> show rid
@@ -53,11 +55,22 @@ removeAtSemiPos f s sp = r where
   r = front >< Seq.drop 1 back
 
 -- TODO test
+-- TODO make an owlDirectory method?
 removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
 removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
   sp = _owlEltMeta_relPosition . _superOwl_meta $ so
   r = removeAtSemiPos (owlMappingSemiPosLookup om) s sp
 
+-- TODO make an owlDirectoryMethod?
+isChildOf :: OwlMapping -> REltId -> REltId -> Bool
+isChildOf om child parent = r where
+  parent' = case IM.lookup child om of
+    Just (oem,_) -> _owlEltMeta_parent oem
+    Nothing -> error $ "expected to find " <> show child
+  r = case parent' of
+    x | x == noOwl -> False
+    x | x == parent -> True
+    x -> isChildOf om x parent
 
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
@@ -94,7 +107,7 @@ superOwl_isTopOwlSurely SuperOwl {..}  = _owlEltMeta_depth _superOwl_meta == 0 &
 noOwl :: REltId
 noOwl = -1
 
--- if parent is selected, then so are all its kiddos
+-- if parent is selected, then kiddos must not be directly included in the parliament
 newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId }
 newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl }
 
@@ -111,6 +124,10 @@ data OwlDirectory = OwlDirectory {
   _owlDirectory_mapping :: OwlMapping
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
+
+
+owlDirectory_maxId :: OwlDirectory -> REltId
+owlDirectory_maxId s = maybe 0 fst (IM.lookupMax (_owlDirectory_mapping s))
 
 -- reorganize the children of the given parent
 -- i.e. update their relPosition in the directory
@@ -188,7 +205,10 @@ owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
   removeChildFn parent = case parent of
     (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlDirectory_mapping children sowl))
     _ -> error "expected parent to be a folder"
+
+  -- TODO need to remove children from directory too
   newMapping' = IM.delete _superOwl_id _owlDirectory_mapping
+
   newMapping = case _superOwl_id of
     x | x == noOwl -> newMapping'
     rid -> IM.adjust removeChildFn rid newMapping'
@@ -200,22 +220,31 @@ owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
       , _owlDirectory_topOwls = newTopOwls
     }
 
+
+-- TODO probably want to move an OwlParliament?
 -- TODO
 owlDirectory_moveSuperOwl :: SuperOwl -> OwlSpot -> OwlDirectory -> OwlDirectory
-owlDirectory_moveSuperOwl = undefined
+owlDirectory_moveSuperOwl sowl@SuperOwl{..} OwlSpot{..} od@OwlDirectory{..} = assert isValid r where
+  rid = _superOwl_id
+  isValid = not $ isChildOf _owlDirectory_mapping _owlSpot_parent rid
+  -- TODO call remove then call add for now, optimize later...
+  r = undefined
 
--- TODO need rel position to insert at I guess
--- TODO SuperOwl probably the wrong type
-owlDirectory_addSuperOwl :: OwlSpot -> SuperOwl -> OwlDirectory -> OwlDirectory
-owlDirectory_addSuperOwl OwlSpot{..} sowl@SuperOwl {..} OwlDirectory{..} = assert (superOwl_isTopOwl sowl) r where
-  newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_mapping
-  --newDirectoryNoAssert = IM.insert _superOwl_id (_superOwl_meta, _superOwl_elt) _owlDirectory_mapping
+-- TODO figure out how you want to handle children...
+-- maybe use serialized form and redo ids each time you add?
+owlDirectory_addSuperOwl :: OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
+owlDirectory_addSuperOwl OwlSpot{..} rid oelt OwlDirectory{..} = r where
+
+  meta = undefined -- TODO
+  newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlDirectory_mapping
+  --newDirectoryNoAssert = IM.insert rid (meta, oelt) _owlDirectory_mapping
+
   r = OwlDirectory {
       _owlDirectory_mapping = newDirectory
       -- TODO insert at provided position
       -- if sibling is Nothing then insert at 0 position otherwise find the sibling owl
       -- then figure out sibling owl index (binary search on rel pos) OR just use actual position you know..
-      , _owlDirectory_topOwls = _owlDirectory_topOwls |> _superOwl_id
+      , _owlDirectory_topOwls = _owlDirectory_topOwls
     }
 
 -- | use to convert old style layers to Owl
@@ -257,3 +286,17 @@ owlDirectory_fromOldState oldDir oldLayers = r where
       _owlDirectory_mapping = newDir
       , _owlDirectory_topOwls = topOwls
     }
+
+-- TODO test
+owlDirectory_toOldState :: OwlDirectory -> SEltTree
+owlDirectory_toOldState od@OwlDirectory{..} = toList $ join r where
+  makeSElt maxid rid = case IM.lookup rid _owlDirectory_mapping of
+    Nothing -> error $ "expected to find owl with id " <> show rid
+    Just (_, OwlEltSElt oi selt) -> (maxid, Seq.singleton $ (rid, SEltLabel (_owlInfo_name oi) selt))
+    Just (_, OwlEltFolder oi children) -> let
+        (newmaxid, childSElts) = mapAccumL makeSElt (maxid+1) children
+      in
+        (newmaxid, Seq.singleton (rid, SEltLabel (_owlInfo_name oi) SEltFolderStart)
+        >< (join childSElts)
+        >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi) SEltFolderEnd))
+  (_, r) = mapAccumL makeSElt (owlDirectory_maxId od) _owlDirectory_topOwls
