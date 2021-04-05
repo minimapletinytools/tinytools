@@ -212,6 +212,7 @@ owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 owliterateall :: OwlDirectory -> Seq SuperOwl
 owliterateall od = owlDirectory_fold (|>) Seq.empty od
 
+
 -- TODO test
 owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
 owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
@@ -220,15 +221,28 @@ owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
     (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlDirectory_mapping children sowl))
     _ -> error "expected parent to be a folder"
 
-  -- TODO need to remove children from directory too
-  newMapping' = IM.delete _superOwl_id _owlDirectory_mapping
+  -- remove the element itself
+  newMapping'' = IM.delete _superOwl_id _owlDirectory_mapping
 
+  -- remove all children recursively
+  removeEltWithoutAdjustMommyFn rid mapping = case IM.lookup rid mapping of
+    Nothing -> error $ errorMsg_owlMapping_lookupFail mapping rid
+    Just (_, OwlEltFolder _ children) -> foldr removeEltWithoutAdjustMommyFn mapping children
+    Just _ -> IM.delete rid mapping
+  newMapping' = case _superOwl_elt of
+    OwlEltFolder _ children -> foldr removeEltWithoutAdjustMommyFn newMapping'' children
+    _ -> newMapping''
+
+  -- remove from children of the element's mommy if needed
   newMapping = case _superOwl_id of
     x | x == noOwl -> newMapping'
     rid -> IM.adjust removeChildFn rid newMapping'
+
+  -- remove from top owls if needed
   newTopOwls = if superOwl_isTopOwl sowl
     then removeSuperOwlFromSeq _owlDirectory_mapping _owlDirectory_topOwls sowl
     else _owlDirectory_topOwls
+
   r = OwlDirectory {
       _owlDirectory_mapping = newMapping
       , _owlDirectory_topOwls = newTopOwls
