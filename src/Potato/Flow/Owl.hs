@@ -16,6 +16,12 @@ import Data.Maybe (fromJust)
 import qualified Data.Text as T
 
 
+errorMsg_owlDirectory_lookupFail :: OwlDirectory -> REltId -> Text
+errorMsg_owlDirectory_lookupFail OwlDirectory {..} rid = errorMsg_owlMapping_lookupFail _owlDirectory_mapping rid
+
+errorMsg_owlMapping_lookupFail :: OwlMapping -> REltId -> Text
+errorMsg_owlMapping_lookupFail om rid = "expected to find REltId " <> show rid <> " in OwlMapping"
+
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
@@ -66,7 +72,7 @@ isChildOf :: OwlMapping -> REltId -> REltId -> Bool
 isChildOf om child parent = r where
   parent' = case IM.lookup child om of
     Just (oem,_) -> _owlEltMeta_parent oem
-    Nothing -> error $ "expected to find " <> show child
+    Nothing -> error $ errorMsg_owlMapping_lookupFail om child
   r = case parent' of
     x | x == noOwl -> False
     x | x == parent -> True
@@ -109,7 +115,15 @@ noOwl = -1
 
 -- if parent is selected, then kiddos must not be directly included in the parliament
 newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId }
+
+-- same as OwlParialment but contains more information
 newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl }
+
+owlParliament_toSuperOwlParliament :: OwlDirectory -> OwlParliament -> SuperOwlParliament
+owlParliament_toSuperOwlParliament od@OwlDirectory{..} op = SuperOwlParliament $ fmap f (unOwlParliament op) where
+  f rid = case IM.lookup rid _owlDirectory_mapping of
+    Nothing -> error $ errorMsg_owlDirectory_lookupFail od rid
+    Just (oem,oe) -> SuperOwl rid oem oe
 
 -- TODO
 owlSuperParliament_isValid :: SuperOwlParliament -> Bool
@@ -138,7 +152,7 @@ reorgChildren od prid = od { _owlDirectory_mapping = om } where
     _ -> case IM.lookup prid (_owlDirectory_mapping od) of
       Just (_, OwlEltFolder _ children) -> children
       Just _ -> Seq.empty
-      Nothing -> error $ "expected to find parent with REltId " <> show prid
+      Nothing -> error $ errorMsg_owlDirectory_lookupFail od prid
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlDirectory_mapping od) childrenToUpdate
 
@@ -291,7 +305,7 @@ owlDirectory_fromOldState oldDir oldLayers = r where
 owlDirectory_toOldState :: OwlDirectory -> SEltTree
 owlDirectory_toOldState od@OwlDirectory{..} = toList $ join r where
   makeSElt maxid rid = case IM.lookup rid _owlDirectory_mapping of
-    Nothing -> error $ "expected to find owl with id " <> show rid
+    Nothing -> error $ errorMsg_owlDirectory_lookupFail od rid
     Just (_, OwlEltSElt oi selt) -> (maxid, Seq.singleton $ (rid, SEltLabel (_owlInfo_name oi) selt))
     Just (_, OwlEltFolder oi children) -> let
         (newmaxid, childSElts) = mapAccumL makeSElt (maxid+1) children
