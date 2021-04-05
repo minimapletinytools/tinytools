@@ -298,5 +298,5 @@ owlDirectory_toOldState od@OwlDirectory{..} = toList $ join r where
       in
         (newmaxid, Seq.singleton (rid, SEltLabel (_owlInfo_name oi) SEltFolderStart)
         >< (join childSElts)
-        >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi) SEltFolderEnd))
+        >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi <> "(end)") SEltFolderEnd))
   (_, r) = mapAccumL makeSElt (owlDirectory_maxId od) _owlDirectory_topOwls
