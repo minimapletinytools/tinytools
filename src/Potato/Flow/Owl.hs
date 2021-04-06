@@ -11,6 +11,7 @@ import           Control.Exception (assert)
 import qualified Data.IntMap       as IM
 import           Data.Sequence     ((|>), (><))
 import qualified Data.Sequence     as Seq
+import qualified Data.Set as Set
 import Data.Foldable (foldl)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
@@ -22,11 +23,18 @@ errorMsg_owlDirectory_lookupFail OwlDirectory {..} rid = errorMsg_owlMapping_loo
 errorMsg_owlMapping_lookupFail :: OwlMapping -> REltId -> Text
 errorMsg_owlMapping_lookupFail om rid = "expected to find REltId " <> show rid <> " in OwlMapping"
 
+class MommyOwl o where
+  mommyOwl_kiddos :: o -> Maybe (Seq REltId)
+
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
 --data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
+
+instance MommyOwl OwlElt where
+  mommyOwl_kiddos (OwlEltFolder  _ kiddos) = Just kiddos
+  mommyOwl_kiddos _ = Nothing
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
 
@@ -84,6 +92,9 @@ data OwlEltMeta = OwlEltMeta {
   , _owlEltMeta_relPosition :: SemiPos
 } deriving (Show, Generic)
 
+owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
+owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_relPosition <> ")"
+
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
   _owlSpot_parent :: REltId
@@ -96,6 +107,16 @@ data SuperOwl = SuperOwl {
   , _superOwl_meta :: OwlEltMeta
   , _superOwl_elt :: OwlElt
 } deriving (Show, Generic)
+
+
+instance MommyOwl SuperOwl where
+  mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
+
+superOwl_prettyPrintForDebugging :: SuperOwl -> Text
+superOwl_prettyPrintForDebugging SuperOwl{..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt where
+  elt = case _superOwl_elt of
+    OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
+    OwlEltSElt oi selt -> "elt: " <> (_owlInfo_name oi) -- TODO elt type
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl
@@ -113,9 +134,12 @@ superOwl_isTopOwlSurely SuperOwl {..}  = _owlEltMeta_depth _superOwl_meta == 0 &
 noOwl :: REltId
 noOwl = -1
 
+
+-- you can prob delete this?
 -- if parent is selected, then kiddos must not be directly included in the parliament
 newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId }
 
+-- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
 newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl }
 
@@ -125,12 +149,43 @@ owlParliament_toSuperOwlParliament od@OwlDirectory{..} op = SuperOwlParliament $
     Nothing -> error $ errorMsg_owlDirectory_lookupFail od rid
     Just (oem,oe) -> SuperOwl rid oem oe
 
--- TODO
-owlSuperParliament_isValid :: SuperOwlParliament -> Bool
-owlSuperParliament_isValid (SuperOwlParliament owls) = undefined
+-- TODO test
+-- check if a mommy owl is selected, that no descendant of that mommy owl is selecetd
+superOwlParliament_isValid :: OwlMapping -> SuperOwlParliament -> Bool
+superOwlParliament_isValid om (SuperOwlParliament owls) = r where
+  kiddosFirst = Seq.sortBy (\a b -> flip compare (_owlEltMeta_depth (_superOwl_meta a)) (_owlEltMeta_depth (_superOwl_meta b))) owls
+  acc0 = (Set.empty, Set.fromList . toList . fmap _superOwl_id $ owls, True)
+  foldlfn (visited, mommies', passing) sowl = (nextVisited, mommies, pass && passing) where
 
--- ???
---makeSuperOwlParliament :: [REltId] -> SuperOwlParliament
+    -- remove self from list of mommies
+    -- TODO you  don't actually need to check two elts at the same level, you can be smarter about removing mommies at each level
+    mommies = Set.delete (_superOwl_id sowl) mommies'
+
+    checkMommyRec rid toVisit = case rid of
+      -- made it to the top
+      x | x == noOwl -> (toVisit, True)
+      _ -> case Set.member rid visited of
+        -- we've been here before, must be OK
+        True -> (toVisit, True)
+        False -> case Set.member rid mommies of
+          -- one of our mommies, not OK
+          True -> (toVisit, False)
+          False -> case IM.lookup rid om of
+            Nothing -> error $ errorMsg_owlMapping_lookupFail om rid
+            -- add self to list of mommies to visit and recurse
+            Just (oem,_) -> checkMommyRec (_owlEltMeta_parent oem) (Set.insert rid toVisit)
+    (toVisit, pass) = checkMommyRec (_owlEltMeta_parent (_superOwl_meta sowl)) Set.empty
+    nextVisited = if pass
+      then Set.union visited toVisit
+      else visited
+
+  (_,_,r) = foldl foldlfn acc0 kiddosFirst
+
+-- TODO
+-- convert a selection into a SuperOwlParliament
+-- TODO figure out selection conditions?
+makeSuperOwlParliament :: OwlDirectory -> [REltId] -> SuperOwlParliament
+makeSuperOwlParliament od@OwlDirectory{..} selection = undefined
 
 -- TODO rename to OwlTree
 data OwlDirectory = OwlDirectory {
@@ -139,6 +194,21 @@ data OwlDirectory = OwlDirectory {
   , _owlDirectory_topOwls :: Seq REltId
 } deriving (Show)
 
+instance MommyOwl OwlDirectory where
+  mommyOwl_kiddos o = Just $ _owlDirectory_topOwls o
+
+owlDirectory_prettyPrint :: OwlDirectory -> Text
+owlDirectory_prettyPrint od@OwlDirectory {..} = r where
+  foldlfn acc rid = let
+      sowl = owlDirectory_mustFindSuperOwl rid od
+      selfEntry' = T.replicate (_owlEltMeta_depth . _superOwl_meta $ sowl) " " <> superOwl_prettyPrintForDebugging sowl
+      selfEntry = selfEntry' <> "\n"
+    in acc <> case mommyOwl_kiddos sowl of
+      Nothing -> selfEntry
+      Just kiddos -> selfEntry <> printKiddos kiddos
+  printKiddos :: Seq REltId -> Text
+  printKiddos kiddos = foldl foldlfn "" kiddos
+  r = printKiddos (fromJust $ mommyOwl_kiddos od)
 
 owlDirectory_maxId :: OwlDirectory -> REltId
 owlDirectory_maxId s = maybe 0 fst (IM.lookupMax (_owlDirectory_mapping s))
@@ -155,7 +225,6 @@ reorgChildren od prid = od { _owlDirectory_mapping = om } where
       Nothing -> error $ errorMsg_owlDirectory_lookupFail od prid
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlDirectory_mapping od) childrenToUpdate
-
 
 emptyDirectory :: OwlDirectory
 emptyDirectory = OwlDirectory {
@@ -193,6 +262,7 @@ owlDirectory_fold f acc0 od = foldl (\acc rid -> owlDirectory_foldAt f acc od ri
 owlDirectory_owlCount :: OwlDirectory -> Int
 owlDirectory_owlCount od = owlDirectory_fold (\acc _ -> acc+1) 0 od
 
+{- bad version DELETE
 owlDirectory_prettyPrint :: OwlDirectory -> [Text]
 owlDirectory_prettyPrint od = reverse $ owlDirectory_fold f [] od where
   f acc (SuperOwl rid OwlEltMeta {..} oelt) = r:acc where
@@ -202,7 +272,7 @@ owlDirectory_prettyPrint od = reverse $ owlDirectory_fold f [] od where
       OwlEltSElt (OwlInfo name) _ -> name
     depth = _owlEltMeta_depth
     r = T.replicate depth "  " <> show rid <> " " <> name
-
+-}
 
 -- | iterates an element and all its children
 owliterateat :: OwlDirectory -> REltId -> Seq SuperOwl
@@ -211,7 +281,6 @@ owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 -- | iterates everything in the directory
 owliterateall :: OwlDirectory -> Seq SuperOwl
 owliterateall od = owlDirectory_fold (|>) Seq.empty od
-
 
 -- TODO test
 owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
@@ -276,7 +345,7 @@ owlDirectory_addSuperOwl OwlSpot{..} rid oelt OwlDirectory{..} = r where
     }
 
 -- | use to convert old style layers to Owl
-addUntilFolderEndRecursive ::
+internal_addUntilFolderEndRecursive ::
   REltIdMap SEltLabel
   -> Seq REltId
   -> LayerPos -- ^ current layer position we are adding
@@ -285,8 +354,8 @@ addUntilFolderEndRecursive ::
   -> REltIdMap (OwlEltMeta, OwlElt) -- ^ accumulated directory
   -> Seq REltId -- ^ accumulated children at current level
   -> (LayerPos, REltIdMap (OwlEltMeta, OwlElt), Seq REltId) -- ^ (next lp, accumulated directory, children of current level)
-addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings = let
-    recurfn = addUntilFolderEndRecursive oldDir oldLayers
+internal_addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings = let
+    recurfn = internal_addUntilFolderEndRecursive oldDir oldLayers
     -- the elt we want to add
     rid = Seq.index oldLayers lp
     SEltLabel name selt =  oldDir IM.! rid
@@ -309,13 +378,12 @@ addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings =
 
 owlDirectory_fromOldState :: REltIdMap SEltLabel -> Seq REltId -> OwlDirectory
 owlDirectory_fromOldState oldDir oldLayers = r where
-  (_, newDir, topOwls) = addUntilFolderEndRecursive oldDir oldLayers 0 noOwl 0 IM.empty Seq.empty
+  (_, newDir, topOwls) = internal_addUntilFolderEndRecursive oldDir oldLayers 0 noOwl 0 IM.empty Seq.empty
   r = OwlDirectory {
       _owlDirectory_mapping = newDir
       , _owlDirectory_topOwls = topOwls
     }
 
--- TODO test
 owlDirectory_toOldState :: OwlDirectory -> SEltTree
 owlDirectory_toOldState od@OwlDirectory{..} = toList $ join r where
   makeSElt maxid rid = case IM.lookup rid _owlDirectory_mapping of
