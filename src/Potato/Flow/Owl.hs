@@ -29,6 +29,8 @@ class MommyOwl o where
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
+
+-- TODO rename to just Owl
 --data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 
@@ -98,8 +100,7 @@ owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMe
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
   _owlSpot_parent :: REltId
-  -- TODO is this what we want?
-  , _owlSpot_leftSibling :: REltId
+  , _owlSpot_leftSibling :: Maybe REltId
 } deriving (Show, Generic)
 
 data SuperOwl = SuperOwl {
@@ -209,13 +210,18 @@ owlDirectory_prettyPrint od@OwlDirectory {..} = r where
   printKiddos kiddos = foldl foldlfn "" kiddos
   r = printKiddos (fromJust $ mommyOwl_kiddos od)
 
+owlDirectory_validate :: OwlDirectory -> Bool
+owlDirectory_validate OwlDirectory {..} = r where
+  -- TODO
+  r = undefined
+
 owlDirectory_maxId :: OwlDirectory -> REltId
 owlDirectory_maxId s = maybe 0 fst (IM.lookupMax (_owlDirectory_mapping s))
 
 -- reorganize the children of the given parent
 -- i.e. update their relPosition in the directory
-reorgChildren :: OwlDirectory -> REltId -> OwlDirectory
-reorgChildren od prid = od { _owlDirectory_mapping = om } where
+internal_owlDirectory_reorgKiddos :: OwlDirectory -> REltId -> OwlDirectory
+internal_owlDirectory_reorgKiddos od prid = od { _owlDirectory_mapping = om } where
   childrenToUpdate = case prid of
     x | x == noOwl -> _owlDirectory_topOwls od
     _ -> case IM.lookup prid (_owlDirectory_mapping od) of
@@ -253,9 +259,11 @@ owlDirectory_foldAt' f acc od sowl = case _superOwl_elt sowl of
 owlDirectory_foldAt :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> REltId -> a
 owlDirectory_foldAt f acc od rid = owlDirectory_foldAt' f acc od (owlDirectory_mustFindSuperOwl rid od)
 
+-- TODO instance Foldable OwlDirectory derp
 owlDirectory_fold :: (a -> SuperOwl -> a) -> a -> OwlDirectory -> a
 owlDirectory_fold f acc0 od = foldl (\acc rid -> owlDirectory_foldAt f acc od rid) acc0 $ _owlDirectory_topOwls od
 
+-- TODO just Foldable.length
 owlDirectory_owlCount :: OwlDirectory -> Int
 owlDirectory_owlCount od = owlDirectory_fold (\acc _ -> acc+1) 0 od
 
@@ -267,7 +275,6 @@ owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
 owliterateall :: OwlDirectory -> Seq SuperOwl
 owliterateall od = owlDirectory_fold (|>) Seq.empty od
 
--- TODO test
 owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
 owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
   -- remove the element itself
@@ -311,22 +318,57 @@ owlDirectory_moveSuperOwl sowl@SuperOwl{..} OwlSpot{..} od@OwlDirectory{..} = as
   -- TODO call remove then call add for now, optimize later...
   r = undefined
 
--- TODO figure out how you want to handle children...
--- maybe use serialized form and redo ids each time you add?
-owlDirectory_addSuperOwl :: OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
-owlDirectory_addSuperOwl OwlSpot{..} rid oelt OwlDirectory{..} = r where
+-- TODO
+owlDirectory_addSEltTree = undefined
 
-  meta = undefined -- TODO
-  newDirectory = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlDirectory_mapping
+owlDirectory_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
+owlDirectory_addOwlElt OwlSpot{..} rid oelt od@OwlDirectory{..} = assert pass r where
+
+  -- if we're adding a folder, ensure it has no children
+  pass = case oelt of
+    OwlEltFolder _ children -> Seq.null children
+    _ -> True
+
+  meta = OwlEltMeta {
+      _owlEltMeta_parent = _owlSpot_parent
+      , _owlEltMeta_depth = case _owlSpot_parent of
+        x | x == noOwl -> 0
+        _ -> case IM.lookup _owlSpot_parent _owlDirectory_mapping of
+          Nothing -> error $ errorMsg_owlMapping_lookupFail _owlDirectory_mapping _owlSpot_parent
+          Just (x,_) -> _owlEltMeta_depth x + 1
+
+      -- this will get set correctly when we call internal_owlDirectory_reorgKiddos later
+      , _owlEltMeta_relPosition = undefined
+    }
+
+  newMapping' = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlDirectory_mapping
   --newDirectoryNoAssert = IM.insert rid (meta, oelt) _owlDirectory_mapping
 
-  r = OwlDirectory {
-      _owlDirectory_mapping = newDirectory
-      -- TODO insert at provided position
-      -- if sibling is Nothing then insert at 0 position otherwise find the sibling owl
-      -- then figure out sibling owl index (binary search on rel pos) OR just use actual position you know..
-      , _owlDirectory_topOwls = _owlDirectory_topOwls
+  modifyKiddos kiddos = Seq.insertAt position rid kiddos where
+    position = case _owlSpot_leftSibling of
+      Nothing -> 0
+      Just rid -> case Seq.elemIndexL rid kiddos of
+        Nothing -> error $ "expected to find leftmost sibling " <> show rid <> " in " <> show kiddos
+        Just x -> x + 1
+
+  adjustfn (oem,oe) = case oe of
+    OwlEltFolder oi kiddos -> (oem, OwlEltFolder oi (modifyKiddos kiddos))
+    _ -> error $ "expected OwlEltFolder"
+
+  newMapping = case _owlSpot_parent of
+    x | x == noOwl -> newMapping'
+    _ -> IM.adjust adjustfn _owlSpot_parent newMapping'
+
+  newTopOwls = case _owlSpot_parent of
+    x | x == noOwl -> modifyKiddos _owlDirectory_topOwls
+    _ -> _owlDirectory_topOwls
+
+  r' = OwlDirectory {
+      _owlDirectory_mapping = newMapping
+      , _owlDirectory_topOwls = newTopOwls
     }
+
+  r = internal_owlDirectory_reorgKiddos r' _owlSpot_parent
 
 -- | use to convert old style layers to Owl
 internal_addUntilFolderEndRecursive ::

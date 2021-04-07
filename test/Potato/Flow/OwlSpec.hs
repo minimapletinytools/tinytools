@@ -45,6 +45,16 @@ spec = do
           sowl2 = owlDirectory_mustFindSuperOwl 1 owlDirectory2 -- fstart2
         owlDirectory_owlCount (owlDirectory_removeSuperOwl sowl1 owlDirectory2) `shouldBe` 8
         owlDirectory_owlCount (owlDirectory_removeSuperOwl sowl2 owlDirectory2) `shouldBe` 4
+      it "owlDirectory_addOwlElt" $ do
+        let
+          owlSpot1 = OwlSpot (-1) Nothing
+          owlElt1 = OwlEltSElt (OwlInfo "💩") SEltNone
+          rid = owlDirectory_maxId owlDirectory2 + 1
+          owlSpot2 = OwlSpot 7 (Just 9)
+        owlDirectory_owlCount (owlDirectory_addOwlElt owlSpot1 rid owlElt1 owlDirectory2) `shouldBe` 10
+        owlDirectory_owlCount (owlDirectory_addOwlElt owlSpot2 rid owlElt1 owlDirectory2) `shouldBe` 10
+        -- too lazy to write proper test, just print and verify manually
+        --putTextLn (owlDirectory_prettyPrint $ owlDirectory_addOwlElt owlSpot2 rid owlElt1 owlDirectory2)
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlDirectory_prettyPrint owlDirectory2)
