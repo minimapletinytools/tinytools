@@ -149,7 +149,6 @@ owlParliament_toSuperOwlParliament od@OwlDirectory{..} op = SuperOwlParliament $
     Nothing -> error $ errorMsg_owlDirectory_lookupFail od rid
     Just (oem,oe) -> SuperOwl rid oem oe
 
--- TODO test
 -- check if a mommy owl is selected, that no descendant of that mommy owl is selecetd
 superOwlParliament_isValid :: OwlMapping -> SuperOwlParliament -> Bool
 superOwlParliament_isValid om (SuperOwlParliament owls) = r where
@@ -237,10 +236,8 @@ owlDirectory_findSuperOwl rid OwlDirectory {..} = do
   (meta, elt) <- IM.lookup rid _owlDirectory_mapping
   return $ SuperOwl rid meta elt
 
-owlDirectory_mustFindSuperOwl :: REltId -> OwlDirectory -> SuperOwl
+owlDirectory_mustFindSuperOwl :: HasCallStack => REltId -> OwlDirectory -> SuperOwl
 owlDirectory_mustFindSuperOwl rid od = fromJust $ owlDirectory_findSuperOwl rid od
--- inlining... hope this will tell me where caller came from when fromJust fails.. I don't think it works...
-{-# INLINE owlDirectory_mustFindSuperOwl #-}
 
 owlDirectory_topSuperOwls :: OwlDirectory -> Seq SuperOwl
 owlDirectory_topSuperOwls od = r where
@@ -262,18 +259,6 @@ owlDirectory_fold f acc0 od = foldl (\acc rid -> owlDirectory_foldAt f acc od ri
 owlDirectory_owlCount :: OwlDirectory -> Int
 owlDirectory_owlCount od = owlDirectory_fold (\acc _ -> acc+1) 0 od
 
-{- bad version DELETE
-owlDirectory_prettyPrint :: OwlDirectory -> [Text]
-owlDirectory_prettyPrint od = reverse $ owlDirectory_fold f [] od where
-  f acc (SuperOwl rid OwlEltMeta {..} oelt) = r:acc where
-    -- TODO make helper for this
-    name = case oelt of
-      OwlEltFolder (OwlInfo name) _ -> name
-      OwlEltSElt (OwlInfo name) _ -> name
-    depth = _owlEltMeta_depth
-    r = T.replicate depth "  " <> show rid <> " " <> name
--}
-
 -- | iterates an element and all its children
 owliterateat :: OwlDirectory -> REltId -> Seq SuperOwl
 owliterateat od rid = owlDirectory_foldAt (|>) Seq.empty od rid where
@@ -285,26 +270,25 @@ owliterateall od = owlDirectory_fold (|>) Seq.empty od
 -- TODO test
 owlDirectory_removeSuperOwl :: SuperOwl -> OwlDirectory -> OwlDirectory
 owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
-  relPosToRemove = _owlEltMeta_relPosition _superOwl_meta
-  removeChildFn parent = case parent of
-    (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlDirectory_mapping children sowl))
-    _ -> error "expected parent to be a folder"
-
   -- remove the element itself
   newMapping'' = IM.delete _superOwl_id _owlDirectory_mapping
 
   -- remove all children recursively
   removeEltWithoutAdjustMommyFn rid mapping = case IM.lookup rid mapping of
     Nothing -> error $ errorMsg_owlMapping_lookupFail mapping rid
-    Just (_, OwlEltFolder _ children) -> foldr removeEltWithoutAdjustMommyFn mapping children
+    Just (_, OwlEltFolder _ children) -> foldr removeEltWithoutAdjustMommyFn (IM.delete rid mapping) children
     Just _ -> IM.delete rid mapping
   newMapping' = case _superOwl_elt of
     OwlEltFolder _ children -> foldr removeEltWithoutAdjustMommyFn newMapping'' children
     _ -> newMapping''
 
+  removeChildFn parent = case parent of
+    (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlDirectory_mapping children sowl))
+    _ -> error "expected parent to be a folder"
+
   -- remove from children of the element's mommy if needed
-  newMapping = case _superOwl_id of
-    x | x == noOwl -> newMapping'
+  newMapping = case _owlEltMeta_parent _superOwl_meta of
+    x | x == noOwl -> newMapping' -- TODO this is wrong? what am I doing here?
     rid -> IM.adjust removeChildFn rid newMapping'
 
   -- remove from top owls if needed

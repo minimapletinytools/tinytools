@@ -39,9 +39,15 @@ spec = do
         toList (fmap _superOwl_id (owliterateall owlDirectory2)) `shouldBe` [0,1,2,3,4,5,7,8,9]
       it "owlDirectory_toOldState" $ do
         filter filterFolderEndFn (owlDirectory_toOldState owlDirectory2) `shouldBe` filter filterFolderEndFn sEltTree2
+      it "owlDirectory_removeSuperOwl" $ do
+        let
+          sowl1 = owlDirectory_mustFindSuperOwl 2 owlDirectory2 -- b1
+          sowl2 = owlDirectory_mustFindSuperOwl 1 owlDirectory2 -- fstart2
+        owlDirectory_owlCount (owlDirectory_removeSuperOwl sowl1 owlDirectory2) `shouldBe` 8
+        owlDirectory_owlCount (owlDirectory_removeSuperOwl sowl2 owlDirectory2) `shouldBe` 4
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
-        putTextLn (owlDirectory_prettyPrint owlDirectory2)
+        --putTextLn (owlDirectory_prettyPrint owlDirectory2)
         let
           validParliament = owlParliament_toSuperOwlParliament owlDirectory2 (OwlParliament $ Seq.fromList [2,3,7])
           invalidParliament = owlParliament_toSuperOwlParliament owlDirectory2 (OwlParliament $ Seq.fromList [2,3,7,9])
