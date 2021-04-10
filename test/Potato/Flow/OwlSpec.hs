@@ -16,7 +16,7 @@ import Potato.Flow.Types
 import Potato.Flow.SElts
 
 
--- | 'owlDirectory_toOldState' may change SEltFolderEnd name and REltId during reconstruction
+-- | 'owlDirectory_toSEltTree' may change SEltFolderEnd name and REltId during reconstruction
 -- so we simply filter it out so we can compare the parts that should not have changed
 filterFolderEndFn :: (REltId, SEltLabel) -> Bool
 filterFolderEndFn (_, SEltLabel _ SEltFolderEnd) = False
@@ -37,8 +37,8 @@ spec = do
         owlDirectory_owlCount owlDirectory2 `shouldBe` 9
       it "owliterateall" $ do
         toList (fmap _superOwl_id (owliterateall owlDirectory2)) `shouldBe` [0,1,2,3,4,5,7,8,9]
-      it "owlDirectory_toOldState" $ do
-        filter filterFolderEndFn (owlDirectory_toOldState owlDirectory2) `shouldBe` filter filterFolderEndFn sEltTree2
+      it "owlDirectory_toSEltTree" $ do
+        filter filterFolderEndFn (owlDirectory_toSEltTree owlDirectory2) `shouldBe` filter filterFolderEndFn sEltTree2
       it "owlDirectory_removeSuperOwl" $ do
         let
           sowl1 = owlDirectory_mustFindSuperOwl 2 owlDirectory2 -- b1
