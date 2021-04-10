@@ -56,9 +56,12 @@ spec = do
         -- too lazy to write proper test, just print and verify manually
         --putTextLn (owlDirectory_prettyPrint $ owlDirectory_addOwlElt owlSpot2 rid owlElt1 owlDirectory2)
       it "owlDirectory_moveOwlParliament" $ do
-        -- TODO
-        --owlDirectory_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlDirectory -> OwlDirectory
-        1 `shouldBe` 1
+        let
+          owlSpot1 = OwlSpot (-1) Nothing
+          parliament = OwlParliament $ Seq.fromList [2,3,7]
+        owlDirectory_owlCount (owlDirectory_moveOwlParliament parliament owlSpot1 owlDirectory2) `shouldBe` 9
+        -- too lazy to write proper test, just print and verify manually
+        --putTextLn (owlDirectory_prettyPrint $ owlDirectory_moveOwlParliament parliament owlSpot1 owlDirectory2)
       it "owlDirectory_addSEltTree" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing

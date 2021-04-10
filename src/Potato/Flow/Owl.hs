@@ -78,15 +78,17 @@ removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r wher
   r = removeAtSemiPos (owlMappingSemiPosLookup om) s sp
 
 -- TODO make an owlDirectoryMethod?
-isDescendentOf :: OwlMapping -> REltId -> REltId -> Bool
-isDescendentOf om child parent = r where
-  parent' = case IM.lookup child om of
-    Just (oem,_) -> _owlEltMeta_parent oem
-    Nothing -> error $ errorMsg_owlMapping_lookupFail om child
-  r = case parent' of
-    x | x == noOwl -> False
-    x | x == parent -> True
-    x -> isDescendentOf om x parent
+isDescendentOf :: (HasCallStack) => OwlMapping -> REltId -> REltId -> Bool
+isDescendentOf om parent child
+  | child == noOwl = False
+  | otherwise = r where
+    parent' = case IM.lookup child om of
+      Just (oem,_) -> _owlEltMeta_parent oem
+      Nothing -> error $ errorMsg_owlMapping_lookupFail om child
+    r = case parent' of
+      x | x == noOwl -> False
+      x | x == parent -> True
+      x -> isDescendentOf om x parent
 
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
@@ -327,7 +329,6 @@ owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
       , _owlDirectory_topOwls = newTopOwls
     }
 
--- TODO test
 owlDirectory_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlDirectory -> OwlDirectory
 owlDirectory_moveOwlParliament op spot@OwlSpot{..} od@OwlDirectory{..} = assert isValid r where
 
@@ -342,7 +343,6 @@ owlDirectory_moveOwlParliament op spot@OwlSpot{..} od@OwlDirectory{..} = assert 
 
   r = owlDirectory_addSEltTree spot selttree removedOd
 
--- TODO test
 owlDirectory_addSEltTree :: OwlSpot -> SEltTree -> OwlDirectory -> OwlDirectory
 owlDirectory_addSEltTree spot selttree od = r where
   -- we do it the potato way
@@ -362,7 +362,7 @@ owlDirectory_addSEltTree spot selttree od = r where
   makeOwl rid = _superOwl_elt $ owlDirectory_mustFindSuperOwl rid otherod
 
   -- and set the children accordingly (will correct metas from previous step)
-  r = foldl (\acc rid -> internal_owlDirectory_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlDirectory_topOwls otherod)
+  r = foldr (\rid acc -> internal_owlDirectory_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlDirectory_topOwls otherod)
 
 internal_owlDirectory_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
 internal_owlDirectory_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlDirectory{..} = assert (allowFoldersAndExisting || pass) r where
