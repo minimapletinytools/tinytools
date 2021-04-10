@@ -55,6 +55,15 @@ spec = do
         owlDirectory_owlCount (owlDirectory_addOwlElt owlSpot2 rid owlElt1 owlDirectory2) `shouldBe` 10
         -- too lazy to write proper test, just print and verify manually
         --putTextLn (owlDirectory_prettyPrint $ owlDirectory_addOwlElt owlSpot2 rid owlElt1 owlDirectory2)
+      it "owlDirectory_moveOwlParliament" $ do
+        -- TODO
+        --owlDirectory_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlDirectory -> OwlDirectory
+        1 `shouldBe` 1
+      it "owlDirectory_addSEltTree" $ do
+        let
+          owlSpot1 = OwlSpot (-1) Nothing
+          seltree1 = owlDirectory_toSEltTree owlDirectory2
+        owlDirectory_owlCount (owlDirectory_addSEltTree owlSpot1 seltree1 owlDirectory2) `shouldBe` 18
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlDirectory_prettyPrint owlDirectory2)

@@ -327,9 +327,7 @@ owlDirectory_removeSuperOwl sowl@SuperOwl{..} od@OwlDirectory{..} = r where
       , _owlDirectory_topOwls = newTopOwls
     }
 
-
--- TODO probably want to move an OwlParliament?
--- TODO
+-- TODO test
 owlDirectory_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlDirectory -> OwlDirectory
 owlDirectory_moveOwlParliament op spot@OwlSpot{..} od@OwlDirectory{..} = assert isValid r where
 
@@ -344,14 +342,30 @@ owlDirectory_moveOwlParliament op spot@OwlSpot{..} od@OwlDirectory{..} = assert 
 
   r = owlDirectory_addSEltTree spot selttree removedOd
 
--- TODO
+-- TODO test
 owlDirectory_addSEltTree :: OwlSpot -> SEltTree -> OwlDirectory -> OwlDirectory
-owlDirectory_addSEltTree OwlSpot{..} selttree od@OwlDirectory{..} = r where
+owlDirectory_addSEltTree spot selttree od = r where
+  -- we do it the potato way
 
-  r = undefined
+  -- reindex the selttree
+  startid = owlDirectory_maxId od + 1
+  reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
 
-owlDirectory_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
-owlDirectory_addOwlElt OwlSpot{..} rid oelt od@OwlDirectory{..} = assert pass r where
+  -- convert SEltTree -> (REltIdMap SEltLabel, Seq REltId) -> OwlDirectory
+  seltmap = IM.fromList reindexed
+  layers = fmap fst reindexed
+  otherod = owlDirectory_fromOldState seltmap (Seq.fromList layers)
+
+  -- now union the two directories
+  newod = od { _owlDirectory_mapping = _owlDirectory_mapping od `IM.union` _owlDirectory_mapping otherod }
+
+  makeOwl rid = _superOwl_elt $ owlDirectory_mustFindSuperOwl rid otherod
+
+  -- and set the children accordingly (will correct metas from previous step)
+  r = foldl (\acc rid -> internal_owlDirectory_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlDirectory_topOwls otherod)
+
+internal_owlDirectory_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
+internal_owlDirectory_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlDirectory{..} = assert (allowFoldersAndExisting || pass) r where
 
   -- if we're adding a folder, ensure it has no children
   pass = case oelt of
@@ -370,8 +384,9 @@ owlDirectory_addOwlElt OwlSpot{..} rid oelt od@OwlDirectory{..} = assert pass r 
       , _owlEltMeta_relPosition = undefined
     }
 
-  newMapping' = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlDirectory_mapping
-  --newDirectoryNoAssert = IM.insert rid (meta, oelt) _owlDirectory_mapping
+  newMapping' = if allowFoldersAndExisting
+    then IM.insert rid (meta, oelt) _owlDirectory_mapping
+    else IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlDirectory_mapping
 
   modifyKiddos kiddos = Seq.insertAt position rid kiddos where
     position = case _owlSpot_leftSibling of
@@ -398,6 +413,9 @@ owlDirectory_addOwlElt OwlSpot{..} rid oelt od@OwlDirectory{..} = assert pass r 
     }
 
   r = internal_owlDirectory_reorgKiddos r' _owlSpot_parent
+
+owlDirectory_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlDirectory -> OwlDirectory
+owlDirectory_addOwlElt = internal_owlDirectory_addOwlElt False
 
 -- | use to convert old style layers to Owl
 internal_addUntilFolderEndRecursive ::
@@ -439,6 +457,5 @@ owlDirectory_fromOldState oldDir oldLayers = r where
       , _owlDirectory_topOwls = topOwls
     }
 
--- TODO convert to SuperOwlParliament and then call superOwlParliament_toSEltTree
 owlDirectory_toSEltTree :: OwlDirectory -> SEltTree
-owlDirectory_toSEltTree od@OwlDirectory{..} = superOwlParliament_toSEltTree od (owlDirectory_toSuperOwlParliament od )
+owlDirectory_toSEltTree od@OwlDirectory{..} = superOwlParliament_toSEltTree od (owlDirectory_toSuperOwlParliament od)
