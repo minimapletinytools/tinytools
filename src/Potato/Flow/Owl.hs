@@ -197,9 +197,7 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
         >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi <> "(end)") SEltFolderEnd))
   (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
--- TODO rename to OwlTree
 data OwlTree = OwlTree {
-  -- TODO rename to mapping
   _owlTree_mapping :: OwlMapping
   , _owlTree_topOwls :: Seq REltId
 } deriving (Show)
@@ -269,11 +267,9 @@ owlTree_foldAt' f acc od sowl = case _superOwl_elt sowl of
 owlTree_foldAt :: (a -> SuperOwl -> a) -> a -> OwlTree -> REltId -> a
 owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl rid od)
 
--- TODO instance Foldable OwlTree derp
 owlTree_fold :: (a -> SuperOwl -> a) -> a -> OwlTree -> a
 owlTree_fold f acc0 od = foldl (\acc rid -> owlTree_foldAt f acc od rid) acc0 $ _owlTree_topOwls od
 
--- TODO just Foldable.length
 owlTree_owlCount :: OwlTree -> Int
 owlTree_owlCount od = owlTree_fold (\acc _ -> acc+1) 0 od
 
@@ -310,7 +306,7 @@ owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
 
   -- remove from children of the element's mommy if needed
   newMapping = case _owlEltMeta_parent _superOwl_meta of
-    x | x == noOwl -> newMapping' -- TODO this is wrong? what am I doing here?
+    x | x == noOwl -> newMapping'
     rid -> IM.adjust removeChildFn rid newMapping'
 
   -- remove from top owls if needed
