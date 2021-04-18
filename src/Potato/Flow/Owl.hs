@@ -47,11 +47,13 @@ owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 -- TODO decide if we want some relative position index or if we just want to use true index (and recompute on move/add/delete)
 type SemiPos = Int
 
+-- TODO DELETE
 -- TODO test
 -- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
 locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
 locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
 
+-- TODO DELETE
 -- TODO test
 -- TODO make an owlTree method?
 owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
@@ -59,6 +61,7 @@ owlMappingSemiPosLookup om rid = case IM.lookup rid om of
   Nothing -> error $ "expected to find rid " <> show rid
   Just (oem,_) -> _owlEltMeta_relPosition oem
 
+-- TODO DELETE
 -- TODO test
 locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
 locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
@@ -77,7 +80,6 @@ removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r wher
   sp = _owlEltMeta_relPosition . _superOwl_meta $ so
   r = removeAtSemiPos (owlMappingSemiPosLookup om) s sp
 
--- TODO make an owlTreeMethod?
 isDescendentOf :: (HasCallStack) => OwlMapping -> REltId -> REltId -> Bool
 isDescendentOf om parent child
   | child == noOwl = False
@@ -111,6 +113,7 @@ data SuperOwl = SuperOwl {
   , _superOwl_elt :: OwlElt
 } deriving (Show, Generic)
 
+type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
 instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
@@ -140,11 +143,11 @@ noOwl = -1
 
 -- you can prob delete this?
 -- if parent is selected, then kiddos must not be directly included in the parliament
-newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId }
+newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId } deriving (Show)
 
 -- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
-newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl }
+newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl } deriving (Show)
 
 owlParliament_toSuperOwlParliament :: OwlTree -> OwlParliament -> SuperOwlParliament
 owlParliament_toSuperOwlParliament od@OwlTree{..} op = SuperOwlParliament $ fmap f (unOwlParliament op) where
@@ -152,7 +155,7 @@ owlParliament_toSuperOwlParliament od@OwlTree{..} op = SuperOwlParliament $ fmap
     Nothing -> error $ errorMsg_owlTree_lookupFail od rid
     Just (oem,oe) -> SuperOwl rid oem oe
 
--- check if a mommy owl is selected, that no descendant of that mommy owl is selecetd
+-- check if a mommy owl is selected, that no descendant of that mommy owl is selected
 superOwlParliament_isValid :: OwlMapping -> SuperOwlParliament -> Bool
 superOwlParliament_isValid om (SuperOwlParliament owls) = r where
   kiddosFirst = Seq.sortBy (\a b -> flip compare (_owlEltMeta_depth (_superOwl_meta a)) (_owlEltMeta_depth (_superOwl_meta b))) owls
@@ -239,8 +242,8 @@ internal_owlTree_reorgKiddos od prid = od { _owlTree_mapping = om } where
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlTree_mapping od) childrenToUpdate
 
-emptyDirectory :: OwlTree
-emptyDirectory = OwlTree {
+emptyOwlTree :: OwlTree
+emptyOwlTree = OwlTree {
     _owlTree_mapping = IM.empty
     , _owlTree_topOwls = Seq.empty
   }
@@ -285,6 +288,9 @@ owliterateall od = owlTree_fold (|>) Seq.empty od
 owlTree_toSuperOwlParliament :: OwlTree -> SuperOwlParliament
 owlTree_toSuperOwlParliament od@OwlTree {..} = r where
   r = owlParliament_toSuperOwlParliament od . OwlParliament $ _owlTree_topOwls
+
+owlTree_removeREltId :: REltId -> OwlTree -> OwlTree
+owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl rid od) od
 
 owlTree_removeSuperOwl :: SuperOwl -> OwlTree -> OwlTree
 owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
@@ -341,10 +347,8 @@ owlTree_addSEltTree spot selttree od = r where
   startid = owlTree_maxId od + 1
   reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
 
-  -- convert SEltTree -> (REltIdMap SEltLabel, Seq REltId) -> OwlTree
-  seltmap = IM.fromList reindexed
-  layers = fmap fst reindexed
-  otherod = owlTree_fromOldState seltmap (Seq.fromList layers)
+  -- convert to OwlDirectory
+  otherod = owlTree_fromSEltTree reindexed
 
   -- now union the two directories
   newod = od { _owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod }
@@ -411,12 +415,12 @@ owlTree_addOwlElt = internal_owlTree_addOwlElt False
 internal_addUntilFolderEndRecursive ::
   REltIdMap SEltLabel
   -> Seq REltId
-  -> LayerPos -- ^ current layer position we are adding
+  -> Int -- ^ current layer position we are adding
   -> REltId -- ^ parent
   -> Int -- ^ depth
   -> REltIdMap (OwlEltMeta, OwlElt) -- ^ accumulated directory
   -> Seq REltId -- ^ accumulated children at current level
-  -> (LayerPos, REltIdMap (OwlEltMeta, OwlElt), Seq REltId) -- ^ (next lp, accumulated directory, children of current level)
+  -> (Int, REltIdMap (OwlEltMeta, OwlElt), Seq REltId) -- ^ (next lp, accumulated directory, children of current level)
 internal_addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accSiblings = let
     recurfn = internal_addUntilFolderEndRecursive oldDir oldLayers
     -- the elt we want to add
@@ -438,6 +442,11 @@ internal_addUntilFolderEndRecursive oldDir oldLayers lp parent depth accDir accS
       -- nothing special, keep going
       _ -> recurfn (lp+1) parent depth (IM.insert rid (selfMeta, OwlEltSElt (OwlInfo name) selt) accDir) newSiblings
 
+owlTree_fromSEltTree :: SEltTree -> OwlTree
+owlTree_fromSEltTree selttree = r where
+  seltmap = IM.fromList selttree
+  layers = fmap fst selttree
+  r = owlTree_fromOldState seltmap (Seq.fromList layers)
 
 owlTree_fromOldState :: REltIdMap SEltLabel -> Seq REltId -> OwlTree
 owlTree_fromOldState oldDir oldLayers = r where
