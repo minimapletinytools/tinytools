@@ -41,7 +41,6 @@ data OwlPFCmd =
 
 instance NFData OwlPFCmd
 
--- TODO move this into a diff file
 data ActionStack = ActionStack {
   doStack     :: [OwlPFCmd] -- maybe just do something lke [PFCmd, Maybe OwlPFState] here for state based undo
   , undoStack :: [OwlPFCmd]
@@ -96,8 +95,7 @@ undoPermanentWorkspace pfw =  r where
 
 doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> OwlPFWorkspace
 --doCmdWorkspace cmd OwlPFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem
--- TODO deepseq here to force evaluation of workspace and prevent leaks
-doCmdWorkspace cmd pfw = r where
+doCmdWorkspace cmd pfw = force r where
   newState = doCmdState cmd (_owlPFWorkspace_pFState pfw)
   ActionStack {..} = (_owlPFWorkspace_actionStack pfw)
   newStack = ActionStack (cmd:doStack) []
@@ -124,7 +122,6 @@ undoCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
 
 ------ update functions via commands
 data WSEvent =
-  -- CHANGE TODO FIGURE IT OUT
   WSEAddElt (Bool, OwlSpot, OwlElt)
   | WSEAddRelative (OwlSpot, Seq OwlElt)
   | WSEAddFolder (OwlSpot, Text)
