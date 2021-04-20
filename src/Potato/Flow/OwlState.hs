@@ -25,7 +25,7 @@ data OwlPFState = OwlPFState {
   , _owlPFState_canvas    :: SCanvas
 } deriving (Show, Generic)
 
---instance NFData OwlPFState
+instance NFData OwlPFState
 
 -- TODO DELETE replace with owlTree_prettyPrint
 debugPrintPFState :: (IsString a) => OwlPFState -> a

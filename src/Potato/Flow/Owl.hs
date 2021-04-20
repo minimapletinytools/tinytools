@@ -29,10 +29,13 @@ class MommyOwl o where
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
+instance NFData OwlInfo
 
 -- TODO rename to just Owl
 --data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
+
+instance NFData OwlElt
 
 instance MommyOwl OwlElt where
   mommyOwl_kiddos (OwlEltFolder  _ kiddos) = Just kiddos
@@ -98,6 +101,8 @@ data OwlEltMeta = OwlEltMeta {
   , _owlEltMeta_relPosition :: SemiPos
 } deriving (Show, Generic)
 
+instance NFData OwlEltMeta
+
 owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_relPosition <> ")"
 
@@ -107,11 +112,15 @@ data OwlSpot = OwlSpot {
   , _owlSpot_leftSibling :: Maybe REltId
 } deriving (Show, Generic)
 
+instance NFData OwlSpot
+
 data SuperOwl = SuperOwl {
   _superOwl_id :: REltId
   , _superOwl_meta :: OwlEltMeta
   , _superOwl_elt :: OwlElt
 } deriving (Show, Generic)
+
+instance NFData SuperOwl
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
@@ -143,11 +152,15 @@ noOwl = -1
 
 -- you can prob delete this?
 -- if parent is selected, then kiddos must not be directly included in the parliament
-newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId } deriving (Show)
+newtype OwlParliament = OwlParliament { unOwlParliament :: Seq REltId } deriving (Show, Generic)
+
+instance NFData OwlParliament
 
 -- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
-newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl } deriving (Show)
+newtype SuperOwlParliament = SuperOwlParliament { unSuperOwlParliament :: Seq SuperOwl } deriving (Show, Generic)
+
+instance NFData SuperOwlParliament
 
 owlParliament_toSuperOwlParliament :: OwlTree -> OwlParliament -> SuperOwlParliament
 owlParliament_toSuperOwlParliament od@OwlTree{..} op = SuperOwlParliament $ fmap f (unOwlParliament op) where
@@ -203,7 +216,9 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
 data OwlTree = OwlTree {
   _owlTree_mapping :: OwlMapping
   , _owlTree_topOwls :: Seq REltId
-} deriving (Show)
+} deriving (Show, Generic)
+
+instance NFData OwlTree
 
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o

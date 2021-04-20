@@ -39,7 +39,7 @@ data OwlPFCmd =
   | OwlPFCResizeCanvas DeltaLBox
   deriving (Show, Generic)
 
---instance NFData OwlPFCmd
+instance NFData OwlPFCmd
 
 -- TODO move this into a diff file
 data ActionStack = ActionStack {
@@ -47,7 +47,7 @@ data ActionStack = ActionStack {
   , undoStack :: [OwlPFCmd]
 } deriving (Show, Generic)
 
---instance NFData ActionStack
+instance NFData ActionStack
 
 emptyActionStack :: ActionStack
 emptyActionStack = ActionStack [] []
@@ -58,7 +58,7 @@ data OwlPFWorkspace = OwlPFWorkspace {
   , _owlPFWorkspace_actionStack :: ActionStack
 } deriving (Show, Generic)
 
---instance NFData OwlPFWorkspace
+instance NFData OwlPFWorkspace
 
 loadOwlPFStateIntoWorkspace :: OwlPFState -> OwlPFWorkspace -> OwlPFWorkspace
 loadOwlPFStateIntoWorkspace pfs ws = r where
