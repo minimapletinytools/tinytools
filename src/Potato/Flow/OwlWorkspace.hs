@@ -158,16 +158,30 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
     deriving (Show, Generic)
 -}
 
+------ helpers for converting events to cmds
+pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
+pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
+
+pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
+pfc_addRelative_to_newElts pfs (lp, stree) = undefined -- OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
+
+pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
+pfc_removeElt_to_deleteElts pfs lps = undefined -- OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
+
+pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
+pfc_addFolder_to_newElts pfs (lp, name) = undefined -- OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
+
+
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_pFState ws
   r = case evt of
     WSEAddElt (undo, spot, oelt) -> if undo
-      then undefined doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]) ws
-      else undefined doCmdWorkspace (OwlPFCDeleteElts [(owlPFState_lastId lastState, spot, oelt)]) ws
-    WSEAddRelative x -> undefined --doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
-    WSEAddFolder x -> undefined --doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
-    WSERemoveElt x -> undefined --doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
+      then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
+      else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
+    WSEAddRelative x -> doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
+    WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
+    WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (const (OwlPFCManipulate x)) ws
       else doCmdWorkspace (OwlPFCManipulate x) ws
