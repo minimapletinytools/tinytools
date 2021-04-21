@@ -27,6 +27,12 @@ data OwlPFState = OwlPFState {
 
 instance NFData OwlPFState
 
+owlPFState_nextId :: OwlPFState -> REltId
+owlPFState_nextId pfs = (+1) . owlTree_maxId . _owlPFState_owlTree $ pfs
+
+owlPFState_lastId :: OwlPFState -> REltId
+owlPFState_lastId pfs = owlTree_maxId . _owlPFState_owlTree $ pfs
+
 -- TODO DELETE replace with owlTree_prettyPrint
 debugPrintPFState :: (IsString a) => OwlPFState -> a
 debugPrintPFState OwlPFState {..} = fromString . T.unpack $ owlTree_prettyPrint _owlPFState_owlTree

@@ -126,7 +126,7 @@ data WSEvent =
   | WSEAddRelative (OwlSpot, Seq OwlElt)
   | WSEAddFolder (OwlSpot, Text)
   | WSERemoveElt OwlParliament -- removed kiddos get adopted by grandparents or w/e?
-  | WSEMoveElt (OwlSpot, OwlParliament) -- also moves kiddos?
+  | WSEMoveElt (OwlSpot, SuperOwlParliament) -- use SuperOwlParliament so we know where to undo back to
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSEManipulate (Bool, ControllersWithId)
   | WSEResizeCanvas DeltaLBox
@@ -146,25 +146,36 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   cmd = cmdFn undoedpfs
   r = doCmdWorkspace cmd undoedws
 
+{-
+  data OwlPFCmd =
+    OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
+    | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
+    | OwlPFCManipulate ControllersWithId
+    -- we need SuperOwlParliament for undo
+    | OwlPFCMove (OwlSpot, OwlParliament)
+
+    | OwlPFCResizeCanvas DeltaLBox
+    deriving (Show, Generic)
+-}
+
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_pFState ws
   r = case evt of
     WSEAddElt (undo, spot, oelt) -> if undo
-      then undefined --doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs x) ws
-      else undefined --doCmdWorkspace (pfc_addElt_to_newElts lastState x) ws
+      then undefined doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]) ws
+      else undefined doCmdWorkspace (OwlPFCDeleteElts [(owlPFState_lastId lastState, spot, oelt)]) ws
     WSEAddRelative x -> undefined --doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
     WSEAddFolder x -> undefined --doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> undefined --doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo
-      then undefined --doCmdOwlPFWorkspaceUndoPermanentFirst (const (PFCManipulate ==> x)) ws
-      else undefined --doCmdWorkspace (PFCManipulate ==> x) ws
-    -- TODO add children to selection before moving
-    WSEMoveElt x -> undefined --doCmdWorkspace (PFCMove ==> x) ws
-    WSEResizeCanvas x -> undefined --doCmdWorkspace (PFCResizeCanvas ==> x) ws
-    WSEUndo -> undefined --undoWorkspace ws
-    WSERedo -> undefined --redoWorkspace ws
-    WSELoad x -> undefined --loadOwlPFStateIntoWorkspace (sPotatoFlow_to_pFState x) ws
+      then doCmdOwlPFWorkspaceUndoPermanentFirst (const (OwlPFCManipulate x)) ws
+      else doCmdWorkspace (OwlPFCManipulate x) ws
+    WSEMoveElt x -> doCmdWorkspace (OwlPFCMove x) ws
+    WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
+    WSEUndo -> undoWorkspace ws
+    WSERedo -> redoWorkspace ws
+    WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_pFState x) ws
   afterState = _owlPFWorkspace_pFState r
   isValidAfter = pFState_isValid afterState
   in
