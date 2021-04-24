@@ -53,6 +53,8 @@ type SemiPos = Int
 -- TODO DELETE
 -- TODO test
 -- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
+-- returns index of SemiPos in a Seq
+-- if there is no exact match, returns position to the "right" of semipos
 locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
 locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
 
@@ -68,6 +70,12 @@ owlMappingSemiPosLookup om rid = case IM.lookup rid om of
 -- TODO test
 locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
 locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
+
+-- TODO test
+locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe REltId
+locateLeftSiblingIdFromSemiPos om s sp = case locateFromSemiPos (owlMappingSemiPosLookup om) s sp of
+  0 -> Nothing
+  x -> Just $ x - 1
 
 -- TODO test
 -- in this case, we remove only if there is an exact match
@@ -106,6 +114,22 @@ instance NFData OwlEltMeta
 
 owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_relPosition <> ")"
+
+-- |
+-- throws if OwlEltMeta is invalid in OwlTree
+owlEltMeta_toOwlSpot :: OwlTree -> OwlEltMeta -> OwlSpot
+owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r where
+  msiblings = case _owlEltMeta_parent of
+    x | x == noOwl -> return _owlTree_topOwls
+    x -> do
+      (_, oelt) <- IM.lookup x _owlTree_mapping
+      mommyOwl_kiddos oelt
+
+  siblings = fromJust msiblings
+  r = OwlSpot {
+    _owlSpot_parent = _owlEltMeta_parent
+    , _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_relPosition
+  }
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
