@@ -104,6 +104,21 @@ IGNORE-simple select compromise
   -completely independent canvas and layer selection
   -TODO spec
 
+::4/2021 self feedback::
+-invert text box crashes still
+-possible to make bad selections sometimes
+-text box type should highlight not cover
+-text box should indicate overflow when in text entry bode
+-needs selection box :O
+-layers
+  -no scrolling in layers
+  -no selection darkening
+  -needs box indicating scroll position (v scroll bar I guess)
+-labels
+  -needs box title
+  -would be cool to have line labels :D
+  -how can we reuse code from text entry handler?
+
 ::NEWEST TODO::
 
 -delete manual install of haskell language server and use ghcup
@@ -143,6 +158,7 @@ DONE-switch to use git submodules ffs
     -(write Ut for this)
   -reverse render order
   -off canvas rendering??
+
 
 -make a set of Goat verifiers for testing in vty UTs
 

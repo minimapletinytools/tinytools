@@ -95,10 +95,11 @@ isDescendentOf om parent child
       x | x == parent -> True
       x -> isDescendentOf om x parent
 
+-- TODO do we need this, maybe just change to OwlSpot?
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
   , _owlEltMeta_depth :: Int
-  , _owlEltMeta_relPosition :: SemiPos
+  , _owlEltMeta_relPosition :: SemiPos -- TODO maybe change to leftSibling?
 } deriving (Show, Generic)
 
 instance NFData OwlEltMeta

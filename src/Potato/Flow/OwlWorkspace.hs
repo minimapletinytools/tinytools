@@ -146,27 +146,30 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   cmd = cmdFn undoedpfs
   r = doCmdWorkspace cmd undoedws
 
-{-
-  data OwlPFCmd =
-    OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
-    | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
-    | OwlPFCManipulate ControllersWithId
-    -- we need SuperOwlParliament for undo
-    | OwlPFCMove (OwlSpot, OwlParliament)
-
-    | OwlPFCResizeCanvas DeltaLBox
-    deriving (Show, Generic)
--}
-
 ------ helpers for converting events to cmds
 pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
 
 pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
-pfc_addRelative_to_newElts pfs (lp, stree) = undefined -- OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
+pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
+  startid = owlPFState_nextId pfs + 1
+  mapAccumLFn (i,ospotacc) oelt = ((i+1, nextacc), (rid, ospotacc, oelt)) where
+    -- order from left to right so there is valid leftSibling
+    nextacc = ospotacc { _owlSpot_leftSibling = Just rid}
+    rid = startid + i
+  (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
+  r = OwlPFCNewElts $ toList r'
 
+-- TODO
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
-pfc_removeElt_to_deleteElts pfs lps = undefined -- OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
+pfc_removeElt_to_deleteElts pfs owlp = r where
+  sowlp = owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) owlp
+  getrpos x = _owlEltMeta_relPosition $ _superOwl_meta x
+  r' = Seq.sortBy (\a b -> compare (getrpos b) (getrpos a)) sowlp
+  -- TODO must order deletion from right to left so that leftSibling is always valid
+  --r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, _superOwl_meta, _superOwl_elt)))
+  -- OwlPFCDeleteElts fmap [(REltId, OwlSpot, OwlElt)]
+  r = undefined
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
 pfc_addFolder_to_newElts pfs (lp, name) = undefined -- OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
