@@ -50,16 +50,14 @@ owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 -- TODO decide if we want some relative position index or if we just want to use true index (and recompute on move/add/delete)
 type SemiPos = Int
 
--- TODO DELETE
--- TODO test
+-- UNTESTED
 -- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
 -- returns index of SemiPos in a Seq
 -- if there is no exact match, returns position to the "right" of semipos
 locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
 locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
 
--- TODO DELETE
--- TODO test
+-- UNTESTED
 -- TODO make an owlTree method?
 owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
 owlMappingSemiPosLookup om rid = case IM.lookup rid om of
@@ -67,24 +65,24 @@ owlMappingSemiPosLookup om rid = case IM.lookup rid om of
   Just (oem,_) -> _owlEltMeta_relPosition oem
 
 -- TODO DELETE
--- TODO test
+-- UNTESTED
 locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
 locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
 
--- TODO test
+-- UNTESTED
 locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe REltId
 locateLeftSiblingIdFromSemiPos om s sp = case locateFromSemiPos (owlMappingSemiPosLookup om) s sp of
   0 -> Nothing
   x -> Just $ x - 1
 
--- TODO test
+-- UNTESTED
 -- in this case, we remove only if there is an exact match
 removeAtSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Seq a
 removeAtSemiPos f s sp = r where
   (front, back) = Seq.breakl (\a -> f a == sp) s
   r = front >< Seq.drop 1 back
 
--- TODO test
+-- UNTESTED
 -- TODO make an owlTree method?
 removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
 removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
@@ -395,10 +393,11 @@ owlTree_addSEltTree spot selttree od = r where
 
   makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl rid otherod
 
+  -- TODO change to mapAccumL so you can return added elements
   -- and set the children accordingly (will correct metas from previous step)
-  r = foldr (\rid acc -> internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
+  r = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
 
-internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> OwlTree
+internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTree{..} = assert (allowFoldersAndExisting || pass) r where
 
   -- if we're adding a folder, ensure it has no children
@@ -417,6 +416,8 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTr
       -- this will get set correctly when we call internal_owlTree_reorgKiddos later
       , _owlEltMeta_relPosition = undefined
     }
+
+  newsowl = SuperOwl rid meta oelt
 
   newMapping' = if allowFoldersAndExisting
     then IM.insert rid (meta, oelt) _owlTree_mapping
@@ -446,9 +447,11 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTr
       , _owlTree_topOwls = newTopOwls
     }
 
-  r = internal_owlTree_reorgKiddos r' _owlSpot_parent
+  r = (internal_owlTree_reorgKiddos r' _owlSpot_parent, newsowl)
 
-owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> OwlTree
+-- TODO modify this to return SuperOwl that was added
+
+owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
 -- | use to convert old style layers to Owl

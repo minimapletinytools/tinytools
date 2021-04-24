@@ -51,8 +51,8 @@ spec = do
           owlElt1 = OwlEltSElt (OwlInfo "💩") SEltNone
           rid = owlTree_maxId owlTree2 + 1
           owlSpot2 = OwlSpot 7 (Just 9)
-        owlTree_owlCount (owlTree_addOwlElt owlSpot1 rid owlElt1 owlTree2) `shouldBe` 10
-        owlTree_owlCount (owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree2) `shouldBe` 10
+        owlTree_owlCount (fst $ owlTree_addOwlElt owlSpot1 rid owlElt1 owlTree2) `shouldBe` 10
+        owlTree_owlCount (fst $ owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree2) `shouldBe` 10
         -- too lazy to write proper test, just print and verify manually
         --putTextLn (owlTree_prettyPrint $ owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree2)
       it "owlTree_moveOwlParliament" $ do

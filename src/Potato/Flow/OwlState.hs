@@ -71,15 +71,17 @@ pFState_toCanvasCoordinates :: OwlPFState -> XY -> XY
 pFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
   LBox (V2 sx sy) _ = _sCanvas_box _owlPFState_canvas
 
--- TODO this should just return SEltTree instead
--- i.e. select all
 pFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 pFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
 
--- TODO
+-- UNTESTED
 do_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-do_newElts seltls OwlPFState {..} = undefined
+do_newElts seltls pfs@OwlPFState {..} = r where
+  mapaccumlfn od (rid,ospot,oelt) = owlTree_addOwlElt ospot rid oelt od
+  (newot, changes') = mapAccumL mapaccumlfn _owlPFState_owlTree seltls
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
+  r = (pfs { _owlPFState_owlTree = newot}, changes)
 
 undo_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newElts seltls OwlPFState {..} = undefined
