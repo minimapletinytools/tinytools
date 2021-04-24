@@ -150,7 +150,7 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
 
--- TEST
+-- UNTESTED
 pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
 pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   startid = owlPFState_nextId pfs + 1
@@ -161,14 +161,14 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
   r = OwlPFCNewElts $ toList r'
 
--- TEST
+-- UNTESTED
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
 pfc_removeElt_to_deleteElts pfs owlp = r where
   od = _owlPFState_owlTree pfs
   SuperOwlParliament sowlp = owlParliament_toSuperOwlParliament od owlp
   getrpos x = _owlEltMeta_relPosition $ _superOwl_meta x
-  -- order deletion from right to left so that leftSibling is always valid
-  r' = Seq.sortBy (\a b -> compare (getrpos b) (getrpos a)) sowlp
+  -- order from left to right so that leftSibling is always valid (we delete from the right)
+  r' = Seq.sortBy (\a b -> compare (getrpos a) (getrpos b)) sowlp
   r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) r')
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd

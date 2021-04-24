@@ -83,8 +83,13 @@ do_newElts seltls pfs@OwlPFState {..} = r where
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
+-- UNTESTED
 undo_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undo_newElts seltls OwlPFState {..} = undefined
+undo_newElts seltls pfs@OwlPFState {..} = r where
+  foldfn (rid,_,_) od = owlTree_removeREltId rid od
+  newot = foldr foldfn _owlPFState_owlTree seltls
+  changes = IM.fromList $ fmap (\(rid,_,_) -> (rid, Nothing)) seltls
+  r = (pfs { _owlPFState_owlTree = newot}, changes)
 
 do_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_deleteElts = undo_newElts
