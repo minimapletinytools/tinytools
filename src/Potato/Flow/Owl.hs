@@ -26,6 +26,10 @@ errorMsg_owlMapping_lookupFail om rid = "expected to find REltId " <> show rid <
 class MommyOwl o where
   mommyOwl_kiddos :: o -> Maybe (Seq REltId)
 
+-- TODO implement
+class IsOwl o where
+  owl_name :: o -> Text
+
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
 
@@ -40,6 +44,10 @@ instance NFData OwlElt
 instance MommyOwl OwlElt where
   mommyOwl_kiddos (OwlEltFolder  _ kiddos) = Just kiddos
   mommyOwl_kiddos _ = Nothing
+
+instance IsOwl OwlElt where
+  owl_name (OwlEltFolder (OwlInfo name) _) = name
+  owl_name (OwlEltSElt (OwlInfo name) _) = name
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
 
@@ -150,6 +158,9 @@ type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
 
+instance IsOwl SuperOwl where
+  owl_name sowl = owl_name $ _superOwl_elt sowl
+  
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
 superOwl_prettyPrintForDebugging SuperOwl{..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt where
   elt = case _superOwl_elt of
@@ -271,12 +282,15 @@ owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 -- i.e. update their relPosition in the directory
 internal_owlTree_reorgKiddos :: OwlTree -> REltId -> OwlTree
 internal_owlTree_reorgKiddos od prid = od { _owlTree_mapping = om } where
+
+  -- TODO use getKiddos helper function...
   childrenToUpdate = case prid of
     x | x == noOwl -> _owlTree_topOwls od
     _ -> case IM.lookup prid (_owlTree_mapping od) of
       Just (_, OwlEltFolder _ children) -> children
       Just _ -> Seq.empty
       Nothing -> error $ errorMsg_owlTree_lookupFail od prid
+
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlTree_mapping od) childrenToUpdate
 
@@ -293,6 +307,26 @@ owlTree_findSuperOwl rid OwlTree {..} = do
 
 owlTree_mustFindSuperOwl :: HasCallStack => REltId -> OwlTree -> SuperOwl
 owlTree_mustFindSuperOwl rid od = fromJust $ owlTree_findSuperOwl rid od
+
+owlTree_findKiddos :: OwlTree -> REltId -> Maybe (Seq REltId)
+owlTree_findKiddos OwlTree {..} rid = case rid of
+  x | x == noOwl -> return _owlTree_topOwls
+  x -> do
+    (_,oelt) <- IM.lookup x _owlTree_mapping
+    mommyOwl_kiddos oelt
+
+owlTree_findSuperOwlAtOwlSpot :: OwlSpot -> OwlTree -> Maybe SuperOwl
+owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
+
+  kiddos <- owlTree_findKiddos od _owlSpot_parent
+
+  case _owlSpot_leftSibling of
+    Nothing -> undefined -- return first kiddo if any
+    Just rid -> undefined -- TODO
+
+
+
+
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r where
