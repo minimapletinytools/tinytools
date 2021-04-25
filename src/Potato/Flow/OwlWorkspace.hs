@@ -137,7 +137,7 @@ data WSEvent =
   deriving (Show)
 
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
-debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintPFState stateBefore <> "\nAFTER: " <> debugPrintPFState stateAfter
+debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
 
 doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> OwlPFWorkspace
 doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
@@ -154,7 +154,7 @@ pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spo
 -- UNTESTED
 pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
 pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
-  startid = owlPFState_nextId pfs + 1
+  startid = owlPFState_nextId pfs
   mapAccumLFn (i,ospotacc) oelt = ((i+1, nextacc), (rid, ospotacc, oelt)) where
     -- order from left to right so there is valid leftSibling
     nextacc = ospotacc { _owlSpot_leftSibling = Just rid}

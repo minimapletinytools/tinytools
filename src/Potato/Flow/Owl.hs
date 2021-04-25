@@ -301,11 +301,13 @@ emptyOwlTree = OwlTree {
     , _owlTree_topOwls = Seq.empty
   }
 
+-- TODO change order of args
 owlTree_findSuperOwl :: REltId -> OwlTree -> Maybe SuperOwl
 owlTree_findSuperOwl rid OwlTree {..} = do
   (meta, elt) <- IM.lookup rid _owlTree_mapping
   return $ SuperOwl rid meta elt
 
+-- TODO change order of args
 owlTree_mustFindSuperOwl :: HasCallStack => REltId -> OwlTree -> SuperOwl
 owlTree_mustFindSuperOwl rid od = fromJust $ owlTree_findSuperOwl rid od
 
@@ -316,6 +318,7 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
     (_,oelt) <- IM.lookup x _owlTree_mapping
     mommyOwl_kiddos oelt
 
+-- TODO change order of args
 -- UNTESTED
 owlTree_findSuperOwlAtOwlSpot :: OwlSpot -> OwlTree -> Maybe SuperOwl
 owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
@@ -323,9 +326,14 @@ owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
   kid <- case _owlSpot_leftSibling of
     Nothing -> Seq.lookup 0 kiddos
     -- take until we reach the point and return one to the right
-    Just rid -> Seq.lookup 0 . Seq.drop 1 . Seq.takeWhileL (\rid' -> rid' /= rid) $ kiddos
+    Just rid -> Seq.lookup 0 . Seq.drop 1 . Seq.dropWhileL (\rid' -> rid' /= rid) $ kiddos
   owlTree_findSuperOwl kid od
 
+-- move one spot to the left, returns Nothing if not possible
+owlTree_goRightFromOwlSpot :: OwlTree -> OwlSpot -> Maybe OwlSpot
+owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
+  sowl <- owlTree_findSuperOwlAtOwlSpot ospot od
+  return $ ospot { _owlSpot_leftSibling = Just $ _superOwl_id sowl }
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r where
