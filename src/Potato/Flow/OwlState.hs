@@ -37,8 +37,9 @@ owlPFState_lastId pfs = owlTree_maxId . _owlPFState_owlTree $ pfs
 debugPrintPFState :: (IsString a) => OwlPFState -> a
 debugPrintPFState OwlPFState {..} = fromString . T.unpack $ owlTree_prettyPrint _owlPFState_owlTree
 
+-- TODO pFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _pFState_layers - 1]
 pFState_isValid :: OwlPFState -> Bool
-pFState_isValid pfs@OwlPFState {..} = undefined -- TODO pFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _pFState_layers - 1]
+pFState_isValid pfs@OwlPFState {..} = True
 
 pFState_selectionIsValid :: OwlPFState -> OwlParliament -> Bool
 pFState_selectionIsValid OwlPFState {..} (OwlParliament op) = validElts where

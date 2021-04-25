@@ -10,6 +10,7 @@ module Potato.Flow.OwlWorkspace (
   , doCmdWorkspace
   , WSEvent(..)
   , updateOwlPFWorkspace
+  , loadOwlPFStateIntoWorkspace
 ) where
 
 import           Relude

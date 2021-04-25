@@ -1,3 +1,6 @@
+-- DEPRECATED
+-- keeping around because we use the types for testing
+
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Potato.Flow.TestStates (

@@ -160,7 +160,7 @@ instance MommyOwl SuperOwl where
 
 instance IsOwl SuperOwl where
   owl_name sowl = owl_name $ _superOwl_elt sowl
-  
+
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
 superOwl_prettyPrintForDebugging SuperOwl{..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt where
   elt = case _superOwl_elt of
@@ -272,7 +272,8 @@ owlTree_prettyPrint od@OwlTree {..} = r where
 
 owlTree_validate :: OwlTree -> Bool
 owlTree_validate OwlTree {..} = r where
-  -- TODO
+  -- TODO check relPos are correct
+  -- TODO check parents/depth is set correctly
   r = undefined
 
 owlTree_maxId :: OwlTree -> REltId
@@ -315,17 +316,15 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
     (_,oelt) <- IM.lookup x _owlTree_mapping
     mommyOwl_kiddos oelt
 
+-- UNTESTED
 owlTree_findSuperOwlAtOwlSpot :: OwlSpot -> OwlTree -> Maybe SuperOwl
 owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
-
   kiddos <- owlTree_findKiddos od _owlSpot_parent
-
-  case _owlSpot_leftSibling of
-    Nothing -> undefined -- return first kiddo if any
-    Just rid -> undefined -- TODO
-
-
-
+  kid <- case _owlSpot_leftSibling of
+    Nothing -> Seq.lookup 0 kiddos
+    -- take until we reach the point and return one to the right
+    Just rid -> Seq.lookup 0 . Seq.drop 1 . Seq.takeWhileL (\rid' -> rid' /= rid) $ kiddos
+  owlTree_findSuperOwl kid od
 
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
@@ -355,6 +354,10 @@ owliterateat od rid = owlTree_foldAt (|>) Seq.empty od rid where
 -- | iterates everything in the directory
 owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
+
+-- TODO
+owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a
+owlTree_foldWithParent = undefined
 
 -- | select everything in the OwlTree
 owlTree_toSuperOwlParliament :: OwlTree -> SuperOwlParliament
@@ -448,7 +451,8 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTr
           Just (x,_) -> _owlEltMeta_depth x + 1
 
       -- this will get set correctly when we call internal_owlTree_reorgKiddos later
-      , _owlEltMeta_relPosition = undefined
+      -- TODO crashes if we set it to undefined, why??
+      , _owlEltMeta_relPosition = -1
     }
 
   newsowl = SuperOwl rid meta oelt

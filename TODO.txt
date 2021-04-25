@@ -121,6 +121,10 @@ IGNORE-simple select compromise
 
 ::NEWEST TODO::
 
+-Owl TODO
+  -write validate function
+  -finish UTs for workspace
+
 -delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 DONE-switch to use git submodules ffs

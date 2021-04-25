@@ -1,3 +1,6 @@
+-- DEPRECATED
+-- keeping around because we use the types for testing
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.State (
