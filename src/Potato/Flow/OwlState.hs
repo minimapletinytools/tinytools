@@ -14,7 +14,7 @@ import           Potato.Flow.Types
 import           Control.Exception       (assert)
 import           Data.Aeson
 import qualified Data.IntMap.Strict      as IM
-import           Data.List.Ordered       (isSorted)
+import           Data.List.Ordered       (isSortedBy)
 import           Data.Maybe
 import qualified Data.Sequence           as Seq
 import qualified Data.Text as T
@@ -101,10 +101,21 @@ undo_deleteElts = do_newElts
 
 -- TODO yay
 do_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-do_move (os, sop) pfs@OwlPFState {..} = undefined
+do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
+  rp = _owlEltMeta_relPosition . _superOwl_meta
+  isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
+
+  op = superOwlParialment_toOwlParliament sop
+  --(newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree
+  --changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, sowl)) changes'
+  --r = (pfs { _owlPFState_owlTree = newot}, changes)
+  r = undefined
+
 
 undo_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_move (os, sop) pfs@OwlPFState {..} = undefined
+-- TODO undo by applying from left to right so that leftSibling is guaranteed to exist
+-- TODO you need to get rid of relpositioning because it will mess up undo if original rel positions are not preserved after the do
 
 -- OwlElt compatible variant of updateFnFromController
 updateFnFromControllerOwl :: Bool -> Controller -> ((OwlEltMeta, OwlElt)->(OwlEltMeta, OwlElt))

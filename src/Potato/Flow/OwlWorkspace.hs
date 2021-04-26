@@ -38,6 +38,8 @@ data OwlPFCmd =
   | OwlPFCMove (OwlSpot, SuperOwlParliament)
 
   | OwlPFCResizeCanvas DeltaLBox
+
+  -- | OwlPFCSnap (OwlPFState, OwlPFState) --(before, after)
   deriving (Show, Generic)
 
 instance NFData OwlPFCmd
@@ -152,7 +154,6 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
 
--- UNTESTED
 pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
 pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   startid = owlPFState_nextId pfs
@@ -163,11 +164,10 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
   r = OwlPFCNewElts $ toList r'
 
+--TODO need to reorder so it becomes undo friendly here I think?
 pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
 pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
 
-
--- UNTESTED
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
 pfc_removeElt_to_deleteElts pfs owlp = r where
   od = _owlPFState_owlTree pfs

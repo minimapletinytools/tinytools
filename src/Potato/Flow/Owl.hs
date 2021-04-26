@@ -186,6 +186,9 @@ owlParliament_toSuperOwlParliament od@OwlTree{..} op = SuperOwlParliament $ fmap
     Nothing -> error $ errorMsg_owlTree_lookupFail od rid
     Just (oem,oe) -> SuperOwl rid oem oe
 
+superOwlParialment_toOwlParliament :: SuperOwlParliament -> OwlParliament
+superOwlParialment_toOwlParliament = OwlParliament . fmap _superOwl_id . unSuperOwlParliament
+
 -- check if a mommy owl is selected, that no descendant of that mommy owl is selected
 superOwlParliament_isValid :: OwlMapping -> SuperOwlParliament -> Bool
 superOwlParliament_isValid om (SuperOwlParliament owls) = r where
@@ -422,16 +425,11 @@ owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
 
 owlTree_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlTree -> OwlTree
 owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r where
-
   sop@(SuperOwlParliament sowls) = owlParliament_toSuperOwlParliament od op
-
   -- check that no owl is a parent of where we want to move to
   isValid = not $ all (isDescendentOf _owlTree_mapping _owlSpot_parent) (fmap _superOwl_id sowls)
-
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
-
   selttree = superOwlParliament_toSEltTree od sop
-
   r = owlTree_addSEltTree spot selttree removedOd
 
 owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> OwlTree
@@ -449,7 +447,6 @@ owlTree_addSEltTree spot selttree od = r where
   newod = od { _owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod }
 
   makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl rid otherod
-
   -- TODO change to mapAccumL so you can return added elements
   -- and set the children accordingly (will correct metas from previous step)
   r = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
