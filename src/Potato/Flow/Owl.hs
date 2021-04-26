@@ -121,22 +121,6 @@ instance NFData OwlEltMeta
 owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_relPosition <> ")"
 
--- |
--- throws if OwlEltMeta is invalid in OwlTree
-owlEltMeta_toOwlSpot :: OwlTree -> OwlEltMeta -> OwlSpot
-owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r where
-  msiblings = case _owlEltMeta_parent of
-    x | x == noOwl -> return _owlTree_topOwls
-    x -> do
-      (_, oelt) <- IM.lookup x _owlTree_mapping
-      mommyOwl_kiddos oelt
-
-  siblings = fromJust msiblings
-  r = OwlSpot {
-    _owlSpot_parent = _owlEltMeta_parent
-    , _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_relPosition
-  }
-
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
   _owlSpot_parent :: REltId
@@ -339,6 +323,29 @@ owlTree_goRightFromOwlSpot :: OwlTree -> OwlSpot -> Maybe OwlSpot
 owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
   sowl <- owlTree_findSuperOwlAtOwlSpot ospot od
   return $ ospot { _owlSpot_leftSibling = Just $ _superOwl_id sowl }
+
+-- |
+-- throws if OwlEltMeta is invalid in OwlTree
+owlTree_owlEltMeta_toOwlSpot :: OwlTree -> OwlEltMeta -> OwlSpot
+owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r where
+  msiblings = case _owlEltMeta_parent of
+    x | x == noOwl -> return _owlTree_topOwls
+    x -> do
+      (_, oelt) <- IM.lookup x _owlTree_mapping
+      mommyOwl_kiddos oelt
+
+  siblings = fromJust msiblings
+  r = OwlSpot {
+    _owlSpot_parent = _owlEltMeta_parent
+    , _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_relPosition
+  }
+
+-- |
+-- throws if REltId is invalid in OwlTree
+owlTree_rEltId_toOwlSpot :: (HasCallStack) => OwlTree -> REltId -> OwlSpot
+owlTree_rEltId_toOwlSpot od@OwlTree {..} rid = r where
+  (oem,_) = fromJust $ IM.lookup rid _owlTree_mapping
+  r = owlTree_owlEltMeta_toOwlSpot od oem
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r where

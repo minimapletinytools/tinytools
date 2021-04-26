@@ -127,7 +127,8 @@ data WSEvent =
   | WSEAddRelative (OwlSpot, Seq OwlElt)
   | WSEAddFolder (OwlSpot, Text)
   | WSERemoveElt OwlParliament -- removed kiddos get adopted by grandparents or w/e?
-  | WSEMoveElt (OwlSpot, SuperOwlParliament) -- use SuperOwlParliament so we know where to undo back to
+  -- TODO change to OwlParliament, convert to SuperOwlParliament in code..
+  | WSEMoveElt (OwlSpot, OwlParliament)
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSEManipulate (Bool, ControllersWithId)
   | WSEResizeCanvas DeltaLBox
@@ -162,6 +163,10 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
   r = OwlPFCNewElts $ toList r'
 
+pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
+pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
+
+
 -- UNTESTED
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
 pfc_removeElt_to_deleteElts pfs owlp = r where
@@ -170,7 +175,7 @@ pfc_removeElt_to_deleteElts pfs owlp = r where
   getrpos x = _owlEltMeta_relPosition $ _superOwl_meta x
   -- order from left to right so that leftSibling is always valid (we delete from the right)
   r' = Seq.sortBy (\a b -> compare (getrpos a) (getrpos b)) sowlp
-  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) r')
+  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) r')
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
 pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlEltFolder (OwlInfo name) Seq.empty)]
@@ -188,7 +193,7 @@ updateOwlPFWorkspace evt ws = let
     WSEManipulate (undo, x) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (const (OwlPFCManipulate x)) ws
       else doCmdWorkspace (OwlPFCManipulate x) ws
-    WSEMoveElt x -> doCmdWorkspace (OwlPFCMove x) ws
+    WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
