@@ -44,7 +44,7 @@ spec = do
 
       owlElt1 = OwlEltSElt (OwlInfo "💩") SEltNone
       owlElt2 = OwlEltSElt (OwlInfo "🍅") SEltNone
-      owlElt3 = OwlEltFolder (OwlInfo "🧀") (Seq.empty)
+      owlElt3 = OwlEltFolder (OwlInfo "🧀") Seq.empty
 
       owlElts = Seq.fromList [owlElt1, owlElt2, owlElt3]
 
@@ -84,7 +84,13 @@ spec = do
           newws2 = updateOwlPFWorkspace wse2 newws1
         verifyOwlAt newws2 childSpot (pred_nameIs (owl_name owlElt1)) `shouldBe` True
       it "WSERemoveElt" $ do
-        1 `shouldBe` 1
+        let
+          --remove b1
+          wse1 = WSERemoveElt (OwlParliament $ Seq.fromList [2])
+          newws1 = updateOwlPFWorkspace wse1 someWorkspace0
+        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
+        -- b2 should now be where b1 was
+        verifyOwlAt newws1 (OwlSpot 1 Nothing) (pred_nameIs ("b2")) `shouldBe` True
       it "WSEMoveElt" $ do
         1 `shouldBe` 1
       it "WSEManipulate" $ do

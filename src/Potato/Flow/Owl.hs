@@ -257,6 +257,11 @@ instance NFData OwlTree
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
 
+-- TODO
+owlTree_equivalent :: OwlTree -> OwlTree -> Bool
+owlTree_equivalent a b = r where
+    r = undefined
+
 owlTree_prettyPrint :: OwlTree -> Text
 owlTree_prettyPrint od@OwlTree {..} = r where
   foldlfn acc rid = let
