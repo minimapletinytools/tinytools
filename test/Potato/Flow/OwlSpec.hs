@@ -59,14 +59,14 @@ spec = do
         let
           owlSpot1 = OwlSpot (-1) Nothing
           parliament = OwlParliament $ Seq.fromList [2,3,7]
-        owlTree_owlCount (owlTree_moveOwlParliament parliament owlSpot1 owlTree2) `shouldBe` 9
+        owlTree_owlCount (fst $ owlTree_moveOwlParliament parliament owlSpot1 owlTree2) `shouldBe` 9
         -- too lazy to write proper test, just print and verify manually
         --putTextLn (owlTree_prettyPrint $ owlTree_moveOwlParliament parliament owlSpot1 owlTree2)
       it "owlTree_addSEltTree" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
           seltree1 = owlTree_toSEltTree owlTree2
-        owlTree_owlCount (owlTree_addSEltTree owlSpot1 seltree1 owlTree2) `shouldBe` 18
+        owlTree_owlCount (fst $ owlTree_addSEltTree owlSpot1 seltree1 owlTree2) `shouldBe` 18
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlTree_prettyPrint owlTree2)

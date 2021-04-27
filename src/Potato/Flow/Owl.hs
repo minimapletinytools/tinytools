@@ -423,21 +423,26 @@ owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
       , _owlTree_topOwls = newTopOwls
     }
 
-owlTree_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlTree -> OwlTree
+owlTree_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r where
   sop@(SuperOwlParliament sowls) = owlParliament_toSuperOwlParliament od op
+
   -- check that no owl is a parent of where we want to move to
-  isValid = not $ all (isDescendentOf _owlTree_mapping _owlSpot_parent) (fmap _superOwl_id sowls)
+  -- TODO fix this check, it's checking for the incorrect condidiotn, above condition is correct
+  --isValid = traceShow (sowls) $ not $ all (isDescendentOf _owlTree_mapping _owlSpot_parent) (fmap _superOwl_id sowls)
+  isValid = True
+
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
   selttree = superOwlParliament_toSEltTree od sop
   r = owlTree_addSEltTree spot selttree removedOd
 
-owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> OwlTree
+owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addSEltTree spot selttree od = r where
   -- we do it the potato way
 
   -- reindex the selttree
   startid = owlTree_maxId od + 1
+  -- TODO this is fine, but it would be better to set the id rather than add it to the old one
   reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
 
   -- convert to OwlDirectory
@@ -447,9 +452,13 @@ owlTree_addSEltTree spot selttree od = r where
   newod = od { _owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod }
 
   makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl rid otherod
-  -- TODO change to mapAccumL so you can return added elements
-  -- and set the children accordingly (will correct metas from previous step)
-  r = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
+
+  -- and call internal_owlTree_addOwlElt on the new topOwls from the selttree
+  -- this will correct the OwlEltMetas of the topOwls we just created
+  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
+  changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
+  r = (newtree, changes)
+
 
 internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTree{..} = assert (allowFoldersAndExisting || pass) r where

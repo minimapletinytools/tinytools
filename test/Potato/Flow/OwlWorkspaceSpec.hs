@@ -19,11 +19,11 @@ import Potato.Flow.Types
 import Potato.Flow.SElts
 
 verifyOwlAt :: OwlPFWorkspace -> OwlSpot -> (SuperOwl -> Bool) -> Bool
-verifyOwlAt ws ospot f = traceShow ospot $ fromMaybe False $ do
+verifyOwlAt ws ospot f = fromMaybe False $ do
   let
     ot = _owlPFState_owlTree . _owlPFWorkspace_pFState $ ws
   sowl <- owlTree_findSuperOwlAtOwlSpot ospot ot
-  traceShow sowl $  Just $ f sowl
+  --traceShow sowl $  Just $ f sowl
   Just $ f sowl
 
 
@@ -65,7 +65,7 @@ spec = do
           wse1 = WSEAddRelative (spot1, owlElts)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
-        putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
+        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
         verifyOwlAt newws1 spot1 (pred_nameIs (owl_name owlElt1)) `shouldBe` True
         verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (owl_name owlElt2)) `shouldBe` True
       it "WSEAddFolder" $ do
@@ -74,7 +74,7 @@ spec = do
           wse1 = WSEAddFolder (spot2, folderName)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
-        putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
+        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
         verifyOwlAt newws1 spot2 (pred_nameIs folderName) `shouldBe` True
         -- create a child in the folder we just created and verify it got added correctly
         let
