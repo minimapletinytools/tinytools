@@ -55,47 +55,15 @@ owlElt_name :: OwlElt -> Text
 owlElt_name (OwlEltFolder (OwlInfo name) _) = name
 owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 
--- TODO decide if we want some relative position index or if we just want to use true index (and recompute on move/add/delete)
 type SemiPos = Int
 
--- UNTESTED
--- TODO change this to do a binary search (once you have decided SemiPos is what you want and not actual position)
--- returns index of SemiPos in a Seq
--- if there is no exact match, returns position to the "right" of semipos
-locateFromSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Int
-locateFromSemiPos f s sp = Seq.length $ Seq.takeWhileL (\a -> f a < sp) s
-
--- UNTESTED
--- TODO make an owlTree method?
-owlMappingSemiPosLookup :: OwlMapping -> REltId -> SemiPos
-owlMappingSemiPosLookup om rid = case IM.lookup rid om of
-  Nothing -> error $ "expected to find rid " <> show rid
-  Just (oem,_) -> _owlEltMeta_relPosition oem
-
--- TODO DELETE
--- UNTESTED
-locateOwlFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Int
-locateOwlFromSemiPos om s sp = locateFromSemiPos (owlMappingSemiPosLookup om) s sp
-
--- UNTESTED
 locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe REltId
-locateLeftSiblingIdFromSemiPos om s sp = case locateFromSemiPos (owlMappingSemiPosLookup om) s sp of
+locateLeftSiblingIdFromSemiPos om s sp = case sp of
   0 -> Nothing
-  x -> Just $ x - 1
+  x -> case Seq.lookup (x - 1) s of
+    Nothing -> error $ "expected to find index " <> show (x-1) <> " in seq"
+    Just r -> Just r
 
--- UNTESTED
--- in this case, we remove only if there is an exact match
-removeAtSemiPos :: (a -> SemiPos) -> Seq a -> SemiPos -> Seq a
-removeAtSemiPos f s sp = r where
-  (front, back) = Seq.breakl (\a -> f a == sp) s
-  r = front >< Seq.drop 1 back
-
--- UNTESTED
--- TODO make an owlTree method?
-removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
-removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
-  sp = _owlEltMeta_relPosition . _superOwl_meta $ so
-  r = removeAtSemiPos (owlMappingSemiPosLookup om) s sp
 
 isDescendentOf :: (HasCallStack) => OwlMapping -> REltId -> REltId -> Bool
 isDescendentOf om parent child
@@ -250,7 +218,7 @@ owlTree_equivalent :: OwlTree -> OwlTree -> Bool
 owlTree_equivalent a b = r where
     r = undefined
 
-owlTree_prettyPrint :: OwlTree -> Text
+owlTree_prettyPrint :: HasCallStack => OwlTree -> Text
 owlTree_prettyPrint od@OwlTree {..} = r where
   foldlfn acc rid = let
       sowl = owlTree_mustFindSuperOwl rid od
@@ -276,15 +244,7 @@ owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 -- i.e. update their relPosition in the directory
 internal_owlTree_reorgKiddos :: OwlTree -> REltId -> OwlTree
 internal_owlTree_reorgKiddos od prid = od { _owlTree_mapping = om } where
-
-  -- TODO use getKiddos helper function...
-  childrenToUpdate = case prid of
-    x | x == noOwl -> _owlTree_topOwls od
-    _ -> case IM.lookup prid (_owlTree_mapping od) of
-      Just (_, OwlEltFolder _ children) -> children
-      Just _ -> Seq.empty
-      Nothing -> error $ errorMsg_owlTree_lookupFail od prid
-
+  childrenToUpdate = fromJust $ owlTree_findKiddos od prid
   setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlTree_mapping od) childrenToUpdate
 
@@ -392,25 +352,32 @@ owlTree_removeREltId :: REltId -> OwlTree -> OwlTree
 owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl rid od) od
 
 owlTree_removeSuperOwl :: SuperOwl -> OwlTree -> OwlTree
-owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
+owlTree_removeSuperOwl sowl od@OwlTree{..} = r where
   -- remove the element itself
-  newMapping'' = IM.delete _superOwl_id _owlTree_mapping
+  newMapping'' = IM.delete (_superOwl_id sowl) _owlTree_mapping
 
   -- remove all children recursively
   removeEltWithoutAdjustMommyFn rid mapping = case IM.lookup rid mapping of
     Nothing -> error $ errorMsg_owlMapping_lookupFail mapping rid
     Just (_, OwlEltFolder _ children) -> foldr removeEltWithoutAdjustMommyFn (IM.delete rid mapping) children
     Just _ -> IM.delete rid mapping
-  newMapping' = case _superOwl_elt of
+  newMapping' = case _superOwl_elt sowl of
     OwlEltFolder _ children -> foldr removeEltWithoutAdjustMommyFn newMapping'' children
     _ -> newMapping''
 
+  removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
+  removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
+    sp = _owlEltMeta_relPosition . _superOwl_meta $ so
+    -- sowl meta may be incorrect at this point so we do linear search to remove the elt
+    r = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
+    -- TODO switch to this version please
+    --r = Seq.deleteAt sp s
+
+  -- remove from children of the element's mommy if needed
   removeChildFn parent = case parent of
     (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlTree_mapping children sowl))
     _ -> error "expected parent to be a folder"
-
-  -- remove from children of the element's mommy if needed
-  newMapping = case _owlEltMeta_parent _superOwl_meta of
+  newMapping = case _owlEltMeta_parent (_superOwl_meta sowl) of
     x | x == noOwl -> newMapping'
     rid -> IM.adjust removeChildFn rid newMapping'
 
@@ -419,19 +386,25 @@ owlTree_removeSuperOwl sowl@SuperOwl{..} od@OwlTree{..} = r where
     then removeSuperOwlFromSeq _owlTree_mapping _owlTree_topOwls sowl
     else _owlTree_topOwls
 
-  r = OwlTree {
+  r' = OwlTree {
       _owlTree_mapping = newMapping
       , _owlTree_topOwls = newTopOwls
     }
+
+  r = internal_owlTree_reorgKiddos r' (_owlEltMeta_parent (_superOwl_meta sowl))
 
 owlTree_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r where
   sop@(SuperOwlParliament sowls) = owlParliament_toSuperOwlParliament od op
 
   -- check that we aren't doing circular parenting 😱
-  isValid = traceShow (sowls) $ not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
+  isValid = not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
 
+  -- NOTE, that _owlEltMeta_relPosition in sowls may be incorrect in the middle of this fold
+  -- this forces us to do linear search in the owlTree_removeSuperOwl call D:
+  -- TODO fix by always sort from right to left to avoid this
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
+
   selttree = superOwlParliament_toSEltTree od sop
   r = owlTree_addSEltTree spot selttree removedOd
 

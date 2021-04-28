@@ -61,7 +61,7 @@ spec = do
           parliament = OwlParliament $ Seq.fromList [2,3,7]
         owlTree_owlCount (fst $ owlTree_moveOwlParliament parliament owlSpot1 owlTree2) `shouldBe` 9
         -- too lazy to write proper test, just print and verify manually
-        --putTextLn (owlTree_prettyPrint $ owlTree_moveOwlParliament parliament owlSpot1 owlTree2)
+        --putTextLn (owlTree_prettyPrint . fst $ owlTree_moveOwlParliament parliament owlSpot1 owlTree2)
       it "owlTree_addSEltTree" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
