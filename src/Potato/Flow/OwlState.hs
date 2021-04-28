@@ -23,7 +23,7 @@ import qualified Data.Text as T
 data OwlPFState = OwlPFState {
   _owlPFState_owlTree :: OwlTree
   , _owlPFState_canvas    :: SCanvas
-} deriving (Show, Generic)
+} deriving (Show, Eq, Generic)
 
 instance NFData OwlPFState
 

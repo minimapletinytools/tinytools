@@ -26,9 +26,13 @@ verifyOwlAt ws ospot f = fromMaybe False $ do
   --traceShow sowl $  Just $ f sowl
   Just $ f sowl
 
-
 pred_nameIs :: Text -> SuperOwl -> Bool
 pred_nameIs n sowl = owl_name sowl == n
+
+undoAndVerify :: OwlPFWorkspace -> OwlPFState -> Bool
+undoAndVerify ws prev = r where
+  undows = updateOwlPFWorkspace WSEUndo ws
+  r = prev == _owlPFWorkspace_pFState undows
 
 
 spec :: Spec

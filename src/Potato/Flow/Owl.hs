@@ -31,13 +31,13 @@ class IsOwl o where
   owl_name :: o -> Text
 
 -- TODO Consider moving OwlInfo into meta?
-data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Generic)
+data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Eq, Generic)
 
 instance NFData OwlInfo
 
 -- TODO rename to just Owl
 --data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
-data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
+data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Eq, Generic)
 
 instance NFData OwlElt
 
@@ -114,7 +114,7 @@ data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
   , _owlEltMeta_depth :: Int
   , _owlEltMeta_relPosition :: SemiPos -- TODO maybe change to leftSibling?
-} deriving (Show, Generic)
+} deriving (Show, Eq, Generic)
 
 instance NFData OwlEltMeta
 
@@ -234,10 +234,11 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
         >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi <> "(end)") SEltFolderEnd))
   (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
+-- |
 data OwlTree = OwlTree {
   _owlTree_mapping :: OwlMapping
   , _owlTree_topOwls :: Seq REltId
-} deriving (Show, Generic)
+} deriving (Show, Eq, Generic)
 
 instance NFData OwlTree
 
