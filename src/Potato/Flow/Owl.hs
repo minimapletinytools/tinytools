@@ -427,10 +427,8 @@ owlTree_moveOwlParliament :: OwlParliament -> OwlSpot -> OwlTree -> (OwlTree, [S
 owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r where
   sop@(SuperOwlParliament sowls) = owlParliament_toSuperOwlParliament od op
 
-  -- check that no owl is a parent of where we want to move to
-  -- TODO fix this check, it's checking for the incorrect condidiotn, above condition is correct
-  --isValid = traceShow (sowls) $ not $ all (isDescendentOf _owlTree_mapping _owlSpot_parent) (fmap _superOwl_id sowls)
-  isValid = True
+  -- check that we aren't doing circular parenting 😱
+  isValid = traceShow (sowls) $ not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
 
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
   selttree = superOwlParliament_toSEltTree od sop
