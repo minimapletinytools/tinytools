@@ -172,7 +172,7 @@ pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
 pfc_removeElt_to_deleteElts pfs owlp = r where
   od = _owlPFState_owlTree pfs
   SuperOwlParliament sowlp = owlParliament_toSuperOwlParliament od owlp
-  getrpos x = _owlEltMeta_relPosition $ _superOwl_meta x
+  getrpos x = _owlEltMeta_position $ _superOwl_meta x
   -- order from left to right so that leftSibling is always valid (we delete from the right)
   r' = Seq.sortBy (\a b -> compare (getrpos a) (getrpos b)) sowlp
   r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) r')

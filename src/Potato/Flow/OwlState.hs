@@ -100,7 +100,7 @@ undo_deleteElts = do_newElts
 
 do_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
-  rp = _owlEltMeta_relPosition . _superOwl_meta
+  rp = _owlEltMeta_position . _superOwl_meta
   isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
   op = superOwlParialment_toOwlParliament sop
   (newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree

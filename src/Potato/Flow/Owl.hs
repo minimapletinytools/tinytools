@@ -55,6 +55,8 @@ owlElt_name :: OwlElt -> Text
 owlElt_name (OwlEltFolder (OwlInfo name) _) = name
 owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 
+-- this is just position index in children
+-- TODO come up with a better name
 type SemiPos = Int
 
 locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe REltId
@@ -81,13 +83,13 @@ isDescendentOf om parent child
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
   , _owlEltMeta_depth :: Int
-  , _owlEltMeta_relPosition :: SemiPos -- TODO maybe change to leftSibling?
+  , _owlEltMeta_position :: SemiPos -- TODO maybe change to leftSibling?
 } deriving (Show, Eq, Generic)
 
 instance NFData OwlEltMeta
 
 owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
-owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_relPosition <> ")"
+owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
@@ -241,11 +243,11 @@ owlTree_maxId :: OwlTree -> REltId
 owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 
 -- reorganize the children of the given parent
--- i.e. update their relPosition in the directory
+-- i.e. update their position in the directory
 internal_owlTree_reorgKiddos :: OwlTree -> REltId -> OwlTree
 internal_owlTree_reorgKiddos od prid = od { _owlTree_mapping = om } where
   childrenToUpdate = fromJust $ owlTree_findKiddos od prid
-  setRelPos i (oem, oe) = (oem { _owlEltMeta_relPosition = i }, oe)
+  setRelPos i (oem, oe) = (oem { _owlEltMeta_position = i }, oe)
   om = Seq.foldlWithIndex (\om' i x -> IM.adjust (setRelPos i) x om') (_owlTree_mapping od) childrenToUpdate
 
 emptyOwlTree :: OwlTree
@@ -301,7 +303,7 @@ owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r where
   siblings = fromJust msiblings
   r = OwlSpot {
     _owlSpot_parent = _owlEltMeta_parent
-    , _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_relPosition
+    , _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_position
   }
 
 -- |
@@ -367,7 +369,7 @@ owlTree_removeSuperOwl sowl od@OwlTree{..} = r where
 
   removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
   removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r where
-    sp = _owlEltMeta_relPosition . _superOwl_meta $ so
+    sp = _owlEltMeta_position . _superOwl_meta $ so
     -- sowl meta may be incorrect at this point so we do linear search to remove the elt
     r = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
     -- TODO switch to this version please
@@ -400,7 +402,7 @@ owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r 
   -- check that we aren't doing circular parenting 😱
   isValid = not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
 
-  -- NOTE, that _owlEltMeta_relPosition in sowls may be incorrect in the middle of this fold
+  -- NOTE, that _owlEltMeta_position in sowls may be incorrect in the middle of this fold
   -- this forces us to do linear search in the owlTree_removeSuperOwl call D:
   -- TODO fix by always sort from right to left to avoid this
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
@@ -450,7 +452,7 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTr
 
       -- this will get set correctly when we call internal_owlTree_reorgKiddos later
       -- TODO crashes if we set it to undefined, why??
-      , _owlEltMeta_relPosition = -1
+      , _owlEltMeta_position = -1
     }
 
   newsowl = SuperOwl rid meta oelt
