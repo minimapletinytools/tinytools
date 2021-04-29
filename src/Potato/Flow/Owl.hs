@@ -215,10 +215,25 @@ instance NFData OwlTree
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
 
--- TODO
 owlTree_equivalent :: OwlTree -> OwlTree -> Bool
-owlTree_equivalent a b = r where
-    r = undefined
+owlTree_equivalent ota otb = r where
+
+  mustFind rid ot = case IM.lookup rid (_owlTree_mapping ot) of
+    Nothing -> error $ errorMsg_owlTree_lookupFail ot rid
+    Just x -> x
+
+  kiddos_equivalent kiddosa kiddosb =
+    Seq.length kiddosa == Seq.length kiddosb
+    && all id (Seq.zipWith (owl_equivalent') kiddosa kiddosb)
+
+  owl_equivalent' rida ridb = owl_equivalent a' b' where
+    (_, a') = mustFind rida ota
+    (_, b') = mustFind ridb otb
+
+  owl_equivalent (OwlEltSElt oia selta) (OwlEltSElt oib seltb) = oia == oib && selta == seltb
+  owl_equivalent (OwlEltFolder oia kiddosa) (OwlEltFolder oib kiddosb) = oia == oib && kiddos_equivalent kiddosa kiddosb
+
+  r = kiddos_equivalent (_owlTree_topOwls ota) (_owlTree_topOwls otb)
 
 owlTree_prettyPrint :: HasCallStack => OwlTree -> Text
 owlTree_prettyPrint od@OwlTree {..} = r where
