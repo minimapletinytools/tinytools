@@ -100,17 +100,38 @@ undo_deleteElts = do_newElts
 
 do_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
+
+  -- make sure SuperOwlParliament is ordered in an undo-friendly way
   rp = _owlEltMeta_position . _superOwl_meta
   isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
+
   op = superOwlParialment_toOwlParliament sop
   (newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
 undo_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undo_move (os, sop) pfs@OwlPFState {..} = undefined
--- TODO undo by applying from left to right so that leftSibling is guaranteed to exist
--- TODO you need to get rid of relpositioning because it will mess up undo if original rel positions are not preserved after the do
+undo_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
+
+  -- NOTE that sop is likely invalid in pfs at this point
+
+  -- make sure SuperOwlParliament is ordered in an undo-friendly way
+  rp = _owlEltMeta_position . _superOwl_meta
+  isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
+
+  -- first remove all elements we moved
+  removefoldfn tree' so = owlTree_removeREltId (_superOwl_id so) tree'
+  removedTree = foldl' removefoldfn _owlPFState_owlTree (unSuperOwlParliament sop)
+
+  -- then add them back in in order
+  addmapaccumlfn tree' so = owlTree_addOwlElt ospot (_superOwl_id so) (_superOwl_elt so) tree' where
+    -- NOTE that because we are ordered from left to right, _superOwl_meta so is valid in tree'
+    ospot = owlTree_owlEltMeta_toOwlSpot tree' $ _superOwl_meta so
+  (addedTree, changes') = mapAccumL addmapaccumlfn removedTree (unSuperOwlParliament sop)
+
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (toList changes')
+  r = (pfs { _owlPFState_owlTree = addedTree}, changes)
+
 
 -- OwlElt compatible variant of updateFnFromController
 updateFnFromControllerOwl :: Bool -> Controller -> ((OwlEltMeta, OwlElt)->(OwlEltMeta, OwlElt))

@@ -65,7 +65,8 @@ spec = do
       it "owlTree_addSEltTree" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
-          seltree1 = owlTree_toSEltTree owlTree2
+          -- current version of owlTree_addSEltTree requires non-colliding REltIds so we reindex here
+          seltree1 = fmap (\(rid,seltl) -> (rid+100, seltl)) $ owlTree_toSEltTree owlTree2
         owlTree_owlCount (fst $ owlTree_addSEltTree owlSpot1 seltree1 owlTree2) `shouldBe` 18
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do

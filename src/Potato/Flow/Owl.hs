@@ -204,6 +204,11 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
         >< Seq.singleton (maxid+1, SEltLabel (_owlInfo_name oi <> "(end)") SEltFolderEnd))
   (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
+-- TODO
+owlTree_isSuperOwlParliamentValid :: OwlTree -> SuperOwlParliament -> Bool
+owlTree_isSuperOwlParliamentValid od@OwlTree {..} = undefined
+
+
 -- |
 data OwlTree = OwlTree {
   _owlTree_mapping :: OwlMapping
@@ -215,6 +220,8 @@ instance NFData OwlTree
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
 
+-- | check if two OwlTree's are equivalent
+-- checks if structure is the same, REltIds can differ
 owlTree_equivalent :: OwlTree -> OwlTree -> Bool
 owlTree_equivalent ota otb = r where
 
@@ -307,6 +314,7 @@ owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
 
 -- |
 -- throws if OwlEltMeta is invalid in OwlTree
+-- TODO make naming consistent in this file...
 owlTree_owlEltMeta_toOwlSpot :: OwlTree -> OwlEltMeta -> OwlSpot
 owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r where
   msiblings = case _owlEltMeta_parent of
@@ -418,24 +426,34 @@ owlTree_moveOwlParliament op spot@OwlSpot{..} od@OwlTree{..} = assert isValid r 
   isValid = not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
 
   -- NOTE, that _owlEltMeta_position in sowls may be incorrect in the middle of this fold
-  -- this forces us to do linear search in the owlTree_removeSuperOwl call D:
+  -- this forces us to do linear search in the owlTree_removeSuperOwl call rather than use sibling position as index into children D:
   -- TODO fix by always sort from right to left to avoid this
   removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
 
   selttree = superOwlParliament_toSEltTree od sop
   r = owlTree_addSEltTree spot selttree removedOd
 
+-- |
+-- assumes SEltTree REltIds do not collide with OwlTree
 owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addSEltTree spot selttree od = r where
+owlTree_addSEltTree spot selttree od = assert (collisions == 0) r where
+
+
+  seltreeindices = Set.fromList $ fmap fst selttree
+  owltreeindices = Set.fromList $ IM.keys (_owlTree_mapping od)
+  collisions = Set.size $ traceShowId $ Set.intersection seltreeindices owltreeindices
+
   -- we do it the potato way
 
+  -- reindexing version below
   -- reindex the selttree
-  startid = owlTree_maxId od + 1
+  --startid = owlTree_maxId od + 1
   -- TODO this is fine, but it would be better to set the id rather than add it to the old one
-  reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
+  --reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
+
 
   -- convert to OwlDirectory
-  otherod = owlTree_fromSEltTree reindexed
+  otherod = owlTree_fromSEltTree selttree
 
   -- now union the two directories
   newod = od { _owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod }
