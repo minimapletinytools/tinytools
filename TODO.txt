@@ -123,7 +123,8 @@ IGNORE-simple select compromise
 
 -Owl TODO
   -write validate function
-  -finish UTs for workspace
+  -name functions in Owl to be consistent
+  DONE-finish UTs for workspace
 
 -delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci

@@ -83,7 +83,7 @@ isDescendentOf om parent child
 data OwlEltMeta = OwlEltMeta {
   _owlEltMeta_parent :: REltId -- or should we do Maybe REltId?
   , _owlEltMeta_depth :: Int
-  , _owlEltMeta_position :: SemiPos -- TODO maybe change to leftSibling?
+  , _owlEltMeta_position :: SemiPos
 } deriving (Show, Eq, Generic)
 
 instance NFData OwlEltMeta
@@ -255,11 +255,26 @@ owlTree_prettyPrint od@OwlTree {..} = r where
   printKiddos kiddos = foldl foldlfn "" kiddos
   r = printKiddos (fromJust $ mommyOwl_kiddos od)
 
-owlTree_validate :: OwlTree -> Bool
-owlTree_validate OwlTree {..} = r where
-  -- TODO check relPos are correct
-  -- TODO check parents/depth is set correctly
-  r = undefined
+owlTree_validate :: OwlTree -> (Bool, Text)
+owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od) where
+  checkRecursive msg0 parentrid depth kiddos = r where
+    foldfn (pass', msg') i rid = case owlTree_findSuperOwl rid od of
+      Nothing -> (False, msg' <> "\nmissing REltId " <> show rid)
+      Just x -> (rpass, rmsg) where
+        expected = OwlEltMeta {
+            _owlEltMeta_parent = parentrid
+            , _owlEltMeta_depth = depth
+            , _owlEltMeta_position = i
+          }
+        rpass1 = pass' && expected == _superOwl_meta x
+        rmsg1 = if rpass1 then msg' else msg' <> "\nbad meta at " <> show rid <> " got " <> show (_superOwl_meta x) <> " expected " <> show expected
+        (rpass2, rmsg2) = case (mommyOwl_kiddos x) of
+          Nothing -> (rpass1, rmsg1)
+          Just kiddos' -> checkRecursive msg0 (_superOwl_id x) (depth+1) kiddos'
+        (rpass, rmsg) = (rpass1 && rpass2, rmsg2)
+    r = Seq.foldlWithIndex foldfn (True, msg0) kiddos
+
+
 
 owlTree_maxId :: OwlTree -> REltId
 owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
@@ -519,8 +534,6 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot{..} rid oelt od@OwlTr
     }
 
   r = (internal_owlTree_reorgKiddos r' _owlSpot_parent, newsowl)
-
--- TODO modify this to return SuperOwl that was added
 
 owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 owlTree_addOwlElt = internal_owlTree_addOwlElt False

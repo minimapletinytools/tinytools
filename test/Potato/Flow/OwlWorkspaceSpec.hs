@@ -114,6 +114,7 @@ spec = do
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
         verifyOwlAt newws1 b1spot (pred_nameIs "b2") `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
+        {-
       it "WSEManipulate" $ do
         1 `shouldBe` 1
       it "WSEResizeCanvas" $ do
@@ -124,17 +125,4 @@ spec = do
         1 `shouldBe` 1
       it "WSELoad" $ do
         1 `shouldBe` 1
-{-
-        data WSEvent =
-          WSEAddElt (Bool, OwlSpot, OwlElt)
-          | WSEAddRelative (OwlSpot, Seq OwlElt)
-          | WSEAddFolder (OwlSpot, Text)
-          | WSERemoveElt OwlParliament -- removed kiddos get adopted by grandparents or w/e?
-          | WSEMoveElt (OwlSpot, SuperOwlParliament) -- use SuperOwlParliament so we know where to undo back to
-          -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
-          | WSEManipulate (Bool, ControllersWithId)
-          | WSEResizeCanvas DeltaLBox
-          | WSEUndo
-          | WSERedo
-          | WSELoad SPotatoFlow
-          deriving (Show)-}
+        -}
