@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:potato-flow"
+
+    - path: "test"
+      component: "potato-flow:test:potato-flow-test"
