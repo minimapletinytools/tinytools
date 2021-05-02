@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Potato.Flow.LayersSpec(
+module Potato.Flow.Deprecated.LayersSpec(
   spec
 ) where
 
@@ -11,7 +11,7 @@ import           Test.Hspec
 import qualified Data.Sequence            as Seq
 import           Potato.Flow
 
-import           Potato.Flow.Layers
+import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Types
 
 someSeq1 :: Seq.Seq Int

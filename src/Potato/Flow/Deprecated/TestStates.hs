@@ -3,7 +3,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Potato.Flow.TestStates (
+module Potato.Flow.Deprecated.TestStates (
   folderStart
   , folderEnd
   , someSEltLabel

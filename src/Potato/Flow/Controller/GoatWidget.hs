@@ -33,9 +33,9 @@ import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix

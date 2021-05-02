@@ -11,8 +11,8 @@ import qualified Data.Text as T
 import qualified Data.Sequence            as Seq
 import qualified Data.IntMap as IM
 import           Potato.Flow.Owl
-import           Potato.Flow.TestStates
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.Deprecated.State
 import Potato.Flow.Types
 import Potato.Flow.SElts
 

@@ -11,7 +11,7 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Data.Default
 import qualified Data.IntMap                    as IM

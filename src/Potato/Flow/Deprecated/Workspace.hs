@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Workspace (
+module Potato.Flow.Deprecated.Workspace (
   PFWorkspace(..)
   , emptyWorkspace
   , emptyActionStack
@@ -20,10 +20,10 @@ module Potato.Flow.Workspace (
 import           Relude
 
 import           Potato.Flow.Cmd
-import           Potato.Flow.Layers
+import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
 
 import           Control.Exception  (assert)

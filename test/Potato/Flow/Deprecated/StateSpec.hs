@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Potato.Flow.StateSpec(
+module Potato.Flow.Deprecated.StateSpec(
   spec
 ) where
 
@@ -12,8 +12,8 @@ import qualified Data.IntMap            as IM
 import qualified Data.Sequence          as Seq
 
 import           Potato.Flow
-import           Potato.Flow.State
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.State
+import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Types
 
 someValidState1 :: PFState

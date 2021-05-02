@@ -3,7 +3,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.State (
+module Potato.Flow.Deprecated.State (
   PFState(..)
   , debugPrintPFState
   , pFState_isValid
@@ -38,7 +38,7 @@ module Potato.Flow.State (
 import           Relude
 
 
-import           Potato.Flow.Layers
+import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts

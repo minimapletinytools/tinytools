@@ -35,7 +35,7 @@ import           Reflex.Test.Monad.Host
 
 import           Potato.Flow
 import           Potato.Flow.Controller.GoatWidget
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.TestStates
 
 import           Control.Monad.Fix
 

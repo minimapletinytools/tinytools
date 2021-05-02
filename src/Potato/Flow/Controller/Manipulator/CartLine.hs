@@ -13,7 +13,7 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Exception
 import           Data.Default

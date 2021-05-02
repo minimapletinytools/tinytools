@@ -13,8 +13,8 @@ import Data.Maybe (fromJust)
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
-import           Potato.Flow.TestStates
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.Deprecated.State
 import Potato.Flow.Types
 import Potato.Flow.SElts
 

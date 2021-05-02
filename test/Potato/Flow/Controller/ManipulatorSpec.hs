@@ -18,7 +18,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.TestStates
 
 import           Data.Default
 import qualified Data.IntMap                       as IM

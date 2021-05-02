@@ -20,7 +20,7 @@ module Potato.Flow.Controller.Input (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
 
 import           Control.Exception (assert)

@@ -33,9 +33,9 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Lens                 (over, _2)
 import           Data.Aeson

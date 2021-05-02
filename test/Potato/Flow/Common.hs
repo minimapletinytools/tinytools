@@ -32,7 +32,7 @@ import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Types
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.TestStates
 
 import           Control.Monad.Fix
 import qualified Data.IntMap                       as IM

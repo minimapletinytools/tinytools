@@ -20,12 +20,12 @@ import           Reflex
 import           Reflex.Potato.Helpers
 
 import           Potato.Flow.BroadPhase
-import           Potato.Flow.Layers     (selectionHasScopingProperty)
+import           Potato.Flow.Deprecated.Layers     (selectionHasScopingProperty)
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Exception      (assert)
 import           Control.Monad.Fix

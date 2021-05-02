@@ -5,7 +5,7 @@ module Potato.Flow.OwlState where
 import           Relude
 
 import Potato.Flow.Owl
-import           Potato.Flow.Layers
+import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts

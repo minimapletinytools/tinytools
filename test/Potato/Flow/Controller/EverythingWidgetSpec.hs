@@ -23,7 +23,7 @@ import           Potato.Flow.Controller.Layers
 
 -- test imports
 import           Potato.Flow.Common
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.TestStates
 
 import qualified Data.IntMap                       as IM
 import qualified Data.List.Ordered                 as L

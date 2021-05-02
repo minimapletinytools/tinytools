@@ -14,7 +14,7 @@ import qualified Data.Text              as T
 import qualified Data.Sequence as Seq
 
 import           Potato.Flow
-import           Potato.Flow.TestStates
+import           Potato.Flow.Deprecated.TestStates
 
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
 testCanvas x y w h = emptyRenderedCanvas (LBox (V2 x y) (V2 w h))

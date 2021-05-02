@@ -16,7 +16,7 @@ module Potato.Flow.OwlWorkspace (
 import           Relude
 
 import           Potato.Flow.Cmd
-import           Potato.Flow.Layers
+import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Owl

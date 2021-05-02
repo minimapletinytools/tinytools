@@ -25,7 +25,7 @@ import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
 
 import qualified Data.IntMap             as IM

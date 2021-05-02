@@ -30,9 +30,9 @@ import           Potato.Flow.Controller.Layers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.State
+import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Types
-import           Potato.Flow.Workspace
+import           Potato.Flow.Deprecated.Workspace
 
 import           Data.Default
 import           Data.Dependent.Sum            (DSum ((:=>)))
