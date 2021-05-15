@@ -30,6 +30,7 @@ import qualified Data.Sequence      as Seq
 
 
 
+-- TODO rename
 data OwlPFCmd =
   OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
   | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
@@ -54,6 +55,7 @@ instance NFData ActionStack
 emptyActionStack :: ActionStack
 emptyActionStack = ActionStack [] []
 
+-- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
   _owlPFWorkspace_pFState       :: OwlPFState
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges

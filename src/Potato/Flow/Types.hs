@@ -2,19 +2,14 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Potato.Flow.Types (
-  -- DELETE
-  LayerPos
-  
-  , REltId
+  REltId
   , REltIdMap
-
-  -- DELETE
-  , SuperSEltLabel
-
   , ControllersWithId
   , controllerWithId_isParams
 
   -- DELETE
+  , LayerPos
+  , SuperSEltLabel
   , SEltLabelChanges
   , SEltLabelChangesWithLayerPos
   , LayerPosMap

@@ -25,10 +25,13 @@ errorMsg_owlMapping_lookupFail om rid = "expected to find REltId " <> show rid <
 
 class MommyOwl o where
   mommyOwl_kiddos :: o -> Maybe (Seq REltId)
+  mommyOwl_hasKiddos :: o -> Bool
+  mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
+  mommyOwl_id :: o -> REltId
 
 -- TODO implement
 class IsOwl o where
-  owl_name :: o -> Text
+  isOwl_name :: o -> Text
 
 -- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo { _owlInfo_name :: Text } deriving (Show, Eq, Generic)
@@ -46,8 +49,8 @@ instance MommyOwl OwlElt where
   mommyOwl_kiddos _ = Nothing
 
 instance IsOwl OwlElt where
-  owl_name (OwlEltFolder (OwlInfo name) _) = name
-  owl_name (OwlEltSElt (OwlInfo name) _) = name
+  isOwl_name (OwlEltFolder (OwlInfo name) _) = name
+  isOwl_name (OwlEltSElt (OwlInfo name) _) = name
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
 
@@ -111,9 +114,10 @@ type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
 instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
+  mommyOwl_id = _superOwl_id
 
 instance IsOwl SuperOwl where
-  owl_name sowl = owl_name $ _superOwl_elt sowl
+  isOwl_name sowl = isOwl_name $ _superOwl_elt sowl
 
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
 superOwl_prettyPrintForDebugging SuperOwl{..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt where
@@ -219,6 +223,7 @@ instance NFData OwlTree
 
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
+  mommyOwl_id _ = noOwl
 
 -- | check if two OwlTree's are equivalent
 -- checks if structure is the same, REltIds can differ

@@ -20,6 +20,7 @@ import qualified Data.Sequence           as Seq
 import qualified Data.Text as T
 
 
+-- TODO rename
 data OwlPFState = OwlPFState {
   _owlPFState_owlTree :: OwlTree
   , _owlPFState_canvas    :: SCanvas

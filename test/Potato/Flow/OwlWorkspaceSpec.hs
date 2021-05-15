@@ -27,7 +27,7 @@ verifyOwlAt ws ospot f = fromMaybe False $ do
   Just $ f sowl
 
 pred_nameIs :: Text -> SuperOwl -> Bool
-pred_nameIs n sowl = owl_name sowl == n
+pred_nameIs n sowl = isOwl_name sowl == n
 
 undoAndVerify :: OwlPFWorkspace -> OwlPFState -> Bool
 undoAndVerify ws prev = r where
@@ -62,13 +62,13 @@ spec = do
           wse1 = WSEAddElt (False, spot1, owlElt1)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
-        verifyOwlAt newws1 spot1 (pred_nameIs (owl_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws1 spot1 (pred_nameIs (isOwl_name owlElt1)) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         let
           wse2 = WSEAddElt (False, spot2, owlElt1)
           newws2 = updateOwlPFWorkspace wse2 someWorkspace0
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws2)
-        verifyOwlAt newws2 spot2 (pred_nameIs (owl_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws2 spot2 (pred_nameIs (isOwl_name owlElt1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
       it "WSEAddRelative" $ do
         let
@@ -76,8 +76,8 @@ spec = do
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
-        verifyOwlAt newws1 spot1 (pred_nameIs (owl_name owlElt1)) `shouldBe` True
-        verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (owl_name owlElt2)) `shouldBe` True
+        verifyOwlAt newws1 spot1 (pred_nameIs (isOwl_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (isOwl_name owlElt2)) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
       it "WSEAddFolder" $ do
         let
@@ -94,7 +94,7 @@ spec = do
           childSpot = OwlSpot (_superOwl_id sowl) Nothing
           wse2 = WSEAddElt (False, childSpot, owlElt1)
           newws2 = updateOwlPFWorkspace wse2 newws1
-        verifyOwlAt newws2 childSpot (pred_nameIs (owl_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws2 childSpot (pred_nameIs (isOwl_name owlElt1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_pFState newws1) `shouldBe` True
       it "WSERemoveElt" $ do
         let
