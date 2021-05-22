@@ -8,15 +8,40 @@ import           Relude
 
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.OwlLayers
+import           Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.Types
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlState
 
 import           Data.Default
 import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
+
+
+data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
+
+data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
+
+
+-- TODO we could probably change this to do a more efficient binary search based on position in hierarchy
+doesSelectionContainREltId :: REltId -> Selection -> Bool
+doesSelectionContainREltId rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
+
+-- TODO a little weird to be returning the SuperOwl you clicked on but whatever...
+clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType)
+clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
+  Nothing                      -> Nothing
+  Just le -> Just . (,) sowl $ case () of
+    () | layerEntry_depth le + 1 == absx   -> LDT_Hide
+    () | layerEntry_depth le + 2 == absx -> LDT_Lock
+    () | layerEntry_isFolder le && layerEntry_depth le == absx -> LDT_Collapse
+    ()                       -> LDT_Normal
+    where
+      sowl = _layerEntry_superOwl le
 
 data LayersHandler = LayersHandler {
     _layersHandler_dragState   :: LayerDragState
@@ -38,25 +63,25 @@ instance PotatoHandler LayersHandler where
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
     leposxy@(V2 _ lepos) = _mouseDrag_to
     selection = _potatoHandlerInput_selection
-    (lmm, lentries) = _potatoHandlerInput_layersState
+    (LayersState lmm lentries) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
-        (nextDragState, mNextLayerState, changes) = case clickLayerNew selection lentries leposxy of
+        (nextDragState, mNextLayerState, changes) = case clickLayerNew lentries leposxy of
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
-          Just (downlp, ldtdown) -> case ldtdown of
-            LDT_Normal -> if shift || (not $ doesSelectionContainLayerPos downlp selection)
+          Just (downsowl, ldtdown) -> case ldtdown of
+            LDT_Normal -> if shift || (not $ doesSelectionContainREltId (_superOwl_id downsowl) selection)
               -- if element wasn't selected or shift is held down, enter selection mode
               then (LDS_Selecting lepos, Nothing, IM.empty)
               else (LDS_Dragging, Nothing, IM.empty)
-            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleHide, IM.empty)
+            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleHide, IM.empty)
             LDT_Lock -> r' where
-              nextLayersState = toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleLock
+              nextLayersState = toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleLock
               hideChanges = changesFromToggleHide pfs nextLayersState lepos
               r' = (LDS_None, Just $ nextLayersState, hideChanges)
-            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (lmm, lentries) lepos LHCO_ToggleCollapse, IM.empty)
+            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleCollapse, IM.empty)
 
         -- TODO also return changes
         -- NOTE, need to finish changesFromToggleHide first
@@ -77,21 +102,23 @@ instance PotatoHandler LayersHandler where
       -- TODO if mouse didn't move from lposdown, enter renaming mode (new handler I guess)
       (MouseDragState_Up, LDS_Selecting leposdown) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
-        sel = _layerEntry_superSEltLabel $ Seq.index lentries leposdown
+        sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None
               }
-            , _potatoHandlerOutput_select = Just (shift, Seq.singleton sel)
+            , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
       (MouseDragState_Up, LDS_Dragging) -> r where
-        mev = case clickLayerNew selection lentries leposxy of
+        mev = case clickLayerNew lentries leposxy of
           -- release where there is no element, do nothing
           Nothing -> Nothing
-          Just (uplp,_) -> case doesSelectionContainLayerPos uplp selection of
+          Just (sowl,_) -> case doesSelectionContainREltId (_superOwl_id sowl) selection of
             -- dropping on a selected element does onthing
             True  ->  Nothing
-            False -> Just $ WSEMoveElt (toList (fmap snd3 selection), uplp)
+            False -> Just $ WSEMoveElt (spot, superOwlParliament_toOwlParliament selection)
+            where
+              spot = owlTree_owlEltMeta_toOwlSpot (_owlPFState_owlTree _potatoHandlerInput_pFState) (_superOwl_meta sowl)
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None

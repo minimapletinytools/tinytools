@@ -5,10 +5,10 @@ module Potato.Flow.Controller.Manipulator.Common (
   , computeSelectionType
   , restrict4
   , restrict8
-  , selectionToSuperSEltLabel
-  , selectionToMaybeSuperSEltLabel
-  , selectionToFirstSuperSEltLabel
-  , selectionToMaybeFirstSuperSEltLabel
+  , selectionToSuperOwl
+  , selectionToMaybeSuperOwl
+  , selectionToFirstSuperOwl
+  , selectionToMaybeFirstSuperOwl
   , lastPositionInSelection
 ) where
 
@@ -19,6 +19,7 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Owl
 
 import           Control.Exception
 import qualified Data.List                    as L
@@ -28,9 +29,9 @@ import           Data.Tuple.Extra
 data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
 
 computeSelectionType :: Selection -> SelectionManipulatorType
-computeSelectionType = foldl' foldfn SMTNone where
-  foldfn accType (_,_,SEltLabel _ selt) = case accType of
-    SMTNone -> case selt of
+computeSelectionType (SuperOwlParliament selection)= foldl' foldfn SMTNone selection where
+  foldfn accType sowl = case accType of
+    SMTNone -> case superOwl_toSElt_hack sowl of
       SEltBox sbox -> if sBoxType_isText (_sBox_boxType sbox) then SMTBoxText else SMTBox
       SEltLine _   -> SMTLine
       SEltTextArea _   -> SMTText
@@ -56,19 +57,20 @@ restrict8 (V2 x y) = r where
       then (V2 0 y)
       else (V2 x y)
 
-selectionToSuperSEltLabel :: Selection -> SuperSEltLabel
-selectionToSuperSEltLabel selection = assert (Seq.length selection == 1) $ Seq.index selection 0
+selectionToSuperOwl :: Selection -> SuperOwl
+selectionToSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
 
-selectionToMaybeSuperSEltLabel :: Selection -> Maybe SuperSEltLabel
-selectionToMaybeSuperSEltLabel selection = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
+selectionToMaybeSuperOwl :: Selection -> Maybe SuperOwl
+selectionToMaybeSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
 
-selectionToFirstSuperSEltLabel :: Selection -> SuperSEltLabel
-selectionToFirstSuperSEltLabel selection = assert (Seq.length selection > 0) $ Seq.index selection 0
+selectionToFirstSuperOwl :: Selection -> SuperOwl
+selectionToFirstSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection > 0) $ Seq.index selection 0
 
-selectionToMaybeFirstSuperSEltLabel :: Selection -> Maybe SuperSEltLabel
-selectionToMaybeFirstSuperSEltLabel selection = Seq.lookup 0 selection
+selectionToMaybeFirstSuperOwl :: Selection -> Maybe SuperOwl
+selectionToMaybeFirstSuperOwl (SuperOwlParliament selection) = Seq.lookup 0 selection
 
-lastPositionInSelection :: Selection -> LayerPos
-lastPositionInSelection selection = r where
-  lastSelectionLps = fmap snd3 $ selection
-  r = if Seq.null lastSelectionLps then 0 else L.minimum lastSelectionLps
+lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
+lastPositionInSelection ot (SuperOwlParliament selection) = r where
+  r = case Seq.lookup (Seq.length selection - 1) selection of
+    Nothing -> topSpot
+    Just x -> owlTree_owlEltMeta_toOwlSpot ot (_superOwl_meta x)

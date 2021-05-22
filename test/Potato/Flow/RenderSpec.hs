@@ -11,27 +11,12 @@ import           Test.Hspec
 import           Data.Default           (def)
 import qualified Data.IntMap            as IM
 import qualified Data.Text              as T
-import qualified Data.Sequence as Seq
 
 import           Potato.Flow
-import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.TestStates
 
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
 testCanvas x y w h = emptyRenderedCanvas (LBox (V2 x y) (V2 w h))
-
-
--- contains SElts of size 0
-pFState_fillBox :: PFState
-pFState_fillBox = PFState {
-    _pFState_layers = Seq.fromList [0]
-    , _pFState_directory = IM.fromList [
-        (0, SEltLabel "b1" (SEltBox $ def {
-            _sBox_box    = LBox (V2 0 0) (V2 100 100)
-          }))
-      ]
-    , _pFState_canvas = SCanvas (LBox 0 (V2 50 100))
-  }
-
 
 spec :: Spec
 spec = do
@@ -107,11 +92,11 @@ spec = do
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
           }
-        state0 = pFState_fromSElts [selt] initial
-        bps0 = BroadPhaseState $ bPTreeFromPFState state0
+        state0 = owlPFState_fromSElts [selt] initial
+        bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvas initial
         -- only thing changed is the canvas size
-        canvas1 = moveRenderedCanvas bps0 (_pFState_directory state0) target canvas0
+        canvas1 = moveRenderedCanvas bps0 (_owlPFState_owlTree state0) target canvas0
       --liftIO $ printRenderedCanvas canvas0
       --liftIO $ printRenderedCanvas canvas1
       -- TODO test something
@@ -120,12 +105,12 @@ spec = do
       let
         --makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def def def SBoxType_Box))
         canvas0 = testCanvas 0 0 100 100
-        state0 = pfstate_basic1
-        bpt0 = bPTreeFromPFState state0
+        state0 = owlpfstate_basic1
+        bpt0 = bPTreeFromOwlPFState state0
         -- TODO actual changes
         changes1 = IM.empty
         (aabbs1, bps1) = update_bPTree IM.empty bpt0
         state1 = state0
-        canvas1 = updateCanvas changes1 aabbs1 bps1 state1 (pFState_getLayerPosMap state1) canvas0
+        canvas1 = updateCanvas changes1 aabbs1 bps1 state1 canvas0
       -- TODO test something
       canvas1 `shouldBe` canvas1

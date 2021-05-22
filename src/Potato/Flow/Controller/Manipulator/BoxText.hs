@@ -21,7 +21,8 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlWorkspace
 
 import           Control.Exception
 import           Data.Default
@@ -36,9 +37,12 @@ import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 
 getSBox :: Selection -> (REltId, SBox)
-getSBox selection = case selectionToSuperSEltLabel selection of
-  (rid,_,SEltLabel _ (SEltBox sbox)) -> (rid, sbox)
-  (_,_,SEltLabel _ selt) -> error $ "expected SBox, got " <> show selt
+getSBox selection = case superOwl_toSElt_hack sowl of
+  SEltBox sbox -> (rid, sbox)
+  selt -> error $ "expected SBox, got " <> show selt
+  where
+    sowl = selectionToSuperOwl selection
+    rid = _superOwl_id sowl
 
 data BoxTextInputState = BoxTextInputState {
   _boxTextInputState_rid            :: REltId
@@ -98,8 +102,8 @@ mouseText tais sbox rmd = r where
 
 
 -- TODO support shift selecting text someday meh
-inputText :: BoxTextInputState -> Bool -> SuperSEltLabel -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
-inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZip }, mop) where
+inputText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip }, mop) where
 
   oldZip = _boxTextInputState_zipper tais
   (changed, newZip) = case kk of
@@ -125,7 +129,7 @@ inputText tais undoFirst selected kk = (tais { _boxTextInputState_zipper = newZi
       _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
     })
   mop = if changed
-    then Just $ WSEManipulate (undoFirst, IM.fromList [(fst3 selected,controller)])
+    then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
 -- TODO rename to BoxTextHandler
@@ -207,11 +211,11 @@ instance PotatoHandler BoxTextHandler where
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
-      sseltl = selectionToSuperSEltLabel _potatoHandlerInput_selection
+      sowl = selectionToSuperOwl _potatoHandlerInput_selection
 
       -- TODO decide what to do with mods
 
-      (nexttais, mev) = inputText _boxTextHandler_state _boxTextHandler_undoFirst sseltl k
+      (nexttais, mev) = inputText _boxTextHandler_state _boxTextHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxTextHandler_state  = nexttais
@@ -223,16 +227,19 @@ instance PotatoHandler BoxTextHandler where
           , _potatoHandlerOutput_pFEvent = mev
         }
 
-  pResetHandler tah PotatoHandlerInput {..} = if Seq.null _potatoHandlerInput_selection
+  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unSuperOwlParliament _potatoHandlerInput_selection)
     then Nothing -- selection was deleted or something
-    else case selectionToSuperSEltLabel _potatoHandlerInput_selection of
-      (rid, _, SEltLabel _ selt) -> if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
-        then Nothing -- selection was change to something else
-        else case selt of
-          SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
-            then Nothing -- SEltBox type changed to non-text
-            else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_selection tah
-          _ -> Nothing
+    else if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
+      then Nothing -- selection was change to something else
+      else case selt of
+        SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
+          then Nothing -- SEltBox type changed to non-text
+          else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_selection tah
+        _ -> Nothing
+      where
+        sowl = selectionToSuperOwl _potatoHandlerInput_selection
+        rid = _superOwl_id sowl
+        selt = superOwl_toSElt_hack sowl
 
 
   pRenderHandler tah' PotatoHandlerInput {..} = r where
@@ -241,7 +248,7 @@ instance PotatoHandler BoxTextHandler where
     origBox = _boxTextInputState_box $ _boxTextHandler_state tah
     (x, y) = TZ._displayLinesWithAlignment_cursorPos dls
     offsetMap = TZ._displayLinesWithAlignment_offsetMap dls
-    
+
     mlbox = do
       guard $ lBox_area origBox > 0
 

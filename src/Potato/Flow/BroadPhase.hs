@@ -4,7 +4,7 @@ module Potato.Flow.BroadPhase (
   AABB
   , NeedsUpdateSet
   , BPTree(..)
-  , bPTreeFromPFState
+  , bPTreeFromOwlPFState
   , emptyBPTree
   , broadPhase_cull
   , broadPhase_cull_includeZero
@@ -21,7 +21,8 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
+import           Potato.Flow.Owl
 import           Potato.Flow.Types
 
 import qualified Data.IntMap.Strict      as IM
@@ -38,9 +39,15 @@ data BPTree = BPTree {
 emptyBPTree :: BPTree
 emptyBPTree = BPTree IM.empty
 
-bPTreeFromPFState :: PFState -> BPTree
-bPTreeFromPFState PFState {..} = r where
-  potato_tree = IM.mapMaybe (getSEltBox . _sEltLabel_sElt) _pFState_directory
+-- TODO
+--bPTreeFromPFState :: PFState -> BPTree
+--bPTreeFromPFState PFState {..} = r where
+--  potato_tree = IM.mapMaybe (getSEltBox . _sEltLabel_sElt) _pFState_directory
+--  r = BPTree potato_tree
+
+bPTreeFromOwlPFState :: OwlPFState -> BPTree
+bPTreeFromOwlPFState OwlPFState {..} = r where
+  potato_tree = IM.mapMaybe (\(_,oelt) -> getSEltBox . owlElt_toSElt_hack $ oelt) (_owlTree_mapping _owlPFState_owlTree)
   r = BPTree potato_tree
 
 data BroadPhaseState = BroadPhaseState {
@@ -55,7 +62,7 @@ emptyBroadPhaseState = BroadPhaseState emptyBPTree
 
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly
-update_bPTree :: REltIdMap (Maybe SEltLabel) -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
+update_bPTree :: SuperOwlChanges -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
 update_bPTree changes BPTree {..} = r where
   -- deletions
   deletefn (aabbs, im) rid = (newaabbs, newim) where
@@ -69,9 +76,9 @@ update_bPTree changes BPTree {..} = r where
     newaabbs = maybe newaabbs' (\oldaabb -> oldaabb:newaabbs') moldaabb
 
   (insmods, deletes) = foldl'
-    (\(insmods',deletes') (rid, mseltl) -> case mseltl of
+    (\(insmods',deletes') (rid, msowl) -> case msowl of
       Nothing    -> (insmods', rid:deletes')
-      Just seltl -> case getSEltBox (_sEltLabel_sElt seltl) of
+      Just sowl -> case getSEltBox (superOwl_toSElt_hack sowl) of
         Nothing   -> (insmods', rid:deletes')
         Just lbox -> ((rid,lbox):insmods', deletes'))
     ([],[])

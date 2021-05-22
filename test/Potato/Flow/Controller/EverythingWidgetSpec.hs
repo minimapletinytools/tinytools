@@ -19,11 +19,11 @@ import           Potato.Flow
 import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.OwlLayers
 
 -- test imports
 import           Potato.Flow.Common
-import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.TestStates
 
 import qualified Data.IntMap                       as IM
 import qualified Data.List.Ordered                 as L
@@ -31,30 +31,33 @@ import qualified Data.Sequence                     as Seq
 import           Data.Tuple.Extra
 
 
-expectState :: PFState -> EverythingPredicate
+expectState :: OwlPFState -> EverythingPredicate
 expectState pfs = FunctionPredicate $
-  (\pfs' -> ("expected pfstate_basic1", pfs == pfs'))
+  -- TODO need to use fuzzy equal
+  (\pfs' -> ("expected owlpfstate_basic1",
+    owlTree_equivalent (_owlPFState_owlTree pfs) (_owlPFState_owlTree pfs')
+    && _owlPFState_canvas pfs == _owlPFState_canvas pfs'))
   . goatState_pFState
 
 everything_load_test :: Test
 everything_load_test = constructTest "load" emptyPFState bs expected where
   bs = [
       EWCLabel "Load"
-      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
-      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
-      , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
-      , EWCLoad (pFState_to_sPotatoFlow pfstate_basic1, emptyControllerMeta)
-      , EWCLoad (pFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
-      , EWCLoad (pFState_to_sPotatoFlow emptyPFState, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow emptyPFState, emptyControllerMeta)
     ]
   expected = [
       LabelCheck "Load"
-      , expectState pfstate_basic1
-      , expectState pfstate_basic1
+      , expectState owlpfstate_basic1
+      , expectState owlpfstate_basic1
       , expectState pfstate_someValidState1
       , Combine [
-          expectState pfstate_basic1
-          -- intersects "b1" "b2" "b3" "b4" in pfstate_basic1
+          expectState owlpfstate_basic1
+          -- intersects "b1" "b2" "b3" "b4" in owlpfstate_basic1
           , numEltsInLBoxUsingBroadphasePredicate 4 (LBox 0 (V2 15 15))
         ]
       , expectState pfstate_someValidState1
@@ -80,7 +83,7 @@ checkLayerEntriesNum n = r where
     . _goatState_layersState
 
 everything_layers_test :: Test
-everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
+everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected where
   bs = [
       EWCLabel "Initial"
       , EWCNothing -- dummy to check state
@@ -97,7 +100,7 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
       -- this isn't an especially useful/exciting test... but it's better than nothing
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
       ]
 
       , LabelCheck "Create A"
@@ -107,12 +110,12 @@ everything_layers_test = constructTest "layers" pfstate_basic1 bs expected where
       , AlwaysPass
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
       ]
     ]
 
 everything_canvasSize_test :: Test
-everything_canvasSize_test = constructTest "canvas resize" pfstate_basic1 bs expected where
+everything_canvasSize_test = constructTest "canvas resize" owlpfstate_basic1 bs expected where
   bs = [
       EWCLabel "Initial"
       , EWCNothing -- dummy to check state
@@ -131,7 +134,7 @@ everything_canvasSize_test = constructTest "canvas resize" pfstate_basic1 bs exp
     ]
 
 everything_keyboard_test :: Test
-everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected where
+everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expected where
   bs = [
       EWCLabel "Copy pasta nothing"
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl])
@@ -173,39 +176,39 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
   -- I can't remember why we're using checkLayerEntriesNum instead of counting number of entries in PFState but it doesn't matter, should be the same
   expected = [
       LabelCheck "Copy pasta nothing"
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
 
       , LabelCheck "Create A with random keyboard inputs in between"
       , (EqPredicate _goatState_selectedTool Tool_Box)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
         , numSelectedEltsEqualPredicate 1
       ]
 
       , LabelCheck "Copy pasta A"
-      , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 1)
+      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
       , Combine [
           -- TODO copy not implemented yet so this doesn't work
-          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
+          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
           , numSelectedEltsEqualPredicate 1
         ]
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 3)
+          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 3)
           , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "Delete A using Delete key"
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
+          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
           , numSelectedEltsEqualPredicate 0
         ]
 
@@ -213,13 +216,13 @@ everything_keyboard_test = constructTest "keyboard" pfstate_basic1 bs expected w
       , (EqPredicate _goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , checkHandlerNameAndState handlerName_select True
-      , numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 2)
+      , numSelectedEltsEqualPredicate (length (_pFState_layers owlpfstate_basic1) + 2)
 
       , LabelCheck "Cut pasta everything"
       , checkLayerEntriesNum 0
       , Combine [
-          numSelectedEltsEqualPredicate (length (_pFState_layers pfstate_basic1) + 2)
-          , checkLayerEntriesNum (length (_pFState_layers pfstate_basic1) + 2)
+          numSelectedEltsEqualPredicate (length (_pFState_layers owlpfstate_basic1) + 2)
+          , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
         ]
 
       , LabelCheck "Esc deselect everything"
@@ -439,7 +442,7 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       -- check that it got moved to 0 0
-      , firstSelectedSuperSEltLabelPredicate Nothing (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperOwlPredicate Nothing (\sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == (-2) && y == (-2)
         _                                        -> False)
 
@@ -452,19 +455,19 @@ everything_basic_test = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
-      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
       , checkHandlerNameAndState handlerName_box True
-      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 3 && y == 3
         _                                        -> False)
-      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
-      , firstSelectedSuperSEltLabelPredicate (Just "<box>") (\(_,_,SEltLabel _ selt) -> case selt of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 

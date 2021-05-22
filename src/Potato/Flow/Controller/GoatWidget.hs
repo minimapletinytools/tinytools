@@ -21,7 +21,7 @@ import           Reflex.Potato.Helpers
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Layers
@@ -33,9 +33,10 @@ import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
@@ -55,8 +56,7 @@ data GoatState = GoatState {
 
     -- TODO Refactor these out into GoatTab or something like that
     -- TODO consider including handlers (vs regenerating from selection each time you switch tabs)
-    _goatState_pFWorkspace       :: PFWorkspace
-    , _goatState_layerPosMap     :: LayerPosMap
+    _goatState_workspace       :: OwlPFWorkspace
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection       :: Selection
     , _goatState_broadPhaseState :: BroadPhaseState
@@ -72,8 +72,11 @@ data GoatState = GoatState {
 
   } deriving (Show)
 
-goatState_pFState :: GoatState -> PFState
-goatState_pFState = _pFWorkspace_pFState . _goatState_pFWorkspace
+goatState_pFState :: GoatState -> OwlPFState
+goatState_pFState = _owlPFWorkspace_pFState . _goatState_workspace
+
+goatState_owlTree :: GoatState -> OwlTree
+goatState_owlTree = _owlPFState_owlTree . goatState_pFState
 
 data GoatCmd =
   GoatCmdTool Tool
@@ -192,7 +195,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- initialization parameters
   -- TODO should really also include ControllerMeta
-  _goatWidgetConfig_initialState     :: PFState
+  _goatWidgetConfig_initialState     :: OwlPFState
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
   -- canvas direct input
@@ -261,39 +264,33 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
 -- TODO fix me
 -- LayerMetaMap isn't enough to figure out if elt is hidden/locked
 -- you need to check its parents as well... and we don't have an easy way to get to parents atm
-makeCanvasSelectionFromSelection :: PFState -> LayerMetaMap -> Selection -> Selection
-makeCanvasSelectionFromSelection PFState {..} lmm selection = flip Seq.filter selection $ \(rid,_,seltl) -> case seltl of
-  SEltLabel _ SEltFolderStart -> False
-  SEltLabel _ SEltFolderEnd -> False
-  _ -> case IM.lookup rid lmm of
+makeCanvasSelectionFromSelection :: OwlPFState -> LayerMetaMap -> Selection -> Selection
+makeCanvasSelectionFromSelection OwlPFState {..} lmm (SuperOwlParliament selection) = SuperOwlParliament . flip Seq.filter selection $ \sowl -> case superOwl_toSElt_hack sowl of
+  SEltFolderStart -> False
+  SEltFolderEnd -> error "this should never happen after owl refactor"
+  _ -> case IM.lookup (_superOwl_id sowl) lmm of
     Nothing             -> True
     Just LayerMeta {..} -> True
 
 
 makeClipboard :: GoatState -> Maybe SEltTree
-makeClipboard GoatState {..} = r where
-  -- TODO if there are connections that aren't included in selection, convert SElt
-  selectionToSEltTree :: Selection -> SEltTree
-  selectionToSEltTree selection = assert (validateSelection selection)
-    $ fmap (\(rid,_,seltl) -> (rid, seltl)) (toList selection)
-
-  r = if Seq.null _goatState_selection
+makeClipboard goatState@GoatState {..} = r where
+  r = if isParliament_null _goatState_selection
     then _goatState_clipboard
-    else Just $ selectionToSEltTree _goatState_selection
+    else Just $ owlTree_superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
 
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
-deleteSelectionEvent GoatState {..} = if Seq.null _goatState_selection
+deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
-  else Just $ WSERemoveElt (toList . fmap snd3 $ _goatState_selection)
+  else Just $ WSERemoveElt (superOwlParliament_toOwlParliament _goatState_selection)
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
-  last_workspace = _goatState_pFWorkspace
-  last_pFState = _pFWorkspace_pFState last_workspace
+  last_workspace = _goatState_workspace
+  last_pFState = _owlPFWorkspace_pFState last_workspace
   r = PotatoHandlerInput {
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
-    , _potatoHandlerInput_layerPosMap = _goatState_layerPosMap
     , _potatoHandlerInput_tool = _goatState_selectedTool
 
     , _potatoHandlerInput_layersState     = _goatState_layersState
@@ -305,8 +302,8 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
 foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
-  last_workspace = _goatState_pFWorkspace
-  last_pFState = _pFWorkspace_pFState last_workspace
+  last_workspace = _goatState_workspace
+  last_pFState = _owlPFWorkspace_pFState last_workspace
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
@@ -379,9 +376,9 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
             -- input not captured by handler, do select or drag+select
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-              nextSelection = selectMagic last_pFState _goatState_layerPosMap _goatState_broadPhaseState canvasDrag
+              nextSelection = selectMagic last_pFState _goatState_broadPhaseState canvasDrag
               shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-              r = if Seq.null nextSelection || shiftClick
+              r = if isParliament_null nextSelection || shiftClick
                 -- clicked on nothing or shift click, start SelectHandler
                 -- NOTE this is weird because:
                 -- 1. doesn't select until mouse up, which is regression from when you do regular click on an elt (via BoxHandler which immediately selects)
@@ -434,8 +431,8 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
               (makeGoatCmdTempOutputFromNothing goatState) {
                   -- TODO change tool back to select?
                   _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
-                    MouseDragState_Up        -> Just (False, Seq.empty)
-                    MouseDragState_Cancelled -> Just (False, Seq.empty)
+                    MouseDragState_Up        -> Just (False, isParliament_empty)
+                    MouseDragState_Cancelled -> Just (False, isParliament_empty)
                     _                        -> Nothing
                 }
 
@@ -450,8 +447,13 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard of
               Nothing    -> makeGoatCmdTempOutputFromNothing goatState
               Just stree -> r where
+
+                -- a bit of a roundabout hack to convert SEltTree to Seq OwlElt but not a big deal
                 offsetstree = offsetSEltTree (V2 1 1) stree
-                pastaEv = WSEAddRelative (lastPositionInSelection _goatState_selection, offsetstree)
+                tempowltree = owlTree_fromSEltTree offsetstree
+                pastaoelts = Seq.fromList . fmap snd . toList . _owlTree_mapping $ tempowltree
+
+                pastaEv = WSEAddRelative (lastPositionInSelection (goatState_owlTree goatState) _goatState_selection, pastaoelts)
                 r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) pastaEv
             KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
               r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
@@ -476,16 +478,15 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       _          -> undefined
 
 
-  -- update PFWorkspace from pho
+  -- update OwlPFWorkspace from pho
   (next_workspace, cslmapForBroadPhase) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
-    Nothing   -> (_goatState_pFWorkspace, IM.empty)
+    Nothing   -> (_goatState_workspace, IM.empty)
     Just (_, wsev) -> (r1,r2) where
-      r1 = updatePFWorkspace wsev _goatState_pFWorkspace
-      r2 = _pFWorkspace_lastChanges r1
-  next_pFState = _pFWorkspace_pFState next_workspace
-  next_layerPosMap = pFState_getLayerPosMap next_pFState
-  cslmap = IM.mapWithKey (\rid v -> fmap (\seltl -> (next_layerPosMap IM.! rid, seltl)) v) cslmapForBroadPhase
+      r1 = updateOwlPFWorkspace wsev _goatState_workspace
+      r2 = _owlPFWorkspace_lastChanges r1
+  next_pFState = _owlPFWorkspace_pFState next_workspace
+  cslmap =  cslmapForBroadPhase
 
   -- update pan from pho
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
@@ -501,38 +502,43 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   -- get selection from pho
   mSelectionFromPho = case _goatCmdTempOutput_select goatCmdTempOutput of
     Nothing -> Nothing
-    Just (add, sel) -> assert (pFState_selectionIsValid next_pFState (fmap snd3 (toList r))) $ Just r where
+    Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
+      nextot = _owlPFState_owlTree next_pFState
       r' = if add
-        then disjointUnionSelection _goatState_selection sel
+        then isParliament_disjointUnion _goatState_selection sel
         else sel
       sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
-      r = Seq.sortBy sortfn r'
+      r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
-  -- get selection from changes
-  newEltFoldMapFn rid v = case v of
-    Nothing     -> []
-    Just (lp,seltl) -> if IM.member rid (_pFState_directory last_pFState) then [] else [(rid,lp,seltl)]
-
-  wasLoad = case cmd of
-    GoatCmdLoad _ -> True
-    _             -> False
-  -- update selection based on changes from updating PFState
+  -- update selection based on changes from updating OwlPFState
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
     then (False, _goatState_selection)
     else r where
-      -- TODO need to sort by LayerPos I think
+
+      -- TODO need to sort
+      -- extract elements that got created
+      newEltFoldMapFn rid v = case v of
+        Nothing     -> []
+        Just sowl -> r where
+          rid = _superOwl_id sowl
+          r = if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
+
+      wasLoad = case cmd of
+        GoatCmdLoad _ -> True
+        _             -> False
+
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
-        then (\x -> (False, x)) $ catMaybesSeq . flip fmap _goatState_selection $ \sseltl@(rid,_,_) ->
-          case IM.lookup rid cslmap of
+        then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament _goatState_selection) $ \sowl ->
+          case IM.lookup (_superOwl_id sowl) cslmap of
             -- no changes means not deleted
-            Nothing                  -> Just sseltl
+            Nothing                  -> Just sowl
             -- if deleted, remove it
             Just Nothing             -> Nothing
             -- it was changed, update selection to newest version
-            Just (Just (lp, seltl')) -> Just (rid, lp, seltl')
-        else (True, Seq.fromList newlyCreatedSEltls)
+            Just (Just x) -> Just x
+        else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
 
   (isNewSelection, next_selection) = case mSelectionFromPho of
     Just x  -> assert (not isNewSelection') (True, x)
@@ -562,9 +568,9 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
   -- TODO crop/expand to screen
-  newBox = _sCanvas_box . _pFState_canvas $ next_pFState
+  newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
   next_renderedCanvas' = if _renderedCanvas_box _goatState_renderedCanvas /= newBox
-    then moveRenderedCanvas next_broadPhaseState (_pFState_directory next_pFState) newBox _goatState_renderedCanvas
+    then moveRenderedCanvas next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
 
@@ -574,19 +580,18 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'
-    else updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_layerPosMap next_renderedCanvas'
+    else updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
 
 
 
   finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
-      _goatState_pFWorkspace      = next_workspace
+      _goatState_workspace      = next_workspace
       , _goatState_pan             = next_pan
       , _goatState_handler         = next_handler
       , _goatState_selection       = next_selection
       , _goatState_broadPhaseState = next_broadPhaseState
       , _goatState_renderedCanvas = next_renderedCanvas
       , _goatState_layersState     = next_layersState
-      , _goatState_layerPosMap = next_layerPosMap
     }
 
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
@@ -608,29 +613,29 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
       ]
 
-    --initialize broadphase with initial state
-    (_, initialbp) = update_bPTree (fmap Just (_pFState_directory _goatWidgetConfig_initialState)) emptyBPTree
-    initiallayersstate = makeLayersStateFromPFState _goatWidgetConfig_initialState
+    -- initialize broadphase with initial state
+    initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
+    (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
+    initiallayersstate = makeLayersStateFromOwlPFState _goatWidgetConfig_initialState
 
     -- TODO wrap this in a helper function in Render
     -- TODO we want to render the whole screen, not just the canvas
-    initialCanvasBox = _sCanvas_box $ _pFState_canvas _goatWidgetConfig_initialState
-    initialselts = fmap (\(SEltLabel _ selt) -> selt) $ toList $ _pFState_directory _goatWidgetConfig_initialState
+    initialCanvasBox = _sCanvas_box $ _owlPFState_canvas _goatWidgetConfig_initialState
+    initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
     initialrc = render initialCanvasBox initialselts (emptyRenderedCanvas initialCanvasBox)
 
     initialgoat = GoatState {
-        _goatState_pFWorkspace      = loadPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace
+        _goatState_workspace      = loadOwlPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
         , _goatState_debugLabel      = ""
-        , _goatState_selection       = Seq.empty
+        , _goatState_selection       = isParliament_empty
         , _goatState_broadPhaseState = initialbp
         , _goatState_renderedCanvas = initialrc
         , _goatState_layersState     = initiallayersstate
-        , _goatState_layerPosMap = pFState_getLayerPosMap _goatWidgetConfig_initialState
         , _goatState_clipboard = Nothing
       }
 
@@ -641,15 +646,15 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- I think it does, but it will prob still do full equality check after changes in goatDyn :(
   -- TODO maybe you need to have special signals to control firing of each sub event instead
   -- I guess the good news is that you can still do this without changing the interface
-  -- i.e. PFStateChangeFlag and have each PFState operation return a change flag as well
+  -- i.e. OwlPFStateChangeFlag and have each OwlPFState operation return a change flag as well
   r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
-  r_layers <- holdUniqDyn $ fmap (snd . _goatState_layersState) goatDyn
+  r_layers <- holdUniqDyn $ fmap (_layersState_entries . _goatState_layersState) goatDyn
   -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
-  r_canvas <- holdUniqDyn $ fmap (_pFState_canvas . _pFWorkspace_pFState . _goatState_pFWorkspace) goatDyn
+  r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
   let
     r_renderedCanvas = fmap _goatState_renderedCanvas goatDyn
 

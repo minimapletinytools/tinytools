@@ -18,7 +18,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
-import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.TestStates
 
 import           Data.Default
 import qualified Data.IntMap                       as IM
@@ -29,7 +29,7 @@ import qualified Data.Sequence                     as Seq
 
 -- this should work with any initial state so long as default names aren't used
 test_Select_zero :: Test
-test_Select_zero = constructTest "zero" pfstate_zero bs expected where
+test_Select_zero = constructTest "zero" owlpfstate_zero bs expected where
   bs = [
 
       EWCLabel "select b1"

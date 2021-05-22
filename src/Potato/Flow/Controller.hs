@@ -10,7 +10,7 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.Manipulator.Common
   , module Potato.Flow.Controller.GoatWidget
   , module Potato.Flow.Controller.Input
-  , module Potato.Flow.Controller.Layers
+  , module Potato.Flow.Controller.OwlLayers
   , module Potato.Flow.Controller.Types
 
 ) where
@@ -18,7 +18,7 @@ module Potato.Flow.Controller(
 import           Potato.Flow.Controller.GoatWidget
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.BoxText
 import           Potato.Flow.Controller.Manipulator.Common

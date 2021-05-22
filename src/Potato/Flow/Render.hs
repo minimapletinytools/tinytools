@@ -25,7 +25,8 @@ import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
+import           Potato.Flow.Owl
 import           Potato.Flow.Types
 
 import qualified Data.IntMap             as IM
@@ -87,8 +88,8 @@ potatoRender seltls RenderedCanvas {..} = r where
       , _renderedCanvas_contents = newc
     }
 
-potatoRenderPFState :: PFState -> RenderedCanvas -> RenderedCanvas
-potatoRenderPFState PFState {..} = potatoRender (fmap (\(SEltLabel _ selt) -> selt) $ toList _pFState_directory)
+potatoRenderPFState :: OwlPFState -> RenderedCanvas -> RenderedCanvas
+potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvas
@@ -147,13 +148,13 @@ renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, Fals
 printRenderedCanvas :: RenderedCanvas -> IO ()
 printRenderedCanvas rc@RenderedCanvas {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvas_box rc
 
-renderWithBroadPhase :: BPTree -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
-renderWithBroadPhase bpt dir lbx rc = r where
+renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvas -> RenderedCanvas
+renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
-  seltls = flip fmap rids $ \rid -> case IM.lookup rid dir of
+  selts = flip fmap rids $ \rid -> case owlTree_findSuperOwl rid ot of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-      Just seltl -> _sEltLabel_sElt seltl
-  r = render lbx seltls rc
+      Just sowl -> superOwl_toSElt_hack sowl
+  r = render lbx selts rc
 
 moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
 moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = assert (area >= 0) r where
@@ -177,27 +178,29 @@ moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = assert (area >= 0) r wher
     }
 
 -- TODO test
-moveRenderedCanvas :: BroadPhaseState -> REltIdMap SEltLabel -> LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvas (BroadPhaseState bpt) dir lbx rc = r where
+moveRenderedCanvas :: BroadPhaseState -> OwlTree -> LBox -> RenderedCanvas -> RenderedCanvas
+moveRenderedCanvas (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasNoReRender lbx rc
-  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt dir sublbx accrc) r1 (substract_lBox lbx (_renderedCanvas_box rc))
+  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvas_box rc))
 
 -- TODO test
-updateCanvas :: SEltLabelChanges -> NeedsUpdateSet -> BroadPhaseState -> PFState -> LayerPosMap -> RenderedCanvas -> RenderedCanvas
-updateCanvas cslmap needsUpdate BroadPhaseState {..} PFState {..} layerPosMap rc = case needsUpdate of
+updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvas -> RenderedCanvas
+updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case needsUpdate of
   [] -> rc
   -- TODO incremental rendering
   (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
     Nothing -> rc
     Just aabb -> r where
       rids' = broadPhase_cull aabb _broadPhaseState_bPTree
-      sortfn rid1 rid2 = compare (layerPosMap IM.! rid1) (layerPosMap IM.! rid2)
+      --sortfn rid1 rid2 = compare (layerPosMap IM.! rid1) (layerPosMap IM.! rid2)
+      -- TODO proper comparison function
+      sortfn rid1 rid2 = compare rid1 rid2
       rids = L.sortBy sortfn rids'
-      seltls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
-        Nothing -> case IM.lookup rid _pFState_directory of
+      selts = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+        Nothing -> case owlTree_findSuperOwl rid _owlPFState_owlTree of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-          Just seltl -> seltl
-        Just mseltl -> case mseltl of
+          Just sowl -> superOwl_toSElt_hack sowl
+        Just msowl -> case msowl of
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-          Just seltl -> seltl
-      r = render aabb (map _sEltLabel_sElt seltls) rc
+          Just sowl -> superOwl_toSElt_hack sowl
+      r = render aabb selts rc

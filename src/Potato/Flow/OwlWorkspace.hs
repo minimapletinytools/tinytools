@@ -104,11 +104,11 @@ doCmdWorkspace cmd pfw = force r where
   newState = doCmdState cmd (_owlPFWorkspace_pFState pfw)
   ActionStack {..} = (_owlPFWorkspace_actionStack pfw)
   newStack = ActionStack (cmd:doStack) []
-  --newMaxId = pFState_maxID _owlPFWorkspace_pFState
+  --newMaxId = owlPFState_maxID _owlPFWorkspace_pFState
   r = uncurry OwlPFWorkspace newState newStack
 
 doCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-doCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
+doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
   (newState, changes) = case cmd of
     OwlPFCNewElts x      ->  do_newElts x s
     OwlPFCDeleteElts x   ->  do_deleteElts x s
@@ -117,7 +117,7 @@ doCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
     OwlPFCResizeCanvas x -> (do_resizeCanvas x s, IM.empty)
 
 undoCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undoCmdState cmd s = assert (pFState_isValid newState) (newState, changes) where
+undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
   (newState, changes) =  case cmd of
     OwlPFCNewElts x      ->  undo_newElts x s
     OwlPFCDeleteElts x   ->  undo_deleteElts x s
@@ -199,9 +199,9 @@ updateOwlPFWorkspace evt ws = let
     WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
-    WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_pFState x) ws
+    WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
   afterState = _owlPFWorkspace_pFState r
-  isValidAfter = pFState_isValid afterState
+  isValidAfter = owlPFState_isValid afterState
   in
     if isValidAfter then r else
       error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)

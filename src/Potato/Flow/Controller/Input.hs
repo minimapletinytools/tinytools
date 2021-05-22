@@ -20,7 +20,7 @@ module Potato.Flow.Controller.Input (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
 import           Potato.Flow.Types
 
 import           Control.Exception (assert)
@@ -126,8 +126,8 @@ mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
 newtype RelMouseDrag = RelMouseDrag MouseDrag deriving (Show)
 
-toRelMouseDrag :: PFState -> XY -> MouseDrag -> RelMouseDrag
-toRelMouseDrag pFState pan md = RelMouseDrag $ md {
-    _mouseDrag_from = pFState_toCanvasCoordinates pFState (_mouseDrag_from md) - pan
-    , _mouseDrag_to = pFState_toCanvasCoordinates pFState (_mouseDrag_to md) - pan
+toRelMouseDrag :: OwlPFState -> XY -> MouseDrag -> RelMouseDrag
+toRelMouseDrag pfs pan md = RelMouseDrag $ md {
+    _mouseDrag_from = owlPFState_toCanvasCoordinates pfs (_mouseDrag_from md) - pan
+    , _mouseDrag_to = owlPFState_toCanvasCoordinates pfs (_mouseDrag_to md) - pan
   }

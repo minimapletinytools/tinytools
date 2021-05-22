@@ -12,8 +12,8 @@ module Potato.Flow.Common
   , checkHandlerNameAndState
   , numEltsInLBoxUsingBroadphasePredicate
   , numSelectedEltsEqualPredicate
-  , firstSelectedSuperSEltLabelPredicate
-  , firstSuperSEltLabelPredicate
+  , firstSelectedSuperOwlPredicate
+  , firstSuperOwlPredicate
   , constructTest
   )
 where
@@ -54,7 +54,7 @@ data GoatWidgetCmd =
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
-  => PFState
+  => OwlPFState
   -> AppIn t () GoatWidgetCmd -> TestGuestT t m (AppOut t GoatState GoatState)
 everything_network_app pfs (AppIn _ ev) = do
   let ewc = GoatWidgetConfig  {
@@ -91,7 +91,7 @@ everything_network_app pfs (AppIn _ ev) = do
 data EverythingPredicate where
   EqPredicate :: (Show a, Eq a) => (GoatState -> a) -> a -> EverythingPredicate
   FunctionPredicate :: (GoatState -> (Text, Bool)) -> EverythingPredicate
-  PFStateFunctionPredicate :: (PFState -> (Text, Bool)) -> EverythingPredicate
+  PFStateFunctionPredicate :: (OwlPFState -> (Text, Bool)) -> EverythingPredicate
   AlwaysPass :: EverythingPredicate
   LabelCheck :: Text -> EverythingPredicate
   Combine :: [EverythingPredicate] -> EverythingPredicate
@@ -115,12 +115,11 @@ showEverythingPredicate (LabelCheck l) e = "expected label: " <> show l <> " got
 -- TODO this should not print passing tests as well :(
 showEverythingPredicate (Combine xs) e = "[" <> foldr (\p acc -> showEverythingPredicate p e <> ", " <> acc) "" xs <> "]"
 
-checkNumElts :: Int -> PFState -> (Text, Bool)
-checkNumElts n PFState {..} = (t,r) where
-  ds = IM.size _pFState_directory
-  ls = Seq.length _pFState_layers
-  r = ds == n && ls == n
-  t = "expected: " <> show n <> " dir: " <> show ds <> " layers: " <> show ls
+checkNumElts :: Int -> OwlPFState -> (Text, Bool)
+checkNumElts n OwlPFState {..} = (t,r) where
+  ds = IM.size (_owlTree_mapping _owlPFState_owlTree)
+  r = ds == n
+  t = "expected: " <> show n <> " owlTree: " <> show ds
 
 numEltsInLBoxUsingBroadphasePredicate :: Int -> LBox -> EverythingPredicate
 numEltsInLBoxUsingBroadphasePredicate n lbox = FunctionPredicate $
@@ -134,7 +133,7 @@ numSelectedEltsEqualPredicate n = FunctionPredicate $
   (\s ->
     let nSelected = Seq.length s
     in ("Selected: " <> show nSelected <> " expected: " <> show n, nSelected == n))
-  . _goatState_selection
+  . unSuperOwlParliament . _goatState_selection
 
 -- you can prob delete this, better to always check for state using version below
 checkHandlerName :: Text -> EverythingPredicate
@@ -153,36 +152,37 @@ checkHandlerNameAndState name state = FunctionPredicate $
     in ("Handler: " <> hName <> "(" <> show hState <> ") expected: " <> name <> " (" <> show state <> ")", hName == name && hState == state))
   . _goatState_handler
 
-firstSelectedSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
-firstSelectedSuperSEltLabelPredicate mlabel f = FunctionPredicate $
+firstSelectedSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
+firstSelectedSuperOwlPredicate mlabel f = FunctionPredicate $
   (\s ->
     let
       mfirst = case mlabel of
         Nothing    -> Seq.lookup 0 s
-        Just label -> find (\(_,_,SEltLabel l _) -> label == l) s
+        Just label -> find (\sowl -> isOwl_name sowl == label) s
     in case mfirst of
       Nothing    -> ("No elt with label " <> show mlabel <> show s, False)
       Just first -> ("First selected: " <> show first, f first))
-  . _goatState_selection
+  . unSuperOwlParliament . _goatState_selection
 
-firstSuperSEltLabelPredicate :: Maybe Text -> (SuperSEltLabel -> Bool) -> EverythingPredicate
-firstSuperSEltLabelPredicate mlabel f = FunctionPredicate $
-  (\sseltls ->
+firstSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
+firstSuperOwlPredicate mlabel f = FunctionPredicate $
+  (\ot ->
     let
+      sowls = toList $ owliterateall ot
       mfirst = case mlabel of
-        Nothing -> case toList sseltls of
+        Nothing -> case sowls of
           []  -> Nothing
           x:_ -> Just x
-        Just label -> case find (\(_, _, SEltLabel l _) -> label == l) sseltls of
+        Just label -> case find (\sowl -> isOwl_name sowl == label) sowls of
           Nothing     -> Nothing
-          Just sseltl -> Just sseltl
+          Just sowl -> Just sowl
     in case mfirst of
       Nothing    -> ("No elt with label " <> show mlabel, False)
       Just first -> ("First elt with label " <> show mlabel <> ": " <> show first, f first))
-  . pFState_to_superSEltLabelSeq . goatState_pFState
+  . _owlPFState_owlTree . goatState_pFState
 
 
-constructTest :: String -> PFState -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
+constructTest :: String -> OwlPFState -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
 constructTest label pfs bs expected = TestLabel label $ TestCase $ do
   let
     run = runApp (everything_network_app pfs) () (fmap (Just . That) bs)

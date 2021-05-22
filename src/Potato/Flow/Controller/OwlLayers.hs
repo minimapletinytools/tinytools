@@ -1,17 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Potato.Flow.Controller.OwlLayers (
-  LayerEntries
-  , LayersState
-  , makeLayersStateFromPFState
-  , changesFromToggleHide
-
-  , layerEntry_isFolder
-  , lockHiddenStateToBool
-
-
-) where
+module Potato.Flow.Controller.OwlLayers where
 
 import           Relude
 
@@ -78,13 +68,14 @@ updateLockHiddenStateInChildren parentstate = \case
   where
     invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"
 
+-- TODO be careful with hidden cost of Eq SuperOwl
 -- this stores info just for what is displayed, Seq LayerEntry is uniquely generated from LayerMetaMap and PFState
 data LayerEntry = LayerEntry {
   _layerEntry_lockState      :: LockHiddenState
   , _layerEntry_hideState      :: LockHiddenState
   , _layerEntry_isCollapsed    :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
   , _layerEntry_superOwl :: SuperOwl
-} deriving (Show)
+} deriving (Eq, Show)
 
 layerEntry_depth :: LayerEntry -> Int
 layerEntry_depth LayerEntry {..} = _owlEltMeta_depth . _superOwl_meta $ _layerEntry_superOwl
@@ -128,7 +119,7 @@ data LayersState = LayersState {
     _layersState_meta :: LayerMetaMap
     -- sequence of visible folders
     , _layersState_entries :: LayerEntries
-  }
+  } deriving (Show)
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 
@@ -221,8 +212,8 @@ toggleLayerEntry pfs@OwlPFState {..} (LayersState lmm lentries) lepos op = r whe
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\lm' x -> lm' { _layerMeta_isHidden = x }) (\le' x -> le' { _layerEntry_hideState = x })
 
 
-makeLayersStateFromPFState :: OwlPFState -> LayersState
-makeLayersStateFromPFState pfs = LayersState IM.empty $ generateLayersNew (_owlPFState_owlTree pfs) IM.empty
+makeLayersStateFromOwlPFState :: OwlPFState -> LayersState
+makeLayersStateFromOwlPFState pfs = LayersState IM.empty $ generateLayersNew (_owlPFState_owlTree pfs) IM.empty
 
 updateLayers :: OwlPFState -> SuperOwlChanges -> LayersState -> LayersState
 updateLayers pfs changes (LayersState lmm lentries) = r where

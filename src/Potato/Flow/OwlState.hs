@@ -38,43 +38,43 @@ owlPFState_lastId pfs = owlTree_maxId . _owlPFState_owlTree $ pfs
 debugPrintOwlPFState :: (IsString a) => OwlPFState -> a
 debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ owlTree_prettyPrint _owlPFState_owlTree
 
--- TODO pFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _pFState_layers - 1]
-pFState_isValid :: OwlPFState -> Bool
-pFState_isValid pfs@OwlPFState {..} = True
+-- TODO owlPFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _owlPFState_layers - 1]
+owlPFState_isValid :: OwlPFState -> Bool
+owlPFState_isValid pfs@OwlPFState {..} = True
 
-pFState_selectionIsValid :: OwlPFState -> OwlParliament -> Bool
-pFState_selectionIsValid OwlPFState {..} (OwlParliament op) = validElts where
+owlPFState_selectionIsValid :: OwlPFState -> OwlParliament -> Bool
+owlPFState_selectionIsValid OwlPFState {..} (OwlParliament op) = validElts where
   OwlTree {..} = _owlPFState_owlTree
   validElts = all isJust . toList $ fmap ((IM.!?) _owlTree_mapping) op
 
 -- TODO replace with superOwlParliament_toSEltTree
-pFState_copyElts :: OwlPFState -> OwlParliament -> [SEltLabel]
-pFState_copyElts OwlPFState {..} op = r where
+owlPFState_copyElts :: OwlPFState -> OwlParliament -> [SEltLabel]
+owlPFState_copyElts OwlPFState {..} op = r where
   sop = owlParliament_toSuperOwlParliament _owlPFState_owlTree op
   r = fmap snd $ superOwlParliament_toSEltTree _owlPFState_owlTree sop
 
 -- TODO replace with owlTree_findSuperOwl
-pFState_getSuperOwls :: OwlPFState -> [REltId] -> REltIdMap (Maybe SuperOwl)
-pFState_getSuperOwls OwlPFState {..} rids = foldr (\rid acc -> IM.insert rid (owlTree_findSuperOwl rid _owlPFState_owlTree) acc) IM.empty rids
+owlPFState_getSuperOwls :: OwlPFState -> [REltId] -> REltIdMap (Maybe SuperOwl)
+owlPFState_getSuperOwls OwlPFState {..} rids = foldr (\rid acc -> IM.insert rid (owlTree_findSuperOwl rid _owlPFState_owlTree) acc) IM.empty rids
 
 emptyPFState :: OwlPFState
 emptyPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 0))
 
-sPotatoFlow_to_pFState :: SPotatoFlow -> OwlPFState
-sPotatoFlow_to_pFState SPotatoFlow {..} = r where
+sPotatoFlow_to_owlPFState :: SPotatoFlow -> OwlPFState
+sPotatoFlow_to_owlPFState SPotatoFlow {..} = r where
   r = OwlPFState (owlTree_fromSEltTree _sPotatoFlow_sEltTree) _sPotatoFlow_sCanvas
 
-pFState_to_sPotatoFlow :: OwlPFState -> SPotatoFlow
-pFState_to_sPotatoFlow OwlPFState {..} = r where
+owlPFState_to_sPotatoFlow :: OwlPFState -> SPotatoFlow
+owlPFState_to_sPotatoFlow OwlPFState {..} = r where
   selttree = owlTree_toSEltTree _owlPFState_owlTree
   r = SPotatoFlow _owlPFState_canvas selttree
 
-pFState_toCanvasCoordinates :: OwlPFState -> XY -> XY
-pFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
+owlPFState_toCanvasCoordinates :: OwlPFState -> XY -> XY
+owlPFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
   LBox (V2 sx sy) _ = _sCanvas_box _owlPFState_canvas
 
-pFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
-pFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
+owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
+owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
 
 -- UNTESTED
@@ -106,7 +106,7 @@ do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   rp = _owlEltMeta_position . _superOwl_meta
   isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
 
-  op = superOwlParialment_toOwlParliament sop
+  op = superOwlParliament_toOwlParliament sop
   (newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)

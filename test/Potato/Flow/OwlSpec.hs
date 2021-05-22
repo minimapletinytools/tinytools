@@ -93,5 +93,5 @@ spec = do
         let
           validParliament = owlParliament_toSuperOwlParliament owlTree0 (OwlParliament $ Seq.fromList [2,3,7])
           invalidParliament = owlParliament_toSuperOwlParliament owlTree0 (OwlParliament $ Seq.fromList [2,3,7,9])
-        superOwlParliament_isValid owlMapping0 validParliament `shouldBe` True
-        superOwlParliament_isValid owlMapping0 invalidParliament `shouldBe` False
+        superOwlParliament_isValid owlTree0 validParliament `shouldBe` True
+        superOwlParliament_isValid owlTree0 invalidParliament `shouldBe` False

@@ -14,14 +14,16 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.Owl
 
 import           Data.Default
 import           Data.Dependent.Sum             (DSum ((:=>)))
 import qualified Data.IntMap                    as IM
 import qualified Data.List                      as L
+import Data.Foldable (maximumBy)
 import           Data.Maybe
 import qualified Data.Sequence                  as Seq
 
@@ -29,36 +31,34 @@ import qualified Data.Sequence                  as Seq
 
 -- TODO ignore locked elements
 -- NOTE hidden stuff is already removed from BroadPhaseState
-selectMagic :: PFState -> LayerPosMap -> BroadPhaseState -> RelMouseDrag -> Selection
-selectMagic pFState layerPosMap bps (RelMouseDrag MouseDrag {..}) = r where
+selectMagic :: OwlPFState -> BroadPhaseState -> RelMouseDrag -> Selection
+selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
   -- always expand selection by 1
   selectBox = LBox pos' (sz' + V2 1 1)
   boxSize = lBox_area selectBox
   singleClick = boxSize == 1
 
-  isboxshaped = \case
-    SEltLabel _ (SEltBox _) -> True
-    SEltLabel _ (SEltTextArea _) -> True
+  isboxshaped sowl = case _superOwl_elt sowl of
+    OwlEltSElt _ (SEltBox _)  -> True
+    OwlEltSElt _ (SEltTextArea _) -> True
     _ -> False
 
-  unculledRids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
-  selectedRids = flip filter unculledRids $ \rid -> case IM.lookup rid (_pFState_directory pFState) of
-    Nothing -> error $ "expected to find rid in directory " <> show rid
+  unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
+  unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl rid (_owlPFState_owlTree pfs)) unculledrids
+  selectedsowls' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
-    Just seltl | isboxshaped seltl -> True
-    Just (SEltLabel _ selt) -> doesSEltIntersectBox selectBox selt
+    sowl | isboxshaped sowl -> True
 
-  mapToLp = map (\rid -> (fromJust . IM.lookup rid $ layerPosMap))
-  lps' = mapToLp selectedRids
-  lps = if singleClick
+
+  selectedsowls = if singleClick
     -- single click, select top elt only
-    then case lps' of
+    then case selectedsowls' of
       [] -> []
-      xs -> [L.maximumBy (\lp1 lp2 -> compare lp2 lp1) xs]
+      _ ->  [maximumBy (\s1 s2 -> owlTree_superOwl_comparePosition (_owlPFState_owlTree pfs) s2 s1) selectedsowls']
     -- otherwise select everything
-    else lps'
-  r = Seq.fromList $ map (pfState_layerPos_to_superSEltLabel pFState) lps
+    else selectedsowls'
+  r = SuperOwlParliament $ Seq.fromList selectedsowls
 
 data SelectHandler = SelectHandler {
     _selectHandler_selectArea :: LBox
@@ -76,7 +76,7 @@ instance PotatoHandler SelectHandler where
     MouseDragState_Dragging -> captureWithNoChange sh
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
-      newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_layerPosMap _potatoHandlerInput_broadPhase rmd
+      newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]

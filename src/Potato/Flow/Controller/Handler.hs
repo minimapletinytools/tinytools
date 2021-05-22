@@ -26,13 +26,14 @@ import           Relude
 
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Layers
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.Deprecated.State
+import           Potato.Flow.OwlState
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.Owl
 
 import           Data.Default
 import           Data.Dependent.Sum            (DSum ((:=>)))
@@ -63,9 +64,8 @@ instance Default PotatoHandlerOutput where
 -- TODO replace this with just GoatState
 data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
-    _potatoHandlerInput_pFState       :: PFState
+    _potatoHandlerInput_pFState       :: OwlPFState
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
-    , _potatoHandlerInput_layerPosMap :: LayerPosMap
 
     -- * from Frontend
     , _potatoHandlerInput_tool        :: Tool

@@ -52,7 +52,7 @@ makeBoxTextInputState_basic_test = let
 
 
 checkSBoxText :: Text -> Text -> EverythingPredicate
-checkSBoxText label text = firstSuperSEltLabelPredicate (Just label) $ \(_,_,SEltLabel _ selt) -> case selt of
+checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
   SEltBox (SBox lbox _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
@@ -113,7 +113,7 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -143,9 +143,9 @@ test_basic = constructTest "basic" emptyPFState bs expected where
       , Combine [
           LabelCheck "set noborder"
           -- make sure REltId is 0 because next step we will modify using it
-          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+          , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
         _                                 -> False
       , checkHandlerNameAndState handlerName_boxText True
@@ -186,7 +186,7 @@ test_handler_state = constructTest "handler state" emptyPFState bs expected wher
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -245,7 +245,7 @@ test_negative = constructTest "negative" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
             -- old non-canonical version, keeping here in case we ever decide to go back to non-canonical version
             --SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 (-10) (-10))
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 0 0) (V2 (10) (10))
@@ -293,7 +293,7 @@ test_zero = constructTest "zero" emptyPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 2 2)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -308,7 +308,7 @@ test_zero = constructTest "zero" emptyPFState bs expected where
       , EqPredicate _goatState_selectedTool Tool_Select
       , AlwaysPass
       , AlwaysPass
-      , firstSuperSEltLabelPredicate (Just "<text>") $ \(_,_,SEltLabel _ selt) -> case selt of
+      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 0 0)
         _                           -> False
 
@@ -398,7 +398,7 @@ test_output = constructTest "output" emptyPFState bs expected where
       , Combine [
           LabelCheck "set noborder"
           -- make sure REltId is 0 because next step we will modify using it
-          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+          , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
       , checkHandlerPos (V2 16 10)
       , checkHandlerPos (V2 15 10)
@@ -406,7 +406,7 @@ test_output = constructTest "output" emptyPFState bs expected where
       , Combine [
           LabelCheck "align right"
           -- make sure REltId is 0 because next step we will modify using it
-          , firstSuperSEltLabelPredicate (Just "<text>") $ \(rid,_,_) -> rid == 1
+          , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
       , checkHandlerPos (V2 20 10)
     ]

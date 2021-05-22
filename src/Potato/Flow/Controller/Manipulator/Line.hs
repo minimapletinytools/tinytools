@@ -13,7 +13,9 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlState
+import           Potato.Flow.Owl
 
 import           Control.Exception
 import           Data.Default
@@ -38,16 +40,18 @@ instance Default SimpleLineHandler where
     }
 
 
--- TODO rewrite using selectionToSuperSEltLabel
 findFirstLineManipulator :: RelMouseDrag -> Selection -> Maybe Bool
-findFirstLineManipulator (RelMouseDrag MouseDrag {..}) selection = assert (Seq.length selection == 1) $ case Seq.lookup 0 selection of
+findFirstLineManipulator (RelMouseDrag MouseDrag {..}) (SuperOwlParliament selection) = assert (Seq.length selection == 1) $ r where
+  msowl = Seq.lookup 0 selection
+  selt = case msowl of
     Nothing -> error "expected selection"
-    Just (_, _, SEltLabel _ (SEltLine SSimpleLine {..})) ->
+    Just sowl -> superOwl_toSElt_hack sowl
+  r = case selt of
+    SEltLine SSimpleLine {..} ->
       if _mouseDrag_to == _sSimpleLine_start then Just True
         else if _mouseDrag_to == _sSimpleLine_end then Just False
           else Nothing
-
-    Just x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
+    x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
 
 
 instance PotatoHandler SimpleLineHandler where
@@ -77,16 +81,17 @@ instance PotatoHandler SimpleLineHandler where
       dragDelta = _mouseDrag_to - _mouseDrag_from
 
       -- for creating new elt
-      newEltPos = lastPositionInSelection _potatoHandlerInput_selection
+      newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
 
       -- for manipulation
-      (rid, _, _) = selectionToSuperSEltLabel _potatoHandlerInput_selection
+      sowl = selectionToSuperOwl _potatoHandlerInput_selection
+      rid = _superOwl_id sowl
       controller = CTagLine :=> (Identity $ if _simpleLineHandler_isStart
         then def { _cLine_deltaStart = Just $ DeltaXY dragDelta }
         else def { _cLine_deltaEnd = Just $ DeltaXY dragDelta })
 
       op = if _simpleLineHandler_isCreation
-        then WSEAddElt (_simpleLineHandler_undoFirst, (newEltPos, SEltLabel "<line>" $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def def))
+        then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def def)
         else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {
@@ -102,8 +107,9 @@ instance PotatoHandler SimpleLineHandler where
     -- TODO keyboard movement
     _                              -> Nothing
   pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
-    boxes = case selectionToMaybeSuperSEltLabel _potatoHandlerInput_selection of
-      Just (_,_,SEltLabel _ (SEltLine SSimpleLine {..})) -> if _simpleLineHandler_active
+    mselt = selectionToMaybeSuperOwl _potatoHandlerInput_selection >>= return . superOwl_toSElt_hack
+    boxes = case mselt of
+      Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
         else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]

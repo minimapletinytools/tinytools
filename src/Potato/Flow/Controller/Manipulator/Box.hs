@@ -1,8 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.Box (
-  computeSelectionType
-  , BoxHandleType(..)
+  BoxHandleType(..)
   , BoxHandler(..)
   , BoxCreationType(..)
   , makeHandleBox
@@ -21,7 +20,9 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
 
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
@@ -42,11 +43,11 @@ type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
 toMouseManipulators :: Selection -> MouseManipulatorSet
-toMouseManipulators selection = bb where
+toMouseManipulators (SuperOwlParliament selection) = bb where
   union_lBoxes :: NonEmpty LBox -> LBox
   union_lBoxes (x:|xs) = foldl' union_lBox x xs
-  fmapfn (_, _, seltl) = do
-    box <- getSEltBox . _sEltLabel_sElt $ seltl
+  fmapfn sowl = do
+    box <- getSEltBox . _sEltLabel_sElt $ superOwl_toSEltLabel_hack sowl
     return box
   msboxes = fmap fmapfn selection
   sboxes = catMaybes (toList msboxes)
@@ -129,7 +130,7 @@ data BoxHandler = BoxHandler {
 
 makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
-  selection = _potatoHandlerInput_selection
+  SuperOwlParliament selection = _potatoHandlerInput_selection
   RelMouseDrag MouseDrag {..} = rmd
   dragDelta = _mouseDrag_to - _mouseDrag_from
   shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
@@ -144,7 +145,7 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 
   dbox = makeDeltaBox m boxRestrictedDelta
 
-  -- TODO STILL BROKEN ;__; only works if yo uscale from BR oops
+  -- TODO STILL BROKEN ;__; only works if you scale from BR oops
   makeControllerNoNeg (_,_,SEltLabel _ selt) dbox = cmd where
     DeltaLBox tr (V2 dw dh) = dbox
     mlbox = getSEltBox selt
@@ -161,12 +162,12 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
       _cBoundingBox_deltaBox = modifieddbox
     })
 
-  makeController (_,_,SEltLabel _ selt) dbox = cmd where
+  makeController _ dbox = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox
     })
 
-  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (fst3 s, makeController s dbox)) (toList selection)))
+  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (_superOwl_id s, makeController s dbox)) (toList selection)))
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)
@@ -203,7 +204,7 @@ instance PotatoHandler BoxHandler where
 
     MouseDragState_Dragging -> Just r where
       dragDelta = _mouseDrag_to - _mouseDrag_from
-      newEltPos = lastPositionInSelection _potatoHandlerInput_selection
+      newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
 
       -- TODO do I use this for box creation? Prob want to restrictDiag or something though
       --shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
@@ -221,7 +222,7 @@ instance PotatoHandler BoxHandler where
       nameToAdd = if _boxHandler_creation == BoxCreationType_Text then "<text>" else "<box>"
 
       op = if boxCreationType_isCreation _boxHandler_creation
-        then WSEAddElt (_boxHandler_undoFirst, (newEltPos, SEltLabel nameToAdd $ SEltBox $ boxToAdd))
+        then WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
         else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
 
       newbh = bh { _boxHandler_undoFirst = True }
@@ -234,8 +235,8 @@ instance PotatoHandler BoxHandler where
         }
 
     MouseDragState_Up -> r where
-      isText = case selectionToMaybeFirstSuperSEltLabel _potatoHandlerInput_selection of
-        Just (_,_,SEltLabel _ (SEltBox SBox{..})) -> sBoxType_isText _sBox_boxType
+      isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_selection of
+        Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType
         _                                    -> False
 
 
