@@ -208,8 +208,8 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
 
       -- TODO OWL
       -- we need OwlTree to find the position
-      --, firstSelectedSuperOwlPredicate (Just "b1") $ \(_,lp,_) -> lp == 0
-      --, firstSelectedSuperOwlPredicate (Just "b1") $ \(_,lp,_) -> lp == 3
+      --, firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \(_,lp,_) -> lp == 0
+      --, firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \(_,lp,_) -> lp == 3
       , AlwaysPass
       , AlwaysPass
     ]

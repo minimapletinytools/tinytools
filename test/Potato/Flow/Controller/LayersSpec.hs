@@ -161,7 +161,6 @@ spec = do
         let
           (LayersState lmm_1 lentries_1) = toggleLayerEntry someState3 (LayersState lmm_0 lentries_0) 3 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
-{- TODO OWL need to figure out how to get SuperOwl from someState1
     describe "updateLayers" $ do
       it "basic" $ do
         let
@@ -169,7 +168,11 @@ spec = do
           lmm_0 = createExpandAllLayerMetaMap state_0 -- everything expanded
           lentries_0 = generateLayersNew' state_0 lmm_0
 
-          (state_1, changes) = do_deleteElts [(4,4,someOwlElt)] state_0
+          deleteme = owlTree_mustFindSuperOwl 4 (_owlPFState_owlTree state_0)
+          rid = _superOwl_id deleteme
+          spot = owlTree_owlEltMeta_toOwlSpot (_owlPFState_owlTree state_0) (_superOwl_meta deleteme)
+          oelt = _superOwl_elt deleteme
+
+          (state_1, changes) = do_deleteElts [(rid,spot,oelt)] state_0
           (LayersState lmm_1 lentries_1) = updateLayers state_1 changes (LayersState lmm_0 lentries_0)
         Seq.length lentries_1 `shouldBe` 4
--}
