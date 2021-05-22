@@ -84,7 +84,7 @@ someState3 = pFState_to_owlPFState $ PFState {
   }
 
 generateLayersNew' :: OwlPFState -> LayerMetaMap -> Seq LayerEntry
-generateLayersNew' pfs lmm = generateLayersNew (_owlPFState_owlTree pfs)
+generateLayersNew' pfs lmm = generateLayersNew (_owlPFState_owlTree pfs) lmm
 
 createExpandAllLayerMetaMap :: OwlPFState -> LayerMetaMap
 createExpandAllLayerMetaMap OwlPFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = False }) (_owlTree_mapping _owlPFState_owlTree)

@@ -45,22 +45,22 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
       EWCLabel "Load"
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
-      , EWCLoad (owlPFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_someValidState1, emptyControllerMeta)
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
-      , EWCLoad (owlPFState_to_sPotatoFlow pfstate_someValidState1, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_someValidState1, emptyControllerMeta)
       , EWCLoad (owlPFState_to_sPotatoFlow emptyPFState, emptyControllerMeta)
     ]
   expected = [
       LabelCheck "Load"
       , expectState owlpfstate_basic1
       , expectState owlpfstate_basic1
-      , expectState pfstate_someValidState1
+      , expectState owlpfstate_someValidState1
       , Combine [
           expectState owlpfstate_basic1
           -- intersects "b1" "b2" "b3" "b4" in owlpfstate_basic1
           , numEltsInLBoxUsingBroadphasePredicate 4 (LBox 0 (V2 15 15))
         ]
-      , expectState pfstate_someValidState1
+      , expectState owlpfstate_someValidState1
       , Combine [
           expectState emptyPFState
           , numEltsInLBoxUsingBroadphasePredicate 0 (LBox 0 (V2 1000 1000))
@@ -71,16 +71,20 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
 
 validateLayersOrderPredicate :: EverythingPredicate
 validateLayersOrderPredicate = r where
-  sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
+
+  r = FunctionPredicate $ const ("", False)
+  {- TODO OWL
+  --sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
   r = FunctionPredicate $
-    (\(_,lentries) -> ("expected LayerEntries in order " <> show (fmap (snd3 . _layerEntry_superSEltLabel) lentries), L.isSortedBy sortingfn (toList lentries)))
-    . _goatState_layersState
+    (\lentries -> ("expected LayerEntries in order " <> show (fmap (snd3 . _layerEntry_superSEltLabel) lentries), L.isSortedBy sortingfn (toList lentries)))
+    . _layersState_entries . _goatState_layersState
+  -}
 
 checkLayerEntriesNum :: Int -> EverythingPredicate
 checkLayerEntriesNum n = r where
   r = FunctionPredicate $
-    (\(_,lentries) -> ("expected " <> show n <> " got " <> show (Seq.length lentries), Seq.length lentries == n))
-    . _goatState_layersState
+    (\lentries -> ("expected " <> show n <> " got " <> show (Seq.length lentries), Seq.length lentries == n))
+    . _layersState_entries . _goatState_layersState
 
 everything_layers_test :: Test
 everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected where
@@ -100,7 +104,7 @@ everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected wh
       -- this isn't an especially useful/exciting test... but it's better than nothing
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
+        , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
       ]
 
       , LabelCheck "Create A"
@@ -110,7 +114,7 @@ everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected wh
       , AlwaysPass
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+        , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
       ]
     ]
 
@@ -176,39 +180,39 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
   -- I can't remember why we're using checkLayerEntriesNum instead of counting number of entries in PFState but it doesn't matter, should be the same
   expected = [
       LabelCheck "Copy pasta nothing"
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
 
       , LabelCheck "Create A with random keyboard inputs in between"
       , (EqPredicate _goatState_selectedTool Tool_Box)
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1))
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
       , Combine [
         validateLayersOrderPredicate
-        , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+        , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
         , numSelectedEltsEqualPredicate 1
       ]
 
       , LabelCheck "Copy pasta A"
-      , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 1)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
       , Combine [
           -- TODO copy not implemented yet so this doesn't work
-          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
+          checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 2)
           , numSelectedEltsEqualPredicate 1
         ]
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 3)
+          checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 3)
           , numSelectedEltsEqualPredicate 1
         ]
 
       , LabelCheck "Delete A using Delete key"
       , Combine [
-          checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
+          checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 2)
           , numSelectedEltsEqualPredicate 0
         ]
 
@@ -216,13 +220,13 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
       , (EqPredicate _goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , checkHandlerNameAndState handlerName_select True
-      , numSelectedEltsEqualPredicate (length (_pFState_layers owlpfstate_basic1) + 2)
+      , numSelectedEltsEqualPredicate ((owlPFState_numElts owlpfstate_basic1)   + 2)
 
       , LabelCheck "Cut pasta everything"
       , checkLayerEntriesNum 0
       , Combine [
-          numSelectedEltsEqualPredicate (length (_pFState_layers owlpfstate_basic1) + 2)
-          , checkLayerEntriesNum (length (_pFState_layers owlpfstate_basic1) + 2)
+          numSelectedEltsEqualPredicate ((owlPFState_numElts owlpfstate_basic1)   + 2)
+          , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 2)
         ]
 
       , LabelCheck "Esc deselect everything"

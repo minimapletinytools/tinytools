@@ -7,6 +7,7 @@ module Potato.Flow.TestStates (
   , someSCanvas
   , defaultCanvasLBox
   , someOwlElt
+  , pFState_to_owlPFState
   , owlPFState_fromSElts
   , owlpfstate_someValidState1
   , owlpfstate_someInvalidState1

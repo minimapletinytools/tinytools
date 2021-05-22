@@ -34,6 +34,9 @@ owlPFState_nextId pfs = (+1) . owlTree_maxId . _owlPFState_owlTree $ pfs
 owlPFState_lastId :: OwlPFState -> REltId
 owlPFState_lastId pfs = owlTree_maxId . _owlPFState_owlTree $ pfs
 
+owlPFState_numElts :: OwlPFState -> Int
+owlPFState_numElts pfs = IM.size . _owlTree_mapping . _owlPFState_owlTree $ pfs
+
 -- TODO DELETE replace with owlTree_prettyPrint
 debugPrintOwlPFState :: (IsString a) => OwlPFState -> a
 debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ owlTree_prettyPrint _owlPFState_owlTree
