@@ -57,6 +57,7 @@ emptyActionStack = ActionStack [] []
 
 -- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
+  -- TODO rename owlPFState
   _owlPFWorkspace_pFState       :: OwlPFState
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges
   , _owlPFWorkspace_actionStack :: ActionStack

@@ -70,15 +70,14 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
     ]
 
 validateLayersOrderPredicate :: EverythingPredicate
-validateLayersOrderPredicate = r where
-
-  r = FunctionPredicate $ const ("TODO IMPLEMENT", False)
-  {- TODO OWL
-  --sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
-  r = FunctionPredicate $
-    (\lentries -> ("expected LayerEntries in order " <> show (fmap (snd3 . _layerEntry_superSEltLabel) lentries), L.isSortedBy sortingfn (toList lentries)))
-    . _layersState_entries . _goatState_layersState
-  -}
+validateLayersOrderPredicate = FunctionPredicate fn where
+  fn GoatState {..} = r where
+    lentries = _layersState_entries _goatState_layersState
+    -- TODO report position of superowls in tree
+    msg = "expected LayerEntries in order " <> show (fmap _layerEntry_superOwl lentries)
+    owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
+    sortingfn le1 le2 = owlTree_superOwl_comparePosition owltree (_layerEntry_superOwl le1) (_layerEntry_superOwl le2) == LT
+    r = (msg, L.isSortedBy sortingfn (toList lentries))
 
 checkLayerEntriesNum :: Int -> EverythingPredicate
 checkLayerEntriesNum n = r where

@@ -126,6 +126,10 @@ data SuperOwl = SuperOwl
   }
   deriving (Eq, Show, Generic)
 
+-- TODO something like
+--type SuperDuperOwl = (SuperOwl, OwlTree)
+-- or even data Duper a = Duper OwlTree a
+
 instance NFData SuperOwl
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
@@ -172,7 +176,7 @@ instance NFData OwlParliament
 
 -- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
--- TODO consider adding OwlTree reference to this type
+-- TODO consider adding OwlTree reference to this type and rename to SuperDuperOwlParliament
 newtype SuperOwlParliament = SuperOwlParliament {unSuperOwlParliament :: Seq SuperOwl} deriving (Eq, Show, Generic)
 
 instance NFData SuperOwlParliament
@@ -338,6 +342,14 @@ owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)
 
 owlTree_maxId :: OwlTree -> REltId
 owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
+
+-- TODO why is this function such a pain to write
+owlTree_rEltId_position :: OwlTree -> REltId -> Int
+owlTree_rEltId_position ot@OwlTree {..} rid = case owlTree_findSuperOwl rid ot of
+  Nothing -> -1
+  Just SuperOwl {..} -> case _owlEltMeta_parent _superOwl_meta of
+    x | x == noOwl -> undefined -- _owlEltMeta
+    _ -> undefined
 
 -- reorganize the children of the given parent
 -- i.e. update their position in the directory
@@ -612,9 +624,26 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
 owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
--- TODO OWL do proper comparison, this is wrong
+-- TODO TEST
 owlTree_superOwl_comparePosition :: OwlTree -> SuperOwl -> SuperOwl -> Ordering
-owlTree_superOwl_comparePosition ot sowl1 sowl2 = compare (_superOwl_id sowl1) (_superOwl_id sowl2)
+owlTree_superOwl_comparePosition ot sowl1 sowl2 = r where
+  m1 = _superOwl_meta sowl1
+  m2 = _superOwl_meta sowl2
+  d1 = _owlEltMeta_depth m1
+  d2 = _owlEltMeta_depth m2
+  p1 = _owlEltMeta_parent m1
+  p2 = _owlEltMeta_parent m2
+  s1 = _owlEltMeta_position m1
+  s2 = _owlEltMeta_position m2
+  psowl1 = owlTree_mustFindSuperOwl p1 ot
+  psowl2 = owlTree_mustFindSuperOwl p2 ot
+  r = if d1 == d2
+    then if p1 == p2
+      then compare s1 s2
+      else owlTree_superOwl_comparePosition ot psowl1 psowl2
+    else if d1 > d2
+      then owlTree_superOwl_comparePosition ot psowl1 sowl2
+      else owlTree_superOwl_comparePosition ot sowl1 psowl2
 
 -- | use to convert old style layers to Owl
 internal_addUntilFolderEndRecursive ::

@@ -152,17 +152,20 @@ checkHandlerNameAndState name state = FunctionPredicate $
     in ("Handler: " <> hName <> "(" <> show hState <> ") expected: " <> name <> " (" <> show state <> ")", hName == name && hState == state))
   . _goatState_handler
 
-firstSelectedSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
-firstSelectedSuperOwlPredicate mlabel f = FunctionPredicate $
-  (\s ->
-    let
-      mfirst = case mlabel of
-        Nothing    -> Seq.lookup 0 s
-        Just label -> find (\sowl -> isOwl_name sowl == label) s
-    in case mfirst of
+firstSelectedSuperOwlWithOwlTreePredicate :: Maybe Text -> (OwlTree -> SuperOwl -> Bool) -> EverythingPredicate
+firstSelectedSuperOwlWithOwlTreePredicate mlabel f = FunctionPredicate fn where
+  fn GoatState {..} = r where
+    s = unSuperOwlParliament _goatState_selection
+    owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
+    mfirst = case mlabel of
+      Nothing    -> Seq.lookup 0 s
+      Just label -> find (\sowl -> isOwl_name sowl == label) s
+    r = case mfirst of
       Nothing    -> ("No elt with label " <> show mlabel <> show s, False)
-      Just first -> ("First selected: " <> show first, f first))
-  . unSuperOwlParliament . _goatState_selection
+      Just first -> ("First selected: " <> show first, f owltree first)
+
+firstSelectedSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
+firstSelectedSuperOwlPredicate mlabel f = firstSelectedSuperOwlWithOwlTreePredicate mlabel (\_ sowl -> f sowl)
 
 firstSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
 firstSuperOwlPredicate mlabel f = FunctionPredicate $
