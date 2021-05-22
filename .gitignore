@@ -6,4 +6,5 @@ cabal.project.local
 *.aux
 *.hp
 *.ps
+*.prof
 serialization_test_output.json
