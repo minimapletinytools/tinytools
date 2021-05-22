@@ -47,7 +47,7 @@ someSCanvas = SCanvas  defaultCanvasLBox
 pFState_fromSElts :: [SElt] -> LBox -> PFState
 pFState_fromSElts selts lbox = PFState {
     _pFState_layers = Seq.fromList [1..length selts]
-    , _pFState_directory = IM.fromList $ fmap (\(i,selt) -> (i, SEltLabel (show i) selt)) $ zip [0..] selts
+    , _pFState_directory = IM.fromList $ fmap (\(i,selt) -> (i, SEltLabel (show i) selt)) $ zip [1..] selts
     , _pFState_canvas = SCanvas lbox
   }
 

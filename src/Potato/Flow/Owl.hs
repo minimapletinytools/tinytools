@@ -77,7 +77,7 @@ locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe R
 locateLeftSiblingIdFromSemiPos om s sp = case sp of
   0 -> Nothing
   x -> case Seq.lookup (x - 1) s of
-    Nothing -> error $ "expected to find index " <> show (x -1) <> " in seq"
+    Nothing -> error $ "expected to find index " <> show (x - 1) <> " in seq"
     Just r -> Just r
 
 isDescendentOf :: (HasCallStack) => OwlMapping -> REltId -> REltId -> Bool
@@ -567,12 +567,10 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
             _ -> case IM.lookup _owlSpot_parent _owlTree_mapping of
               Nothing -> error $ errorMsg_owlMapping_lookupFail _owlTree_mapping _owlSpot_parent
               Just (x, _) -> _owlEltMeta_depth x + 1,
+          -- TODO do this the right way using laziness
           -- this will get set correctly when we call internal_owlTree_reorgKiddos later
-          -- TODO crashes if we set it to undefined, why??
-          _owlEltMeta_position = -1
+          _owlEltMeta_position = undefined
         }
-
-    newsowl = SuperOwl rid meta oelt
 
     newMapping' =
       if allowFoldersAndExisting
@@ -605,12 +603,16 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
           _owlTree_topOwls = newTopOwls
         }
 
-    r = (internal_owlTree_reorgKiddos r' _owlSpot_parent, newsowl)
+    newtree = internal_owlTree_reorgKiddos r' _owlSpot_parent
+
+    newsowl = owlTree_mustFindSuperOwl rid newtree
+
+    r = (newtree, newsowl)
 
 owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
--- TODO do proper comparison, this is wrong
+-- TODO OWL do proper comparison, this is wrong
 owlTree_superOwl_comparePosition :: OwlTree -> SuperOwl -> SuperOwl -> Ordering
 owlTree_superOwl_comparePosition ot sowl1 sowl2 = compare (_superOwl_id sowl1) (_superOwl_id sowl2)
 
@@ -671,9 +673,6 @@ owlTree_fromOldState oldDir oldLayers = r
 
 owlTree_toSEltTree :: OwlTree -> SEltTree
 owlTree_toSEltTree od@OwlTree {..} = superOwlParliament_toSEltTree od (owlTree_toSuperOwlParliament od)
-
-owlTree_superOwlParliament_toSEltTree :: OwlTree -> SuperOwlParliament -> SEltTree
-owlTree_superOwlParliament_toSEltTree od (SuperOwlParliament selection) = undefined
 
 -- temp conversions
 owlElt_toSElt_hack :: OwlElt -> SElt

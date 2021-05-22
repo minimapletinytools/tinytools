@@ -49,6 +49,7 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
   selectedsowls' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True
+    sowl -> doesSEltIntersectBox selectBox (isOwl_toSElt_hack sowl)
 
 
   selectedsowls = if singleClick

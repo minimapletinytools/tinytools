@@ -72,7 +72,7 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
 validateLayersOrderPredicate :: EverythingPredicate
 validateLayersOrderPredicate = r where
 
-  r = FunctionPredicate $ const ("", False)
+  r = FunctionPredicate $ const ("TODO IMPLEMENT", False)
   {- TODO OWL
   --sortingfn le1 le2 = layerEntry_layerPos le1 < layerEntry_layerPos le2
   r = FunctionPredicate $

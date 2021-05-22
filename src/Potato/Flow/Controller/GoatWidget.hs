@@ -277,7 +277,7 @@ makeClipboard :: GoatState -> Maybe SEltTree
 makeClipboard goatState@GoatState {..} = r where
   r = if isParliament_null _goatState_selection
     then _goatState_clipboard
-    else Just $ owlTree_superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
+    else Just $ superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
 
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
