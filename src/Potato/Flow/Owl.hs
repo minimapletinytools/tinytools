@@ -315,7 +315,7 @@ owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)
   where
     checkRecursive msg0 parentrid depth kiddos = r
       where
-        foldfn (pass', msg') i rid = case owlTree_findSuperOwl rid od of
+        foldfn (pass', msg') i rid = case owlTree_findSuperOwl od rid of
           Nothing -> (False, msg' <> "\nmissing REltId " <> show rid)
           Just x -> (rpass, rmsg)
             where
@@ -338,7 +338,7 @@ owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 
 -- TODO why is this function such a pain to write
 owlTree_rEltId_position :: OwlTree -> REltId -> Int
-owlTree_rEltId_position ot@OwlTree {..} rid = case owlTree_findSuperOwl rid ot of
+owlTree_rEltId_position ot@OwlTree {..} rid = case owlTree_findSuperOwl ot rid of
   Nothing -> -1
   Just SuperOwl {..} -> case _owlEltMeta_parent _superOwl_meta of
     x | x == noOwl -> undefined -- _owlEltMeta
@@ -361,14 +361,14 @@ emptyOwlTree =
     }
 
 -- TODO change order of args
-owlTree_findSuperOwl :: REltId -> OwlTree -> Maybe SuperOwl
-owlTree_findSuperOwl rid OwlTree {..} = do
+owlTree_findSuperOwl :: OwlTree -> REltId -> Maybe SuperOwl
+owlTree_findSuperOwl OwlTree {..} rid = do
   (meta, elt) <- IM.lookup rid _owlTree_mapping
   return $ SuperOwl rid meta elt
 
 -- TODO change order of args
 owlTree_mustFindSuperOwl :: HasCallStack => REltId -> OwlTree -> SuperOwl
-owlTree_mustFindSuperOwl rid od = fromJust $ owlTree_findSuperOwl rid od
+owlTree_mustFindSuperOwl rid od = fromJust $ owlTree_findSuperOwl od rid
 
 owlTree_findKiddos :: OwlTree -> REltId -> Maybe (Seq REltId)
 owlTree_findKiddos OwlTree {..} rid = case rid of
@@ -386,7 +386,7 @@ owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
     Nothing -> Seq.lookup 0 kiddos
     -- take until we reach the point and return one to the right
     Just rid -> Seq.lookup 0 . Seq.drop 1 . Seq.dropWhileL (\rid' -> rid' /= rid) $ kiddos
-  owlTree_findSuperOwl kid od
+  owlTree_findSuperOwl od kid
 
 -- move one spot to the left, returns Nothing if not possible
 owlTree_goRightFromOwlSpot :: OwlTree -> OwlSpot -> Maybe OwlSpot

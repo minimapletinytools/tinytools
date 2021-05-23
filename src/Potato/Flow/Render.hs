@@ -151,7 +151,7 @@ printRenderedCanvas rc@RenderedCanvas {..} = T.putStrLn $ renderedCanvasRegionTo
 renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvas -> RenderedCanvas
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
-  selts = flip fmap rids $ \rid -> case owlTree_findSuperOwl rid ot of
+  selts = flip fmap rids $ \rid -> case owlTree_findSuperOwl ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
       Just sowl -> superOwl_toSElt_hack sowl
   r = render lbx selts rc
@@ -197,7 +197,7 @@ updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case n
       sortfn rid1 rid2 = compare rid1 rid2
       rids = L.sortBy sortfn rids'
       selts = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
-        Nothing -> case owlTree_findSuperOwl rid _owlPFState_owlTree of
+        Nothing -> case owlTree_findSuperOwl _owlPFState_owlTree rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
           Just sowl -> superOwl_toSElt_hack sowl
         Just msowl -> case msowl of
