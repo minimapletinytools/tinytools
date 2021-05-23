@@ -22,7 +22,7 @@ verifyOwlAt :: OwlPFWorkspace -> OwlSpot -> (SuperOwl -> Bool) -> Bool
 verifyOwlAt ws ospot f = fromMaybe False $ do
   let
     ot = _owlPFState_owlTree . _owlPFWorkspace_pFState $ ws
-  sowl <- owlTree_findSuperOwlAtOwlSpot ospot ot
+  sowl <- owlTree_findSuperOwlAtOwlSpot ot ospot
   --traceShow sowl $  Just $ f sowl
   Just $ f sowl
 
@@ -90,7 +90,7 @@ spec = do
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         -- create a child in the folder we just created and verify it got added correctly
         let
-          sowl = fromJust $ owlTree_findSuperOwlAtOwlSpot spot2 ot1
+          sowl = fromJust $ owlTree_findSuperOwlAtOwlSpot ot1 spot2
           childSpot = OwlSpot (_superOwl_id sowl) Nothing
           wse2 = WSEAddElt (False, childSpot, owlElt1)
           newws2 = updateOwlPFWorkspace wse2 newws1

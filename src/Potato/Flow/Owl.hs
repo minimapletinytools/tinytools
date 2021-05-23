@@ -377,8 +377,8 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
 
 -- TODO change order of args
 -- UNTESTED
-owlTree_findSuperOwlAtOwlSpot :: OwlSpot -> OwlTree -> Maybe SuperOwl
-owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
+owlTree_findSuperOwlAtOwlSpot :: OwlTree -> OwlSpot -> Maybe SuperOwl
+owlTree_findSuperOwlAtOwlSpot od@OwlTree {..} OwlSpot {..} = do
   kiddos <- owlTree_findKiddos od _owlSpot_parent
   kid <- case _owlSpot_leftSibling of
     Nothing -> Seq.lookup 0 kiddos
@@ -389,7 +389,7 @@ owlTree_findSuperOwlAtOwlSpot OwlSpot {..} od@OwlTree {..} = do
 -- move one spot to the left, returns Nothing if not possible
 owlTree_goRightFromOwlSpot :: OwlTree -> OwlSpot -> Maybe OwlSpot
 owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
-  sowl <- owlTree_findSuperOwlAtOwlSpot ospot od
+  sowl <- owlTree_findSuperOwlAtOwlSpot od ospot
   return $ ospot {_owlSpot_leftSibling = Just $ _superOwl_id sowl}
 
 -- |
