@@ -45,8 +45,8 @@ spec = do
         filter filterFolderEndFn (owlTree_toSEltTree owlTree0) `shouldBe` filter filterFolderEndFn sEltTree2
       it "owlTree_removeSuperOwl" $ do
         let
-          sowl1 = owlTree_mustFindSuperOwl 2 owlTree0 -- b1
-          sowl2 = owlTree_mustFindSuperOwl 1 owlTree0 -- fstart2
+          sowl1 = owlTree_mustFindSuperOwl owlTree0 2 -- b1
+          sowl2 = owlTree_mustFindSuperOwl owlTree0 1 -- fstart2
           ot1 = owlTree_removeSuperOwl sowl1 owlTree0
           ot2 = owlTree_removeSuperOwl sowl2 owlTree0
         owlTree_owlCount ot1 `shouldBe` 8

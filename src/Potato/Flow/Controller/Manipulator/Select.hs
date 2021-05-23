@@ -45,7 +45,7 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
     _ -> False
 
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
-  unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl rid (_owlPFState_owlTree pfs)) unculledrids
+  unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid) unculledrids
   selectedsowls' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True

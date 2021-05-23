@@ -231,7 +231,7 @@ updateLayers pfs changes (LayersState lmm lentries) = r where
 buildLayerEntriesRecursive :: OwlTree -> LayerMetaMap -> Seq LayerEntry -> Maybe LayerEntry -> Seq LayerEntry
 buildLayerEntriesRecursive ot lmm acc mparent = r where
   foldlfn acclentries rid = newacclentries where
-    sowl = owlTree_mustFindSuperOwl rid ot
+    sowl = owlTree_mustFindSuperOwl ot rid
     lm = lookupWithDefault rid lmm
     -- add self
     lentry = case mparent of

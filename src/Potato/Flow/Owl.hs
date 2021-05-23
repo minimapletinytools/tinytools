@@ -300,7 +300,7 @@ owlTree_prettyPrint :: HasCallStack => OwlTree -> Text
 owlTree_prettyPrint od@OwlTree {..} = r
   where
     foldlfn acc rid =
-      let sowl = owlTree_mustFindSuperOwl rid od
+      let sowl = owlTree_mustFindSuperOwl od rid
           selfEntry' = T.replicate (_owlEltMeta_depth . _superOwl_meta $ sowl) " " <> superOwl_prettyPrintForDebugging sowl
           selfEntry = selfEntry' <> "\n"
        in acc <> case mommyOwl_kiddos sowl of
@@ -360,15 +360,13 @@ emptyOwlTree =
       _owlTree_topOwls = Seq.empty
     }
 
--- TODO change order of args
 owlTree_findSuperOwl :: OwlTree -> REltId -> Maybe SuperOwl
 owlTree_findSuperOwl OwlTree {..} rid = do
   (meta, elt) <- IM.lookup rid _owlTree_mapping
   return $ SuperOwl rid meta elt
 
--- TODO change order of args
-owlTree_mustFindSuperOwl :: HasCallStack => REltId -> OwlTree -> SuperOwl
-owlTree_mustFindSuperOwl rid od = fromJust $ owlTree_findSuperOwl od rid
+owlTree_mustFindSuperOwl :: HasCallStack => OwlTree -> REltId -> SuperOwl
+owlTree_mustFindSuperOwl od rid = fromJust $ owlTree_findSuperOwl od rid
 
 owlTree_findKiddos :: OwlTree -> REltId -> Maybe (Seq REltId)
 owlTree_findKiddos OwlTree {..} rid = case rid of
@@ -433,17 +431,17 @@ owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r
   where
-    sowls = fmap (flip owlTree_mustFindSuperOwl od) (_owlTree_topOwls od)
+    sowls = fmap (owlTree_mustFindSuperOwl od) (_owlTree_topOwls od)
     areOwlsInFactSuper = all superOwl_isTopOwl sowls
     r = assert areOwlsInFactSuper sowls
 
 owlTree_foldAt' :: (a -> SuperOwl -> a) -> a -> OwlTree -> SuperOwl -> a
 owlTree_foldAt' f acc od sowl = case _superOwl_elt sowl of
-  OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl rid' od)) (f acc sowl) children
+  OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) (f acc sowl) children
   _ -> f acc sowl
 
 owlTree_foldAt :: (a -> SuperOwl -> a) -> a -> OwlTree -> REltId -> a
-owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl rid od)
+owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl od rid)
 
 owlTree_fold :: (a -> SuperOwl -> a) -> a -> OwlTree -> a
 owlTree_fold f acc0 od = foldl (\acc rid -> owlTree_foldAt f acc od rid) acc0 $ _owlTree_topOwls od
@@ -470,7 +468,7 @@ owlTree_toSuperOwlParliament od@OwlTree {..} = r
     r = owlParliament_toSuperOwlParliament od . OwlParliament $ _owlTree_topOwls
 
 owlTree_removeREltId :: REltId -> OwlTree -> OwlTree
-owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl rid od) od
+owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl od rid) od
 
 owlTree_removeSuperOwl :: SuperOwl -> OwlTree -> OwlTree
 owlTree_removeSuperOwl sowl od@OwlTree {..} = r
@@ -557,7 +555,7 @@ owlTree_addSEltTree spot selttree od = assert (collisions == 0) r
     -- now union the two directories
     newod = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
 
-    makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl rid otherod
+    makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl otherod rid
 
     -- and call internal_owlTree_addOwlElt on the new topOwls from the selttree
     -- this will correct the OwlEltMetas of the topOwls we just created
@@ -619,7 +617,7 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
 
     newtree = internal_owlTree_reorgKiddos r' _owlSpot_parent
 
-    newsowl = owlTree_mustFindSuperOwl rid newtree
+    newsowl = owlTree_mustFindSuperOwl newtree rid
 
     r = (newtree, newsowl)
 
@@ -637,8 +635,8 @@ owlTree_superOwl_comparePosition ot sowl1 sowl2 = r where
   p2 = _owlEltMeta_parent m2
   s1 = _owlEltMeta_position m1
   s2 = _owlEltMeta_position m2
-  psowl1 = owlTree_mustFindSuperOwl p1 ot
-  psowl2 = owlTree_mustFindSuperOwl p2 ot
+  psowl1 = owlTree_mustFindSuperOwl ot p1
+  psowl2 = owlTree_mustFindSuperOwl ot p2
   r = if d1 == d2
     then if p1 == p2
       then compare s1 s2

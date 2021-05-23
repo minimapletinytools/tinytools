@@ -168,7 +168,7 @@ spec = do
           lmm_0 = createExpandAllLayerMetaMap state_0 -- everything expanded
           lentries_0 = generateLayersNew' state_0 lmm_0
 
-          deleteme = owlTree_mustFindSuperOwl 4 (_owlPFState_owlTree state_0)
+          deleteme = owlTree_mustFindSuperOwl (_owlPFState_owlTree state_0) 4
           rid = _superOwl_id deleteme
           spot = owlTree_owlEltMeta_toOwlSpot (_owlPFState_owlTree state_0) (_superOwl_meta deleteme)
           oelt = _superOwl_elt deleteme
