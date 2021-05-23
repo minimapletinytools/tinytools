@@ -27,15 +27,11 @@ class MommyOwl o where
   mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
   mommyOwl_id :: o -> REltId
 
--- TODO implement
 class IsOwl o where
   isOwl_name :: o -> Text
-
-  -- this should really be of type SuperOwl -> Maybe SElt/SEltLabel
   isOwl_toSElt_hack :: o -> SElt
   isOwl_toSEltLabel_hack :: o -> SEltLabel
 
--- TODO Consider moving OwlInfo into meta?
 data OwlInfo = OwlInfo {_owlInfo_name :: Text} deriving (Show, Eq, Generic)
 
 instance NFData OwlInfo
@@ -70,11 +66,10 @@ owlElt_name (OwlEltFolder (OwlInfo name) _) = name
 owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 
 -- this is just position index in children
--- TODO come up with a better name
-type SemiPos = Int
+type SiblingPosition = Int
 
-locateLeftSiblingIdFromSemiPos :: OwlMapping -> Seq REltId -> SemiPos -> Maybe REltId
-locateLeftSiblingIdFromSemiPos om s sp = case sp of
+locateLeftSiblingIdFromSiblingPosition :: OwlMapping -> Seq REltId -> SiblingPosition -> Maybe REltId
+locateLeftSiblingIdFromSiblingPosition om s sp = case sp of
   0 -> Nothing
   x -> case Seq.lookup (x - 1) s of
     Nothing -> error $ "expected to find index " <> show (x - 1) <> " in seq"
@@ -93,11 +88,10 @@ isDescendentOf om parent child
       x | x == parent -> True
       x -> isDescendentOf om x parent
 
--- TODO do we need this, maybe just change to OwlSpot?
 data OwlEltMeta = OwlEltMeta
   { _owlEltMeta_parent :: REltId, -- or should we do Maybe REltId?
     _owlEltMeta_depth :: Int,
-    _owlEltMeta_position :: SemiPos
+    _owlEltMeta_position :: SiblingPosition
   }
   deriving (Eq, Show, Generic)
 
@@ -118,7 +112,6 @@ instance NFData OwlSpot
 topSpot :: OwlSpot
 topSpot = OwlSpot noOwl Nothing
 
--- TODO consider adding OwlTree reference to this type
 data SuperOwl = SuperOwl
   { _superOwl_id :: REltId,
     _superOwl_meta :: OwlEltMeta,
@@ -176,7 +169,7 @@ instance NFData OwlParliament
 
 -- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
--- TODO consider adding OwlTree reference to this type and rename to SuperDuperOwlParliament
+-- TODO consider adding OwlTree reference to this type and rename to SuperDuperOwlParliament or something like that
 newtype SuperOwlParliament = SuperOwlParliament {unSuperOwlParliament :: Seq SuperOwl} deriving (Eq, Show, Generic)
 
 instance NFData SuperOwlParliament
@@ -417,7 +410,7 @@ owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r
     r =
       OwlSpot
         { _owlSpot_parent = _owlEltMeta_parent,
-          _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_position
+          _owlSpot_leftSibling = locateLeftSiblingIdFromSiblingPosition _owlTree_mapping siblings _owlEltMeta_position
         }
 
 
@@ -467,8 +460,8 @@ owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
 
 -- TODO
-owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a
-owlTree_foldWithParent = undefined
+--owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a
+--owlTree_foldWithParent = undefined
 
 -- | select everything in the OwlTree
 owlTree_toSuperOwlParliament :: OwlTree -> SuperOwlParliament
@@ -500,8 +493,8 @@ owlTree_removeSuperOwl sowl od@OwlTree {..} = r
         sp = _owlEltMeta_position . _superOwl_meta $ so
         -- sowl meta may be incorrect at this point so we do linear search to remove the elt
         r = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
-    -- TODO switch to this version please
-    --r = Seq.deleteAt sp s
+        -- TODO switch to this version once you fix issue in owlTree_moveOwlParliament
+        --r = Seq.deleteAt sp s
 
     -- remove from children of the element's mommy if needed
     removeChildFn parent = case parent of
@@ -552,7 +545,7 @@ owlTree_addSEltTree spot selttree od = assert (collisions == 0) r
 
     -- we do it the potato way
 
-    -- reindexing version below
+    -- reindexing version below (forget why I kept this here, CAN DELETE)
     -- reindex the selttree
     --startid = owlTree_maxId od + 1
     -- TODO this is fine, but it would be better to set the id rather than add it to the old one
