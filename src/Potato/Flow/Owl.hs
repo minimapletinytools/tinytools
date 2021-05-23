@@ -420,6 +420,7 @@ owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r
           _owlSpot_leftSibling = locateLeftSiblingIdFromSemiPos _owlTree_mapping siblings _owlEltMeta_position
         }
 
+
 -- |
 -- throws if REltId is invalid in OwlTree
 owlTree_rEltId_toOwlSpot :: (HasCallStack) => OwlTree -> REltId -> OwlSpot
@@ -427,6 +428,14 @@ owlTree_rEltId_toOwlSpot od@OwlTree {..} rid = r
   where
     (oem, _) = fromJust $ IM.lookup rid _owlTree_mapping
     r = owlTree_owlEltMeta_toOwlSpot od oem
+
+-- |
+-- super inefficient implementation for testing only
+owlTree_rEltId_toFlattenedIndex_debug :: (HasCallStack) => OwlTree -> REltId -> Int
+owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
+  where
+    sowls = owliterateall od
+    r = fromMaybe (-1) $ Seq.findIndexL (\sowl -> _superOwl_id sowl == rid) sowls
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r

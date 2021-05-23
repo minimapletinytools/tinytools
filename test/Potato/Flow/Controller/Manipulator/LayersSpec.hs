@@ -203,15 +203,9 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       LabelCheck "select b1"
       , numSelectedEltsEqualPredicate 0
       , numSelectedEltsEqualPredicate 1
-
       , LabelCheck "drag b1"
-
-      -- TODO OWL
-      -- we need OwlTree to find the position
-      --, firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \(_,lp,_) -> lp == 0
-      --, firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \(_,lp,_) -> lp == 3
-      , AlwaysPass
-      , AlwaysPass
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 3
     ]
 
 

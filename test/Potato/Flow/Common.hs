@@ -13,6 +13,7 @@ module Potato.Flow.Common
   , numEltsInLBoxUsingBroadphasePredicate
   , numSelectedEltsEqualPredicate
   , firstSelectedSuperOwlPredicate
+  , firstSelectedSuperOwlWithOwlTreePredicate
   , firstSuperOwlPredicate
   , constructTest
   )
