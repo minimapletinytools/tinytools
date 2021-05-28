@@ -121,9 +121,9 @@ IGNORE-simple select compromise
 
 ::NEWEST TODO::
 
--Owl TODO
-  -write validate function
-  -name functions in Owl to be consistent
+DONE-Owl TODO
+  DONE-write validate function
+  DONE-name functions in Owl to be consistent
   DONE-finish UTs for workspace
 
 -delete manual install of haskell language server and use ghcup

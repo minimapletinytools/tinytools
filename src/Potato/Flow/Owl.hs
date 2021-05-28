@@ -375,7 +375,6 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
     (_, oelt) <- IM.lookup x _owlTree_mapping
     mommyOwl_kiddos oelt
 
--- TODO change order of args
 -- UNTESTED
 owlTree_findSuperOwlAtOwlSpot :: OwlTree -> OwlSpot -> Maybe SuperOwl
 owlTree_findSuperOwlAtOwlSpot od@OwlTree {..} OwlSpot {..} = do
