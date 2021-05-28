@@ -150,9 +150,9 @@ DONE-switch to use git submodules ffs
     -background
     -text
     -etc
-  -prep for testing
+  DONE/IGNORE-prep for testing
     DONE-get rid of PFWidgetCtx and use specific instances
-    -write harness for testing Params, Tools, etc...
+    DONE-write harness for testing Params, Tools, etc...
   -add character to handlers and show highlighted text
   -add rename support to layers
   -multi-line handler
@@ -167,13 +167,19 @@ DONE-switch to use git submodules ffs
 
 -make a set of Goat verifiers for testing in vty UTs
 
+-consider moving layer position into REltIdMap directory
+  -to do this efficiently you should track which elements actually had their position changed
+  -or consider converting layers into a tree first blarg you need to do this sooner or later
+    -except it's not clear how to sort elts if they are in a tree oh no
+
 -text zipper
   -fix cursor pos on right alignment D: (easy way to fix is just to offset right by 1)
   -text alignment UTs
   DONE😭-test with wide chars (in vty)
   DONE-put up PR :O
 
-
+-queueVtyEventAndFire
+-create a PR for readDynamic
 -params MVP
   -toggle box border?
   -line style??
@@ -369,7 +375,7 @@ DONE-no border box support
 DONE-do popup fancy :O
 DONE-finish params widget
   DONE-create set of Params modifying widget, something that ultimately does
-    Dynamic t Selection -> VtyWidget t m (Event t WSEvent)
+    Dynamic t SuperOwlParliament -> VtyWidget t m (Event t WSEvent)
   DONE-create something like
     layoutDump :: DMap ParamTypeTag (MinDimensions, VtyWidget t ???) -> VtyWidget (DMap ParamTypeTag ???)
   DONE-although tbh, you can just replace DMap with [] since every params widget returns the same type prob?
@@ -559,7 +565,7 @@ DONE-figure out how to call makeHandlerFromSelection after making a new selectio
   -other select cases
     -there are currently no other select cases
     -can we treat select output in PFO specially then?
-      -like 'Either SomePotatoHandler Selection' since they seem to be exclusive
+      -like 'Either SomePotatoHandler SuperOwlParliament' since they seem to be exclusive
 DONE-create handler from selection helper
 DONE-finish select handler
 DONE-box handler needs to handle creation case
