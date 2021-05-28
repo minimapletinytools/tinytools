@@ -60,8 +60,8 @@ owlPFState_copyElts OwlPFState {..} op = r where
 owlPFState_getSuperOwls :: OwlPFState -> [REltId] -> REltIdMap (Maybe SuperOwl)
 owlPFState_getSuperOwls OwlPFState {..} rids = foldr (\rid acc -> IM.insert rid (owlTree_findSuperOwl _owlPFState_owlTree rid) acc) IM.empty rids
 
-emptyPFState :: OwlPFState
-emptyPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 0))
+emptyOwlPFState :: OwlPFState
+emptyOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 0))
 
 sPotatoFlow_to_owlPFState :: SPotatoFlow -> OwlPFState
 sPotatoFlow_to_owlPFState SPotatoFlow {..} = r where

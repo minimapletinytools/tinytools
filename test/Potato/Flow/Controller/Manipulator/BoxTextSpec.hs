@@ -71,7 +71,7 @@ checkHandlerPos pos = FunctionPredicate $ \gs ->
     _ -> ("too many handler outputs", False)
 
 test_basic :: Test
-test_basic = constructTest "basic" emptyPFState bs expected where
+test_basic = constructTest "basic" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "create <text>"
       , EWCTool Tool_Text
@@ -154,7 +154,7 @@ test_basic = constructTest "basic" emptyPFState bs expected where
     ]
 
 test_handler_state :: Test
-test_handler_state = constructTest "handler state" emptyPFState bs expected where
+test_handler_state = constructTest "handler state" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "create <text>"
       , EWCTool Tool_Text
@@ -217,7 +217,7 @@ test_handler_state = constructTest "handler state" emptyPFState bs expected wher
 
 -- same test as basic except box is inverted
 test_negative :: Test
-test_negative = constructTest "negative" emptyPFState bs expected where
+test_negative = constructTest "negative" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "create <text>"
       , EWCTool Tool_Text
@@ -269,7 +269,7 @@ test_negative = constructTest "negative" emptyPFState bs expected where
     ]
 
 test_zero :: Test
-test_zero = constructTest "zero" emptyPFState bs expected where
+test_zero = constructTest "zero" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "create <text>"
       , EWCTool Tool_Text
@@ -315,7 +315,7 @@ test_zero = constructTest "zero" emptyPFState bs expected where
     ]
 
 test_output :: Test
-test_output = constructTest "output" emptyPFState bs expected where
+test_output = constructTest "output" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "create <text>"
       , EWCTool Tool_Text

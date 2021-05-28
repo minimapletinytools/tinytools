@@ -99,7 +99,7 @@ spec = do
         Seq.length (generateLayersNew' someState1 IM.empty) `shouldBe` 1
         Seq.length (generateLayersNew' someState2 IM.empty) `shouldBe` 1
       it "handles empty state" $ do
-        Seq.length (generateLayersNew' emptyPFState IM.empty) `shouldBe` 0
+        Seq.length (generateLayersNew' emptyOwlPFState IM.empty) `shouldBe` 0
     describe "toggleLayerEntry" $ do
       it "basic1" $ do
         -- open 0

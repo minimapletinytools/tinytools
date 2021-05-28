@@ -40,7 +40,7 @@ expectState pfs = FunctionPredicate $
   . goatState_pFState
 
 everything_load_test :: Test
-everything_load_test = constructTest "load" emptyPFState bs expected where
+everything_load_test = constructTest "load" emptyOwlPFState bs expected where
   bs = [
       EWCLabel "Load"
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
@@ -48,7 +48,7 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_someValidState1, emptyControllerMeta)
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_basic1, emptyControllerMeta)
       , EWCLoad (owlPFState_to_sPotatoFlow owlpfstate_someValidState1, emptyControllerMeta)
-      , EWCLoad (owlPFState_to_sPotatoFlow emptyPFState, emptyControllerMeta)
+      , EWCLoad (owlPFState_to_sPotatoFlow emptyOwlPFState, emptyControllerMeta)
     ]
   expected = [
       LabelCheck "Load"
@@ -62,7 +62,7 @@ everything_load_test = constructTest "load" emptyPFState bs expected where
         ]
       , expectState owlpfstate_someValidState1
       , Combine [
-          expectState emptyPFState
+          expectState emptyOwlPFState
           , numEltsInLBoxUsingBroadphasePredicate 0 (LBox 0 (V2 1000 1000))
         ]
 
@@ -235,7 +235,7 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
 
 
 everything_basic_test :: Test
-everything_basic_test = constructTest "basic" emptyPFState bs expected where
+everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
   bs = [
       -- test basic panning
       EWCLabel "Pan"

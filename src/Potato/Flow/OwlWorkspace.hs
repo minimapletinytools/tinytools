@@ -73,7 +73,7 @@ loadOwlPFStateIntoWorkspace pfs ws = r where
   r = OwlPFWorkspace pfs changes emptyActionStack
 
 emptyWorkspace :: OwlPFWorkspace
-emptyWorkspace = OwlPFWorkspace emptyPFState IM.empty emptyActionStack
+emptyWorkspace = OwlPFWorkspace emptyOwlPFState IM.empty emptyActionStack
 
 undoWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 undoWorkspace pfw =  r where

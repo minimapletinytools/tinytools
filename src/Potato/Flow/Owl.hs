@@ -178,6 +178,7 @@ class IsParliament a where
   isParliament_disjointUnion :: a -> a -> a
   isParliament_null :: a -> Bool
   isParliament_empty :: a
+  isParliament_length :: a -> Int
 
 --  isParliament_isValid :: OwlMapping -> a -> Bool
 
@@ -188,12 +189,14 @@ instance IsParliament OwlParliament where
   isParliament_disjointUnion (OwlParliament s1) (OwlParliament s2) = OwlParliament $ Seq.fromList $ disjointUnion (toList s1) (toList s2)
   isParliament_null = Seq.null . unOwlParliament
   isParliament_empty = OwlParliament Seq.empty
+  isParliament_length (OwlParliament x) = Seq.length x
 
 
 instance IsParliament SuperOwlParliament where
   isParliament_disjointUnion (SuperOwlParliament s1) (SuperOwlParliament s2) = SuperOwlParliament $ Seq.fromList $ disjointUnion (toList s1) (toList s2)
   isParliament_null = Seq.null . unSuperOwlParliament
   isParliament_empty = SuperOwlParliament Seq.empty
+  isParliament_length (SuperOwlParliament x) = Seq.length x
 
 owlParliament_toSuperOwlParliament :: OwlTree -> OwlParliament -> SuperOwlParliament
 owlParliament_toSuperOwlParliament od@OwlTree {..} op = SuperOwlParliament $ fmap f (unOwlParliament op)

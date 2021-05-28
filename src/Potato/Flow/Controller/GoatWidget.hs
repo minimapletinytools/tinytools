@@ -221,7 +221,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
 emptyGoatWidgetConfig :: (Reflex t) => GoatWidgetConfig t
 emptyGoatWidgetConfig = GoatWidgetConfig {
-    _goatWidgetConfig_initialState = emptyPFState
+    _goatWidgetConfig_initialState = emptyOwlPFState
     , _goatWidgetConfig_selectTool  = never
     , _goatWidgetConfig_load = never
     , _goatWidgetConfig_mouse     = never
