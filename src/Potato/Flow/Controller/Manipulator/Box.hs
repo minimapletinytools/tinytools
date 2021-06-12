@@ -30,6 +30,7 @@ import qualified Data.IntMap                                as IM
 import qualified Data.List                                  as L
 import qualified Data.Sequence                              as Seq
 import           Data.Tuple.Extra
+import Control.Exception (assert)
 
 -- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
@@ -128,6 +129,29 @@ data BoxHandler = BoxHandler {
 
   } deriving (Show)
 
+-- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
+-- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical
+-- assumes input box is canonical
+clampNoNegDeltaLBoxTransformation :: LBox -> DeltaLBox -> DeltaLBox
+clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) dlbx@(DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
+  -- first transfrom as usual
+  LBox (V2 nx' ny') (V2 nw'' nh'') = plusDelta lbx dlbx
+
+  -- limit translation based on original bottom right corner position (assumes input box is canonical)
+  nx = min nx' (x+w+(min 0 dw))
+  ny = min ny' (y+h+(min 0 dh))
+
+  -- compute the new sizes based on limited translations
+  nw' = nx'+nw''-nx
+  nh' = ny'+nh''-ny
+
+  -- then clamp size portion (translation takes priority)
+  nw = max 0 nw'
+  nh = max 0 nh'
+
+  -- convert back to DeltaLBox
+  r = DeltaLBox (V2 (nx-x) (ny-y)) (V2 (nw-w) (nh-h))
+
 makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   SuperOwlParliament selection = _potatoHandlerInput_selection
@@ -137,31 +161,28 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 
   -- TODO may change handle when dragging through axis
   --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
-  m = bht
+  newbht = bht
 
   boxRestrictedDelta = if shiftClick
     then restrict8 dragDelta
     else dragDelta
 
-  dbox = makeDeltaBox m boxRestrictedDelta
+  dbox = makeDeltaBox newbht boxRestrictedDelta
 
-  -- TODO STILL BROKEN ;__; only works if you scale from BR oops
-  makeControllerNoNeg (_,_,SEltLabel _ selt) dbox = cmd where
-    DeltaLBox tr (V2 dw dh) = dbox
-    mlbox = getSEltBox selt
-    -- ensures delta does not create negative box (does allow for 0 size boxes though)
-    clampDelta orig delta = - (min orig (-delta))
-    -- this version enforces 1 size boxes (orig box must be not be a 0 size box though, can we enforce this invariant?)
-    --clampDelta orig delta = - (min (orig-1) (-delta))
-    -- do not allow negative boxes for now
+  -- TODO this needs to work with the after "undo first" state 😱
+  {-
+  makeControllerNoNeg sowl dbox =  cmd where
+    mlbox = getSEltBox $ superOwl_toSElt_hack sowl
     modifieddbox = case mlbox of
       Nothing -> dbox -- TODO we should really just remove from list of modified elts...
-      Just (LBox _ (V2 w h)) -> DeltaLBox tr (V2 (clampDelta w dw) (clampDelta h dh))
+      Just lbx -> clampNoNegDeltaLBoxTransformation lbx dbox
+
 
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = modifieddbox
-    })
+    })-}
 
+  -- no clamping variant
   makeController _ dbox = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox

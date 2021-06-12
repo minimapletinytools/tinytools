@@ -59,7 +59,7 @@ instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine
 
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
-  -- make sure pan offset is 0 in RelMouseDrag
+  -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
     leposxy@(V2 _ lepos) = _mouseDrag_to
     selection = _potatoHandlerInput_selection

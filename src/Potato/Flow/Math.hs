@@ -29,6 +29,7 @@ module Potato.Flow.Math (
   , canonicalLBox_from_lBox_
   , lBox_from_canonicalLBox
   , deltaLBox_via_canonicalLBox
+  , lBox_isCanonicalLBox
 
   , Delta(..)
   , DeltaXY(..)
@@ -237,6 +238,8 @@ deltaLBox_via_canonicalLBox (CanonicalLBox fx fy _) DeltaLBox {..} = r where
   (rty, rsy) = if fy then (sy, ty) else (ty, sy)
   r = DeltaLBox (V2 rtx rty) (V2 rsx rsy)
 
+lBox_isCanonicalLBox :: LBox -> Bool
+lBox_isCanonicalLBox lbx = canonicalLBox_from_lBox_ lbx == lbx
 
 
 class Delta x dx where
