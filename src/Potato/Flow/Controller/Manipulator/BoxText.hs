@@ -49,7 +49,7 @@ data BoxTextInputState = BoxTextInputState {
   , _boxTextInputState_original     :: Text -- needed to properly create DeltaText for undo
   , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
   , _boxTextInputState_zipper       :: TZ.TextZipper
-  , _boxTextInputState_displayLines :: TZ.DisplayLinesWithAlignment ()
+  , _boxTextInputState_displayLines :: TZ.DisplayLines ()
   --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
@@ -97,7 +97,7 @@ mouseText tais sbox rmd = r where
   CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   V2 mousex mousey = _mouseDrag_to
   V2 xoffset yoffset = getOffset sbox
-  newtz = TZ.goToDisplayLineWithAlignmentPosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
+  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
   r = tais { _boxTextInputState_zipper = newtz }
 
 
@@ -246,8 +246,8 @@ instance PotatoHandler BoxTextHandler where
     tah = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
     dls = _boxTextInputState_displayLines $ _boxTextHandler_state tah
     origBox = _boxTextInputState_box $ _boxTextHandler_state tah
-    (x, y) = TZ._displayLinesWithAlignment_cursorPos dls
-    offsetMap = TZ._displayLinesWithAlignment_offsetMap dls
+    (x, y) = TZ._displayLines_cursorPos dls
+    offsetMap = TZ._displayLines_offsetMap dls
 
     mlbox = do
       guard $ lBox_area origBox > 0

@@ -1,8 +1,5 @@
--- | forked from reflex-vty-0.1.4.1
--- adds alignment support
-
 {-|
-Module: Potato.Data.Text.Zipper
+Module: Data.Text.Zipper
 Description: A zipper for text documents that allows convenient editing and navigation
 
 'TextZipper' is designed to be help manipulate the contents of a text input field. It keeps track of the logical lines of text (i.e., lines separated by user-entered newlines) and the current cursor position. Several functions are defined in this module to navigate and edit the TextZipper from the cursor position.
@@ -10,37 +7,27 @@ Description: A zipper for text documents that allows convenient editing and navi
 'TextZipper's can be converted into 'DisplayLines', which describe how the contents of the zipper will be displayed when wrapped to fit within a container of a certain width. It also provides some convenience facilities for converting interactions with the rendered DisplayLines back into manipulations of the underlying TextZipper.
 
 -}
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Potato.Data.Text.Zipper where
 
 import           Prelude
 
-import qualified Relude as R
-
 import Control.Exception (assert)
-import Control.Monad (join)
-import           Control.Monad.State             (evalState, forM, get, put)
-import           Data.Char                       (isSpace)
-import           Data.Map                        (Map)
-import qualified Data.Map                        as Map
-import           Data.Maybe                      (fromMaybe)
-import           Data.String
-
+import Control.Monad.State (evalState, forM, get, put, join)
+import Data.Char (isSpace)
+import Data.Map (Map)
+import Data.Maybe (fromMaybe)
+import Data.String
+import Data.Text (Text)
+import Data.Text.Internal (Text(..), text)
+import Data.Text.Internal.Fusion (stream)
+import Data.Text.Internal.Fusion.Types (Stream(..), Step(..))
+import Data.Text.Unsafe
 import qualified Data.List as L
-import           Data.Text                       (Text)
-import qualified Data.Text                       as T
-import           Data.Text.Internal              (Text (..), text)
-import           Data.Text.Internal.Fusion       (stream)
-import           Data.Text.Internal.Fusion.Types (Step (..), Stream (..))
-import           Data.Text.Unsafe
-import Data.Tuple.Extra
-
+import qualified Data.Map as Map
+import qualified Data.Text as T
 
 import Graphics.Text.Width (wcwidth)
+
 
 -- | A zipper of the logical text input contents (the "document"). The lines
 -- before the line containing the cursor are stored in reverse order.
@@ -183,7 +170,7 @@ deleteLeftWord (TextZipper lb b a la) =
 -- | Insert up to n spaces to get to the next logical column that is a multiple of n
 tab :: Int -> TextZipper -> TextZipper
 tab n z@(TextZipper _ b _ _) =
-  insert (T.replicate (fromEnum $ n - (T.length b `mod` max 1 n)) " ") z
+  insert (T.replicate (fromEnum $ n - T.length b `mod` max 1 n) " ") z
 
 -- | The plain text contents of the zipper
 value :: TextZipper -> Text
@@ -206,104 +193,34 @@ fromText = flip insert empty
 data Span tag = Span tag Text
   deriving (Show)
 
+-- | Text alignment type
+data TextAlignment =
+  TextAlignment_Left
+  | TextAlignment_Right
+  | TextAlignment_Center
+  deriving (Eq, Show)
+
+-- A map from the index (row) of display line to (fst,snd)
+-- fst: leading empty spaces from left (may be negative) to adjust for alignment
+-- snd: the text offset from the beginning of the document
+-- to the first character of the display line
+type OffsetMapWithAlignment = Map Int (Int, Int)
+
+-- helper type representing a single visual line that may be part of a wrapped logical line
+data WrappedLine = WrappedLine
+  { _wrappedLines_text :: Text
+  , _wrappedLines_hiddenWhitespace :: Bool -- ^ 'True' if this line ends with a deleted whitespace character
+  , _wrappedLines_offset :: Int -- ^ offset from beginning of line
+  }
+  deriving (Eq, Show)
+
 -- | Information about the document as it is displayed (i.e., post-wrapping)
 data DisplayLines tag = DisplayLines
   { _displayLines_spans :: [[Span tag]]
-  , _displayLines_offsetMap :: Map Int Int
-  , _displayLines_cursorY :: Int
+  , _displayLines_offsetMap :: OffsetMapWithAlignment
+  , _displayLines_cursorPos :: (Int, Int) -- cursor position relative to upper left hand corner
   }
   deriving (Show)
-
--- | Given a width and a 'TextZipper', produce a list of display lines
--- (i.e., lines of wrapped text) with special attributes applied to
--- certain segments (e.g., the cursor). Additionally, produce the current
--- y-coordinate of the cursor and a mapping from display line number to text
--- offset
-displayLines
-  :: Int -- ^ Width, used for wrapping
-  -> tag -- ^ Metadata for normal characters
-  -> tag -- ^ Metadata for the cursor
-  -> TextZipper -- ^ The text input contents and cursor state
-  -> DisplayLines tag
-displayLines width tag cursorTag (TextZipper lb b a la) =
-  let linesBefore :: [[Text]] -- The wrapped lines before the cursor line
-      linesBefore = map (wrapWithOffset width 0) $ reverse lb
-      linesAfter :: [[Text]] -- The wrapped lines after the cursor line
-      linesAfter = map (wrapWithOffset width 0) la
-      offsets :: Map Int Int
-      offsets = offsetMap $ mconcat
-        [ linesBefore
-        , [wrapWithOffset width 0 $ b <> a]
-        , linesAfter
-        ]
-      spansBefore = map ((:[]) . Span tag) $ concat linesBefore
-      spansAfter = map ((:[]) . Span tag) $ concat linesAfter
-      -- Separate the spans before the cursor into
-      -- * spans that are on earlier display lines (though on the same logical line), and
-      -- * spans that are on the same display line
-      (spansCurrentBefore, spansCurLineBefore) = fromMaybe ([], []) $
-        initLast $ map ((:[]) . Span tag) (wrapWithOffset width 0 b)
-      -- Calculate the number of columns on the cursor's display line before the cursor
-      curLineOffset = spansWidth spansCurLineBefore
-      -- Check whether the spans on the current display line are long enough that
-      -- the cursor has to go to the next line
-      cursorAfterEOL = curLineOffset == width
-      cursorCharWidth = case T.uncons a of
-        Nothing -> 1
-        Just (c, _) -> charWidth c
-      -- Separate the span after the cursor into
-      -- * spans that are on the same display line, and
-      -- * spans that are on later display lines (though on the same logical line)
-      (spansCurLineAfter, spansCurrentAfter) = fromMaybe ([], []) $
-        headTail $ case T.uncons a of
-          Nothing -> [[Span cursorTag " "]]
-          Just (c, rest) ->
-            let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
-                cursor = Span cursorTag (T.singleton c)
-            in case map ((:[]) . Span tag) (wrapWithOffset width o rest) of
-                  [] -> [[cursor]]
-                  (l:ls) -> (cursor : l) : ls
-  in  DisplayLines
-        { _displayLines_spans = concat
-          [ spansBefore
-          , spansCurrentBefore
-          , if cursorAfterEOL
-              then [ spansCurLineBefore, spansCurLineAfter ]
-              else [ spansCurLineBefore <> spansCurLineAfter ]
-          , spansCurrentAfter
-          , spansAfter
-          ]
-        , _displayLines_offsetMap = offsets
-        , _displayLines_cursorY = sum
-          [ length spansBefore
-          , length spansCurrentBefore
-          , if cursorAfterEOL then cursorCharWidth else 0
-          ]
-        }
-  where
-    initLast :: [a] -> Maybe ([a], a)
-    initLast = \case
-      [] -> Nothing
-      (x:xs) -> case initLast xs of
-        Nothing -> Just ([], x)
-        Just (ys, y) -> Just (x:ys, y)
-    headTail :: [a] -> Maybe (a, [a])
-    headTail = \case
-      [] -> Nothing
-      x:xs -> Just (x, xs)
-
--- | Wraps a logical line of text to fit within the given width. The first
--- wrapped line is offset by the number of columns provided. Subsequent wrapped
--- lines are not.
-wrapWithOffset
-  :: Int -- ^ Maximum width
-  -> Int -- ^ Offset for first line
-  -> Text -- ^ Text to be wrapped
-  -> [Text]
-wrapWithOffset maxWidth _ _ | maxWidth <= 0 = []
-wrapWithOffset maxWidth n xs =
-  let (firstLine, rest) = splitAtWidth (maxWidth - n) xs
-  in firstLine : (fmap (takeWidth maxWidth) . takeWhile (not . T.null) . iterate (dropWidth maxWidth) $ rest)
 
 -- | Split a 'Text' at the given column index. For example
 --
@@ -352,56 +269,6 @@ dropWidth n = snd . splitAtWidth n
 charWidth :: Char -> Int
 charWidth = wcwidth
 
-
--- | For a given set of wrapped logical lines, computes a map
--- from display line index to text offset in the original text.
--- This is used to help determine how interactions with the displayed
--- text map back to the original text.
--- For example, given the document @\"AA\\nBBB\\nCCCCCCCC\\n\"@ wrapped to 5 columns,
--- this function will compute the offset in the original document of each character
--- in column 1:
---
--- >   AA...      (0, 0)
--- >   BBB..      (1, 3)
--- >   CCCCC      (2, 7)  -- (this line wraps to the next row)
--- >   CCC..      (3, 12)
--- >   .....      (4, 16)
-offsetMap
-  :: [[Text]] -- ^ The outer list represents logical lines, and the
-              -- inner list represents the display lines into which
-              -- the logical line has been wrapped
-  -> Map Int Int -- ^ A map from the index (row) of display line to
-                 -- the text offset from the beginning of the document
-                 -- to the first character of the display line
-offsetMap ts = evalState (offsetMap' ts) (0, 0)
-  where
-    offsetMap' xs = fmap Map.unions $ forM xs $ \x -> do
-      maps <- forM x $ \line -> do
-        let l = T.length line
-        (dl, o) <- get
-        put (dl + 1, o + l)
-        return $ Map.singleton dl o
-      (dl, o) <- get
-      put (dl, o + 1)
-      return $ Map.insert dl (o + 1) $ Map.unions maps
-
--- | Move the cursor of the given 'TextZipper' to the logical position indicated
--- by the given display line coordinates, using the provided 'DisplayLines'
--- information.  If the x coordinate is beyond the end of a line, the cursor is
--- moved to the end of the line.
-goToDisplayLinePosition :: Int -> Int -> DisplayLines tag -> TextZipper -> TextZipper
-goToDisplayLinePosition x y dl tz =
-  let offset = Map.lookup y $ _displayLines_offsetMap dl
-  in  case offset of
-        Nothing -> tz
-        Just o ->
-          let
-            moveRight = case drop y $ _displayLines_spans dl of
-                []    -> x
-                (s:_) -> charIndexAt x . stream . mconcat . fmap (\(Span _ t) -> t) $ s
-          in  rightN (o + min moveRight x) $ top tz
-
-
 -- | Get the width of the text in a set of 'Span's, taking into account unicode character widths
 spansWidth :: [Span tag] -> Int
 spansWidth = sum . map (\(Span _ t) -> textWidth t)
@@ -441,55 +308,31 @@ charIndexAt pos (Stream next s0 _len) = loop_length 0 0 s0
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- NEW TEXT ALIGNMENT STUFF BELOW
-
-
--- same as T.words except whitespace characters are included at end (i.e. ["line1 ", ...])
+-- | Same as T.words except whitespace characters are included at end (i.e. ["line1 ", ...])
 -- 'Char's representing white space.
 wordsWithWhitespace :: Text -> [Text]
 wordsWithWhitespace t@(Text arr off len) = loop 0 0 False
   where
     loop !start !n !wasSpace
-        | n >= len = if start == n
-                     then []
-                     else [Text arr (start+off) (n-start)]
+        | n >= len = [Text arr (start+off) (n-start) | not (start == n)]
         | isSpace c = loop start (n+d) True
         | wasSpace = Text arr (start+off) (n-start) : loop n n False
         | otherwise = loop start (n+d) False
         where Iter c d = iter t n
 {-# INLINE wordsWithWhitespace #-}
 
--- TODO Check that this handles EOL space/newline stuff correctly
--- take sum of word length, returns True if ends with trailng space
+-- | Split words into logical lines, 'True' in the tuple indicates line ends with a whitespace character that got deleted
 splitWordsAtDisplayWidth :: Int -> [Text] -> [(Text, Bool)]
 splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   appendOut :: [(Text,Bool)] -> Text -> Bool -> [(Text,Bool)]
-  appendOut [] t b = [(t,b)]
+  appendOut [] t b           = [(t,b)]
   appendOut ((t',_):ts') t b = (t'<>t,b) : ts'
 
   -- remove the last whitespace in output
   modifyOutForNewLine :: [(Text,Bool)] -> [(Text,Bool)]
   modifyOutForNewLine [] = error "should never happen"
   modifyOutForNewLine ((t',_):ts) = case T.unsnoc t' of
-    Nothing -> error "should never happen"
+    Nothing           -> error "should never happen"
     Just (t,lastChar) -> assert (isSpace lastChar) $ (t,True):ts -- assume last char is whitespace
 
   loop :: [Text] -> Int -> [(Text,Bool)] -> [(Text,Bool)]
@@ -505,26 +348,11 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
           -- single word exceeds max width, so just split on the word
           then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
             in loop (t2:xs) 0 [] <> appendOut out t1 False
-
           -- otherwise start a new line
           else loop (x:xs) 0 [] <> modifyOutForNewLine out
       else loop xs newWidth $ appendOut out x False
 
-data TextAlignment = TextAlignment_Left | TextAlignment_Right | TextAlignment_Center
 
--- A map from the index (row) of display line to
--- fst: leading empty spaces from left (may be negative) to adjust for alignment
--- snd: the text offset from the beginning of the document
--- to the first character of the display line
-type OffsetMapWithAlignment = Map Int (Int, Int)
-
--- | Information about the document as it is displayed (i.e., post-wrapping)
-data DisplayLinesWithAlignment tag = DisplayLinesWithAlignment
-  { _displayLinesWithAlignment_spans     :: [[Span tag]]
-  , _displayLinesWithAlignment_offsetMap :: OffsetMapWithAlignment
-  , _displayLinesWithAlignment_cursorPos   :: (Int, Int) -- cursor position relative to upper left hand corner
-  }
-  deriving (Show)
 
 -- | Wraps a logical line of text to fit within the given width. The first
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
@@ -534,25 +362,25 @@ wrapWithOffsetAndAlignment
   -> Int -- ^ Maximum width
   -> Int -- ^ Offset for first line
   -> Text -- ^ Text to be wrapped
-  -> [(Text,Bool,Int)] -- (words on that line, hidden space char, offset from beginning of line)
+  -> [WrappedLine] -- (words on that line, hidden space char, offset from beginning of line)
 wrapWithOffsetAndAlignment _ maxWidth _ _ | maxWidth <= 0 = []
-wrapWithOffsetAndAlignment alignment maxWidth n text = assert (n <= maxWidth) r where
-  r' = splitWordsAtDisplayWidth maxWidth $ T.replicate n " " : wordsWithWhitespace text
+wrapWithOffsetAndAlignment alignment maxWidth n txt = assert (n <= maxWidth) r where
+  r' = splitWordsAtDisplayWidth maxWidth $ wordsWithWhitespace ( T.replicate n "." <> txt)
   fmapfn (t,b) = case alignment of
-    TextAlignment_Left -> (t,b,0)
-    TextAlignment_Right -> (t,b,maxWidth-l)
-    TextAlignment_Center -> (t,b,(maxWidth-l) `div` 2)
+    TextAlignment_Left   -> WrappedLine t b 0
+    TextAlignment_Right  -> WrappedLine t b (maxWidth-l)
+    TextAlignment_Center -> WrappedLine t b ((maxWidth-l) `div` 2)
     where l = textWidth t
   r'' =  case r' of
-    [] -> []
+    []       -> []
     (x,b):xs -> (T.drop n x,b):xs
   r = fmap fmapfn r''
 
 -- converts deleted eol spaces into logical lines
-eolSpacesToLogicalLines :: [[(Text, Bool, Int)]] -> [[(Text, Int)]]
-eolSpacesToLogicalLines = fmap (fmap (\(a, b, c) -> (a,c))) . join . fmap (L.groupBy (\(_,b,_) _ -> not b))
+eolSpacesToLogicalLines :: [[WrappedLine]] -> [[(Text, Int)]]
+eolSpacesToLogicalLines = fmap (fmap (\(WrappedLine a _ c) -> (a,c))) . ((L.groupBy (\(WrappedLine _ b _) _ -> not b)) =<<)
 
-offsetMapWithAlignmentInternal :: [[(Text, Bool, Int)]] -> OffsetMapWithAlignment
+offsetMapWithAlignmentInternal :: [[WrappedLine]] -> OffsetMapWithAlignment
 offsetMapWithAlignmentInternal = offsetMapWithAlignment . eolSpacesToLogicalLines
 
 offsetMapWithAlignment
@@ -578,16 +406,16 @@ offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLinesWithAlignment
-  :: (Show tag) => TextAlignment
+  :: TextAlignment
   -> Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
   -> TextZipper -- ^ The text input contents and cursor state
-  -> DisplayLinesWithAlignment tag
+  -> DisplayLines tag
 displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
-  let linesBefore :: [[(Text, Bool, Int)]] -- The wrapped lines before the cursor line
+  let linesBefore :: [[WrappedLine]] -- The wrapped lines before the cursor line
       linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
-      linesAfter :: [[(Text, Bool, Int)]] -- The wrapped lines after the cursor line
+      linesAfter :: [[WrappedLine]] -- The wrapped lines after the cursor line
       linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) la
       offsets :: OffsetMapWithAlignment
       offsets = offsetMapWithAlignmentInternal $ mconcat
@@ -595,16 +423,15 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         , [wrapWithOffsetAndAlignment alignment width 0 $ b <> a]
         , linesAfter
         ]
-      flattenLines = concatMap (fmap fst3)
+      flattenLines = concatMap (fmap _wrappedLines_text)
       spansBefore = map ((:[]) . Span tag) $ flattenLines linesBefore
       spansAfter = map ((:[]) . Span tag) $ flattenLines linesAfter
       -- Separate the spans before the cursor into
       -- * spans that are on earlier display lines (though on the same logical line), and
       -- * spans that are on the same display line
 
-      -- TODO cursor goes here if align right
       (spansCurrentBefore, spansCurLineBefore) = fromMaybe ([], []) $
-        initLast $ map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width 0 b)
+        initLast $ map ((:[]) . Span tag) $ _wrappedLines_text <$> (wrapWithOffsetAndAlignment alignment width 0 b)
       -- Calculate the number of columns on the cursor's display line before the cursor
       curLineOffset = spansWidth spansCurLineBefore
       -- Check whether the spans on the current display line are long enough that
@@ -618,16 +445,28 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- * spans that are on the same display line, and
       -- * spans that are on later display lines (though on the same logical line)
 
-      -- TODO do not show cursor if align right
       (spansCurLineAfter, spansCurrentAfter) = fromMaybe ([], []) $
         headTail $ case T.uncons a of
           Nothing -> [[Span cursorTag " "]]
           Just (c, rest) ->
             let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
                 cursor = Span cursorTag (T.singleton c)
-            in case map ((:[]) . Span tag) $ fmap fst3 $ (wrapWithOffsetAndAlignment alignment width o rest) of
+            in case map ((:[]) . Span tag) $ _wrappedLines_text <$> (wrapWithOffsetAndAlignment alignment width o rest) of
                   []     -> [[cursor]]
                   (l:ls) -> (cursor : l) : ls
+
+      curLineSpanNormalCase = if cursorAfterEOL
+        then [ spansCurLineBefore, spansCurLineAfter ]
+        else [ spansCurLineBefore <> spansCurLineAfter ]
+
+      -- for right alignment, we want draw the cursor tag to be on the character just before the logical cursor position
+      curLineSpan = if alignment == TextAlignment_Right && not cursorAfterEOL
+        then case reverse spansCurLineBefore of
+          [] -> curLineSpanNormalCase
+          (Span _ x):xs -> case spansCurLineAfter of
+            [] -> error "should not be possible" -- curLineSpanNormalCase
+            (Span _ y):ys -> [reverse (Span cursorTag x:xs) <> ((Span tag y):ys)]
+        else curLineSpanNormalCase
 
       cursorY = sum
         [ length spansBefore
@@ -637,18 +476,16 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- a little silly to convert back to text but whatever, it works
       cursorX = if cursorAfterEOL then 0 else textWidth (mconcat $ fmap (\(Span _ t) -> t) spansCurLineBefore)
 
-  in  DisplayLinesWithAlignment
-        { _displayLinesWithAlignment_spans = concat
+  in  DisplayLines
+        { _displayLines_spans = concat
           [ spansBefore
           , spansCurrentBefore
-          , if cursorAfterEOL
-              then [ spansCurLineBefore, spansCurLineAfter ]
-              else [ spansCurLineBefore <> spansCurLineAfter ]
+          , curLineSpan
           , spansCurrentAfter
           , spansAfter
           ]
-        , _displayLinesWithAlignment_offsetMap = offsets
-        , _displayLinesWithAlignment_cursorPos = (cursorX, cursorY)
+        , _displayLines_offsetMap = offsets
+        , _displayLines_cursorPos = (cursorX, cursorY)
         }
   where
     initLast :: [a] -> Maybe ([a], a)
@@ -667,15 +504,38 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
 -- by the given display line coordinates, using the provided 'DisplayLinesWithAlignment'
 -- information.  If the x coordinate is beyond the end of a line, the cursor is
 -- moved to the end of the line.
-goToDisplayLineWithAlignmentPosition :: Int -> Int -> DisplayLinesWithAlignment tag -> TextZipper -> TextZipper
-goToDisplayLineWithAlignmentPosition x y dl tz =
-  let offset = Map.lookup y $ _displayLinesWithAlignment_offsetMap dl
+goToDisplayLinePosition :: Int -> Int -> DisplayLines tag -> TextZipper -> TextZipper
+goToDisplayLinePosition x y dl tz =
+  let offset = Map.lookup y $ _displayLines_offsetMap dl
   in  case offset of
         Nothing -> tz
         Just (alignOff,o) ->
           let
             trueX = max 0 (x - alignOff)
-            moveRight = case drop y $ _displayLinesWithAlignment_spans dl of
+            moveRight = case drop y $ _displayLines_spans dl of
                 []    -> 0
                 (s:_) -> charIndexAt trueX . stream . mconcat . fmap (\(Span _ t) -> t) $ s
           in  rightN (o + moveRight) $ top tz
+
+-- | Given a width and a 'TextZipper', produce a list of display lines
+-- (i.e., lines of wrapped text) with special attributes applied to
+-- certain segments (e.g., the cursor). Additionally, produce the current
+-- y-coordinate of the cursor and a mapping from display line number to text
+-- offset
+displayLines
+  :: Int -- ^ Width, used for wrapping
+  -> tag -- ^ Metadata for normal characters
+  -> tag -- ^ Metadata for the cursor
+  -> TextZipper -- ^ The text input contents and cursor state
+  -> DisplayLines tag
+displayLines = displayLinesWithAlignment TextAlignment_Left
+
+-- | Wraps a logical line of text to fit within the given width. The first
+-- wrapped line is offset by the number of columns provided. Subsequent wrapped
+-- lines are not.
+wrapWithOffset
+  :: Int -- ^ Maximum width
+  -> Int -- ^ Offset for first line
+  -> Text -- ^ Text to be wrapped
+  -> [Text]
+wrapWithOffset maxWidth n xs = _wrappedLines_text <$> wrapWithOffsetAndAlignment TextAlignment_Left maxWidth n xs

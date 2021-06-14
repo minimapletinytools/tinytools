@@ -129,29 +129,6 @@ data BoxHandler = BoxHandler {
 
   } deriving (Show)
 
--- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
--- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical
--- assumes input box is canonical
-clampNoNegDeltaLBoxTransformation :: LBox -> DeltaLBox -> DeltaLBox
-clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) dlbx@(DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
-  -- first transfrom as usual
-  LBox (V2 nx' ny') (V2 nw'' nh'') = plusDelta lbx dlbx
-
-  -- limit translation based on original bottom right corner position (assumes input box is canonical)
-  nx = min nx' (x+w+(min 0 dw))
-  ny = min ny' (y+h+(min 0 dh))
-
-  -- compute the new sizes based on limited translations
-  nw' = nx'+nw''-nx
-  nh' = ny'+nh''-ny
-
-  -- then clamp size portion (translation takes priority)
-  nw = max 0 nw'
-  nh = max 0 nh'
-
-  -- convert back to DeltaLBox
-  r = DeltaLBox (V2 (nx-x) (ny-y)) (V2 (nw-w) (nh-h))
-
 makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
 makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   SuperOwlParliament selection = _potatoHandlerInput_selection
@@ -168,19 +145,6 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
     else dragDelta
 
   dbox = makeDeltaBox newbht boxRestrictedDelta
-
-  -- TODO this needs to work with the after "undo first" state 😱
-  {-
-  makeControllerNoNeg sowl dbox =  cmd where
-    mlbox = getSEltBox $ superOwl_toSElt_hack sowl
-    modifieddbox = case mlbox of
-      Nothing -> dbox -- TODO we should really just remove from list of modified elts...
-      Just lbx -> clampNoNegDeltaLBoxTransformation lbx dbox
-
-
-    cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
-      _cBoundingBox_deltaBox = modifieddbox
-    })-}
 
   -- no clamping variant
   makeController _ dbox = cmd where

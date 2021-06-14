@@ -19,6 +19,7 @@ import           Potato.Flow.Cmd
 import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
+import Potato.Flow.SEltMethods
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
@@ -154,9 +155,11 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   r = doCmdWorkspace cmd undoedws
 
 ------ helpers for converting events to cmds
+-- TODO assert elts are valid
 pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
 
+-- TODO assert elts are valid
 pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
 pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   startid = owlPFState_nextId pfs
@@ -168,9 +171,11 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   r = OwlPFCNewElts $ toList r'
 
 --TODO need to reorder so it becomes undo friendly here I think?
+-- TODO assert elts are valid
 pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
 pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
 
+-- TODO assert elts actually exist
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
 pfc_removeElt_to_deleteElts pfs owlp = r where
   od = _owlPFState_owlTree pfs
@@ -183,6 +188,50 @@ pfc_removeElt_to_deleteElts pfs owlp = r where
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
 pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlEltFolder (OwlInfo name) Seq.empty)]
 
+-- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
+-- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical
+-- assumes input box is canonical
+clampNoNegDeltaLBoxTransformation :: LBox -> DeltaLBox -> DeltaLBox
+clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) dlbx@(DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
+  -- first transfrom as usual
+  LBox (V2 nx ny) (V2 nw' nh') = plusDelta lbx dlbx
+
+  -- TODO do addional limits so that when you translate, you can't push the box around
+  -- some bug in the code below
+  --LBox (V2 nx' ny') (V2 nw'' nh'') = plusDelta lbx dlbx
+
+  -- limit translation based on original bottom right corner position (assumes input box is canonical)
+  --nx = min nx' (x+w+(min 0 dw))
+  --ny = min ny' (y+h+(min 0 dh))
+
+  -- compute the new sizes based on limited translations
+  --nw' = nx'+nw''-nx
+  --nh' = ny'+nh''-ny
+
+  -- then clamp size portion (translation takes priority)
+  nw = max 0 nw'
+  nh = max 0 nh'
+
+  -- convert back to DeltaLBox
+  r = DeltaLBox (V2 (nx-x) (ny-y)) (V2 (nw-w) (nh-h))
+
+pfc_manipulate_to_manipulate :: OwlPFState -> ControllersWithId -> OwlPFCmd
+pfc_manipulate_to_manipulate pfs cwid = r where
+  -- TODO probably move somwhere else
+  -- restrict boxes to prevent negative
+  mapfn rid controller = case controller of
+    (CTagBoundingBox :=> Identity x) -> newbb where
+      db' = _cBoundingBox_deltaBox x
+      sowl = owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid
+      msbox = getSEltBox $ superOwl_toSElt_hack sowl
+      db = case msbox of
+        Nothing -> db'
+        Just sbox -> clampNoNegDeltaLBoxTransformation sbox db'
+      newbb = CTagBoundingBox :=> Identity (CBoundingBox db)
+    x -> x
+  r = OwlPFCManipulate $ IM.mapWithKey mapfn cwid
+
+
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_pFState ws
@@ -194,8 +243,8 @@ updateOwlPFWorkspace evt ws = let
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo
-      then doCmdOwlPFWorkspaceUndoPermanentFirst (const (OwlPFCManipulate x)) ws
-      else doCmdWorkspace (OwlPFCManipulate x) ws
+      then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_manipulate_to_manipulate pfs x) ws
+      else doCmdWorkspace (pfc_manipulate_to_manipulate lastState x) ws
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
     WSEUndo -> undoWorkspace ws

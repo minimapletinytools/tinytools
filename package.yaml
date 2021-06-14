@@ -29,9 +29,9 @@ ghc-options:
 #- -Werror
 
 # I think these flags enable profiling but make compiles take longer
-configure-options:
-- --enable-library-profiling
-- --enable-profiling
+# configure-options:
+# - --enable-library-profiling
+# - --enable-profiling
 
 default-extensions:
 - ApplicativeDo

@@ -32,7 +32,7 @@ import qualified Data.Text          as T
 import qualified Potato.Data.Text.Zipper   as TZ
 
 
-makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLinesWithAlignment Int
+makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines Int
 makeDisplayLinesFromSBox sbox = r where
   alignment = _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
   text = _sBoxText_text . _sBox_text $ sbox
@@ -46,10 +46,10 @@ makeDisplayLinesFromSBox sbox = r where
 
   -- hack to get rid of trailing cursor if text is ""
   r = if T.null text
-    then TZ.DisplayLinesWithAlignment {
-        _displayLinesWithAlignment_spans = []
-        , _displayLinesWithAlignment_offsetMap = Map.empty
-        , _displayLinesWithAlignment_cursorPos   = (0,0)
+    then TZ.DisplayLines {
+        _displayLines_spans = []
+        , _displayLines_offsetMap = Map.empty
+        , _displayLines_cursorPos   = (0,0)
       }
     else TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
 
@@ -161,8 +161,8 @@ sBox_drawer sbox@SBox {..} = r where
 
       -- 😰😰😰 for now we just do the below for every cell
       dl = makeDisplayLinesFromSBox sbox
-      spans = TZ._displayLinesWithAlignment_spans dl
-      offsetMap = TZ._displayLinesWithAlignment_offsetMap dl
+      spans = TZ._displayLines_spans dl
+      offsetMap = TZ._displayLines_offsetMap dl
 
       (LBox (V2 bx by) _) = _sBox_box
       (xoff,yoff) = case _sBox_boxType of
@@ -171,8 +171,8 @@ sBox_drawer sbox@SBox {..} = r where
 
       y = y' - by - yoff
       xalignoffset = case Map.lookup y offsetMap of
-        -- TODO this happens when you have a double inverted box TODO figure out why
-        Nothing -> error "should not happen"
+        -- TODO this happens when you resize a box too quickly, figure out why
+        Nothing -> error $ "should not happen. got " <> show y <> " in\n" <> show dl <> "\n" <> show spans <> "\n" <> show (_sBox_text) <> show _sBox_box
         Just (offset,_) -> offset
 
       outputChar = case spans !!? y of
