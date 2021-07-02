@@ -145,14 +145,15 @@ lookupWithDefault rid ridm = case IM.lookup rid ridm of
 changesFromToggleHide :: OwlPFState -> LayersState -> LayerEntryPos -> SuperOwlChanges
 changesFromToggleHide OwlPFState {..} (LayersState lmm lentries) lepos = r where
   le = Seq.index lentries lepos
-  sowl = _layerEntry_superOwl
-   le
+  sowl = _layerEntry_superOwl le
   lerid = _superOwl_id sowl
   lm = lookupWithDefault lerid lmm
   isHidden = _layerMeta_isHidden lm
 
-  -- TODO find all unhidden children
-  unhiddenChildren = []
+  -- find all children that weren't already hidden
+  children = owliteratechildrenat _owlPFState_owlTree lerid
+  isunhidden sowl' = not . _layerMeta_isHidden $ lookupWithDefault (_superOwl_id sowl') lmm
+  unhiddenChildren = toList . fmap (\sowl' -> (_superOwl_id sowl', sowl')) $ Seq.filter isunhidden children
 
   r = if isHidden
     then IM.fromList $ (lerid, Nothing) : (fmap (over _2 (const Nothing)) unhiddenChildren)
