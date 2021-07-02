@@ -4,7 +4,7 @@ stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 ::4/2021 self feedback::
--invert text box crashes still
+DONE-invert text box crashes still
 -possible to make bad selections sometimes
 -text box type should highlight not cover
 -text box should indicate overflow when in text entry bode
@@ -26,6 +26,7 @@ DONE-Owl TODO
   DONE-finish UTs for workspace
 DONE-switch to use git submodules ffs
 
+-setup linux :O???
 -delete manual install of haskell language server and use ghcup
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
@@ -47,7 +48,7 @@ DONE-switch to use git submodules ffs
     -add rename support to layers
     -implement highlight drag drop (see nested layers below)
   -multi-line handler
-  -block inverted squares (how to handle multi-select?)
+  DONE/IGNORE-block inverted squares (how to handle multi-select?)
     -you broke it, fix pls
     -write a UT for this
     -this is hard because of "undo first" issue makes it difficult to recover state we are operating from
@@ -70,9 +71,11 @@ DONE-switch to use git submodules ffs
 
 -make a set of Goat verifiers for testing in vty UTs
 
+-do proper prevent inverted box in PFWorkspace
 
 -text zipper
   -fix cursor pos on right alignment D: (easy way to fix is just to offset right by 1)
+    -test
   IGNORE/DONE-text alignment UTs
   DONE😭-test with wide chars (in vty)
   DONE-put up PR :O

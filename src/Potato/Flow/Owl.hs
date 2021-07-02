@@ -29,6 +29,7 @@ class MommyOwl o where
 
 class IsOwl o where
   isOwl_name :: o -> Text
+  isOwl_isFolder :: o -> Bool
   isOwl_toSElt_hack :: o -> SElt
   isOwl_toSEltLabel_hack :: o -> SEltLabel
 
@@ -49,15 +50,14 @@ instance MommyOwl OwlElt where
 instance IsOwl OwlElt where
   isOwl_name (OwlEltFolder (OwlInfo name) _) = name
   isOwl_name (OwlEltSElt (OwlInfo name) _) = name
+  isOwl_isFolder (OwlEltFolder _ _) = True
+  isOwl_isFolder _ = False
   isOwl_toSElt_hack = \case
     OwlEltSElt _ selt -> selt
     _ -> SEltFolderStart
   isOwl_toSEltLabel_hack o = case o of
     OwlEltSElt _ selt -> SEltLabel (isOwl_name o) selt
     _ -> SEltLabel (isOwl_name o) SEltFolderStart
-
-
-
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
 
@@ -101,8 +101,9 @@ owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
-data OwlSpot = OwlSpot
-  { _owlSpot_parent :: REltId,
+data OwlSpot = OwlSpot { 
+    -- TODO _owlSpot_parent is redundant if _owlSpot_leftSibling is not Nothing
+    _owlSpot_parent :: REltId,
     _owlSpot_leftSibling :: Maybe REltId
   }
   deriving (Show, Generic)
@@ -133,6 +134,7 @@ instance MommyOwl SuperOwl where
 
 instance IsOwl SuperOwl where
   isOwl_name sowl = isOwl_name $ _superOwl_elt sowl
+  isOwl_isFolder sowl = isOwl_isFolder $ _superOwl_elt sowl
   isOwl_toSElt_hack = owlElt_toSElt_hack . _superOwl_elt
   isOwl_toSEltLabel_hack sowl = case _superOwl_elt sowl of
     OwlEltSElt (OwlInfo name) selt -> SEltLabel name selt
@@ -160,6 +162,19 @@ superOwl_isTopOwlSurely SuperOwl {..} = _owlEltMeta_depth _superOwl_meta == 0 &&
 
 noOwl :: REltId
 noOwl = -1
+
+superOwl_parentId :: SuperOwl -> REltId
+superOwl_parentId SuperOwl {..} = _owlEltMeta_parent _superOwl_meta
+
+superOwl_depth :: SuperOwl -> Int
+superOwl_depth SuperOwl {..} = _owlEltMeta_depth _superOwl_meta
+
+owlTree_superOwlNthParentId :: OwlTree -> SuperOwl -> Int -> REltId
+owlTree_superOwlNthParentId _ sowl 0 = _superOwl_id sowl
+owlTree_superOwlNthParentId od sowl n
+  | superOwl_parentId sowl == noOwl = noOwl
+  | otherwise = owlTree_superOwlNthParentId od (owlTree_mustFindSuperOwl od (superOwl_parentId sowl)) (n-1)
+
 
 -- you can prob delete this?
 -- if parent is selected, then kiddos must not be directly included in the parliament

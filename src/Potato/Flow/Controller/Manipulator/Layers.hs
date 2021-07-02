@@ -63,10 +63,15 @@ instance PotatoHandler LayersHandler where
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
-    leposxy@(V2 _ lepos) = _mouseDrag_to
+
+    -- TODO offset by scrolling
+    leposxy@(V2 rawxoffset lepos) = _mouseDrag_to
+
     selection = _potatoHandlerInput_selection
     (LayersState lmm lentries) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
+    owltree = (_owlPFState_owlTree pfs)
+
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
@@ -95,18 +100,51 @@ instance PotatoHandler LayersHandler where
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, LDS_Dragging) -> r where
-        -- TODO figure out where we are about to drop and render dummy thingy
 
-        V2 _ lastCursorY = _layersHandler_cursorPos
-        V2 _ cursorY = _mouseDrag_to
-        goingDown = lastCursorY > cursorY
+        -- we will always place between dropSowl and justAboveDropSowl
+        mDropSowlWithOffset = do
+          (downsowl, _, offset') <- clickLayerNew lentries leposxy
+          return (downsowl, offset')
 
-        --mev = case clickLayerNew lentries leposxy of
+        mJustAboveDropSowl = do
+          lentry <- case mDropSowlWithOffset of
+            Nothing -> Seq.lookup (Seq.length lentries - 1) lentries
+            Just _ -> Seq.lookup (lepos-1) lentries
+          return $ _layerEntry_superOwl lentry
 
-        dropIndex' = if goingDown
-          then undefined -- child if possibe otherwise sibling
-          else undefined -- sibling
-        dropIndex = dropIndex' -- TODO clamp
+        nparentoffset' = case mDropSowlWithOffset of
+          Nothing -> case mJustAboveDropSowl of
+            Nothing -> error "this should never happen"
+            Just sowl -> rawxoffset - superOwl_depth sowl
+          Just (_, x) -> x
+
+        -- clamp max amount between the two locations
+        -- TODO
+        nparentoffset = case mDropSowlWithOffset of
+          Nothing -> nparentoffset'
+          Just (dsowl,_) -> case mJustAboveDropSowl of
+            Nothing -> error "this should never happen"
+            -- do not let negative parent offset go past difference
+            Just asowl -> max nparentoffset' (superOwl_depth asowl - superOwl_depth dsowl)
+
+        -- determine which direction we're moving the mouse in
+        --V2 _ lastCursorY = _layersHandler_cursorPos
+        --V2 _ cursorY = _mouseDrag_to
+        --goingDown = lastCursorY > cursorY
+
+        -- TODO do something with this
+        targetspot = case mJustAboveDropSowl of
+          -- we are dropping at the top of our LayerEntries
+          Nothing -> OwlSpot noOwl Nothing
+          Just sowl -> if nparentoffset > 0 && isOwl_isFolder sowl
+            -- drop inside at the top
+            then OwlSpot (_superOwl_id sowl) Nothing
+            else case owlTree_findSuperOwl owltree newsiblingid of
+              Nothing -> OwlSpot noOwl (Just newsiblingid)
+              Just newsibling -> OwlSpot (superOwl_parentId newsibling) (Just newsiblingid)
+              where
+                newsiblingid = owlTree_superOwlNthParentId owltree sowl (-nparentoffset)
+
 
         r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
@@ -114,7 +152,7 @@ instance PotatoHandler LayersHandler where
             }
         }
 
-      -- TODO somday do drag for multi-select here
+      -- TODO someday do drag for multi-select here
       (MouseDragState_Dragging, _) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
               _layersHandler_cursorPos = _mouseDrag_to
@@ -131,6 +169,11 @@ instance PotatoHandler LayersHandler where
               }
             , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
+
+
+
+      -- TODO move to the place we cached in dragging step
+      -- TODO when we have multi-user mode, we'll want to test if the cached space is still valid
       (MouseDragState_Up, LDS_Dragging) -> r where
         mev = case clickLayerNew lentries leposxy of
           -- release where there is no element, do nothing
@@ -147,6 +190,9 @@ instance PotatoHandler LayersHandler where
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
+
+
+
       (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
           _layersHandler_dragState = LDS_None
