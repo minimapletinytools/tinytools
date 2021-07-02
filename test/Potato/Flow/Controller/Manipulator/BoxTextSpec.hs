@@ -364,7 +364,10 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , EqPredicate _goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerPos (V2 11 11)
+      , Combine [
+          numSelectedEltsEqualPredicate 1
+          , checkHandlerPos (V2 11 11)
+        ]
 
       , LabelCheck "modify <text>"
       , checkHandlerPos (V2 12 11)
@@ -408,7 +411,7 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkHandlerPos (V2 20 10)
+      , checkHandlerPos (V2 19 10)
     ]
 
 spec :: Spec

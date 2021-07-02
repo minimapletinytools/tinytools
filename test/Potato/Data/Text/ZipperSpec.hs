@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Text.ZipperSpec(
+module Potato.Data.Text.ZipperSpec (
   spec
 ) where
 
@@ -12,7 +12,7 @@ import qualified Data.Map         as Map
 import qualified          Data.Text as T
 import Control.Monad
 
-import           Data.Text.Zipper
+import           Potato.Data.Text.Zipper
 
 
 someSentence = "12345 1234 12"
