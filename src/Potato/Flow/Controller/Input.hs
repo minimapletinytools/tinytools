@@ -51,6 +51,9 @@ data KeyboardKey =
   | KeyboardKey_Char Char
   -- not really a keypress but it's fine to put it here
   | KeyboardKey_Paste Text
+
+  -- easier to handle as keyboard input
+  | KeyboardKey_Scroll Int
   deriving (Show, Eq)
 
 -- MOUSE

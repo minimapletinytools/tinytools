@@ -130,7 +130,14 @@ instance PotatoHandler LayersHandler where
           _layersHandler_dragState = LDS_None
         }
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
-  pHandleKeyboard _ _ _ = Nothing
+
+  pHandleKeyboard lh@LayersHandler {..} PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData (KeyboardKey_Scroll _) _ -> Nothing -- TODO scrolling
+    _ -> Nothing
+
+
+
+
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_cursorPos (V2 1 1)]
     else emptyHandlerRenderOutput
