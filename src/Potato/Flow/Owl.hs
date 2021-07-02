@@ -442,8 +442,18 @@ owlTree_foldAt' f acc od sowl = case _superOwl_elt sowl of
   OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) (f acc sowl) children
   _ -> f acc sowl
 
+-- | fold over an element in the tree and all its children
 owlTree_foldAt :: (a -> SuperOwl -> a) -> a -> OwlTree -> REltId -> a
 owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl od rid)
+
+owlTree_foldChildrenAt' :: (a -> SuperOwl -> a) -> a -> OwlTree -> SuperOwl -> a
+owlTree_foldChildrenAt' f acc od sowl = case _superOwl_elt sowl of
+  OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldChildrenAt' f acc' od (owlTree_mustFindSuperOwl od rid')) acc children
+  _ -> acc
+
+-- | same as owlTree_foldAt but excludes parent
+owlTree_foldChildrenAt :: (a -> SuperOwl -> a) -> a -> OwlTree -> REltId -> a
+owlTree_foldChildrenAt f acc od rid = owlTree_foldChildrenAt' f acc od (owlTree_mustFindSuperOwl od rid)
 
 owlTree_fold :: (a -> SuperOwl -> a) -> a -> OwlTree -> a
 owlTree_fold f acc0 od = foldl (\acc rid -> owlTree_foldAt f acc od rid) acc0 $ _owlTree_topOwls od
@@ -454,6 +464,10 @@ owlTree_owlCount od = owlTree_fold (\acc _ -> acc + 1) 0 od
 -- | iterates an element and all its children
 owliterateat :: OwlTree -> REltId -> Seq SuperOwl
 owliterateat od rid = owlTree_foldAt (|>) Seq.empty od rid where
+
+-- | iterates an element's children (excluding self)
+owliteratechildrenat :: OwlTree -> REltId -> Seq SuperOwl
+owliteratechildrenat od rid = owlTree_foldChildrenAt (|>) Seq.empty od rid where
 
 -- | iterates everything in the directory
 owliterateall :: OwlTree -> Seq SuperOwl
