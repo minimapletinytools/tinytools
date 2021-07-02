@@ -127,6 +127,7 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   , _goatCmdTempOutput_pFEvent     :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
   , _goatCmdTempOutput_pan         :: Maybe XY
   , _goatCmdTempOutput_layersState :: Maybe LayersState
+  , _goatCmdTempOutput_changesFromToggleHide :: SuperOwlChanges
 } deriving (Show)
 
 instance Default GoatCmdTempOutput where
@@ -168,6 +169,7 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
     , _goatCmdTempOutput_pFEvent     = fmap (\x -> (True,x)) _potatoHandlerOutput_pFEvent
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
+    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide
   }
 
 
@@ -576,7 +578,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
 
   -- render the scene if there were changes
-  cslmapFromHide = IM.empty -- TODO
+  cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'

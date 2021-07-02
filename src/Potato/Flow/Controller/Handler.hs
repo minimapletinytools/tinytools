@@ -50,7 +50,7 @@ data PotatoHandlerOutput = PotatoHandlerOutput {
     , _potatoHandlerOutput_pFEvent     :: Maybe WSEvent
     , _potatoHandlerOutput_pan         :: Maybe XY
     , _potatoHandlerOutput_layersState :: Maybe LayersState
-    -- TODO _potatoHandlerOutput_changes :: SuperOwlChanges
+    , _potatoHandlerOutput_changesFromToggleHide :: SuperOwlChanges
   } deriving (Show)
 
 instance Default PotatoHandlerOutput where
@@ -60,6 +60,7 @@ instance Default PotatoHandlerOutput where
       , _potatoHandlerOutput_pan = Nothing
       , _potatoHandlerOutput_select = Nothing
       , _potatoHandlerOutput_layersState = Nothing
+      , _potatoHandlerOutput_changesFromToggleHide = IM.empty
     }
 
 -- TODO replace this with just GoatState
