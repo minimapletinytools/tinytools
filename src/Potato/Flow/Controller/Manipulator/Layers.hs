@@ -32,20 +32,22 @@ doesSelectionContainREltId :: REltId -> Selection -> Bool
 doesSelectionContainREltId rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
 
 -- TODO a little weird to be returning the SuperOwl you clicked on but whatever...
-clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType)
+clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType, Int)
 clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
   Nothing                      -> Nothing
-  Just le -> Just . (,) sowl $ case () of
+  Just le -> Just . (,,absx - layerEntry_depth le) sowl $ case () of
+    () | layerEntry_isFolder le && layerEntry_depth le == absx -> LDT_Collapse
     () | layerEntry_depth le + 1 == absx   -> LDT_Hide
     () | layerEntry_depth le + 2 == absx -> LDT_Lock
-    () | layerEntry_isFolder le && layerEntry_depth le == absx -> LDT_Collapse
-    ()                       -> LDT_Normal
+    () -> LDT_Normal
     where
       sowl = _layerEntry_superOwl le
+
 
 data LayersHandler = LayersHandler {
     _layersHandler_dragState   :: LayerDragState
     , _layersHandler_cursorPos :: XY
+
   }
 
 instance Default LayersHandler where
@@ -71,7 +73,7 @@ instance PotatoHandler LayersHandler where
         (nextDragState, mNextLayerState, changes) = case clickLayerNew lentries leposxy of
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
-          Just (downsowl, ldtdown) -> case ldtdown of
+          Just (downsowl, ldtdown, offset) -> case ldtdown of
             LDT_Normal -> if shift || (not $ doesSelectionContainREltId (_superOwl_id downsowl) selection)
               -- if element wasn't selected or shift is held down, enter selection mode
               then (LDS_Selecting lepos, Nothing, IM.empty)
@@ -83,8 +85,7 @@ instance PotatoHandler LayersHandler where
               r' = (LDS_None, Just $ nextLayersState, hideChanges)
             LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleCollapse, IM.empty)
 
-        -- TODO also return changes
-        -- NOTE, need to finish changesFromToggleHide first
+        -- TODO also return visual changes
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
@@ -93,6 +94,27 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_layersState = mNextLayerState
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
+      (MouseDragState_Dragging, LDS_Dragging) -> r where
+        -- TODO figure out where we are about to drop and render dummy thingy
+
+        V2 _ lastCursorY = _layersHandler_cursorPos
+        V2 _ cursorY = _mouseDrag_to
+        goingDown = lastCursorY > cursorY
+
+        --mev = case clickLayerNew lentries leposxy of
+
+        dropIndex' = if goingDown
+          then undefined -- child if possibe otherwise sibling
+          else undefined -- sibling
+        dropIndex = dropIndex' -- TODO clamp
+
+        r = Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
+              _layersHandler_cursorPos = _mouseDrag_to
+            }
+        }
+
+      -- TODO somday do drag for multi-select here
       (MouseDragState_Dragging, _) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
               _layersHandler_cursorPos = _mouseDrag_to
@@ -113,7 +135,7 @@ instance PotatoHandler LayersHandler where
         mev = case clickLayerNew lentries leposxy of
           -- release where there is no element, do nothing
           Nothing -> Nothing
-          Just (sowl,_) -> case doesSelectionContainREltId (_superOwl_id sowl) selection of
+          Just (sowl,_,_) -> case doesSelectionContainREltId (_superOwl_id sowl) selection of
             -- dropping on a selected element does onthing
             True  ->  Nothing
             False -> Just $ WSEMoveElt (spot, superOwlParliament_toOwlParliament selection)

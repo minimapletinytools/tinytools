@@ -50,6 +50,7 @@ data PotatoHandlerOutput = PotatoHandlerOutput {
     , _potatoHandlerOutput_pFEvent     :: Maybe WSEvent
     , _potatoHandlerOutput_pan         :: Maybe XY
     , _potatoHandlerOutput_layersState :: Maybe LayersState
+    -- TODO _potatoHandlerOutput_changes :: SuperOwlChanges
   } deriving (Show)
 
 instance Default PotatoHandlerOutput where
@@ -76,6 +77,25 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
     , _potatoHandlerInput_selection   :: Selection
+  }
+
+type ColorType = ()
+data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
+    _simpleBoxHandlerRenderOutput_box :: LBox
+    , _simpleBoxHandlerRenderOutput_fillText :: Maybe PChar -- fills the entire box with the same char
+    , _simpleBoxHandlerRenderOutput_fillTextColor :: ColorType
+    , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
+  }
+
+
+-- TODO
+data LayersViewEntry = LayersViewEntry {
+    _layersViewEntry_ :: ()
+  }
+
+-- hack to render layers view via HandlerRenderOutput (we could have just as well put this in LayerState I guesss)
+data LayersViewHandlerRenderOutput = LayersViewHandlerRenderOutput {
+    _layersViewHandlerRenderOutput_entiers :: Seq LayersViewEntry
   }
 
 data HandlerRenderOutput = HandlerRenderOutput {
@@ -108,7 +128,7 @@ handlerName_empty = "EmptyHandler"
 
 -- TODO prob replace this with 'data PotatoHandler' rather than typeclass
 -- TODO rename methods in here..
--- rename to Manipulator XD
+-- TODO rename to Manipulator XD
 class PotatoHandler h where
   pHandlerName :: h -> Text
 
