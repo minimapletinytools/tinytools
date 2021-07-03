@@ -86,7 +86,7 @@ isDescendentOf om parent child
     r = case parent' of
       x | x == noOwl -> False
       x | x == parent -> True
-      x -> isDescendentOf om x parent
+      x -> isDescendentOf om parent x
 
 data OwlEltMeta = OwlEltMeta
   { _owlEltMeta_parent :: REltId, -- or should we do Maybe REltId?
@@ -553,7 +553,7 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     sop@(SuperOwlParliament sowls) = owlParliament_toSuperOwlParliament od op
 
     -- check that we aren't doing circular parenting 😱
-    isValid = not $ all (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
+    isValid = not $ any (\x -> isDescendentOf _owlTree_mapping x _owlSpot_parent) (fmap _superOwl_id sowls)
 
     -- NOTE, that _owlEltMeta_position in sowls may be incorrect in the middle of this fold
     -- this forces us to do linear search in the owlTree_removeSuperOwl call rather than use sibling position as index into children D:

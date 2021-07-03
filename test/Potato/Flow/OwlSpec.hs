@@ -29,6 +29,13 @@ spec = do
     let
       owlTree0 = owlTree_fromOldState (_pFState_directory pfstate_basic2) (_pFState_layers pfstate_basic2)
       owlMapping0 = _owlTree_mapping owlTree0
+    describe "OwlMapping" $ do
+      it "isDescendentOf" $ do
+        isDescendentOf owlMapping0 1 2 `shouldBe` True
+        isDescendentOf owlMapping0 0 2 `shouldBe` True
+        isDescendentOf owlMapping0 2 1 `shouldBe` False -- 2 is child of 1
+        isDescendentOf owlMapping0 1 7 `shouldBe` False -- siblings
+
     describe "OwlTree" $ do
       let
         sEltTree2 = _sPotatoFlow_sEltTree (pFState_to_sPotatoFlow pfstate_basic2)
