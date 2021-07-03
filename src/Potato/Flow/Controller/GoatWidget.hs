@@ -138,6 +138,7 @@ instance Default GoatCmdTempOutput where
       , _goatCmdTempOutput_pFEvent     = Nothing
       , _goatCmdTempOutput_pan         = Nothing
       , _goatCmdTempOutput_layersState = Nothing
+      , _goatCmdTempOutput_changesFromToggleHide = IM.empty
     }
 
 makeGoatCmdTempOutputFromNothing :: GoatState -> GoatCmdTempOutput
