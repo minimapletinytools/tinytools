@@ -70,7 +70,7 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
   }
 
 type LayersHandlerRenderEntrySelectedState = Bool
-data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayerEntry | LayersHandlerRenderEntryDummy Int
+data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayerEntry | LayersHandlerRenderEntryDummy Int  deriving (Eq, Show)
 
 layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
 layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ lentry) = layerEntry_depth lentry
@@ -79,7 +79,7 @@ layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
 -- hack to render layers view via HandlerRenderOutput (we could have just as well put this in LayerState I guesss)
 data LayersViewHandlerRenderOutput = LayersViewHandlerRenderOutput {
     _layersViewHandlerRenderOutput_entries :: Seq LayersHandlerRenderEntry
-  }
+  } deriving (Eq, Show)
 
 instance Default LayersViewHandlerRenderOutput where
   def = LayersViewHandlerRenderOutput {

@@ -242,6 +242,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
   -- TODO render here?
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
+  , _goatWidget_layersHandlerRenderOutput :: Dynamic t LayersViewHandlerRenderOutput
   , _goatWidget_canvas              :: Dynamic t SCanvas
   , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvas
 
@@ -663,8 +664,11 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap (_layersState_entries . _goatState_layersState) goatDyn
+
   -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
+  r_layersHandlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
+
   r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
   let
     r_renderedCanvas = fmap _goatState_renderedCanvas goatDyn
@@ -679,5 +683,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_canvas = r_canvas
       , _goatWidget_renderedCanvas = r_renderedCanvas
       , _goatWidget_handlerRenderOutput =  r_handlerRenderOutput
+      , _goatWidget_layersHandlerRenderOutput = r_layersHandlerRenderOutput
       , _goatWidget_DEBUG_goatState = goatDyn
     }
