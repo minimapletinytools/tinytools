@@ -69,7 +69,7 @@ instance PotatoHandler LayersHandler where
     leposxy@(V2 rawxoffset lepos) = _mouseDrag_to
 
     selection = _potatoHandlerInput_selection
-    (LayersState lmm lentries) = _potatoHandlerInput_layersState
+    ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
     owltree = (_owlPFState_owlTree pfs)
 
@@ -84,12 +84,12 @@ instance PotatoHandler LayersHandler where
               -- if element wasn't selected or shift is held down, enter selection mode
               then (LDS_Selecting lepos, Nothing, IM.empty)
               else (LDS_Dragging, Nothing, IM.empty)
-            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleHide, IM.empty)
+            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleHide, IM.empty)
             LDT_Lock -> r' where
-              nextLayersState = toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleLock
+              nextLayersState = toggleLayerEntry pfs ls lepos LHCO_ToggleLock
               hideChanges = changesFromToggleHide pfs nextLayersState lepos
               r' = (LDS_None, Just $ nextLayersState, hideChanges)
-            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleCollapse, IM.empty)
+            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleCollapse, IM.empty)
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {

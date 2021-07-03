@@ -119,6 +119,7 @@ data LayersState = LayersState {
     _layersState_meta :: LayerMetaMap
     -- sequence of visible folders
     , _layersState_entries :: LayerEntries
+    , _layersState_scrollPos :: Int
   } deriving (Show)
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
@@ -143,16 +144,16 @@ lookupWithDefault rid ridm = case IM.lookup rid ridm of
 -- TODO test
 -- | assumes LayersState is after hide state of given lepos has just been toggled
 changesFromToggleHide :: OwlPFState -> LayersState -> LayerEntryPos -> SuperOwlChanges
-changesFromToggleHide OwlPFState {..} (LayersState lmm lentries) lepos = r where
-  le = Seq.index lentries lepos
+changesFromToggleHide OwlPFState {..} LayersState {..} lepos = r where
+  le = Seq.index _layersState_entries lepos
   sowl = _layerEntry_superOwl le
   lerid = _superOwl_id sowl
-  lm = lookupWithDefault lerid lmm
+  lm = lookupWithDefault lerid _layersState_meta
   isHidden = _layerMeta_isHidden lm
 
   -- find all children that weren't already hidden
   children = owliteratechildrenat _owlPFState_owlTree lerid
-  isunhidden sowl' = not . _layerMeta_isHidden $ lookupWithDefault (_superOwl_id sowl') lmm
+  isunhidden sowl' = not . _layerMeta_isHidden $ lookupWithDefault (_superOwl_id sowl') _layersState_meta
   unhiddenChildren = toList . fmap (\sowl' -> (_superOwl_id sowl', sowl')) $ Seq.filter isunhidden children
 
   r = if isHidden
@@ -178,33 +179,33 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
 
 
 toggleLayerEntry :: OwlPFState -> LayersState -> LayerEntryPos -> LockHideCollapseOp -> LayersState
-toggleLayerEntry pfs@OwlPFState {..} (LayersState lmm lentries) lepos op = r where
-  le = Seq.index lentries lepos
+toggleLayerEntry pfs@OwlPFState {..} LayersState {..} lepos op = r where
+  le = Seq.index _layersState_entries lepos
   lerid = layerEntry_rEltId le
   ledepth = layerEntry_depth le
   childFrom nextLayerEntry = layerEntry_depth nextLayerEntry /= ledepth
   -- visible children of le
-  childles = Seq.takeWhileL childFrom . Seq.drop (lepos+1) $ lentries
+  childles = Seq.takeWhileL childFrom . Seq.drop (lepos+1) $ _layersState_entries
   -- everything before le
-  frontOfLe = Seq.take lepos lentries
+  frontOfLe = Seq.take lepos _layersState_entries
   -- everything after childles
-  backOfChildles = Seq.drop (lepos + 1 + Seq.length childles) lentries
+  backOfChildles = Seq.drop (lepos + 1 + Seq.length childles) _layersState_entries
 
   -- simple helper function for setting lock/hidden state
-  togglefn fn setlmfn setlefn = (LayersState newlmm newlentries) where
+  togglefn fn setlmfn setlefn = (LayersState newlmm newlentries 0) where
     newlhsstate = toggleLockHiddenState $ fn le
-    newlmm = alterWithDefault (\lm' -> setlmfn lm' (lockHiddenStateToBool newlhsstate)) lerid lmm
+    newlmm = alterWithDefault (\lm' -> setlmfn lm' (lockHiddenStateToBool newlhsstate)) lerid _layersState_meta
     entryfn childle = setlefn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
     newchildles = doChildrenRecursive (lockHiddenStateToBool . fn) entryfn childles
     newle = setlefn le newlhsstate
     newlentries = (frontOfLe |> newle) >< newchildles >< backOfChildles
 
   r = case op of
-    LHCO_ToggleCollapse -> (LayersState newlmm newlentries) where
+    LHCO_ToggleCollapse -> (LayersState newlmm newlentries 0) where
       newcollapse = not $ _layerEntry_isCollapsed le
-      newlmm = alterWithDefault (\le' -> le' { _layerMeta_isCollapsed = newcollapse }) lerid lmm
+      newlmm = alterWithDefault (\le' -> le' { _layerMeta_isCollapsed = newcollapse }) lerid _layersState_meta
       newle = le { _layerEntry_isCollapsed = newcollapse }
-      newchildles = buildLayerEntriesRecursive _owlPFState_owlTree lmm Seq.empty (Just newle)
+      newchildles = buildLayerEntriesRecursive _owlPFState_owlTree _layersState_meta Seq.empty (Just newle)
       newlentries = if newcollapse
         then (frontOfLe |> newle) >< backOfChildles
         else (frontOfLe |> newle) >< newchildles >< backOfChildles
@@ -214,20 +215,24 @@ toggleLayerEntry pfs@OwlPFState {..} (LayersState lmm lentries) lepos op = r whe
 
 
 makeLayersStateFromOwlPFState :: OwlPFState -> LayersState
-makeLayersStateFromOwlPFState pfs = LayersState IM.empty $ generateLayersNew (_owlPFState_owlTree pfs) IM.empty
+makeLayersStateFromOwlPFState pfs = LayersState {
+    _layersState_meta = IM.empty
+    , _layersState_entries = generateLayersNew (_owlPFState_owlTree pfs) IM.empty
+    , _layersState_scrollPos = 0
+  }
 
 updateLayers :: OwlPFState -> SuperOwlChanges -> LayersState -> LayersState
-updateLayers pfs changes (LayersState lmm lentries) = r where
-  -- update lmm
+updateLayers pfs changes LayersState {..} = r where
+  -- update _layersState_meta
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
-  newlmm = IM.difference (IM.union lmm (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
+  newlmm = IM.difference (IM.union _layersState_meta (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
   -- keep deleted elts so that folder state is preserved after undos/redos
-  --newlmm = IM.union lmm (fmap (const def) maybenewstuff)
+  --newlmm = IM.union _layersState_meta (fmap (const def) maybenewstuff)
 
   -- TODO incremental rather than regenerate...
   newlentries = generateLayersNew (_owlPFState_owlTree pfs) newlmm
 
-  r = LayersState newlmm newlentries
+  r = LayersState newlmm newlentries _layersState_scrollPos
 
 buildLayerEntriesRecursive :: OwlTree -> LayerMetaMap -> Seq LayerEntry -> Maybe LayerEntry -> Seq LayerEntry
 buildLayerEntriesRecursive ot lmm acc mparent = r where
