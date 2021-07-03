@@ -194,6 +194,8 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
 
       , EWCLabel "drag b1"
       , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      -- must enter "Dragging" state for handler to work correctly
+      , EWCMouse (LMouseData (V2 moveOffset 4) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 moveOffset 4) True MouseButton_Left [] True)
 
       -- TODO folder drag/move
@@ -205,6 +207,7 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       , numSelectedEltsEqualPredicate 1
       , LabelCheck "drag b1"
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
+      , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 3
     ]
 

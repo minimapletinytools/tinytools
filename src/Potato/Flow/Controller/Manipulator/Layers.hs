@@ -47,6 +47,7 @@ clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
 data LayersHandler = LayersHandler {
     _layersHandler_dragState   :: LayerDragState
     , _layersHandler_cursorPos :: XY
+    , _layersHandler_dropSpot :: Maybe OwlSpot
 
   }
 
@@ -90,13 +91,14 @@ instance PotatoHandler LayersHandler where
               r' = (LDS_None, Just $ nextLayersState, hideChanges)
             LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs (LayersState lmm lentries) lepos LHCO_ToggleCollapse, IM.empty)
 
-        -- TODO also return visual changes
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = nextDragState
                 , _layersHandler_cursorPos = _mouseDrag_to
+                , _layersHandler_dropSpot = Nothing
               }
             , _potatoHandlerOutput_layersState = mNextLayerState
+            , _potatoHandlerOutput_changesFromToggleHide = changes
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, LDS_Dragging) -> r where
@@ -140,15 +142,18 @@ instance PotatoHandler LayersHandler where
             -- drop inside at the top
             then OwlSpot (_superOwl_id sowl) Nothing
             else case owlTree_findSuperOwl owltree newsiblingid of
-              Nothing -> OwlSpot noOwl (Just newsiblingid)
-              Just newsibling -> OwlSpot (superOwl_parentId newsibling) (Just newsiblingid)
+              Nothing -> OwlSpot noOwl siblingout
+              Just newsibling -> OwlSpot (superOwl_parentId newsibling) siblingout
               where
-                newsiblingid = owlTree_superOwlNthParentId owltree sowl (-nparentoffset)
-
+                newsiblingid = owlTree_superOwlNthParentId owltree sowl (-(min 0 nparentoffset))
+                siblingout = case newsiblingid of
+                  x | x == noOwl -> Nothing
+                  x -> Just x
 
         r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
               _layersHandler_cursorPos = _mouseDrag_to
+              , _layersHandler_dropSpot = Just targetspot
             }
         }
 
@@ -156,6 +161,7 @@ instance PotatoHandler LayersHandler where
       (MouseDragState_Dragging, _) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
               _layersHandler_cursorPos = _mouseDrag_to
+              , _layersHandler_dropSpot = Nothing
             }
         }
 
@@ -166,27 +172,27 @@ instance PotatoHandler LayersHandler where
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None
+                , _layersHandler_dropSpot = Nothing
               }
             , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
 
-
-
-      -- TODO move to the place we cached in dragging step
-      -- TODO when we have multi-user mode, we'll want to test if the cached space is still valid
+      -- TODO when we have multi-user mode, we'll want to test if the target drop space is still valid
       (MouseDragState_Up, LDS_Dragging) -> r where
-        mev = case clickLayerNew lentries leposxy of
-          -- release where there is no element, do nothing
-          Nothing -> Nothing
-          Just (sowl,_,_) -> case doesSelectionContainREltId (_superOwl_id sowl) selection of
-            -- dropping on a selected element does onthing
-            True  ->  Nothing
-            False -> Just $ WSEMoveElt (spot, superOwlParliament_toOwlParliament selection)
-            where
-              spot = owlTree_owlEltMeta_toOwlSpot (_owlPFState_owlTree _potatoHandlerInput_pFState) (_superOwl_meta sowl)
+        mev = do
+          spot <- _layersHandler_dropSpot
+          let
+            -- TODO spot is invalid if it's the child of a already select elt
+            isSpotValid = True
+            -- TODO modify if we drag on top of existing elt
+            modifiedSpot = spot
+          guard isSpotValid
+          return $ WSEMoveElt (modifiedSpot, superOwlParliament_toOwlParliament selection)
+
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None
+
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
@@ -196,6 +202,7 @@ instance PotatoHandler LayersHandler where
       (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
           _layersHandler_dragState = LDS_None
+          , _layersHandler_dropSpot = Nothing
         }
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 

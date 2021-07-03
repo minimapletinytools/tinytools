@@ -101,7 +101,7 @@ owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
-data OwlSpot = OwlSpot { 
+data OwlSpot = OwlSpot {
     -- TODO _owlSpot_parent is redundant if _owlSpot_leftSibling is not Nothing
     _owlSpot_parent :: REltId,
     _owlSpot_leftSibling :: Maybe REltId
@@ -570,7 +570,7 @@ owlTree_addSEltTree spot selttree od = assert (collisions == 0) r
   where
     seltreeindices = Set.fromList $ fmap fst selttree
     owltreeindices = Set.fromList $ IM.keys (_owlTree_mapping od)
-    collisions = Set.size $ traceShowId $ Set.intersection seltreeindices owltreeindices
+    collisions = Set.size $ Set.intersection seltreeindices owltreeindices
 
     -- we do it the potato way
 
