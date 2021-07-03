@@ -126,6 +126,7 @@ DONE-switch to use git submodules ffs
 -handlers should render as background fill color
   -and to be even more awesome, you could render on top for when moving things is background I guess
 
+-more efficient replacement for doesSelectionContainREltId
 -need narrow phase selection methods, i.e. can't just do it using boxes
   -make sure to test :)
 -make flowchart diagram of handler setting rules

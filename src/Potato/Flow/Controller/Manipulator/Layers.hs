@@ -19,23 +19,8 @@ import           Potato.Flow.OwlState
 import           Data.Default
 import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
+import Data.Sequence ((<|))
 import           Data.Tuple.Extra
-
-data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayerEntry | LayersHandlerRenderEntryDummy Int
-
-layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
-layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal lentry) = layerEntry_depth lentry
-layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
-
--- DELETE
-{-layersHandlerRenderEntry :: LayersHandlerRenderEntry -> Text
-layersHandlerRenderEntry (LayersHandlerRenderEntryNormal lentry) = T.replicate (layerEntry_depth lentry) " " <>
-layersHandlerRenderEntry (LayersHandlerRenderEntryDummy i) = T.replicate i " " <> T.replicate 100 "*"-}
-
-
-data LayersHandlerRenderOutput = LayersHandlerRenderOutput {
-    _layersHandlerRenderOutput_renderEntries :: Seq LayersHandlerRenderEntry
-  }
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -72,12 +57,37 @@ instance Default LayersHandler where
       , _layersHandler_cursorPos = 0
     }
 
-make_layersHandlerRenderOutput :: LayersHandler -> LayersHandlerRenderOutput
-make_layersHandlerRenderOutput LayersHandler {..} = r where
-  r = undefined
+-- TODO
+make_layersHandlerRenderOutput :: PotatoHandlerInput -> LayersHandler -> LayersViewHandlerRenderOutput
+make_layersHandlerRenderOutput PotatoHandlerInput {..} LayersHandler {..} = LayersViewHandlerRenderOutput newlentries where
+  selection = _potatoHandlerInput_selection
+  ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
+  --pfs = _potatoHandlerInput_pFState
+  --owltree = (_owlPFState_owlTree pfs)
 
-offsetByDropLocation :: LayersHandler -> Int -> Int
-offsetByDropLocation LayersHandler {..} p = undefined
+  isSelected lentry = doesSelectionContainREltId (_superOwl_id $ _layerEntry_superOwl lentry) selection
+
+  newlentries' = fmap (\lentry -> LayersHandlerRenderEntryNormal (isSelected lentry) lentry) lentries
+
+  newlentries = case _layersHandler_dropSpot of
+    Nothing -> newlentries'
+    Just ds -> r where
+      mleftmost = case _owlSpot_parent ds of
+          x | x == noOwl -> maybe Nothing Just (_owlSpot_leftSibling ds)
+          x -> case _owlSpot_leftSibling ds of
+            Nothing -> Just x
+            Just s -> Just s
+
+
+      r = case mleftmost of
+        Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries'
+        Just sibid -> r' where
+          (index, depth) = case Seq.findIndexL (\lentry -> _superOwl_id (_layerEntry_superOwl lentry) == sibid) lentries of
+            Nothing -> error $ "expected to find id " <> show sibid <> " in " <> show lentries
+            Just x -> (x, layerEntry_depth (Seq.index lentries x))
+          -- TODO correct depth calculation
+          r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries'
+
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine

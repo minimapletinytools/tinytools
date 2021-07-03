@@ -1,26 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.Handler (
-
-  handlerName_box
-  , handlerName_simpleLine
-  , handlerName_cartesianLine
-  , handlerName_boxText
-  , handlerName_pan
-  , handlerName_select
-  , handlerName_empty
-
-  , PotatoHandlerOutput(..)
-  , PotatoHandler(..)
-  , PotatoHandlerInput(..)
-  , HandlerRenderOutput(..)
-  , emptyHandlerRenderOutput
-  , SomePotatoHandler(..)
-  , captureWithNoChange
-  , setHandlerOnly
-  , EmptyHandler(..)
-) where
+module Potato.Flow.Controller.Handler where
 
 import           Relude
 
@@ -88,16 +69,22 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
+type LayersHandlerRenderEntrySelectedState = Bool
+data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayerEntry | LayersHandlerRenderEntryDummy Int
 
--- TODO
-data LayersViewEntry = LayersViewEntry {
-    _layersViewEntry_ :: ()
-  }
+layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ lentry) = layerEntry_depth lentry
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
 
 -- hack to render layers view via HandlerRenderOutput (we could have just as well put this in LayerState I guesss)
 data LayersViewHandlerRenderOutput = LayersViewHandlerRenderOutput {
-    _layersViewHandlerRenderOutput_entiers :: Seq LayersViewEntry
+    _layersViewHandlerRenderOutput_entries :: Seq LayersHandlerRenderEntry
   }
+
+instance Default LayersViewHandlerRenderOutput where
+  def = LayersViewHandlerRenderOutput {
+      _layersViewHandlerRenderOutput_entries = Seq.empty
+    }
 
 data HandlerRenderOutput = HandlerRenderOutput {
     _handlerRenderOutput_temp :: [LBox] -- list of coordinates where there are handles
@@ -108,6 +95,7 @@ instance Default HandlerRenderOutput where
 
 emptyHandlerRenderOutput :: HandlerRenderOutput
 emptyHandlerRenderOutput = HandlerRenderOutput { _handlerRenderOutput_temp = [] }
+
 
 -- we check handler name for debug reasons so it's useful to have constants
 -- there should be no non-test code that depends on comparing pHandlerName
@@ -164,6 +152,13 @@ class PotatoHandler h where
 
   pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
   pRenderHandler _ _ = def
+
+  -- ad-hoc render function just for layers
+  -- note that this renders layers even when there is no drop location to be rendered (which is owned by the LayersHandler)
+  -- a bit of a hack but it's easier this way, the other way to do it would have been to put drop location inside of LayersState
+  -- layers are different because when rendering drop location, it's not a strict overlay so normal render/handler render (drop location) are combined
+  pRenderLayersHandler :: h -> PotatoHandlerInput -> LayersViewHandlerRenderOutput
+  pRenderLayersHandler _ _ = def
 
   -- helper method used to check that we aren't feeding invalid mouse states
   pValidateMouse :: h -> RelMouseDrag -> Bool
