@@ -230,13 +230,21 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
       -- drag b1 to first elt in fstart1
       , EWCLabel "drag b1"
       , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [] True)
-      -- must enter "Dragging" state for handler to work correctly
-      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True) -- must enter "Dragging" state for handler to work correctly
       , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
 
+      -- drag b1 into fstart3 (collapsed)
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 20 7) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 20 7) True MouseButton_Left [] True) -- go far to the right so it goes inside the folder
+
+      , EWCLabel "expand fstart3"
+      , EWCMouse (LMouseData (V2 1 5) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 5) True MouseButton_Left [] True)
+
       , EWCLabel "collapse fstart2"
-      , EWCMouse (LMouseData (V2 1 2) False MouseButton_Left [] True)
-      , EWCMouse (LMouseData (V2 1 2) True MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [] True)
 
       , EWCLabel "collapse fstart1"
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] True)
@@ -262,9 +270,17 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
       , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 0
 
+      , AlwaysPass
+      , AlwaysPass
+      , numLayerEntriesEqualPredicate 6
+
+      , LabelCheck "expand fstart3"
+      , numLayerEntriesEqualPredicate 9
+      , AlwaysPass
+
       , LabelCheck "collapse fstart2"
-      , numLayerEntriesEqualPredicate 4
-      , numLayerEntriesEqualPredicate 4
+      , numLayerEntriesEqualPredicate 6
+      , numLayerEntriesEqualPredicate 6
 
       , LabelCheck "collapse fstart1"
       , numLayerEntriesEqualPredicate 1

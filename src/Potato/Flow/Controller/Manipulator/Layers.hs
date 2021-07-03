@@ -91,7 +91,7 @@ instance PotatoHandler LayersHandler where
     owltree = (_owlPFState_owlTree pfs)
 
     rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
-    leposxy@(V2 _ lepos) = traceShow scrollPos $ V2 rawxoffset (rawlepos + scrollPos)
+    leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
 
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
