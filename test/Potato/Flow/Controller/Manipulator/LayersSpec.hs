@@ -211,6 +211,37 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 3
     ]
 
+test_LayersHandler_scroll :: Test
+test_LayersHandler_scroll = constructTest "scroll" owlpfstate_basic1 bs expected where
+  bs = [
+      -- click first to focus on layers (so it can register keyboard input)
+      EWCLabel "select b1"
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 0) True MouseButton_Left [] True)
+
+      , EWCLabel "scroll"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Scroll 1) [])
+
+      , EWCLabel "select b2"
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 0) True MouseButton_Left [] True)
+
+      -- TODO folder drag/move
+
+    ]
+  expected = [
+      LabelCheck "select b1"
+      , numSelectedEltsEqualPredicate 0
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ _ -> True
+
+      , LabelCheck "scroll"
+      , AlwaysPass
+
+      , LabelCheck "select b2"
+      , numSelectedEltsEqualPredicate 1 -- b1 still selected
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b2") $ \_ _ -> True
+    ]
+
 
 spec :: Spec
 spec = do
@@ -219,3 +250,4 @@ spec = do
     fromHUnitTest $ test_LayersHandler_toggle
     fromHUnitTest $ test_LayersHandler_collapse
     fromHUnitTest $ test_LayersHandler_move
+    fromHUnitTest $ test_LayersHandler_scroll

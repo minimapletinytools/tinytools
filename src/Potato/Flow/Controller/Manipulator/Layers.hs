@@ -64,14 +64,13 @@ instance PotatoHandler LayersHandler where
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
-
-    -- TODO offset by scrolling
-    leposxy@(V2 rawxoffset lepos) = _mouseDrag_to
-
     selection = _potatoHandlerInput_selection
     ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
     owltree = (_owlPFState_owlTree pfs)
+
+    rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
+    leposxy@(V2 _ lepos) = traceShow scrollPos $ V2 rawxoffset (rawlepos + scrollPos)
 
     in case (_mouseDrag_state, _layersHandler_dragState) of
       (MouseDragState_Down, LDS_None) -> r where
@@ -207,7 +206,15 @@ instance PotatoHandler LayersHandler where
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 
   pHandleKeyboard lh@LayersHandler {..} PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData (KeyboardKey_Scroll _) _ -> Nothing -- TODO scrolling
+    KeyboardData (KeyboardKey_Scroll scroll) _ -> r where
+      scrollPos = _layersState_scrollPos _potatoHandlerInput_layersState
+      maxentries = 10 + (Seq.length $ _layersState_entries _potatoHandlerInput_layersState)
+      newScrollPos = max 0 (min maxentries (scrollPos + scroll))
+      r = Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
+          -- TODO clamp based on number of entries
+          , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
+        }
     _ -> Nothing
 
 

@@ -65,6 +65,7 @@ data GoatState = GoatState {
 
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
+
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
     , _goatState_clipboard       :: Maybe SEltTree
@@ -425,59 +426,66 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         -- TODO pass input to LayersHandler
         -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
         -- LayersHandler should only capture when donig renaming
-        _ -> case pHandleKeyboard handler potatoHandlerInput kbd of
-          Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
-          -- input not captured by handler
-          -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState which PotatoHandlerOutput can't atm
-          Nothing -> case kbd of
-            KeyboardData KeyboardKey_Esc _ ->
-              (makeGoatCmdTempOutputFromNothing goatState) {
-                  -- TODO change tool back to select?
-                  _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
-                    MouseDragState_Up        -> Just (False, isParliament_empty)
-                    MouseDragState_Cancelled -> Just (False, isParliament_empty)
-                    _                        -> Nothing
-                }
+        _ -> if _mouseDrag_isLayerMouse _goatState_mouseDrag
+          -- if last input was on layers, then send keyboard input to layers as well
+          then
+            case pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd of
+              Nothing -> makeGoatCmdTempOutputFromNothing goatState
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
+          else
+            case pHandleKeyboard handler potatoHandlerInput kbd of
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
+              -- input not captured by handler
+              -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState which PotatoHandlerOutput can't atm
+              Nothing -> case kbd of
+                KeyboardData KeyboardKey_Esc _ ->
+                  (makeGoatCmdTempOutputFromNothing goatState) {
+                      -- TODO change tool back to select?
+                      _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
+                        MouseDragState_Up        -> Just (False, isParliament_empty)
+                        MouseDragState_Cancelled -> Just (False, isParliament_empty)
+                        _                        -> Nothing
+                    }
 
-            KeyboardData (KeyboardKey_Delete) [] -> r where
-              r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
-            KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
-              copied = makeClipboard goatState
-              r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
-            KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
-              copied = makeClipboard goatState
-              r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
-            KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard of
-              Nothing    -> makeGoatCmdTempOutputFromNothing goatState
-              Just stree -> r where
+                KeyboardData (KeyboardKey_Delete) [] -> r where
+                  r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
+                KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
+                  copied = makeClipboard goatState
+                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
+                KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
+                  copied = makeClipboard goatState
+                  r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
+                KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard of
+                  Nothing    -> makeGoatCmdTempOutputFromNothing goatState
+                  Just stree -> r where
 
-                -- a bit of a roundabout hack to convert SEltTree to Seq OwlElt but not a big deal
-                offsetstree = offsetSEltTree (V2 1 1) stree
-                tempowltree = owlTree_fromSEltTree offsetstree
-                pastaoelts = Seq.fromList . fmap snd . toList . _owlTree_mapping $ tempowltree
+                    -- a bit of a roundabout hack to convert SEltTree to Seq OwlElt but not a big deal
+                    offsetstree = offsetSEltTree (V2 1 1) stree
+                    tempowltree = owlTree_fromSEltTree offsetstree
+                    pastaoelts = Seq.fromList . fmap snd . toList . _owlTree_mapping $ tempowltree
 
-                pastaEv = WSEAddRelative (lastPositionInSelection (goatState_owlTree goatState) _goatState_selection, pastaoelts)
-                r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) pastaEv
-            KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
-              r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
-            KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
-              r = makeGoatCmdTempOutputFromEvent goatState WSERedo
-            -- tool hotkeys
-            KeyboardData (KeyboardKey_Char key) _ -> r where
-              newTool = case key of
-                'v'  -> Tool_Select
-                -- 'p' -> Tool_Pan
-                'b'  -> Tool_Box
-                '\\' -> Tool_Line
-                't'  -> Tool_Text
-                _    -> _goatState_selectedTool
-              -- TODO consider clearing/resetting the handler?
-              r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }
+                    pastaEv = WSEAddRelative (lastPositionInSelection (goatState_owlTree goatState) _goatState_selection, pastaoelts)
+                    r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) pastaEv
+                KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
+                  r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
+                KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
+                  r = makeGoatCmdTempOutputFromEvent goatState WSERedo
+                -- tool hotkeys
+                KeyboardData (KeyboardKey_Char key) _ -> r where
+                  newTool = case key of
+                    'v'  -> Tool_Select
+                    -- 'p' -> Tool_Pan
+                    'b'  -> Tool_Box
+                    '\\' -> Tool_Line
+                    't'  -> Tool_Text
+                    _    -> _goatState_selectedTool
+                  -- TODO consider clearing/resetting the handler?
+                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }
 
-            -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
+                -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
 
-            -- unhandled input
-            _ -> makeGoatCmdTempOutputFromNothing goatState
+                -- unhandled input
+                _ -> makeGoatCmdTempOutputFromNothing goatState
       _          -> undefined
 
 
