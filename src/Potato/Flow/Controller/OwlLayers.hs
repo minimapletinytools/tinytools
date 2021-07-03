@@ -21,6 +21,7 @@ import qualified Data.IntMap                  as IM
 import           Data.Sequence                ((<|), (><), (|>))
 import qualified Data.Sequence                as Seq
 import           Data.Tuple.Extra
+import qualified Data.Text as T
 
 data LockHiddenState = LHS_True | LHS_False | LHS_True_InheritTrue | LHS_False_InheritTrue deriving (Eq, Show)
 
@@ -112,7 +113,7 @@ layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
       LHS_True_InheritTrue  -> "▓"
       LHS_False_InheritTrue -> "▒"
     sowl = _layerEntry_superOwl
-    r = collapseText <> hideText <> lockText <> " " <> isOwl_name sowl <> "\n" <> acc
+    r = T.replicate (layerEntry_depth le) " " <> collapseText <> hideText <> lockText <> " " <> isOwl_name sowl <> "\n" <> acc
 
 data LayersState = LayersState {
     -- mapping from REltId to element meta data

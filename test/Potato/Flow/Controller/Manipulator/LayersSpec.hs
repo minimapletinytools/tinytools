@@ -183,7 +183,6 @@ test_LayersHandler_collapse = constructTest "collapse" owlpfstate_basic2 bs expe
       , numLayerEntriesEqualPredicate 1
     ]
 
-
 test_LayersHandler_move :: Test
 test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected where
   bs = [
@@ -209,6 +208,67 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
       , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 3
+    ]
+
+
+test_LayersHandler_folders :: Test
+test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expected where
+  bs = [
+      EWCLabel "expand fstart1"
+      , EWCNothing
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] True) -- expands folder on the downclick
+      , EWCMouse (LMouseData (V2 0 0) True MouseButton_Left [] True) -- but we still need to release the mouse to continue
+
+      , EWCLabel "expand fstart2"
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [] True)
+
+      , EWCLabel "select b1"
+      , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 2) True MouseButton_Left [] True)
+
+      -- drag b1 to first elt in fstart1
+      , EWCLabel "drag b1"
+      , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [] True)
+      -- must enter "Dragging" state for handler to work correctly
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
+
+      , EWCLabel "collapse fstart2"
+      , EWCMouse (LMouseData (V2 1 2) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 2) True MouseButton_Left [] True)
+
+      , EWCLabel "collapse fstart1"
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 0 0) True MouseButton_Left [] True)
+
+    ]
+  expected = [
+      LabelCheck "expand fstart1"
+      , numLayerEntriesEqualPredicate 1
+      , numLayerEntriesEqualPredicate 3
+      , numLayerEntriesEqualPredicate 3
+
+      , LabelCheck "expand fstart2"
+      , numLayerEntriesEqualPredicate 7
+      , numLayerEntriesEqualPredicate 7
+
+      , LabelCheck "select b1"
+      , numSelectedEltsEqualPredicate 0
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ _ -> True
+
+      , LabelCheck "drag b1"
+      , AlwaysPass
+      , AlwaysPass
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 0
+
+      , LabelCheck "collapse fstart2"
+      , numLayerEntriesEqualPredicate 4
+      , numLayerEntriesEqualPredicate 4
+
+      , LabelCheck "collapse fstart1"
+      , numLayerEntriesEqualPredicate 1
+      , numLayerEntriesEqualPredicate 1
     ]
 
 test_LayersHandler_scroll :: Test
@@ -250,4 +310,5 @@ spec = do
     fromHUnitTest $ test_LayersHandler_toggle
     fromHUnitTest $ test_LayersHandler_collapse
     fromHUnitTest $ test_LayersHandler_move
+    fromHUnitTest $ test_LayersHandler_folders
     fromHUnitTest $ test_LayersHandler_scroll

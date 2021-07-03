@@ -21,6 +21,21 @@ import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
 import           Data.Tuple.Extra
 
+data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayerEntry | LayersHandlerRenderEntryDummy Int
+
+layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal lentry) = layerEntry_depth lentry
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
+
+-- DELETE
+{-layersHandlerRenderEntry :: LayersHandlerRenderEntry -> Text
+layersHandlerRenderEntry (LayersHandlerRenderEntryNormal lentry) = T.replicate (layerEntry_depth lentry) " " <>
+layersHandlerRenderEntry (LayersHandlerRenderEntryDummy i) = T.replicate i " " <> T.replicate 100 "*"-}
+
+
+data LayersHandlerRenderOutput = LayersHandlerRenderOutput {
+    _layersHandlerRenderOutput_renderEntries :: Seq LayersHandlerRenderEntry
+  }
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -57,6 +72,12 @@ instance Default LayersHandler where
       , _layersHandler_cursorPos = 0
     }
 
+make_layersHandlerRenderOutput :: LayersHandler -> LayersHandlerRenderOutput
+make_layersHandlerRenderOutput LayersHandler {..} = r where
+  r = undefined
+
+offsetByDropLocation :: LayersHandler -> Int -> Int
+offsetByDropLocation LayersHandler {..} p = undefined
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_simpleLine
