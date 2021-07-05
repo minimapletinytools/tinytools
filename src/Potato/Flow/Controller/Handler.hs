@@ -69,7 +69,11 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
+
+-- TODO add shadow select state for child selected objects
+-- TODO add dot depth for drag position indication
 type LayersHandlerRenderEntrySelectedState = Bool
+
 data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayerEntry | LayersHandlerRenderEntryDummy Int  deriving (Eq, Show)
 
 layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int

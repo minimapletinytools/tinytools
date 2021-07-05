@@ -102,12 +102,19 @@ do_deleteElts = undo_newElts
 undo_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_deleteElts = do_newElts
 
+
+isSuperOwlParliamentUndoFriendly :: SuperOwlParliament -> Bool
+isSuperOwlParliamentUndoFriendly sop = r where
+  rp = _owlEltMeta_position . _superOwl_meta
+  sameparent sowl1 sowl2 = _owlEltMeta_parent ( _superOwl_meta sowl1) == _owlEltMeta_parent ( _superOwl_meta sowl2)
+  -- this is a hack use of isSortedBy and assumes parliament is ordered correctly
+  r = isSortedBy (\sowl1 sowl2 -> if sameparent sowl1 sowl2 then (rp sowl1) < (rp sowl2) else True) . toList . unSuperOwlParliament $ sop
+
 do_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
 
   -- make sure SuperOwlParliament is ordered in an undo-friendly way
-  rp = _owlEltMeta_position . _superOwl_meta
-  isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
+  isUndoFriendly = isSuperOwlParliamentUndoFriendly sop
 
   op = superOwlParliament_toOwlParliament sop
   (newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree
@@ -120,8 +127,7 @@ undo_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   -- NOTE that sop is likely invalid in pfs at this point
 
   -- make sure SuperOwlParliament is ordered in an undo-friendly way
-  rp = _owlEltMeta_position . _superOwl_meta
-  isUndoFriendly = isSortedBy (\sowl1 sowl2 -> (rp sowl1) < (rp sowl2)) . toList . unSuperOwlParliament $ sop
+  isUndoFriendly = isSuperOwlParliamentUndoFriendly sop
 
   -- first remove all elements we moved
   removefoldfn tree' so = owlTree_removeREltId (_superOwl_id so) tree'

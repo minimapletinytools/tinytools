@@ -239,7 +239,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_selection           :: Dynamic t Selection
 
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
-  
+
   , _goatWidget_pan                 :: Dynamic t XY
   , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
   -- TODO render here?
@@ -426,14 +426,14 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         -- perhaps a better way to do this is to have handlers capture all inputs when active
         _ | mouseDrag_isActive _goatState_mouseDrag -> makeGoatCmdTempOutputFromNothing goatState
 
-        -- TODO pass input to LayersHandler
-        -- a reasonable way to do this is to always pass it to LayersHandler first and then to normal handler
-        -- LayersHandler should only capture when donig renaming
         _ -> if _mouseDrag_isLayerMouse _goatState_mouseDrag
           -- if last input was on layers, then send keyboard input to layers as well
           then
             case pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd of
+
+              -- TODO I guess pass this input on to usual handler stuff below so we can get ctrl-Z sorta-stuff
               Nothing -> makeGoatCmdTempOutputFromNothing goatState
+
               Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
           else
             case pHandleKeyboard handler potatoHandlerInput kbd of
