@@ -594,10 +594,11 @@ owlTree_addSEltTree spot selttree od = assert (collisions == 0) r
     changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
     r = (newtree, changes)
 
+-- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the tree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
 internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlTree {..} = assert (allowFoldersAndExisting || pass) r
   where
-    -- if we're adding a folder, ensure it has no children
+    -- if we're adding a folder (in the normal case), ensure it has no children
     pass = case oelt of
       OwlEltFolder _ children -> Seq.null children
       _ -> True
@@ -620,6 +621,7 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
         then IM.insert rid (meta, oelt) _owlTree_mapping
         else IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlTree_mapping
 
+    -- modify kiddos of the parent we are adding to
     modifyKiddos kiddos = Seq.insertAt position rid kiddos
       where
         position = case _owlSpot_leftSibling of
@@ -627,6 +629,8 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
           Just rid -> case Seq.elemIndexL rid kiddos of
             Nothing -> error $ "expected to find leftmost sibling " <> show rid <> " in " <> show kiddos
             Just x -> x + 1
+
+    -- TODO in children case (if allowFoldersAndExisting is true) recursively modify all children to correct there OwlEltMeta's (has incorrect depth)
 
     adjustfn (oem, oe) = case oe of
       OwlEltFolder oi kiddos -> (oem, OwlEltFolder oi (modifyKiddos kiddos))

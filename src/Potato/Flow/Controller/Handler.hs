@@ -179,6 +179,7 @@ instance PotatoHandler SomePotatoHandler where
   pIsHandlerActive (SomePotatoHandler h) = pIsHandlerActive h
   pResetHandler (SomePotatoHandler h) = pResetHandler h
   pRenderHandler (SomePotatoHandler h) = pRenderHandler h
+  pRenderLayersHandler (SomePotatoHandler h) = pRenderLayersHandler h
   pValidateMouse (SomePotatoHandler h) = pValidateMouse h
 
 captureWithNoChange :: (PotatoHandler h) => h -> PotatoHandlerOutput

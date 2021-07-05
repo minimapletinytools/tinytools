@@ -31,7 +31,6 @@ data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (S
 doesSelectionContainREltId :: REltId -> Selection -> Bool
 doesSelectionContainREltId rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
 
--- TODO a little weird to be returning the SuperOwl you clicked on but whatever...
 clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType, Int)
 clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
   Nothing                      -> Nothing
@@ -55,6 +54,7 @@ instance Default LayersHandler where
   def = LayersHandler {
       _layersHandler_dragState = LDS_None
       , _layersHandler_cursorPos = 0
+      , _layersHandler_dropSpot = Nothing
     }
 
 instance PotatoHandler LayersHandler where
@@ -99,6 +99,7 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_changesFromToggleHide = changes
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
+      --(MouseDragState_Dragging, LDS_Dragging) -> trace "\n\n\n" $ traceShow mJustAboveDropSowl $ traceShow mDropSowlWithOffset $ r where
       (MouseDragState_Dragging, LDS_Dragging) -> r where
 
         -- we will always place between dropSowl and justAboveDropSowl
@@ -112,41 +113,36 @@ instance PotatoHandler LayersHandler where
             Just _ -> Seq.lookup (lepos-1) lentries
           return $ _layerEntry_superOwl lentry
 
-        nparentoffset' = case mDropSowlWithOffset of
+
+        nparentoffset = case mDropSowlWithOffset of
           Nothing -> case mJustAboveDropSowl of
             Nothing -> error "this should never happen"
-            Just sowl -> rawxoffset - superOwl_depth sowl
-          Just (_, x) -> x
+            -- we are at the very bottom
+            Just asowl -> rawxoffset - superOwl_depth asowl
 
-        -- clamp max amount between the two locations
-        -- TODO
-        nparentoffset = case mDropSowlWithOffset of
-          Nothing -> nparentoffset'
-          Just (dsowl,_) -> case mJustAboveDropSowl of
-            Nothing -> error "this should never happen"
-            -- do not let negative parent offset go past difference
-            Just asowl -> max nparentoffset' (superOwl_depth asowl - superOwl_depth dsowl)
+          Just (dsowl, x) -> case mJustAboveDropSowl of
+            -- we are at the very top
+            Nothing -> 0
+            -- limit how deep in the hierarchy we can move based on what's below the cursor
+            Just asowl -> max x (superOwl_depth dsowl - superOwl_depth asowl)
 
-        -- determine which direction we're moving the mouse in
-        --V2 _ lastCursorY = _layersHandler_cursorPos
-        --V2 _ cursorY = _mouseDrag_to
-        --goingDown = lastCursorY > cursorY
+        nsibling = max 0 (- (min 0 nparentoffset))
 
-        -- TODO do something with this
+
         targetspot = case mJustAboveDropSowl of
           -- we are dropping at the top of our LayerEntries
           Nothing -> OwlSpot noOwl Nothing
-          Just sowl -> if nparentoffset > 0 && isOwl_isFolder sowl
+          Just asowl -> if nparentoffset > 0 && isOwl_isFolder asowl
             -- drop inside at the top
-            then OwlSpot (_superOwl_id sowl) Nothing
+            then OwlSpot (_superOwl_id asowl) Nothing
             else case owlTree_findSuperOwl owltree newsiblingid of
               Nothing -> OwlSpot noOwl siblingout
               Just newsibling -> OwlSpot (superOwl_parentId newsibling) siblingout
               where
-                newsiblingid = owlTree_superOwlNthParentId owltree sowl (-(min 0 nparentoffset))
+                newsiblingid = owlTree_superOwlNthParentId owltree asowl nsibling
                 siblingout = case newsiblingid of
                   x | x == noOwl -> Nothing
-                  x -> Just x
+                  x | x == x -> Just x
 
         r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
@@ -190,7 +186,7 @@ instance PotatoHandler LayersHandler where
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersHandler_dragState = LDS_None
-
+                , _layersHandler_dropSpot = Nothing
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
@@ -219,9 +215,11 @@ instance PotatoHandler LayersHandler where
 
 
 
+  -- TODO DELETE
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_cursorPos (V2 1 1)]
     else emptyHandlerRenderOutput
+
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where
@@ -237,18 +235,23 @@ instance PotatoHandler LayersHandler where
     newlentries = case _layersHandler_dropSpot of
       Nothing -> newlentries'
       Just ds -> r where
-        mleftmost = case _owlSpot_parent ds of
-            x | x == noOwl -> maybe Nothing Just (_owlSpot_leftSibling ds)
+        (mleftmost, samelevel) = case _owlSpot_parent ds of
+            x | x == noOwl -> (maybe Nothing Just (_owlSpot_leftSibling ds), True)
             x -> case _owlSpot_leftSibling ds of
-              Nothing -> Just x
-              Just s -> Just s
-
+              Nothing -> (Just x, False)
+              Just s -> (Just s, True)
 
         r = case mleftmost of
           Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries'
-          Just sibid -> r' where
-            (index, depth) = case Seq.findIndexL (\lentry -> _superOwl_id (_layerEntry_superOwl lentry) == sibid) lentries of
-              Nothing -> error $ "expected to find id " <> show sibid <> " in " <> show lentries
-              Just x -> (x, layerEntry_depth (Seq.index lentries x))
-            -- TODO correct depth calculation
+
+          Just leftmostid -> r' where
+            -- TODO you could probably do this more efficiently with a very bespoke fold but whatever
+            (index, depth) = case Seq.findIndexL (\lentry -> _superOwl_id (_layerEntry_superOwl lentry) == leftmostid) lentries of
+              Nothing -> error $ "expected to find id " <> show leftmostid <> " in " <> show lentries
+              Just x -> (skipped, depth') where
+                depth' = layerEntry_depth (Seq.index lentries x) + (if samelevel then 0 else 1)
+                noskiplentries = Seq.drop (x+1) $ lentries
+                skippedlentries = Seq.takeWhileL (\lentry -> layerEntry_depth lentry > depth') $ noskiplentries
+                skipped = if samelevel then x + 1 + Seq.length skippedlentries else x+1
+
             r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries'

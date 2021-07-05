@@ -3,6 +3,12 @@
 stack test --test-arguments='--match "BoxText"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+::7/2021 folder drag bugs::
+DONE-can't reach last spot
+DONE-clamping seems to be wrong (need to +1)
+DONE-sibling computation puts you in wrong spot for some reason
+-need to figure out drag on self situation (or maybe it's not an issue?)
+
 ::4/2021 self feedback::
 DONE-invert text box crashes still
 -possible to make bad selections sometimes

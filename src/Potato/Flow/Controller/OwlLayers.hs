@@ -121,7 +121,7 @@ data LayersState = LayersState {
     -- sequence of visible folders
     , _layersState_entries :: LayerEntries
     , _layersState_scrollPos :: Int
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 

@@ -237,7 +237,9 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
 data GoatWidget t = GoatWidget {
   _goatWidget_tool                  :: Dynamic t Tool
   , _goatWidget_selection           :: Dynamic t Selection
-  , _goatWidget_layers              :: Dynamic t LayerEntries
+
+  , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
+  
   , _goatWidget_pan                 :: Dynamic t XY
   , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
   -- TODO render here?
@@ -663,7 +665,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
-  r_layers <- holdUniqDyn $ fmap (_layersState_entries . _goatState_layersState) goatDyn
+  r_layers <- holdUniqDyn $ fmap _goatState_layersState goatDyn
 
   -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
