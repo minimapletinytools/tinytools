@@ -18,6 +18,7 @@ import           Potato.Flow.OwlState
 
 import           Data.Default
 import qualified Data.IntMap                    as IM
+import qualified Data.Set as Set
 import qualified Data.Sequence                  as Seq
 import Data.Sequence ((<|))
 import           Data.Tuple.Extra
@@ -28,8 +29,24 @@ data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (S
 
 
 -- TODO we could probably change this to do a more efficient binary search based on position in hierarchy
-doesSelectionContainREltId :: REltId -> Selection -> Bool
-doesSelectionContainREltId rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
+doesSelectionContainREltId_linear :: REltId -> Selection -> Bool
+doesSelectionContainREltId_linear rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
+
+-- TODO change to Set.Set REltId
+type SelectionSet = REltIdMap SuperOwl
+
+selectionToSelectionSet :: Selection -> SelectionSet
+selectionToSelectionSet (SuperOwlParliament sowls) = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, sowl)) $ sowls
+
+doesSelectionSetContainREltId :: REltId -> SelectionSet -> Bool
+doesSelectionSetContainREltId = IM.member
+
+isREltIdDescendentOfSelection :: OwlTree -> REltId -> SelectionSet -> Bool
+isREltIdDescendentOfSelection ot rid sset = if doesSelectionSetContainREltId rid sset
+  then True
+  else case owlTree_findSuperOwl ot rid of
+    Nothing -> False
+    Just x -> isREltIdDescendentOfSelection ot (superOwl_parentId x) sset
 
 clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType, Int)
 clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
@@ -78,13 +95,36 @@ instance PotatoHandler LayersHandler where
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
           Just (downsowl, ldtdown, offset) -> case ldtdown of
-            LDT_Normal -> if shift || (not $ doesSelectionContainREltId (_superOwl_id downsowl) selection)
 
+            LDT_Normal -> if shift || (not $ doesSelectionContainREltId_linear (_superOwl_id downsowl) selection)
               -- TODO check if element is descendent of selected element and return LDS_None if so
               -- if element wasn't selected or shift is held down, enter selection mode
               then (LDS_Selecting lepos, Nothing, IM.empty)
-
               else (LDS_Dragging, Nothing, IM.empty)
+
+            -- this variant denies selecting children of selected parents but not the other way around...
+            -- maybe easier to deny this at a higher level rather than here.
+            {-
+            LDT_Normal -> if shift
+              then if exclusivedescendent
+                -- element is descendent of selection and therefore do not allow selecting
+                then (LDS_None, Nothing, IM.empty)
+                else (LDS_Selecting lepos, Nothing, IM.empty)
+              else if not isselected
+                then if exclusivedescendent
+                  -- element is descendent of selection and therefore do not allow selecting (TODO consider alternatively, enter dragging mode)
+                  then (LDS_None, Nothing, IM.empty)
+                  -- enter selection mode
+                  else (LDS_Selecting lepos, Nothing, IM.empty)
+                -- entry dragging mode
+              else (LDS_Dragging, Nothing, IM.empty)
+              where
+                rid = _superOwl_id downsowl
+                selectionset = selectionToSelectionSet selection
+                isselected = doesSelectionSetContainREltId rid selectionset
+                exclusivedescendent = isREltIdDescendentOfSelection owltree rid selectionset && not isselected
+            -}
+
             LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleHide, IM.empty)
             LDT_Lock -> r' where
               nextLayersState = toggleLayerEntry pfs ls lepos LHCO_ToggleLock
@@ -227,7 +267,11 @@ instance PotatoHandler LayersHandler where
     --pfs = _potatoHandlerInput_pFState
     --owltree = (_owlPFState_owlTree pfs)
 
-    isSelected lentry = doesSelectionContainREltId (_superOwl_id $ _layerEntry_superOwl lentry) selection
+    -- TODO would also be best to cache this in LayerState since it's also used by other operations...
+    selectionset = selectionToSelectionSet selection
+    isSelected lentry = doesSelectionSetContainREltId (layerEntry_rEltId lentry) selectionset
+    -- perhaps linear search is faster for smaller sets though
+    --isSelected lentry = doesSelectionContainREltId_linear (_superOwl_id $ _layerEntry_superOwl lentry) selection
 
     -- update the selected state
     mapaccumlfn_forselection mseldepth lentry = case mseldepth of

@@ -9,9 +9,9 @@ DONE-clamping seems to be wrong (need to +1)
 DONE-sibling computation puts you in wrong spot for some reason
 DONE-isundofriendly assert should only lump together stuff that has the same parent I think
 -must deny selecting child of a selected object
-  -visually do shadow select to indicate this in layers so it's no confusing?
+  DONE-visually do shadow select to indicate this in layers so it's no confusing?
 -due to layers capturing input now, ctrl-z doesn't work after doing layer drag
--add dots for dragging several layers so it's clear which folder you're going under
+DONE-add dots for dragging several layers so it's clear which folder you're going under
 
 ::4/2021 self feedback::
 
