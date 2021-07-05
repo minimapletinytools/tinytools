@@ -79,8 +79,11 @@ instance PotatoHandler LayersHandler where
           -- (you can only click + drag selected elements)
           Just (downsowl, ldtdown, offset) -> case ldtdown of
             LDT_Normal -> if shift || (not $ doesSelectionContainREltId (_superOwl_id downsowl) selection)
+
+              -- TODO check if element is descendent of selected element and return LDS_None if so
               -- if element wasn't selected or shift is held down, enter selection mode
               then (LDS_Selecting lepos, Nothing, IM.empty)
+
               else (LDS_Dragging, Nothing, IM.empty)
             LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleHide, IM.empty)
             LDT_Lock -> r' where
@@ -99,7 +102,6 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_changesFromToggleHide = changes
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
-      --(MouseDragState_Dragging, LDS_Dragging) -> trace "\n\n\n" $ traceShow mJustAboveDropSowl $ traceShow mDropSowlWithOffset $ r where
       (MouseDragState_Dragging, LDS_Dragging) -> r where
 
         -- we will always place between dropSowl and justAboveDropSowl
@@ -212,9 +214,6 @@ instance PotatoHandler LayersHandler where
         }
     _ -> Nothing
 
-
-
-
   -- TODO DELETE
   pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
     then HandlerRenderOutput [LBox _layersHandler_cursorPos (V2 1 1)]
@@ -230,10 +229,23 @@ instance PotatoHandler LayersHandler where
 
     isSelected lentry = doesSelectionContainREltId (_superOwl_id $ _layerEntry_superOwl lentry) selection
 
-    newlentries' = fmap (\lentry -> LayersHandlerRenderEntryNormal (isSelected lentry) lentry) lentries
+    -- update the selected state
+    mapaccumlfn_forselection mseldepth lentry = case mseldepth of
+      Nothing -> normalcase
+      Just x -> if layerEntry_depth lentry > x
+        then (mseldepth, makelentry LHRESS_InheritSelected)
+        else normalcase
+      where
+        -- dot depth will be filled in later
+        makelentry x = LayersHandlerRenderEntryNormal x Nothing lentry
+        normalcase = if isSelected lentry
+          then (Just (layerEntry_depth lentry), makelentry LHRESS_Selected)
+          else (Nothing, makelentry LHRESS_None)
+    (_,newlentries'') = mapAccumL mapaccumlfn_forselection Nothing lentries
 
-    newlentries = case _layersHandler_dropSpot of
-      Nothing -> newlentries'
+    -- next insert the drop spot
+    newlentries' = case _layersHandler_dropSpot of
+      Nothing -> newlentries''
       Just ds -> r where
         (mleftmost, samelevel) = case _owlSpot_parent ds of
             x | x == noOwl -> (maybe Nothing Just (_owlSpot_leftSibling ds), True)
@@ -242,7 +254,7 @@ instance PotatoHandler LayersHandler where
               Just s -> (Just s, True)
 
         r = case mleftmost of
-          Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries'
+          Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries''
 
           Just leftmostid -> r' where
             -- TODO you could probably do this more efficiently with a very bespoke fold but whatever
@@ -254,4 +266,17 @@ instance PotatoHandler LayersHandler where
                 skippedlentries = Seq.takeWhileL (\lentry -> layerEntry_depth lentry > depth') $ noskiplentries
                 skipped = if samelevel then x + 1 + Seq.length skippedlentries else x+1
 
-            r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries'
+            r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries''
+
+    -- finally add the dots indicating drop spot depth
+    mapaccumrfn_fordots mdropdepth lhre = case mdropdepth of
+      Nothing -> case lhre of
+        LayersHandlerRenderEntryDummy d -> (Just d, lhre)
+        _ -> (mdropdepth, lhre)
+      Just x -> case lhre of
+        LayersHandlerRenderEntryNormal s _ lentry -> if layerEntry_depth lentry > x
+          then (mdropdepth, LayersHandlerRenderEntryNormal s (Just x) lentry)
+          else (Nothing, lhre)
+        _ -> error "unexpected LayersHandlerRenderEntryDummy"
+
+    (_, newlentries) = mapAccumR mapaccumrfn_fordots Nothing newlentries'

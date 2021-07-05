@@ -72,12 +72,17 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
 
 -- TODO add shadow select state for child selected objects
 -- TODO add dot depth for drag position indication
-type LayersHandlerRenderEntrySelectedState = Bool
+data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_None deriving (Eq, Show)
+-- depth at which dots are added if any
+type LayersHandlerRenderEntryDots = Maybe Int
 
-data LayersHandlerRenderEntry = LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayerEntry | LayersHandlerRenderEntryDummy Int  deriving (Eq, Show)
+data LayersHandlerRenderEntry =
+  LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayersHandlerRenderEntryDots LayerEntry
+  | LayersHandlerRenderEntryDummy Int
+  deriving (Eq, Show)
 
 layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
-layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ lentry) = layerEntry_depth lentry
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ _ lentry) = layerEntry_depth lentry
 layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
 
 -- hack to render layers view via HandlerRenderOutput (we could have just as well put this in LayerState I guesss)
