@@ -236,7 +236,14 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
 
 data GoatWidget t = GoatWidget {
   _goatWidget_tool                  :: Dynamic t Tool
+
+
   , _goatWidget_selection           :: Dynamic t Selection
+
+  -- TODO
+  -- TODO also you want a bunch of selection converting helper functions...
+  --, _goatWidget_selection_converted :: Dynamic t Selection
+
 
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
 
@@ -516,13 +523,20 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   -- get selection from pho
   mSelectionFromPho = case _goatCmdTempOutput_select goatCmdTempOutput of
     Nothing -> Nothing
-    Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
-      nextot = _owlPFState_owlTree next_pFState
-      r' = if add
-        then isParliament_disjointUnion _goatState_selection sel
-        else sel
-      sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
-      r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
+    --Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
+    Just (add, sel) -> if not (superOwlParliament_isValid nextot r) -- disable invalid selection, TODO do selection correction instead
+      then Nothing
+      else Just r
+      where
+        nextot = _owlPFState_owlTree next_pFState
+        r' = if add
+
+          -- TODO fix selection so that it's valid
+          then isParliament_disjointUnion _goatState_selection sel
+
+          else sel
+        sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
+        r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
   -- update selection based on changes from updating OwlPFState
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
