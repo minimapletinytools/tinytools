@@ -274,9 +274,20 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
             )
     (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
--- TODO
-owlTree_isSuperOwlParliamentValid :: OwlTree -> SuperOwlParliament -> Bool
-owlTree_isSuperOwlParliamentValid od@OwlTree {..} = undefined
+type OwlParliamentSet = Set.Set REltId
+
+superOwlParliament_toOwlParliamentSet :: SuperOwlParliament -> OwlParliamentSet
+superOwlParliament_toOwlParliamentSet (SuperOwlParliament sowls) = Set.fromList . toList . fmap _superOwl_id $ sowls
+
+owlParliamentSet_member :: REltId -> OwlParliamentSet -> Bool
+owlParliamentSet_member = Set.member
+
+owlParliamentSet_descendent :: OwlTree -> REltId -> OwlParliamentSet -> Bool
+owlParliamentSet_descendent ot rid sset = if owlParliamentSet_member rid sset
+  then True
+  else case owlTree_findSuperOwl ot rid of
+    Nothing -> False
+    Just x -> owlParliamentSet_descendent ot (superOwl_parentId x) sset
 
 -- |
 data OwlTree = OwlTree

@@ -32,21 +32,6 @@ data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (S
 doesSelectionContainREltId_linear :: REltId -> Selection -> Bool
 doesSelectionContainREltId_linear rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
 
--- TODO change to Set.Set REltId
-type SelectionSet = REltIdMap SuperOwl
-
-selectionToSelectionSet :: Selection -> SelectionSet
-selectionToSelectionSet (SuperOwlParliament sowls) = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, sowl)) $ sowls
-
-doesSelectionSetContainREltId :: REltId -> SelectionSet -> Bool
-doesSelectionSetContainREltId = IM.member
-
-isREltIdDescendentOfSelection :: OwlTree -> REltId -> SelectionSet -> Bool
-isREltIdDescendentOfSelection ot rid sset = if doesSelectionSetContainREltId rid sset
-  then True
-  else case owlTree_findSuperOwl ot rid of
-    Nothing -> False
-    Just x -> isREltIdDescendentOfSelection ot (superOwl_parentId x) sset
 
 clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType, Int)
 clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
@@ -120,9 +105,9 @@ instance PotatoHandler LayersHandler where
               else (LDS_Dragging, Nothing, IM.empty)
               where
                 rid = _superOwl_id downsowl
-                selectionset = selectionToSelectionSet selection
-                isselected = doesSelectionSetContainREltId rid selectionset
-                exclusivedescendent = isREltIdDescendentOfSelection owltree rid selectionset && not isselected
+                selectionset = superOwlParliament_toOwlParliamentSet selection
+                isselected = owlParliamentSet_member rid selectionset
+                exclusivedescendent = owlParliamentSet_descendent owltree rid selectionset && not isselected
             -}
 
             LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleHide, IM.empty)
@@ -268,8 +253,8 @@ instance PotatoHandler LayersHandler where
     --owltree = (_owlPFState_owlTree pfs)
 
     -- TODO would also be best to cache this in LayerState since it's also used by other operations...
-    selectionset = selectionToSelectionSet selection
-    isSelected lentry = doesSelectionSetContainREltId (layerEntry_rEltId lentry) selectionset
+    selectionset = superOwlParliament_toOwlParliamentSet selection
+    isSelected lentry = owlParliamentSet_member (layerEntry_rEltId lentry) selectionset
     -- perhaps linear search is faster for smaller sets though
     --isSelected lentry = doesSelectionContainREltId_linear (_superOwl_id $ _layerEntry_superOwl lentry) selection
 
