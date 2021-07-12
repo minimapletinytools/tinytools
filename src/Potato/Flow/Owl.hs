@@ -274,17 +274,21 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
             )
     (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
--- TODO figure out what output type you want (new newtype?)
+
+newtype CanvasSelection = CanvasSelection { unCanvasSelection :: Seq SuperOwl } deriving (Show, Eq)
+
+-- TODO test
+-- TODO filterfn type what we want?
 -- | convert SuperOwlParliament to CanvasSelection (omits locked/hidden elts, includes children and no folders)
-superOwlParliament_convertToCanvasSelection :: OwlTree -> SuperOwlParliament -> (SuperOwl -> Bool) -> Seq SuperOwl
-superOwlParliament_convertToCanvasSelection od@OwlTree {..} (SuperOwlParliament sowls) filterfn = r where
+superOwlParliament_convertToCanvasSelection :: OwlTree -> (SuperOwl -> Bool) -> SuperOwlParliament -> CanvasSelection
+superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlParliament sowls) = r where
   filtered = Seq.filter filterfn sowls
   sopify children = owlParliament_toSuperOwlParliament od (OwlParliament children)
   -- if folder then recursively include children otherwise include self
   mapfn sowl = case _superOwl_elt sowl of
-    OwlEltFolder _ children -> superOwlParliament_convertToCanvasSelection od (sopify children) filterfn
+    OwlEltFolder _ children -> unCanvasSelection $ superOwlParliament_convertToCanvasSelection od filterfn (sopify children)
     _ -> Seq.singleton sowl
-  r = join . fmap mapfn $ sowls
+  r = CanvasSelection . join . fmap mapfn $ sowls
 
 type OwlParliamentSet = Set.Set REltId
 
