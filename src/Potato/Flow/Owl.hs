@@ -274,6 +274,18 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
             )
     (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
+-- TODO figure out what output type you want (new newtype?)
+-- | convert SuperOwlParliament to CanvasSelection (omits locked/hidden elts, includes children and no folders)
+superOwlParliament_convertToCanvasSelection :: OwlTree -> SuperOwlParliament -> (SuperOwl -> Bool) -> Seq SuperOwl
+superOwlParliament_convertToCanvasSelection od@OwlTree {..} (SuperOwlParliament sowls) filterfn = r where
+  filtered = Seq.filter filterfn sowls
+  sopify children = owlParliament_toSuperOwlParliament od (OwlParliament children)
+  -- if folder then recursively include children otherwise include self
+  mapfn sowl = case _superOwl_elt sowl of
+    OwlEltFolder _ children -> superOwlParliament_convertToCanvasSelection od (sopify children) filterfn
+    _ -> Seq.singleton sowl
+  r = join . fmap mapfn $ sowls
+
 type OwlParliamentSet = Set.Set REltId
 
 superOwlParliament_toOwlParliamentSet :: SuperOwlParliament -> OwlParliamentSet
@@ -288,6 +300,7 @@ owlParliamentSet_descendent ot rid sset = if owlParliamentSet_member rid sset
   else case owlTree_findSuperOwl ot rid of
     Nothing -> False
     Just x -> owlParliamentSet_descendent ot (superOwl_parentId x) sset
+
 
 -- |
 data OwlTree = OwlTree
