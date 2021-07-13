@@ -282,7 +282,7 @@ makeSortedSuperOwlParliament od sowls = r where
   r = SuperOwlParliament $ sortrec parentChains
 
 -- TODO test
--- assumes s1 is and s2 are valid and s2 has no folders
+-- assumes s1 is and s2 are valid
 superOwlParliament_disjointUnionAndCorrect :: OwlTree -> SuperOwlParliament -> SuperOwlParliament -> SuperOwlParliament
 superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (SuperOwlParliament s2) = r where
   --ops = superOwlParliament_toOwlParliamentSet sop1
@@ -300,6 +300,17 @@ superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (Supe
     -- parent already removed
     Nothing -> mapsop
 
+  addToSelection :: SuperOwl -> IM.IntMap SuperOwl -> IM.IntMap SuperOwl
+  addToSelection sowl mapsop = rslt where
+    rid = _superOwl_id sowl
+
+    -- add self to map
+    rslt' = IM.insert rid sowl mapsop
+
+    -- check if any children are selected and remove them from selection
+    children = owliteratechildrenat od rid
+    rslt = foldr (\x acc -> IM.delete (_superOwl_id x) acc) rslt' children
+
   -- assumes sowl is NOT in mapsop and that one of its ancestors is
   -- removes sowl from mapsop and adds its siblings and recurses on its parent until it reaches a selected parent
   removeFromInheritSelection sowl mapsop = rslt where
@@ -307,7 +318,7 @@ superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (Supe
     -- the parent is guaranteed to exist because we only call this on elements who inheritSelected
     mommy = owlTree_mustFindSuperOwl od prid
     newkiddos = Seq.deleteAt (_owlEltMeta_position . _superOwl_meta $ sowl) (fromJust $ mommyOwl_kiddos mommy)
-    -- add siblings to selection
+    -- add siblings to selection (guaranteed that none of their children are selected by assumption)
     mapsop' = foldr (\rid acc -> IM.insert rid (owlTree_mustFindSuperOwl od rid) acc) mapsop newkiddos
     rslt = if IM.member prid mapsop'
       -- we've reached the selected parent, deselect it and return our new selection
@@ -330,7 +341,7 @@ superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (Supe
       -- parent selected
       then removeFromInheritSelection sowl acc
       -- parent not selected, add self to selection
-      else IM.insert rid sowl acc
+      else addToSelection sowl acc
     where
       rid = _superOwl_id sowl
 
@@ -607,7 +618,7 @@ owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl
 
 owlTree_foldChildrenAt' :: (a -> SuperOwl -> a) -> a -> OwlTree -> SuperOwl -> a
 owlTree_foldChildrenAt' f acc od sowl = case _superOwl_elt sowl of
-  OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldChildrenAt' f acc' od (owlTree_mustFindSuperOwl od rid')) acc children
+  OwlEltFolder _ children -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) acc children
   _ -> acc
 
 -- | same as owlTree_foldAt but excludes parent

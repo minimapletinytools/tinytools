@@ -126,3 +126,5 @@ spec = do
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop0 sop28) `shouldBe` [3,4,5,9]
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop7 sop8) `shouldBe` [9]
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop7 sop9) `shouldBe` [8]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop89 sop7) `shouldBe` [7]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop28 sop0) `shouldBe` [0]
