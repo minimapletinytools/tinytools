@@ -137,36 +137,36 @@ pfstate_basic2 = PFState {
     _pFState_layers = Seq.fromList [0..11]
     , _pFState_directory = IM.fromList [
         (0, SEltLabel "fstart1" SEltFolderStart)
-        , (1, SEltLabel "fstart2" SEltFolderStart)
-        -- 4 boxes in a grid
-        , (2, SEltLabel "b1" (SEltBox def {
-            _sBox_box = LBox (V2 0 0) (V2 5 5)
-          }))
-        , (3, SEltLabel "b2" (SEltBox def {
-            _sBox_box = LBox (V2 10 10) (V2 5 5)
-          }))
-        , (4, SEltLabel "b3" (SEltBox def {
-            _sBox_box = LBox (V2 0 10) (V2 5 5)
-          }))
-        , (5, SEltLabel "b4" (SEltBox def {
-            _sBox_box = LBox (V2 10 0) (V2 5 5)
-          }))
-        , (6, SEltLabel "fend2" SEltFolderEnd)
+          , (1, SEltLabel "fstart2" SEltFolderStart)
+            -- 4 boxes in a grid
+            , (2, SEltLabel "b1" (SEltBox def {
+                _sBox_box = LBox (V2 0 0) (V2 5 5)
+              }))
+            , (3, SEltLabel "b2" (SEltBox def {
+                _sBox_box = LBox (V2 10 10) (V2 5 5)
+              }))
+            , (4, SEltLabel "b3" (SEltBox def {
+                _sBox_box = LBox (V2 0 10) (V2 5 5)
+              }))
+            , (5, SEltLabel "b4" (SEltBox def {
+                _sBox_box = LBox (V2 10 0) (V2 5 5)
+              }))
+            , (6, SEltLabel "fend2" SEltFolderEnd)
         , (7, SEltLabel "fstart3" SEltFolderStart)
-        -- 2 lines sharing a start point at (0,100)
-        , (8, SEltLabel "sl1" (SEltLine SSimpleLine {
-            _sSimpleLine_start = V2 0 100
-            , _sSimpleLine_end = V2 0 110
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-          }))
-        , (9, SEltLabel "sl2" (SEltLine SSimpleLine {
-            _sSimpleLine_start = V2 0 100
-            , _sSimpleLine_end = V2 10 100
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-          }))
-        , (10, SEltLabel "fend3" SEltFolderEnd)
+          -- 2 lines sharing a start point at (0,100)
+          , (8, SEltLabel "sl1" (SEltLine SSimpleLine {
+              _sSimpleLine_start = V2 0 100
+              , _sSimpleLine_end = V2 0 110
+              , _sSimpleLine_style = def
+              , _sSimpleLine_lineStyle = def
+            }))
+          , (9, SEltLabel "sl2" (SEltLine SSimpleLine {
+              _sSimpleLine_start = V2 0 100
+              , _sSimpleLine_end = V2 10 100
+              , _sSimpleLine_style = def
+              , _sSimpleLine_lineStyle = def
+            }))
+          , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox

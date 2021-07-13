@@ -2,6 +2,9 @@
 
 module Potato.Flow.Owl where
 
+import Relude
+import qualified Relude.Unsafe as Unsafe
+
 import Control.Exception (assert)
 import Data.Foldable (foldl)
 import qualified Data.IntMap as IM
@@ -13,7 +16,8 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 import Potato.Flow.SElts
 import Potato.Flow.Types
-import Relude
+
+import Debug.Pretty.Simple
 
 errorMsg_owlTree_lookupFail :: OwlTree -> REltId -> Text
 errorMsg_owlTree_lookupFail OwlTree {..} rid = errorMsg_owlMapping_lookupFail _owlTree_mapping rid
@@ -233,58 +237,102 @@ partitionN f as = r where
   foldfn a acc = IM.alter (alterfn a) (f a) acc
   r = foldr foldfn IM.empty as
 
--- TODO FINISH
 -- TODO TEST
 -- TODO rename
 makeSortedSuperOwlParliament :: OwlTree -> Seq SuperOwl -> SuperOwlParliament
 makeSortedSuperOwlParliament od sowls = r where
 
   -- attach parents (at front of list, last elt is child and actuall part of original selection)
-  makeParentChain :: SuperOwl -> NonEmpty SuperOwl
+  makeParentChain :: SuperOwl -> [SuperOwl]
   makeParentChain sowl = done where
     makeParentChain' sowl' acc = case superOwl_parentId sowl' of
       x | x == noOwl -> acc
-      x -> makeParentChain' parentsowl ((parentsowl:|[])<>acc) where
+      x -> makeParentChain' parentsowl (parentsowl:acc) where
         parentsowl = owlTree_mustFindSuperOwl od x
-    done = makeParentChain' sowl (sowl:|[])
+    done = makeParentChain' sowl (sowl:[])
 
   parentChains = fmap makeParentChain sowls
 
-  sortrec :: (MommyOwl o) => o -> Seq (NonEmpty SuperOwl) -> Seq SuperOwl
-  sortrec mommy chains = done where
-    groupedParentChains' :: IM.IntMap (Seq (NonEmpty SuperOwl))
-    groupedParentChains' = partitionN (\(front:|_) -> _superOwl_id front) chains
-    kiddos = mommyOwl_kiddos mommy
+  -- this function is sketch af D:
+  sortrec :: Seq [SuperOwl] -> Seq SuperOwl
+  sortrec chains = done where
+    frontid (x:_) = _superOwl_id x
+    frontid _ = error "should never happen"
+
+    groupedParentChains = partitionN (\(front:_) -> _superOwl_id front) chains
+
+    removeFront (x:xs) = xs
+    removeFront [] = error "should never happen"
 
     -- it's not necessary to look up rid as it will be the first element in each Seq elt in the value but whatever this is easier (to fix, you should rewrite partitionN)
-    groupedParentChains = fmap (\(rid,x) -> (owlTree_mustFindSuperOwl od rid, x)) . Seq.fromList . IM.toList $ groupedParentChains'
+    groupedParentChains2 = fmap (\(rid,x) -> (owlTree_mustFindSuperOwl od rid, x)) . Seq.fromList . IM.toList $ groupedParentChains
     cfn = _owlEltMeta_position . _superOwl_meta . fst
-    sortedPairs = Seq.sortOn cfn $ groupedParentChains
+    sortedPairs = Seq.sortOn cfn $ groupedParentChains2
 
-    fmapfn (sowl, chains') =  sortrec sowl chains'
+    -- sketchy logic here reliant on assumptions carried over from previous iteration... TODO rewrite this so it's not so weird
+    fmapfn (_, chains') = if Seq.length chains' == 1
+      -- this is unititive, but if the group has only 1 chain in it, that means it's already sorted and hence are leaf node case
+      then join $ fmap (Seq.singleton . Unsafe.last) chains'
+      -- otherwise, we have more children to process, note that if assumptions are correct, then each chain in the sequence has at least 2 elts (otherwise it would have been caught by the above condition in the previous iteration)
+      else sortrec (fmap removeFront chains')
+
+
     done = join . fmap fmapfn  $ sortedPairs
-  r = SuperOwlParliament $ sortrec od parentChains
+
+  r = SuperOwlParliament $ sortrec parentChains
 
 -- TODO test
 -- assumes s1 is and s2 are valid and s2 has no folders
-superOwlParliament_combineAndCorrect :: OwlTree -> SuperOwlParliament -> SuperOwlParliament -> SuperOwlParliament
-superOwlParliament_combineAndCorrect od sop1@(SuperOwlParliament s1) (SuperOwlParliament s2) = r where
+superOwlParliament_disjointUnionAndCorrect :: OwlTree -> SuperOwlParliament -> SuperOwlParliament -> SuperOwlParliament
+superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (SuperOwlParliament s2) = r where
   --ops = superOwlParliament_toOwlParliamentSet sop1
   --(des, notdes) = Seq.partition (\sowl -> owlParliamentSet_descendent od (_superOwl_id sowl) ops)
 
+  -- first convert s1 into a map
+  mapsop0 :: IM.IntMap SuperOwl
   mapsop0 = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, sowl)) $ s1
 
+  -- DELETE
+  -- helper method from removing parents
   removeParents parentrid mapsop = case IM.lookup parentrid mapsop of
     -- found parent, remove it and recurse
     Just psowl -> removeParents (superOwl_parentId psowl) (IM.delete parentrid mapsop)
     -- parent already removed
     Nothing -> mapsop
 
-  foldfn sowl mapsopacc = if IM.member (_superOwl_id sowl) mapsopacc
-    -- already selected, remove it from selection
-    then IM.delete (_superOwl_id sowl) mapsopacc
-    -- not selected, select it and then remove all ancestors to maintain valid selection
-    else removeParents (superOwl_parentId sowl) (IM.insert (_superOwl_id sowl) sowl mapsopacc)
+  -- assumes sowl is NOT in mapsop and that one of its ancestors is
+  -- removes sowl from mapsop and adds its siblings and recurses on its parent until it reaches a selected parent
+  removeFromInheritSelection sowl mapsop = rslt where
+    prid = superOwl_parentId sowl
+    -- the parent is guaranteed to exist because we only call this on elements who inheritSelected
+    mommy = owlTree_mustFindSuperOwl od prid
+    newkiddos = Seq.deleteAt (_owlEltMeta_position . _superOwl_meta $ sowl) (fromJust $ mommyOwl_kiddos mommy)
+    -- add siblings to selection
+    mapsop' = foldr (\rid acc -> IM.insert rid (owlTree_mustFindSuperOwl od rid) acc) mapsop newkiddos
+    rslt = if IM.member prid mapsop'
+      -- we've reached the selected parent, deselect it and return our new selection
+      then IM.delete prid mapsop'
+      -- recursively deselect the parent
+      else removeFromInheritSelection (owlTree_mustFindSuperOwl od prid) mapsop'
+
+  isDescendentOfOwlMap :: REltId -> IM.IntMap SuperOwl -> Bool
+  isDescendentOfOwlMap rid mapsop = if IM.member rid mapsop
+    then True
+    else case owlTree_findSuperOwl od rid of
+      Nothing -> False
+      Just x -> isDescendentOfOwlMap (superOwl_parentId x) mapsop
+
+  foldfn sowl acc = if IM.member rid acc
+    -- we are selected, remove self from selection
+    then IM.delete rid acc
+    -- we are not selected
+    else if isDescendentOfOwlMap rid acc
+      -- parent selected
+      then removeFromInheritSelection sowl acc
+      -- parent not selected, add self to selection
+      else IM.insert rid sowl acc
+    where
+      rid = _superOwl_id sowl
 
   mapsop1 = foldr foldfn mapsop0 s2
   unsortedSeq = Seq.fromList (IM.elems mapsop1)

@@ -102,3 +102,27 @@ spec = do
           invalidParliament = owlParliament_toSuperOwlParliament owlTree0 (OwlParliament $ Seq.fromList [2,3,7,9])
         superOwlParliament_isValid owlTree0 validParliament `shouldBe` True
         superOwlParliament_isValid owlTree0 invalidParliament `shouldBe` False
+      it "superOwlParliament_disjointUnionAndCorrect" $ do
+        let
+          tosop = SuperOwlParliament . Seq.fromList . fmap (owlTree_mustFindSuperOwl owlTree0)
+          torids (SuperOwlParliament sop) = toList $ fmap _superOwl_id sop
+          sopnil = tosop []
+          sop0 = tosop [0]
+          sop1 = tosop [1]
+          sop2 = tosop [2]
+          sop3 = tosop [3]
+          sop7 = tosop [7]
+          sop8 = tosop [8]
+          sop9 = tosop [9]
+          sop89 = tosop [8,9]
+          sop28 = tosop [2,8]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sopnil sopnil) `shouldBe` []
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sopnil sop1) `shouldBe` [1]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop1 sop1) `shouldBe` []
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop2 sop3) `shouldBe` [2,3]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop1 sop2) `shouldBe` [3,4,5]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop1 sop2) `shouldBe` [3,4,5]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop1 sop28) `shouldBe` [3,4,5,8]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop0 sop28) `shouldBe` [3,4,5,9]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop7 sop8) `shouldBe` [9]
+        torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop7 sop9) `shouldBe` [8]
