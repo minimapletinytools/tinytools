@@ -63,6 +63,8 @@ data GoatState = GoatState {
     , _goatState_layersState     :: LayersState
     , _goatState_renderedCanvas  :: RenderedCanvas
 
+    , _goatState_canvasRegion    :: XY
+
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
 
@@ -83,6 +85,7 @@ data GoatCmd =
   GoatCmdTool Tool
   | GoatCmdLoad EverythingLoadState
   | GoatCmdWSEvent WSEvent
+  | GoatCmdSetCanvasRegionDim XY
 
   -- canvas direct input
   | GoatCmdMouse LMouseData
@@ -207,7 +210,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_keyboard       :: Event t KeyboardData
 
   -- other canvas stuff
-  --, _goatWidgetConfig_screenSize     :: Dynamic t (Int, Int)
+  , _goatWidgetConfig_canvasRegionDim     :: Dynamic t XY
 
   -- command based
   , _goatWidgetConfig_selectTool     :: Event t Tool
@@ -325,6 +328,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     SomePotatoHandler handler -> case cmd of
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
+      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_canvasRegion = x }
       GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdLoad (spf, cm) ->
@@ -492,8 +496,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                   -- TODO consider clearing/resetting the handler?
                   r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }
 
-                -- TODO copy pasta, or maybe copy pasta lives outside of GoatWidget?
-
                 -- unhandled input
                 _ -> makeGoatCmdTempOutputFromNothing goatState
       _          -> undefined
@@ -590,7 +592,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
   -- TODO crop/expand to screen
-  newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
+
+  canvasRegionBox = LBox (- _goatState_pan) _goatState_canvasRegion
+  newBox = canvasRegionBox
+  --newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
   next_renderedCanvas' = if _renderedCanvas_box _goatState_renderedCanvas /= newBox
     then moveRenderedCanvas next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
@@ -621,6 +626,7 @@ holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   -> m (GoatWidget t)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
+  initialCanvasRegion <- sample . current $ _goatWidgetConfig_canvasRegionDim
   let
     --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
     --goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
@@ -633,6 +639,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
       , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
+      , ffor (updated _goatWidgetConfig_canvasRegionDim) GoatCmdSetCanvasRegionDim
       ]
 
     -- initialize broadphase with initial state
@@ -659,6 +666,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_renderedCanvas = initialrc
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
+        , _goatState_canvasRegion = initialCanvasRegion
       }
 
   goatDyn :: Dynamic t GoatState

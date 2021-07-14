@@ -31,7 +31,6 @@ DONE-fix shift select parent case (must deselect selected children)
 
 
 ::4/2021 self feedback::
--possible to make bad selections sometimes
 -text box type should highlight not cover
 -text box should indicate overflow when in text entry bode
 -needs selection box :O
@@ -40,6 +39,7 @@ DONE-fix shift select parent case (must deselect selected children)
   -needs box title
   -would be cool to have line labels :D
   -how can we reuse code from text entry handler?
+IGNORE-possible to make bad selections sometimes
 DONE-invert text box crashes still
 DONE-layers
   -no selection darkening
@@ -59,7 +59,8 @@ DONE-layers
     -background
     -text
     -etc
-  -add dividers in LHS to indicate where each UI region starts/ends
+  DONE-add dividers in LHS to indicate where each UI region starts/ends
+    -to be more awesome you could color each section differently...
   -add character to handlers and show highlighted text
   -layers
     -scrollbar/border to layers panel
