@@ -75,7 +75,7 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
 -- | brute force renders a RenderedCanvasRegion
 potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRender seltls RenderedCanvasRegion {..} = r where
-  drawers = reverse $ map getDrawer seltls
+  drawers = map getDrawer seltls
   genfn i = newc' where
     pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
@@ -97,7 +97,7 @@ potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . f
 -- caller is expected to provide all SElts that intersect the rendered LBox
 render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 render llbx@(LBox (V2 x y) _) seltls RenderedCanvasRegion {..} = r where
-  drawers = reverse $ map getDrawer seltls
+  drawers = map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
     pt@(V2 lx ly) = toPoint llbx i

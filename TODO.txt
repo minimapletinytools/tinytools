@@ -48,19 +48,8 @@ DONE-layers
 ::NEWEST TODO::
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
-
 -TINY TODO
-  -fix focus in params ugh
-  -fix cursor highlight in params
-  -color config object
-    -entry box valid
-    -entry box entering
-    -entry box grayed
-    -background
-    -text
-    -etc
-  DONE-add dividers in LHS to indicate where each UI region starts/ends
-    -to be more awesome you could color each section differently...
+  -fix multi-select resize
   -add character to handlers and show highlighted text
   -layers
     -scrollbar/border to layers panel
@@ -68,14 +57,36 @@ DONE-layers
     -fix layers issues above
     -remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
-  -multi-line handler
-  -fix multi-selecet resize
+  -color config object
+    -entry box valid
+    -entry box entering
+    -entry box grayed
+    -background
+    -text
+    -etc
   -still getting same source assert when dragging to/from layers/canvas
     -(write Ut for this)
-  -reverse render order
-  -off canvas rendering??
-    -you need to change dynamic XY to event XY (and set initial state with an event) to avoid cyclic eval...
-
+  -EXTRA BONUS TODO
+    -attachments
+    -text box should indicate overflow when in text entry bode
+    -box labels
+    -glyph widget
+  -BONUS TODO (TBH you need to do this to make the product useable)
+    -layer show/hide
+      -test impl
+      -refine UI
+    -save, save as, open dialogs
+    -selection box
+    -separate selection rendering
+    -multi-line handler
+  DONE-params crap
+    DONE-fix focus in params ugh
+    DONE-fix cursor highlight in params
+  DONE-reverse render order
+  DONE-add dividers in LHS to indicate where each UI region starts/ends
+    -to be more awesome you could color each section differently...
+  DONE-off canvas rendering??
+    DONE-you need to change dynamic XY to event XY (and set initial state with an event) to avoid cyclic eval...
   DONE/IGNORE-block inverted squares (how to handle multi-select?)
     DONE-you broke it, fix pls
     DONE-write a UT for this
@@ -86,11 +97,11 @@ DONE-layers
     DONE-get rid of PFWidgetCtx and use specific instances
     DONE-write harness for testing Params, Tools, etc...
 
+
+-selection separate rendering
+  -do I need to make a second AABB??
+  -also lets you do selection preview
 -make a set of Goat verifiers for testing in vty UTs
--params MVP
-  -toggle box border?
-  -line style??
-  -make a UT for setting params
 -glpyh selector-search widget
   -at least basic version which has a tab listing standard ASCII stuff
   -and then tab for all the best emojis :O
@@ -107,31 +118,21 @@ DONE-layers
   -Wrap Characters
   -Overflow
   -Clip
-
--selection separate rendering
-  -do I need to make a second AABB??
-  -also lets you do selection preview
-
 -do multiline stuff :D
-
 -switch to endo style folding in goatwidget so you don't need to use ignoreMouseUnlessFocused
-
 -hook up unicode width fn
   -add hook for it in renderer
     -erhh, this may need some refactoring...
   -maybe need it in broadphase too? Prob not
-
 -convert textarea into free form
   -implement or at least add stubs for this
 -add screen size support to GoatWidget (for rendering OOB)
-
 -menu bar?
   -open/save/load/quit/about
     -maybe don't worry about submenus for now 😱
   -you need to use zipper if you want sub menus
 -new vty window stuff
   -MVP is some floating windows that modify something in base window
-
 -consider adding second cursor type, "v" and "a" equivalent (probably ignore)
 -handlers should render as background fill color
   -and to be even more awesome, you could render on top for when moving things is background I guess
@@ -151,49 +152,27 @@ DONE-layers
   -undo redo of text
     -you should really set up a 1000 undo redo sorta thing again
 -rendering
-  -get rid of BroadPhaseState (carry changes around separately)
-  -layer show/hide needs to return SEltLabelChanges
+  DONE-get rid of BroadPhaseState (carry changes around separately)
+  DONE???-layer show/hide needs to return SEltLabelChanges
   -render based on screen not canvas
     -add _goatWidgetConfig_screen Dynamic t (Int,Int)
   -wrap initial render into helper function
   DONE/IGNORE-finish TODOs in updateCanvas
   DONE-rendering happens in GoatWidget??
     -or just make sure utility functions make it easy enough to do this outside of GoatWidget
--layers
-  DONE-consider doing tree structure for folders
-  -layers (probably go with "more complicated select")
-    -layers selection and actual selection are different
-      -need a way to figure out parent
-        -refactor layers to use tree structure
-        -maintain an IntMap LayerEntry for non-visible LayerEntry as well
-        -maintain IntMap REltId parent map
-    -render selection in layers (add selected state to lentry)
-    -PFEMove moves all children if folder was moved
-      -addAllChildrenToSelection
-    IGNORE-select folder start also selects folder end in layers
-    -shift deselect test
-    -add deselect support to LayersHandler ???
-  -selectMagic should ignore locked elements
-    -test it
-  -finish changesFromToggleHide
-    -test it
--saved SuperStyle presets
+-user defined SuperStyle presets
 -if you are in BoxTextHandler mode and you have Text tool selected
   -then you click and release outside box, you will go back to boxtext handler
   -so I guess click release with any creation tool should deselect everything
   -or not, maybe this is ok...
--layers test for the future
-  -rename (when supported)
-  -drag move collapsed folder
-  -select non-contiguous elements and drag+move
 -PFStateChangeFlag and have each PFState operation return a change flag as well
 -SimpleSEltLine
   DONE-renderer
   -prototoype connections
 -refactor for ordering service spec D:
 -SPECS
-  -vty attr spec
   -params spec
+  DONE-vty attr spec
   DONE-cartesian lines spec
   -group spec
     -group is prob just a folder that auto selects everything in said folder, you can subgroup but it just adds to the parent group effectively
@@ -215,9 +194,34 @@ DONE-layers
   -write method to update layers incrementally when there are changes + when moving elements around in layers
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
--rename Entry/newmemtest/Testing/Directory to DEPRECATED
 
-
+DONE-params MVP
+  -toggle box border?
+  -line style??
+  -make a UT for setting params
+IGNORE-layers test for the future
+  -rename (when supported)
+  -drag move collapsed folder
+  -select non-contiguous elements and drag+move
+DONE/IGNORE-rename Entry/newmemtest/Testing/Directory to DEPRECATED
+IGNORE-layers
+  DONE-consider doing tree structure for folders
+  -layers (probably go with "more complicated select")
+    -layers selection and actual selection are different
+      -need a way to figure out parent
+        -refactor layers to use tree structure
+        -maintain an IntMap LayerEntry for non-visible LayerEntry as well
+        -maintain IntMap REltId parent map
+    -render selection in layers (add selected state to lentry)
+    -PFEMove moves all children if folder was moved
+      -addAllChildrenToSelection
+    IGNORE-select folder start also selects folder end in layers
+    -shift deselect test
+    -add deselect support to LayersHandler ???
+  -selectMagic should ignore locked elements
+    -test it
+  DONE-finish changesFromToggleHide
+    -test it
 DONE-nested layers
   DONE-dummy square at bottom
   DONE-highlight square indicating where you will drop to
