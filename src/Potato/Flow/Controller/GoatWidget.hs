@@ -40,12 +40,10 @@ import           Potato.Flow.Types
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
-import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
-import           Data.Tuple.Extra
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
@@ -240,6 +238,10 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_keyboard = never
     , _goatWidgetConfig_paramsEvent = never
     , _goatWidgetConfig_setDebugLabel = never
+    , _goatWidgetConfig_unicodeWidthFn = Nothing
+    , _goatWidgetConfig_canvasRegionDim = never
+    , _goatWidgetConfig_canvasSize = never
+    , _goatWidgetConfig_bypassEvent = never
   }
 
 
@@ -281,18 +283,6 @@ maybeUpdateHandlerFromSelection sph selection = case sph of
   SomePotatoHandler h -> if pIsHandlerActive h
     then sph
     else makeHandlerFromSelection selection
-
--- TODO fix me
--- LayerMetaMap isn't enough to figure out if elt is hidden/locked
--- you need to check its parents as well... and we don't have an easy way to get to parents atm
-makeCanvasSelectionFromSelection :: OwlPFState -> LayerMetaMap -> Selection -> Selection
-makeCanvasSelectionFromSelection OwlPFState {..} lmm (SuperOwlParliament selection) = SuperOwlParliament . flip Seq.filter selection $ \sowl -> case superOwl_toSElt_hack sowl of
-  SEltFolderStart -> False
-  SEltFolderEnd -> error "this should never happen after owl refactor"
-  _ -> case IM.lookup (_superOwl_id sowl) lmm of
-    Nothing             -> True
-    Just LayerMeta {..} -> True
-
 
 makeClipboard :: GoatState -> Maybe SEltTree
 makeClipboard goatState@GoatState {..} = r where
@@ -502,8 +492,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
                 -- unhandled input
                 _ -> makeGoatCmdTempOutputFromNothing goatState
-      _          -> undefined
-
 
   -- update OwlPFWorkspace from pho
   (next_workspace, cslmapForBroadPhase) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
@@ -535,7 +523,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       r' = if add
         then superOwlParliament_disjointUnionAndCorrect nextot _goatState_selection sel
         else sel
-      sortfn (_,lp1,_) (_,lp2,_) = compare lp1 lp2
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
   -- update selection based on changes from updating OwlPFState
