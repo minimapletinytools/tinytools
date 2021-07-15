@@ -1,3 +1,4 @@
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Render (
@@ -42,6 +43,7 @@ emptyChar :: PChar
 emptyChar = ' '
 
 -- TODO rename, this should mean the portion of the screen that is rendered, not the canvas
+-- RenderedCanvasScreen
 data RenderedCanvas = RenderedCanvas {
   _renderedCanvas_box        :: LBox
   , _renderedCanvas_contents :: V.Vector PChar -- ^ row major
@@ -130,7 +132,11 @@ renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
 -- TODO this does not handle wide chars at all fack
 -- | assumes region LBox is strictly contained in _renderedCanvas_box
 renderedCanvasRegionToText :: LBox -> RenderedCanvas -> Text
-renderedCanvasRegionToText lbx RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
+renderedCanvasRegionToText lbx RenderedCanvas {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvas_box)
+  else T.unfoldr unfoldfn (0, False) where
+
+  validBoxes = intersect_lBox lbx _renderedCanvas_box == Just lbx
+
   l = lBox_area lbx
   (LBox (V2 px py) _) = _renderedCanvas_box
   (LBox _ (V2 lw _)) = lbx

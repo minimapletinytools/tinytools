@@ -61,9 +61,9 @@ data GoatState = GoatState {
     , _goatState_selection       :: Selection
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
-    , _goatState_renderedCanvas  :: RenderedCanvas
 
-    , _goatState_canvasRegion    :: XY
+    , _goatState_renderedCanvas  :: RenderedCanvas
+    , _goatState_screenRegion    :: XY
 
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
@@ -85,6 +85,8 @@ data GoatCmd =
   GoatCmdTool Tool
   | GoatCmdLoad EverythingLoadState
   | GoatCmdWSEvent WSEvent
+
+  -- TODO DELETE
   | GoatCmdSetCanvasRegionDim XY
 
   -- canvas direct input
@@ -133,6 +135,11 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   , _goatCmdTempOutput_layersState :: Maybe LayersState
   , _goatCmdTempOutput_changesFromToggleHide :: SuperOwlChanges
 } deriving (Show)
+
+-- helpers to extract stuff out of goatState because we use record wildcards and can't access otherwise
+goatCmdTempOutput_screenRegion :: GoatCmdTempOutput -> XY
+goatCmdTempOutput_screenRegion = _goatState_screenRegion . _goatCmdTempOutput_goatState
+
 
 instance Default GoatCmdTempOutput where
   def = GoatCmdTempOutput {
@@ -210,7 +217,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_keyboard       :: Event t KeyboardData
 
   -- other canvas stuff
-  , _goatWidgetConfig_canvasRegionDim     :: Dynamic t XY
+  , _goatWidgetConfig_canvasRegionDim     :: Event t XY
 
   -- command based
   , _goatWidgetConfig_selectTool     :: Event t Tool
@@ -218,8 +225,6 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
   , _goatWidgetConfig_canvasSize     :: Event t XY
-
-  -- TODO command for updating canvas size
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
@@ -243,21 +248,19 @@ data GoatWidget t = GoatWidget {
 
   , _goatWidget_selection           :: Dynamic t Selection
 
-  -- TODO
   -- TODO also you want a bunch of selection converting helper functions...
   , _goatWidget_selection_converted :: Dynamic t CanvasSelection
-
 
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
 
   , _goatWidget_pan                 :: Dynamic t XY
   , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
-  -- TODO render here?
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
   , _goatWidget_layersHandlerRenderOutput :: Dynamic t LayersViewHandlerRenderOutput
-  , _goatWidget_canvas              :: Dynamic t SCanvas
+  , _goatWidget_canvas              :: Dynamic t SCanvas -- TODO DELETE just use OwlPFState
   , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvas
 
+  -- TODO this is no longer debug (or maybe expose just OwlPFState part)
   -- debug stuff prob
   , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
 }
@@ -328,7 +331,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     SomePotatoHandler handler -> case cmd of
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
-      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_canvasRegion = x }
+      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdLoad (spf, cm) ->
@@ -591,16 +594,12 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
-  -- TODO crop/expand to screen
-
-  canvasRegionBox = LBox (- _goatState_pan) _goatState_canvasRegion
+  canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   --newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
   next_renderedCanvas' = if _renderedCanvas_box _goatState_renderedCanvas /= newBox
     then moveRenderedCanvas next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
-
-
 
   -- render the scene if there were changes
   cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
@@ -626,7 +625,6 @@ holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   -> m (GoatWidget t)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
-  initialCanvasRegion <- sample . current $ _goatWidgetConfig_canvasRegionDim
   let
     --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
     --goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
@@ -639,14 +637,16 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
       , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
-      , ffor (updated _goatWidgetConfig_canvasRegionDim) GoatCmdSetCanvasRegionDim
+      , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
       ]
+
 
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
     (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
     initiallayersstate = makeLayersStateFromOwlPFState _goatWidgetConfig_initialState
 
+    -- TODO DELETE
     -- TODO wrap this in a helper function in Render
     -- TODO we want to render the whole screen, not just the canvas
     initialCanvasBox = _sCanvas_box $ _owlPFState_canvas _goatWidgetConfig_initialState
@@ -666,7 +666,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_renderedCanvas = initialrc
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
-        , _goatState_canvasRegion = initialCanvasRegion
+        , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
       }
 
   goatDyn :: Dynamic t GoatState

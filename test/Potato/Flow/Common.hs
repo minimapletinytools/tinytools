@@ -82,7 +82,7 @@ everything_network_app pfs (AppIn _ ev) = do
         EWCCanvasResize x -> Just x
         _ -> Nothing
       , _goatWidgetConfig_bypassEvent = never
-      , _goatWidgetConfig_canvasRegionDim = constDyn (V2 100 100)
+      , _goatWidgetConfig_canvasRegionDim = never
 
     }
   everythingWidget <- holdGoatWidget ewc

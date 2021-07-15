@@ -74,6 +74,7 @@ DONE-layers
     -(write Ut for this)
   -reverse render order
   -off canvas rendering??
+    -you need to change dynamic XY to event XY (and set initial state with an event) to avoid cyclic eval...
 
   DONE/IGNORE-block inverted squares (how to handle multi-select?)
     DONE-you broke it, fix pls
