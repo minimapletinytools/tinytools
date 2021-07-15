@@ -14,7 +14,6 @@ module Potato.Flow.Controller.Manipulator.Common (
 
 import           Relude
 
-import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
@@ -22,9 +21,7 @@ import           Potato.Flow.Types
 import           Potato.Flow.Owl
 
 import           Control.Exception
-import qualified Data.List                    as L
 import qualified Data.Sequence                as Seq
-import           Data.Tuple.Extra
 
 data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
 

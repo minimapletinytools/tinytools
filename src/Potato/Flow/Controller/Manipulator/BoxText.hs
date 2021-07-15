@@ -27,12 +27,10 @@ import           Potato.Flow.OwlWorkspace
 import           Control.Exception
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
-import Data.Maybe (catMaybes)
 import qualified Data.IntMap                               as IM
 import qualified Data.Map as Map
 import qualified Data.Sequence                             as Seq
 import qualified Potato.Data.Text.Zipper                          as TZ
-import           Data.Tuple.Extra
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 
@@ -73,11 +71,15 @@ makeBoxTextInputState :: REltId -> SBox -> RelMouseDrag -> BoxTextInputState
 makeBoxTextInputState rid sbox rmd = r where
   ogtext = _sBoxText_text . _sBox_text $ sbox
   ogtz = TZ.fromText ogtext
-  -- missing fields get updated in next pass
   r' = BoxTextInputState {
       _boxTextInputState_rid = rid
       , _boxTextInputState_original   = ogtext
       , _boxTextInputState_zipper   = ogtz
+
+      -- these fields get updated in next pass
+      , _boxTextInputState_box = error "expected to be filled"
+      , _boxTextInputState_displayLines = error "expected to be filled"
+
       --, _boxTextInputState_selected = 0
     }
   r'' = updateBoxTextInputStateWithSBox sbox r'
@@ -94,7 +96,7 @@ mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
 mouseText tais sbox rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   ogtz = _boxTextInputState_zipper tais
-  CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox $ _sBox_box sbox
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   V2 mousex mousey = _mouseDrag_to
   V2 xoffset yoffset = getOffset sbox
   newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
@@ -123,7 +125,7 @@ inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip },
     KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
     KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
 
-    KeyboardKey_Esc                   -> error "unexpected keyboard char (escape should be handled outside)"
+    k                   -> error $ "unexpected keyboard char (event should have been handled outside of this handler)" <> show k
 
   controller = CTagBoxText :=> (Identity $ CBoxText {
       _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
@@ -204,9 +206,8 @@ instance PotatoHandler BoxTextHandler where
             }
         }
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
-      _ -> error "unexpected mouse state passed to handler"
 
-  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k mods) = case k of
+  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxTextHandler_prevHandler tah') }
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares

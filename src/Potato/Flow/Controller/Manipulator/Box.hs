@@ -28,9 +28,6 @@ import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
 import qualified Data.IntMap                                as IM
 import qualified Data.List                                  as L
-import qualified Data.Sequence                              as Seq
-import           Data.Tuple.Extra
-import Control.Exception (assert)
 
 -- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)

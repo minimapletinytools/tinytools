@@ -63,7 +63,7 @@ instance PotatoHandler CartLineHandler where
     MouseDragState_Dragging -> undefined
     MouseDragState_Up -> undefined
     MouseDragState_Cancelled -> Just def
-    _ -> error "unexpected mouse state passed to handler"
+
   pHandleKeyboard clh PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement based on last selected manipulator I guess
     _                              -> Nothing

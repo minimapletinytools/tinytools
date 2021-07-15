@@ -5,22 +5,17 @@ module Potato.Flow.Controller.OwlLayers where
 
 import           Relude
 
-import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Types
-import           Potato.Flow.Math
-import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 
 import           Control.Lens                 (over, _2)
-import           Data.Aeson
 import Data.Foldable (foldl)
 import           Data.Default
 import qualified Data.IntMap                  as IM
-import           Data.Sequence                ((<|), (><), (|>))
+import           Data.Sequence                ((><), (|>))
 import qualified Data.Sequence                as Seq
-import           Data.Tuple.Extra
 import qualified Data.Text as T
 
 data LockHiddenState = LHS_True | LHS_False | LHS_True_InheritTrue | LHS_False_InheritTrue deriving (Eq, Show)
@@ -42,7 +37,6 @@ setLockHiddenStateInChildren parentstate = \case
   False -> case parentstate of
     LHS_False -> LHS_False
     _         -> LHS_False_InheritTrue
-    LHS_True  -> LHS_False_InheritTrue
   True -> case parentstate of
     LHS_False -> LHS_True
     _         -> LHS_True_InheritTrue
@@ -173,14 +167,14 @@ doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
       -- note, no need to check for collapsed state because we are iterating over LayerEntry which do not include children of collapsed entries
       | skipfn le = depth + 1
       -- either we exited a skipped folder or aren't skipping, reset skip counter (since we skip subfolders of skipped entries, maximal skip stack depth is 1 so reset is OK)
-      | depth < skipdepth = maxBound
+      | otherwise = maxBound
     newle = if depth >= skipdepth
       then le -- no changes to skipped elts
       else entryfn le
 
 
 toggleLayerEntry :: OwlPFState -> LayersState -> LayerEntryPos -> LockHideCollapseOp -> LayersState
-toggleLayerEntry pfs@OwlPFState {..} LayersState {..} lepos op = r where
+toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
   le = Seq.index _layersState_entries lepos
   lerid = layerEntry_rEltId le
   ledepth = layerEntry_depth le

@@ -18,10 +18,8 @@ import           Potato.Flow.OwlState
 
 import           Data.Default
 import qualified Data.IntMap                    as IM
-import qualified Data.Set as Set
 import qualified Data.Sequence                  as Seq
 import Data.Sequence ((<|))
-import           Data.Tuple.Extra
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -66,7 +64,7 @@ instance PotatoHandler LayersHandler where
   -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
     selection = _potatoHandlerInput_selection
-    ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
+    ls@(LayersState _ lentries scrollPos) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
     owltree = (_owlPFState_owlTree pfs)
 
@@ -79,7 +77,7 @@ instance PotatoHandler LayersHandler where
         (nextDragState, mNextLayerState, changes) = case clickLayerNew lentries leposxy of
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
-          Just (downsowl, ldtdown, offset) -> case ldtdown of
+          Just (downsowl, ldtdown, _) -> case ldtdown of
 
             LDT_Normal -> if shift || (not $ doesSelectionContainREltId_linear (_superOwl_id downsowl) selection)
               -- TODO check if element is descendent of selected element and return LDS_None if so
@@ -169,7 +167,7 @@ instance PotatoHandler LayersHandler where
                 newsiblingid = owlTree_superOwlNthParentId owltree asowl nsibling
                 siblingout = case newsiblingid of
                   x | x == noOwl -> Nothing
-                  x | x == x -> Just x
+                  x -> Just x
 
         r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {

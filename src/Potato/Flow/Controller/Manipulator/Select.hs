@@ -15,16 +15,10 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
-import           Potato.Flow.Types
-import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Owl
 
 import           Data.Default
-import           Data.Dependent.Sum             (DSum ((:=>)))
-import qualified Data.IntMap                    as IM
-import qualified Data.List                      as L
 import Data.Foldable (maximumBy)
-import           Data.Maybe
 import qualified Data.Sequence                  as Seq
 
 

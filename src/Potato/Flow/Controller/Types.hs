@@ -14,32 +14,21 @@ module Potato.Flow.Controller.Types (
 
 import           Relude
 
-import           Reflex
-import           Reflex.Potato.Helpers
-
-import           Potato.Flow.BroadPhase
-import           Potato.Flow.Deprecated.Layers     (selectionHasScopingProperty)
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.Owl
 
-import           Control.Exception      (assert)
-import           Control.Monad.Fix
 import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap            as IM
-import qualified Data.List              as L
-import qualified Data.List.Ordered      as L (isSortedBy)
-import           Data.Maybe
-import qualified Data.Sequence          as Seq
-import           Data.Tuple.Extra
 
 
 -- someday it would be nice to support graphene clusters and RTL 😭
 data UnicodeWidthFn = UnicodeWidthFn {
     unicodeWidth_wcwidth :: PChar -> Int
   }
+
 
 -- TOOL
 data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text deriving (Eq, Show, Enum)

@@ -102,7 +102,6 @@ instance PotatoHandler SimpleLineHandler where
         }
     MouseDragState_Up -> Just def
     MouseDragState_Cancelled -> Just def
-    _ -> error "unexpected mouse state passed to handler"
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
     _                              -> Nothing

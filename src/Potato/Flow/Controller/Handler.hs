@@ -12,17 +12,13 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
-import           Potato.Flow.Types
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Owl
 
 import           Data.Default
-import           Data.Dependent.Sum            (DSum ((:=>)))
 import qualified Data.IntMap                   as IM
-import qualified Data.List                     as L
 import qualified Data.Sequence                 as Seq
 import qualified Data.Text                     as T
-import           Data.Tuple.Extra
 import qualified Text.Show
 
 data PotatoHandlerOutput = PotatoHandlerOutput {
@@ -153,7 +149,7 @@ class PotatoHandler h where
   pResetHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   -- prob not correct behavior, if you delete an elt (say), then you don't want to persist the handler
   --pResetHandler h _ = Just $ SomePotatoHandler h
-  pResetHandler h _ = Nothing
+  pResetHandler _ _ = Nothing
 
   -- active manipulators will not be overwritten by new handlers via selection from backend
   pIsHandlerActive :: h -> Bool
