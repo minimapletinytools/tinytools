@@ -49,20 +49,15 @@ DONE-layers
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
 -TINY TODO
-  -add character to handlers and show highlighted text
+  -TODO add sorting to BroadPhase somehow...
+    -fix select order
+    -ok you didn't actually fix render order...
   -layers
     -scrollbar/border to layers panel
     -add rename support to layers
     -fix layers issues above
     DONE-remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
-  -color config object
-    -entry box valid
-    -entry box entering
-    -entry box grayed
-    -background
-    -text
-    -etc
   -still getting same source assert when dragging to/from layers/canvas
     -(write Ut for this)
     -I think you just need to switch layout stuff to use pane2
@@ -75,11 +70,19 @@ DONE-layers
     -layer show/hide
       -test impl
       -refine UI
-    -save, save as, open dialogs
+    -save, save as, open, print dialogs
     -selection box
     -separate selection rendering
     -multi-line handler
     -toggle box to textbox to freeform
+  DONE/IGNORE-color config object
+    -entry box valid
+    -entry box entering
+    -entry box grayed
+    -background
+    -text
+    -etc
+  DONE-add character to handlers and show highlighted text
   DONE-fix multi-select resize
   DONE-params crap
     DONE-fix focus in params ugh
