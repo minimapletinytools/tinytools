@@ -12,23 +12,14 @@ import           Test.Hspec
 import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
-import           Reflex
-import           Reflex.Test.Host
-
 import           Potato.Flow
-import           Potato.Flow.Controller.GoatWidget
-import           Potato.Flow.Controller.Handler
-import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.OwlLayers
 
 -- test imports
 import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
-import qualified Data.IntMap                       as IM
 import qualified Data.List.Ordered                 as L
 import qualified Data.Sequence                     as Seq
-import           Data.Tuple.Extra
 
 
 expectState :: OwlPFState -> EverythingPredicate

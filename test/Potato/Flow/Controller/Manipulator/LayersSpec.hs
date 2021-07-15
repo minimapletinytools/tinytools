@@ -13,15 +13,10 @@ import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
-import           Potato.Flow.Controller.GoatWidget
-import           Potato.Flow.Controller.Handler
-import           Potato.Flow.Controller.Input
 
 import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
-import           Data.Default
-import qualified Data.IntMap                       as IM
 import qualified Data.Sequence                     as Seq
 
 moveOffset :: Int
@@ -335,19 +330,19 @@ test_LayersHandler_folders2 = constructTest "folders2" owlpfstate_basic2 bs expe
       , LabelCheck "drag b1"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 7
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 7
 
       , LabelCheck "drag b1 2"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
 
       , LabelCheck "drag fstart2"
       , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \_ _ -> True
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
     ]
 
 test_LayersHandler_scroll :: Test

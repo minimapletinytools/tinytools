@@ -13,8 +13,6 @@ import           Test.Hspec.Contrib.HUnit                   (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
-import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Manipulator.BoxText
 
 import           Potato.Flow.Common
 
@@ -53,7 +51,7 @@ makeBoxTextInputState_basic_test = let
 
 checkSBoxText :: Text -> Text -> EverythingPredicate
 checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
-  SEltBox (SBox lbox _ _ (SBoxText {..}) _) -> _sBoxText_text == text
+  SEltBox (SBox _ _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
 -- | check the position of the cursor
@@ -146,7 +144,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
       , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
-        SEltBox (SBox lbox _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
+        SEltBox (SBox _ _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
         _                                 -> False
       , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False

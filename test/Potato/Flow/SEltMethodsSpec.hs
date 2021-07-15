@@ -9,8 +9,6 @@ import           Relude       hiding (empty, fromList)
 import           Test.Hspec
 
 import           Data.Default (def)
-import qualified Data.IntMap  as IM
-import qualified Data.Text    as T
 
 import           Potato.Flow
 

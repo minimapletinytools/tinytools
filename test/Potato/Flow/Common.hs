@@ -19,23 +19,15 @@ module Potato.Flow.Common
   )
 where
 
-import           Relude                            hiding (empty, fromList)
+import           Relude                            hiding (empty, fromList, first)
 
-import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Reflex
 import           Reflex.Test.Host
 
 import           Potato.Flow
-import           Potato.Flow.Controller.GoatWidget
-import           Potato.Flow.Controller.Handler
-import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.Types
-import           Potato.Flow.Deprecated.TestStates
 
-import           Control.Monad.Fix
 import qualified Data.IntMap                       as IM
 import qualified Data.Sequence                     as Seq
 import qualified Data.Text                         as T
@@ -83,6 +75,7 @@ everything_network_app pfs (AppIn _ ev) = do
         _ -> Nothing
       , _goatWidgetConfig_bypassEvent = never
       , _goatWidgetConfig_canvasRegionDim = never
+      , _goatWidgetConfig_unicodeWidthFn = Nothing
 
     }
   everythingWidget <- holdGoatWidget ewc
@@ -146,12 +139,12 @@ checkHandlerName name = FunctionPredicate $
   . _goatState_handler
 
 checkHandlerNameAndState :: Text -> Bool -> EverythingPredicate
-checkHandlerNameAndState name state = FunctionPredicate $
+checkHandlerNameAndState name st = FunctionPredicate $
   (\(SomePotatoHandler h) ->
     let
       hName = pHandlerName h
-      hState = pIsHandlerActive h
-    in ("Handler: " <> hName <> "(" <> show hState <> ") expected: " <> name <> " (" <> show state <> ")", hName == name && hState == state))
+      hst = pIsHandlerActive h
+    in ("Handler: " <> hName <> "(" <> show hst <> ") expected: " <> name <> " (" <> show st <> ")", hName == name && hst == st))
   . _goatState_handler
 
 firstSelectedSuperOwlWithOwlTreePredicate :: Maybe Text -> (OwlTree -> SuperOwl -> Bool) -> EverythingPredicate
@@ -203,7 +196,7 @@ constructTest label pfs bs expected = TestLabel label $ TestCase $ do
   -- TODO do index counting from labels
   -- expect each output matches predicate
   -- if no output event, uses output behavior to test predicate
-  forM_ (zip3 (join values) expected [0..]) $ \((b, me), p, i) -> let
+  forM_ (zip3 (join values) expected [(0::Int)..]) $ \((b, me), p, i) -> let
       testfn ewcd =
         (assertBool . T.unpack) ((showEverythingPredicate p ewcd)
           <> " \n[label = " <> _goatState_debugLabel ewcd

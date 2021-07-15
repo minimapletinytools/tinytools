@@ -9,12 +9,8 @@ where
 import           Relude                        hiding (empty, fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit      (fromHUnitTest)
-import           Test.HUnit
 
 import           Potato.Flow
-import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.OwlLayers
 
 import           Potato.Flow.TestStates
 import           Potato.Flow.Deprecated.State (PFState(..))
@@ -22,7 +18,6 @@ import           Potato.Flow.Deprecated.State (PFState(..))
 import           Data.Default
 import qualified Data.IntMap                   as IM
 import qualified Data.Sequence                 as Seq
-import           Data.Tuple.Extra
 
 
 someState1 :: OwlPFState

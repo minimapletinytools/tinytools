@@ -20,14 +20,9 @@ module Potato.Flow.TestStates (
 
 import           Relude
 
-import           Data.Default
-import qualified Data.IntMap   as IM
-import qualified Data.Sequence as Seq
 import           Potato.Flow
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
-import           Potato.Flow.OwlState
-import           Potato.Flow.Owl
 
 someOwlElt :: OwlElt
 someOwlElt = OwlEltSElt (OwlInfo "some elt") SEltNone
