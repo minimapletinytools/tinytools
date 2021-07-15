@@ -193,30 +193,38 @@ pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pf
 -- assumes input box is canonical
 clampNoNegDeltaLBoxTransformation :: LBox -> DeltaLBox -> DeltaLBox
 clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) dlbx@(DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
-  -- first transfrom as usual
-  LBox (V2 nx ny) (V2 nw' nh') = plusDelta lbx dlbx
 
-  -- TODO do addional limits so that when you translate, you can't push the box around
-  -- some bug in the code below
-  --LBox (V2 nx' ny') (V2 nw'' nh'') = plusDelta lbx dlbx
+  -- var legend
+  -- ogt = original translation
+  -- ogd = original dimension
+  -- dt = delta translation
+  -- dd = delta dimension
 
-  -- limit translation based on original bottom right corner position (assumes input box is canonical)
-  --nx = min nx' (x+w+(min 0 dw))
-  --ny = min ny' (y+h+(min 0 dh))
+  clamptfirst ogt ogd dt dd = (nt, nd) where
+    nt = min (ogt+dt) (ogt + max ogd (ogd+dd))
+    nd = max 0 (ogd+dd)
 
-  -- compute the new sizes based on limited translations
-  --nw' = nx'+nw''-nx
-  --nh' = ny'+nh''-ny
+  clampdfirst ogt ogd dt dd = (nt, nd) where
+    nd = max 0 (ogd+dd)
+    nt = min (ogt+dt) (ogt+nd)
 
-  -- then clamp size portion (translation takes priority)
-  nw = max 0 nw'
-  nh = max 0 nh'
+  computepair ogt ogd dt dd = if ogd + dd < 0
+    -- if there was a flip
+    then if dt /= 0
+      -- if we're moving from the translation side then clamp the translation first
+      then clamptfirst ogt ogd dt dd
+      else clampdfirst ogt ogd dt dd
+    -- else plusDelta on components as normal
+    else (ogt+dt, ogd+dd)
 
-  -- convert back to DeltaLBox
+  (nx, nw) = computepair x w dx dw
+  (ny, nh) = computepair y h dy dh
+
   r = DeltaLBox (V2 (nx-x) (ny-y)) (V2 (nw-w) (nh-h))
 
 pfc_manipulate_to_manipulate :: OwlPFState -> ControllersWithId -> OwlPFCmd
 pfc_manipulate_to_manipulate pfs cwid = r where
+
   -- TODO probably move somwhere else
   -- restrict boxes to prevent negative
   mapfn rid controller = case controller of
@@ -229,6 +237,7 @@ pfc_manipulate_to_manipulate pfs cwid = r where
         Just sbox -> clampNoNegDeltaLBoxTransformation sbox db'
       newbb = CTagBoundingBox :=> Identity (CBoundingBox db)
     x -> x
+
   r = OwlPFCManipulate $ IM.mapWithKey mapfn cwid
 
 

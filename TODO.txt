@@ -55,7 +55,7 @@ DONE-layers
     -scrollbar/border to layers panel
     -add rename support to layers
     -fix layers issues above
-    -remove inherit selection highlight
+    DONE-remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
   -color config object
     -entry box valid
@@ -66,6 +66,7 @@ DONE-layers
     -etc
   -still getting same source assert when dragging to/from layers/canvas
     -(write Ut for this)
+    -I think you just need to switch layout stuff to use pane2
   -EXTRA BONUS TODO
     -attachments
     -text box should indicate overflow when in text entry bode
