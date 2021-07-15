@@ -422,7 +422,7 @@ DONE-remove pHandleCancel
 DONE-connect TextArea handler
   -potato text area input
   -text area tool should create a box and after box is finished it should go straight to edit mode in text area handler
-IGNORE-connect RenderedCanvas
+IGNORE-connect RenderedCanvasRegion
 IGNORE-think of some way to make _pFState_directory type safe
   -partial from accessing by REltId index
   -partial from trying to operate on possibly incorrect type
@@ -435,10 +435,10 @@ DONE/IGNORE-layers
   DONE-layer drag interface (mouse position or more abstract?)
 DONE-implement override handler as per spec above (ANOTHER OPTION)
 DONE-incremental render function
-  -moveRenderedCanvas :: LBox -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
-    -first do moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
+  -moveRenderedCanvasRegion :: LBox -> BroadPhaseState -> PFState -> RenderedCanvasRegion -> RenderedCanvasRegion
+    -first do moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
     -then call renderCanvas and rerender newly moved areas
-  -updateCanvas :: SEltLableChanges -> BroadPhaseState -> PFState -> RenderedCanvas -> RenderedCanvas
+  -updateCanvas :: SEltLableChanges -> BroadPhaseState -> PFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 DONE-rename LBox methods to lBox
 IGNORE/DONE-figure out how you want to handle layer input using handlers
   -seems like there's a handler stack....

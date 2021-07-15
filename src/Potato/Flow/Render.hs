@@ -2,10 +2,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Render (
-  RenderedCanvas(..)
+  RenderedCanvasRegion(..)
   , renderedCanvas_box
-  , emptyRenderedCanvas
-  , printRenderedCanvas
+  , emptyRenderedCanvasRegion
+  , printRenderedCanvasRegion
   , potatoRender
   , potatoRenderPFState
   , render
@@ -13,11 +13,11 @@ module Potato.Flow.Render (
   , renderedCanvasRegionToText
 
   , renderWithBroadPhase
-  , moveRenderedCanvas
+  , moveRenderedCanvasRegion
   , updateCanvas
 
   -- exposed for testing
-  , moveRenderedCanvasNoReRender
+  , moveRenderedCanvasRegionNoReRender
 ) where
 
 import           Relude
@@ -42,20 +42,19 @@ import Control.Exception (assert)
 emptyChar :: PChar
 emptyChar = ' '
 
--- TODO rename, this should mean the portion of the screen that is rendered, not the canvas
--- RenderedCanvasScreen
-data RenderedCanvas = RenderedCanvas {
-  _renderedCanvas_box        :: LBox
-  , _renderedCanvas_contents :: V.Vector PChar -- ^ row major
+-- A rendered region in Canvas space
+data RenderedCanvasRegion = RenderedCanvasRegion {
+  _renderedCanvasRegion_box        :: LBox
+  , _renderedCanvasRegion_contents :: V.Vector PChar -- ^ row major
 } deriving (Eq, Show)
 
-renderedCanvas_box :: RenderedCanvas -> LBox
-renderedCanvas_box = _renderedCanvas_box
+renderedCanvas_box :: RenderedCanvasRegion -> LBox
+renderedCanvas_box = _renderedCanvasRegion_box
 
-emptyRenderedCanvas :: LBox -> RenderedCanvas
-emptyRenderedCanvas lb@(LBox _ (V2 w h)) = RenderedCanvas {
-    _renderedCanvas_box = lb
-    , _renderedCanvas_contents = V.replicate (w*h) ' '
+emptyRenderedCanvasRegion :: LBox -> RenderedCanvasRegion
+emptyRenderedCanvasRegion lb@(LBox _ (V2 w h)) = RenderedCanvasRegion {
+    _renderedCanvasRegion_box = lb
+    , _renderedCanvasRegion_contents = V.replicate (w*h) ' '
   }
 
 -- TODO move these methods to Math
@@ -73,36 +72,36 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
   then Just $ toIndex lbx xy
   else Nothing
 
--- | brute force renders a RenderedCanvas
-potatoRender :: [SElt] -> RenderedCanvas -> RenderedCanvas
-potatoRender seltls RenderedCanvas {..} = r where
+-- | brute force renders a RenderedCanvasRegion
+potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+potatoRender seltls RenderedCanvasRegion {..} = r where
   drawers = reverse $ map getDrawer seltls
   genfn i = newc' where
-    pt = toPoint _renderedCanvas_box i
+    pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
     newc' = case mdrawn of
       Just c  -> c
       Nothing -> ' '
-  newc = V.generate (V.length _renderedCanvas_contents) genfn
-  r = RenderedCanvas {
-      _renderedCanvas_box = _renderedCanvas_box
-      , _renderedCanvas_contents = newc
+  newc = V.generate (V.length _renderedCanvasRegion_contents) genfn
+  r = RenderedCanvasRegion {
+      _renderedCanvasRegion_box = _renderedCanvasRegion_box
+      , _renderedCanvasRegion_contents = newc
     }
 
-potatoRenderPFState :: OwlPFState -> RenderedCanvas -> RenderedCanvas
+potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
--- | renders just a portion of the RenderedCanvas
+-- | renders just a portion of the RenderedCanvasRegion
 -- caller is expected to provide all SElts that intersect the rendered LBox
-render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvas -> RenderedCanvas
-render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
+render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+render llbx@(LBox (V2 x y) _) seltls RenderedCanvasRegion {..} = r where
   drawers = reverse $ map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
     pt@(V2 lx ly) = toPoint llbx i
-    pindex = toIndex _renderedCanvas_box pt
+    pindex = toIndex _renderedCanvasRegion_box pt
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
     -- render what we found or empty otherwise
@@ -111,50 +110,50 @@ render llbx@(LBox (V2 x y) _) seltls RenderedCanvas {..} = r where
       Nothing -> (pindex,emptyChar)
   -- go through each point in target LBox and render it
   newc = V.generate (lBox_area llbx) genfn
-  r = RenderedCanvas {
-      _renderedCanvas_box = _renderedCanvas_box
-      , _renderedCanvas_contents = V.update _renderedCanvas_contents newc
+  r = RenderedCanvasRegion {
+      _renderedCanvasRegion_box = _renderedCanvasRegion_box
+      , _renderedCanvasRegion_contents = V.update _renderedCanvasRegion_contents newc
     }
 
-renderedCanvasToText :: RenderedCanvas -> Text
-renderedCanvasToText RenderedCanvas {..} = T.unfoldr unfoldfn (0, False) where
-  l = V.length _renderedCanvas_contents
-  (LBox _ (V2 w _)) = _renderedCanvas_box
+renderedCanvasToText :: RenderedCanvasRegion -> Text
+renderedCanvasToText RenderedCanvasRegion {..} = T.unfoldr unfoldfn (0, False) where
+  l = V.length _renderedCanvasRegion_contents
+  (LBox _ (V2 w _)) = _renderedCanvasRegion_box
   unfoldfn (i, eol) = if i == l
     then Nothing
     else if eol
       then Just $ ('\n', (i, False))
       else if (i+1) `mod` w == 0
-        then Just $ (_renderedCanvas_contents V.! i, (i+1, True))
-        else Just $ (_renderedCanvas_contents V.! i, (i+1, False))
+        then Just $ (_renderedCanvasRegion_contents V.! i, (i+1, True))
+        else Just $ (_renderedCanvasRegion_contents V.! i, (i+1, False))
 
 
 -- TODO this does not handle wide chars at all fack
--- | assumes region LBox is strictly contained in _renderedCanvas_box
-renderedCanvasRegionToText :: LBox -> RenderedCanvas -> Text
-renderedCanvasRegionToText lbx RenderedCanvas {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvas_box)
+-- | assumes region LBox is strictly contained in _renderedCanvasRegion_box
+renderedCanvasRegionToText :: LBox -> RenderedCanvasRegion -> Text
+renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvasRegion_box)
   else T.unfoldr unfoldfn (0, False) where
 
-  validBoxes = intersect_lBox lbx _renderedCanvas_box == Just lbx
+  validBoxes = intersect_lBox lbx _renderedCanvasRegion_box == Just lbx
 
   l = lBox_area lbx
-  (LBox (V2 px py) _) = _renderedCanvas_box
+  (LBox (V2 px py) _) = _renderedCanvasRegion_box
   (LBox _ (V2 lw _)) = lbx
   unfoldfn (i, eol) = if i == l
     then Nothing
     else if eol
       then Just $ ('\n', (i, False))
       else if (i+1) `mod` lw == 0
-        then Just $ (_renderedCanvas_contents V.! pindex, (i+1, True))
-        else Just $ (_renderedCanvas_contents V.! pindex, (i+1, False))
+        then Just $ (_renderedCanvasRegion_contents V.! pindex, (i+1, True))
+        else Just $ (_renderedCanvasRegion_contents V.! pindex, (i+1, False))
     where
       pt = toPoint lbx i
-      pindex = toIndex _renderedCanvas_box pt
+      pindex = toIndex _renderedCanvasRegion_box pt
 
-printRenderedCanvas :: RenderedCanvas -> IO ()
-printRenderedCanvas rc@RenderedCanvas {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvas_box rc
+printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
+printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
 
-renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvas -> RenderedCanvas
+renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
   selts = flip fmap rids $ \rid -> case owlTree_findSuperOwl ot rid of
@@ -162,35 +161,35 @@ renderWithBroadPhase bpt ot lbx rc = r where
       Just sowl -> superOwl_toSElt_hack sowl
   r = render lbx selts rc
 
-moveRenderedCanvasNoReRender :: LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvasNoReRender lbx RenderedCanvas {..} = assert (area >= 0) r where
-  -- unnecessary to init with empty vector as moveRenderedCanvas will re-render those areas
+moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
+moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) r where
+  -- unnecessary to init with empty vector as moveRenderedCanvasRegion will re-render those areas
   -- but it's still nice to do and makes testing easier
   area = lBox_area lbx
   emptyv = V.replicate area ' '
-  newv = case intersect_lBox lbx _renderedCanvas_box of
+  newv = case intersect_lBox lbx _renderedCanvasRegion_box of
     Just intersectlbx -> copiedv where
       (l,r,t,b) = lBox_to_axis intersectlbx
       -- [(newIndex, oldIndex)]
-      indices' = [toIndexSafe _renderedCanvas_box (V2 x y) >>= return . (toIndex lbx (V2 x y),) | x <- [l..(r-1)], y <- [t..(b-1)]]
+      indices' = [toIndexSafe _renderedCanvasRegion_box (V2 x y) >>= return . (toIndex lbx (V2 x y),) | x <- [l..(r-1)], y <- [t..(b-1)]]
       indices = catMaybes indices'
-      indexedValues = fmap (\(idx, oldidx) -> (idx, _renderedCanvas_contents V.! oldidx)) indices
+      indexedValues = fmap (\(idx, oldidx) -> (idx, _renderedCanvasRegion_contents V.! oldidx)) indices
       copiedv = (V.//) emptyv indexedValues
     Nothing -> emptyv
 
-  r = RenderedCanvas {
-      _renderedCanvas_box = lbx
-      , _renderedCanvas_contents = newv
+  r = RenderedCanvasRegion {
+      _renderedCanvasRegion_box = lbx
+      , _renderedCanvasRegion_contents = newv
     }
 
 -- TODO test
-moveRenderedCanvas :: BroadPhaseState -> OwlTree -> LBox -> RenderedCanvas -> RenderedCanvas
-moveRenderedCanvas (BroadPhaseState bpt) ot lbx rc = r where
-  r1 = moveRenderedCanvasNoReRender lbx rc
-  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvas_box rc))
+moveRenderedCanvasRegion :: BroadPhaseState -> OwlTree -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
+moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
+  r1 = moveRenderedCanvasRegionNoReRender lbx rc
+  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
 -- TODO test
-updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvas -> RenderedCanvas
+updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case needsUpdate of
   [] -> rc
   -- TODO incremental rendering

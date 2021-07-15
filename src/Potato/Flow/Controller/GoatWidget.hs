@@ -62,7 +62,7 @@ data GoatState = GoatState {
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
 
-    , _goatState_renderedCanvas  :: RenderedCanvas
+    , _goatState_renderedCanvas  :: RenderedCanvasRegion
     , _goatState_screenRegion    :: XY
 
     , _goatState_selectedTool    :: Tool
@@ -113,7 +113,7 @@ data DynGoatFlags = DynGoatFlags {
   , _dynGoatFlags_handlerRenderOutput =  r_handlerRenderOutput
 } deriving (Show)
 
-data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFlag_Layers | GoatStateFlag_Pan | GoatStateFlag_BroadPhase | GoatStateFlag_Canvas | GoatStateFlag_RenderedCanvas | GoatStateFlag_HandlerRenderOutput deriving (Show, Eq)
+data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFlag_Layers | GoatStateFlag_Pan | GoatStateFlag_BroadPhase | GoatStateFlag_Canvas | GoatStateFlag_RenderedCanvasRegion | GoatStateFlag_HandlerRenderOutput deriving (Show, Eq)
 -}
 
 
@@ -258,7 +258,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
   , _goatWidget_layersHandlerRenderOutput :: Dynamic t LayersViewHandlerRenderOutput
   , _goatWidget_canvas              :: Dynamic t SCanvas -- TODO DELETE just use OwlPFState
-  , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvas
+  , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvasRegion
 
   -- TODO this is no longer debug (or maybe expose just OwlPFState part)
   -- debug stuff prob
@@ -597,8 +597,8 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   --newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
-  next_renderedCanvas' = if _renderedCanvas_box _goatState_renderedCanvas /= newBox
-    then moveRenderedCanvas next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
+  next_renderedCanvas' = if _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
+    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
   -- render the scene if there were changes
@@ -651,7 +651,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     -- TODO we want to render the whole screen, not just the canvas
     initialCanvasBox = _sCanvas_box $ _owlPFState_canvas _goatWidgetConfig_initialState
     initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
-    initialrc = render initialCanvasBox initialselts (emptyRenderedCanvas initialCanvasBox)
+    initialrc = render initialCanvasBox initialselts (emptyRenderedCanvasRegion initialCanvasBox)
 
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace

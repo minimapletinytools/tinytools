@@ -15,8 +15,8 @@ import qualified Data.Text              as T
 import           Potato.Flow
 import           Potato.Flow.TestStates
 
-testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvas
-testCanvas x y w h = emptyRenderedCanvas (LBox (V2 x y) (V2 w h))
+testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvasRegion
+testCanvas x y w h = emptyRenderedCanvasRegion (LBox (V2 x y) (V2 w h))
 
 spec :: Spec
 spec = do
@@ -51,7 +51,7 @@ spec = do
       let
         fillBox = LBox (V2 (-12) (-44)) (V2 100 100)
         renderBox = LBox (V2 (-1) 10) (V2 10 10)
-        canvas1 = emptyRenderedCanvas fillBox
+        canvas1 = emptyRenderedCanvasRegion fillBox
         selt = SEltBox $ def {
             _sBox_box    = fillBox
           }
@@ -61,7 +61,7 @@ spec = do
       --putTextLn $ canvas2Text
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` lBox_area renderBox
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2TextRegion) `shouldBe` lBox_area renderBox
-    it "moveRenderedCanvasNoReRender - translate" $ do
+    it "moveRenderedCanvasRegionNoReRender - translate" $ do
       let
         -- fill the whole canvas
         canvas1 = testCanvas 0 0 100 100
@@ -70,10 +70,10 @@ spec = do
           }
         canvas2 = potatoRender [selt] canvas1
         target = LBox (V2 (-50) (-50)) (V2 100 100)
-        canvas3 = moveRenderedCanvasNoReRender target canvas2
+        canvas3 = moveRenderedCanvasRegionNoReRender target canvas2
         canvas3Text = renderedCanvasToText canvas3
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas3Text) `shouldBe` 50*50
-    it "moveRenderedCanvasNoReRender - resize" $ do
+    it "moveRenderedCanvasRegionNoReRender - resize" $ do
       let
         canvas1 = testCanvas 0 0 50 100
         -- fill the whole canvas and then some
@@ -82,10 +82,10 @@ spec = do
           }
         canvas2 = potatoRender [selt] canvas1
         target = LBox (V2 0 0) (V2 100 50)
-        canvas3 = moveRenderedCanvasNoReRender target canvas2
+        canvas3 = moveRenderedCanvasRegionNoReRender target canvas2
         canvas3Text = renderedCanvasToText canvas3
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas3Text) `shouldBe` 50*50
-    it "moveRenderedCanvas" $ do
+    it "moveRenderedCanvasRegion" $ do
       let
         initial = LBox (V2 0 0) (V2 50 100)
         target = LBox (V2 0 0) (V2 100 50)
@@ -94,11 +94,11 @@ spec = do
           }
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
-        canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvas initial
+        canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
         -- only thing changed is the canvas size
-        canvas1 = moveRenderedCanvas bps0 (_owlPFState_owlTree state0) target canvas0
-      --liftIO $ printRenderedCanvas canvas0
-      --liftIO $ printRenderedCanvas canvas1
+        canvas1 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) target canvas0
+      --liftIO $ printRenderedCanvasRegion canvas0
+      --liftIO $ printRenderedCanvasRegion canvas1
       -- TODO test something
       canvas1 `shouldBe` canvas1
     it "updateCanvas - basic" $ do

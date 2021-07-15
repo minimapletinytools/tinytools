@@ -59,7 +59,7 @@ data CanvasWidgetConfig t = CanvasWidgetConfig {
 
 data CanvasWidget t = CanvasWidget {
   -- everything is in absolute coordinates
-  _canvasWidget_renderedScreen     :: Dynamic t RenderedCanvas
+  _canvasWidget_renderedScreen     :: Dynamic t RenderedCanvasRegion
   , _canvasWidget_canvasRegion :: Dynamic t LBox
 }
 
@@ -73,8 +73,8 @@ holdCanvasWidget CanvasWidgetConfig {..} = mdo
     inputDyn = ffor2 (ffor3 screenpan _canvasWidgetConfig_broadPhaseWithUpdateSet _canvasWidgetConfig_owlPFState (,,,)) _canvasWidgetConfig_cslmapForRendering (,)
 
     foldDynFn ((box, (aabbs, bp), pfstate), cslmapForRendering) oldrc = nextrc where
-      nextrc' = if _renderedCanvas_box oldrc /= box
-        then moveRenderedCanvas bp (_owlPFState_owlTree pfstate) box oldrc
+      nextrc' = if _renderedCanvasRegion_box oldrc /= box
+        then moveRenderedCanvasRegion bp (_owlPFState_owlTree pfstate) box oldrc
         else oldrc
       nextrc = if IM.null cslmapForRendering
         then nextrc'
