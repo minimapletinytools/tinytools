@@ -249,5 +249,5 @@ instance PotatoHandler BoxHandler where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
-    r = HandlerRenderOutput handlePoints
+    r = HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
   pIsHandlerActive = _boxHandler_active

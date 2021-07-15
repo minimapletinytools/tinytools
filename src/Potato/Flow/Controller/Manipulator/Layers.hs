@@ -237,10 +237,8 @@ instance PotatoHandler LayersHandler where
         }
     _ -> Nothing
 
-  -- TODO DELETE
-  pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = if pIsHandlerActive lh
-    then HandlerRenderOutput [LBox _layersHandler_cursorPos (V2 1 1)]
-    else emptyHandlerRenderOutput
+  -- TODO render renaming stuff
+  pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 

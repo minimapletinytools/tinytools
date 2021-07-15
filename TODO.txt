@@ -49,7 +49,6 @@ DONE-layers
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
 -TINY TODO
-  -fix multi-select resize
   -add character to handlers and show highlighted text
   -layers
     -scrollbar/border to layers panel
@@ -80,6 +79,8 @@ DONE-layers
     -selection box
     -separate selection rendering
     -multi-line handler
+    -toggle box to textbox to freeform
+  DONE-fix multi-select resize
   DONE-params crap
     DONE-fix focus in params ugh
     DONE-fix cursor highlight in params

@@ -91,8 +91,19 @@ instance Default LayersViewHandlerRenderOutput where
       _layersViewHandlerRenderOutput_entries = Seq.empty
     }
 
+-- TODO come up with better name
+data RenderHandle = RenderHandle {
+    _renderHandle_box :: LBox
+    -- Nothing means highlight
+    , _renderHandle_char :: Maybe PChar
+  } deriving (Show, Eq)
+
+defaultRenderHandle :: LBox -> RenderHandle
+defaultRenderHandle lbox = RenderHandle lbox (Just 'X')
+
+-- TODO come up with better name
 data HandlerRenderOutput = HandlerRenderOutput {
-    _handlerRenderOutput_temp :: [LBox] -- list of coordinates where there are handles
+    _handlerRenderOutput_temp :: [RenderHandle] -- list of coordinates where there are handles
   } deriving (Eq)
 
 instance Default HandlerRenderOutput where

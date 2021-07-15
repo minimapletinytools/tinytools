@@ -33,6 +33,7 @@ import qualified Data.Sequence                             as Seq
 import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
+import qualified Data.Text as T
 
 getSBox :: Selection -> (REltId, SBox)
 getSBox selection = case superOwl_toSElt_hack sowl of
@@ -250,6 +251,8 @@ instance PotatoHandler BoxTextHandler where
     (x, y) = TZ._displayLines_cursorPos dls
     offsetMap = TZ._displayLines_offsetMap dls
 
+    mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _boxTextInputState_zipper . _boxTextHandler_state $ tah
+
     mlbox = do
       guard $ lBox_area origBox > 0
 
@@ -258,7 +261,11 @@ instance PotatoHandler BoxTextHandler where
       let
         LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
         offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
-      return $ [LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)]
+        handle = RenderHandle {
+            _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
+            , _renderHandle_char = mCursorChar
+          }
+      return [handle]
 
     r = HandlerRenderOutput $ fromMaybe [] mlbox
   pIsHandlerActive = _boxTextHandler_isActive

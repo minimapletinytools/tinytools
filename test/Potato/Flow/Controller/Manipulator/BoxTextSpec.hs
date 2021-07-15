@@ -63,7 +63,7 @@ checkHandlerPos pos = FunctionPredicate $ \gs ->
     HandlerRenderOutput hs = pRenderHandler h phi
   in case hs of
     [] -> ("no handler outputs", False)
-    (LBox p _):[] -> if p == pos
+    (RenderHandle (LBox p _) _):[] -> if p == pos
       then ("", True)
       else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
     _ -> ("too many handler outputs", False)

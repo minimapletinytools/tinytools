@@ -74,5 +74,5 @@ instance PotatoHandler SelectHandler where
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
-  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [_selectHandler_selectArea sh]
+  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [defaultRenderHandle $ _selectHandler_selectArea sh]
   pIsHandlerActive _ = True
