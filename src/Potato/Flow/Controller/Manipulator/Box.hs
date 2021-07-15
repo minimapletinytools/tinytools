@@ -147,12 +147,12 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
   dbox = makeDeltaBox newbht boxRestrictedDelta
 
   -- no clamping variant
-  makeController _ dbox = cmd where
+  makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox
     })
 
-  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (_superOwl_id s, makeController s dbox)) (toList selection)))
+  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)
