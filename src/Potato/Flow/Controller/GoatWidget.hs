@@ -242,6 +242,7 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_setDebugLabel = never
   }
 
+
 data GoatWidget t = GoatWidget {
   _goatWidget_tool                  :: Dynamic t Tool
 
@@ -546,9 +547,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       -- extract elements that got created
       newEltFoldMapFn rid v = case v of
         Nothing     -> []
-        Just sowl -> r where
-          rid = _superOwl_id sowl
-          r = if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
+        Just sowl -> if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
 
       wasLoad = case cmd of
