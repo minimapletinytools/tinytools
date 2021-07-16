@@ -46,6 +46,7 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
     sowl -> doesSEltIntersectBox selectBox (isOwl_toSElt_hack sowl)
 
 
+  -- TODO consider using makeSortedSuperOwlParliament instead (prob a little faster?)
   selectedsowls = if singleClick
     -- single click, select top elt only
     then case selectedsowls' of

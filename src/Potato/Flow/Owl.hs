@@ -237,8 +237,8 @@ partitionN f as = r where
   foldfn a acc = IM.alter (alterfn a) (f a) acc
   r = foldr foldfn IM.empty as
 
--- TODO TEST
 -- TODO rename
+-- input type is not SuperOwlParliament type because it is not ordered
 makeSortedSuperOwlParliament :: OwlTree -> Seq SuperOwl -> SuperOwlParliament
 makeSortedSuperOwlParliament od sowls = r where
 

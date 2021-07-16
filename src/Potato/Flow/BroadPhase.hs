@@ -33,6 +33,7 @@ type NeedsUpdateSet = [AABB]
 
 -- TODO actual BroadPhase...
 data BPTree = BPTree {
+  -- TODO you want something sortable too...
   _bPTree_potato_tree :: REltIdMap AABB
 } deriving (Show, Eq)
 

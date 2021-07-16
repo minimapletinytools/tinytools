@@ -36,6 +36,7 @@ import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
 import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
+import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
 
@@ -75,7 +76,7 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
 -- | brute force renders a RenderedCanvasRegion
 potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRender seltls RenderedCanvasRegion {..} = r where
-  drawers = reverse $ map getDrawer seltls
+  drawers = map getDrawer seltls
   genfn i = newc' where
     pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
@@ -97,7 +98,7 @@ potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . f
 -- caller is expected to provide all SElts that intersect the rendered LBox
 render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 render llbx@(LBox (V2 x y) _) seltls RenderedCanvasRegion {..} = r where
-  drawers = reverse $ map getDrawer seltls
+  drawers = map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
     pt@(V2 lx ly) = toPoint llbx i
@@ -156,9 +157,11 @@ printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCa
 renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
-  selts = flip fmap rids $ \rid -> case owlTree_findSuperOwl ot rid of
+  sowls' = flip fmap rids $ \rid -> case owlTree_findSuperOwl ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-      Just sowl -> superOwl_toSElt_hack sowl
+      Just sowl -> sowl
+  SuperOwlParliament sowls = makeSortedSuperOwlParliament ot $ Seq.fromList sowls'
+  selts = fmap superOwl_toSElt_hack $ toList sowls
   r = render lbx selts rc
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
@@ -201,11 +204,13 @@ updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case n
       -- TODO proper comparison function
       sortfn rid1 rid2 = compare rid1 rid2
       rids = L.sortBy sortfn rids'
-      selts = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+      sowls' = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
         Nothing -> case owlTree_findSuperOwl _owlPFState_owlTree rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-          Just sowl -> superOwl_toSElt_hack sowl
+          Just sowl -> sowl
         Just msowl -> case msowl of
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-          Just sowl -> superOwl_toSElt_hack sowl
+          Just sowl -> sowl
+      SuperOwlParliament sowls = makeSortedSuperOwlParliament _owlPFState_owlTree $ Seq.fromList sowls'
+      selts = fmap superOwl_toSElt_hack $ toList sowls
       r = render aabb selts rc
