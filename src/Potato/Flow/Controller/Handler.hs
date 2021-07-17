@@ -119,6 +119,10 @@ handlerName_box :: Text
 handlerName_box = "BoxHandler"
 handlerName_simpleLine :: Text
 handlerName_simpleLine = "SimpleLineHandler"
+handlerName_layers :: Text
+handlerName_layers = "LayersHandler"
+handlerName_layersRename :: Text
+handlerName_layersRename = "LayersRenameHandler"
 handlerName_cartesianLine :: Text
 handlerName_cartesianLine = "CartesianLineHandler"
 handlerName_boxText :: Text

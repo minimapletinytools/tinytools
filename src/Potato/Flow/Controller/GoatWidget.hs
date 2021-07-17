@@ -354,6 +354,8 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
             Nothing  -> noChangeOutput
 
+          -- TODO for non-layers mouse input case, you want to send some event to layers such that we can exit "renaming" mode 🤔
+
           -- special case, if mouse down and pan tool, we override with a new handler
           MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
             Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
@@ -449,6 +451,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 KeyboardData KeyboardKey_Esc _ ->
                   (makeGoatCmdTempOutputFromNothing goatState) {
                       -- TODO change tool back to select?
+                      -- cancel selection if we are in a neutral mouse state and there is no handler
                       _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
                         MouseDragState_Up        -> Just (False, isParliament_empty)
                         MouseDragState_Cancelled -> Just (False, isParliament_empty)

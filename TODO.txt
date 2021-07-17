@@ -49,13 +49,11 @@ DONE-layers
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
 -TINY TODO
-  -TODO add sorting to BroadPhase somehow...
-    -fix select order
-    -ok you didn't actually fix render order...
   -layers
     -scrollbar/border to layers panel
     -add rename support to layers
-    -fix layers issues above
+      -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
+    -fix layer keyboard input capturing
     DONE-remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
   -still getting same source assert when dragging to/from layers/canvas
@@ -66,6 +64,7 @@ DONE-layers
     -text box should indicate overflow when in text entry bode
     -box labels
     -glyph widget
+    -consider refactoringlayers handler
   -BONUS TODO (TBH you need to do this to make the product useable)
     -layer show/hide
       -test impl
@@ -75,6 +74,9 @@ DONE-layers
     -separate selection rendering
     -multi-line handler
     -toggle box to textbox to freeform
+  DONE-add sorting to BroadPhase somehow...
+    -fix select order
+    -ok you didn't actually fix render order...
   DONE/IGNORE-color config object
     -entry box valid
     -entry box entering

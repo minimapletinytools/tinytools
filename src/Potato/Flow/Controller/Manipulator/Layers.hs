@@ -20,6 +20,8 @@ import           Data.Default
 import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
 import Data.Sequence ((<|))
+import qualified Potato.Data.Text.Zipper                          as TZ
+import qualified Data.Text as T
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -58,11 +60,12 @@ instance Default LayersHandler where
     }
 
 instance PotatoHandler LayersHandler where
-  pHandlerName _ = handlerName_simpleLine
+  pHandlerName _ = handlerName_layers
 
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
+
     selection = _potatoHandlerInput_selection
     ls@(LayersState _ lentries scrollPos) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
@@ -85,6 +88,7 @@ instance PotatoHandler LayersHandler where
               then (LDS_Selecting lepos, Nothing, IM.empty)
               else (LDS_Dragging, Nothing, IM.empty)
 
+            -- DELETE
             -- this variant denies selecting children of selected parents but not the other way around...
             -- maybe easier to deny this at a higher level rather than here.
             {-
@@ -237,8 +241,7 @@ instance PotatoHandler LayersHandler where
         }
     _ -> Nothing
 
-  -- TODO render renaming stuff
-  pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
+  --pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
@@ -305,3 +308,66 @@ instance PotatoHandler LayersHandler where
         _ -> error "unexpected LayersHandlerRenderEntryDummy"
 
     (_, newlentries) = mapAccumR mapaccumrfn_fordots Nothing newlentries'
+
+
+
+
+-- TODO FINISH WORK IN PROGRESS
+data LayersRenameHandler = LayersRenameHandler {
+    _layersRenameHandler_original :: LayersHandler
+    , _layersRenameHandler_renaming   :: REltId
+    , _layersRenameHandler_zipper   :: TZ.TextZipper
+    , _layersRenameHandler_displayLines :: TZ.DisplayLines ()
+  }
+
+instance PotatoHandler LayersRenameHandler where
+  pHandlerName _ = handlerName_layersRename
+
+  -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
+  -- pan offset should always be set to 0 in RelMouseDrag
+  pHandleMouse lh@LayersRenameHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
+
+    ls@(LayersState _ lentries scrollPos) = _potatoHandlerInput_layersState
+    pfs = _potatoHandlerInput_pFState
+    owltree = (_owlPFState_owlTree pfs)
+    rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
+    leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
+
+    -- TODO figure out index of element we are renaming (prob just store index of it instead of REltId)
+    -- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement
+
+    -- TODO click on display lines to move cursor
+
+    in case _mouseDrag_state of
+      MouseDragState_Down -> r where
+        r = Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
+          }
+      _ -> undefined
+
+  pHandleKeyboard lh@LayersRenameHandler {..} PotatoHandlerInput {..} kbd = case kbd of
+    KeyboardData (KeyboardKey_Scroll scroll) _ -> r where
+
+      -- TODO pass input to TZ
+
+      -- TODO pressing return confirms rename
+      -- TODO pressing escape cancels are returns to previous handler
+
+      -- TODO wrap up scrolling in a helper function and share code with Layers handler
+      scrollPos = _layersState_scrollPos _potatoHandlerInput_layersState
+      maxentries = 10 + (Seq.length $ _layersState_entries _potatoHandlerInput_layersState)
+      newScrollPos = max 0 (min maxentries (scrollPos + scroll))
+      r = Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
+          -- TODO clamp based on number of entries
+          , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
+        }
+    _ -> Nothing
+
+  -- TODO render renaming stuff (or do we do this in pRenderLayersHandler?)
+  pRenderHandler lh@LayersRenameHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
+
+  pIsHandlerActive LayersRenameHandler {..} = False
+
+  -- TODO just call this method on orign handler
+  pRenderLayersHandler LayersRenameHandler {..} PotatoHandlerInput {..} = undefined
