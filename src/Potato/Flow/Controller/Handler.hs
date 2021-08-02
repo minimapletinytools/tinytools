@@ -65,9 +65,7 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
-
--- TODO add shadow select state for child selected objects
--- TODO add dot depth for drag position indication
+-- TODO add renaming text box here??? e.g. LHRESS_Renaming DisplayLines 
 data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_None deriving (Eq, Show)
 -- depth at which dots are added if any
 type LayersHandlerRenderEntryDots = Maybe Int

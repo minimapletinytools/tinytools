@@ -16,12 +16,14 @@ import           Potato.Flow.Types
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.OwlState
 
+import           Data.Dependent.Sum                        (DSum ((:=>)))
 import           Data.Default
 import qualified Data.IntMap                    as IM
 import qualified Data.Sequence                  as Seq
 import Data.Sequence ((<|))
 import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Data.Text as T
+import Data.Char (isAlphaNum)
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -58,6 +60,19 @@ instance Default LayersHandler where
       , _layersHandler_cursorPos = 0
       , _layersHandler_dropSpot = Nothing
     }
+
+handleScroll :: (PotatoHandler h) => h -> PotatoHandlerInput -> Int -> PotatoHandlerOutput
+handleScroll h PotatoHandlerInput {..} scroll  = r where
+  -- TODO share this code with other handler
+  scrollPos = _layersState_scrollPos _potatoHandlerInput_layersState
+  maxentries = 10 + (Seq.length $ _layersState_entries _potatoHandlerInput_layersState)
+  newScrollPos = max 0 (min maxentries (scrollPos + scroll))
+  r = def {
+      _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
+      -- TODO clamp based on number of entries
+      , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
+    }
+
 
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_layers
@@ -188,7 +203,6 @@ instance PotatoHandler LayersHandler where
             }
         }
 
-      -- TODO if mouse didn't move from lposdown, enter renaming mode (new handler I guess)
       (MouseDragState_Up, LDS_Selecting leposdown) -> r where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
         sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
@@ -199,6 +213,32 @@ instance PotatoHandler LayersHandler where
               }
             , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
+
+      -- we clicked and released on a selected element, enter renaming mode
+      (MouseDragState_Up, LDS_Dragging) | isNothing _layersHandler_dropSpot -> case clickLayerNew lentries leposxy of
+        Nothing -> error "pretty sure this should never happen "
+        -- (you can only click + drag selected elements)
+        Just (downsowl, ldtdown, offset) -> case ldtdown of
+          LDT_Normal | offset > 0 -> r where
+            -- TODO great place for TZ.selectAll when you add selection capability into TZ
+            zipper = TZ.fromText $ isOwl_name downsowl
+
+            r = Just $ setHandlerOnly LayersRenameHandler {
+                _layersRenameHandler_original = lh
+                , _layersRenameHandler_renaming   = _superOwl_id downsowl
+                , _layersRenameHandler_zipper   = zipper
+                , _layersRenameHandler_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () zipper
+              }
+
+
+
+          _ -> Just $ setHandlerOnly lh {
+              _layersHandler_dragState = LDS_None
+              , _layersHandler_dropSpot = Nothing
+            }
+
+
+
 
       -- TODO when we have multi-user mode, we'll want to test if the target drop space is still valid
       (MouseDragState_Up, LDS_Dragging) -> r where
@@ -220,8 +260,6 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_pFEvent = mev
           }
 
-
-
       (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
           _layersHandler_dragState = LDS_None
@@ -229,16 +267,8 @@ instance PotatoHandler LayersHandler where
         }
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 
-  pHandleKeyboard lh@LayersHandler {..} PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData (KeyboardKey_Scroll scroll) _ -> r where
-      scrollPos = _layersState_scrollPos _potatoHandlerInput_layersState
-      maxentries = 10 + (Seq.length $ _layersState_entries _potatoHandlerInput_layersState)
-      newScrollPos = max 0 (min maxentries (scrollPos + scroll))
-      r = Just $ def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
-          -- TODO clamp based on number of entries
-          , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
-        }
+  pHandleKeyboard lh phi kbd = case kbd of
+    KeyboardData (KeyboardKey_Scroll scroll) _ -> Just $ handleScroll lh phi scroll
     _ -> Nothing
 
   --pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
@@ -320,6 +350,34 @@ data LayersRenameHandler = LayersRenameHandler {
     , _layersRenameHandler_displayLines :: TZ.DisplayLines ()
   }
 
+-- TODO finish
+isValidLayerRenameChar :: Char -> Bool
+isValidLayerRenameChar c = isAlphaNum c -- `and` oneof c "-_."
+
+renameTextZipperTransform :: KeyboardKey -> Maybe (TZ.TextZipper -> TZ.TextZipper)
+renameTextZipperTransform = \case
+  KeyboardKey_Space -> Just $ TZ.insertChar ' '
+  KeyboardKey_Char k | isValidLayerRenameChar k -> Just $ TZ.insertChar k
+  KeyboardKey_Backspace             -> Just $ TZ.deleteLeft
+  KeyboardKey_Delete                 -> Just $ TZ.deleteRight
+  KeyboardKey_Left               -> Just $ TZ.left
+  KeyboardKey_Right             -> Just $ TZ.right
+  KeyboardKey_Home              -> Just $ TZ.home
+  KeyboardKey_End                  -> Just $ TZ.end
+  KeyboardKey_Paste t | T.all isValidLayerRenameChar t -> Just $ TZ.insert t
+  _                                   -> Nothing
+
+renameToAndReturn :: LayersRenameHandler -> Text -> PotatoHandlerOutput
+renameToAndReturn lh@LayersRenameHandler {..} newName = r where
+  sowl :: SuperOwl = undefined
+  controller = CTagRename :=> (Identity $ CRename {
+      _cRename_deltaLabel = (isOwl_name sowl, newName)
+    })
+  r = def {
+      _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
+      , _potatoHandlerOutput_pFEvent = Just $ WSEManipulate (False, IM.fromList [(_superOwl_id sowl,controller)])
+    }
+
 instance PotatoHandler LayersRenameHandler where
   pHandlerName _ = handlerName_layersRename
 
@@ -334,34 +392,36 @@ instance PotatoHandler LayersRenameHandler where
     leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
 
     -- TODO figure out index of element we are renaming (prob just store index of it instead of REltId)
+      -- extract current name as initial zalue for TZ
     -- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement
 
     -- TODO click on display lines to move cursor
 
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
+
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
           }
       _ -> undefined
 
-  pHandleKeyboard lh@LayersRenameHandler {..} PotatoHandlerInput {..} kbd = case kbd of
-    KeyboardData (KeyboardKey_Scroll scroll) _ -> r where
-
-      -- TODO pass input to TZ
-
-      -- TODO pressing return confirms rename
-      -- TODO pressing escape cancels are returns to previous handler
-
-      -- TODO wrap up scrolling in a helper function and share code with Layers handler
-      scrollPos = _layersState_scrollPos _potatoHandlerInput_layersState
-      maxentries = 10 + (Seq.length $ _layersState_entries _potatoHandlerInput_layersState)
-      newScrollPos = max 0 (min maxentries (scrollPos + scroll))
-      r = Just $ def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
-          -- TODO clamp based on number of entries
-          , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
-        }
+  pHandleKeyboard lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} kbd = case kbd of
+    -- don't allow ctrl shortcuts while renaming
+    KeyboardData _ [KeyModifier_Ctrl] -> Just $ setHandlerOnly lh
+    KeyboardData KeyboardKey_Return [] -> Just $ renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
+    KeyboardData KeyboardKey_Esc [] ->    Just $ setHandlerOnly _layersRenameHandler_original
+    KeyboardData (KeyboardKey_Scroll scroll) _ -> Just $ handleScroll lh phi scroll
+    KeyboardData key [] -> case renameTextZipperTransform key of
+      Nothing -> Nothing
+      Just f -> r where
+        nexttz = f _layersRenameHandler_zipper
+        nextdl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () nexttz
+        r = Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
+                _layersRenameHandler_zipper = nexttz
+                , _layersRenameHandler_displayLines = nextdl
+              }
+          }
     _ -> Nothing
 
   -- TODO render renaming stuff (or do we do this in pRenderLayersHandler?)

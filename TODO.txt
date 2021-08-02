@@ -17,7 +17,7 @@ DONE-do selection correction in GoatWidget rather than deny invalid selections
     -when deselecting child, then this must deselect all selected parents recursively... hmm
 DONE-fix shift select parent case (must deselect selected children)
   -alternatively, you could do disjoint uninon with selected children.. whatever
--due to layers capturing input now, ctrl-z doesn't work after doing layer drag
+DONE-due to layers capturing input now, ctrl-z doesn't work after doing layer drag
   -delete key after selectinglayers sorta dosen't work either
 -layers scrolling
   -change rendering based on scroll position
@@ -60,7 +60,7 @@ DONE-layers
     -scrollbar/border to layers panel
     -add rename support to layers
       -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
-    -fix layer keyboard input capturing
+    DONE-fix layer keyboard input capturing
     DONE-remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
   -still getting same source assert when dragging to/from layers/canvas
