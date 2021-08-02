@@ -76,6 +76,7 @@ checkLayerEntriesNum n = r where
     (\lentries -> ("expected " <> show n <> " got " <> show (Seq.length lentries), Seq.length lentries == n))
     . _layersState_entries . _goatState_layersState
 
+-- TODO what does this even test???
 everything_layers_test :: Test
 everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected where
   bs = [
@@ -106,6 +107,57 @@ everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected wh
         validateLayersOrderPredicate
         , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
       ]
+    ]
+
+-- test specific behaviour on input focus between layers and canvas
+everything_inputfocusing_test :: Test
+everything_inputfocusing_test = constructTest "inputfocusing" owlpfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "Create A"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+      , EWCNothing -- dummy to check state
+
+      , EWCLabel "undo redo"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+
+      -- TODO actually do something in layers
+      , EWCLabel "click on layers"
+      , EWCMouse (LMouseData (V2 10 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 10 0) True MouseButton_Left [] True)
+
+      -- expect undo redo to work even though our focus is in layers now
+      , EWCLabel "undo redo"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+
+      -- TODO (when it's implemented) add test for renaming in layers and then changing focus back to canvas should cancel rename action
+    ]
+  expected = [
+      LabelCheck "Create A"
+      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , AlwaysPass
+      , AlwaysPass
+      , AlwaysPass
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+
+      , LabelCheck "undo redo"
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 0)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+
+      -- TODO test that something in layers got seleceted
+      -- TODO test that last mouse input is in layers
+      , LabelCheck "click on layers"
+      , AlwaysPass
+      , AlwaysPass
+
+      , LabelCheck "undo redo"
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 0)
+      , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+
     ]
 
 everything_canvasSize_test :: Test
@@ -476,3 +528,4 @@ spec = do
     fromHUnitTest $ everything_canvasSize_test
     fromHUnitTest $ everything_keyboard_test
     fromHUnitTest $ everything_basic_test
+    fromHUnitTest $ everything_inputfocusing_test

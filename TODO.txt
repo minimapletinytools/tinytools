@@ -48,6 +48,13 @@ DONE-layers
 ::NEWEST TODO::
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
+-TODO
+  -finish file explorer widget
+    -typeable file path bar
+  -fix kb capture issue with layers
+  -layers scroll pane (with scrolling bar)
+    -test if mouse scroll wheel works as you expect
+
 -TINY TODO
   -layers
     -scrollbar/border to layers panel
@@ -70,6 +77,7 @@ DONE-layers
       -test impl
       -refine UI
     -save, save as, open, print dialogs
+      -you want a settings widget to track which is current directory/file
     -selection box
     -separate selection rendering
     -multi-line handler

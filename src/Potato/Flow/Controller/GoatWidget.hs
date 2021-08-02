@@ -433,17 +433,15 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         -- perhaps a better way to do this is to have handlers capture all inputs when active
         _ | mouseDrag_isActive _goatState_mouseDrag -> makeGoatCmdTempOutputFromNothing goatState
 
-        _ -> if _mouseDrag_isLayerMouse _goatState_mouseDrag
-          -- if last input was on layers, then send keyboard input to layers as well
-          then
-            case pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd of
-
-              -- TODO I guess pass this input on to usual handler stuff below so we can get ctrl-Z sorta-stuff
-              Nothing -> makeGoatCmdTempOutputFromNothing goatState
-
-              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
-          else
-            case pHandleKeyboard handler potatoHandlerInput kbd of
+        _ ->
+          let
+            maybeHandleLayers = do
+              guard $ _mouseDrag_isLayerMouse _goatState_mouseDrag
+              pho <- pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd
+              return $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
+          in case maybeHandleLayers of
+            Just x -> x
+            Nothing -> case pHandleKeyboard handler potatoHandlerInput kbd of
               Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
               -- input not captured by handler
               -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState which PotatoHandlerOutput can't atm
