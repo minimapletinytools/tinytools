@@ -312,13 +312,13 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
-foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
+foldGoatFn cmd goatState@GoatState {..} = trace "FOLDING" $ finalGoatState where
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
-  (goatCmdTempOutput) = case _goatState_handler of
+  goatCmdTempOutput = case _goatState_handler of
     SomePotatoHandler handler -> case cmd of
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
@@ -438,7 +438,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             maybeHandleLayers = do
               guard $ _mouseDrag_isLayerMouse _goatState_mouseDrag
               pho <- pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd
-              return $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
+              return $ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState pho
           in case maybeHandleLayers of
             Just x -> x
             Nothing -> case pHandleKeyboard handler potatoHandlerInput kbd of

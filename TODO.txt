@@ -51,12 +51,15 @@ DONE-layers
 -TODO
   -finish file explorer widget
     -typeable file path bar
-  -fix kb capture issue with layers
+  DONE-fix kb capture issue with layers
+  DONE-something is resetting _layersRenameHandler_zipper making renaming not work...
   -layers scroll pane (with scrolling bar)
     -test if mouse scroll wheel works as you expect
   -highlight parents with selected children gray (repuprose INHERISTSELECET)
-  -something is resetting _layersRenameHandler_zipper making renaming not work...
+  -layers rename handler renderer
+  -foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -copy paste and undo allows you to insert elements with children which breaks  internal_owlTree_addOwlElt right now
+    -you probably want like a MiniOwlTree or something
 
 
 -TINY TODO

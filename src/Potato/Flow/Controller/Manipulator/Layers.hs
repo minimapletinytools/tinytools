@@ -394,7 +394,7 @@ instance PotatoHandler LayersRenameHandler where
       MouseDragState_Down | lepos == renaminglepos -> r where
         xpos = case clickLayerNew lentries leposxy of
           Nothing -> error "this should never happen"
-          Just (downsowl, _, xoff) -> xoff - 3
+          Just (downsowl, _, xoff) -> xoff - 6
 
         dl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () _layersRenameHandler_zipper
         nexttz = TZ.goToDisplayLinePosition xpos 0 dl _layersRenameHandler_zipper
