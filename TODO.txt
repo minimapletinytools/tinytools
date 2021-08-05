@@ -54,6 +54,10 @@ DONE-layers
   -fix kb capture issue with layers
   -layers scroll pane (with scrolling bar)
     -test if mouse scroll wheel works as you expect
+  -highlight parents with selected children gray (repuprose INHERISTSELECET)
+  -something is resetting _layersRenameHandler_zipper making renaming not work...
+  -copy paste and undo allows you to insert elements with children which breaks  internal_owlTree_addOwlElt right now
+
 
 -TINY TODO
   -layers

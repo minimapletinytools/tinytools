@@ -74,6 +74,13 @@ handleScroll h PotatoHandlerInput {..} scroll  = r where
     }
 
 
+resetLayersHandler :: LayersHandler -> LayersHandler
+resetLayersHandler lh = lh {
+    _layersHandler_dragState = LDS_None
+    , _layersHandler_dropSpot = Nothing
+  }
+
+
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_layers
 
@@ -207,35 +214,31 @@ instance PotatoHandler LayersHandler where
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
         sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
         r = Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
-                _layersHandler_dragState = LDS_None
-                , _layersHandler_dropSpot = Nothing
-              }
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
             , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
 
+      -- NOTE this will not work on inherit selected children, feature or bug??
       -- we clicked and released on a selected element, enter renaming mode
       (MouseDragState_Up, LDS_Dragging) | isNothing _layersHandler_dropSpot -> case clickLayerNew lentries leposxy of
         Nothing -> error "pretty sure this should never happen "
         -- (you can only click + drag selected elements)
         Just (downsowl, ldtdown, offset) -> case ldtdown of
           LDT_Normal | offset > 0 -> r where
+
             -- TODO great place for TZ.selectAll when you add selection capability into TZ
             zipper = TZ.fromText $ isOwl_name downsowl
 
             r = Just $ setHandlerOnly LayersRenameHandler {
-                _layersRenameHandler_original = lh
-                , _layersRenameHandler_renaming   = _superOwl_id downsowl
+                _layersRenameHandler_original = resetLayersHandler lh
+                , _layersRenameHandler_renaming   = downsowl
+                , _layersRenameHandler_index = lepos
                 , _layersRenameHandler_zipper   = zipper
-                , _layersRenameHandler_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () zipper
               }
 
 
 
-          _ -> Just $ setHandlerOnly lh {
-              _layersHandler_dragState = LDS_None
-              , _layersHandler_dropSpot = Nothing
-            }
+          _ -> Just $ setHandlerOnly (resetLayersHandler lh)
 
 
 
@@ -253,18 +256,12 @@ instance PotatoHandler LayersHandler where
           return $ WSEMoveElt (modifiedSpot, superOwlParliament_toOwlParliament selection)
 
         r = Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
-                _layersHandler_dragState = LDS_None
-                , _layersHandler_dropSpot = Nothing
-              }
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
             , _potatoHandlerOutput_pFEvent = mev
           }
 
       (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
-      (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly lh {
-          _layersHandler_dragState = LDS_None
-          , _layersHandler_dropSpot = Nothing
-        }
+      (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly (resetLayersHandler lh)
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 
   pHandleKeyboard lh phi kbd = case kbd of
@@ -345,9 +342,9 @@ instance PotatoHandler LayersHandler where
 -- TODO FINISH WORK IN PROGRESS
 data LayersRenameHandler = LayersRenameHandler {
     _layersRenameHandler_original :: LayersHandler
-    , _layersRenameHandler_renaming   :: REltId
+    , _layersRenameHandler_renaming   :: SuperOwl
+    , _layersRenameHandler_index :: Int -- LayerEntries index of what we are renaming
     , _layersRenameHandler_zipper   :: TZ.TextZipper
-    , _layersRenameHandler_displayLines :: TZ.DisplayLines ()
   }
 
 -- TODO finish
@@ -369,21 +366,21 @@ renameTextZipperTransform = \case
 
 renameToAndReturn :: LayersRenameHandler -> Text -> PotatoHandlerOutput
 renameToAndReturn lh@LayersRenameHandler {..} newName = r where
-  sowl :: SuperOwl = undefined
   controller = CTagRename :=> (Identity $ CRename {
-      _cRename_deltaLabel = (isOwl_name sowl, newName)
+      _cRename_deltaLabel = (isOwl_name _layersRenameHandler_renaming, newName)
     })
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
-      , _potatoHandlerOutput_pFEvent = Just $ WSEManipulate (False, IM.fromList [(_superOwl_id sowl,controller)])
+      , _potatoHandlerOutput_pFEvent = Just $ WSEManipulate (False, IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 
+-- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement (see TODO in GoatWidget)
 instance PotatoHandler LayersRenameHandler where
   pHandlerName _ = handlerName_layersRename
 
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- pan offset should always be set to 0 in RelMouseDrag
-  pHandleMouse lh@LayersRenameHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
     ls@(LayersState _ lentries scrollPos) = _potatoHandlerInput_layersState
     pfs = _potatoHandlerInput_pFState
@@ -391,19 +388,30 @@ instance PotatoHandler LayersRenameHandler where
     rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
     leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
 
-    -- TODO figure out index of element we are renaming (prob just store index of it instead of REltId)
-      -- extract current name as initial zalue for TZ
-    -- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement
-
-    -- TODO click on display lines to move cursor
+    renaminglepos = _layersRenameHandler_index
 
     in case _mouseDrag_state of
-      MouseDragState_Down -> r where
+      MouseDragState_Down | lepos == renaminglepos -> r where
+        xpos = case clickLayerNew lentries leposxy of
+          Nothing -> error "this should never happen"
+          Just (downsowl, _, xoff) -> xoff - 3
+
+        dl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () _layersRenameHandler_zipper
+        nexttz = TZ.goToDisplayLinePosition xpos 0 dl _layersRenameHandler_zipper
 
         r = Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
+                _layersRenameHandler_zipper = nexttz
+              }
           }
-      _ -> undefined
+      -- TODO drag + select when it's implemented in TZ
+      MouseDragState_Dragging -> Just $ setHandlerOnly lh
+      MouseDragState_Up -> Just $ setHandlerOnly lh
+
+      -- TODO somehow add return args from
+      -- renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
+      -- in here as well
+      _ -> pHandleMouse _layersRenameHandler_original phi rmd
 
   pHandleKeyboard lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} kbd = case kbd of
     -- don't allow ctrl shortcuts while renaming
@@ -411,23 +419,23 @@ instance PotatoHandler LayersRenameHandler where
     KeyboardData KeyboardKey_Return [] -> Just $ renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
     KeyboardData KeyboardKey_Esc [] ->    Just $ setHandlerOnly _layersRenameHandler_original
     KeyboardData (KeyboardKey_Scroll scroll) _ -> Just $ handleScroll lh phi scroll
-    KeyboardData key [] -> case renameTextZipperTransform key of
+    KeyboardData key [] ->  case renameTextZipperTransform key of
       Nothing -> Nothing
-      Just f -> r where
+      Just f -> trace (T.unpack $ TZ.value nexttz) r where
         nexttz = f _layersRenameHandler_zipper
-        nextdl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () nexttz
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
                 _layersRenameHandler_zipper = nexttz
-                , _layersRenameHandler_displayLines = nextdl
               }
           }
     _ -> Nothing
 
   -- TODO render renaming stuff (or do we do this in pRenderLayersHandler?)
-  pRenderHandler lh@LayersRenameHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
+  --pRenderHandler lh@LayersRenameHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
   pIsHandlerActive LayersRenameHandler {..} = False
 
-  -- TODO just call this method on orign handler
-  pRenderLayersHandler LayersRenameHandler {..} PotatoHandlerInput {..} = undefined
+  -- TODO just call this method on origin handler
+  pRenderLayersHandler lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
+    -- TODO render renaming text box
+    r = pRenderLayersHandler _layersRenameHandler_original phi

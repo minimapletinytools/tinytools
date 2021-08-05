@@ -80,7 +80,7 @@ owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
 
--- UNTESTED
+-- TODO what to do when you have children???
 do_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newElts seltls pfs@OwlPFState {..} = r where
   mapaccumlfn od (rid,ospot,oelt) = owlTree_addOwlElt ospot rid oelt od
@@ -88,7 +88,7 @@ do_newElts seltls pfs@OwlPFState {..} = r where
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
--- UNTESTED
+-- TODO what to do when you have children???
 undo_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newElts seltls pfs@OwlPFState {..} = r where
   foldfn (rid,_,_) od = owlTree_removeREltId rid od

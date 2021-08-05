@@ -118,11 +118,12 @@ everything_inputfocusing_test = constructTest "inputfocusing" owlpfstate_basic1 
       , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
-      , EWCNothing -- dummy to check state
+      , EWCNothing
 
       , EWCLabel "undo redo"
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Esc) []) -- deselect so we don't go into renaming mode later
 
       -- TODO actually do something in layers
       , EWCLabel "click on layers"
@@ -147,6 +148,7 @@ everything_inputfocusing_test = constructTest "inputfocusing" owlpfstate_basic1 
       , LabelCheck "undo redo"
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 0)
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
+      , AlwaysPass
 
       -- TODO test that something in layers got seleceted
       -- TODO test that last mouse input is in layers

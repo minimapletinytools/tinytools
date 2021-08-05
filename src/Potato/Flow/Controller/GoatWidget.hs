@@ -575,6 +575,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     -- TODO you only need to do this if handler is one that came from mHandlerFromPho
     -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
+    -- TODO you also want to reset layers handler here too
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pResetHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
