@@ -94,6 +94,8 @@ spec = do
         owlTree_owlCount ot1 `shouldBe` 18
         length c1 `shouldBe` 9
         fst (owlTree_validate ot1) `shouldBe` True
+      it "owlTree_equivalent" $ do
+        owlTree_equivalent owlTree0 owlTree0 `shouldBe` True
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlTree_prettyPrint owlTree0)
@@ -128,3 +130,10 @@ spec = do
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop7 sop9) `shouldBe` [8]
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop89 sop7) `shouldBe` [7]
         torids (superOwlParliament_disjointUnionAndCorrect owlTree0 sop28 sop0) `shouldBe` [0]
+      it "owlParliament_convertToMiniOwltree" $ do
+        let
+          mot = owlParliament_convertToMiniOwltree owlTree0 (OwlParliament (_owlTree_topOwls owlTree0))
+        --putTextLn (owlTree_prettyPrint mot)
+        -- also tests owlTree_equivalent :D
+        owlTree_equivalent mot owlTree0 `shouldBe` True
+        owlTree_equivalent owlTree0 mot `shouldBe` True

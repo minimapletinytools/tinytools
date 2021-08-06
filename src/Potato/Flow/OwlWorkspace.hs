@@ -33,8 +33,15 @@ import qualified Data.Sequence      as Seq
 
 -- TODO rename
 data OwlPFCmd =
+
+  -- TODO DELETE
   OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
   | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
+
+  -- TODO something like this
+  -- | OwlPFCNewTree MiniOwlTree
+  -- | OwlPFCDeleteTree MiniOwlTree
+
   | OwlPFCManipulate ControllersWithId
   -- we need SuperOwlParliament for undo
   | OwlPFCMove (OwlSpot, SuperOwlParliament)

@@ -417,6 +417,54 @@ superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlPa
     _ -> Seq.singleton sowl
   r = CanvasSelection . join . fmap mapfn $ sowls
 
+-- | intended for use in OwlWorkspace to create PFCmd
+-- generate MiniOwlTree will be reindexed so as not to conflict with OwlTree
+-- reliees on OwlParliament being correctly ordered
+owlParliament_convertToMiniOwltree :: OwlTree -> OwlParliament -> MiniOwlTree
+owlParliament_convertToMiniOwltree od@OwlTree {..} (OwlParliament owls) = r where
+
+  -- TODO assert OwlParliament is ordered
+
+  addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition)
+  addOwl newprid rid newchildrids (om, ridremap, nrid, pos) = (newom, newridremap, nrid+1, pos+1) where
+    sowl = owlTree_mustFindSuperOwl od rid
+    newoem = OwlEltMeta {
+        _owlEltMeta_parent = newprid
+        , _owlEltMeta_depth = 0
+        , _owlEltMeta_position = pos -- relies on OwlParliament being correctly ordered
+      }
+    newoe = case _superOwl_elt sowl of
+      OwlEltFolder oi _ -> OwlEltFolder oi newchildrids
+      x -> x
+    newom = IM.insert nrid (newoem, newoe) om
+    newridremap = IM.insert rid nrid ridremap
+
+  -- TODO this needs to return remapped rids (use mapAccumL)
+  addOwlRecursive :: Int -> REltId -> REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> ((OwlMapping, IM.IntMap REltId, REltId, SiblingPosition), REltId)
+  addOwlRecursive depth prid rid (om, ridremap, nrid, pos) = rslt where
+
+    newprid = if prid == noOwl then noOwl else ridremap IM.! prid
+
+    -- add self (note that nrid is the new rid of the owl we just added)
+    (newom', newridremap', newnrid', newpos) = addOwl newprid rid (newchildrids) (om, ridremap, nrid, pos)
+
+    children = fromMaybe Seq.empty $ mommyOwl_kiddos $ owlTree_mustFindSuperOwl od rid
+
+    -- recursively add children
+    ((newom, newridremap, newnrid, _), newchildrids) = mapAccumL (\acc crid -> addOwlRecursive (depth+1) rid crid acc) (newom', newridremap', newnrid', 0) children
+
+    rslt = ((newom, newridremap, newnrid, pos+1), nrid)
+
+
+  -- recursively add all children to owltree and reindex
+  ((om1, ridremap1, _, _), newtopowls) = mapAccumL (\acc rid -> addOwlRecursive 0 noOwl rid acc) (IM.empty, IM.empty, owlTree_maxId od + 1, 0) owls
+
+  r = OwlTree {
+      _owlTree_mapping = om1
+      , _owlTree_topOwls = newtopowls
+    }
+
+
 type OwlParliamentSet = Set.Set REltId
 
 superOwlParliament_toOwlParliamentSet :: SuperOwlParliament -> OwlParliamentSet
@@ -433,6 +481,8 @@ owlParliamentSet_descendent ot rid sset = if owlParliamentSet_member rid sset
     Just x -> owlParliamentSet_descendent ot (superOwl_parentId x) sset
 
 
+
+
 -- |
 data OwlTree = OwlTree
   { _owlTree_mapping :: OwlMapping,
@@ -445,6 +495,8 @@ instance NFData OwlTree
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
   mommyOwl_id _ = noOwl
+
+type MiniOwlTree = OwlTree
 
 -- | check if two OwlTree's are equivalent
 -- checks if structure is the same, REltIds can differ
@@ -721,33 +773,35 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
 -- |
 -- assumes SEltTree REltIds do not collide with OwlTree
 owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addSEltTree spot selttree od = assert (collisions == 0) r
-  where
-    seltreeindices = Set.fromList $ fmap fst selttree
-    owltreeindices = Set.fromList $ IM.keys (_owlTree_mapping od)
-    collisions = Set.size $ Set.intersection seltreeindices owltreeindices
+owlTree_addSEltTree spot selttree od = r where
 
-    -- we do it the potato way
+  -- reindexing version below (forget why I kept this here, CAN DELETE)
+  -- reindex the selttree
+  --startid = owlTree_maxId od + 1
+  -- TODO this is fine, but it would be better to set the id rather than add it to the old one
+  --reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
 
-    -- reindexing version below (forget why I kept this here, CAN DELETE)
-    -- reindex the selttree
-    --startid = owlTree_maxId od + 1
-    -- TODO this is fine, but it would be better to set the id rather than add it to the old one
-    --reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
+  -- convert to OwlDirectory
+  otherod = owlTree_fromSEltTree selttree
+  r = owlTree_addOwlTree spot otherod od
 
-    -- convert to OwlDirectory
-    otherod = owlTree_fromSEltTree selttree
+owlTree_addOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
+owlTree_addOwlTree spot otherod od = assert (collisions == 0) r where
+  od1indices = Set.fromList $ IM.keys (_owlTree_mapping od)
+  od2indices = Set.fromList $ IM.keys (_owlTree_mapping otherod)
+  collisions = Set.size $ Set.intersection od1indices od2indices
 
-    -- now union the two directories
-    newod = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
+  -- now union the two directories
+  newod = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
 
-    makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl otherod rid
+  makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl otherod rid
 
-    -- and call internal_owlTree_addOwlElt on the new topOwls from the selttree
-    -- this will correct the OwlEltMetas of the topOwls we just created
-    newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
-    changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
-    r = (newtree, changes)
+  -- and call internal_owlTree_addOwlElt on the new topOwls from otherod
+  -- this will correct the OwlEltMetas of the topOwls we just created
+  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
+  changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
+  r = (newtree, changes)
+
 
 -- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the tree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
 internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
