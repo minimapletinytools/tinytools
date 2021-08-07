@@ -103,6 +103,30 @@ undo_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, Sup
 undo_deleteElts = do_newElts
 
 
+
+-- MiniOwlTree variant, probably not needed I realized now...
+do_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_newMiniOwlTree (mot, ospot) pfs@OwlPFState {..} = r where
+  (newot, changes') = owlTree_addMiniOwlTree ospot mot _owlPFState_owlTree
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
+  r = (pfs { _owlPFState_owlTree = newot}, changes)
+
+-- MiniOwlTree variant, probably not needed I realized now...
+undo_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+undo_newMiniOwlTree (mot, _) pfs@OwlPFState {..} = r where
+  foldfn rid od = owlTree_removeREltId rid od
+  newot = foldr foldfn _owlPFState_owlTree (_owlTree_topOwls mot)
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ toList $ owliterateall mot
+  r = (pfs { _owlPFState_owlTree = newot}, changes)
+
+do_deleteMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_deleteMiniOwlTree = undo_newMiniOwlTree
+
+undo_deleteMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+undo_deleteMiniOwlTree = do_newMiniOwlTree
+
+
+
 isSuperOwlParliamentUndoFriendly :: SuperOwlParliament -> Bool
 isSuperOwlParliamentUndoFriendly sop = r where
   rp = _owlEltMeta_position . _superOwl_meta
