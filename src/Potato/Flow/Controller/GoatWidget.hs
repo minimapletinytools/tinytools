@@ -389,7 +389,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                       else _goatState_selectedTool
                 }
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
-            -- input not captured by handler, do select or drag+select
+            -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               nextSelection = selectMagic last_pFState _goatState_broadPhaseState canvasDrag
               shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
@@ -403,7 +403,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                   Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
                   Nothing -> error "handler was expected to capture this mouse state"
 
-                -- special drag + select case, override the selection
+                -- special select+drag case, override the selection
                 -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                 -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                 -- also NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case GoatWidget will set the correct handler type
@@ -469,7 +469,8 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                   Nothing    -> makeGoatCmdTempOutputFromNothing goatState
                   Just stree -> r where
 
-                    -- a bit of a roundabout hack to convert SEltTree to Seq OwlElt but not a big deal
+                    -- TODO this is totally wrong, it won't handle parent/children stuff correctly
+                    -- TODO convert to MiniOwlTree :D
                     offsetstree = offsetSEltTree (V2 1 1) stree
                     tempowltree = owlTree_fromSEltTree offsetstree
                     pastaoelts = Seq.fromList . fmap snd . toList . _owlTree_mapping $ tempowltree

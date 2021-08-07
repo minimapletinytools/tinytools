@@ -45,7 +45,6 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
     sowl | isboxshaped sowl -> True
     sowl -> doesSEltIntersectBox selectBox (isOwl_toSElt_hack sowl)
 
-
   -- TODO consider using makeSortedSuperOwlParliament instead (prob a little faster?)
   selectedsowls = if singleClick
     -- single click, select top elt only
@@ -54,7 +53,9 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
       _ ->  [maximumBy (\s1 s2 -> owlTree_superOwl_comparePosition (_owlPFState_owlTree pfs) s2 s1) selectedsowls']
     -- otherwise select everything
     else selectedsowls'
-  r = SuperOwlParliament $ Seq.fromList selectedsowls
+
+  r = makeSortedSuperOwlParliament (_owlPFState_owlTree pfs) $ Seq.fromList selectedsowls
+
 
 data SelectHandler = SelectHandler {
     _selectHandler_selectArea :: LBox
