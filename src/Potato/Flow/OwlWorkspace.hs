@@ -182,15 +182,13 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
 pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
 pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
 
--- TODO assert elts actually exist
 pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
-pfc_removeElt_to_deleteElts pfs owlp = r where
+pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
   od = _owlPFState_owlTree pfs
-  SuperOwlParliament sowlp = owlParliament_toSuperOwlParliament od owlp
-  getrpos x = _owlEltMeta_position $ _superOwl_meta x
-  -- order from left to right so that leftSibling is always valid (we delete from the right)
-  r' = Seq.sortBy (\a b -> compare (getrpos a) (getrpos b)) sowlp
-  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) r')
+  valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od owlp
+  sop = owlParliament_toSuperOwlParliament od owlp
+  sowlswithchildren = superOwlParliament_convertToSeqWithChildren od sop
+  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
 pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlEltFolder (OwlInfo name) Seq.empty)]

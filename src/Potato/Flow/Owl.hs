@@ -237,7 +237,7 @@ partitionN f as = r where
   foldfn a acc = IM.alter (alterfn a) (f a) acc
   r = foldr foldfn IM.empty as
 
--- TODO rename
+-- TODO rename, SuperOwlParliament is always sorted so the name is redundant!
 -- input type is not SuperOwlParliament type because it is not ordered
 makeSortedSuperOwlParliament :: OwlTree -> Seq SuperOwl -> SuperOwlParliament
 makeSortedSuperOwlParliament od sowls = r where
@@ -420,7 +420,17 @@ superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlPa
   mapfn sowl = case _superOwl_elt sowl of
     OwlEltFolder _ children -> unCanvasSelection $ superOwlParliament_convertToCanvasSelection od filterfn (sopify children)
     _ -> Seq.singleton sowl
-  r = CanvasSelection . join . fmap mapfn $ sowls
+  r = CanvasSelection . join . fmap mapfn $ filtered
+
+-- converts a SuperOwlParliament to its ordered Seq of SuperOwls including its children
+superOwlParliament_convertToSeqWithChildren :: OwlTree -> SuperOwlParliament -> Seq SuperOwl
+superOwlParliament_convertToSeqWithChildren od@OwlTree {..} (SuperOwlParliament sowls) = r where
+  sopify children = owlParliament_toSuperOwlParliament od (OwlParliament children)
+  -- if folder then recursively include children otherwise include self
+  mapfn sowl = case _superOwl_elt sowl of
+    OwlEltFolder _ children -> sowl <| (superOwlParliament_convertToSeqWithChildren od (sopify children))
+    _ -> Seq.singleton sowl
+  r = join . fmap mapfn $ sowls
 
 -- | intended for use in OwlWorkspace to create PFCmd
 -- generate MiniOwlTree will be reindexed so as not to conflict with OwlTree
@@ -879,7 +889,7 @@ owlTree_addOwlEltList seltls od = r where
 
   -- TODO test that seltls are valid... (easier said than done)
 
-  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt False True ospot rid oelt od
+  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True False ospot rid oelt od
   r = mapAccumL mapaccumlfn od seltls
 
 
