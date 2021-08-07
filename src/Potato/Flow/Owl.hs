@@ -888,23 +888,49 @@ owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOw
 owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
 
--- TODO This function is currently broken if there are folders...
+-- TODO this function is broken, idk why, it's a bad function and relies on too many assumptions so delete it anyways
+-- TODO DELETE ME
 -- this variant allows OwlElts with children so long as all children are included in the list and sorted from left to right
 owlTree_addOwlEltList :: [(REltId, OwlSpot, OwlElt)] -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addOwlEltList seltls od0 = r where
 
   -- TODO test that seltls are valid... (easier said than done)
 
-  -- OwlEltMeta will be set later in internal_owlTree_addOwlElt
-  foldrfn (rid, ospot, oe) acc = IM.insert rid (error "this thunk should never get evaluated", oe) acc
+  -- first go from left to right and generate prelim OwlEltMeta
+  mapaccumlfn (prevrid, prevpos, topsrev) (rid, ospot, oelt) = rslt where
+    parent = _owlSpot_parent ospot
+    leftisparent = parent == noOwl || parent == prevrid
+    newtopsrev = if leftisparent
+      then (rid, ospot, oelt):topsrev
+      else topsrev
+    -- this part does relies on the fact that all children are included in the list
+    pos = if leftisparent
+      then 0
+      else case _owlSpot_leftSibling ospot of
+        Nothing -> 0
+        Just x -> if x == prevrid
+          then prevpos +1
+          else 0
+    oem = OwlEltMeta {
+        _owlEltMeta_parent = parent
+        -- will be set later in internal_owlTree_addOwlElt
+        , _owlEltMeta_depth = error "this thunk should never get evaluated"
+        , _owlEltMeta_position = pos
+      }
+    rslt = ((rid, pos, newtopsrev), (rid, (oem, oelt)))
+  ((_,_,topsrev), oeoems) = mapAccumL mapaccumlfn (noOwl, 0, []) seltls
 
-  -- first add elts to mapping and created an invalid OwlTree as needed by internal_owlTree_addOwlElt
+  -- add elts to mapping and created an invalid OwlTree as needed by internal_owlTree_addOwlElt
+  foldrfn (rid,oeoem) acc = IM.insert rid oeoem acc
   od1_invalid = od0 {
-      _owlTree_mapping = foldr foldrfn (_owlTree_mapping od0) seltls
+      _owlTree_mapping = foldr foldrfn (_owlTree_mapping od0) oeoems
     }
 
-  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True True ospot rid oelt od
-  r = mapAccumL mapaccumlfn od1_invalid seltls
+  mapaccumfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True ospot rid oelt od
+
+  (newot, changes) = mapAccumR mapaccumfn od1_invalid topsrev
+
+  r = (newot, changes)
 
 
 -- TODO TEST
