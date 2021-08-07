@@ -806,6 +806,8 @@ owlTree_addMiniOwlTree spot otherod od = assert (collisions == 0) r where
   od2indices = Set.fromList $ IM.keys (_owlTree_mapping otherod)
   collisions = Set.size $ Set.intersection od1indices od2indices
 
+  -- TODO instead of doing this, add from left to right and remove children from parents before adding
+  -- this will allow you to remove the allowFoldersAndExisting hack in internal_owlTree_addOwlElt
   -- now union the two directories
   unionedod_invalid = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
 
@@ -818,6 +820,7 @@ owlTree_addMiniOwlTree spot otherod od = assert (collisions == 0) r where
   r = (newtree, changes)
 
 
+-- TODO remove allowFoldersAndExisting hack
 -- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the OwlMapping of the OwlTree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
 internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlTree {..} = assert (allowFoldersAndExisting || pass) r
@@ -839,6 +842,7 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
           -- this will get set correctly when we call internal_owlTree_reorgKiddos later
           _owlEltMeta_position = error "this thunk should never get evaluated"
         }
+
     adjustDepthRecursive newdepth rid' om0 = om2 where
       (oem, oe) = om0 IM.! rid'
       newoem = oem { _owlEltMeta_depth = newdepth }
@@ -884,51 +888,24 @@ internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlT
 
     r = (newtree, newsowl)
 
+-- OwlElt must not be a parent
 owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
-
--- TODO this function is broken, idk why, it's a bad function and relies on too many assumptions so delete it anyways
--- TODO DELETE ME
--- this variant allows OwlElts with children so long as all children are included in the list and sorted from left to right
+-- this method works for parents IF all children are included in the list and sorted from left to right
 owlTree_addOwlEltList :: [(REltId, OwlSpot, OwlElt)] -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addOwlEltList seltls od0 = r where
-
+  
   -- TODO test that seltls are valid... (easier said than done)
 
-  -- first go from left to right and generate prelim OwlEltMeta
-  mapaccumlfn (prevrid, prevpos, topsrev) (rid, ospot, oelt) = rslt where
-    parent = _owlSpot_parent ospot
-    leftisparent = parent == noOwl || parent == prevrid
-    newtopsrev = if leftisparent
-      then (rid, ospot, oelt):topsrev
-      else topsrev
-    -- this part does relies on the fact that all children are included in the list
-    pos = if leftisparent
-      then 0
-      else case _owlSpot_leftSibling ospot of
-        Nothing -> 0
-        Just x -> if x == prevrid
-          then prevpos +1
-          else 0
-    oem = OwlEltMeta {
-        _owlEltMeta_parent = parent
-        -- will be set later in internal_owlTree_addOwlElt
-        , _owlEltMeta_depth = error "this thunk should never get evaluated"
-        , _owlEltMeta_position = pos
-      }
-    rslt = ((rid, pos, newtopsrev), (rid, (oem, oelt)))
-  ((_,_,topsrev), oeoems) = mapAccumL mapaccumlfn (noOwl, 0, []) seltls
+  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt False ospot rid oeltmodded od where
+    oeltmodded = case oelt of
+      -- temp remove kiddos from parent as needed by internal_owlTree_addOwlElt
+      OwlEltFolder oi _ -> OwlEltFolder oi Seq.empty
+      x -> x
 
-  -- add elts to mapping and created an invalid OwlTree as needed by internal_owlTree_addOwlElt
-  foldrfn (rid,oeoem) acc = IM.insert rid oeoem acc
-  od1_invalid = od0 {
-      _owlTree_mapping = foldr foldrfn (_owlTree_mapping od0) oeoems
-    }
-
-  mapaccumfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True ospot rid oelt od
-
-  (newot, changes) = mapAccumR mapaccumfn od1_invalid topsrev
+  -- go from left to right such that parents are added first
+  (newot, changes) = mapAccumL mapaccumlfn od0 seltls
 
   r = (newot, changes)
 
