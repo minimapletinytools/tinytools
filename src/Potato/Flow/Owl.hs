@@ -788,10 +788,10 @@ owlTree_addSEltTree spot selttree od = r where
 
   -- convert to OwlDirectory
   otherod = owlTree_fromSEltTree selttree
-  r = owlTree_addOwlTree spot otherod od
+  r = owlTree_addMiniOwlTree spot otherod od
 
-owlTree_addOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addOwlTree spot otherod od = assert (collisions == 0) r where
+owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
+owlTree_addMiniOwlTree spot otherod od = assert (collisions == 0) r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od)
   od2indices = Set.fromList $ IM.keys (_owlTree_mapping otherod)
   collisions = Set.size $ Set.intersection od1indices od2indices
