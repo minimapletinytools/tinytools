@@ -350,12 +350,12 @@ superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (Supe
 
   r = makeSortedSuperOwlParliament od unsortedSeq
 
--- TODO also check if kids are in order
--- check if a mommy owl is selected, that no descendant of that mommy owl is selected
 superOwlParliament_isValid :: OwlTree -> SuperOwlParliament -> Bool
-superOwlParliament_isValid od (SuperOwlParliament owls) = r
+superOwlParliament_isValid od sop@(SuperOwlParliament owls) = r
   where
     om = _owlTree_mapping od
+
+    -- check if a mommy owl is selected, that no descendant of that mommy owl is selected
     kiddosFirst = Seq.sortBy (\a b -> flip compare (_owlEltMeta_depth (_superOwl_meta a)) (_owlEltMeta_depth (_superOwl_meta b))) owls
     acc0 = (Set.empty, Set.fromList . toList . fmap _superOwl_id $ owls, True)
     foldlfn (visited, mommies', passing) sowl = (nextVisited, mommies, pass && passing)
@@ -383,7 +383,12 @@ superOwlParliament_isValid od (SuperOwlParliament owls) = r
             then Set.union visited toVisit
             else visited
 
-    (_, _, r) = foldl foldlfn acc0 kiddosFirst
+    (_, _, r1) = foldl foldlfn acc0 kiddosFirst
+
+    -- check that parliament is in fact ordered correctly (inefficiently 😭)
+    r2 = makeSortedSuperOwlParliament od owls == sop
+
+    r = r1 && r2
 
 superOwlParliament_toSEltTree :: OwlTree -> SuperOwlParliament -> SEltTree
 superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toList $ join r
@@ -419,11 +424,11 @@ superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlPa
 
 -- | intended for use in OwlWorkspace to create PFCmd
 -- generate MiniOwlTree will be reindexed so as not to conflict with OwlTree
--- reliees on OwlParliament being correctly ordered
+-- relies on OwlParliament being correctly ordered
 owlParliament_convertToMiniOwltree :: OwlTree -> OwlParliament -> MiniOwlTree
-owlParliament_convertToMiniOwltree od@OwlTree {..} (OwlParliament owls) = r where
+owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = assert valid r where
 
-  -- TODO assert OwlParliament is ordered
+  valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od op
 
   addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition)
   addOwl newprid rid newchildrids (om, ridremap, nrid, pos) = (newom, newridremap, nrid+1, pos+1) where
