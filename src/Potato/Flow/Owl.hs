@@ -744,7 +744,7 @@ owlTree_removeSuperOwl sowl od@OwlTree {..} = r
         sp = _owlEltMeta_position . _superOwl_meta $ so
         -- sowl meta may be incorrect at this point so we do linear search to remove the elt
         r = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
-        -- TODO switch to this version once you fix issue in owlTree_moveOwlParliament
+        -- TODO switch to this version once you fix issue in owlTree_moveOwlParliament (see comments there)
         --r = Seq.deleteAt sp s
 
     -- remove from children of the element's mommy if needed
@@ -807,17 +807,18 @@ owlTree_addMiniOwlTree spot otherod od = assert (collisions == 0) r where
   collisions = Set.size $ Set.intersection od1indices od2indices
 
   -- now union the two directories
-  newod = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
+  unionedod_invalid = od {_owlTree_mapping = _owlTree_mapping od `IM.union` _owlTree_mapping otherod}
 
   makeOwl rid = _superOwl_elt $ owlTree_mustFindSuperOwl otherod rid
 
   -- and call internal_owlTree_addOwlElt on the new topOwls from otherod
   -- this will correct the OwlEltMetas of the topOwls we just created
-  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True True spot rid (makeOwl rid) acc) newod (_owlTree_topOwls otherod)
+  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True True spot rid (makeOwl rid) acc) unionedod_invalid (_owlTree_topOwls otherod)
   changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
   r = (newtree, changes)
 
 
+-- TODO combine allowFolders and allowExisting
 -- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the tree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
 internal_owlTree_addOwlElt :: Bool -> Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@OwlTree {..} = assert (allowFolders || pass) r
@@ -835,9 +836,8 @@ internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@O
             _ -> case IM.lookup _owlSpot_parent _owlTree_mapping of
               Nothing -> error $ errorMsg_owlMapping_lookupFail _owlTree_mapping _owlSpot_parent
               Just (x, _) -> _owlEltMeta_depth x + 1,
-          -- TODO do this the right way using laziness
           -- this will get set correctly when we call internal_owlTree_reorgKiddos later
-          _owlEltMeta_position = undefined
+          _owlEltMeta_position = error "this thunk should never get evaluated"
         }
 
     newMapping' =
@@ -885,12 +885,20 @@ owlTree_addOwlElt = internal_owlTree_addOwlElt False False
 
 -- this variant allows OwlElts with children so long as all children are included in the list and sorted from left to right
 owlTree_addOwlEltList :: [(REltId, OwlSpot, OwlElt)] -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addOwlEltList seltls od = r where
+owlTree_addOwlEltList seltls od0 = r where
 
   -- TODO test that seltls are valid... (easier said than done)
 
-  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True False ospot rid oelt od
-  r = mapAccumL mapaccumlfn od seltls
+  -- OwlEltMeta will be set later in internal_owlTree_addOwlElt
+  foldrfn (rid, ospot, oe) acc = IM.insert rid (error "this thunk should never get evaluated", oe) acc
+
+  -- first add elts to mapping and created an invalid OwlTree as needed by internal_owlTree_addOwlElt
+  od1_invalid = od0 {
+      _owlTree_mapping = foldr foldrfn (_owlTree_mapping od0) seltls
+    }
+
+  mapaccumlfn od (rid,ospot,oelt) = internal_owlTree_addOwlElt True True ospot rid oelt od
+  r = mapAccumL mapaccumlfn od1_invalid seltls
 
 
 -- TODO TEST
