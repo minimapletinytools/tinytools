@@ -813,21 +813,21 @@ owlTree_addMiniOwlTree spot otherod od = assert (collisions == 0) r where
 
   -- and call internal_owlTree_addOwlElt on the new topOwls from otherod
   -- this will correct the OwlEltMetas of the topOwls we just created
-  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True True spot rid (makeOwl rid) acc) unionedod_invalid (_owlTree_topOwls otherod)
+  newtree = foldr (\rid acc -> fst $ internal_owlTree_addOwlElt True spot rid (makeOwl rid) acc) unionedod_invalid (_owlTree_topOwls otherod)
   changes = foldMap (\rid -> owlTree_foldAt (flip (:)) [] newtree rid) $ _owlTree_topOwls otherod
   r = (newtree, changes)
 
 
--- TODO combine allowFolders and allowExisting
--- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the tree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
-internal_owlTree_addOwlElt :: Bool -> Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
-internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@OwlTree {..} = assert (allowFolders || pass) r
+-- allowFoldersAndExisting used internally ONLY, it assumes all children already exist in the OwlMapping of the OwlTree and leverages this method to adjust sibling position (in parent) and OwlEltMeta (in self and children)
+internal_owlTree_addOwlElt :: Bool -> OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
+internal_owlTree_addOwlElt allowFoldersAndExisting OwlSpot {..} rid oelt od@OwlTree {..} = assert (allowFoldersAndExisting || pass) r
   where
     -- if we're adding a folder (in the normal case), ensure it has no children
     pass = case oelt of
       OwlEltFolder _ children -> Seq.null children
       _ -> True
 
+    -- first add the OwlElt to the mapping
     meta =
       OwlEltMeta
         { _owlEltMeta_parent = _owlSpot_parent,
@@ -839,10 +839,18 @@ internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@O
           -- this will get set correctly when we call internal_owlTree_reorgKiddos later
           _owlEltMeta_position = error "this thunk should never get evaluated"
         }
-
+    adjustDepthRecursive newdepth rid' om0 = om2 where
+      (oem, oe) = om0 IM.! rid'
+      newoem = oem { _owlEltMeta_depth = newdepth }
+      om1 = case oe of
+        OwlEltFolder oi kiddos -> foldr (adjustDepthRecursive (newdepth+1)) om0 kiddos
+        _ -> om0
+      om2 = IM.insert rid' (newoem, oe) om1
     newMapping' =
-      if allowExisting
-        then IM.insert rid (meta, oelt) _owlTree_mapping
+      if allowFoldersAndExisting
+        -- in this case, just override it (to correct the OwlEltMeta)
+        -- also adjust depth of all its children
+        then adjustDepthRecursive (_owlEltMeta_depth meta) rid $ IM.insert rid (meta, oelt) _owlTree_mapping
         else IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oelt) _owlTree_mapping
 
     -- modify kiddos of the parent we are adding to
@@ -853,17 +861,13 @@ internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@O
           Just rid -> case Seq.elemIndexL rid kiddos of
             Nothing -> error $ "expected to find leftmost sibling " <> show rid <> " in " <> show kiddos
             Just x -> x + 1
-
-    -- TODO in children case (if allowFoldersAndExisting is true) recursively modify all children to correct there OwlEltMeta's (has incorrect depth)
-
     adjustfn (oem, oe) = case oe of
       OwlEltFolder oi kiddos -> (oem, OwlEltFolder oi (modifyKiddos kiddos))
       _ -> error $ "expected OwlEltFolder"
-
     newMapping = case _owlSpot_parent of
       x | x == noOwl -> newMapping'
       _ -> IM.adjust adjustfn _owlSpot_parent newMapping'
-
+    -- or top owls if there is no parent
     newTopOwls = case _owlSpot_parent of
       x | x == noOwl -> modifyKiddos _owlTree_topOwls
       _ -> _owlTree_topOwls
@@ -881,8 +885,10 @@ internal_owlTree_addOwlElt allowFolders allowExisting OwlSpot {..} rid oelt od@O
     r = (newtree, newsowl)
 
 owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
-owlTree_addOwlElt = internal_owlTree_addOwlElt False False
+owlTree_addOwlElt = internal_owlTree_addOwlElt False
 
+
+-- TODO This function is currently broken if there are folders...
 -- this variant allows OwlElts with children so long as all children are included in the list and sorted from left to right
 owlTree_addOwlEltList :: [(REltId, OwlSpot, OwlElt)] -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addOwlEltList seltls od0 = r where
