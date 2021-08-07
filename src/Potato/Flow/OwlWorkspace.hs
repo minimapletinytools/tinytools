@@ -177,7 +177,7 @@ pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
   r = OwlPFCNewElts $ toList r'
 
---TODO need to reorder so it becomes undo friendly here I think?
+--TODO need to reorder so it becomes undo friendly here I think? (uhh, pretty sure it's ok to delete this TODO? should be ordered by assumption)
 -- TODO assert elts are valid
 pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
 pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)

@@ -49,6 +49,10 @@ DONE-layers
 -setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
 -TODO
+  -BUG selecting folders does not create select boxes
+  DONE-BUG add sorting to selectMagic
+  DONE-BUG deleting folders does not delete children from canvas
+    -Ok, now when you undo a delete folder it breaks :(
   -finish file explorer widget
     -typeable file path bar
   DONE-fix kb capture issue with layers
@@ -59,8 +63,10 @@ DONE-layers
   -layers rename handler renderer
   -foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -copy paste and undo allows you to insert elements with children which breaks  internal_owlTree_addOwlElt right now
-    -you probably want like a MiniOwlTree or something
-
+    DONE-you probably want like a MiniOwlTree or something
+  -darken text areas being editted
+    -boxtext
+    -renaming labels
 
 -TINY TODO
   -layers

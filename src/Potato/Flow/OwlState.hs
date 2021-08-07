@@ -19,7 +19,6 @@ import           Data.Maybe
 import qualified Data.Sequence           as Seq
 import qualified Data.Text as T
 
-
 -- TODO rename
 data OwlPFState = OwlPFState {
   _owlPFState_owlTree :: OwlTree
@@ -79,19 +78,19 @@ owlPFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
 owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
-
--- TODO what to do when you have children???
 do_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newElts seltls pfs@OwlPFState {..} = r where
-  mapaccumlfn od (rid,ospot,oelt) = owlTree_addOwlElt ospot rid oelt od
-  (newot, changes') = mapAccumL mapaccumlfn _owlPFState_owlTree seltls
+
+  -- parents are allowed, but seltls must be sortefd from left -> right such that leftmost sibling/parent of OwlSpot exists (assuming elts are added to the tree from left to right)
+  (newot, changes') = owlTree_addOwlEltList seltls _owlPFState_owlTree
+
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
--- TODO what to do when you have children???
 undo_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newElts seltls pfs@OwlPFState {..} = r where
   foldfn (rid,_,_) od = owlTree_removeREltId rid od
+  -- assumes seltls sorted from left to right so that no parent is deleted before its child
   newot = foldr foldfn _owlPFState_owlTree seltls
   changes = IM.fromList $ fmap (\(rid,_,_) -> (rid, Nothing)) seltls
   r = (pfs { _owlPFState_owlTree = newot}, changes)
@@ -102,16 +101,12 @@ do_deleteElts = undo_newElts
 undo_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_deleteElts = do_newElts
 
-
-
--- MiniOwlTree variant, probably not needed I realized now...
 do_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newMiniOwlTree (mot, ospot) pfs@OwlPFState {..} = r where
   (newot, changes') = owlTree_addMiniOwlTree ospot mot _owlPFState_owlTree
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
--- MiniOwlTree variant, probably not needed I realized now...
 undo_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newMiniOwlTree (mot, _) pfs@OwlPFState {..} = r where
   foldfn rid od = owlTree_removeREltId rid od
