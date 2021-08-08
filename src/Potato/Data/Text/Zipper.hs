@@ -191,7 +191,7 @@ fromText = flip insert empty
 -- | A span of text tagged with some metadata that makes up part of a display
 -- line.
 data Span tag = Span tag Text
-  deriving (Show)
+  deriving (Eq, Show)
 
 -- | Text alignment type
 data TextAlignment =
@@ -220,7 +220,7 @@ data DisplayLines tag = DisplayLines
   , _displayLines_offsetMap :: OffsetMapWithAlignment
   , _displayLines_cursorPos :: (Int, Int) -- cursor position relative to upper left hand corner
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
 -- | Split a 'Text' at the given column index. For example
 --

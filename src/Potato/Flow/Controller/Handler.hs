@@ -15,6 +15,8 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Owl
 
+import qualified Potato.Data.Text.Zipper                          as TZ
+
 import           Data.Default
 import qualified Data.IntMap                   as IM
 import qualified Data.Sequence                 as Seq
@@ -65,8 +67,8 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
--- TODO add renaming text box here??? e.g. LHRESS_Renaming DisplayLines 
-data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_None deriving (Eq, Show)
+-- TODO add renaming text box here??? e.g. LHRESS_Renaming DisplayLines
+data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming (TZ.DisplayLines ()) | LHRESS_None deriving (Eq, Show)
 -- depth at which dots are added if any
 type LayersHandlerRenderEntryDots = Maybe Int
 
@@ -92,7 +94,6 @@ instance Default LayersViewHandlerRenderOutput where
 -- TODO come up with better name
 data RenderHandle = RenderHandle {
     _renderHandle_box :: LBox
-    -- Nothing means highlight
     , _renderHandle_char :: Maybe PChar
   } deriving (Show, Eq)
 

@@ -374,6 +374,9 @@ renameToAndReturn lh@LayersRenameHandler {..} newName = r where
       , _potatoHandlerOutput_pFEvent = Just $ WSEManipulate (False, IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 
+toDisplayLines :: LayersRenameHandler -> TZ.DisplayLines ()
+toDisplayLines LayersRenameHandler {..} = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () _layersRenameHandler_zipper
+
 -- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement (see TODO in GoatWidget)
 instance PotatoHandler LayersRenameHandler where
   pHandlerName _ = handlerName_layersRename
@@ -396,7 +399,7 @@ instance PotatoHandler LayersRenameHandler where
           Nothing -> error "this should never happen"
           Just (downsowl, _, xoff) -> xoff - 6
 
-        dl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () _layersRenameHandler_zipper
+        dl = toDisplayLines lh
         nexttz = TZ.goToDisplayLinePosition xpos 0 dl _layersRenameHandler_zipper
 
         r = Just $ def {
@@ -421,7 +424,7 @@ instance PotatoHandler LayersRenameHandler where
     KeyboardData (KeyboardKey_Scroll scroll) _ -> Just $ handleScroll lh phi scroll
     KeyboardData key [] ->  case renameTextZipperTransform key of
       Nothing -> Nothing
-      Just f -> trace (T.unpack $ TZ.value nexttz) r where
+      Just f -> r where
         nexttz = f _layersRenameHandler_zipper
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
@@ -438,4 +441,11 @@ instance PotatoHandler LayersRenameHandler where
   -- TODO just call this method on origin handler
   pRenderLayersHandler lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
     -- TODO render renaming text box
-    r = pRenderLayersHandler _layersRenameHandler_original phi
+    r' = pRenderLayersHandler _layersRenameHandler_original phi
+    entries' = _layersViewHandlerRenderOutput_entries r'
+
+    adjustfn (LayersHandlerRenderEntryNormal lhress dots lentry) = LayersHandlerRenderEntryNormal newlhress dots lentry where
+      newlhress = LHRESS_Renaming (toDisplayLines lh)
+    adjustfn (LayersHandlerRenderEntryDummy _) = error "this should never happen"
+    entries = Seq.adjust'  adjustfn _layersRenameHandler_index entries'
+    r = LayersViewHandlerRenderOutput { _layersViewHandlerRenderOutput_entries = entries }
