@@ -28,19 +28,18 @@ import           Control.Exception  (assert)
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Sequence      as Seq
+import qualified Data.Text as T
+
 
 
 
 -- TODO rename
 data OwlPFCmd =
-
-  -- TODO DELETE
   OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
   | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
 
-  -- TODO something like this
-  -- | OwlPFCNewTree MiniOwlTree
-  -- | OwlPFCDeleteTree MiniOwlTree
+  | OwlPFCNewTree (MiniOwlTree, OwlSpot)
+  | OwlPFCDeleteTree (MiniOwlTree, OwlSpot)
 
   | OwlPFCManipulate ControllersWithId
   -- we need SuperOwlParliament for undo
@@ -119,8 +118,13 @@ doCmdWorkspace cmd pfw = force r where
 doCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
   (newState, changes) = case cmd of
+
     OwlPFCNewElts x      ->  do_newElts x s
     OwlPFCDeleteElts x   ->  do_deleteElts x s
+
+    OwlPFCNewTree x -> do_newMiniOwlTree x s
+    OwlPFCDeleteTree x -> do_deleteMiniOwlTree x s
+
     OwlPFCManipulate x   ->  do_manipulate x s
     OwlPFCMove x         -> do_move x s
     OwlPFCResizeCanvas x -> (do_resizeCanvas x s, IM.empty)
@@ -128,8 +132,13 @@ doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wher
 undoCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
   (newState, changes) =  case cmd of
+
     OwlPFCNewElts x      ->  undo_newElts x s
     OwlPFCDeleteElts x   ->  undo_deleteElts x s
+
+    OwlPFCNewTree x -> undo_newMiniOwlTree x s
+    OwlPFCDeleteTree x -> undo_deleteMiniOwlTree x s
+
     OwlPFCManipulate x   ->  undo_manipulate x s
     OwlPFCMove x         -> undo_move x s
     OwlPFCResizeCanvas x -> (undo_resizeCanvas x s, IM.empty)
@@ -137,10 +146,15 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
 ------ update functions via commands
 data WSEvent =
   WSEAddElt (Bool, OwlSpot, OwlElt)
+
+  -- TODO won't work, needs to support OwlElts with kiddos, need MiniOwlTree
+  -- it's a little weird that MiniOwlTree is already reindexed though...
+  -- maybe just take a selttree D:
+  -- I can't remember why I called this WSEAddRelative D:
   | WSEAddRelative (OwlSpot, Seq OwlElt)
+
   | WSEAddFolder (OwlSpot, Text)
-  | WSERemoveElt OwlParliament -- removed kiddos get adopted by grandparents or w/e?
-  -- TODO change to OwlParliament, convert to SuperOwlParliament in code..
+  | WSERemoveElt OwlParliament
   | WSEMoveElt (OwlSpot, OwlParliament)
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSEManipulate (Bool, ControllersWithId)
@@ -266,6 +280,7 @@ updateOwlPFWorkspace evt ws = let
     WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
   afterState = _owlPFWorkspace_pFState r
   isValidAfter = owlPFState_isValid afterState
-  in
-    if isValidAfter then r else
-      error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
+  in if isValidAfter
+    --then trace "WORKSPACE UPDATE" $ traceShow evt $ trace (T.unpack $ owlTree_prettyPrint (_owlPFState_owlTree afterState)) $ r
+    then r
+    else error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)

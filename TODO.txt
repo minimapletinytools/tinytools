@@ -3,6 +3,7 @@
 stack test --test-arguments='--match "Parliament"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+
 ::7/2021 folder drag bugs::
 DONE-can't reach last spot
 DONE-clamping seems to be wrong (need to +1)
@@ -22,51 +23,42 @@ DONE-due to layers capturing input now, ctrl-z doesn't work after doing layer dr
 -layers scrolling
   -change rendering based on scroll position
   -needs box indicating scroll position (v scroll bar I guess)
-
-
-::7/2021 buggaroos::
 -must click to focus on canvas (after having focused on layers) for input to register
 -click on layer  and drag to canvas area causes freeze
   -generally speaking clicking and dragging to other panes is kind of broken
 
-
-::4/2021 self feedback::
--text box type should highlight not cover
--text box should indicate overflow when in text entry bode
--needs selection box :O
-  -live selection preview :O
--labels
-  -needs box title
-  -would be cool to have line labels :D
-  -how can we reuse code from text entry handler?
 IGNORE-possible to make bad selections sometimes
 DONE-invert text box crashes still
 DONE-layers
   -no selection darkening
 
 
-::NEWEST TODO::
--setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
 
--TODO
-  -BUG selecting folders does not create select boxes
-  DONE-BUG add sorting to selectMagic
-  DONE-BUG deleting folders does not delete children from canvas
-    -Ok, now when you undo a delete folder it breaks :(
-  -finish file explorer widget
-    -typeable file path bar
-  DONE-fix kb capture issue with layers
-  DONE-something is resetting _layersRenameHandler_zipper making renaming not work...
-  -layers scroll pane (with scrolling bar)
-    -test if mouse scroll wheel works as you expect
-  -highlight parents with selected children gray (repuprose INHERISTSELECET)
-  -layers rename handler renderer
-  -foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
-  -copy paste and undo allows you to insert elements with children which breaks  internal_owlTree_addOwlElt right now
-    DONE-you probably want like a MiniOwlTree or something
-  -darken text areas being editted
-    -boxtext
-    -renaming labels
+
+::NEWEST TODO::
+-add State to PotatoReader
+-BUG selecting folders does not create select boxes
+  -need to use converted selection in select handler?
+    -or do I want to make converted selection available via PotatoHandlerInput
+-BUG paste does not work for folders
+  -WSEAddRelative needs to use OwlMiniTree
+-BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
+  -you should fix cuz it makes debugging hard...
+-finish file explorer widget
+  DONE-typeable file path bar
+-layers scroll pane (with scrolling bar
+  -test if mouse scroll wheel works as you expect
+-highlight parents with selected children gray (repuprose INHERISTSELECET)
+-layers rename handler renderer
+-file explorer
+  DONE-double focus between filename and folder
+  DONE-fix h scrolling in filename input
+  -apply styling
+  -initialize app with correct floder
+  -prompt to save if not saved
+  -display filename sowhere with * if not saved
+  -ctrl-s, ctrl-o, ctrl-n to save
+  -add quit button somewhere?
 
 -TINY TODO
   -layers
@@ -92,9 +84,13 @@ DONE-layers
     -save, save as, open, print dialogs
       -you want a settings widget to track which is current directory/file
     -selection box
+      -live selection preview
     -separate selection rendering
     -multi-line handler
+    -freeform
     -toggle box to textbox to freeform
+      -this operation can not be reversed popup :O
+    -user settings object in vty
   DONE-add sorting to BroadPhase somehow...
     -fix select order
     -ok you didn't actually fix render order...
@@ -140,7 +136,8 @@ DONE-layers
   -add BoxTitle
     -maybe left/right/center text
     -add padding to BoxText
-
+  -text box type should highlight not cover
+  -text box should indicate overflow when in text entry mode
 -DisplayLineConfig
   -Wrap Words
   -Wrap Characters
@@ -223,6 +220,12 @@ DONE-layers
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+IGNORE-setup GHCI with hoogle :O http://dev.stephendiehl.com/hask/#ghci
+DONE-BUG add sorting to selectMagic
+DONE-BUG deleting folders does not delete children from canvas
+  -Ok, now when you undo a delete folder it breaks :(
+DONE-fix kb capture issue with layers
+DONE-something is resetting _layersRenameHandler_zipper making renaming not work...
 DONE-params MVP
   -toggle box border?
   -line style??

@@ -445,7 +445,7 @@ instance PotatoHandler LayersRenameHandler where
     entries' = _layersViewHandlerRenderOutput_entries r'
 
     adjustfn (LayersHandlerRenderEntryNormal lhress dots lentry) = LayersHandlerRenderEntryNormal newlhress dots lentry where
-      newlhress = LHRESS_Renaming (toDisplayLines lh)
+      newlhress = LHRESS_Renaming _layersRenameHandler_zipper
     adjustfn (LayersHandlerRenderEntryDummy _) = error "this should never happen"
     entries = Seq.adjust'  adjustfn _layersRenameHandler_index entries'
     r = LayersViewHandlerRenderOutput { _layersViewHandlerRenderOutput_entries = entries }

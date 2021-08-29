@@ -57,6 +57,10 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
     , _potatoHandlerInput_selection   :: Selection
+
+    -- TODO
+    --, _potatoHandlerInput_canvasSelection :: CanvasSelection
+    -- superOwlParliament_convertToCanvasSelection
   }
 
 type ColorType = ()
@@ -68,7 +72,15 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
   }
 
 -- TODO add renaming text box here??? e.g. LHRESS_Renaming DisplayLines
-data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming (TZ.DisplayLines ()) | LHRESS_None deriving (Eq, Show)
+data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming TZ.TextZipper | LHRESS_None deriving (Show)
+
+instance Eq LayersHandlerRenderEntrySelectedState where
+  (==) (LHRESS_Renaming x) (LHRESS_Renaming y) = undefined -- TODO
+  (==) LHRESS_Selected LHRESS_Selected = True
+  (==) LHRESS_InheritSelected LHRESS_InheritSelected = True
+  (==) LHRESS_None LHRESS_None = True
+  (==) _ _ = False
+
 -- depth at which dots are added if any
 type LayersHandlerRenderEntryDots = Maybe Int
 

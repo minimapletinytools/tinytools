@@ -251,6 +251,7 @@ data GoatWidget t = GoatWidget {
 
   , _goatWidget_selection           :: Dynamic t Selection
 
+  -- TODO I don't think you actually need this.... Delete me
   -- TODO also you want a bunch of selection converting helper functions...
   , _goatWidget_selection_converted :: Dynamic t CanvasSelection
 
