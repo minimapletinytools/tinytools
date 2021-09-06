@@ -71,15 +71,15 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
--- TODO add renaming text box here??? e.g. LHRESS_Renaming DisplayLines
-data LayersHandlerRenderEntrySelectedState = LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming TZ.TextZipper | LHRESS_None deriving (Show)
+data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming TZ.TextZipper | LHRESS_None deriving (Show, Eq)
 
-instance Eq LayersHandlerRenderEntrySelectedState where
-  (==) (LHRESS_Renaming x) (LHRESS_Renaming y) = undefined -- TODO
+{--instance Eq LayersHandlerRenderEntrySelectedState where
+  (==) (LHRESS_Renaming x) (LHRESS_Renaming y) = x == y
   (==) LHRESS_Selected LHRESS_Selected = True
   (==) LHRESS_InheritSelected LHRESS_InheritSelected = True
   (==) LHRESS_None LHRESS_None = True
-  (==) _ _ = False
+  (==) LHRESS_ChildSelected LHRESS_ChildSelected = True
+  (==) _ _ = False--}
 
 -- depth at which dots are added if any
 type LayersHandlerRenderEntryDots = Maybe Int

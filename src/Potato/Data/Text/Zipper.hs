@@ -41,7 +41,7 @@ data TextZipper = TextZipper
   , _textZipper_after :: Text -- The cursor is on top of the first character of this text
   , _textZipper_linesAfter :: [Text]
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance IsString TextZipper where
   fromString = fromText . T.pack
