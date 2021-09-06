@@ -348,7 +348,7 @@ instance PotatoHandler LayersHandler where
         then (False, selected:selstack)
         else if selected 
           then case selstack of 
-            [] -> error "expected something on selstack"
+            [] -> (False, [True]) -- this happens if on the first element that we mapAccumR on
             x:xs -> (False, True:xs)
           else if depth < lastdepth
             then case selstack of
@@ -357,9 +357,11 @@ instance PotatoHandler LayersHandler where
                 [] -> (x1, [x1])
                 x2:xs2 -> (x1 && not x2, (x1 || x2) : xs2)
             else (False, selstack)
-      newlhre = case lhre of 
-        LayersHandlerRenderEntryNormal _ dots lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots lentry
-        x -> x
+      newlhre = if childSelected
+        then case lhre of 
+          LayersHandlerRenderEntryNormal _ dots lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots lentry
+          x -> x
+        else lhre
     (_, newlentries) = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries3
 
       
