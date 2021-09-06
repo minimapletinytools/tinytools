@@ -71,6 +71,7 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
     , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
   }
 
+-- TODO remove renaming and move it into LayersHandlerRenderEntry
 data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming TZ.TextZipper | LHRESS_None deriving (Show, Eq)
 
 {--instance Eq LayersHandlerRenderEntrySelectedState where

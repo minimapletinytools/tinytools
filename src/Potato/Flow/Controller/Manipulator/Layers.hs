@@ -29,6 +29,10 @@ data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deri
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
 
+layersHandlerRenderEntry_selected :: LayersHandlerRenderEntry -> Bool
+layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_Selected _ _) = True
+layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_InheritSelected _ _) = True
+layersHandlerRenderEntry_selected _ = False
 
 -- TODO we could probably change this to do a more efficient binary search based on position in hierarchy
 doesSelectionContainREltId_linear :: REltId -> Selection -> Bool
@@ -297,11 +301,11 @@ instance PotatoHandler LayersHandler where
         normalcase = if isSelected lentry
           then (Just (layerEntry_depth lentry), makelentry LHRESS_Selected)
           else (Nothing, makelentry LHRESS_None)
-    (_,newlentries'') = mapAccumL mapaccumlfn_forselection Nothing lentries
+    (_,newlentries1) = mapAccumL mapaccumlfn_forselection Nothing lentries
 
     -- next insert the drop spot
-    newlentries' = case _layersHandler_dropSpot of
-      Nothing -> newlentries''
+    newlentries2 = case _layersHandler_dropSpot of
+      Nothing -> newlentries1
       Just ds -> r where
         (mleftmost, samelevel) = case _owlSpot_parent ds of
             x | x == noOwl -> (maybe Nothing Just (_owlSpot_leftSibling ds), True)
@@ -310,7 +314,7 @@ instance PotatoHandler LayersHandler where
               Just s -> (Just s, True)
 
         r = case mleftmost of
-          Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries''
+          Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries1
 
           Just leftmostid -> r' where
             -- TODO you could probably do this more efficiently with a very bespoke fold but whatever
@@ -322,7 +326,7 @@ instance PotatoHandler LayersHandler where
                 skippedlentries = Seq.takeWhileL (\lentry -> layerEntry_depth lentry > depth') $ noskiplentries
                 skipped = if samelevel then x + 1 + Seq.length skippedlentries else x+1
 
-            r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries''
+            r' = Seq.insertAt index (LayersHandlerRenderEntryDummy depth) newlentries1
 
     -- finally add the dots indicating drop spot depth
     mapaccumrfn_fordots mdropdepth lhre = case mdropdepth of
@@ -335,15 +339,8 @@ instance PotatoHandler LayersHandler where
           else (Nothing, lhre)
         _ -> error "unexpected LayersHandlerRenderEntryDummy"
 
-    (_, newlentries) = mapAccumR mapaccumrfn_fordots Nothing newlentries'
+    (_, newlentries3) = mapAccumR mapaccumrfn_fordots Nothing newlentries2
 
-
-    layersHandlerRenderEntry_selected :: LayersHandlerRenderEntry -> Bool
-    layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_Selected _ _) = True
-    layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_InheritSelected _ _) = True
-    layersHandlerRenderEntry_selected _ = False
-
-    -- TODO test + hookup correctly
     mapaccumrfn_forchildselected (selstack, lastdepth) lhre = ((newstack, depth), newlhre) where
       selected = layersHandlerRenderEntry_selected lhre
       depth = layersHandlerRenderEntry_depth lhre
@@ -363,7 +360,7 @@ instance PotatoHandler LayersHandler where
       newlhre = case lhre of 
         LayersHandlerRenderEntryNormal _ dots lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots lentry
         x -> x
-    finallentries = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries
+    (_, newlentries) = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries3
 
       
 
