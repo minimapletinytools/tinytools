@@ -272,6 +272,7 @@ instance PotatoHandler LayersHandler where
 
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
+  -- TODO generate LHRESS_ChildSelected
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where
     selection = _potatoHandlerInput_selection
     ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
@@ -335,6 +336,48 @@ instance PotatoHandler LayersHandler where
         _ -> error "unexpected LayersHandlerRenderEntryDummy"
 
     (_, newlentries) = mapAccumR mapaccumrfn_fordots Nothing newlentries'
+
+
+    layersHandlerRenderEntry_selected :: LayersHandlerRenderEntry -> Bool
+    layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_Selected _ _) = True
+    layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_InheritSelected _ _) = True
+    layersHandlerRenderEntry_selected _ = False
+
+    -- TODO test + hookup correctly
+    mapaccumrfn_forchildselected (selstack, lastdepth) lhre = ((newstack, depth), newlhre) where
+      selected = layersHandlerRenderEntry_selected lhre
+      depth = layersHandlerRenderEntry_depth lhre
+      (childSelected, newstack) = if depth > lastdepth 
+        then (False, selected:selstack)
+        else if selected 
+          then case selstack of 
+            [] -> error "expected something on selstack"
+            x:xs -> (False, True:xs)
+          else if depth < lastdepth
+            then case selstack of
+              [] -> error "this should never happen"
+              x1:xs1 -> case xs1 of
+                [] -> (x1, [x1])
+                x2:xs2 -> (x1 && not x2, (x1 || x2) : xs2)
+            else (False, selstack)
+      newlhre = case lhre of 
+        LayersHandlerRenderEntryNormal _ dots lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots lentry
+        x -> x
+    finallentries = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries
+
+      
+
+
+    -- TODO iterate backwards to determine parents with selected children
+    -- acc0 = ([False],0)  (stack, lastdepth)
+    -- if depth > lastdepth
+      -- (push False stack, depth)
+    -- if selected, (set top of stack to true, depth)
+    -- if depth < lastdepth
+      -- (pop stack and set top of stack to True, depth)
+      -- mark as LHRESS_ChildSelected
+    -- otherwise no change
+    -- 
 
 
 
@@ -438,9 +481,7 @@ instance PotatoHandler LayersRenameHandler where
 
   pIsHandlerActive LayersRenameHandler {..} = False
 
-  -- TODO just call this method on origin handler
   pRenderLayersHandler lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
-    -- TODO render renaming text box
     r' = pRenderLayersHandler _layersRenameHandler_original phi
     entries' = _layersViewHandlerRenderOutput_entries r'
 
