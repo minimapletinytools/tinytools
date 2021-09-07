@@ -22,8 +22,6 @@ stack test --test-arguments='--match "Parliament"' --file-watch
       -click on attachment point... attaches
       -ctrl click does not attach
 -text area
-
-FAIL/IGNORE-add State to PotatoReader
 -layers scrolling
   -change rendering based on scroll position
   -needs box indicating scroll position (v scroll bar I guess)
@@ -37,8 +35,6 @@ FAIL/IGNORE-add State to PotatoReader
   -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
-DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)
--layers rename handler renderer
 -file explorer
   DONE-typeable file path bar
   DONE-double focus between filename and folder
@@ -53,11 +49,14 @@ DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+FAIL/IGNORE-add State to PotatoReader
+DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)
+DONE-layers rename handler renderer
 
 -TINY TODO
   -layers
     -scrollbar/border to layers panel
-    -add rename support to layers
+    DONE-add rename support to layers
       -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
     DONE-fix layer keyboard input capturing
     DONE-remove inherit selection highlight

@@ -453,10 +453,15 @@ instance PotatoHandler LayersRenameHandler where
       MouseDragState_Dragging -> Just $ setHandlerOnly lh
       MouseDragState_Up -> Just $ setHandlerOnly lh
 
-      -- TODO somehow add return args from
-      -- renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
-      -- in here as well
-      _ -> pHandleMouse _layersRenameHandler_original phi rmd
+      _ -> Just r where
+        -- we want to pass output to original hanler
+        mpho' = pHandleMouse _layersRenameHandler_original phi rmd
+        -- but we also want to return a rename event
+        pho'' = renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
+        -- so just do both and sketch combine the results... probably ok...
+        r = case mpho' of 
+          Nothing -> error "this should never happen..."
+          Just pho' -> pho' { _potatoHandlerOutput_pFEvent = _potatoHandlerOutput_pFEvent pho'' }
 
   pHandleKeyboard lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} kbd = case kbd of
     -- don't allow ctrl shortcuts while renaming
