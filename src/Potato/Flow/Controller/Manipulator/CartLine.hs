@@ -22,6 +22,29 @@ import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 
 
+isCartesian :: XY -> XY -> Bool
+isCartesian (V2 ax ay) (V2 bx by) = ax == bx || ay == by 
+
+-- | predicate holds if pt is between a and b
+-- expects a b to be in the same cartesian plane
+isBetween :: XY -> (XY, XY) -> Bool
+isBetween (V2 px py) (a@(V2 ax ay), b@(V2 bx by)) = assert (isCartesian a b) $ if ax == bx && ax == px
+  -- if in same vertical line
+  then (py >= ay && py <= by) || (py <= ay && py >= by) 
+  else if ay == by && ay == py
+    -- if in same horizontal line
+    then (px >= ax && px <= bx) || (px <= ax && px >= bx) 
+    else False 
+
+splitFind :: (a -> Bool) -> [a] -> ([a],[a])
+splitFind p l = r where
+  splitFind' rprevs [] = (rprevs,[])
+  splitFind' rprevs (x:xs) = if p x
+    -- note we built up backwards but we reverse at the very end
+    then (reverse rprevs, x:xs)
+    else splitFind' (x:rprevs) xs
+  r = splitFind' [] l
+
 -- first elt of second list is currently selected anchor (no anchor selected if empty)
 -- by assumption each anchor can only differ in one component from the previous one 
 -- anchors must not continue forward in same direction 
@@ -30,6 +53,21 @@ import qualified Data.Sequence                             as Seq
 data AnchorZipper = AnchorZipper [XY] [XY] deriving (Show)
 emptyAnchorZipper :: AnchorZipper
 emptyAnchorZipper = AnchorZipper [] []
+
+flattenAnchors :: AnchorZipper -> [XY]
+flattenAnchors (AnchorZipper xs ys) = xs <> ys
+
+-- | flatten AnchorZipper to a plain list
+-- used only in creation step, where no anchor can be focused, asserts if this condition fails
+flattenAnchorsInCreation :: AnchorZipper -> [XY]
+flattenAnchorsInCreation az@(AnchorZipper xs ys) = assert (length ys == 0) $ flattenAnchors az
+
+
+-- | adjacentPairs [1,2,3,4] `shouldBe` [(1,2),(2,3),(3,4)] 
+adjacentPairs :: [a] -> [(a,a)]
+adjacentPairs [] = []
+adjacentPairs (x:[]) = []
+adjacentPairs (x:y:es) = (x,y) : adjacentPairs (y:es)
 
 
 -- TODO TEST
@@ -131,6 +169,8 @@ instance PotatoHandler CartLineHandler where
       then restrict4 dragDelta
       else dragDelta
 
+    anchors = flattenAnchors _cartLineHandler_anchors
+
     in case _mouseDrag_state of
       MouseDragState_Down | _cartLineHandler_isCreation -> Just $ def {
         -- TODO
@@ -156,14 +196,29 @@ instance PotatoHandler CartLineHandler where
                 _cartLineHandler_isCreation = False
                 , _cartLineHandler_active = False -- is it bad that we're still dragging but this is set to False?
               }
-            else
-              -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
-              undefined
+            -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
+            else Just $ setHandlerOnly $ clh {
+                _cartLineHandler_anchors = AnchorZipper 
+                  (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors)) 
+                  []
+              }
         False -> r where
-          -- TODO
-          -- if click on dot, store it
-          -- if click on line, create new dot
-          r = undefined
+          
+          -- first go through and find dots we may have clicked on
+          (dotfs,dotbs) = splitFind (== mousexy) anchors
+          -- then go through and find any lines we may have clicked on
+          (linefs, linebs) = splitFind (isBetween mousexy) (adjacentPairs anchors)
+
+          r = if null dotbs 
+            -- we did not click on any dots
+            then if null linebs
+              -- we found nothing, input not captured
+              then Nothing
+              -- we clicked on a line
+              else undefined -- TODO
+            -- we clicked on a dot
+            else undefined -- TODO
+          
       MouseDragState_Dragging -> case _cartLineHandler_isCreation of
         -- TODO someday allow dragging dots on in creation case (to adjust position)
         True -> Just $ setHandlerOnly clh

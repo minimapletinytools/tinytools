@@ -29,7 +29,7 @@ FAIL/IGNORE-add State to PotatoReader
   -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
--highlight parents with selected children gray (repuprose INHERISTSELECET)
+DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)
 -layers rename handler renderer
 -file explorer
   DONE-typeable file path bar
