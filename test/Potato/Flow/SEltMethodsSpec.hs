@@ -46,6 +46,17 @@ spec = do
                 }
               , _sBox_boxType = style
             }
+          somesbox5 style = def {
+            _sBox_box       = LBox 0 (V2 10 5)
+            , _sBox_text    = def {
+                _sBoxText_text = "aoeuaoeu"
+              }
+            , _sBox_title = SBoxTitle {
+                _sBoxTitle_title = Just "boop"
+                , _sBoxTitle_align = TextAlign_Right
+              }
+            , _sBox_boxType = style
+          }
         it "SBoxType_NoBoxText" $ do
           let
             SEltDrawer {..} = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
@@ -76,6 +87,14 @@ spec = do
           _sEltDrawer_renderFn (V2 1 0) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'ｈ'
           _sEltDrawer_renderFn (V2 3 0) `shouldBe` Nothing
+        it "box label" $ do
+          let 
+            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '╔'
+          _sEltDrawer_renderFn (V2 8 0) `shouldBe` Just 'p'
+
+
       describe "SSimpleLine" $ do
         let
           somelinestyle autoStyle = LineStyle {
