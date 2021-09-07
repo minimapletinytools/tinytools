@@ -1,4 +1,7 @@
 
+
+
+
 ----------
 stack test --test-arguments='--match "Parliament"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
@@ -13,6 +16,12 @@ stack test --test-arguments='--match "Parliament"' --file-watch
     -click + drag produces reuglar line
     -click release in same spot takes you to CartLine
   -may as well do attachments while you're at it
+    -same as regular line except last points auto track to their attaching points, may create some un-editable joints
+    -how to detach?
+    -how to attach during creation?
+      -click on attachment point... attaches
+      -ctrl click does not attach
+
 -text area
 
 FAIL/IGNORE-add State to PotatoReader

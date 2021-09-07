@@ -22,6 +22,37 @@ import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 
 
+{- examples of how CartLine works
+
+1---2
+    |
+    3
+drag 2 up (1 moves as well)
+1---2
+    |
+    |
+    3
+drag 2 right (3 moves as well)
+1------2
+       |
+       |
+       3
+
+1---x---2
+drag x down (later anchor always moves)
+1---*
+    |
+    *---2
+
+examples:
+1---3---2
+drag 2 up
+    3---2
+        |
+1-------*
+
+-}
+
 isCartesian :: XY -> XY -> Bool
 isCartesian (V2 ax ay) (V2 bx by) = ax == bx || ay == by 
 
