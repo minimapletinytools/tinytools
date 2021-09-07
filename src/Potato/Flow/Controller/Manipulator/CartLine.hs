@@ -172,67 +172,55 @@ instance PotatoHandler CartLineHandler where
     anchors = flattenAnchors _cartLineHandler_anchors
 
     in case _mouseDrag_state of
-      MouseDragState_Down | _cartLineHandler_isCreation -> Just $ def {
-        -- TODO
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler clh {
-              _cartLineHandler_active = True
+      MouseDragState_Down | _cartLineHandler_isCreation -> case _cartLineHandler_anchors of
+        AnchorZipper _ (x:xs) -> error "this should never happen"
+        -- creation case
+        AnchorZipper [] [] -> r where
+          -- TODO track the fact we clicked, if we drag, pass on to SimpleLine? (but what happens if we drag back to start)
+          r = Just $ setHandlerOnly $ clh {
+              _cartLineHandler_anchors = AnchorZipper [mousexy] []
             }
-        }
+        AnchorZipper (x:xs) [] -> if last (x :| xs) == mousexy
+          then Just $ setHandlerOnly $ clh {
+              _cartLineHandler_isCreation = False
+              , _cartLineHandler_active = False -- is it bad that we're still dragging but this is set to False?
+            }
+          -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
+          else Just $ setHandlerOnly $ clh {
+              _cartLineHandler_anchors = AnchorZipper 
+                (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors)) 
+                []
+            }
       -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
-      MouseDragState_Down -> case _cartLineHandler_isCreation of
+      MouseDragState_Down -> r where
+        -- first go through and find dots we may have clicked on
+        (dotfs,dotbs) = splitFind (== mousexy) anchors
+        -- then go through and find any lines we may have clicked on
+        (linefs, linebs) = splitFind (isBetween mousexy) (adjacentPairs anchors)
 
-        True -> case _cartLineHandler_anchors of
-          AnchorZipper _ (x:xs) -> error "this should never happen"
-          -- creation case
-          AnchorZipper [] [] -> r where
-            -- TODO track the fact we clicked, if we drag, pass on to SimpleLine? (but what happens if we drag back to start)
-            r = Just $ setHandlerOnly $ clh {
-                _cartLineHandler_anchors = AnchorZipper [mousexy] []
-              }
-          AnchorZipper (x:xs) [] -> if last (x :| xs) == mousexy
-            then Just $ setHandlerOnly $ clh {
-                _cartLineHandler_isCreation = False
-                , _cartLineHandler_active = False -- is it bad that we're still dragging but this is set to False?
-              }
-            -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
-            else Just $ setHandlerOnly $ clh {
-                _cartLineHandler_anchors = AnchorZipper 
-                  (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors)) 
-                  []
-              }
-        False -> r where
-          
-          -- first go through and find dots we may have clicked on
-          (dotfs,dotbs) = splitFind (== mousexy) anchors
-          -- then go through and find any lines we may have clicked on
-          (linefs, linebs) = splitFind (isBetween mousexy) (adjacentPairs anchors)
-
-          r = if null dotbs 
-            -- we did not click on any dots
-            then if null linebs
-              -- we found nothing, input not captured
-              then Nothing
-              -- we clicked on a line
-              else undefined -- TODO
-            -- we clicked on a dot
+        r = if null dotbs 
+          -- we did not click on any dots
+          then if null linebs
+            -- we found nothing, input not captured
+            then Nothing
+            -- we clicked on a line
             else undefined -- TODO
-          
-      MouseDragState_Dragging -> case _cartLineHandler_isCreation of
-        -- TODO someday allow dragging dots on in creation case (to adjust position)
-        True -> Just $ setHandlerOnly clh
-        False -> r where
-          -- TODO
-          r = undefined
-      MouseDragState_Up -> case _cartLineHandler_isCreation of
-        -- nothing to do here
-        True -> Just $ setHandlerOnly clh
-        False -> r where
-          -- on release cases, topology may change (some anchors removed), unclear how to map topology (probably need meta data to track)
-          -- if release is on a dummy dot, (in between two other dots)
-          -- TODO
-          r = undefined
+          -- we clicked on a dot
+          else undefined -- TODO
+
+      -- TODO someday allow dragging dots on in creation case (to adjust position)  
+      MouseDragState_Dragging | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
+      MouseDragState_Dragging -> r where
+        r = undefined
+      -- nothing to do here
+      MouseDragState_Up | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
+      MouseDragState_Up -> r where
+        -- on release cases, topology may change (some anchors removed), unclear how to map topology (probably need meta data to track)
+        -- if release is on a dummy dot, (in between two other dots)
+        -- TODO
+        r = undefined
       MouseDragState_Cancelled -> Just def
 
   pHandleKeyboard clh PotatoHandlerInput {..} kbd = case kbd of
