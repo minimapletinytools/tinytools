@@ -21,7 +21,6 @@ stack test --test-arguments='--match "Parliament"' --file-watch
     -how to attach during creation?
       -click on attachment point... attaches
       -ctrl click does not attach
-
 -text area
 
 FAIL/IGNORE-add State to PotatoReader

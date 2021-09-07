@@ -72,7 +72,7 @@ data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
   }
 
 -- TODO remove renaming and move it into LayersHandlerRenderEntry
-data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selected | LHRESS_InheritSelected | LHRESS_Renaming TZ.TextZipper | LHRESS_None deriving (Show, Eq)
+data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selected | LHRESS_InheritSelected | LHRESS_None deriving (Show, Eq)
 
 {--instance Eq LayersHandlerRenderEntrySelectedState where
   (==) (LHRESS_Renaming x) (LHRESS_Renaming y) = x == y
@@ -84,14 +84,16 @@ data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selec
 
 -- depth at which dots are added if any
 type LayersHandlerRenderEntryDots = Maybe Int
+-- are we renaming this one
+type LayersHandlerRenderEntryRenaming = Maybe TZ.TextZipper
 
 data LayersHandlerRenderEntry =
-  LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayersHandlerRenderEntryDots LayerEntry
+  LayersHandlerRenderEntryNormal LayersHandlerRenderEntrySelectedState LayersHandlerRenderEntryDots LayersHandlerRenderEntryRenaming LayerEntry
   | LayersHandlerRenderEntryDummy Int
   deriving (Eq, Show)
 
 layersHandlerRenderEntry_depth :: LayersHandlerRenderEntry -> Int
-layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ _ lentry) = layerEntry_depth lentry
+layersHandlerRenderEntry_depth (LayersHandlerRenderEntryNormal _ _ _ lentry) = layerEntry_depth lentry
 layersHandlerRenderEntry_depth (LayersHandlerRenderEntryDummy i) = i
 
 -- hack to render layers view via HandlerRenderOutput (we could have just as well put this in LayerState I guesss)

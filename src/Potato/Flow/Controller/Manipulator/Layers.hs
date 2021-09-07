@@ -30,8 +30,8 @@ data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deri
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
 
 layersHandlerRenderEntry_selected :: LayersHandlerRenderEntry -> Bool
-layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_Selected _ _) = True
-layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_InheritSelected _ _) = True
+layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_Selected _ _ _) = True
+layersHandlerRenderEntry_selected (LayersHandlerRenderEntryNormal LHRESS_InheritSelected _ _ _) = True
 layersHandlerRenderEntry_selected _ = False
 
 -- TODO we could probably change this to do a more efficient binary search based on position in hierarchy
@@ -297,7 +297,7 @@ instance PotatoHandler LayersHandler where
         else normalcase
       where
         -- dot depth will be filled in later
-        makelentry x = LayersHandlerRenderEntryNormal x Nothing lentry
+        makelentry x = LayersHandlerRenderEntryNormal x Nothing Nothing lentry
         normalcase = if isSelected lentry
           then (Just (layerEntry_depth lentry), makelentry LHRESS_Selected)
           else (Nothing, makelentry LHRESS_None)
@@ -334,8 +334,8 @@ instance PotatoHandler LayersHandler where
         LayersHandlerRenderEntryDummy d -> (Just d, lhre)
         _ -> (mdropdepth, lhre)
       Just x -> case lhre of
-        LayersHandlerRenderEntryNormal s _ lentry -> if layerEntry_depth lentry > x
-          then (mdropdepth, LayersHandlerRenderEntryNormal s (Just x) lentry)
+        LayersHandlerRenderEntryNormal s _ _ lentry -> if layerEntry_depth lentry > x
+          then (mdropdepth, LayersHandlerRenderEntryNormal s (Just x) Nothing lentry)
           else (Nothing, lhre)
         _ -> error "unexpected LayersHandlerRenderEntryDummy"
 
@@ -359,7 +359,7 @@ instance PotatoHandler LayersHandler where
             else (False, selstack)
       newlhre = if childSelected
         then case lhre of 
-          LayersHandlerRenderEntryNormal _ dots lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots lentry
+          LayersHandlerRenderEntryNormal _ dots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots renaming lentry
           x -> x
         else lhre
     (_, newlentries) = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries3
@@ -484,8 +484,12 @@ instance PotatoHandler LayersRenameHandler where
     r' = pRenderLayersHandler _layersRenameHandler_original phi
     entries' = _layersViewHandlerRenderOutput_entries r'
 
-    adjustfn (LayersHandlerRenderEntryNormal lhress dots lentry) = LayersHandlerRenderEntryNormal newlhress dots lentry where
-      newlhress = LHRESS_Renaming _layersRenameHandler_zipper
+    -- PROBLEM you want to do some hcropping on the zipper but you don't know how much to crop by because width is unknown
+    -- solution 1: align right
+    -- solution 2: take over entire row from very left 
+    -- solution 3: ignore, user may need to resize layers area
+    -- we will just do solution 3 cuz it's easiest
+    adjustfn (LayersHandlerRenderEntryNormal lhress dots renaming lentry) = LayersHandlerRenderEntryNormal lhress dots (Just _layersRenameHandler_zipper) lentry where
     adjustfn (LayersHandlerRenderEntryDummy _) = error "this should never happen"
     entries = Seq.adjust'  adjustfn _layersRenameHandler_index entries'
     r = LayersViewHandlerRenderOutput { _layersViewHandlerRenderOutput_entries = entries }
