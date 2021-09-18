@@ -311,8 +311,8 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
-foldGoatFn cmd goatState@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
---foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
+--foldGoatFn cmd goatState@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
+foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
 

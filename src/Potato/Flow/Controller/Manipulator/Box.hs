@@ -126,24 +126,25 @@ data BoxHandler = BoxHandler {
 
   } deriving (Show)
 
-makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
-makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
-  CanvasSelection selection = _potatoHandlerInput_canvasSelection
+makeDragDeltaBox :: BoxHandleType -> RelMouseDrag -> DeltaLBox
+makeDragDeltaBox bht rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   dragDelta = _mouseDrag_to - _mouseDrag_from
   shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
-
-  -- TODO may change handle when dragging through axis
-  --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
-  newbht = bht
 
   boxRestrictedDelta = if shiftClick
     then restrict8 dragDelta
     else dragDelta
 
-  dbox = makeDeltaBox newbht boxRestrictedDelta
+  r = makeDeltaBox bht boxRestrictedDelta
 
-  -- no clamping variant
+
+
+
+makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> WSEvent
+makeDragOperation undoFirst PotatoHandlerInput {..} dbox = op where
+  CanvasSelection selection = _potatoHandlerInput_canvasSelection
+
   makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox
@@ -208,7 +209,7 @@ instance PotatoHandler BoxHandler where
 
       op = if boxCreationType_isCreation _boxHandler_creation
         then WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
-        else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
+        else makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh { _boxHandler_undoFirst = True }
 
@@ -244,9 +245,27 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just WSEUndo }
 
 
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
-    -- TODO keyboard movement
-    _ -> Nothing
+  pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key mods) = r where
+
+    todlbox (x,y) = Just $ DeltaLBox (V2 x y) 0
+    mmove = case key of
+      KeyboardKey_Left -> todlbox (-1,0)
+      KeyboardKey_Right -> todlbox (1,0)
+      KeyboardKey_Up -> todlbox (0,-1)
+      KeyboardKey_Down -> todlbox (0,1)
+      _ -> Nothing
+
+    r = if _boxHandler_active bh
+      -- ignore inputs when we're in the middle of dragging
+      then Nothing
+      else case mmove of
+        Nothing -> Nothing
+        Just move -> Just r2 where
+          op = makeDragOperation False phi move
+          r2 = def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
+              , _potatoHandlerOutput_pFEvent = Just op
+            }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_canvasSelection
