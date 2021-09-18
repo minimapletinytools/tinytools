@@ -35,7 +35,7 @@ import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
 
-getSBox :: Selection -> (REltId, SBox)
+getSBox :: CanvasSelection -> (REltId, SBox)
 getSBox selection = case superOwl_toSElt_hack sowl of
   SEltBox sbox -> (rid, sbox)
   selt -> error $ "expected SBox, got " <> show selt
@@ -145,7 +145,7 @@ data BoxTextHandler = BoxTextHandler {
     , _boxTextHandler_undoFirst   :: Bool
   }
 
-makeBoxTextHandler :: SomePotatoHandler -> Selection -> RelMouseDrag -> BoxTextHandler
+makeBoxTextHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
 makeBoxTextHandler prev selection rmd = BoxTextHandler {
       _boxTextHandler_isActive = False
       , _boxTextHandler_state = uncurry makeBoxTextInputState (getSBox selection) rmd
@@ -153,7 +153,7 @@ makeBoxTextHandler prev selection rmd = BoxTextHandler {
       , _boxTextHandler_undoFirst = False
     }
 
-updateBoxTextHandlerState :: Bool -> Selection -> BoxTextHandler -> BoxTextHandler
+updateBoxTextHandlerState :: Bool -> CanvasSelection -> BoxTextHandler -> BoxTextHandler
 updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
   (_, sbox) = getSBox selection
 
@@ -182,8 +182,8 @@ instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
   pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxTextHandler_state
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
-      (_, sbox) = getSBox _potatoHandlerInput_selection
+      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
+      (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
@@ -212,8 +212,8 @@ instance PotatoHandler BoxTextHandler where
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxTextHandler_prevHandler tah') }
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
-      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
-      sowl = selectionToSuperOwl _potatoHandlerInput_selection
+      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
+      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
 
       -- TODO decide what to do with mods
 
@@ -229,23 +229,23 @@ instance PotatoHandler BoxTextHandler where
           , _potatoHandlerOutput_pFEvent = mev
         }
 
-  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unSuperOwlParliament _potatoHandlerInput_selection)
+  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
         SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
           then Nothing -- SEltBox type changed to non-text
-          else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_selection tah
+          else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_canvasSelection tah
         _ -> Nothing
       where
-        sowl = selectionToSuperOwl _potatoHandlerInput_selection
+        sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
 
 
   pRenderHandler tah' PotatoHandlerInput {..} = r where
-    tah = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
+    tah = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     dls = _boxTextInputState_displayLines $ _boxTextHandler_state tah
     origBox = _boxTextInputState_box $ _boxTextHandler_state tah
     (x, y) = TZ._displayLines_cursorPos dls
@@ -260,7 +260,7 @@ instance PotatoHandler BoxTextHandler where
       (alignxoff,_) <- Map.lookup y offsetMap
       let
         LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
-        offset = getOffset $ snd $ getSBox _potatoHandlerInput_selection
+        offset = getOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
         handle = RenderHandle {
             _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
             , _renderHandle_char = mCursorChar

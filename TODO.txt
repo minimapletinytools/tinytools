@@ -10,6 +10,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
+-box drag should probably check if you actually clicked on a elt before letting you drag (right now you will drag if you click on nothing if it's inside the box)
 -box labels
 -multi node lines
   -decide how to combine Line and CartLine
@@ -22,19 +23,14 @@ stack test --test-arguments='--match "Parliament"' --file-watch
       -click on attachment point... attaches
       -ctrl click does not attach
 -text area
--layers scrolling
-  -change rendering based on scroll position
-  -needs box indicating scroll position (v scroll bar I guess)
--must click to focus on canvas (after having focused on layers) for input to register
--click on layer  and drag to canvas area causes freeze
-  -generally speaking clicking and dragging to other panes is kind of broken
--BUG selecting folders does not create select boxes
+DONE-BUG selecting folders does not create select boxes
   -need to use converted selection in select handler?
     -or do I want to make converted selection available via PotatoHandlerInput
 -BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
+  -you got it down to 2 :O
 -file explorer
   DONE-typeable file path bar
   DONE-double focus between filename and folder
@@ -49,6 +45,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+DONE-must click to focus on canvas (after having focused on layers) for input to registerv
 FAIL/IGNORE-add State to PotatoReader
 DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)
 DONE-layers rename handler renderer
@@ -56,14 +53,14 @@ DONE-layers rename handler renderer
 -TINY TODO
   -layers
     -scrollbar/border to layers panel
+      -change rendering based on scroll position
+      -needs box indicating scroll position (v scroll bar I guess)
+      -why does scrolling get managed by GoatWidget again?
     DONE-add rename support to layers
       -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
     DONE-fix layer keyboard input capturing
     DONE-remove inherit selection highlight
     DONE-implement highlight drag drop (see nested layers below)
-  -still getting same source assert when dragging to/from layers/canvas
-    -(write Ut for this)
-    -I think you just need to switch layout stuff to use pane2
   -EXTRA BONUS TODO
     -attachments
     -text box should indicate overflow when in text entry bode
@@ -86,6 +83,9 @@ DONE-layers rename handler renderer
     -toggle box to textbox to freeform
       -this operation can not be reversed popup :O
     -user settings object in vty
+  DONE-still getting same source assert when dragging to/from layers/canvas
+    DONE-(write Ut for this)
+    DONE-I think you just need to switch layout stuff to use pane2
   DONE-add sorting to BroadPhase somehow...
     -fix select order
     -ok you didn't actually fix render order...
