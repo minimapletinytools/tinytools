@@ -10,7 +10,8 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--box drag should probably check if you actually clicked on a elt before letting you drag (right now you will drag if you click on nothing if it's inside the box)
+-box handler drag/move should probably check if you actually clicked on a elt before letting you drag
+  -right now you will drag if you click on nothing if it's inside the box
 -box labels
 -multi node lines
   -decide how to combine Line and CartLine
@@ -23,9 +24,6 @@ stack test --test-arguments='--match "Parliament"' --file-watch
       -click on attachment point... attaches
       -ctrl click does not attach
 -text area
-DONE-BUG selecting folders does not create select boxes
-  -need to use converted selection in select handler?
-    -or do I want to make converted selection available via PotatoHandlerInput
 -BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
@@ -45,6 +43,9 @@ DONE-BUG selecting folders does not create select boxes
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+DONE-BUG selecting folders does not create select boxes
+  -need to use converted selection in select handler?
+    -or do I want to make converted selection available via PotatoHandlerInput
 DONE-must click to focus on canvas (after having focused on layers) for input to registerv
 FAIL/IGNORE-add State to PotatoReader
 DONE-highlight parents with selected children gray (repuprose INHERISTSELECET)

@@ -117,7 +117,7 @@ boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreati
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
-    _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging, TODO should this be Maybe BoxHandleType?
+    _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging
     , _boxHandler_undoFirst :: Bool
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
@@ -156,7 +156,7 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 -- and one exclusively for creating boxes
 instance Default BoxHandler where
   def = BoxHandler {
-      _boxHandler_handle       = BH_BR -- does this matter?
+      _boxHandler_handle       = BH_BR
       , _boxHandler_undoFirst  = False
       , _boxHandler_creation = BoxCreationType_None
       , _boxHandler_active = False
@@ -173,16 +173,19 @@ instance PotatoHandler BoxHandler where
     -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
-    MouseDragState_Down -> r where
-      mmi = findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection
-      r = case mmi of
-        -- didn't click on a manipulator, don't capture input
-        Nothing -> Nothing
-        Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
-          newbh = bh {
-              _boxHandler_handle = toEnum mi
-              , _boxHandler_active = True
-            }
+    MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
+      -- didn't click on a manipulator
+      Nothing -> r where
+        -- TODO
+        -- if the only thing selected a box?
+        --  if we click on the top horiz bar of the box
+        --    return BoxLabel handler
+        r = Nothing
+      Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
+        newbh = bh {
+            _boxHandler_handle = toEnum mi
+            , _boxHandler_active = True
+          }
 
     MouseDragState_Dragging -> Just r where
       dragDelta = _mouseDrag_to - _mouseDrag_from
