@@ -10,7 +10,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--box labels
+-box label
 -multi node lines
   -decide how to combine Line and CartLine
     -click + drag produces reuglar line
@@ -25,6 +25,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 -layers scrolling
   -change rendering based on scroll position
   -needs box indicating scroll position (v scroll bar I guess)
+-I think you broke folder depth dots (remember it's only for when you drag)
 -must click to focus on canvas (after having focused on layers) for input to register
 -click on layer  and drag to canvas area causes freeze
   -generally speaking clicking and dragging to other panes is kind of broken

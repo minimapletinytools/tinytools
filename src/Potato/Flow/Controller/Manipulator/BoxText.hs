@@ -5,6 +5,7 @@ module Potato.Flow.Controller.Manipulator.BoxText (
   BoxTextHandler(..)
   , BoxTextInputState(..)
   , makeBoxTextHandler
+  -- , BoxLabelHandler(..)
 
   -- exposed for testing
   , makeBoxTextInputState
@@ -135,7 +136,6 @@ inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip },
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
--- TODO rename to BoxTextHandler
 data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
@@ -269,3 +269,24 @@ instance PotatoHandler BoxTextHandler where
 
     r = HandlerRenderOutput $ fromMaybe [] mlbox
   pIsHandlerActive = _boxTextHandler_isActive
+
+
+
+{- TODO
+data BoxLabelHandler = BoxLabelHandler {
+    _boxLabelHandler_active      :: Bool
+    -- NOTE some fields in here are ignored or interpreted differently
+    , _boxLabelHandler_state       :: BoxTextInputState
+    , _boxLabelHandler_undoFirst   :: Bool
+  }
+
+instance PotatoHandler BoxLabelHandler where
+  pHandlerName _ = handlerName_boxLabel
+  pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
+  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+      -- TODO we need a different updated function here that does just the label
+      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
+      (_, sbox) = getSBox _potatoHandlerInput_selection
+    
+  pIsHandlerActive = _boxLabelHandler_active
+-}

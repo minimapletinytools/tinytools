@@ -141,6 +141,8 @@ handlerName_cartesianLine :: Text
 handlerName_cartesianLine = "CartesianLineHandler"
 handlerName_boxText :: Text
 handlerName_boxText = "BoxTextHandler"
+handlerName_boxLabel :: Text
+handlerName_boxLabel = "BoxLabelHandler"
 handlerName_pan :: Text
 handlerName_pan = "PanHandler"
 handlerName_select :: Text
