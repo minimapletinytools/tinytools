@@ -25,16 +25,15 @@ import qualified Data.Sequence                as Seq
 
 data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
 
-computeSelectionType :: Selection -> SelectionManipulatorType
-computeSelectionType (SuperOwlParliament selection)= foldl' foldfn SMTNone selection where
+computeSelectionType :: CanvasSelection -> SelectionManipulatorType
+computeSelectionType (CanvasSelection selection)= foldl' foldfn SMTNone selection where
   foldfn accType sowl = case accType of
     SMTNone -> case superOwl_toSElt_hack sowl of
       SEltBox sbox -> if sBoxType_isText (_sBox_boxType sbox) then SMTBoxText else SMTBox
       SEltLine _   -> SMTLine
       SEltTextArea _   -> SMTText
-      -- TODO
-      --SEltFolderStart _ -> SMTNone
-      --SEltFolderEnd _ -> SMTNone
+      SEltFolderStart -> error "this should never happen by assumption of CanvasSelection type"
+      SEltFolderEnd -> error "this should never happen by assumption of CanvasSelection type"
       --SEltNone -> SMTNone
       _            -> SMTBoundingBox
     _ -> SMTBoundingBox
@@ -54,17 +53,17 @@ restrict8 (V2 x y) = r where
       then (V2 0 y)
       else (V2 x y)
 
-selectionToSuperOwl :: Selection -> SuperOwl
-selectionToSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
+selectionToSuperOwl :: CanvasSelection -> SuperOwl
+selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
 
-selectionToMaybeSuperOwl :: Selection -> Maybe SuperOwl
-selectionToMaybeSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
+selectionToMaybeSuperOwl :: CanvasSelection -> Maybe SuperOwl
+selectionToMaybeSuperOwl (CanvasSelection selection) = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
 
-selectionToFirstSuperOwl :: Selection -> SuperOwl
-selectionToFirstSuperOwl (SuperOwlParliament selection) = assert (Seq.length selection > 0) $ Seq.index selection 0
+selectionToFirstSuperOwl :: CanvasSelection -> SuperOwl
+selectionToFirstSuperOwl (CanvasSelection selection) = assert (Seq.length selection > 0) $ Seq.index selection 0
 
-selectionToMaybeFirstSuperOwl :: Selection -> Maybe SuperOwl
-selectionToMaybeFirstSuperOwl (SuperOwlParliament selection) = Seq.lookup 0 selection
+selectionToMaybeFirstSuperOwl :: CanvasSelection -> Maybe SuperOwl
+selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
 
 lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where

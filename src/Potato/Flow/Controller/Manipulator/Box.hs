@@ -40,8 +40,8 @@ data MouseManipulator = MouseManipulator {
 type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
-toMouseManipulators :: Selection -> MouseManipulatorSet
-toMouseManipulators (SuperOwlParliament selection) = bb where
+toMouseManipulators :: CanvasSelection -> MouseManipulatorSet
+toMouseManipulators (CanvasSelection selection) = bb where
   union_lBoxes :: NonEmpty LBox -> LBox
   union_lBoxes (x:|xs) = foldl' union_lBox x xs
   fmapfn sowl = do
@@ -53,7 +53,7 @@ toMouseManipulators (SuperOwlParliament selection) = bb where
     []   -> []
     x:xs -> fmap (flip makeHandleBox (union_lBoxes (x:|xs))) [BH_TL .. BH_A]
 
-findFirstMouseManipulator :: RelMouseDrag -> Selection -> Maybe ManipulatorIndex
+findFirstMouseManipulator :: RelMouseDrag -> CanvasSelection -> Maybe ManipulatorIndex
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
   smt = computeSelectionType selection
@@ -117,7 +117,7 @@ boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreati
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
-    _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging, TODO should this be Maybe BoxHandleType?
+    _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging
     , _boxHandler_undoFirst :: Bool
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
@@ -126,24 +126,25 @@ data BoxHandler = BoxHandler {
 
   } deriving (Show)
 
-makeDragOperation :: Bool -> BoxHandleType -> PotatoHandlerInput -> RelMouseDrag -> WSEvent
-makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
-  SuperOwlParliament selection = _potatoHandlerInput_selection
+makeDragDeltaBox :: BoxHandleType -> RelMouseDrag -> DeltaLBox
+makeDragDeltaBox bht rmd = r where
   RelMouseDrag MouseDrag {..} = rmd
   dragDelta = _mouseDrag_to - _mouseDrag_from
   shiftClick = elem KeyModifier_Shift _mouseDrag_modifiers
-
-  -- TODO may change handle when dragging through axis
-  --(m, mi) = continueManipulate _mouseDrag_to lastmi smt mms
-  newbht = bht
 
   boxRestrictedDelta = if shiftClick
     then restrict8 dragDelta
     else dragDelta
 
-  dbox = makeDeltaBox newbht boxRestrictedDelta
+  r = makeDeltaBox bht boxRestrictedDelta
 
-  -- no clamping variant
+
+
+
+makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> WSEvent
+makeDragOperation undoFirst PotatoHandlerInput {..} dbox = op where
+  CanvasSelection selection = _potatoHandlerInput_canvasSelection
+
   makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox
@@ -156,7 +157,7 @@ makeDragOperation undoFirst bht PotatoHandlerInput {..} rmd = op where
 -- and one exclusively for creating boxes
 instance Default BoxHandler where
   def = BoxHandler {
-      _boxHandler_handle       = BH_BR -- does this matter?
+      _boxHandler_handle       = BH_BR
       , _boxHandler_undoFirst  = False
       , _boxHandler_creation = BoxCreationType_None
       , _boxHandler_active = False
@@ -173,16 +174,19 @@ instance PotatoHandler BoxHandler where
     -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
-    MouseDragState_Down -> r where
-      mmi = findFirstMouseManipulator rmd _potatoHandlerInput_selection
-      r = case mmi of
-        -- didn't click on a manipulator, don't capture input
-        Nothing -> Nothing
-        Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
-          newbh = bh {
-              _boxHandler_handle = toEnum mi
-              , _boxHandler_active = True
-            }
+    MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
+      -- didn't click on a manipulator
+      Nothing -> r where
+        -- TODO
+        -- if the only thing selected a box?
+        --  if we click on the top horiz bar of the box
+        --    return BoxLabel handler
+        r = Nothing
+      Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
+        newbh = bh {
+            _boxHandler_handle = toEnum mi
+            , _boxHandler_active = True
+          }
 
     MouseDragState_Dragging -> Just r where
       dragDelta = _mouseDrag_to - _mouseDrag_from
@@ -205,7 +209,7 @@ instance PotatoHandler BoxHandler where
 
       op = if boxCreationType_isCreation _boxHandler_creation
         then WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
-        else makeDragOperation _boxHandler_undoFirst _boxHandler_handle phi rmd
+        else makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh { _boxHandler_undoFirst = True }
 
@@ -217,7 +221,7 @@ instance PotatoHandler BoxHandler where
         }
 
     MouseDragState_Up -> r where
-      isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_selection of
+      isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection of
         Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType
         _                                    -> False
 
@@ -233,7 +237,7 @@ instance PotatoHandler BoxHandler where
           -- if we are drag selecting, then don't enter BoxText mode
           && not (_boxHandler_creation == BoxCreationType_DragSelect)
         -- create box handler and pass on the input
-        then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_selection rmd) phi rmd
+        then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
         else Just def
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
@@ -241,12 +245,30 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just WSEUndo }
 
 
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
-    -- TODO keyboard movement
-    _ -> Nothing
+  pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key mods) = r where
+
+    todlbox (x,y) = Just $ DeltaLBox (V2 x y) 0
+    mmove = case key of
+      KeyboardKey_Left -> todlbox (-1,0)
+      KeyboardKey_Right -> todlbox (1,0)
+      KeyboardKey_Up -> todlbox (0,-1)
+      KeyboardKey_Down -> todlbox (0,1)
+      _ -> Nothing
+
+    r = if _boxHandler_active bh
+      -- ignore inputs when we're in the middle of dragging
+      then Nothing
+      else case mmove of
+        Nothing -> Nothing
+        Just move -> Just r2 where
+          op = makeDragOperation False phi move
+          r2 = def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
+              , _potatoHandlerOutput_pFEvent = Just op
+            }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
-    handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_selection
+    handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_canvasSelection
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
     r = HandlerRenderOutput (fmap defaultRenderHandle handlePoints)

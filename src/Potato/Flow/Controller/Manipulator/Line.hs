@@ -40,8 +40,8 @@ instance Default SimpleLineHandler where
     }
 
 
-findFirstLineManipulator :: RelMouseDrag -> Selection -> Maybe Bool
-findFirstLineManipulator (RelMouseDrag MouseDrag {..}) (SuperOwlParliament selection) = assert (Seq.length selection == 1) $ r where
+findFirstLineManipulator :: RelMouseDrag -> CanvasSelection -> Maybe Bool
+findFirstLineManipulator (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
   msowl = Seq.lookup 0 selection
   selt = case msowl of
     Nothing -> error "expected selection"
@@ -67,7 +67,7 @@ instance PotatoHandler SimpleLineHandler where
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
-      mistart = findFirstLineManipulator rmd _potatoHandlerInput_selection
+      mistart = findFirstLineManipulator rmd _potatoHandlerInput_canvasSelection
       r = case mistart of
         Nothing -> Nothing -- did not click on manipulator, no capture
         Just isstart -> Just $ def {
@@ -84,7 +84,7 @@ instance PotatoHandler SimpleLineHandler where
       newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
 
       -- for manipulation
-      sowl = selectionToSuperOwl _potatoHandlerInput_selection
+      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
       rid = _superOwl_id sowl
       controller = CTagLine :=> (Identity $ if _simpleLineHandler_isStart
         then def { _cLine_deltaStart = Just $ DeltaXY dragDelta }
@@ -106,7 +106,7 @@ instance PotatoHandler SimpleLineHandler where
     -- TODO keyboard movement
     _                              -> Nothing
   pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
-    mselt = selectionToMaybeSuperOwl _potatoHandlerInput_selection >>= return . superOwl_toSElt_hack
+    mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
     boxes = case mselt of
       Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler

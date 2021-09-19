@@ -57,6 +57,7 @@ data GoatState = GoatState {
     _goatState_workspace       :: OwlPFWorkspace
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection       :: Selection
+    , _goatState_canvasSelection :: CanvasSelection
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
 
@@ -251,10 +252,6 @@ data GoatWidget t = GoatWidget {
 
   , _goatWidget_selection           :: Dynamic t Selection
 
-  -- TODO I don't think you actually need this.... Delete me
-  -- TODO also you want a bunch of selection converting helper functions...
-  , _goatWidget_selection_converted :: Dynamic t CanvasSelection
-
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
 
   , _goatWidget_pan                 :: Dynamic t XY
@@ -270,7 +267,7 @@ data GoatWidget t = GoatWidget {
 }
 
 -- TODO rename to makeHandlerFromCanvasSelection
-makeHandlerFromSelection :: Selection -> SomePotatoHandler
+makeHandlerFromSelection :: CanvasSelection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTBoxText     -> SomePotatoHandler $ (def :: BoxHandler)
@@ -279,7 +276,7 @@ makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
   SMTNone        -> SomePotatoHandler EmptyHandler
 
-maybeUpdateHandlerFromSelection :: SomePotatoHandler -> Selection -> SomePotatoHandler
+maybeUpdateHandlerFromSelection :: SomePotatoHandler -> CanvasSelection -> SomePotatoHandler
 maybeUpdateHandlerFromSelection sph selection = case sph of
   SomePotatoHandler h -> if pIsHandlerActive h
     then sph
@@ -307,13 +304,14 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 
     , _potatoHandlerInput_layersState     = _goatState_layersState
     , _potatoHandlerInput_selection   = _goatState_selection
+    , _potatoHandlerInput_canvasSelection = _goatState_canvasSelection
   }
 
 -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
---foldGoatFn cmd goatState@GoatState {..} = trace "FOLDING" $ finalGoatState where
+--foldGoatFn cmd goatState@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
 foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
@@ -392,7 +390,9 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-              nextSelection = selectMagic last_pFState _goatState_broadPhaseState canvasDrag
+              nextSelection@(SuperOwlParliament sowls) = selectMagic last_pFState _goatState_broadPhaseState canvasDrag
+              -- since selection came from canvas, it's definitely a valid CanvasSelection, no need to convert
+              nextCanvasSelection = CanvasSelection sowls
               shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
               r = if isParliament_null nextSelection || shiftClick
                 -- clicked on nothing or shift click, start SelectHandler
@@ -408,7 +408,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
                 -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
                 -- also NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case GoatWidget will set the correct handler type
-                else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection }) canvasDrag of
+                else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection, _potatoHandlerInput_canvasSelection = nextCanvasSelection }) canvasDrag of
                   -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
                   Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
                     $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' (pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
@@ -565,11 +565,13 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
 
-  nextHandlerFromSelection = makeHandlerFromSelection next_selection
+  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) (const True) next_selection
+
+  nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
 
   next_handler' = if isNewSelection
     -- if there is a new selection, update the handler with new selection if handler wasn't active
-    then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_selection
+    then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_canvasSelection
     -- otherwise, use the returned handler or make a new one from selection
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
 
@@ -606,6 +608,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       , _goatState_pan             = next_pan
       , _goatState_handler         = next_handler
       , _goatState_selection       = next_selection
+      , _goatState_canvasSelection = next_canvasSelection
       , _goatState_broadPhaseState = next_broadPhaseState
       , _goatState_renderedCanvas = next_renderedCanvas
       , _goatState_layersState     = next_layersState
@@ -653,6 +656,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
         , _goatState_debugLabel      = ""
         , _goatState_selection       = isParliament_empty
+        , _goatState_canvasSelection = CanvasSelection Seq.empty
         , _goatState_broadPhaseState = initialbp
         , _goatState_renderedCanvas = initialrc
         , _goatState_layersState     = initiallayersstate
@@ -660,8 +664,11 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
       }
 
-  goatDyn :: Dynamic t GoatState
+  goatDyn' :: Dynamic t GoatState
     <- foldDyn foldGoatFn initialgoat goatEvent
+
+  -- reduces # of calls to foldGoatFn to 2 :\
+  let goatDyn = fmap id goatDyn'
 
   -- TODO make sure holdUniqDyn actually does what you think it does
   -- I think it does, but it will prob still do full equality check after changes in goatDyn :(
@@ -670,16 +677,28 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- i.e. OwlPFStateChangeFlag and have each OwlPFState operation return a change flag as well
   r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
-  r_selection_converted <- holdUniqDyn $ fmap (\gs -> superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState . _goatState_workspace $ gs) (const True) (_goatState_selection gs)) goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap _goatState_layersState goatDyn
-
   -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_layersHandlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
-
   r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
+
+  {- this causes 4 calls to foldGoatFn per tick :(
+  let
+    r_tool = fmap _goatState_selectedTool goatDyn
+    r_selection = fmap _goatState_selection goatDyn
+    r_selection_converted = fmap (\gs -> superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState . _goatState_workspace $ gs) (const True) (_goatState_selection gs)) goatDyn
+    r_broadphase = fmap _goatState_broadPhaseState goatDyn
+    r_pan = fmap _goatState_pan goatDyn
+    r_layers = fmap _goatState_layersState goatDyn
+    -- TODO flip order of render and holdUniqDyn
+    r_handlerRenderOutput = fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
+    r_layersHandlerRenderOutput = fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
+    r_canvas = fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
+  -}
+
   let
     r_renderedCanvas = fmap _goatState_renderedCanvas goatDyn
 
@@ -687,7 +706,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     {
       _goatWidget_tool           = r_tool
       , _goatWidget_selection    = r_selection
-      , _goatWidget_selection_converted = r_selection_converted
       , _goatWidget_layers       = r_layers
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase

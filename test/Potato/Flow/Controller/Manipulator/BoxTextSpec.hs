@@ -36,8 +36,8 @@ testClick x y = RelMouseDrag $ def {
     _mouseDrag_to = V2 x y
   }
 
-makeBoxTextInputState_basic_test :: Spec
-makeBoxTextInputState_basic_test = let
+boxTextInputState_basic_test :: Spec
+boxTextInputState_basic_test = let
     tais1 = makeBoxTextInputState 0 testSBoxWithText1 (testClick 5 5)
     tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5)
   in
@@ -415,7 +415,7 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
 spec :: Spec
 spec = do
   describe "BoxText" $ do
-    makeBoxTextInputState_basic_test
+    boxTextInputState_basic_test
     fromHUnitTest $ test_basic
     fromHUnitTest $ test_handler_state
     fromHUnitTest $ test_negative

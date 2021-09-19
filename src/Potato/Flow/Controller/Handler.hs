@@ -57,6 +57,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
     , _potatoHandlerInput_selection   :: Selection
+    , _potatoHandlerInput_canvasSelection :: CanvasSelection
 
     -- TODO
     --, _potatoHandlerInput_canvasSelection :: CanvasSelection
@@ -143,6 +144,8 @@ handlerName_boxText :: Text
 handlerName_boxText = "BoxTextHandler"
 handlerName_boxLabel :: Text
 handlerName_boxLabel = "BoxLabelHandler"
+handlerName_textArea :: Text
+handlerName_textArea = "TextAreaHandler"
 handlerName_pan :: Text
 handlerName_pan = "PanHandler"
 handlerName_select :: Text
