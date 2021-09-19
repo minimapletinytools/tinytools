@@ -114,6 +114,7 @@ data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationT
 boxCreationType_isCreation :: BoxCreationType -> Bool
 boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreationType_DragSelect
 
+
 -- new handler stuff
 data BoxHandler = BoxHandler {
 
@@ -168,6 +169,8 @@ instance Default BoxHandler where
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
   pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+
+    -- TODO creation should be a separate handler
     MouseDragState_Down | boxCreationType_isCreation _boxHandler_creation ->  Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh { _boxHandler_active = True }
       }

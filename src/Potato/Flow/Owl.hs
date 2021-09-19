@@ -37,12 +37,14 @@ class IsOwl o where
   isOwl_toSElt_hack :: o -> SElt
   isOwl_toSEltLabel_hack :: o -> SEltLabel
 
-data OwlInfo = OwlInfo {_owlInfo_name :: Text} deriving (Show, Eq, Generic)
+data OwlInfo = OwlInfo {
+    _owlInfo_name :: Text
+  } deriving (Show, Eq, Generic)
 
 instance NFData OwlInfo
 
 -- TODO rename to just Owl
---data OwlElt = OwlEltFolder OwlInfo (Seq OwlElt) | OwlEltSElt OwlInfo SElt deriving (Show, Generic)
+-- TODO add OwlEltFolder settings (or make it part of owlinfo?)
 data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Eq, Generic)
 
 instance NFData OwlElt

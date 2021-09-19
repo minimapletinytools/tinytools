@@ -26,6 +26,7 @@ import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
+import           Potato.Flow.Controller.Manipulator.CartLine
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Controller.Types
@@ -365,6 +366,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             someNewHandler = case _goatState_selectedTool of
               Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
               Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
+              Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
               Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
               Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
               _           -> error "not valid tool"

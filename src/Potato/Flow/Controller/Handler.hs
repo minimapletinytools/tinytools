@@ -176,10 +176,12 @@ class PotatoHandler h where
   -- return type of Nothing means input is not captured
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
 
-  -- reset handler if an event came in in between
+  -- reset handler if an event came in in between (e.g. due to undo, redo)
+  --
   -- FOR NOW we expect this to only be called if handler is not active
   -- FOR NOW this is only allowed to return the existing handler
-  -- when we have multi-user, this may return actions, and may happen when a handler is active
+  -- when we have multi-user, this may return actions (to undo some inprogress state I guess?), and may happen when a handler is active
+  --
   pResetHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   -- prob not correct behavior, if you delete an elt (say), then you don't want to persist the handler
   --pResetHandler h _ = Just $ SomePotatoHandler h

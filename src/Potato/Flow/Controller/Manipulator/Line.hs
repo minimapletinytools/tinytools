@@ -24,6 +24,7 @@ import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 
 
+-- TODO rename to AutoLine
 data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool --either we are manipulating start, or we are manipulating end
     , _simpleLineHandler_undoFirst  :: Bool
