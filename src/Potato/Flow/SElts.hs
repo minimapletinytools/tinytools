@@ -16,6 +16,7 @@ module Potato.Flow.SElts (
   , SBoxText(..)
   , SBoxType(..)
   , sBoxType_isText
+  , sBoxType_hasBorder
   , SBox(..)
   , SSimpleLine(..)
   , STextArea(..)
@@ -186,7 +187,10 @@ instance Binary SBoxType
 instance NFData SBoxType
 
 sBoxType_isText :: SBoxType -> Bool
-sBoxType_isText = (/=) SBoxType_Box
+sBoxType_isText sbt = sbt == SBoxType_BoxText || sbt == SBoxType_NoBoxText
+
+sBoxType_hasBorder :: SBoxType -> Bool
+sBoxType_hasBorder sbt = sbt == SBoxType_Box || sbt == SBoxType_BoxText
 
 -- |
 data SBox = SBox {

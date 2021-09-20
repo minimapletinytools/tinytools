@@ -66,7 +66,7 @@ checkHandlerPos pos = FunctionPredicate $ \gs ->
     (RenderHandle (LBox p _) _):[] -> if p == pos
       then ("", True)
       else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
-    _ -> ("too many handler outputs", False)
+    hs -> ("too many handler outputs for " <> pHandlerName h <> " got: " <> show hs, False)
 
 test_basic :: Test
 test_basic = constructTest "basic" emptyOwlPFState bs expected where
