@@ -5,7 +5,9 @@ module Potato.Flow.Controller.Manipulator.BoxText (
   BoxTextHandler(..)
   , BoxTextInputState(..)
   , makeBoxTextHandler
-  -- , BoxLabelHandler(..)
+  , BoxLabelHandler(..)
+  , makeBoxLabelHandler
+  , lBox_to_boxLabelBox
 
   -- exposed for testing
   , makeBoxTextInputState
@@ -289,15 +291,25 @@ data BoxLabelHandler = BoxLabelHandler {
     , _boxLabelHandler_undoFirst   :: Bool
   }
 
+makeBoxLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxLabelHandler
+makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
+      _boxLabelHandler_active = False
+      , _boxLabelHandler_state = uncurry makeBoxTextInputState (getSBox selection) rmd
+      , _boxLabelHandler_prevHandler = prev
+      , _boxLabelHandler_undoFirst = False
+    }
+
+lBox_to_boxLabelBox :: LBox -> LBox
+lBox_to_boxLabelBox lbx = r where
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox lbx
+  width = max 0 (w - 2)
+  r = LBox (V2 (x+1) y) (V2 width 1)
+  
 
 updateBoxLabelInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxLabelInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
-
-  CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox $ _sBox_box sbox
-  width = max 0 (w - 2)
-  newBox = LBox (V2 (x+1) y) (V2 width 1)
-  
+  newBox@(LBox _ (V2 width _)) =  lBox_to_boxLabelBox $ _sBox_box sbox
   r = btis {
       _boxTextInputState_box = newBox
       , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
@@ -387,15 +399,16 @@ instance PotatoHandler BoxLabelHandler where
         }
 
   -- UNTESTED
-  -- TODO do you need to reset _boxTextHandler_prevHandler as well?
+  -- TODO do you need to reset _boxLabelHandler_prevHandler as well?
   pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
-        SEltBox sbox -> if not $ sBoxType_hasBorder (_sBox_boxType sbox)
-          then Nothing -- SEltBox type changed to non-text
-          else Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
+        SEltBox sbox -> if sBox_hasLabel sbox
+          then Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
+          -- SEltBox type changed to non-text
+          else Nothing 
         _ -> Nothing
       where
         sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
