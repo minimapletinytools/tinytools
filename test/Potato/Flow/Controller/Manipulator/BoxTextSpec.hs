@@ -54,19 +54,6 @@ checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case i
   SEltBox (SBox _ _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
--- | check the position of the cursor
-checkHandlerPos :: XY -> EverythingPredicate
-checkHandlerPos pos = FunctionPredicate $ \gs ->
-  let
-    h = _goatState_handler gs
-    phi = potatoHandlerInputFromGoatState gs
-    HandlerRenderOutput hs = pRenderHandler h phi
-  in case hs of
-    [] -> ("no handler outputs", False)
-    (RenderHandle (LBox p _) _):[] -> if p == pos
-      then ("", True)
-      else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
-    hs -> ("too many handler outputs for " <> pHandlerName h <> " got: " <> show hs, False)
 
 test_basic :: Test
 test_basic = constructTest "basic" emptyOwlPFState bs expected where
@@ -312,6 +299,26 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
 
     ]
 
+
+lookup :: Int -> [a] -> Maybe a
+lookup _ []       = Nothing
+lookup 0 (x : _)  = Just x
+lookup i (_ : xs) = lookup (i - 1) xs
+
+-- | check the position of the cursor
+checkRenderHandlerPos :: XY -> EverythingPredicate
+checkRenderHandlerPos pos = FunctionPredicate $ \gs ->
+  let
+    h = _goatState_handler gs
+    phi = potatoHandlerInputFromGoatState gs
+    HandlerRenderOutput hs = pRenderHandler h phi
+  -- cursor is always 4th position in HandlerRenderOutput
+  in case lookup 4 hs of
+    Nothing -> ("could not find render handler for " <> pHandlerName h <> " got: " <> show hs, False)
+    Just (RenderHandle (LBox p _) _) -> if p == pos
+      then ("", True)
+      else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
+
 test_output :: Test
 test_output = constructTest "output" emptyOwlPFState bs expected where
   bs = [
@@ -364,36 +371,36 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , Combine [
           numSelectedEltsEqualPredicate 1
-          , checkHandlerPos (V2 11 11)
+          , checkRenderHandlerPos (V2 11 11)
         ]
 
       , LabelCheck "modify <text>"
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
-      , checkHandlerPos (V2 14 11)
-      , checkHandlerPos (V2 15 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 14 11)
+      , checkRenderHandlerPos (V2 15 11)
 
       , LabelCheck "move cursor <text>"
       , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
 
       , LabelCheck "exit BoxText"
       , checkHandlerNameAndState handlerName_box False
 
       , LabelCheck "select <text> at end of line"
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerPos (V2 16 11)
-      , checkHandlerPos (V2 17 11)
+      , checkRenderHandlerPos (V2 16 11)
+      , checkRenderHandlerPos (V2 17 11)
 
       , LabelCheck "navigate"
-      , checkHandlerPos (V2 16 11)
-      , checkHandlerPos (V2 15 11)
-      , checkHandlerPos (V2 11 11)
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
-      , checkHandlerPos (V2 17 11)
+      , checkRenderHandlerPos (V2 16 11)
+      , checkRenderHandlerPos (V2 15 11)
+      , checkRenderHandlerPos (V2 11 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 17 11)
 
 
       , Combine [
@@ -401,15 +408,15 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkHandlerPos (V2 16 10)
-      , checkHandlerPos (V2 15 10)
+      , checkRenderHandlerPos (V2 16 10)
+      , checkRenderHandlerPos (V2 15 10)
 
       , Combine [
           LabelCheck "align right"
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkHandlerPos (V2 19 10)
+      , checkRenderHandlerPos (V2 19 10)
     ]
 
 spec :: Spec

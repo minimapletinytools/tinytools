@@ -205,7 +205,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
 instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
   pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxTextHandler_state
-  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
@@ -219,7 +219,8 @@ instance PotatoHandler BoxTextHandler where
                   , _boxTextHandler_state = newState
                 }
             }
-          else Nothing
+          -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
+          else pHandleMouse _boxTextHandler_prevHandler phi rmd
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
@@ -253,6 +254,7 @@ instance PotatoHandler BoxTextHandler where
           , _potatoHandlerOutput_pFEvent = mev
         }
 
+  -- TODO do you need to reset _boxTextHandler_prevHandler as well?
   pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
@@ -267,11 +269,11 @@ instance PotatoHandler BoxTextHandler where
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
 
-
-  pRenderHandler tah' PotatoHandlerInput {..} = makeTextHandlerRenderOutput btis offset where
+  pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
     tah = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxTextHandler_state tah
     offset = getOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
+    r = pRenderHandler (_boxTextHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis offset
 
   pIsHandlerActive = _boxTextHandler_isActive
 
@@ -333,7 +335,7 @@ instance PotatoHandler BoxLabelHandler where
   pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
 
   -- UNTESTED
-  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       -- TODO we need a different updated function here that does just the label
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
@@ -348,7 +350,8 @@ instance PotatoHandler BoxLabelHandler where
                   , _boxLabelHandler_state = newState
                 }
             }
-          else Nothing
+          -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
+          else pHandleMouse _boxLabelHandler_prevHandler phi rmd
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
@@ -384,6 +387,7 @@ instance PotatoHandler BoxLabelHandler where
         }
 
   -- UNTESTED
+  -- TODO do you need to reset _boxTextHandler_prevHandler as well?
   pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
@@ -399,9 +403,10 @@ instance PotatoHandler BoxLabelHandler where
         selt = superOwl_toSElt_hack sowl
 
   -- UNTESTED
-  pRenderHandler tah' PotatoHandlerInput {..} = makeTextHandlerRenderOutput btis offset where
+  pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
     tah = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxLabelHandler_state tah
     offset = V2 1 0 
+    r = pRenderHandler (_boxLabelHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis offset
 
   pIsHandlerActive = _boxLabelHandler_active

@@ -121,6 +121,11 @@ data HandlerRenderOutput = HandlerRenderOutput {
     _handlerRenderOutput_temp :: [RenderHandle] -- list of coordinates where there are handles
   } deriving (Eq)
 
+instance Semigroup HandlerRenderOutput where
+  a <> b = HandlerRenderOutput {
+      _handlerRenderOutput_temp = _handlerRenderOutput_temp a <> _handlerRenderOutput_temp b
+    }
+
 instance Default HandlerRenderOutput where
   def = emptyHandlerRenderOutput
 
