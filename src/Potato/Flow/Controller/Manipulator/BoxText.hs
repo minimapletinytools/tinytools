@@ -275,3 +275,112 @@ instance PotatoHandler BoxTextHandler where
 
   pIsHandlerActive = _boxTextHandler_isActive
 
+
+
+
+-- BOX LABEL STUFF STARTS HERE
+data BoxLabelHandler = BoxLabelHandler {
+    _boxLabelHandler_active      :: Bool
+    -- NOTE some fields in here are ignored or interpreted differently from BoxTextHandler
+    , _boxLabelHandler_state       :: BoxTextInputState
+    , _boxLabelHandler_prevHandler :: SomePotatoHandler
+    , _boxLabelHandler_undoFirst   :: Bool
+  }
+
+
+updateBoxLabelInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
+updateBoxLabelInputStateWithSBox sbox btis = r where
+  alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
+
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox $ _sBox_box sbox
+  width = max 0 (w - 2)
+  newBox = LBox (V2 (x+1) y) (V2 width 1)
+  
+  r = btis {
+      _boxTextInputState_box = newBox
+      , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
+    }
+
+
+-- UNTESTED
+updateBoxLabelHandlerState :: Bool -> CanvasSelection -> BoxLabelHandler -> BoxLabelHandler
+updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzIsCorrect r where
+  (_, sbox) = getSBox selection
+
+  mNewText = _sBoxTitle_title . _sBox_title $ sbox
+  newText = fromMaybe (error "expected text") mNewText
+
+  recomputetz = TZ.fromText newText
+  oldtz = _boxTextInputState_zipper _boxLabelHandler_state
+  -- NOTE that recomputetz won't have the same cursor position
+  -- TODO delete this check, not very meaningful, but good for development purposes I guess
+  tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
+  nextstate = updateBoxLabelInputStateWithSBox sbox _boxLabelHandler_state
+
+  r = tah {
+    _boxLabelHandler_state = if reset
+      then nextstate {
+          _boxTextInputState_original = newText
+        }
+      else nextstate
+    , _boxLabelHandler_undoFirst = if reset
+      then False
+      else _boxLabelHandler_undoFirst
+  }
+
+instance PotatoHandler BoxLabelHandler where
+  pHandlerName _ = handlerName_boxLabel
+  pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
+  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+      -- TODO we need a different updated function here that does just the label
+      tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
+      (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
+    in 
+      -- TODO
+      undefined
+
+  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
+    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxLabelHandler_prevHandler tah') }
+
+    -- UNTESTED
+    _ -> Just r where
+      -- this regenerates displayLines unecessarily but who cares
+      tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
+      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
+
+      -- TODO decide what to do with mods
+
+      (nexttais, mev) = inputText _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
+      r = def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+              _boxLabelHandler_state  = nexttais
+              , _boxLabelHandler_undoFirst = case mev of
+                Nothing -> _boxLabelHandler_undoFirst
+                --Nothing -> False -- this variant adds new undo point each time cursoer is moved
+                Just _  -> True
+            }
+          , _potatoHandlerOutput_pFEvent = mev
+        }
+
+  -- UNTESTED
+  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
+    then Nothing -- selection was deleted or something
+    else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
+      then Nothing -- selection was change to something else
+      else case selt of
+        SEltBox sbox -> if not $ sBoxType_hasBorder (_sBox_boxType sbox)
+          then Nothing -- SEltBox type changed to non-text
+          else Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
+        _ -> Nothing
+      where
+        sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
+        rid = _superOwl_id sowl
+        selt = superOwl_toSElt_hack sowl
+
+  -- UNTESTED
+  pRenderHandler tah' PotatoHandlerInput {..} = makeTextHandlerRenderOutput btis offset where
+    tah = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
+    btis = _boxLabelHandler_state tah
+    offset = V2 1 0 
+
+  pIsHandlerActive = _boxLabelHandler_active
