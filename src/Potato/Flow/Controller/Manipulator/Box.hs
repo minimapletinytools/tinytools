@@ -28,6 +28,7 @@ import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
 import qualified Data.IntMap                                as IM
 import qualified Data.List                                  as L
+import qualified Data.Sequence as Seq
 
 -- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
@@ -166,6 +167,16 @@ instance Default BoxHandler where
       --, _boxHandler_wasDragged = False
     }
 
+
+
+selectionOnlySBox :: CanvasSelection -> Maybe SBox
+selectionOnlySBox (CanvasSelection selection) = if Seq.length selection == 1 
+  then case superOwl_toSElt_hack (Seq.index selection 0) of
+    SEltBox sbox -> Just sbox
+    _ -> Nothing
+  else Nothing
+
+
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
   pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
@@ -179,12 +190,15 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
       -- didn't click on a manipulator
-      Nothing -> r where
-        -- TODO
-        -- if the only thing selected a box?
-        --  if we click on the top horiz bar of the box
-        --    return BoxLabel handler
-        r = Nothing
+      Nothing -> case selectionOnlySBox _potatoHandlerInput_canvasSelection of
+        Just sbox -> if sBox_hasLabel sbox
+          then if does_lBox_contains_XY (lBox_to_boxLabelBox (_sBox_box sbox)) _mouseDrag_to
+            -- clicked on the box label area 
+            then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
+            else Nothing
+          else Nothing
+        Nothing -> Nothing
+      -- clicked on a manipulator, begin dragging
       Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
         newbh = bh {
             _boxHandler_handle = toEnum mi

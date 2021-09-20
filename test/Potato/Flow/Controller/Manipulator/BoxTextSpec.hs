@@ -54,6 +54,10 @@ checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case i
   SEltBox (SBox _ _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
+checkSBoxLabel :: Text -> Text -> EverythingPredicate
+checkSBoxLabel label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
+  SEltBox sbox -> _sBoxTitle_title (_sBox_title sbox) == Just text
+  _                                         -> False
 
 test_basic :: Test
 test_basic = constructTest "basic" emptyOwlPFState bs expected where
@@ -419,12 +423,60 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , checkRenderHandlerPos (V2 19 10)
     ]
 
+
+
+test_boxlabel_basic :: Test
+test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
+  bs = [
+      EWCLabel "create <box>"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
+
+      , EWCLabel "select <box> label"
+      , EWCMouse (LMouseData (V2 12 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 10) True MouseButton_Left [] False)
+
+      , EWCLabel "modify <box> label"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+    ]
+  expected = [
+      LabelCheck "create <box>"
+      , EqPredicate _goatState_selectedTool Tool_Box
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case isOwl_toSElt_hack sowl of
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
+            _                           -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_boxText False
+        ]
+
+      , LabelCheck "select <box> label"
+      , checkHandlerNameAndState handlerName_boxLabel True
+      , checkHandlerNameAndState handlerName_boxLabel True
+
+      , LabelCheck "modify <box> label"
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkSBoxLabel "<text>" "poop"
+    ]
+
 spec :: Spec
 spec = do
-  describe "BoxText" $ do
+  describe "BoxTextHandel" $ do
     boxTextInputState_basic_test
     fromHUnitTest $ test_basic
     fromHUnitTest $ test_handler_state
     fromHUnitTest $ test_negative
     fromHUnitTest $ test_zero
     fromHUnitTest $ test_output
+  --describe "BoxLabelHandler" $ do
+  --  fromHUnitTest $ test_boxlabel_basic    
+

@@ -386,6 +386,7 @@ instance PotatoHandler BoxLabelHandler where
 
       -- TODO decide what to do with mods
 
+      -- TODO inputText is wrong, you need a label specific version
       (nexttais, mev) = inputText _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
