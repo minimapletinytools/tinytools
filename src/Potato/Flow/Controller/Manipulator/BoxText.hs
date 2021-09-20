@@ -331,13 +331,34 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
 instance PotatoHandler BoxLabelHandler where
   pHandlerName _ = handlerName_boxLabel
   pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
+
+  -- UNTESTED
   pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       -- TODO we need a different updated function here that does just the label
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
-    in 
-      -- TODO
-      undefined
+    in case _mouseDrag_state of
+      MouseDragState_Down -> r where
+        clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
+        newState = mouseText _boxLabelHandler_state sbox rmd
+        r = if clickInside
+          then Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+                  _boxLabelHandler_active = True
+                  , _boxLabelHandler_state = newState
+                }
+            }
+          else Nothing
+
+      -- TODO drag select text someday
+      MouseDragState_Dragging -> Just $ captureWithNoChange tah
+
+      MouseDragState_Up -> Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+              _boxLabelHandler_active = False
+            }
+        }
+      MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxLabelHandler_prevHandler tah') }
