@@ -136,6 +136,30 @@ inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip },
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
+makeTextHandlerRenderOutput :: BoxTextInputState -> XY -> HandlerRenderOutput
+makeTextHandlerRenderOutput btis offset = r where
+  dls = _boxTextInputState_displayLines btis
+  origBox = _boxTextInputState_box $ btis
+  (x, y) = TZ._displayLines_cursorPos dls
+  offsetMap = TZ._displayLines_offsetMap dls
+
+  mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _boxTextInputState_zipper $ btis
+
+  mlbox = do
+    guard $ lBox_area origBox > 0
+
+    -- TODO would be nice to assert that this exists...
+    (alignxoff,_) <- Map.lookup y offsetMap
+    let
+      LBox p _ = _boxTextInputState_box $ btis
+      handle = RenderHandle {
+          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
+          , _renderHandle_char = mCursorChar
+        }
+    return [handle]
+
+  r = HandlerRenderOutput $ fromMaybe [] mlbox
+
 data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
@@ -238,55 +262,16 @@ instance PotatoHandler BoxTextHandler where
           then Nothing -- SEltBox type changed to non-text
           else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_canvasSelection tah
         _ -> Nothing
-      where
+      where 
         sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
 
 
-  pRenderHandler tah' PotatoHandlerInput {..} = r where
+  pRenderHandler tah' PotatoHandlerInput {..} = makeTextHandlerRenderOutput btis offset where
     tah = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
-    dls = _boxTextInputState_displayLines $ _boxTextHandler_state tah
-    origBox = _boxTextInputState_box $ _boxTextHandler_state tah
-    (x, y) = TZ._displayLines_cursorPos dls
-    offsetMap = TZ._displayLines_offsetMap dls
+    btis = _boxTextHandler_state tah
+    offset = getOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
 
-    mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _boxTextInputState_zipper . _boxTextHandler_state $ tah
-
-    mlbox = do
-      guard $ lBox_area origBox > 0
-
-      -- TODO would be nice to assert that this exists...
-      (alignxoff,_) <- Map.lookup y offsetMap
-      let
-        LBox p _ = _boxTextInputState_box $ _boxTextHandler_state tah
-        offset = getOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
-        handle = RenderHandle {
-            _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
-            , _renderHandle_char = mCursorChar
-          }
-      return [handle]
-
-    r = HandlerRenderOutput $ fromMaybe [] mlbox
   pIsHandlerActive = _boxTextHandler_isActive
 
-
-
-{- TODO
-data BoxLabelHandler = BoxLabelHandler {
-    _boxLabelHandler_active      :: Bool
-    -- NOTE some fields in here are ignored or interpreted differently
-    , _boxLabelHandler_state       :: BoxTextInputState
-    , _boxLabelHandler_undoFirst   :: Bool
-  }
-
-instance PotatoHandler BoxLabelHandler where
-  pHandlerName _ = handlerName_boxLabel
-  pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
-  pHandleMouse tah' PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      -- TODO we need a different updated function here that does just the label
-      tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_selection tah'
-      (_, sbox) = getSBox _potatoHandlerInput_selection
-    
-  pIsHandlerActive = _boxLabelHandler_active
--}
