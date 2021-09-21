@@ -48,7 +48,7 @@ getSBox selection = case superOwl_toSElt_hack sowl of
 
 data BoxTextInputState = BoxTextInputState {
   _boxTextInputState_rid            :: REltId
-  , _boxTextInputState_original     :: Text -- needed to properly create DeltaText for undo
+  , _boxTextInputState_original     :: Maybe Text -- needed to properly create DeltaText for undo
   , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
   , _boxTextInputState_zipper       :: TZ.TextZipper
   , _boxTextInputState_displayLines :: TZ.DisplayLines ()
@@ -77,7 +77,7 @@ makeBoxTextInputState rid sbox rmd = r where
   ogtz = TZ.fromText ogtext
   r' = BoxTextInputState {
       _boxTextInputState_rid = rid
-      , _boxTextInputState_original   = ogtext
+      , _boxTextInputState_original   = Just ogtext
       , _boxTextInputState_zipper   = ogtz
 
       -- these fields get updated in next pass
@@ -137,7 +137,7 @@ inputBoxText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxText
 inputBoxText tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
-      _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value (_boxTextInputState_zipper newtais))
+      _cBoxText_deltaText = (fromMaybe "" (_boxTextInputState_original tais), TZ.value (_boxTextInputState_zipper newtais))
     })
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
@@ -201,7 +201,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
   r = tah {
     _boxTextHandler_state = if reset
       then nextstate {
-          _boxTextInputState_original = newText
+          _boxTextInputState_original = Just newText
         }
       else nextstate
     , _boxTextHandler_undoFirst = if reset
@@ -327,9 +327,8 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   (_, sbox) = getSBox selection
 
   mNewText = _sBoxTitle_title . _sBox_title $ sbox
-  newText = fromMaybe (error "expected text") mNewText
 
-  recomputetz = TZ.fromText newText
+  recomputetz = TZ.fromText (fromMaybe "" mNewText)
   oldtz = _boxTextInputState_zipper _boxLabelHandler_state
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
@@ -339,7 +338,7 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   r = tah {
     _boxLabelHandler_state = if reset
       then nextstate {
-          _boxTextInputState_original = newText
+          _boxTextInputState_original = mNewText
         }
       else nextstate
     , _boxLabelHandler_undoFirst = if reset

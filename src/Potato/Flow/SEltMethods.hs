@@ -419,7 +419,7 @@ updateFnFromController isDo = \case
   (CTagBoxLabelAlignment :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sEltBox_label_with_cTextAlign isDo selt d)
   (CTagBoxLabelText :=> Identity d) -> \(SEltLabel sname selt) ->
-    SEltLabel sname (modify_sEltBox_label_with_cText isDo selt d)
+    SEltLabel sname (modify_sEltBox_label_with_cMaybeText isDo selt d)
 
 
 

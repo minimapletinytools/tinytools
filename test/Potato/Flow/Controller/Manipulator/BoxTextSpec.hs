@@ -43,8 +43,8 @@ boxTextInputState_basic_test = let
   in
     it "makeBoxTextInputState_basic" $ do
       --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
-      _boxTextInputState_original tais1 `shouldBe` testText1
-      _boxTextInputState_original tais2 `shouldBe` testText1
+      _boxTextInputState_original tais1 `shouldBe` Just testText1
+      _boxTextInputState_original tais2 `shouldBe` Just testText1
       -- TZ has no Eq instance but show works fine, whatever
       show (TZ.right (_boxTextInputState_zipper tais1)) `shouldBe` show (_boxTextInputState_zipper tais2)
 
