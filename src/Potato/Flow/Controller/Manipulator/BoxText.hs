@@ -108,8 +108,10 @@ mouseText tais sbox rmd = r where
 
 
 -- TODO support shift selecting text someday meh
-inputText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
-inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip }, mop) where
+-- | returns zipper in BoxTextInputState after keyboard input has been applied
+-- Bool indicates if there was any real input
+inputZipper :: BoxTextInputState -> KeyboardKey -> (Bool, BoxTextInputState)
+inputZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
 
   oldZip = _boxTextInputState_zipper tais
   (changed, newZip) = case kk of
@@ -131,8 +133,11 @@ inputText tais undoFirst sowl kk = (tais { _boxTextInputState_zipper = newZip },
 
     k                   -> error $ "unexpected keyboard char (event should have been handled outside of this handler)" <> show k
 
+inputBoxText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputBoxText tais undoFirst sowl kk = (newtais, mop) where
+  (changed, newtais) = inputZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
-      _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value newZip)
+      _cBoxText_deltaText = (_boxTextInputState_original tais, TZ.value (_boxTextInputState_zipper newtais))
     })
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
@@ -244,7 +249,7 @@ instance PotatoHandler BoxTextHandler where
 
       -- TODO decide what to do with mods
 
-      (nexttais, mev) = inputText _boxTextHandler_state _boxTextHandler_undoFirst sowl k
+      (nexttais, mev) = inputBoxText _boxTextHandler_state _boxTextHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxTextHandler_state  = nexttais
