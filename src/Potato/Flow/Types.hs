@@ -23,6 +23,8 @@ module Potato.Flow.Types (
   , CTag(..)
   , CTextStyle(..)
   , CSuperStyle(..)
+  , CTextAlign(..)
+  , CMaybeText(..)
   , Controller
 
   , DeltaText
@@ -78,28 +80,34 @@ instance (Show a, Eq a) => Delta a (a,a) where
     else assert (b == s) a
   minusDelta s (b, a) = assert (a == s) b
 
+data DeltaTextAlign = DeltaTextAlign (TextAlign, TextAlign) deriving (Eq, Generic, Show)
+instance NFData DeltaTextAlign
+instance Delta TextAlign DeltaTextAlign where
+  plusDelta ta (DeltaTextAlign d) = plusDelta ta d
+  minusDelta ta (DeltaTextAlign d) = minusDelta ta d
+
 data DeltaSuperStyle = DeltaSuperStyle (SuperStyle, SuperStyle) deriving (Eq, Generic, Show)
-
 instance NFData DeltaSuperStyle
-
 instance Delta SuperStyle DeltaSuperStyle where
   plusDelta ss (DeltaSuperStyle d) = plusDelta ss d
   minusDelta ss (DeltaSuperStyle d) = minusDelta ss d
 
 data DeltaTextStyle = DeltaTextStyle (TextStyle, TextStyle) deriving (Eq, Generic, Show)
-
 instance NFData DeltaTextStyle
-
 instance Delta TextStyle DeltaTextStyle where
   plusDelta ts (DeltaTextStyle d) = plusDelta ts d
   minusDelta ts (DeltaTextStyle d) = minusDelta ts d
 
+data DeltaMaybeText = DeltaMaybeText (Maybe Text, Maybe Text)  deriving (Eq, Generic, Show)
+instance NFData DeltaMaybeText
+instance Delta (Maybe Text) DeltaMaybeText where
+  plusDelta mt (DeltaMaybeText d) = plusDelta mt d
+  minusDelta mt (DeltaMaybeText d) = minusDelta mt d
+
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
 } deriving (Eq, Generic, Show)
-
 instance NFData CRename
-
 instance Delta SEltLabel CRename where
   plusDelta (SEltLabel name selt) CRename {..} = SEltLabel (plusDelta name _cRename_deltaLabel) selt
   minusDelta (SEltLabel name selt) CRename {..} = SEltLabel (minusDelta name _cRename_deltaLabel) selt
@@ -108,9 +116,7 @@ data CLine = CLine {
   _cLine_deltaStart :: Maybe DeltaXY
   , _cLine_deltaEnd :: Maybe DeltaXY
 } deriving (Eq, Generic, Show)
-
 instance NFData CLine
-
 instance Default CLine where
   def = CLine Nothing Nothing
 
@@ -169,16 +175,19 @@ instance Delta SBox CBoxType where
 data CBoundingBox = CBoundingBox {
   _cBoundingBox_deltaBox    :: DeltaLBox
 } deriving (Eq, Generic, Show)
-
 instance NFData CBoundingBox
 
 data CSuperStyle = CSuperStyle DeltaSuperStyle deriving (Eq, Generic, Show)
-
 instance NFData CSuperStyle
 
 data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
-
 instance NFData CTextStyle
+
+data CTextAlign = CTextAlign DeltaTextAlign deriving (Eq, Generic, Show)
+instance NFData CTextAlign
+
+data CMaybeText = CMaybeText DeltaMaybeText deriving (Eq, Generic, Show)
+instance NFData CMaybeText
 
 -- NOTE, in some previous (very flawed) design, these were fanned out in a Reflex event hence the `DSum CTag` thing
 -- we don't do this anymore, but DSum is still a nice alternative to using an ADT so we keep it.
@@ -187,9 +196,18 @@ data CTag a where
   CTagLine :: CTag CLine
   CTagBoxText :: CTag CBoxText
   CTagBoxType :: CTag CBoxType
-  CTagBoundingBox :: CTag CBoundingBox
-  CTagSuperStyle :: CTag CSuperStyle
   CTagBoxTextStyle :: CTag CTextStyle
+
+  CTagBoxLabelAlignment :: CTag CTextAlign
+  CTagBoxLabelText :: CTag CMaybeText
+  
+  -- TODO CTagBoxLabel
+  -- CTagBoxLabelAlignment
+
+  CTagSuperStyle :: CTag CSuperStyle
+  CTagBoundingBox :: CTag CBoundingBox
+  
+  
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
@@ -207,6 +225,8 @@ instance NFData Controller where
   rnf (CTagBoundingBox DS.:=> Identity a)  = rnf a
   rnf (CTagSuperStyle DS.:=> Identity a)   = rnf a
   rnf (CTagBoxTextStyle DS.:=> Identity a) = rnf a
+  rnf (CTagBoxLabelAlignment DS.:=> Identity a) = rnf a
+  rnf (CTagBoxLabelText DS.:=> Identity a) = rnf a
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller
@@ -215,6 +235,7 @@ controller_isParams :: Controller -> Bool
 controller_isParams (CTagBoxType DS.:=> Identity a)      = True
 controller_isParams (CTagSuperStyle DS.:=> Identity a)   = True
 controller_isParams (CTagBoxTextStyle DS.:=> Identity a) = True
+controller_isParams (CTagBoxLabelAlignment DS.:=> Identity a) = True
 controller_isParams _                                    = False
 
 controllerWithId_isParams :: ControllersWithId -> Bool

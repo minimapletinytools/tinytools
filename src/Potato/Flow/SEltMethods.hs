@@ -370,6 +370,28 @@ modify_sElt_with_cTextStyle isDo selt (CTextStyle style) = case selt of
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
   --x -> x
 
+modify_sEltBox_label_with_cTextAlign :: Bool -> SElt -> CTextAlign -> SElt
+modify_sEltBox_label_with_cTextAlign isDo selt (CTextAlign align) = case selt of
+  SEltBox sbox -> SEltBox $ sbox {
+      _sBox_title = sboxtitle {
+          _sBoxTitle_align = modifyDelta isDo (_sBoxTitle_align sboxtitle) align
+        }
+    } where
+      sboxtitle = _sBox_title sbox
+  _ -> error $ "Controller - SElt type mismatch: CTagBoxLabelAlignment - " <> show selt
+  -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
+  --x -> x
+
+modify_sEltBox_label_with_cMaybeText :: Bool -> SElt -> CMaybeText -> SElt
+modify_sEltBox_label_with_cMaybeText isDo selt (CMaybeText text) = case selt of
+  SEltBox sbox -> SEltBox $ sbox {
+      _sBox_title = sboxtitle {
+          _sBoxTitle_title = modifyDelta isDo (_sBoxTitle_title sboxtitle) text
+        }
+    } where
+      sboxtitle = _sBox_title sbox
+  _ -> error $ "Controller - SElt type mismatch: CTagBoxLabelAlignment - " <> show selt
+
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -393,6 +415,11 @@ updateFnFromController isDo = \case
     SEltLabel sname (modify_sElt_with_cSuperStyle isDo selt d)
   (CTagBoxTextStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cTextStyle isDo selt d)
+
+  (CTagBoxLabelAlignment :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltBox_label_with_cTextAlign isDo selt d)
+  (CTagBoxLabelText :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltBox_label_with_cText isDo selt d)
 
 
 
