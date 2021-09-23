@@ -460,7 +460,7 @@ instance PotatoHandler BoxLabelHandler where
   pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
     tah = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxLabelHandler_state tah
-    offset = V2 1 0 
+    offset = V2 0 0  -- TODO figure out why this isn't V2 1 0 😱
     r = pRenderHandler (_boxLabelHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis offset
 
   pIsHandlerActive = _boxLabelHandler_active
