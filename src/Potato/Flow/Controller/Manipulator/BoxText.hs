@@ -372,6 +372,21 @@ inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
     else Nothing
 
 
+-- | just a helper for pHandleMouse
+handleMouseDownOrFirstUpForBoxLabelHandler :: BoxLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> SBox -> Bool -> Maybe PotatoHandlerOutput
+handleMouseDownOrFirstUpForBoxLabelHandler tah@BoxLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) sbox isdown = r where
+  clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
+  newState = mouseText _boxLabelHandler_state sbox rmd (V2 1 0)
+  r = if clickInside
+    then Just $ def {
+        _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+            _boxLabelHandler_active = isdown
+            , _boxLabelHandler_state = newState
+          }
+      }
+    -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
+    else pHandleMouse _boxLabelHandler_prevHandler phi rmd
+
 
 instance PotatoHandler BoxLabelHandler where
   pHandlerName _ = handlerName_boxLabel
@@ -384,29 +399,19 @@ instance PotatoHandler BoxLabelHandler where
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
 
-      
-      MouseDragState_Down -> r where
-        clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
-        newState = mouseText _boxLabelHandler_state sbox rmd (V2 1 0)
-        r = if clickInside
-          then Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _boxLabelHandler_active = False -- True
-                  , _boxLabelHandler_state = newState
-                }
-            }
-          -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
-          else pHandleMouse _boxLabelHandler_prevHandler phi rmd
+
+      MouseDragState_Down -> handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd sbox True
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
 
-      MouseDragState_Up -> Just $ captureWithNoChange tah
-      {-MouseDragState_Up -> Just $ def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-              _boxLabelHandler_active = False
-            }
-        }-}
+      MouseDragState_Up -> if not _boxLabelHandler_active
+        then handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd sbox False
+        else Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+                _boxLabelHandler_active = False
+              }
+          }
 
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 

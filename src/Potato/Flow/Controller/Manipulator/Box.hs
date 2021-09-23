@@ -191,7 +191,7 @@ isMouseOnSelectionSBoxBorder cs (RelMouseDrag MouseDrag {..}) = case selectionOn
 
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
-  pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag md@MouseDrag {..}) = case _mouseDrag_state of
+  pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
 
     -- TODO creation should be a separate handler
     MouseDragState_Down | boxCreationType_isCreation _boxHandler_creation ->  Just $ def {
@@ -254,7 +254,7 @@ instance PotatoHandler BoxHandler where
       -- clicked on the box label area
       -- pass on mouse as MouseDragState_Down is a hack but whatever it works
       -- TODO fix this hack, just have mouse up handle selection in this special case
-      then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi (RelMouseDrag md { _mouseDrag_state = MouseDragState_Down})
+      then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
       else Nothing
     MouseDragState_Up -> r where
       isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection of
