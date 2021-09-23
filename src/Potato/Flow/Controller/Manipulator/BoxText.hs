@@ -12,6 +12,7 @@ module Potato.Flow.Controller.Manipulator.BoxText (
   -- exposed for testing
   , makeBoxTextInputState
   , mouseText
+  , getBoxTextOffset
 
 ) where
 
@@ -87,22 +88,21 @@ makeBoxTextInputState rid sbox rmd = r where
       --, _boxTextInputState_selected = 0
     }
   r'' = updateBoxTextInputStateWithSBox sbox r'
-  r = mouseText r'' sbox rmd
+  r = mouseText r'' sbox rmd (getBoxTextOffset sbox)
 
-getOffset :: SBox -> XY
-getOffset sbox =  case _sBox_boxType sbox of
+getBoxTextOffset :: HasCallStack => SBox -> XY
+getBoxTextOffset sbox =  case _sBox_boxType sbox of
   SBoxType_BoxText   -> V2 1 1
   SBoxType_NoBoxText -> 0
   _                  -> error "wrong type"
 
 -- TODO define behavior for when you click outside box or assert
-mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> BoxTextInputState
-mouseText tais sbox rmd = r where
+mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> XY -> BoxTextInputState
+mouseText tais sbox rmd (V2 xoffset yoffset)= r where
   RelMouseDrag MouseDrag {..} = rmd
   ogtz = _boxTextInputState_zipper tais
   CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   V2 mousex mousey = _mouseDrag_to
-  V2 xoffset yoffset = getOffset sbox
   newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
   r = tais { _boxTextInputState_zipper = newtz }
 
@@ -218,7 +218,7 @@ instance PotatoHandler BoxTextHandler where
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
-        newState = mouseText _boxTextHandler_state sbox rmd
+        newState = mouseText _boxTextHandler_state sbox rmd (getBoxTextOffset sbox) 
         r = if clickInside
           then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
@@ -279,7 +279,7 @@ instance PotatoHandler BoxTextHandler where
   pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
     tah = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxTextHandler_state tah
-    offset = getOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
+    offset = getBoxTextOffset $ snd $ getSBox _potatoHandlerInput_canvasSelection
     r = pRenderHandler (_boxTextHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis offset
 
   pIsHandlerActive = _boxTextHandler_isActive
@@ -296,14 +296,6 @@ data BoxLabelHandler = BoxLabelHandler {
     , _boxLabelHandler_undoFirst   :: Bool
   }
 
-makeBoxLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxLabelHandler
-makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
-      _boxLabelHandler_active = False
-      , _boxLabelHandler_state = uncurry makeBoxTextInputState (getSBox selection) rmd
-      , _boxLabelHandler_prevHandler = prev
-      , _boxLabelHandler_undoFirst = False
-    }
-
 lBox_to_boxLabelBox :: LBox -> LBox
 lBox_to_boxLabelBox lbx = r where
   CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox lbx
@@ -318,6 +310,30 @@ updateBoxLabelInputStateWithSBox sbox btis = r where
   r = btis {
       _boxTextInputState_box = newBox
       , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
+    }
+
+makeBoxLabelInputState :: REltId -> SBox -> RelMouseDrag -> BoxTextInputState
+makeBoxLabelInputState rid sbox rmd = r where
+  mogtext = _sBoxTitle_title . _sBox_title $ sbox
+  ogtz = TZ.fromText (fromMaybe "" mogtext)
+  r' = BoxTextInputState {
+      _boxTextInputState_rid = rid
+      , _boxTextInputState_original   = mogtext
+      , _boxTextInputState_zipper   = ogtz
+
+      -- these fields get updated in next pass
+      , _boxTextInputState_box = error "expected to be filled"
+      , _boxTextInputState_displayLines = error "expected to be filled"
+    }
+  r'' = updateBoxLabelInputStateWithSBox sbox r'
+  r = mouseText r'' sbox rmd (V2 1 0)
+
+makeBoxLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxLabelHandler
+makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
+      _boxLabelHandler_active = False
+      , _boxLabelHandler_state = uncurry makeBoxLabelInputState (getSBox selection) rmd
+      , _boxLabelHandler_prevHandler = prev
+      , _boxLabelHandler_undoFirst = False
     }
 
 
@@ -346,6 +362,17 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
       else _boxLabelHandler_undoFirst
   }
 
+inputBoxLabel :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
+  (changed, newtais) = inputZipper tais kk
+  newtext = TZ.value (_boxTextInputState_zipper newtais)
+  controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_boxTextInputState_original tais, if newtext == "" then Nothing else Just newtext)))
+  mop = if changed
+    then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
+    else Nothing
+
+
+
 instance PotatoHandler BoxLabelHandler where
   pHandlerName _ = handlerName_boxLabel
   pHandlerDebugShow BoxLabelHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxLabelHandler_state
@@ -356,13 +383,15 @@ instance PotatoHandler BoxLabelHandler where
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
+
+      
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
-        newState = mouseText _boxLabelHandler_state sbox rmd
+        newState = mouseText _boxLabelHandler_state sbox rmd (V2 1 0)
         r = if clickInside
           then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _boxLabelHandler_active = True
+                  _boxLabelHandler_active = False -- True
                   , _boxLabelHandler_state = newState
                 }
             }
@@ -372,11 +401,13 @@ instance PotatoHandler BoxLabelHandler where
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
 
-      MouseDragState_Up -> Just $ def {
+      MouseDragState_Up -> Just $ captureWithNoChange tah
+      {-MouseDragState_Up -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxLabelHandler_active = False
             }
-        }
+        }-}
+
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
@@ -390,8 +421,8 @@ instance PotatoHandler BoxLabelHandler where
 
       -- TODO decide what to do with mods
 
-      -- TODO inputText is wrong, you need a label specific version
-      (nexttais, mev) = inputText _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
+      -- TODO inputBoxText is wrong, you need a label specific version
+      (nexttais, mev) = inputBoxLabel _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxLabelHandler_state  = nexttais
@@ -410,7 +441,7 @@ instance PotatoHandler BoxLabelHandler where
     else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
-        SEltBox sbox -> if sBox_hasLabel sbox
+        SEltBox sbox -> if sBoxType_hasBorder (_sBox_boxType sbox)
           then Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
           -- SEltBox type changed to non-text
           else Nothing 

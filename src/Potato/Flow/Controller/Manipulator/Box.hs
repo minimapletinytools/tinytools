@@ -126,6 +126,8 @@ data BoxHandler = BoxHandler {
     , _boxHandler_creation  :: BoxCreationType
     , _boxHandler_active    :: Bool
 
+    , _boxHandler_downOnLabel :: Bool
+
   } deriving (Show)
 
 makeDragDeltaBox :: BoxHandleType -> RelMouseDrag -> DeltaLBox
@@ -163,6 +165,7 @@ instance Default BoxHandler where
       , _boxHandler_undoFirst  = False
       , _boxHandler_creation = BoxCreationType_None
       , _boxHandler_active = False
+      , _boxHandler_downOnLabel = False
       -- TODO whatever
       --, _boxHandler_wasDragged = False
     }
@@ -177,9 +180,18 @@ selectionOnlySBox (CanvasSelection selection) = if Seq.length selection == 1
   else Nothing
 
 
+isMouseOnSelectionSBoxBorder :: CanvasSelection -> RelMouseDrag -> Bool
+isMouseOnSelectionSBoxBorder cs (RelMouseDrag MouseDrag {..}) = case selectionOnlySBox cs of
+  -- not an SBox selected
+  Nothing -> False
+  Just sbox -> if sBoxType_hasBorder (_sBox_boxType sbox) && does_lBox_contains_XY (lBox_to_boxLabelBox (_sBox_box sbox)) _mouseDrag_from
+    then True
+    else False
+
+
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
-  pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+  pHandleMouse bh@BoxHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag md@MouseDrag {..}) = case _mouseDrag_state of
 
     -- TODO creation should be a separate handler
     MouseDragState_Down | boxCreationType_isCreation _boxHandler_creation ->  Just $ def {
@@ -189,20 +201,17 @@ instance PotatoHandler BoxHandler where
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
-      -- didn't click on a manipulator
-      Nothing -> case selectionOnlySBox _potatoHandlerInput_canvasSelection of
-        Just sbox -> if sBox_hasLabel sbox
-          then if does_lBox_contains_XY (lBox_to_boxLabelBox (_sBox_box sbox)) _mouseDrag_to
-            -- clicked on the box label area 
-            then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
-            else Nothing
-          else Nothing
-        Nothing -> Nothing
+      Nothing -> Nothing
+
+
+        
       -- clicked on a manipulator, begin dragging
       Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
         newbh = bh {
             _boxHandler_handle = toEnum mi
             , _boxHandler_active = True
+            -- label position always intersects BH_A so we do the test in here to see if we clicked on the label area
+            , _boxHandler_downOnLabel = isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
           }
 
     MouseDragState_Dragging -> Just r where
@@ -228,7 +237,11 @@ instance PotatoHandler BoxHandler where
         then WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
         else makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
-      newbh = bh { _boxHandler_undoFirst = True }
+      newbh = bh { 
+          _boxHandler_undoFirst = True
+          -- if we drag, we are no longer in label case
+          , _boxHandler_downOnLabel = False
+        }
 
       -- NOTE, that if we did create a new box, it wil get auto selected and a new BoxHandler will be created for it
 
@@ -237,6 +250,12 @@ instance PotatoHandler BoxHandler where
           , _potatoHandlerOutput_pFEvent = Just op
         }
 
+    MouseDragState_Up | _boxHandler_downOnLabel -> if isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
+      -- clicked on the box label area
+      -- pass on mouse as MouseDragState_Down is a hack but whatever it works
+      -- TODO fix this hack, just have mouse up handle selection in this special case
+      then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi (RelMouseDrag md { _mouseDrag_state = MouseDragState_Down})
+      else Nothing
     MouseDragState_Up -> r where
       isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection of
         Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType

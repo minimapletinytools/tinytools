@@ -30,6 +30,8 @@ module Potato.Flow.Types (
   , DeltaText
   , DeltaSuperStyle(..)
   , DeltaTextStyle(..)
+  , DeltaTextAlign(..)
+  , DeltaMaybeText(..)
 
   -- serialized types
   , SEltTree

@@ -39,7 +39,7 @@ testClick x y = RelMouseDrag $ def {
 boxTextInputState_basic_test :: Spec
 boxTextInputState_basic_test = let
     tais1 = makeBoxTextInputState 0 testSBoxWithText1 (testClick 5 5)
-    tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5)
+    tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5) (getBoxTextOffset testSBoxWithText1)
   in
     it "makeBoxTextInputState_basic" $ do
       --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
@@ -454,18 +454,18 @@ test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
-          , checkHandlerNameAndState handlerName_boxText False
+          , checkHandlerNameAndState handlerName_box False
         ]
 
       , LabelCheck "select <box> label"
-      , checkHandlerNameAndState handlerName_boxLabel True
-      , checkHandlerNameAndState handlerName_boxLabel True
+      , checkHandlerNameAndState handlerName_box True 
+      , checkHandlerNameAndState handlerName_boxLabel False
 
       , LabelCheck "modify <box> label"
       , checkHandlerNameAndState handlerName_boxLabel False
       , checkHandlerNameAndState handlerName_boxLabel False
       , checkHandlerNameAndState handlerName_boxLabel False
-      , checkSBoxLabel "<text>" "poop"
+      , checkSBoxLabel "<box>" "poop"
     ]
 
 spec :: Spec
@@ -477,6 +477,6 @@ spec = do
     fromHUnitTest $ test_negative
     fromHUnitTest $ test_zero
     fromHUnitTest $ test_output
-  --describe "BoxLabelHandler" $ do
-  --  fromHUnitTest $ test_boxlabel_basic    
+  describe "BoxLabelHandler" $ do
+    fromHUnitTest $ test_boxlabel_basic    
 
