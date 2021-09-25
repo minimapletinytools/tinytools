@@ -208,11 +208,12 @@ instance PotatoHandler BoxHandler where
       -- clicked on a manipulator, begin dragging
       Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
         newbh = bh {
-            _boxHandler_handle = toEnum mi
+            _boxHandler_handle = bht
             , _boxHandler_active = True
             -- label position always intersects BH_A so we do the test in here to see if we clicked on the label area
-            , _boxHandler_downOnLabel = isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
+            , _boxHandler_downOnLabel = if bht == BH_A then isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd else False
           }
+        bht = toEnum mi
 
     MouseDragState_Dragging -> Just r where
       dragDelta = _mouseDrag_to - _mouseDrag_from
