@@ -10,6 +10,7 @@ module Potato.Flow.SEltMethods (
   , getSEltBoxType
   , getSEltLabelBoxType
   , doesSEltIntersectBox
+  , doesSEltIntersectPoint
   , updateFnFromController
   , RenderFn
   , SEltDrawer(..)
@@ -96,6 +97,9 @@ doesSEltIntersectBox lbox selt = case selt of
   -- TODO this is wrong, do it correctly...
   -- we use does_lBox_intersect since it's impossibl efor a SSimpleLine to have zero sized box
   SEltLine sline@SSimpleLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
+
+doesSEltIntersectPoint :: XY -> SElt -> Bool
+doesSEltIntersectPoint pos selt = doesSEltIntersectBox (LBox pos (V2 1 1)) selt
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of

@@ -206,7 +206,7 @@ instance PotatoHandler BoxHandler where
 
         
       -- clicked on a manipulator, begin dragging
-      Just mi -> Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh } where
+      Just mi -> r where
         newbh = bh {
             _boxHandler_handle = bht
             , _boxHandler_active = True
@@ -214,6 +214,12 @@ instance PotatoHandler BoxHandler where
             , _boxHandler_downOnLabel = if bht == BH_A then isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd else False
           }
         bht = toEnum mi
+        -- special case behavior for BH_A require actually clicking on something on selection
+        clickOnSelection = any (doesSEltIntersectPoint _mouseDrag_to . superOwl_toSElt_hack) $ unCanvasSelection _potatoHandlerInput_canvasSelection
+        r = if bht /= BH_A || clickOnSelection 
+          then Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh }
+          else Nothing
+
 
     MouseDragState_Dragging -> Just r where
       dragDelta = _mouseDrag_to - _mouseDrag_from
