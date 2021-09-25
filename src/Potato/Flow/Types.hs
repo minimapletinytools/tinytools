@@ -60,6 +60,8 @@ type LayerPos = Int
 type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
+
+-- TODO ugg, pretty sure this could just be SElt instead of SEltLabel
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
 type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
 type LayerPosMap = REltIdMap LayerPos
