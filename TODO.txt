@@ -10,10 +10,13 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--box handler drag/move should probably check if you actually clicked on a elt before letting you drag
+-BUG pane2 has broken save/savas and generally stuff that opens up a popup due to popup overriding mouse capture
+DONE-box handler drag/move should probably check if you actually clicked on a elt before letting you drag
   -right now you will drag if you click on nothing if it's inside the box
--box labels
+DONE-box labels
 -multi node lines
+  -you really need to design+determine all line types first
+  -cartline needs a SElt type
   -decide how to combine Line and CartLine
     -click + drag produces reuglar line
     -click release in same spot takes you to CartLine
@@ -75,12 +78,14 @@ DONE-layers rename handler renderer
   -EXTRA BONUS TODO
     -attachments
     -text box should indicate overflow when in text entry bode
-    -box labels
+    DONE-box labels
     -glyph widget
     -consider refactoring layers handler
     -consider refactoring handlers to output commands so you can make everything even more scriptable
+    -would be nice to select line anchors and then have keyboard input on the selected anchor
   -BONUS TODO (TBH you need to do this to make the product useable)
-    -keyboard input
+    -add options type to SEltFolder (so yo ucan do stuf like smart reroute ond attached lines)
+    DONE-keyboard input
     -layer show/hide
       -test impl
       -refine UI
@@ -94,6 +99,8 @@ DONE-layers rename handler renderer
     -toggle box to textbox to freeform
       -this operation can not be reversed popup :O
     -user settings object in vty
+    -MDI refactor
+    -box label text alignment parameters
   DONE-still getting same source assert when dragging to/from layers/canvas
     DONE-(write Ut for this)
     DONE-I think you just need to switch layout stuff to use pane2
