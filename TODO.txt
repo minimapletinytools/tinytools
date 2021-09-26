@@ -71,6 +71,8 @@ DONE-layers rename handler renderer
     -consider refactoring handlers to output commands so you can make everything even more scriptable
   -BONUS TODO (TBH you need to do this to make the product useable)
     -keyboard input
+      DONE-box handler
+      -for line handler it should operate on the last anchor selected
     -layer show/hide
       -test impl
       -refine UI
