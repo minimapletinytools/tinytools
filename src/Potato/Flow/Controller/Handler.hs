@@ -121,6 +121,11 @@ data HandlerRenderOutput = HandlerRenderOutput {
     _handlerRenderOutput_temp :: [RenderHandle] -- list of coordinates where there are handles
   } deriving (Eq)
 
+instance Semigroup HandlerRenderOutput where
+  a <> b = HandlerRenderOutput {
+      _handlerRenderOutput_temp = _handlerRenderOutput_temp a <> _handlerRenderOutput_temp b
+    }
+
 instance Default HandlerRenderOutput where
   def = emptyHandlerRenderOutput
 
@@ -142,6 +147,8 @@ handlerName_cartesianLine :: Text
 handlerName_cartesianLine = "CartesianLineHandler"
 handlerName_boxText :: Text
 handlerName_boxText = "BoxTextHandler"
+handlerName_boxLabel :: Text
+handlerName_boxLabel = "BoxLabelHandler"
 handlerName_textArea :: Text
 handlerName_textArea = "TextAreaHandler"
 handlerName_pan :: Text
@@ -174,10 +181,12 @@ class PotatoHandler h where
   -- return type of Nothing means input is not captured
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
 
-  -- reset handler if an event came in in between
+  -- reset handler if an event came in in between (e.g. due to undo, redo)
+  --
   -- FOR NOW we expect this to only be called if handler is not active
   -- FOR NOW this is only allowed to return the existing handler
-  -- when we have multi-user, this may return actions, and may happen when a handler is active
+  -- when we have multi-user, this may return actions (to undo some inprogress state I guess?), and may happen when a handler is active
+  --
   pResetHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   -- prob not correct behavior, if you delete an elt (say), then you don't want to persist the handler
   --pResetHandler h _ = Just $ SomePotatoHandler h

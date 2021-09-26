@@ -39,12 +39,12 @@ testClick x y = RelMouseDrag $ def {
 boxTextInputState_basic_test :: Spec
 boxTextInputState_basic_test = let
     tais1 = makeBoxTextInputState 0 testSBoxWithText1 (testClick 5 5)
-    tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5)
+    tais2 = mouseText tais1 testSBoxWithText1 (testClick 6 5) (getBoxTextOffset testSBoxWithText1)
   in
     it "makeBoxTextInputState_basic" $ do
       --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
-      _boxTextInputState_original tais1 `shouldBe` testText1
-      _boxTextInputState_original tais2 `shouldBe` testText1
+      _boxTextInputState_original tais1 `shouldBe` Just testText1
+      _boxTextInputState_original tais2 `shouldBe` Just testText1
       -- TZ has no Eq instance but show works fine, whatever
       show (TZ.right (_boxTextInputState_zipper tais1)) `shouldBe` show (_boxTextInputState_zipper tais2)
 
@@ -54,19 +54,10 @@ checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case i
   SEltBox (SBox _ _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
--- | check the position of the cursor
-checkHandlerPos :: XY -> EverythingPredicate
-checkHandlerPos pos = FunctionPredicate $ \gs ->
-  let
-    h = _goatState_handler gs
-    phi = potatoHandlerInputFromGoatState gs
-    HandlerRenderOutput hs = pRenderHandler h phi
-  in case hs of
-    [] -> ("no handler outputs", False)
-    (RenderHandle (LBox p _) _):[] -> if p == pos
-      then ("", True)
-      else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
-    _ -> ("too many handler outputs", False)
+checkSBoxLabel :: Text -> Text -> EverythingPredicate
+checkSBoxLabel label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
+  SEltBox sbox -> _sBoxTitle_title (_sBox_title sbox) == Just text
+  _                                         -> False
 
 test_basic :: Test
 test_basic = constructTest "basic" emptyOwlPFState bs expected where
@@ -312,6 +303,26 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
 
     ]
 
+
+lookup :: Int -> [a] -> Maybe a
+lookup _ []       = Nothing
+lookup 0 (x : _)  = Just x
+lookup i (_ : xs) = lookup (i - 1) xs
+
+-- | check the position of the cursor
+checkRenderHandlerPos :: XY -> EverythingPredicate
+checkRenderHandlerPos pos = FunctionPredicate $ \gs ->
+  let
+    h = _goatState_handler gs
+    phi = potatoHandlerInputFromGoatState gs
+    HandlerRenderOutput hs = pRenderHandler h phi
+  -- cursor is always 4th position in HandlerRenderOutput
+  in case lookup 4 hs of
+    Nothing -> ("could not find render handler for " <> pHandlerName h <> " got: " <> show hs, False)
+    Just (RenderHandle (LBox p _) _) -> if p == pos
+      then ("", True)
+      else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
+
 test_output :: Test
 test_output = constructTest "output" emptyOwlPFState bs expected where
   bs = [
@@ -364,36 +375,36 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , Combine [
           numSelectedEltsEqualPredicate 1
-          , checkHandlerPos (V2 11 11)
+          , checkRenderHandlerPos (V2 11 11)
         ]
 
       , LabelCheck "modify <text>"
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
-      , checkHandlerPos (V2 14 11)
-      , checkHandlerPos (V2 15 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 14 11)
+      , checkRenderHandlerPos (V2 15 11)
 
       , LabelCheck "move cursor <text>"
       , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
 
       , LabelCheck "exit BoxText"
       , checkHandlerNameAndState handlerName_box False
 
       , LabelCheck "select <text> at end of line"
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerPos (V2 16 11)
-      , checkHandlerPos (V2 17 11)
+      , checkRenderHandlerPos (V2 16 11)
+      , checkRenderHandlerPos (V2 17 11)
 
       , LabelCheck "navigate"
-      , checkHandlerPos (V2 16 11)
-      , checkHandlerPos (V2 15 11)
-      , checkHandlerPos (V2 11 11)
-      , checkHandlerPos (V2 12 11)
-      , checkHandlerPos (V2 13 11)
-      , checkHandlerPos (V2 17 11)
+      , checkRenderHandlerPos (V2 16 11)
+      , checkRenderHandlerPos (V2 15 11)
+      , checkRenderHandlerPos (V2 11 11)
+      , checkRenderHandlerPos (V2 12 11)
+      , checkRenderHandlerPos (V2 13 11)
+      , checkRenderHandlerPos (V2 17 11)
 
 
       , Combine [
@@ -401,23 +412,71 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkHandlerPos (V2 16 10)
-      , checkHandlerPos (V2 15 10)
+      , checkRenderHandlerPos (V2 16 10)
+      , checkRenderHandlerPos (V2 15 10)
 
       , Combine [
           LabelCheck "align right"
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkHandlerPos (V2 19 10)
+      , checkRenderHandlerPos (V2 19 10)
+    ]
+
+
+
+test_boxlabel_basic :: Test
+test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
+  bs = [
+      EWCLabel "create <box>"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
+
+      , EWCLabel "select <box> label"
+      , EWCMouse (LMouseData (V2 12 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 12 10) True MouseButton_Left [] False)
+
+      , EWCLabel "modify <box> label"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'o') [])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
+    ]
+  expected = [
+      LabelCheck "create <box>"
+      , EqPredicate _goatState_selectedTool Tool_Box
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , Combine [
+          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case isOwl_toSElt_hack sowl of
+            SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
+            _                           -> False
+          , numSelectedEltsEqualPredicate 1
+          , checkHandlerNameAndState handlerName_box False
+        ]
+
+      , LabelCheck "select <box> label"
+      , checkHandlerNameAndState handlerName_box True 
+      , checkHandlerNameAndState handlerName_boxLabel False
+
+      , LabelCheck "modify <box> label"
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkHandlerNameAndState handlerName_boxLabel False
+      , checkSBoxLabel "<box>" "poop"
     ]
 
 spec :: Spec
 spec = do
-  describe "BoxText" $ do
+  describe "BoxTextHandel" $ do
     boxTextInputState_basic_test
     fromHUnitTest $ test_basic
     fromHUnitTest $ test_handler_state
     fromHUnitTest $ test_negative
     fromHUnitTest $ test_zero
     fromHUnitTest $ test_output
+  describe "BoxLabelHandler" $ do
+    fromHUnitTest $ test_boxlabel_basic    
+

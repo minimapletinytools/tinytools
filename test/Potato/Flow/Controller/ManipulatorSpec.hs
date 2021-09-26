@@ -153,6 +153,47 @@ test_BoxHandler_restrict8 = constructTest "restrict8" owlpfstate_basic1 bs expec
         _                                        -> False
     ]
 
+test_BoxHandler_clickOnSelectionDragging :: Test
+test_BoxHandler_clickOnSelectionDragging = constructTest "drags only when click on selection" owlpfstate_basic1 bs expected where
+  bs = [
+      EWCTool Tool_Select
+
+      , EWCLabel "select all boxes"
+      , EWCMouse (LMouseData (V2 (-1) (-1)) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 20 20) True MouseButton_Left [] False)
+
+      , EWCLabel "click on something and drag"
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 1 1) True MouseButton_Left [] False)
+
+      , EWCLabel "click on nothing and drag"
+      , EWCMouse (LMouseData (V2 8 8) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+    ]
+  expected = [
+      EqPredicate _goatState_selectedTool Tool_Select
+
+      , LabelCheck "select all boxes"
+      , checkHandlerNameAndState handlerName_select True
+      , checkHandlerNameAndState handlerName_select True
+      , numSelectedEltsEqualPredicate 4
+
+      , LabelCheck "click on something and drag"
+      , checkHandlerNameAndState handlerName_box True
+      , checkHandlerNameAndState handlerName_box True
+      , firstSuperOwlPredicate (Just "b1") $ \sowl -> case isOwl_toSElt_hack sowl of
+        SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 1 && y == 1
+        _                                        -> False
+
+      , LabelCheck "click on nothing and drag"
+      , checkHandlerNameAndState handlerName_select True
+      , checkHandlerNameAndState handlerName_select True
+      , numSelectedEltsEqualPredicate 0
+    ]
+
 test_LineHandler_drag :: Test
 test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
   bs = [
@@ -280,6 +321,7 @@ spec = do
       fromHUnitTest $ test_BoxHandler_drag
       fromHUnitTest $ test_BoxHandler_select_and_drag
       fromHUnitTest $ test_BoxHandler_restrict8
+      fromHUnitTest $ test_BoxHandler_clickOnSelectionDragging
     describe "LineHandler" $ do
       fromHUnitTest $ test_LineHandler_drag
     describe "Common" $ do

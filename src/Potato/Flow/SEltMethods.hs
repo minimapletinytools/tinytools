@@ -10,6 +10,7 @@ module Potato.Flow.SEltMethods (
   , getSEltBoxType
   , getSEltLabelBoxType
   , doesSEltIntersectBox
+  , doesSEltIntersectPoint
   , updateFnFromController
   , RenderFn
   , SEltDrawer(..)
@@ -32,15 +33,8 @@ import qualified Data.Text          as T
 import qualified Potato.Data.Text.Zipper   as TZ
 
 
-makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines Int
-makeDisplayLinesFromSBox sbox = r where
-  alignment = _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
-  text = _sBoxText_text . _sBox_text $ sbox
-  box@(LBox _ (V2 width' _)) = _sBox_box sbox
-  width = case _sBox_boxType sbox of
-    SBoxType_BoxText   -> max 0 (width'-2)
-    SBoxType_NoBoxText -> width'
-    _                  -> error "wrong type"
+noTrailngCursorDisplayLines :: Int -> TextAlign -> T.Text -> TZ.DisplayLines Int
+noTrailngCursorDisplayLines width alignment text = r where
   -- force TZ to top so that displayLinesWithAlignment doesn't create trailing space for cursor
   tz = TZ.top (TZ.fromText text)
 
@@ -52,6 +46,17 @@ makeDisplayLinesFromSBox sbox = r where
         , _displayLines_cursorPos   = (0,0)
       }
     else TZ.displayLinesWithAlignment (convertTextAlignToTextZipperTextAlignment alignment) width 0 1 tz
+
+makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines Int
+makeDisplayLinesFromSBox sbox = r where
+  alignment = _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
+  text = _sBoxText_text . _sBox_text $ sbox
+  box@(LBox _ (V2 width' _)) = _sBox_box sbox
+  width = case _sBox_boxType sbox of
+    SBoxType_BoxText   -> max 0 (width'-2)
+    SBoxType_NoBoxText -> width'
+    _                  -> error "wrong type"
+  r = noTrailngCursorDisplayLines width alignment text 
 
 concatSpans :: [TZ.Span a] -> Text
 concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
@@ -92,6 +97,9 @@ doesSEltIntersectBox lbox selt = case selt of
   -- TODO this is wrong, do it correctly...
   -- we use does_lBox_intersect since it's impossibl efor a SSimpleLine to have zero sized box
   SEltLine sline@SSimpleLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
+
+doesSEltIntersectPoint :: XY -> SElt -> Bool
+doesSEltIntersectPoint pos selt = doesSEltIntersectBox (LBox pos (V2 1 1)) selt
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
@@ -149,10 +157,27 @@ sBox_drawer :: SBox -> SEltDrawer
 sBox_drawer sbox@SBox {..} = r where
   CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
 
+  titlewidth = max 0 (w-2)
+
   fillfn _ = case _superStyle_fill _sBox_style of
     FillStyle_Simple c -> Just c
     FillStyle_Blank    -> Nothing
 
+  displayLinesToChar dl (x',y') (xoff, yoff) = outputChar where
+    spans = TZ._displayLines_spans dl
+    offsetMap = TZ._displayLines_offsetMap dl
+    yidx = y' - y - yoff
+    xalignoffset = case Map.lookup yidx offsetMap of
+      Nothing -> error $ "should not happen. got " <> show yidx <> " in\n" <> show dl <> "\n" <> show spans <> "\n" <> show (_sBox_text) <> show _sBox_box
+      Just (offset,_) -> offset
+    outputChar = case spans !!? yidx of
+      Nothing -> Nothing
+      Just row -> outputChar' where
+        rowText = subWidth $ concatSpans row
+        xidx = x' - x - xoff - xalignoffset
+        outputChar' = case rowText !!? xidx of
+          Nothing -> Nothing
+          Just x -> Just x
 
   rfntext pt@(V2 x' y') = case _sBox_boxType of
     SBoxType_Box -> Nothing
@@ -161,28 +186,22 @@ sBox_drawer sbox@SBox {..} = r where
 
       -- 😰😰😰 for now we just do the below for every cell
       dl = makeDisplayLinesFromSBox sbox
-      spans = TZ._displayLines_spans dl
-      offsetMap = TZ._displayLines_offsetMap dl
 
-      (LBox (V2 bx by) _) = _sBox_box
-      (xoff,yoff) = case _sBox_boxType of
+      offs = case _sBox_boxType of
         SBoxType_NoBoxText -> (0,0)
         _                  -> (1,1)
 
-      y = y' - by - yoff
-      xalignoffset = case Map.lookup y offsetMap of
-        -- TODO this happens when you resize a box too quickly, figure out why
-        Nothing -> error $ "should not happen. got " <> show y <> " in\n" <> show dl <> "\n" <> show spans <> "\n" <> show (_sBox_text) <> show _sBox_box
-        Just (offset,_) -> offset
+      outputChar = displayLinesToChar dl (x', y') offs
 
-      outputChar = case spans !!? y of
-        Nothing -> Nothing
-        Just row -> outputChar' where
-          rowText = subWidth $ concatSpans row
-          xidx = x' - bx - xoff - xalignoffset
-          outputChar' = case rowText !!? xidx of
-            Nothing -> Nothing
-            Just x -> Just x
+  -- TODO test
+  rfnlabel pt@(V2 x' y') = case _sBoxTitle_title _sBox_title of
+    Nothing -> Nothing
+    Just title -> outputChar where
+      -- TODO we want to crop instead of wrap here
+      -- however using infinite width trick will break AlignRight :(
+      dl = noTrailngCursorDisplayLines titlewidth (_sBoxTitle_align _sBox_title) title
+      -- note that y' will ultimately resolve to a yindex of 0 inside of displayLinesToChar
+      outputChar = displayLinesToChar dl (x', y') (1,0)
 
   rfnnoborder pt
     | not (does_lBox_contains_XY lbox pt) = Nothing
@@ -201,8 +220,11 @@ sBox_drawer sbox@SBox {..} = r where
     | x' == x+w-1 && y' == y = _superStyle_tr _sBox_style
     | x' == x+w-1 && y' == y+h-1 = _superStyle_br _sBox_style
     | x' == x || x' == x+w-1 = _superStyle_vertical _sBox_style
-    -- TODO box title
-    | y' == y || y' == y+h-1 = _superStyle_horizontal _sBox_style
+    -- label shows up at top horizontal portion 
+    | y' == y = case rfnlabel pt of 
+      Nothing -> _superStyle_horizontal _sBox_style
+      Just x -> x
+    | y' == y+h-1 = _superStyle_horizontal _sBox_style
     | otherwise = rfnnoborder pt
 
   r = SEltDrawer {
@@ -352,6 +374,28 @@ modify_sElt_with_cTextStyle isDo selt (CTextStyle style) = case selt of
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
   --x -> x
 
+modify_sEltBox_label_with_cTextAlign :: Bool -> SElt -> CTextAlign -> SElt
+modify_sEltBox_label_with_cTextAlign isDo selt (CTextAlign align) = case selt of
+  SEltBox sbox -> SEltBox $ sbox {
+      _sBox_title = sboxtitle {
+          _sBoxTitle_align = modifyDelta isDo (_sBoxTitle_align sboxtitle) align
+        }
+    } where
+      sboxtitle = _sBox_title sbox
+  _ -> error $ "Controller - SElt type mismatch: CTagBoxLabelAlignment - " <> show selt
+  -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
+  --x -> x
+
+modify_sEltBox_label_with_cMaybeText :: Bool -> SElt -> CMaybeText -> SElt
+modify_sEltBox_label_with_cMaybeText isDo selt (CMaybeText text) = case selt of
+  SEltBox sbox -> SEltBox $ sbox {
+      _sBox_title = sboxtitle {
+          _sBoxTitle_title = modifyDelta isDo (_sBoxTitle_title sboxtitle) text
+        }
+    } where
+      sboxtitle = _sBox_title sbox
+  _ -> error $ "Controller - SElt type mismatch: CTagBoxLabelAlignment - " <> show selt
+
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -375,6 +419,11 @@ updateFnFromController isDo = \case
     SEltLabel sname (modify_sElt_with_cSuperStyle isDo selt d)
   (CTagBoxTextStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cTextStyle isDo selt d)
+
+  (CTagBoxLabelAlignment :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltBox_label_with_cTextAlign isDo selt d)
+  (CTagBoxLabelText :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltBox_label_with_cMaybeText isDo selt d)
 
 
 

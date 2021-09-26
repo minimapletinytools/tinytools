@@ -20,6 +20,8 @@ import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
+import qualified Text.Pretty.Simple as Pretty
+import qualified Data.Text.Lazy as LT
 
 
 {- examples of how CartLine works
@@ -153,6 +155,7 @@ last2 e1 e2 es = r where
       _ -> x
   r = (l1, l2)
 
+-- helper method for creating new anchor at the end of a sequence of anchors (when creating new lines)
 -- both input and output anchor list is REVERSED 
 elbowFromEnd :: XY -> [XY] -> [XY]
 elbowFromEnd pos [] = [pos]
@@ -174,13 +177,13 @@ elbowFromEnd pos ls@(e1:(e2:es)) = r where
         -- if there was no horizontal change, update the last point
         then pos:e2:es
         --last was vertical, go horizontal first
-        else (if dy == 0 then [] else [V2 (e1x+dx) (e1y + dy)]) <> (V2 e1x (e1y + dy) : ls)
+        else (if dy == 0 then [] else [V2 (e1x+dx) (e1y + dy)]) <> (V2 (e1x+dx) e1y : ls)
       -- last was horizontal
       else if dy == 0
         -- if there was no vertical change, update the last point
         then pos:e2:es
         --last was horizontal, go vertical first
-        else (if dx == 0 then [] else [V2 (e1x+dx) (e1y + dy)]) <> (V2 (e1x+dx) e1y : ls)
+        else (if dx == 0 then [] else [V2 (e1x+dx) (e1y + dy)]) <> (V2 e1x (e1y + dy) : ls)
   
 
 smartAutoPathDown :: XY -> [XY] -> [XY]
@@ -191,6 +194,7 @@ smartAutoPathDown pos es = reverse $ elbowFromEnd pos (reverse es)
 
 instance PotatoHandler CartLineHandler where
   pHandlerName _ = handlerName_cartesianLine
+  pHandlerDebugShow clh = LT.toStrict $ Pretty.pShowNoColor clh
   pHandleMouse clh@CartLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
     -- restrict mouse
@@ -203,17 +207,24 @@ instance PotatoHandler CartLineHandler where
     anchors = flattenAnchors _cartLineHandler_anchors
 
     in case _mouseDrag_state of
+      -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
+      -- TODO consider moving this into GoatWidget since it's needed by many manipulators
+      MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
+
+      -- TODO creation should be a separate handler
+      -- creation case
       MouseDragState_Down | _cartLineHandler_isCreation -> case _cartLineHandler_anchors of
         AnchorZipper _ (x:xs) -> error "this should never happen"
-        -- creation case
         AnchorZipper [] [] -> r where
-          -- TODO track the fact we clicked, if we drag, pass on to SimpleLine? (but what happens if we drag back to start)
+          -- TODO track the fact we clicked, if we drag, pass on to SimpleLine? (but what happens if we drag back to start??)
           r = Just $ setHandlerOnly $ clh {
-              _cartLineHandler_anchors = AnchorZipper [mousexy] []
+              _cartLineHandler_active = True
+              , _cartLineHandler_anchors = AnchorZipper [mousexy] []
             }
         AnchorZipper (x:xs) [] -> if last (x :| xs) == mousexy
+          -- if we click on the last dot, we're done, exit creation mode
           then Just $ setHandlerOnly $ clh {
-              _cartLineHandler_isCreation = False
+              _cartLineHandler_isCreation = True
               , _cartLineHandler_active = False -- is it bad that we're still dragging but this is set to False?
             }
           -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
@@ -222,9 +233,14 @@ instance PotatoHandler CartLineHandler where
                 (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors)) 
                 []
             }
-      -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
-      -- TODO consider moving this into GoatWidget since it's needed by many manipulators
-      MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
+      -- TODO someday allow dragging dots on in creation case (to adjust position)  
+      MouseDragState_Dragging | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
+      MouseDragState_Up | _cartLineHandler_isCreation ->  Just $ setHandlerOnly clh {
+          -- disable creation mode on release (no reason besides it being convenient code wise)
+          _cartLineHandler_isCreation = _cartLineHandler_active
+        }
+
+      -- modify existing line case
       MouseDragState_Down -> r where
         -- first go through and find dots we may have clicked on
         (dotfs,dotbs) = splitFind (== mousexy) anchors
@@ -240,23 +256,22 @@ instance PotatoHandler CartLineHandler where
             else undefined -- TODO
           -- we clicked on a dot
           else undefined -- TODO
-
-      -- TODO someday allow dragging dots on in creation case (to adjust position)  
-      MouseDragState_Dragging | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
+      
+      -- TODO
       MouseDragState_Dragging -> r where
         r = undefined
-      -- nothing to do here
-      MouseDragState_Up | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
       MouseDragState_Up -> r where
         -- on release cases, topology may change (some anchors removed), unclear how to map topology (probably need meta data to track)
         -- if release is on a dummy dot, (in between two other dots)
         -- TODO
         r = undefined
+
       MouseDragState_Cancelled -> Just def
 
   pHandleKeyboard clh PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement based on last selected manipulator I guess
     _                              -> Nothing
+
   pRenderHandler clh@CartLineHandler {..} PotatoHandlerInput {..} = r where
     toBoxHandle isactive xy = RenderHandle {
         _renderHandle_box = LBox xy 1

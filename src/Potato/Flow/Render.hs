@@ -43,6 +43,9 @@ import Control.Exception (assert)
 emptyChar :: PChar
 emptyChar = ' '
 
+
+-- TODO for selection rendering you want to make it V.Vector (Maybe PChar) or maybe you can just use a map?
+
 -- A rendered region in Canvas space
 data RenderedCanvasRegion = RenderedCanvasRegion {
   _renderedCanvasRegion_box        :: LBox
@@ -55,7 +58,7 @@ renderedCanvas_box = _renderedCanvasRegion_box
 emptyRenderedCanvasRegion :: LBox -> RenderedCanvasRegion
 emptyRenderedCanvasRegion lb@(LBox _ (V2 w h)) = RenderedCanvasRegion {
     _renderedCanvasRegion_box = lb
-    , _renderedCanvasRegion_contents = V.replicate (w*h) ' '
+    , _renderedCanvasRegion_contents = V.replicate (w*h) emptyChar
   }
 
 -- TODO move these methods to Math

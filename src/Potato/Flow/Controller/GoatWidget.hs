@@ -26,6 +26,7 @@ import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
+import           Potato.Flow.Controller.Manipulator.CartLine
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
 import           Potato.Flow.Controller.Types
@@ -62,6 +63,7 @@ data GoatState = GoatState {
     , _goatState_layersState     :: LayersState
 
     , _goatState_renderedCanvas  :: RenderedCanvasRegion
+    , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
     , _goatState_screenRegion    :: XY
 
     , _goatState_selectedTool    :: Tool
@@ -365,6 +367,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
             someNewHandler = case _goatState_selectedTool of
               Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
               Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
+              Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
               Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
               Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
               _           -> error "not valid tool"
@@ -587,20 +590,36 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
+  -- update the rendered region if we moved the screen
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
-  --newBox = _sCanvas_box . _owlPFState_canvas $ next_pFState
-  next_renderedCanvas' = if _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
+  didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
+  next_renderedCanvas' = if didScreenRegionMove
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
-  -- render the scene if there were changes
+  -- WIP rendered selection stuff  
+  next_renderedSelection' = if didScreenRegionMove
+    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedSelection
+    else _goatState_renderedSelection
+  -- END WIP rendered selection stuff  
+
+  -- render the scene if there were changes, note that it must be mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
   cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'
-    else updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
+    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
 
+  -- WIP rendered selection stuff
+  prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
+  curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament _goatState_selection
+  -- TODO you can be even smarter about this by combining cslmapForRendering 
+  cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
+  next_renderedSelection = if IM.null cslmapForSelectionRendering
+    then next_renderedSelection'
+    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForSelectionRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedSelection'
+  -- END WIP rendered selection stuff  
 
 
   finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
@@ -611,6 +630,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       , _goatState_canvasSelection = next_canvasSelection
       , _goatState_broadPhaseState = next_broadPhaseState
       , _goatState_renderedCanvas = next_renderedCanvas
+      , _goatState_renderedSelection = next_renderedSelection
       , _goatState_layersState     = next_layersState
     }
 
@@ -645,7 +665,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     -- TODO we want to render the whole screen, not just the canvas
     initialCanvasBox = _sCanvas_box $ _owlPFState_canvas _goatWidgetConfig_initialState
     initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
-    initialrc = render initialCanvasBox initialselts (emptyRenderedCanvasRegion initialCanvasBox)
+    initialemptyrcr = emptyRenderedCanvasRegion initialCanvasBox
+    initialrc = render initialCanvasBox initialselts initialemptyrcr
 
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace
@@ -659,6 +680,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_canvasSelection = CanvasSelection Seq.empty
         , _goatState_broadPhaseState = initialbp
         , _goatState_renderedCanvas = initialrc
+        , _goatState_renderedSelection = initialemptyrcr
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
         , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
