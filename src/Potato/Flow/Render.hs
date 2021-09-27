@@ -45,6 +45,11 @@ emptyChar = ' '
 
 
 -- TODO for selection rendering you want to make it V.Vector (Maybe PChar) or maybe you can just use a map?
+{-
+class IsRenderedCanvasRegion rc where
+  isRenderedCanvasRegion_area :: LBox
+  isRenderedCanvasRegion_generateMaybe :: (Int, Int) -> ((Int, Int) -> Maybe PChar) -> rc
+-}
 
 -- A rendered region in Canvas space
 data RenderedCanvasRegion = RenderedCanvasRegion {

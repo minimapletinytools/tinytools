@@ -262,6 +262,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_layersHandlerRenderOutput :: Dynamic t LayersViewHandlerRenderOutput
   , _goatWidget_canvas              :: Dynamic t SCanvas -- TODO DELETE just use OwlPFState
   , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvasRegion
+  , _goatWidget_renderedSelection      :: Dynamic t RenderedCanvasRegion
 
   -- TODO this is no longer debug (or maybe expose just OwlPFState part)
   -- debug stuff prob
@@ -598,11 +599,11 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
-  -- WIP rendered selection stuff  
+  -- WIP rendered selection stuff
   next_renderedSelection' = if didScreenRegionMove
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedSelection
     else _goatState_renderedSelection
-  -- END WIP rendered selection stuff  
+  -- END WIP rendered selection stuff
 
   -- render the scene if there were changes, note that it must be mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
   cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
@@ -613,13 +614,13 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
 
   -- WIP rendered selection stuff
   prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
-  curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament _goatState_selection
-  -- TODO you can be even smarter about this by combining cslmapForRendering 
+  curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
+  -- TODO you can be even smarter about this by combining cslmapForRendering I think
   cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
   next_renderedSelection = if IM.null cslmapForSelectionRendering
     then next_renderedSelection'
-    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForSelectionRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedSelection'
-  -- END WIP rendered selection stuff  
+    else updateCanvas cslmapForSelectionRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedSelection'
+  -- END WIP rendered selection stuff
 
 
   finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
@@ -722,7 +723,9 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -}
 
   let
+    --why is this not holdUniqDyn? Is this why I'm getting extra ticks?
     r_renderedCanvas = fmap _goatState_renderedCanvas goatDyn
+    r_renderedSelection = fmap _goatState_renderedSelection goatDyn
 
   return GoatWidget
     {
@@ -733,6 +736,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_broadPhase   = r_broadphase
       , _goatWidget_canvas = r_canvas
       , _goatWidget_renderedCanvas = r_renderedCanvas
+      , _goatWidget_renderedSelection = r_renderedSelection
       , _goatWidget_handlerRenderOutput =  r_handlerRenderOutput
       , _goatWidget_layersHandlerRenderOutput = r_layersHandlerRenderOutput
       , _goatWidget_DEBUG_goatState = goatDyn
