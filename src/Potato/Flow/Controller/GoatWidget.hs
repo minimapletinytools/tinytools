@@ -617,9 +617,15 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
   curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
   -- TODO you can be even smarter about this by combining cslmapForRendering I think
   cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
+
+
+  -- you need to do something like this but this is wrong....
+  --(needsupdateaabbsforrenderselection, _) = update_bPTree cslmapForSelectionRendering (_broadPhaseState_bPTree next_broadPhaseState)
+  needsupdateaabbsforrenderselection = needsupdateaabbs
+
   next_renderedSelection = if IM.null cslmapForSelectionRendering
     then next_renderedSelection'
-    else updateCanvas cslmapForSelectionRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedSelection'
+    else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState next_pFState next_renderedSelection'
   -- END WIP rendered selection stuff
 
 
