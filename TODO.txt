@@ -10,6 +10,9 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
+-BUG hitting assert
+  selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
+  repro (select a bunch of stuff and try and shift click a bunch on linux???)
 -BUG pane2 has broken save/savas and generally stuff that opens up a popup due to popup overriding mouse capture
 -multi node lines
   -research how lucidchart does it?
@@ -96,8 +99,8 @@ DONE-box labels
       -refine UI
     -save, save as, open, print dialogs
       -you want a settings widget to track which is current directory/file
-    -selection box
-      -live selection preview
+    DONE-selection box
+    -live selection preview
     -handlerrenderoutput should be bale to do grey background for text boxes and stuff
     DONE-separate selection rendering
     -multi-line handler

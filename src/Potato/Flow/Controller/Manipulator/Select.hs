@@ -68,13 +68,19 @@ instance Default SelectHandler where
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = handlerName_select
-  pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag md) = Just $ case _mouseDrag_state md of
+  pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Down -> captureWithNoChange sh
-    MouseDragState_Dragging -> captureWithNoChange sh
+    MouseDragState_Dragging -> setHandlerOnly sh {
+        _selectHandler_selectArea = make_lBox_from_XYs _mouseDrag_from _mouseDrag_to
+      }
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
-      shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers md)
+      shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
-  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput [defaultRenderHandle $ _selectHandler_selectArea sh]
+  pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput (fmap defaultRenderHandle $ substract_lBox full inside) where
+    full@(LBox (V2 x y) (V2 w h)) = _selectHandler_selectArea sh
+    inside = if w > 2 && h > 2
+      then LBox (V2 (x+1) (y+1)) (V2 (w-2) (h-2))
+      else LBox 0 0
   pIsHandlerActive _ = True
