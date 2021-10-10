@@ -599,12 +599,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
-  -- WIP rendered selection stuff
-  next_renderedSelection' = if didScreenRegionMove
-    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedSelection
-    else _goatState_renderedSelection
-  -- END WIP rendered selection stuff
-
   -- render the scene if there were changes, note that it must be mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
   cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
@@ -612,21 +606,29 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     then next_renderedCanvas'
     else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
 
-  -- WIP rendered selection stuff
+  -- render the selection (just rerender it every time)
+  selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
+  next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmapForRendering
+    -- nothing changed, we can keep our selection rendering
+    then _goatState_renderedSelection
+    else render newBox selectionselts (emptyRenderedCanvasRegion newBox)
+
+  {- TODO render only parts of selection that have changed TODO broken
+  next_renderedSelection' = if didScreenRegionMove
+    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedSelection
+    else _goatState_renderedSelection
   prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
   curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
   -- TODO you can be even smarter about this by combining cslmapForRendering I think
   cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
-
-
   -- you need to do something like this but this is wrong....
   --(needsupdateaabbsforrenderselection, _) = update_bPTree cslmapForSelectionRendering (_broadPhaseState_bPTree next_broadPhaseState)
   needsupdateaabbsforrenderselection = needsupdateaabbs
-
   next_renderedSelection = if IM.null cslmapForSelectionRendering
     then next_renderedSelection'
     else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState next_pFState next_renderedSelection'
-  -- END WIP rendered selection stuff
+  -}
+
 
 
   finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {

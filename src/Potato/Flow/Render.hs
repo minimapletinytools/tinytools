@@ -4,6 +4,7 @@
 module Potato.Flow.Render (
   RenderedCanvasRegion(..)
   , renderedCanvas_box
+  , renderedCanvasRegion_nonEmptyCount
   , emptyRenderedCanvasRegion
   , printRenderedCanvasRegion
   , potatoRender
@@ -65,6 +66,9 @@ emptyRenderedCanvasRegion lb@(LBox _ (V2 w h)) = RenderedCanvasRegion {
     _renderedCanvasRegion_box = lb
     , _renderedCanvasRegion_contents = V.replicate (w*h) emptyChar
   }
+
+renderedCanvasRegion_nonEmptyCount :: RenderedCanvasRegion -> Int
+renderedCanvasRegion_nonEmptyCount = V.length . V.filter (\x -> x /= emptyChar) . _renderedCanvasRegion_contents
 
 -- TODO move these methods to Math
 -- | input index must be contained in the box

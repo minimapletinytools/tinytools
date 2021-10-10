@@ -36,6 +36,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
+-disable selection highlight in some modes
 -file explorer
   DONE-typeable file path bar
   DONE-double focus between filename and folder
@@ -98,7 +99,7 @@ DONE-box labels
     -selection box
       -live selection preview
     -handlerrenderoutput should be bale to do grey background for text boxes and stuff
-    -separate selection rendering
+    DONE-separate selection rendering
     -multi-line handler
     -freeform
     -toggle box to textbox to freeform
