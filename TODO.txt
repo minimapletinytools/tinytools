@@ -90,6 +90,7 @@ DONE-box labels
     -consider refactoring layers handler
     -consider refactoring handlers to output commands so you can make everything even more scriptable
     -would be nice to select line anchors and then have keyboard input on the selected anchor
+    -"convert to text area" option
   -BONUS TODO (TBH you need to do this to make the product useable)
     -keyboard input
       DONE-box handler
@@ -99,10 +100,8 @@ DONE-box labels
       -refine UI
     -save, save as, open, print dialogs
       -you want a settings widget to track which is current directory/file
-    DONE-selection box
     -live selection preview
     -handlerrenderoutput should be bale to do grey background for text boxes and stuff
-    DONE-separate selection rendering
     -multi-line handler
     -freeform
     -toggle box to textbox to freeform
@@ -110,6 +109,8 @@ DONE-box labels
     -user settings object in vty
     -MDI refactor
     -box label text alignment parameters
+    DONE-selection box
+    DONE-separate selection rendering
   DONE-still getting same source assert when dragging to/from layers/canvas
     DONE-(write Ut for this)
     DONE-I think you just need to switch layout stuff to use pane2
