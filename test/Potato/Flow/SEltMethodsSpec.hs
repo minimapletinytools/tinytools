@@ -88,7 +88,7 @@ spec = do
           _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'ｈ'
           _sEltDrawer_renderFn (V2 3 0) `shouldBe` Nothing
         it "box label" $ do
-          let 
+          let
             sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
           --forM_ (sEltDrawer_renderToLines sd) putTextLn
           _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '╔'
@@ -150,3 +150,15 @@ spec = do
           _sEltDrawer_renderFn (V2 9 10) `shouldBe` Nothing
           _sEltDrawer_renderFn (V2 10 14) `shouldBe` _superStyle_vertical def
           _sEltDrawer_renderFn (V2 10 15) `shouldBe` _superStyle_br def
+
+      describe "STextArea" $ do
+        let
+          sometextarea = STextArea {
+              _sTextArea_box         = LBox (V2 0 0) (V2 10 10)
+              , _sTextArea_text      = M.fromList [((0,0),'a'),((1,1),'b'),((9,9),'c')]
+              , _sTextArea_transparent = False
+            }
+        it "basic" do
+          let
+            sd@SEltDrawer {..} = getDrawer (SEltTextArea $ sometextarea)
+          forM_ (sEltDrawer_renderToLines sd) putTextLn

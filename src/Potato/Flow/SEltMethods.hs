@@ -56,7 +56,7 @@ makeDisplayLinesFromSBox sbox = r where
     SBoxType_BoxText   -> max 0 (width'-2)
     SBoxType_NoBoxText -> width'
     _                  -> error "wrong type"
-  r = noTrailngCursorDisplayLines width alignment text 
+  r = noTrailngCursorDisplayLines width alignment text
 
 concatSpans :: [TZ.Span a] -> Text
 concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
@@ -220,8 +220,8 @@ sBox_drawer sbox@SBox {..} = r where
     | x' == x+w-1 && y' == y = _superStyle_tr _sBox_style
     | x' == x+w-1 && y' == y+h-1 = _superStyle_br _sBox_style
     | x' == x || x' == x+w-1 = _superStyle_vertical _sBox_style
-    -- label shows up at top horizontal portion 
-    | y' == y = case rfnlabel pt of 
+    -- label shows up at top horizontal portion
+    | y' == y = case rfnlabel pt of
       Nothing -> _superStyle_horizontal _sBox_style
       Just x -> x
     | y' == y+h-1 = _superStyle_horizontal _sBox_style
@@ -318,6 +318,32 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
         LineAutoStyle_StraightAlwaysHorizontal -> vertrenderfn
     }
 
+sTextArea_drawer :: STextArea -> SEltDrawer
+sTextArea_drawer stextarea@STextArea {..} = r where
+
+  lbox@(LBox (V2 x y) (V2 w h)) = _sTextArea_box
+
+  renderfn pt(V2 x' y') = outputChar where
+    xidx = x'-x
+    yidx = y'-y
+    inbounds = does_lBox_contains_XY lbox (V2 xidx yidx)
+    outputChar = if inbounds
+      then case Map.lookup (xidx, yidx) _sTextArea_text of
+        Nothing -> if _sTextArea_transparent
+          then Nothing
+          else Just ' '
+        Just c -> Just c
+      else Nothing
+
+  r = SEltDrawer {
+      _sEltDrawer_box = lbox
+      , _sEltDrawer_renderFn = undefined
+    }
+
+
+
+
+
 -- TODO split up so it's not one big case statement...
 getDrawer :: SElt -> SEltDrawer
 getDrawer selt = case selt of
@@ -326,7 +352,7 @@ getDrawer selt = case selt of
   SEltFolderEnd   -> nilDrawer
   SEltBox sbox    -> sBox_drawer sbox
   SEltLine sline  -> sSimpleLine_drawer sline
-  SEltTextArea _  -> potatoDrawer
+  SEltTextArea stextarea  -> sTextArea_drawer stextarea
   where
     potatoDrawer = SEltDrawer {
         _sEltDrawer_box = fromJust (getSEltBox selt)

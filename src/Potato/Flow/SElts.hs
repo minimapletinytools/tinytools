@@ -289,8 +289,7 @@ instance NFData SCartLines
 -- | abitrary text confined to a box
 data STextArea = STextArea {
   _sTextArea_box           :: LBox
-  -- TODO probably Map (Int,Int) Char
-  , _sTextArea_text        :: Text
+  , _sTextArea_text        :: Map (Int, Int) PChar
   -- TODO consider using SuperStyle here instead and using Fill property only
   , _sTextArea_transparent :: Bool
 } deriving (Eq, Generic, Show)

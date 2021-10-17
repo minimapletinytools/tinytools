@@ -177,7 +177,7 @@ renderWithBroadPhase bpt ot lbx rc = r where
   r = render lbx selts rc
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
-moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) r where
+moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) outrcr where
   -- unnecessary to init with empty vector as moveRenderedCanvasRegion will re-render those areas
   -- but it's still nice to do and makes testing easier
   area = lBox_area lbx
@@ -192,7 +192,7 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
       copiedv = (V.//) emptyv indexedValues
     Nothing -> emptyv
 
-  r = RenderedCanvasRegion {
+  outrcr = RenderedCanvasRegion {
       _renderedCanvasRegion_box = lbx
       , _renderedCanvasRegion_contents = newv
     }

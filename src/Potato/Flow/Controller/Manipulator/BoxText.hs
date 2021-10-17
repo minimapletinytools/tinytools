@@ -218,7 +218,7 @@ instance PotatoHandler BoxTextHandler where
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
-        newState = mouseText _boxTextHandler_state sbox rmd (getBoxTextOffset sbox) 
+        newState = mouseText _boxTextHandler_state sbox rmd (getBoxTextOffset sbox)
         r = if clickInside
           then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
@@ -271,7 +271,7 @@ instance PotatoHandler BoxTextHandler where
           then Nothing -- SEltBox type changed to non-text
           else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_canvasSelection tah
         _ -> Nothing
-      where 
+      where
         sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
@@ -301,7 +301,7 @@ lBox_to_boxLabelBox lbx = r where
   CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox lbx
   width = max 0 (w - 2)
   r = LBox (V2 (x+1) y) (V2 width 1)
-  
+
 
 updateBoxLabelInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxLabelInputStateWithSBox sbox btis = r where
@@ -418,7 +418,6 @@ instance PotatoHandler BoxLabelHandler where
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxLabelHandler_prevHandler tah') }
 
-    -- UNTESTED
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
@@ -449,7 +448,7 @@ instance PotatoHandler BoxLabelHandler where
         SEltBox sbox -> if sBoxType_hasBorder (_sBox_boxType sbox)
           then Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
           -- SEltBox type changed to non-text
-          else Nothing 
+          else Nothing
         _ -> Nothing
       where
         sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
