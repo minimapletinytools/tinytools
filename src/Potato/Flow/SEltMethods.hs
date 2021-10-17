@@ -323,10 +323,10 @@ sTextArea_drawer stextarea@STextArea {..} = r where
 
   lbox@(LBox (V2 x y) (V2 w h)) = _sTextArea_box
 
-  renderfn pt(V2 x' y') = outputChar where
+  renderfn (V2 x' y') = outputChar where
     xidx = x'-x
     yidx = y'-y
-    inbounds = does_lBox_contains_XY lbox (V2 xidx yidx)
+    inbounds = does_lBox_contains_XY lbox (V2 x' y')
     outputChar = if inbounds
       then case Map.lookup (xidx, yidx) _sTextArea_text of
         Nothing -> if _sTextArea_transparent
@@ -337,7 +337,7 @@ sTextArea_drawer stextarea@STextArea {..} = r where
 
   r = SEltDrawer {
       _sEltDrawer_box = lbox
-      , _sEltDrawer_renderFn = undefined
+      , _sEltDrawer_renderFn = renderfn
     }
 
 

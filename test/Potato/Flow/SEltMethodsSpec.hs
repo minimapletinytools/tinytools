@@ -8,6 +8,7 @@ import           Relude       hiding (empty, fromList)
 
 import           Test.Hspec
 
+import qualified Data.Map as Map
 import           Data.Default (def)
 
 import           Potato.Flow
@@ -154,11 +155,14 @@ spec = do
       describe "STextArea" $ do
         let
           sometextarea = STextArea {
-              _sTextArea_box         = LBox (V2 0 0) (V2 10 10)
-              , _sTextArea_text      = M.fromList [((0,0),'a'),((1,1),'b'),((9,9),'c')]
+              _sTextArea_box         = LBox (V2 1 1) (V2 10 10)
+              , _sTextArea_text      = Map.fromList [((0,0),'a'),((1,1),'b'),((9,9),'c')]
               , _sTextArea_transparent = False
             }
-        it "basic" do
+        it "basic" $ do
           let
             sd@SEltDrawer {..} = getDrawer (SEltTextArea $ sometextarea)
-          forM_ (sEltDrawer_renderToLines sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd) putTextLn
+          _sEltDrawer_renderFn (V2 1 1) `shouldBe` Just 'a'
+          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just 'c'
+          _sEltDrawer_renderFn (V2 100 0) `shouldBe` Nothing
