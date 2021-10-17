@@ -19,13 +19,23 @@ import           Potato.Flow.OwlWorkspace
 import Data.Default
 
 
+getSTextArea :: CanvasSelection -> (REltId, STextArea)
+getSTextArea selection = case superOwl_toSElt_hack sowl of
+  SEltTextArea stextarea -> (rid, stextarea)
+  selt -> error $ "expected SBox, got " <> show selt
+  where
+    sowl = selectionToSuperOwl selection
+    rid = _superOwl_id sowl
+
 data TextAreaHandler = TextAreaHandler {
     _textAreaHandler_prevHandler :: SomePotatoHandler
+    , _textAreaHandler_cursor :: XY
   }
 
 makeTextAreaHandler :: SomePotatoHandler -> TextAreaHandler
 makeTextAreaHandler prev = TextAreaHandler {
     _textAreaHandler_prevHandler = prev
+    , _textAreaHandler_cursor = 0
   }
 
 
@@ -34,10 +44,14 @@ instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
   pHandlerDebugShow tah = ""
 
+  {-_sTextArea_box           :: LBox
+  , _sTextArea_text        :: Map (Int, Int) PChar
+  -- TODO consider using SuperStyle here instead and using Fill property only
+  , _sTextArea_transparent :: Bool-}
+
   -- TODO FINISH
   pHandleMouse tah PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      --(_, sbox) = getSBox _potatoHandlerInput_canvasSelection
-      aoeu = undefined
+      (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
     in
       case _mouseDrag_state of
         MouseDragState_Down -> r where
@@ -49,9 +63,22 @@ instance PotatoHandler TextAreaHandler where
         MouseDragState_Up -> Just $ captureWithNoChange tah
         MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
-  pHandleKeyboard tah PotatoHandlerInput {..} (KeyboardData k _) = case k of
-    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah) }
-    _ -> Nothing
+  pHandleKeyboard tah PotatoHandlerInput {..} (KeyboardData k _) = let
+      (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
+
+      -- TODO
+      moveAndWrap dp = undefined
+
+    in case k of
+      KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah) }
+      KeyboardKey_Left -> moveAndWrap (V2 (-1) 0)
+      KeyboardKey_Right -> moveAndWrap (V2 1 0)
+      KeyboardKey_Down -> moveAndWrap (V2 0 (-1))
+      KeyboardKey_Up -> moveAndWrap (V2 0 1)
+      _ -> r where
+        -- TODO
+        r = Nothing
+
   pResetHandler tah PotatoHandlerInput {..} = Nothing
   pRenderHandler tah PotatoHandlerInput {..} = HandlerRenderOutput $ []
   pIsHandlerActive tah = False
