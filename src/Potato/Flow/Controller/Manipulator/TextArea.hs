@@ -17,6 +17,8 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 
 import Data.Default
+import qualified Data.Map as Map
+import qualified Data.Text as T
 
 
 getSTextArea :: CanvasSelection -> (REltId, STextArea)
@@ -29,20 +31,20 @@ getSTextArea selection = case superOwl_toSElt_hack sowl of
 
 data TextAreaHandler = TextAreaHandler {
     _textAreaHandler_prevHandler :: SomePotatoHandler
-    , _textAreaHandler_cursor :: XY
+    , _textAreaHandler_relCursor :: XY
   }
 
 makeTextAreaHandler :: SomePotatoHandler -> TextAreaHandler
 makeTextAreaHandler prev = TextAreaHandler {
     _textAreaHandler_prevHandler = prev
-    , _textAreaHandler_cursor = 0
+    , _textAreaHandler_relCursor = 0
   }
 
 
 -- TODO FINISH
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
-  pHandlerDebugShow tah = ""
+  pHandlerDebugShow tah = "TextAreaHandler, cursor: " <> show (_textAreaHandler_relCursor tah)
 
   {-_sTextArea_box           :: LBox
   , _sTextArea_text        :: Map (Int, Int) PChar
@@ -52,12 +54,20 @@ instance PotatoHandler TextAreaHandler where
   -- TODO FINISH
   pHandleMouse tah PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
+      CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
+      newrelpos = _mouseDrag_to - p
+      inbounds = does_lBox_contains_XY lbox _mouseDrag_to
+
     in
       case _mouseDrag_state of
         MouseDragState_Down -> r where
-          r = Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah
-            }
+          r = if not inbounds
+            then Nothing
+            else Just $ def {
+                _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+                    _textAreaHandler_relCursor = newrelpos
+                  }
+              }
         -- TODO "painting" mode someday
         MouseDragState_Dragging -> Just $ captureWithNoChange tah
         MouseDragState_Up -> Just $ captureWithNoChange tah
@@ -65,20 +75,48 @@ instance PotatoHandler TextAreaHandler where
 
   pHandleKeyboard tah PotatoHandlerInput {..} (KeyboardData k _) = let
       (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
+      CanonicalLBox _ _ lbox@(LBox _ (V2 width height)) = canonicalLBox_from_lBox _sTextArea_box
+      wrapBox (V2 x y) = V2 (x `mod` width) (y `mod` height)
 
+      -- combinators
+      start = (Nothing, tah)
+      finish (mc, h) = Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
+          -- TODO
+          , _potatoHandlerOutput_pFEvent = Nothing
+        }
+      moveAndWrap dp (mc, h) = (mc, h {
+          _textAreaHandler_relCursor = wrapBox $ (_textAreaHandler_relCursor tah) + dp
+        })
       -- TODO
-      moveAndWrap dp = undefined
+      setChar c (mc, h) = (mc, h)
+      deleteChar (mc, h) = (mc, h)
+
 
     in case k of
       KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah) }
-      KeyboardKey_Left -> moveAndWrap (V2 (-1) 0)
-      KeyboardKey_Right -> moveAndWrap (V2 1 0)
-      KeyboardKey_Down -> moveAndWrap (V2 0 (-1))
-      KeyboardKey_Up -> moveAndWrap (V2 0 1)
-      _ -> r where
-        -- TODO
-        r = Nothing
+      KeyboardKey_Left -> finish . moveAndWrap (V2 (-1) 0) $ start
+      KeyboardKey_Right -> finish .  moveAndWrap (V2 1 0) $ start
+      KeyboardKey_Down -> finish . moveAndWrap (V2 0 (-1)) $ start
+      KeyboardKey_Up -> finish . moveAndWrap (V2 0 1) $ start
+      KeyboardKey_Return  -> finish . moveAndWrap (V2 0 (-1)) $ start
+      KeyboardKey_Space   -> finish . moveAndWrap (V2 1 0) . setChar ' ' $ start
+      KeyboardKey_Delete  -> finish . deleteChar $ start
+      KeyboardKey_Backspace -> finish . deleteChar . moveAndWrap (V2 (-1) 0) $ start
+      KeyboardKey_Char c  -> finish . moveAndWrap (V2 1 0) . setChar c $ start
+      KeyboardKey_Paste t -> finish $ foldl' (\acc c -> moveAndWrap (V2 1 0) . setChar c $ acc) start (T.unpack t)
+      _ -> Nothing
 
   pResetHandler tah PotatoHandlerInput {..} = Nothing
-  pRenderHandler tah PotatoHandlerInput {..} = HandlerRenderOutput $ []
+  pRenderHandler tah PotatoHandlerInput {..} = r where
+
+    -- TODO maybe store instead of pull from selection?
+    (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
+    CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
+    V2 cx cy = _textAreaHandler_relCursor tah
+    cursor = RenderHandle {
+        _renderHandle_box = LBox (p + _textAreaHandler_relCursor tah) (V2 1 1)
+        , _renderHandle_char = Map.lookup (cx, cy) _sTextArea_text
+      }
+    r = HandlerRenderOutput [cursor]
   pIsHandlerActive tah = False
