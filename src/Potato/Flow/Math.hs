@@ -58,6 +58,8 @@ import qualified Text.Show
 type XY = V2 Int
 instance FromJSON XY
 instance ToJSON XY
+instance FromJSONKey XY
+instance ToJSONKey XY
 
 -- | a point in screen space
 -- should only be used by VC, so does not belong here

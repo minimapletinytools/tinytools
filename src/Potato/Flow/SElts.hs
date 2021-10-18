@@ -286,7 +286,7 @@ instance ToJSON SCartLines
 instance Binary SCartLines
 instance NFData SCartLines
 
-type TextAreaMapping = Map (Int, Int) PChar
+type TextAreaMapping = Map XY PChar
 
 -- | abitrary text confined to a box
 data STextArea = STextArea {

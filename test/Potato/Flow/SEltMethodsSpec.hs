@@ -156,7 +156,7 @@ spec = do
         let
           sometextarea = STextArea {
               _sTextArea_box         = LBox (V2 1 1) (V2 10 10)
-              , _sTextArea_text      = Map.fromList [((0,0),'a'),((1,1),'b'),((9,9),'c')]
+              , _sTextArea_text      = Map.fromList [((V2 0 0),'a'),((V2 1 1),'b'),((V2 9 9),'c')]
               , _sTextArea_transparent = False
             }
         it "basic" $ do

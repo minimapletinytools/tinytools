@@ -115,7 +115,7 @@ instance Delta (Maybe Text) DeltaMaybeText where
   plusDelta mt (DeltaMaybeText d) = plusDelta mt d
   minusDelta mt (DeltaMaybeText d) = minusDelta mt d
 
-data DeltaTextArea = DeltaTextArea (Map (Int, Int) (Maybe PChar, Maybe PChar))   deriving (Eq, Generic, Show)
+data DeltaTextArea = DeltaTextArea (Map XY (Maybe PChar, Maybe PChar))   deriving (Eq, Generic, Show)
 instance NFData DeltaTextArea
 instance Delta TextAreaMapping DeltaTextArea where
   plusDelta tam (DeltaTextArea m) = justs `Map.union` tam `Map.difference` empties where

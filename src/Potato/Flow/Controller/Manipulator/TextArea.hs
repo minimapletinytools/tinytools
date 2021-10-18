@@ -118,10 +118,9 @@ instance PotatoHandler TextAreaHandler where
     -- TODO maybe store instead of pull from selection?
     (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
     CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
-    V2 cx cy = _textAreaHandler_relCursor tah
     cursor = RenderHandle {
         _renderHandle_box = LBox (p + _textAreaHandler_relCursor tah) (V2 1 1)
-        , _renderHandle_char = Map.lookup (cx, cy) _sTextArea_text
+        , _renderHandle_char = Map.lookup (_textAreaHandler_relCursor tah) _sTextArea_text
       }
     r = HandlerRenderOutput [cursor]
   pIsHandlerActive tah = False

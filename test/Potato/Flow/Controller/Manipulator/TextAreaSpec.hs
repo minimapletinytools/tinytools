@@ -22,7 +22,7 @@ import qualified Data.IntMap                                as IM
 import qualified Data.Map                                as Map
 import qualified Potato.Data.Text.Zipper                           as TZ
 
-checkSTextAreaTextAt :: Text -> (Int, Int) -> PChar -> EverythingPredicate
+checkSTextAreaTextAt :: Text -> XY -> PChar -> EverythingPredicate
 checkSTextAreaTextAt label k c = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
   SEltTextArea (STextArea _ tm _) -> Map.lookup k tm == Just c
   _                                         -> False

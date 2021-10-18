@@ -321,14 +321,12 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
 sTextArea_drawer :: STextArea -> SEltDrawer
 sTextArea_drawer stextarea@STextArea {..} = r where
 
-  lbox@(LBox (V2 x y) (V2 w h)) = _sTextArea_box
+  lbox@(LBox p (V2 w h)) = _sTextArea_box
 
-  renderfn (V2 x' y') = outputChar where
-    xidx = x'-x
-    yidx = y'-y
-    inbounds = does_lBox_contains_XY lbox (V2 x' y')
+  renderfn p' = outputChar where
+    inbounds = does_lBox_contains_XY lbox p'
     outputChar = if inbounds
-      then case Map.lookup (xidx, yidx) _sTextArea_text of
+      then case Map.lookup (p' - p) _sTextArea_text of
         Nothing -> if _sTextArea_transparent
           then Nothing
           else Just ' '
