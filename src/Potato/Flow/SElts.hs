@@ -20,6 +20,7 @@ module Potato.Flow.SElts (
   , SBox(..)
   , sBox_hasLabel
   , SSimpleLine(..)
+  , TextAreaMapping
   , STextArea(..)
   , SElt(..)
   , SEltLabel(..)
@@ -285,11 +286,12 @@ instance ToJSON SCartLines
 instance Binary SCartLines
 instance NFData SCartLines
 
+type TextAreaMapping = Map (Int, Int) PChar
 
 -- | abitrary text confined to a box
 data STextArea = STextArea {
   _sTextArea_box           :: LBox
-  , _sTextArea_text        :: Map (Int, Int) PChar
+  , _sTextArea_text        :: TextAreaMapping
   -- TODO consider using SuperStyle here instead and using Fill property only
   , _sTextArea_transparent :: Bool
 } deriving (Eq, Generic, Show)

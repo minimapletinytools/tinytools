@@ -33,6 +33,9 @@ module Potato.Flow.Types (
   , DeltaTextAlign(..)
   , DeltaMaybeText(..)
 
+  , DeltaTextArea(..)
+  , DeltaToggleTextArea(..)
+
   -- serialized types
   , SEltTree
   , SCanvas(..)
@@ -53,6 +56,7 @@ import qualified Data.Dependent.Sum        as DS
 import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
 import qualified Data.IntMap.Strict        as IM
+import qualified Data.Map as Map
 
 
 
@@ -107,6 +111,25 @@ instance NFData DeltaMaybeText
 instance Delta (Maybe Text) DeltaMaybeText where
   plusDelta mt (DeltaMaybeText d) = plusDelta mt d
   minusDelta mt (DeltaMaybeText d) = minusDelta mt d
+
+data DeltaTextArea = DeltaTextArea (Map (Int, Int) (Maybe PChar, Maybe PChar))   deriving (Eq, Generic, Show)
+instance NFData DeltaTextArea
+instance Delta TextAreaMapping DeltaTextArea where
+  plusDelta tam (DeltaTextArea m) = justs `Map.union` tam `Map.difference` empties where
+    m' = fmap snd m
+    justs = Map.mapMaybe id m'
+    empties = Map.mapMaybe (\x -> if isNothing x then Just () else Nothing) m'
+  minusDelta tam (DeltaTextArea m) =  justs `Map.union` tam `Map.difference` empties where
+    m' = fmap fst m
+    justs = Map.mapMaybe id m'
+    empties = Map.mapMaybe (\x -> if isNothing x then Just () else Nothing) m'
+
+-- TODO
+data DeltaToggleTextArea = DeltaToggleTextArea SElt  deriving (Eq, Generic, Show)
+instance NFData DeltaToggleTextArea
+instance Delta SElt DeltaToggleTextArea where
+  plusDelta s (DeltaToggleTextArea s') = assert (s == s') $ undefined -- TODO
+  minusDelta _ (DeltaToggleTextArea s') = s'
 
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
@@ -204,14 +227,14 @@ data CTag a where
 
   CTagBoxLabelAlignment :: CTag CTextAlign
   CTagBoxLabelText :: CTag CMaybeText
-  
+
   -- TODO CTagBoxLabel
   -- CTagBoxLabelAlignment
 
   CTagSuperStyle :: CTag CSuperStyle
   CTagBoundingBox :: CTag CBoundingBox
-  
-  
+
+
 
 deriveGEq      ''CTag
 deriveGCompare ''CTag
