@@ -25,18 +25,21 @@ module Potato.Flow.Types (
   , CSuperStyle(..)
   , CTextAlign(..)
   , CMaybeText(..)
+  , CTextArea(..)
+  , CTextAreaToggle(..)
+
   , Controller
 
+  -- * delta types
   , DeltaText
   , DeltaSuperStyle(..)
   , DeltaTextStyle(..)
   , DeltaTextAlign(..)
   , DeltaMaybeText(..)
-
   , DeltaTextArea(..)
-  , DeltaToggleTextArea(..)
+  , DeltaTextAreaToggle(..)
 
-  -- serialized types
+  -- * serialized types
   , SEltTree
   , SCanvas(..)
   , SPotatoFlow(..)
@@ -125,11 +128,11 @@ instance Delta TextAreaMapping DeltaTextArea where
     empties = Map.mapMaybe (\x -> if isNothing x then Just () else Nothing) m'
 
 -- TODO
-data DeltaToggleTextArea = DeltaToggleTextArea SElt  deriving (Eq, Generic, Show)
-instance NFData DeltaToggleTextArea
-instance Delta SElt DeltaToggleTextArea where
-  plusDelta s (DeltaToggleTextArea s') = assert (s == s') $ undefined -- TODO
-  minusDelta _ (DeltaToggleTextArea s') = s'
+data DeltaTextAreaToggle = DeltaTextAreaToggle SElt  deriving (Eq, Generic, Show)
+instance NFData DeltaTextAreaToggle
+instance Delta SElt DeltaTextAreaToggle where
+  plusDelta s (DeltaTextAreaToggle s') = assert (s == s') $ undefined -- TODO
+  minusDelta _ (DeltaTextAreaToggle s') = s'
 
 data CRename = CRename {
   _cRename_deltaLabel :: DeltaText
@@ -216,11 +219,19 @@ instance NFData CTextAlign
 data CMaybeText = CMaybeText DeltaMaybeText deriving (Eq, Generic, Show)
 instance NFData CMaybeText
 
+data CTextArea = CTextArea DeltaTextArea deriving (Eq, Generic, Show)
+instance NFData CTextArea
+
+data CTextAreaToggle = CTextAreaToggle DeltaTextAreaToggle deriving (Eq, Generic, Show)
+instance NFData CTextAreaToggle
+
 -- NOTE, in some previous (very flawed) design, these were fanned out in a Reflex event hence the `DSum CTag` thing
 -- we don't do this anymore, but DSum is still a nice alternative to using an ADT so we keep it.
 data CTag a where
   CTagRename :: CTag CRename
+
   CTagLine :: CTag CLine
+
   CTagBoxText :: CTag CBoxText
   CTagBoxType :: CTag CBoxType
   CTagBoxTextStyle :: CTag CTextStyle
@@ -228,8 +239,8 @@ data CTag a where
   CTagBoxLabelAlignment :: CTag CTextAlign
   CTagBoxLabelText :: CTag CMaybeText
 
-  -- TODO CTagBoxLabel
-  -- CTagBoxLabelAlignment
+  CTagTextArea :: CTag CTextArea
+  CTagTextAreaToggle :: CTag CTextAreaToggle
 
   CTagSuperStyle :: CTag CSuperStyle
   CTagBoundingBox :: CTag CBoundingBox
@@ -254,6 +265,8 @@ instance NFData Controller where
   rnf (CTagBoxTextStyle DS.:=> Identity a) = rnf a
   rnf (CTagBoxLabelAlignment DS.:=> Identity a) = rnf a
   rnf (CTagBoxLabelText DS.:=> Identity a) = rnf a
+  rnf (CTagTextArea DS.:=> Identity a) = rnf a
+  rnf (CTagTextAreaToggle DS.:=> Identity a) = rnf a
 
 -- | indexed my REltId
 type ControllersWithId = IntMap Controller

@@ -422,6 +422,20 @@ modify_sEltBox_label_with_cMaybeText isDo selt (CMaybeText text) = case selt of
       sboxtitle = _sBox_title sbox
   _ -> error $ "Controller - SElt type mismatch: CTagBoxLabelAlignment - " <> show selt
 
+modify_sEltTextArea_with_cTextArea :: Bool -> SElt -> CTextArea -> SElt
+modify_sEltTextArea_with_cTextArea isDo selt (CTextArea dt) = case selt of
+  SEltTextArea stextarea -> SEltTextArea $ stextarea {
+      _sTextArea_text = modifyDelta isDo (_sTextArea_text stextarea) dt
+    }
+  _ -> error $ "Controller - SElt type mismatch: CTagTextArea - " <> show selt
+
+modify_sEltTextArea_with_cTextAreaToggle :: Bool -> SElt -> CTextAreaToggle -> SElt
+modify_sEltTextArea_with_cTextAreaToggle isDo selt (CTextAreaToggle toggle) = case selt of
+  -- double toggle is idempotent but we disallow it for now
+  SEltTextArea _ -> error $ "Controller - SElt type mismatch: CTagTextAreaToggle - " <> show selt
+  x -> modifyDelta isDo x toggle
+
+
 modifyDelta :: (Delta x dx) => Bool -> x ->  dx -> x
 modifyDelta isDo x dx = if isDo
   then plusDelta x dx
@@ -451,6 +465,10 @@ updateFnFromController isDo = \case
   (CTagBoxLabelText :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sEltBox_label_with_cMaybeText isDo selt d)
 
+  (CTagTextArea :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltTextArea_with_cTextArea isDo selt d)
+  (CTagTextAreaToggle :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sEltTextArea_with_cTextAreaToggle isDo selt d)
 
 
 -- | helper method used in copy pasta
