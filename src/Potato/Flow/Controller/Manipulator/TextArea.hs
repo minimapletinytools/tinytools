@@ -19,6 +19,7 @@ import           Potato.Flow.OwlWorkspace
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import Data.Default
 import qualified Data.Map as Map
+import qualified Data.IntMap as IM
 import qualified Data.Text as T
 
 
@@ -41,18 +42,9 @@ makeTextAreaHandler prev = TextAreaHandler {
     , _textAreaHandler_relCursor = 0
   }
 
-
--- TODO FINISH
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
   pHandlerDebugShow tah = "TextAreaHandler, cursor: " <> show (_textAreaHandler_relCursor tah)
-
-  {-_sTextArea_box           :: LBox
-  , _sTextArea_text        :: Map (Int, Int) PChar
-  -- TODO consider using SuperStyle here instead and using Fill property only
-  , _sTextArea_transparent :: Bool-}
-
-  -- TODO FINISH
   pHandleMouse tah PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
       CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
@@ -75,27 +67,28 @@ instance PotatoHandler TextAreaHandler where
         MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
   pHandleKeyboard tah PotatoHandlerInput {..} (KeyboardData k _) = let
-      (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
+      (rid, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
       CanonicalLBox _ _ lbox@(LBox _ (V2 width height)) = canonicalLBox_from_lBox _sTextArea_box
       wrapBox (V2 x y) = V2 (x `mod` width) (y `mod` height)
 
 
-      --getCursorChar h = Map.lookup (_textAreaHandler_relCursor h) _sTextArea_text
+      getCursorChar h = Map.lookup (_textAreaHandler_relCursor h) _sTextArea_text
       -- combinators
       start = (Map.empty, tah)
       finish (mc, h) = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
-          -- TODO
           , _potatoHandlerOutput_pFEvent = if null mc
             then Nothing
-            else undefined --Just $ CTagTextArea :=> (Identity $ CTextArea mc)
-        }
+            -- TODO if you store mc in TextAreaHandler you can continue to build on it which would allow you to set "undoFirst" paremeter to True
+            else Just $ WSEManipulate (False, IM.singleton rid controller)
+        } where
+          controller = CTagTextArea :=> (Identity $ CTextArea (DeltaTextArea mc))
       moveAndWrap dp (mc, h) = (mc, h {
           _textAreaHandler_relCursor = wrapBox $ (_textAreaHandler_relCursor tah) + dp
         })
       -- TODO
-      setChar c (mc, h) = (mc, h) --(Map.insert (_textAreaHandler_relCursor h) (getCursorChar h, Just c) mc, h)
-      deleteChar (mc, h) = (mc, h)
+      setChar c (mc, h) = (Map.insert (_textAreaHandler_relCursor h) (getCursorChar h, Just c) mc, h)
+      deleteChar (mc, h) = (Map.insert (_textAreaHandler_relCursor h) (getCursorChar h, Nothing) mc, h)
 
 
     in case k of
