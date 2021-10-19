@@ -491,10 +491,11 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
                 KeyboardData (KeyboardKey_Char key) _ -> r where
                   newTool = case key of
                     'v'  -> Tool_Select
-                    -- 'p' -> Tool_Pan
+                    'p' -> Tool_Pan
                     'b'  -> Tool_Box
-                    '\\' -> Tool_Line
+                    'l' -> Tool_Line
                     't'  -> Tool_Text
+                    'n'  -> Tool_TextArea
                     _    -> _goatState_selectedTool
                   -- TODO consider clearing/resetting the handler?
                   r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }

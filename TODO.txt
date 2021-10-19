@@ -19,13 +19,14 @@ pai(n)t
 
 ::NEWEST TODO::
 -ui work
-  -rework tools menu to be more readable
-    -add tools for text area and maybe multiline
+  DONE-rework tools menu to be more readable
+    DONE-add tools for text area and maybe multiline
   -resize left pane to be correct
   -add little indicator indicating you can click to enable box labels?
-  -add hotkeys to MOTD?
+  DONE-add hotkeys to MOTD?
+DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
 
-
+-textarea click to select enters textarea handler 
 
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
