@@ -14,6 +14,7 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.BoxText
+import           Potato.Flow.Controller.Manipulator.TextArea
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
@@ -27,6 +28,7 @@ import           Potato.Flow.OwlWorkspace
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
 import qualified Data.IntMap                                as IM
+import qualified Data.Map as Map
 import qualified Data.List                                  as L
 import qualified Data.Sequence as Seq
 
@@ -110,7 +112,7 @@ makeDeltaBox bht (V2 dx dy) = case bht of
 
 
 -- TODO rename to BoxHandlerType or something
-data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationType_Text | BoxCreationType_DragSelect deriving (Show, Eq)
+data BoxCreationType = BoxCreationType_None | BoxCreationType_Box | BoxCreationType_Text | BoxCreationType_TextArea | BoxCreationType_DragSelect deriving (Show, Eq)
 
 boxCreationType_isCreation :: BoxCreationType -> Bool
 boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreationType_DragSelect
@@ -173,7 +175,7 @@ instance Default BoxHandler where
 
 
 selectionOnlySBox :: CanvasSelection -> Maybe SBox
-selectionOnlySBox (CanvasSelection selection) = if Seq.length selection == 1 
+selectionOnlySBox (CanvasSelection selection) = if Seq.length selection == 1
   then case superOwl_toSElt_hack (Seq.index selection 0) of
     SEltBox sbox -> Just sbox
     _ -> Nothing
@@ -204,7 +206,7 @@ instance PotatoHandler BoxHandler where
       Nothing -> Nothing
 
 
-        
+
       -- clicked on a manipulator, begin dragging
       Just mi -> r where
         newbh = bh {
@@ -216,7 +218,7 @@ instance PotatoHandler BoxHandler where
         bht = toEnum mi
         -- special case behavior for BH_A require actually clicking on something on selection
         clickOnSelection = any (doesSEltIntersectPoint _mouseDrag_to . superOwl_toSElt_hack) $ unCanvasSelection _potatoHandlerInput_canvasSelection
-        r = if bht /= BH_A || clickOnSelection 
+        r = if bht /= BH_A || clickOnSelection
           then Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh }
           else Nothing
 
@@ -238,13 +240,24 @@ instance PotatoHandler BoxHandler where
           --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
         }
 
-      nameToAdd = if _boxHandler_creation == BoxCreationType_Text then "<text>" else "<box>"
+      textAreaToAdd = def {
+          _sTextArea_box   =  canonicalLBox_from_lBox_ $ LBox _mouseDrag_from dragDelta
+          , _sTextArea_text        = Map.empty
+          , _sTextArea_transparent = True
+        }
 
-      op = if boxCreationType_isCreation _boxHandler_creation
-        then WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
-        else makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
+      nameToAdd = case _boxHandler_creation of
+        BoxCreationType_Box -> "<box>"
+        BoxCreationType_Text -> "<text>"
+        BoxCreationType_TextArea -> "<textarea>"
+        _ -> error "invalid BoxCreationType"
 
-      newbh = bh { 
+      op = case _boxHandler_creation of
+        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
+        BoxCreationType_TextArea -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltTextArea $ textAreaToAdd)
+        _ -> makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
+
+      newbh = bh {
           _boxHandler_undoFirst = True
           -- if we drag, we are no longer in label case
           , _boxHandler_downOnLabel = False
@@ -264,9 +277,13 @@ instance PotatoHandler BoxHandler where
       then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
       else Nothing
     MouseDragState_Up -> r where
-      isText = case superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection of
+      selt = superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection
+      isText = case selt of
         Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType
         _                                    -> False
+      isTextArea = case selt of
+        Just (SEltTextArea _) -> True
+        _ -> False
 
 
 
@@ -281,7 +298,9 @@ instance PotatoHandler BoxHandler where
           && not (_boxHandler_creation == BoxCreationType_DragSelect)
         -- create box handler and pass on the input
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
-        else Just def
+        else if isTextArea
+          then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler))) phi rmd
+          else Just def
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 

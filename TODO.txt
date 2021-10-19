@@ -9,7 +9,24 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 
+(v)select
+(p)an
+(t)ext
+(\)simpleline
+multi(l)ine
+pai(n)t
+
+
 ::NEWEST TODO::
+-ui work
+  -rework tools menu to be more readable
+    -add tools for text area and maybe multiline
+  -resize left pane to be correct
+  -add little indicator indicating you can click to enable box labels?
+  -add hotkeys to MOTD?
+
+
+
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)

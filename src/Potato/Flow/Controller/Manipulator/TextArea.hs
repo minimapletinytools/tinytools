@@ -2,6 +2,7 @@
 
 module Potato.Flow.Controller.Manipulator.TextArea (
   TextAreaHandler(..)
+  , makeTextAreaHandler
 ) where
 
 import           Relude

@@ -35,6 +35,7 @@ import           Data.Aeson
 import           Data.Binary
 import           Data.Default
 import qualified Data.List         as L
+import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper                          as TZ
 
 type PChar = Char
@@ -295,6 +296,13 @@ data STextArea = STextArea {
   -- TODO consider using SuperStyle here instead and using Fill property only
   , _sTextArea_transparent :: Bool
 } deriving (Eq, Generic, Show)
+
+instance Default STextArea where
+  def = STextArea {
+      _sTextArea_box   =        LBox 0 0
+      , _sTextArea_text        = Map.empty
+      , _sTextArea_transparent = True
+    }
 
 instance FromJSON STextArea
 instance ToJSON STextArea

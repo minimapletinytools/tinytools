@@ -371,6 +371,7 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
               Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
               Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
               Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
+              Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }
               _           -> error "not valid tool"
 
             -- pass input onto newly created handler
