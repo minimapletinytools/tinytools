@@ -26,7 +26,7 @@ pai(n)t
   DONE-add hotkeys to MOTD?
 DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
 -textarea click to select enters textarea handler
-  -still broken after dragging??? whyy
+  DONE-still broken after dragging??? whyy
   -also cursor is not getting psased in correctly (need to handle on mouse up)
 
 -BUG hitting assert

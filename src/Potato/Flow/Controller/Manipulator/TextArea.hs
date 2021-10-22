@@ -37,20 +37,28 @@ data TextAreaHandler = TextAreaHandler {
     , _textAreaHandler_relCursor :: XY
   }
 
-makeTextAreaHandler :: SomePotatoHandler -> TextAreaHandler
-makeTextAreaHandler prev = TextAreaHandler {
+getCursorPosHelper :: CanvasSelection -> RelMouseDrag -> (XY, Bool)
+getCursorPosHelper selection rmd@(RelMouseDrag MouseDrag {..}) = r where
+  (_, STextArea {..}) = getSTextArea selection
+  CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
+  newrelpos = _mouseDrag_to - p
+  clickinside = does_lBox_contains_XY lbox _mouseDrag_to
+  r = (newrelpos, clickinside)
+
+makeTextAreaHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> Bool -> TextAreaHandler
+makeTextAreaHandler prev selection rmd creation = r where
+  (newrelpos, _) = getCursorPosHelper selection rmd
+  r = TextAreaHandler {
     _textAreaHandler_prevHandler = prev
-    , _textAreaHandler_relCursor = 0
+    -- we want the cursor at the beginning if we are creating TextAreaHandler right after creating a new text area
+    , _textAreaHandler_relCursor = if creation then 0 else newrelpos
   }
 
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
   pHandlerDebugShow tah = "TextAreaHandler, cursor: " <> show (_textAreaHandler_relCursor tah)
   pHandleMouse tah phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
-      CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
-      newrelpos = _mouseDrag_to - p
-      clickinside = does_lBox_contains_XY lbox _mouseDrag_to
+      (newrelpos, clickinside) = getCursorPosHelper _potatoHandlerInput_canvasSelection rmd
     in
       case _mouseDrag_state of
         MouseDragState_Down -> r where
@@ -97,9 +105,9 @@ instance PotatoHandler TextAreaHandler where
       KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_textAreaHandler_prevHandler tah) }
       KeyboardKey_Left -> finish . moveAndWrap (V2 (-1) 0) $ start
       KeyboardKey_Right -> finish .  moveAndWrap (V2 1 0) $ start
-      KeyboardKey_Down -> finish . moveAndWrap (V2 0 (-1)) $ start
-      KeyboardKey_Up -> finish . moveAndWrap (V2 0 1) $ start
-      KeyboardKey_Return  -> finish . moveAndWrap (V2 0 (-1)) $ start
+      KeyboardKey_Down -> finish . moveAndWrap (V2 0 1) $ start
+      KeyboardKey_Up -> finish . moveAndWrap (V2 0 (-1)) $ start
+      KeyboardKey_Return  -> finish . moveAndWrap (V2 0 1) $ start
       KeyboardKey_Space   -> finish . moveAndWrap (V2 1 0) . setChar ' ' $ start
       KeyboardKey_Delete  -> finish . deleteChar $ start
       KeyboardKey_Backspace -> finish . deleteChar . moveAndWrap (V2 (-1) 0) $ start

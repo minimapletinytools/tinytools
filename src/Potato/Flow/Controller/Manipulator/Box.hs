@@ -290,15 +290,17 @@ instance PotatoHandler BoxHandler where
       wasNotDragSelecting = not (_boxHandler_creation == BoxCreationType_DragSelect)
       -- only enter subHandler we did not drag (hack, we do this by testing form _boxHandler_undoFirst)
       wasNotActuallyDragging = not _boxHandler_undoFirst
+      -- always go straight to handler after creating a new SElt
+      isCreation = boxCreationType_isCreation _boxHandler_creation
       r = if isText
-          && (wasNotActuallyDragging || _boxHandler_creation == BoxCreationType_Text)
+          && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
         -- create box handler and pass on the input
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
         else if isTextArea
-          && (wasNotActuallyDragging || _boxHandler_creation == BoxCreationType_TextArea)
+          && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
-          then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler))) phi rmd
+          then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation) phi rmd
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
           else Just def
