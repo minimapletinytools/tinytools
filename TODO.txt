@@ -25,8 +25,9 @@ pai(n)t
   -add little indicator indicating you can click to enable box labels?
   DONE-add hotkeys to MOTD?
 DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
-
--textarea click to select enters textarea handler 
+-textarea click to select enters textarea handler
+  -still broken after dragging??? whyy
+  -also cursor is not getting psased in correctly (need to handle on mouse up)
 
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0

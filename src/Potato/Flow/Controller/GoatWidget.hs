@@ -275,7 +275,7 @@ makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTBoxText     -> SomePotatoHandler $ (def :: BoxHandler)
   SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
-  SMTText        -> SomePotatoHandler EmptyHandler -- TODO
+  SMTTextArea    -> SomePotatoHandler $ (def :: BoxHandler)
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
   SMTNone        -> SomePotatoHandler EmptyHandler
 

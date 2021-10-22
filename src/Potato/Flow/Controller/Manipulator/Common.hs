@@ -23,7 +23,7 @@ import           Potato.Flow.Owl
 import           Control.Exception
 import qualified Data.Sequence                as Seq
 
-data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTText | SMTBoundingBox deriving (Show, Eq)
+data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTTextArea | SMTBoundingBox deriving (Show, Eq)
 
 computeSelectionType :: CanvasSelection -> SelectionManipulatorType
 computeSelectionType (CanvasSelection selection)= foldl' foldfn SMTNone selection where
@@ -31,7 +31,7 @@ computeSelectionType (CanvasSelection selection)= foldl' foldfn SMTNone selectio
     SMTNone -> case superOwl_toSElt_hack sowl of
       SEltBox sbox -> if sBoxType_isText (_sBox_boxType sbox) then SMTBoxText else SMTBox
       SEltLine _   -> SMTLine
-      SEltTextArea _   -> SMTText
+      SEltTextArea _   -> SMTTextArea
       SEltFolderStart -> error "this should never happen by assumption of CanvasSelection type"
       SEltFolderEnd -> error "this should never happen by assumption of CanvasSelection type"
       --SEltNone -> SMTNone

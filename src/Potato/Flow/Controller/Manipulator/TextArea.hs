@@ -46,22 +46,23 @@ makeTextAreaHandler prev = TextAreaHandler {
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea
   pHandlerDebugShow tah = "TextAreaHandler, cursor: " <> show (_textAreaHandler_relCursor tah)
-  pHandleMouse tah PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse tah phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
       CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
       newrelpos = _mouseDrag_to - p
-      inbounds = does_lBox_contains_XY lbox _mouseDrag_to
-
+      clickinside = does_lBox_contains_XY lbox _mouseDrag_to
     in
       case _mouseDrag_state of
         MouseDragState_Down -> r where
-          r = if not inbounds
-            then Nothing
-            else Just $ def {
+          r = if clickinside
+            then Just $ def {
                 _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                     _textAreaHandler_relCursor = newrelpos
                   }
               }
+            -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
+            else pHandleMouse (_textAreaHandler_prevHandler tah) phi rmd
+
         -- TODO "painting" mode someday
         MouseDragState_Dragging -> Just $ captureWithNoChange tah
         MouseDragState_Up -> Just $ captureWithNoChange tah
@@ -107,7 +108,7 @@ instance PotatoHandler TextAreaHandler where
       _ -> Nothing
 
   pResetHandler tah PotatoHandlerInput {..} = Nothing
-  pRenderHandler tah PotatoHandlerInput {..} = r where
+  pRenderHandler tah phi@PotatoHandlerInput {..} = r where
 
     -- TODO maybe store instead of pull from selection?
     (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
@@ -116,5 +117,5 @@ instance PotatoHandler TextAreaHandler where
         _renderHandle_box = LBox (p + _textAreaHandler_relCursor tah) (V2 1 1)
         , _renderHandle_char = Map.lookup (_textAreaHandler_relCursor tah) _sTextArea_text
       }
-    r = HandlerRenderOutput [cursor]
+    r = pRenderHandler (_textAreaHandler_prevHandler tah) phi <>  HandlerRenderOutput [cursor]
   pIsHandlerActive tah = False

@@ -62,7 +62,7 @@ findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   smt = computeSelectionType selection
   normalSel = L.findIndex (\mm -> does_lBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
   r = case smt of
-    SMTText -> normalSel -- TODO figure out how to differentiate between area / text manipulator
+    SMTTextArea -> normalSel -- TODO figure out how to differentiate between area / text manipulator
     _       -> normalSel
 
 
@@ -286,20 +286,21 @@ instance PotatoHandler BoxHandler where
         _ -> False
 
 
-
-      -- TODO right now if you click realease on a text box it will go straight into BoxText handler
-      -- TODO only do this if it was already selected
-
-
+      -- only enter sub handler if we weren't drag selecting (this includes selecting it from an unselect state without dragging)
+      wasNotDragSelecting = not (_boxHandler_creation == BoxCreationType_DragSelect)
+      -- only enter subHandler we did not drag (hack, we do this by testing form _boxHandler_undoFirst)
+      wasNotActuallyDragging = not _boxHandler_undoFirst
       r = if isText
-          -- HACK if _boxHandler_undoFirst is false, that means we didn't actually do anything since the last time we clicked which means we want to enter BoxText mode
-          && (not _boxHandler_undoFirst || _boxHandler_creation == BoxCreationType_Text)
-          -- if we are drag selecting, then don't enter BoxText mode
-          && not (_boxHandler_creation == BoxCreationType_DragSelect)
+          && (wasNotActuallyDragging || _boxHandler_creation == BoxCreationType_Text)
+          && wasNotDragSelecting
         -- create box handler and pass on the input
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
         else if isTextArea
+          && (wasNotActuallyDragging || _boxHandler_creation == BoxCreationType_TextArea)
+          && wasNotDragSelecting
           then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler))) phi rmd
+          -- This clears the handler and causes selection to regenerate a new handler.
+          -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
           else Just def
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
