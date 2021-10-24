@@ -278,6 +278,25 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
 
     ]
 
+everything_newfolder_test :: Test
+everything_newfolder_test = constructTest "new folder" owlpfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "New Folder (no selection)"
+      , EWCNewFolder
+
+      , EWCLabel "New Folder (with selection)"
+      -- TODO open up some folder, and select some stuff
+      --, EWCNewFolder
+    ]
+  expected = [
+      LabelCheck "New Folder (no selection)"
+      , firstSelectedSuperOwlPredicate (Just "<folder>") (\sowl -> case isOwl_toSElt_hack sowl of
+        SEltFolderStart -> True
+        _                                        -> False)
+
+      , LabelCheck "New Folder (with selection)"
+    ]
+
 
 everything_basic_test :: Test
 everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where

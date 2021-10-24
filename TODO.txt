@@ -18,23 +18,13 @@ pai(n)t
 
 
 ::NEWEST TODO::
--ui work
-  DONE-rework tools menu to be more readable
-    DONE-add tools for text area and maybe multiline
-  -resize left pane to be correct
-  -add little indicator indicating you can click to enable box labels?
-  DONE-add hotkeys to MOTD?
-DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
--textarea click to select enters textarea handler
-  DONE-still broken after dragging??? whyy
-  -also cursor is not getting psased in correctly (need to handle on mouse up)
-
+-widgetify left panel and fix dynamic heights
+DONE-pass out dynamic height in params
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
--BUG pane2 has broken save/savas and generally stuff that opens up a popup due to popup overriding mouse capture
 -multi node lines
-  -research how lucidchart does it?
+  -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
   -you really need to design+determine all line types first
   -cartline needs a SElt type
   -decide how to combine Line and CartLine
@@ -46,8 +36,11 @@ DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
     -how to attach during creation?
       -click on attachment point... attaches
       -ctrl click does not attach
+-new folder button
+  -do proper folder position
+  -add UTs
 -figure out how to change folders into groups for auto-pathing group support
--text area
+  -is it just a folder setting?
 -glypth widget
 -layers scrolling
   -change rendering based on scroll position
@@ -73,6 +66,19 @@ DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+DONE-BUG pane2 has broken save/savas and generally stuff that opens up a popup due to popup overriding mouse capture
+  -fix by activating on mouse up instead of down...
+DONE-text area
+DONE-ui work
+  DONE-rework tools menu to be more readable
+    DONE-add tools for text area and maybe multiline
+  -resize left pane to be correct
+  -add little indicator indicating you can click to enable box labels?
+  DONE-add hotkeys to MOTD?
+DONE-hotkeys for choosing tools are broken (every other hotkey is broken...)
+DONE-textarea click to select enters textarea handler
+  DONE-still broken after dragging??? whyy
+  DONE-also cursor is not getting psased in correctly (need to handle on mouse up)
 DONE-BUG selecting folders does not create select boxes
   -need to use converted selection in select handler?
     -or do I want to make converted selection available via PotatoHandlerInput
@@ -110,7 +116,10 @@ DONE-box labels
     -consider refactoring handlers to output commands so you can make everything even more scriptable
     -would be nice to select line anchors and then have keyboard input on the selected anchor
     -"convert to text area" option
+    -right cilck menus
   -BONUS TODO (TBH you need to do this to make the product useable)
+    -do proper theming dark/light
+      -theming/design pass
     -keyboard input
       DONE-box handler
       -for line handler it should operate on the last anchor selected

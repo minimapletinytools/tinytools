@@ -85,10 +85,11 @@ goatState_owlTree = _owlPFState_owlTree . goatState_pFState
 data GoatCmd =
   GoatCmdTool Tool
   | GoatCmdLoad EverythingLoadState
-  | GoatCmdWSEvent WSEvent
 
-  -- TODO DELETE
+  -- command based input
+  | GoatCmdWSEvent WSEvent
   | GoatCmdSetCanvasRegionDim XY
+  | GoatCmdNewFolder
 
   -- canvas direct input
   | GoatCmdMouse LMouseData
@@ -226,6 +227,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   -- only intended for setting params
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
   , _goatWidgetConfig_canvasSize     :: Event t XY
+  , _goatWidgetConfig_newFolder :: Event t ()
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
@@ -244,6 +246,7 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_unicodeWidthFn = Nothing
     , _goatWidgetConfig_canvasRegionDim = never
     , _goatWidgetConfig_canvasSize = never
+    , _goatWidgetConfig_newFolder = never
     , _goatWidgetConfig_bypassEvent = never
   }
 
@@ -328,6 +331,10 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
+      GoatCmdNewFolder -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
+        -- TODO position based on selection
+        newFolderEv = WSEAddFolder (OwlSpot noOwl Nothing, "folder")
+
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff
         makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)
@@ -581,7 +588,6 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     -- otherwise, use the returned handler or make a new one from selection
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
 
-
   next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- TODO you only need to do this if handler is one that came from mHandlerFromPho
     -- if there was a non-canvas event, reset the handler D:
@@ -589,6 +595,9 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
     -- TODO you also want to reset layers handler here too
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pResetHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
+
+  -- TODO if cslmapForBroadPhase has a newly created folder then we want to enter rename mode for that folder
+  --_goatState_layersHandler
 
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
@@ -659,6 +668,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , GoatCmdMouse <$> _goatWidgetConfig_mouse
       , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
       , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
+      , GoatCmdNewFolder <$ _goatWidgetConfig_newFolder
       , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
       , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
       , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent

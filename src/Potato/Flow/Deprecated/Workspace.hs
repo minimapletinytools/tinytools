@@ -167,7 +167,6 @@ pfc_addRelative_to_newElts pfs (lp, stree) = assert validScope $ r where
 --  r = PFCFDuplicate ==> rids
 
 ------ update functions via commands
--- TODO rename to WSEvent
 data WSEvent =
   -- CHANGE TODO FIGURE IT OUT
   --WSEAddElt (Bool, OwlSpot, OwlElt)

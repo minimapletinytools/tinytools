@@ -44,6 +44,7 @@ data GoatWidgetCmd =
   | EWCNothing
   | EWCLabel Text
   | EWCCanvasResize XY
+  | EWCNewFolder
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -72,6 +73,9 @@ everything_network_app pfs (AppIn _ ev) = do
         _ -> Nothing
       , _goatWidgetConfig_canvasSize = fforMaybe ev $ \case
         EWCCanvasResize x -> Just x
+        _ -> Nothing
+      , _goatWidgetConfig_newFolder = fforMaybe ev $ \case
+        EWCNewFolder -> Just ()
         _ -> Nothing
       , _goatWidgetConfig_bypassEvent = never
       , _goatWidgetConfig_canvasRegionDim = never
