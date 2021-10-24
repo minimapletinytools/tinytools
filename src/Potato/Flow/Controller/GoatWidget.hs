@@ -332,8 +332,8 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
       GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
-        -- TODO position based on selection
-        newFolderEv = WSEAddFolder (OwlSpot noOwl Nothing, "folder")
+        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState $  _goatState_workspace) _goatState_selection
+        newFolderEv = WSEAddFolder (folderPos, "folder")
 
       GoatCmdLoad (spf, cm) ->
         -- TODO load ControllerMeta stuff

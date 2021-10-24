@@ -18,8 +18,7 @@ pai(n)t
 
 
 ::NEWEST TODO::
--widgetify left panel and fix dynamic heights
-DONE-pass out dynamic height in params
+)
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
@@ -36,8 +35,10 @@ DONE-pass out dynamic height in params
     -how to attach during creation?
       -click on attachment point... attaches
       -ctrl click does not attach
--new folder button
-  -do proper folder position
+-new folder stuff
+  DONE-do proper folder position
+  -consider making new elts get created inside selected folder rather than above it?
+  -empty folders should not be expandable? (set to expanded by default
   -add UTs
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
@@ -66,6 +67,9 @@ DONE-pass out dynamic height in params
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+DONE-widgetify left panel
+DONE-fix dynamic heights in left panel
+DONE-pass out dynamic height in params
 DONE-BUG pane2 has broken save/savas and generally stuff that opens up a popup due to popup overriding mouse capture
   -fix by activating on mouse up instead of down...
 DONE-text area
