@@ -209,10 +209,10 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\lm' x -> lm' { _layerMeta_isHidden = x }) (\le' x -> le' { _layerEntry_hideState = x })
 
 
-makeLayersStateFromOwlPFState :: OwlPFState -> LayersState
-makeLayersStateFromOwlPFState pfs = LayersState {
+makeLayersStateFromOwlPFState :: OwlPFState -> LayerMetaMap -> LayersState
+makeLayersStateFromOwlPFState pfs lmm = LayersState {
     _layersState_meta = IM.empty
-    , _layersState_entries = generateLayersNew (_owlPFState_owlTree pfs) IM.empty
+    , _layersState_entries = generateLayersNew (_owlPFState_owlTree pfs) lmm
     , _layersState_scrollPos = 0
   }
 

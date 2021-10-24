@@ -64,7 +64,7 @@ instance Default LayerMeta where
 type LayerMetaMap = REltIdMap LayerMeta
 
 data ControllerMeta = ControllerMeta {
-  _controllerMeta_pan      :: XY
+  _controllerMeta_pan      :: XY -- do we really want this?
   , _controllerMeta_layers :: LayerMetaMap
 } deriving (Show, Eq, Generic)
 

@@ -335,9 +335,14 @@ foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState $  _goatState_workspace) _goatState_selection
         newFolderEv = WSEAddFolder (folderPos, "folder")
 
-      GoatCmdLoad (spf, cm) ->
-        -- TODO load ControllerMeta stuff
-        makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)
+      GoatCmdLoad (spf, cm) -> r where
+        -- HACK this won't get generated until later but we need this to generate layersState...
+        -- someday we'll split up foldGoatFn by `GoatCmd` (or switch to Endo `GoatState`) and clean this up
+        tempOwlPFStateHack = sPotatoFlow_to_owlPFState spf
+        r = (makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)) {
+            _goatCmdTempOutput_pan = Just $ _controllerMeta_pan cm
+            , _goatCmdTempOutput_layersState = Just $ makeLayersStateFromOwlPFState tempOwlPFStateHack (_controllerMeta_layers cm)
+          }
       --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
       GoatCmdMouse mouseData ->
         let
@@ -679,7 +684,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
     (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
-    initiallayersstate = makeLayersStateFromOwlPFState _goatWidgetConfig_initialState
+    initiallayersstate = makeLayersStateFromOwlPFState _goatWidgetConfig_initialState IM.empty
 
     -- TODO DELETE
     -- TODO wrap this in a helper function in Render
