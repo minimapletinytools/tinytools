@@ -211,7 +211,7 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
 
 makeLayersStateFromOwlPFState :: OwlPFState -> LayerMetaMap -> LayersState
 makeLayersStateFromOwlPFState pfs lmm = LayersState {
-    _layersState_meta = IM.empty
+    _layersState_meta = lmm
     , _layersState_entries = generateLayersNew (_owlPFState_owlTree pfs) lmm
     , _layersState_scrollPos = 0
   }
@@ -220,7 +220,12 @@ updateLayers :: OwlPFState -> SuperOwlChanges -> LayersState -> LayersState
 updateLayers pfs changes LayersState {..} = r where
   -- update _layersState_meta
   (deletestuff, maybenewstuff) = IM.partition isNothing changes
-  newlmm = IM.difference (IM.union _layersState_meta (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)) deletestuff
+
+  maybenewstuffcollapsed = (fmap (const (def {_layerMeta_isCollapsed = True})) maybenewstuff)
+
+  newlmm = IM.difference (IM.union _layersState_meta maybenewstuffcollapsed) deletestuff
+
+
   -- keep deleted elts so that folder state is preserved after undos/redos
   --newlmm = IM.union _layersState_meta (fmap (const def) maybenewstuff)
 
