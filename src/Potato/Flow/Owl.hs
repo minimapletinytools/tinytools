@@ -883,19 +883,22 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
   od2indices = Set.fromList $ IM.keys (_owlTree_mapping miniot)
   collisions = Set.size $ Set.intersection od1indices od2indices
 
-  mapaccumlfn od sowl = internal_owlTree_addOwlElt ospot rid oeltmodded od where
+  mapaccumlfn od (spot, sowl) = internal_owlTree_addOwlElt ospot rid oeltmodded od where
     rid = _superOwl_id sowl
     meta = _superOwl_meta sowl
     ospot = if _owlEltMeta_parent meta == noOwl && _owlEltMeta_position meta == 0
       then targetspot
-      else owlTree_owlEltMeta_toOwlSpot od meta
+      else if _owlEltMeta_parent meta == noOwl
+        then spot { _owlSpot_parent = _owlSpot_parent targetspot}
+        else spot
+
     oeltmodded = case _superOwl_elt sowl of
       -- temp remove kiddos from parent as needed by internal_owlTree_addOwlElt
       OwlEltFolder oi _ -> OwlEltFolder oi Seq.empty
       x -> x
 
-  -- go from left to right such that parents are added first
-  r = mapAccumL mapaccumlfn od0 $ toList $ owliterateall miniot
+  -- go from left to right such that parents/left siblings are added first
+  r = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlEltMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
 
 -- parents NOT allowed :O
 internal_owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)

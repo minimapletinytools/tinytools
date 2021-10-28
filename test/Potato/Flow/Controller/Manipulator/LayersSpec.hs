@@ -244,9 +244,9 @@ test_LayersHandler_moveToSelf = constructTest "move elt into its own position (e
       , numSelectedEltsEqualPredicate 2
 
       , LabelCheck "drag b1 and b3"
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (traceShowId $ owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 2
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 2
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (traceShowId $ owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 1
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 1
     ]
 
 expandfoldersforbasic2 :: [GoatWidgetCmd]
