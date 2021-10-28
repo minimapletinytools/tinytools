@@ -8,6 +8,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
+DONE-BUG owlTree_addMiniOwlTree order is incorrect for top level elts
 DONE-BUG if elt is drag onto its own spot in list, it crashes
   IGNORE-you can probably fix this by preventing dragging back onto same elt (i.e. no move)
     -this breaks multi-move though...

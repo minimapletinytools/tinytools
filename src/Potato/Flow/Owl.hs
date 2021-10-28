@@ -861,6 +861,22 @@ owlTree_addSEltTree spot selttree od = r where
   otherod = owlTree_fromSEltTree selttree
   r = owlTree_addMiniOwlTree spot otherod od
 
+
+{- DELETE not needed, and not correct for what we needed it for
+groupSimilar :: (Eq b) => (a -> b) -> Seq a -> [[a]]
+groupSimilar f s = r where
+  grouplast x [] = [[x]]
+  grouplast x (y:ys) = (x:y):ys
+  foldrfn x (mlastfx, out) = case mlastfx of
+    Nothing -> (Just (f x), [x]:out)
+    Just lastfx -> if f x == lastfx
+      then (mlastfx, grouplast x out)
+      else (Just (f x), [x]:out)
+  (_,r) = foldr foldrfn (Nothing,[]) s
+-- we need to add in reverse order for elts that share the same parent, but we need to add their parents first so we group by parent and reverse each group
+elts = join . fmap reverse . (\xs -> traceShow (_superOwl_id <<$>> xs) xs) . groupSimilar (_owlEltMeta_parent . _superOwl_meta) . owliterateall $ miniot
+-}
+
 owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od0)
@@ -870,8 +886,7 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
   mapaccumlfn od sowl = internal_owlTree_addOwlElt ospot rid oeltmodded od where
     rid = _superOwl_id sowl
     meta = _superOwl_meta sowl
-    ospot = if _owlEltMeta_parent meta == noOwl
-      -- TODO this is incorrect, stuff will get added in the wrong order, you need to go from top down but then do it in reverse order
+    ospot = if _owlEltMeta_parent meta == noOwl && _owlEltMeta_position meta == 0
       then targetspot
       else owlTree_owlEltMeta_toOwlSpot od meta
     oeltmodded = case _superOwl_elt sowl of
