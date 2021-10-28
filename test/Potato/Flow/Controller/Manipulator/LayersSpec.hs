@@ -192,8 +192,6 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       , EWCMouse (LMouseData (V2 moveOffset 4) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 moveOffset 4) True MouseButton_Left [] True)
 
-      -- TODO folder drag/move
-
     ]
   expected = [
       LabelCheck "select b1"
@@ -203,6 +201,52 @@ test_LayersHandler_move = constructTest "move" owlpfstate_basic1 bs expected whe
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
       , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 3
+    ]
+
+test_LayersHandler_moveToSelf :: Test
+test_LayersHandler_moveToSelf = constructTest "move elt into its own position (edge case)" owlpfstate_basic1 bs expected where
+  bs = [
+
+      EWCLabel "select b1"
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 0) True MouseButton_Left [] True)
+
+      , EWCLabel "drag b1"
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      -- must enter "Dragging" state for handler to work correctly
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
+
+      , EWCLabel "shift select b3"
+      , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [KeyModifier_Shift] True)
+      , EWCMouse (LMouseData (V2 moveOffset 2) True MouseButton_Left [KeyModifier_Shift] True)
+
+      , EWCLabel "drag b1 and b3"
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      -- must enter "Dragging" state for handler to work correctly
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
+
+
+    ]
+  expected = [
+      LabelCheck "select b1"
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 1
+
+      , LabelCheck "drag b1"
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
+      , AlwaysPass
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl) == 0
+
+      , LabelCheck "shift select b3"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 2
+
+      , LabelCheck "drag b1 and b3"
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (traceShowId $ owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 2
+      , AlwaysPass
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b3") $ \od sowl -> (traceShowId $ owlTree_rEltId_toFlattenedIndex_debug od (_superOwl_id sowl)) == 1
     ]
 
 expandfoldersforbasic2 :: [GoatWidgetCmd]
@@ -384,6 +428,7 @@ spec = do
     fromHUnitTest $ test_LayersHandler_toggle
     fromHUnitTest $ test_LayersHandler_collapse
     fromHUnitTest $ test_LayersHandler_move
+    fromHUnitTest $ test_LayersHandler_moveToSelf
     fromHUnitTest $ test_LayersHandler_folders
     fromHUnitTest $ test_LayersHandler_folders2
     fromHUnitTest $ test_LayersHandler_scroll

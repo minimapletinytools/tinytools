@@ -8,7 +8,12 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
+DONE-BUG if elt is drag onto its own spot in list, it crashes
+  IGNORE-you can probably fix this by preventing dragging back onto same elt (i.e. no move)
+    -this breaks multi-move though...
+  DONE-add UT for this
 -UT ControllerMeta loading
+  -ugh
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
@@ -27,15 +32,15 @@ stack test --test-arguments='--match "Parliament"' --file-watch
       -ctrl click does not attach
 -new folder stuff
   DONE-do proper folder position
+  -new folders should insert in expanded state (or when elts get added to a folder, it should auto expand?)
   -consider making new elts get created inside selected folder rather than above it?
   -empty folders should not be expandable? (set to expanded by default
   -add UTs
+-figure out why scrolling in file explorer is hecka broken
+  -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -glypth widget
--layers scrolling
-  -change rendering based on scroll position
-  -needs box indicating scroll position (v scroll bar I guess)
 -I think you broke folder depth dots (remember it's only for when you drag)
 -BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
@@ -47,13 +52,13 @@ stack test --test-arguments='--match "Parliament"' --file-watch
   DONE-typeable file path bar
   DONE-double focus between filename and folder
   DONE-fix h scrolling in filename input
+  DONE-ctrl-s to save
   -apply styling
   -initialize app with correct folder
   -prompt to save if not saved
     -would be nice if we had potatooutput state thingy
   -display filename somewhere with * if not saved
     -on start, it should pop stack, on exit it should pop stack
-  DONE-ctrl-s to save
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
@@ -112,6 +117,10 @@ DONE-box labels
     -would be nice to select line anchors and then have keyboard input on the selected anchor
     -"convert to text area" option
     -right cilck menus
+    -actual MDI
+      -ctrl-t for new tab
+      -ctrl-w for close tabe
+      -ctrl-{/} for tab left/right
   -BONUS TODO (TBH you need to do this to make the product useable)
     -do proper theming dark/light
       -theming/design pass

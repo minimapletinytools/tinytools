@@ -205,10 +205,14 @@ constructTest label pfs bs expected = TestLabel label $ TestCase $ do
         (assertBool . T.unpack) ((showEverythingPredicate p ewcd)
           <> " \n[label = " <> _goatState_debugLabel ewcd
           <> ", index = " <> show i <> "]"
-          <> "\nstate = " <> case me of
+          <> "\ntree = " <> case me of
+            Just e -> (owlTree_prettyPrint . _owlPFState_owlTree . goatState_pFState $ e)
+            Nothing -> (owlTree_prettyPrint . _owlPFState_owlTree . goatState_pFState $ b))
+          {-<> "\nstate = " <> case me of
             Just e  -> show (goatState_pFState e)
-            Nothing -> show (goatState_pFState b))
+            Nothing -> show (goatState_pFState b))-}
         (testEverythingPredicate p ewcd)
+
     in case me of
       Just e  -> testfn e
       Nothing -> testfn b

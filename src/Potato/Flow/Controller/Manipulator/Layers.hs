@@ -25,6 +25,8 @@ import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Data.Text as T
 import Data.Char (isAlphaNum)
 
+import Debug.Pretty.Simple
+
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
@@ -334,7 +336,7 @@ instance PotatoHandler LayersHandler where
         LayersHandlerRenderEntryDummy d -> (Just d, lhre)
         _ -> (mdropdepth, lhre)
       Just x -> case lhre of
-        LayersHandlerRenderEntryNormal s _ _ lentry -> if layerEntry_depth lentry > x
+        LayersHandlerRenderEntryNormal s _ _ lentry -> if layerEntry_depth lentry >= x
           then (mdropdepth, LayersHandlerRenderEntryNormal s (Just x) Nothing lentry)
           else (Nothing, lhre)
         _ -> error "unexpected LayersHandlerRenderEntryDummy"
@@ -344,10 +346,10 @@ instance PotatoHandler LayersHandler where
     mapaccumrfn_forchildselected (selstack, lastdepth) lhre = ((newstack, depth), newlhre) where
       selected = layersHandlerRenderEntry_selected lhre
       depth = layersHandlerRenderEntry_depth lhre
-      (childSelected, newstack) = if depth > lastdepth 
+      (childSelected, newstack) = if depth > lastdepth
         then (False, selected:selstack)
-        else if selected 
-          then case selstack of 
+        else if selected
+          then case selstack of
             [] -> (False, [True]) -- this happens if on the first element that we mapAccumR on
             x:xs -> (False, True:xs)
           else if depth < lastdepth
@@ -358,13 +360,13 @@ instance PotatoHandler LayersHandler where
                 x2:xs2 -> (x1 && not x2, (x1 || x2) : xs2)
             else (False, selstack)
       newlhre = if childSelected
-        then case lhre of 
-          LayersHandlerRenderEntryNormal _ dots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected dots renaming lentry
+        then case lhre of
+          LayersHandlerRenderEntryNormal _ mdots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected mdots renaming lentry
           x -> x
         else lhre
     (_, newlentries) = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries3
 
-      
+
 
 
     -- TODO iterate backwards to determine parents with selected children
@@ -376,7 +378,7 @@ instance PotatoHandler LayersHandler where
       -- (pop stack and set top of stack to True, depth)
       -- mark as LHRESS_ChildSelected
     -- otherwise no change
-    -- 
+    --
 
 
 
@@ -459,7 +461,7 @@ instance PotatoHandler LayersRenameHandler where
         -- but we also want to return a rename event
         pho'' = renameToAndReturn lh (TZ.value _layersRenameHandler_zipper)
         -- so just do both and sketch combine the results... probably ok...
-        r = case mpho' of 
+        r = case mpho' of
           Nothing -> error "this should never happen..."
           Just pho' -> pho' { _potatoHandlerOutput_pFEvent = _potatoHandlerOutput_pFEvent pho'' }
 
@@ -491,7 +493,7 @@ instance PotatoHandler LayersRenameHandler where
 
     -- PROBLEM you want to do some hcropping on the zipper but you don't know how much to crop by because width is unknown
     -- solution 1: align right
-    -- solution 2: take over entire row from very left 
+    -- solution 2: take over entire row from very left
     -- solution 3: ignore, user may need to resize layers area
     -- we will just do solution 3 cuz it's easiest
     adjustfn (LayersHandlerRenderEntryNormal lhress dots renaming lentry) = LayersHandlerRenderEntryNormal lhress dots (Just _layersRenameHandler_zipper) lentry where

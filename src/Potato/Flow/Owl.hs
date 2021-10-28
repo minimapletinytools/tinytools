@@ -784,8 +784,67 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     -- TODO fix by always sort from right to left to avoid this
     removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
 
+    -- WIP start
+    -- TODO now that we've removed owls, this might invalidate our target position, so we need to reconstruct it
+
+{-
+    -- first find the first position to the left (inclusive) of where we our original drop position is that isn't a removed element
+    -- ()
+    --removed =  sort . fmap (_owlEltMeta_position . _superOwl_owlEltMeta) . filter ((== _owlSpot_parent) . _owlEltMeta_parent . _superOwl_owlEltMeta) $ sowls
+    findPos [] pos = pos
+    findPos (x:xs) pos = if x == pos
+      then go xs (pos-1)
+      else pos
+    leftSiblingPos = case _owlSpot_leftSibling of
+      Nothing -> noOwl
+      Just rid -> _owlEltMeta_position . _superOwl_owlEltMeta . owlTree_mustFindSuperOwl od $ rid
+    newSpotPos = findPos removed leftSiblingPos
+
+    newSpotLeftSibling = if newSpotPos == noOwl
+      then Nothing
+      else if _owlSpot_parent == noOwl
+        then
+        else owlTree_mustFindSuperOwl od _owlSpot_parent
+    -}
+
+    -- list of removed element sorted in order
+    removed = fmap _superOwl_id
+      . sortOn (_owlEltMeta_position . _superOwl_meta)
+      . filter ((== _owlSpot_parent) . _owlEltMeta_parent . _superOwl_meta)
+      . toList
+      $ sowls
+    -- list of all siblings on the spot we are dragging to
+    origSiblings = fromMaybe (error "expected siblings") $ if _owlSpot_parent == noOwl
+      then mommyOwl_kiddos $ od
+      else mommyOwl_kiddos $ owlTree_mustFindSuperOwl od _owlSpot_parent
+    -- now we will walk from right to left picking out the first elt that is on or after the target spot we are dragging to (_owlSpot_leftSibling) and isn't in the removed list
+    findPos ::
+      REltId -- ^ original _owlSpot_leftSibling
+      -> [REltId] -- ^ list of removed elements
+      -> [REltId] -- ^ list of siblings
+      -> Bool -- ^ whether we've gone past our target or not
+      -> Maybe REltId -- ^ new non-removed leftSibling
+    findPos _ _ [] _ = Nothing
+    findPos targetrid [] (y:ys) past = if past
+      then Just y
+      else if y == targetrid
+        then Just y
+        else findPos targetrid [] ys past
+    findPos targetrid (x:xs) (y:ys) past = if past || (y == targetrid)
+      then if x == y
+        then findPos targetrid xs ys True
+        else Just y
+      else if x == y
+        then findPos targetrid xs ys past
+        else findPos targetrid (x:xs) ys past
+    newLeftSibling = case _owlSpot_leftSibling of
+      Nothing -> Nothing
+      Just target -> findPos target (reverse $ toList removed) (reverse $ toList origSiblings) False
+    --correctedSpot = trace ("old spot: " <> show spot <> "\nnew spot: " <> show (spot { _owlSpot_leftSibling = newLeftSibling})) $ spot { _owlSpot_leftSibling = newLeftSibling}
+    correctedSpot = spot { _owlSpot_leftSibling = newLeftSibling}
+
     selttree = superOwlParliament_toSEltTree od sop
-    r = owlTree_addSEltTree spot selttree removedOd
+    r = owlTree_addSEltTree correctedSpot selttree removedOd
 
 -- |
 -- assumes SEltTree REltIds do not collide with OwlTree
@@ -812,6 +871,7 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
     rid = _superOwl_id sowl
     meta = _superOwl_meta sowl
     ospot = if _owlEltMeta_parent meta == noOwl
+      -- TODO this is incorrect, stuff will get added in the wrong order, you need to go from top down but then do it in reverse order
       then targetspot
       else owlTree_owlEltMeta_toOwlSpot od meta
     oeltmodded = case _superOwl_elt sowl of
