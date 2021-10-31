@@ -887,9 +887,12 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
     rid = _superOwl_id sowl
     meta = _superOwl_meta sowl
     ospot = if _owlEltMeta_parent meta == noOwl && _owlEltMeta_position meta == 0
+      -- first element goes to target spot
       then targetspot
       else if _owlEltMeta_parent meta == noOwl
+        -- top level elements share the parent of the target spot
         then spot { _owlSpot_parent = _owlSpot_parent targetspot}
+        -- everything else has a valid spot from previous tree
         else spot
 
     oeltmodded = case _superOwl_elt sowl of

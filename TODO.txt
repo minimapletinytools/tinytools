@@ -1,18 +1,14 @@
 
 
 
-
 ----------
 stack test --test-arguments='--match "Parliament"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 
 ::NEWEST TODO::
-DONE-BUG owlTree_addMiniOwlTree order is incorrect for top level elts
-DONE-BUG if elt is drag onto its own spot in list, it crashes
-  IGNORE-you can probably fix this by preventing dragging back onto same elt (i.e. no move)
-    -this breaks multi-move though...
-  DONE-add UT for this
+-probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel)
+-make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
 -UT ControllerMeta loading
   -ugh
 -BUG hitting assert
@@ -42,7 +38,7 @@ DONE-BUG if elt is drag onto its own spot in list, it crashes
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -glypth widget
--I think you broke folder depth dots (remember it's only for when you drag)
+DONE-I think you broke folder depth dots (remember it's only for when you drag)
 -BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
@@ -50,6 +46,7 @@ DONE-BUG if elt is drag onto its own spot in list, it crashes
   -you got it down to 2 :O
 -disable selection highlight in some modes
 -file explorer
+  -getting filename and last folder confused
   DONE-typeable file path bar
   DONE-double focus between filename and folder
   DONE-fix h scrolling in filename input
@@ -63,6 +60,11 @@ DONE-BUG if elt is drag onto its own spot in list, it crashes
   -ctrl-o to open
   -ctrl-n for new file
   -add quit button somewhere?
+DONE-BUG owlTree_addMiniOwlTree order is incorrect for top level elts
+DONE-BUG if elt is drag onto its own spot in list, it crashes
+  IGNORE-you can probably fix this by preventing dragging back onto same elt (i.e. no move)
+    -this breaks multi-move though...
+  DONE-add UT for this
 DONE-widgetify left panel
 DONE-fix dynamic heights in left panel
 DONE-pass out dynamic height in params
@@ -118,6 +120,7 @@ DONE-box labels
     -would be nice to select line anchors and then have keyboard input on the selected anchor
     -"convert to text area" option
     -right cilck menus
+    -serialize action stack
     -actual MDI
       -ctrl-t for new tab
       -ctrl-w for close tabe
