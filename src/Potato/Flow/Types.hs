@@ -60,6 +60,7 @@ import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
 import qualified Data.IntMap.Strict        as IM
 import qualified Data.Map as Map
+import qualified Text.Show
 
 
 
@@ -285,7 +286,10 @@ type SEltTree = [(REltId,SEltLabel)]
 
 data SCanvas = SCanvas {
   _sCanvas_box :: LBox
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
+
+instance Show SCanvas where
+  show s = "SCanvas " <> show (_sCanvas_box s)
 
 instance FromJSON SCanvas
 instance ToJSON SCanvas

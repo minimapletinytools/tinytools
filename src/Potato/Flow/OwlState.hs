@@ -25,6 +25,9 @@ data OwlPFState = OwlPFState {
   , _owlPFState_canvas    :: SCanvas
 } deriving (Show, Eq, Generic)
 
+owlPFState_prettyPrintForDebugging :: OwlPFState -> Text
+owlPFState_prettyPrintForDebugging OwlPFState {..} = owlTree_prettyPrint _owlPFState_owlTree <> show _owlPFState_canvas
+
 instance NFData OwlPFState
 
 owlPFState_nextId :: OwlPFState -> REltId

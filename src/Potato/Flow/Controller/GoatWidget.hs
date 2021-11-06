@@ -72,7 +72,9 @@ data GoatState = GoatState {
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
     , _goatState_clipboard       :: Maybe SEltTree
+
     , _goatState_debugLabel      :: Text
+    , _goatState_debugCammands   :: [GoatCmd]
 
   } deriving (Show)
 
@@ -318,7 +320,12 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
 --foldGoatFn cmd goatState@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
-foldGoatFn cmd goatState@GoatState {..} = finalGoatState where
+foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
+
+  -- TODO do some sort of rolling buffer here prob
+  goatState = goatStateIgnore { _goatState_debugCammands = cmd:_goatState_debugCammands }
+  --goatState = goatStateIgnore
+
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
 

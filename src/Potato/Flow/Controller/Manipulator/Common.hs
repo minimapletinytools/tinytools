@@ -53,19 +53,19 @@ restrict8 (V2 x y) = r where
       then (V2 0 y)
       else (V2 x y)
 
-selectionToSuperOwl :: CanvasSelection -> SuperOwl
+selectionToSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
 
-selectionToMaybeSuperOwl :: CanvasSelection -> Maybe SuperOwl
+selectionToMaybeSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
 selectionToMaybeSuperOwl (CanvasSelection selection) = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
 
-selectionToFirstSuperOwl :: CanvasSelection -> SuperOwl
+selectionToFirstSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToFirstSuperOwl (CanvasSelection selection) = assert (Seq.length selection > 0) $ Seq.index selection 0
 
-selectionToMaybeFirstSuperOwl :: CanvasSelection -> Maybe SuperOwl
+selectionToMaybeFirstSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
 selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
 
-lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
+lastPositionInSelection :: (HasCallStack) => OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where
   r = case Seq.lookup (Seq.length selection - 1) selection of
     Nothing -> topSpot

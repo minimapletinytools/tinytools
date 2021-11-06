@@ -14,6 +14,7 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
+  -dump state/tree
 -multi node lines
   -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
   -you really need to design+determine all line types first
