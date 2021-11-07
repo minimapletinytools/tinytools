@@ -102,92 +102,59 @@ DONE-box handler drag/move should probably check if you actually clicked on a el
   -right now you will drag if you click on nothing if it's inside the box
 DONE-box labels
 
--TINY TODO
-  DONE-layers
-    DONE-scrollbar/border to layers panel
-      -change rendering based on scroll position
-      -needs box indicating scroll position (v scroll bar I guess)
-      -why does scrolling get managed by GoatWidget again?
-    DONE-add rename support to layers
-      -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
-    DONE-fix layer keyboard input capturing
-    DONE-remove inherit selection highlight
-    DONE-implement highlight drag drop (see nested layers below)
-  -EXTRA BONUS TODO
-    -break up foldgoatfn to clean up stuff, in particular, so you can have dedicated file load / initialization code path
-    -attachments
-    -text box should indicate overflow when in text entry bode
-    DONE-box labels
-    -glyph widget
-    -consider refactoring layers handler
-    -consider refactoring handlers to output commands so you can make everything even more scriptable
-    -would be nice to select line anchors and then have keyboard input on the selected anchor
-    -"convert to text area" option
-    -right cilck menus
-    -serialize action stack
-    -actual MDI
-      -ctrl-t for new tab
-      -ctrl-w for close tabe
-      -ctrl-{/} for tab left/right
-  -BONUS TODO (TBH you need to do this to make the product useable)
-    -do proper theming dark/light
-      -theming/design pass
-    -keyboard input
-      DONE-box handler
-      -for line handler it should operate on the last anchor selected
-    -layer show/hide
-      -test impl
-      -refine UI
-    -save, save as, open, print dialogs
-      -you want a settings widget to track which is current directory/file
-    -live selection preview
-    -handlerrenderoutput should be bale to do grey background for text boxes and stuff
-    -multi-line handler
-    -freeform
-    -toggle box to textbox to freeform
-      -this operation can not be reversed popup :O
-    -user settings object in vty
-    -MDI refactor
-    -box label text alignment parameters
-    DONE-selection box
-    DONE-separate selection rendering
-  DONE-still getting same source assert when dragging to/from layers/canvas
-    DONE-(write Ut for this)
-    DONE-I think you just need to switch layout stuff to use pane2
-  DONE-add sorting to BroadPhase somehow...
-    -fix select order
-    -ok you didn't actually fix render order...
-  DONE/IGNORE-color config object
-    -entry box valid
-    -entry box entering
-    -entry box grayed
-    -background
-    -text
-    -etc
-  DONE-add character to handlers and show highlighted text
-  DONE-fix multi-select resize
-  DONE-params crap
-    DONE-fix focus in params ugh
-    DONE-fix cursor highlight in params
-  DONE-reverse render order
-  DONE-add dividers in LHS to indicate where each UI region starts/ends
-    -to be more awesome you could color each section differently...
-  DONE-off canvas rendering??
-    DONE-you need to change dynamic XY to event XY (and set initial state with an event) to avoid cyclic eval...
-  DONE/IGNORE-block inverted squares (how to handle multi-select?)
-    DONE-you broke it, fix pls
-    DONE-write a UT for this
-    DONE-this is hard because of "undo first" issue makes it difficult to recover state we are operating from
-      -we can either invert the operation locally
-      DONE-or we can modify the operation in PFWorkspace before popping onto action stack
-  DONE/IGNORE-prep for testing
-    DONE-get rid of PFWidgetCtx and use specific instances
-    DONE-write harness for testing Params, Tools, etc...
 
+-EXTRA BONUS TODO
+  -break up foldgoatfn to clean up stuff, in particular, so you can have dedicated file load / initialization code path
+  -attachments
+  -text box should indicate overflow when in text entry bode
+  DONE-box labels
+  -glyph widget
+  -consider refactoring layers handler
+  -consider refactoring handlers to output commands so you can make everything even more scriptable
+  -would be nice to select line anchors and then have keyboard input on the selected anchor
+  -"convert to text area" option
+  -right cilck menus
+  -serialize action stack
+  -actual MDI
+    -ctrl-t for new tab
+    -ctrl-w for close tabe
+    -ctrl-{/} for tab left/right
+-BONUS TODO (TBH you need to do this to make the product useable)
+  -do proper theming dark/light
+    -theming/design pass
+  -keyboard input
+    DONE-box handler
+    -for line handler it should operate on the last anchor selected
+  -layer show/hide
+    -test impl
+    -refine UI
+  -save, save as, open, print dialogs
+    -you want a settings widget to track which is current directory/file
+  -live selection preview
+  -handlerrenderoutput should be bale to do grey background for text boxes and stuff
+  -multi-line handler
+  DONE-freeform
+  -toggle box to textbox to freeform
+    -this operation can not be reversed popup :O
+  -user settings object in vty
+  -MDI refactor
+  -box label text alignment parameters
+  DONE-selection box
+  DONE-separate selection rendering
+DONE-still getting same source assert when dragging to/from layers/canvas
+  DONE-(write Ut for this)
+  DONE-I think you just need to switch layout stuff to use pane2
+DONE-add sorting to BroadPhase somehow...
+  -fix select order
+  -ok you didn't actually fix render order...
+DONE/IGNORE-color config object
+  -entry box valid
+  -entry box entering
+  -entry box grayed
+  -background
+  -text
+  -etc
 
--selection separate rendering
-  -do I need to make a second AABB??
-  -also lets you do selection preview
 -make a set of Goat verifiers for testing in vty UTs
 -glpyh selector-search widget
   -at least basic version which has a tab listing standard ASCII stuff
@@ -212,8 +179,6 @@ DONE-box labels
   -add hook for it in renderer
     -erhh, this may need some refactoring...
   -maybe need it in broadphase too? Prob not
--convert textarea into free form
-  -implement or at least add stubs for this
 -add screen size support to GoatWidget (for rendering OOB)
 -menu bar?
   -open/save/load/quit/about
@@ -283,7 +248,37 @@ DONE-box labels
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
--7/2021 folder drag bugs
+DONE-TINY TODO
+  DONE-layers
+    DONE-scrollbar/border to layers panel
+      -change rendering based on scroll position
+      -needs box indicating scroll position (v scroll bar I guess)
+      -why does scrolling get managed by GoatWidget again?
+    DONE-add rename support to layers
+      -clicking away from layers panel (onto canvas or some other params) should cancel all layers interaction
+    DONE-fix layer keyboard input capturing
+    DONE-remove inherit selection highlight
+    DONE-implement highlight drag drop (see nested layers below)
+  DONE-add character to handlers and show highlighted text
+  DONE-fix multi-select resize
+  DONE-params crap
+    DONE-fix focus in params ugh
+    DONE-fix cursor highlight in params
+  DONE-reverse render order
+  DONE-add dividers in LHS to indicate where each UI region starts/ends
+    -to be more awesome you could color each section differently...
+  DONE-off canvas rendering??
+    DONE-you need to change dynamic XY to event XY (and set initial state with an event) to avoid cyclic eval...
+  DONE/IGNORE-block inverted squares (how to handle multi-select?)
+    DONE-you broke it, fix pls
+    DONE-write a UT for this
+    DONE-this is hard because of "undo first" issue makes it difficult to recover state we are operating from
+      -we can either invert the operation locally
+      DONE-or we can modify the operation in PFWorkspace before popping onto action stack
+  DONE/IGNORE-prep for testing
+    DONE-get rid of PFWidgetCtx and use specific instances
+    DONE-write harness for testing Params, Tools, etc...
+DONE-7/2021 folder drag bugs
   DONE-can't reach last spot
   DONE-clamping seems to be wrong (need to +1)
   DONE-sibling computation puts you in wrong spot for some reason
