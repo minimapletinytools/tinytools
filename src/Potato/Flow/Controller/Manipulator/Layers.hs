@@ -343,6 +343,7 @@ instance PotatoHandler LayersHandler where
 
     (_, newlentries3) = mapAccumR mapaccumrfn_fordots Nothing newlentries2
 
+    -- determine parents of selection
     mapaccumrfn_forchildselected (selstack, lastdepth) lhre = ((newstack, depth), newlhre) where
       selected = layersHandlerRenderEntry_selected lhre
       depth = layersHandlerRenderEntry_depth lhre
@@ -369,21 +370,6 @@ instance PotatoHandler LayersHandler where
 
 
 
-    -- TODO iterate backwards to determine parents with selected children
-    -- acc0 = ([False],0)  (stack, lastdepth)
-    -- if depth > lastdepth
-      -- (push False stack, depth)
-    -- if selected, (set top of stack to true, depth)
-    -- if depth < lastdepth
-      -- (pop stack and set top of stack to True, depth)
-      -- mark as LHRESS_ChildSelected
-    -- otherwise no change
-    --
-
-
-
-
--- TODO FINISH WORK IN PROGRESS
 data LayersRenameHandler = LayersRenameHandler {
     _layersRenameHandler_original :: LayersHandler
     , _layersRenameHandler_renaming   :: SuperOwl
@@ -391,9 +377,14 @@ data LayersRenameHandler = LayersRenameHandler {
     , _layersRenameHandler_zipper   :: TZ.TextZipper
   }
 
--- TODO finish
 isValidLayerRenameChar :: Char -> Bool
-isValidLayerRenameChar c = isAlphaNum c -- `and` oneof c "-_."
+isValidLayerRenameChar c = case c of 
+  '-' -> True
+  '_' -> True
+  '.' -> True
+  ' ' -> True
+  _ | isAlphaNum c -> True
+  _ -> False
 
 renameTextZipperTransform :: KeyboardKey -> Maybe (TZ.TextZipper -> TZ.TextZipper)
 renameTextZipperTransform = \case

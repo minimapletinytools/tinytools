@@ -7,7 +7,17 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel)
+-11/7 feedback
+  -BUG radiolist width counting function is wrong (I think you forgot spaces between boxes)
+  DONE-MINOR box title allows news lines (they just get hidden, forbid new lines in box title entry method)
+  -auto expand folder after dragging into it
+  DONE-folder renaming doesn't allow spaces
+  -after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  -(requires [TextZipper selection]) click to rename folders should really select all existing text 
+-figure out if paste is done via repeated inputs or actually via paste event
+-[graceful handling of bad mouse states] probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel) 
 -make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
 -UT ControllerMeta loading
   -ugh
