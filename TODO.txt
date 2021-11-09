@@ -7,15 +7,20 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
+-omit hidden layers in render function (don't forget to do it for selection rendering too or does it not matter becaues you sholdn't be able to select hidden stuff??)
+-omit locked stuff from selection set somehow
+  -inside of handler
+  -direct selection via layersa
+
 -11/7 feedback
-  -BUG radiolist width counting function is wrong (I think you forgot spaces between boxes)
-  DONE-MINOR box title allows news lines (they just get hidden, forbid new lines in box title entry method)
   -auto expand folder after dragging into it
-  DONE-folder renaming doesn't allow spaces
   -after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
       -can you tie this into graceful handling of bad mouse states?
   -(requires [TextZipper selection]) click to rename folders should really select all existing text 
+  DONE-BUG radiolist width counting function is wrong (I think you forgot spaces between boxes)
+  DONE-MINOR box title allows news lines (they just get hidden, forbid new lines in box title entry method)
+  DONE-folder renaming doesn't allow spaces
 -figure out if paste is done via repeated inputs or actually via paste event
 -[graceful handling of bad mouse states] probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel) 
 -make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
@@ -48,7 +53,6 @@ stack test --test-arguments='--match "Parliament"' --file-watch
   -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
--glypth widget
 -delete layer scrolling support from GoatWidget. I can't remember why I did this anymore
 -BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
@@ -138,6 +142,7 @@ DONE-box labels
   -layer show/hide
     -test impl
     -refine UI
+    -probably easiest to do inside of updateCanvas
   -save, save as, open, print dialogs
     -you want a settings widget to track which is current directory/file
   -live selection preview

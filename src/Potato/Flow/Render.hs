@@ -203,7 +203,7 @@ moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasRegionNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
--- TODO test
+-- TODO pass in LayerMetaMap so hidden stuff can be ommitteed 
 updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case needsUpdate of
   [] -> rc
@@ -216,6 +216,9 @@ updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case n
       -- TODO proper comparison function
       sortfn rid1 rid2 = compare rid1 rid2
       rids = L.sortBy sortfn rids'
+
+      -- TODO filter rids to exclude hidden stuff
+      
       sowls' = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
         Nothing -> case owlTree_findSuperOwl _owlPFState_owlTree rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"

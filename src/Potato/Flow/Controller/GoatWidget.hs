@@ -539,7 +539,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       V2 cx0 cy0 = _goatState_pan
 
   -- update layersState from pho
-  next_layersState' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
+  next_layersState'' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
     Nothing -> _goatState_layersState
     Just ls -> ls
 
@@ -554,7 +554,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         else sel
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
-  -- update selection based on changes from updating OwlPFState
+  -- update selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate)
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap
     then (False, _goatState_selection)
     else r where
@@ -581,12 +581,23 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             -- it was changed, update selection to newest version
             Just (Just x) -> Just x
         else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
-
+  
+  
   (isNewSelection, next_selection) = case mSelectionFromPho of
     Just x  -> assert (not isNewSelection') (True, x)
     -- better/more expensive check to ensure mSelectionFromPho stuff is mutually exclusive to selectionAfterChanges
     --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
     Nothing -> (isNewSelection', selectionAfterChanges)
+
+
+
+
+  -- TODO auto expand folders for selected elements
+  -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
+  next_layersState' = next_layersState''
+
+
+
 
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
 
@@ -627,6 +638,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'
+    -- TODO you need to pass in hidden stuff somehow here
     else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
 
   -- render the selection (just rerender it every time)
