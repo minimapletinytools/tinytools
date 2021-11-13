@@ -204,7 +204,23 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
   }
 
+-- | hack function for resetting both handlers
+forceResetBothHandlersAndMakeGoatCmdTempOutput :: (PotatoHandler h, PotatoHandler h') => GoatState -> PotatoHandlerInput -> h -> h' -> GoatCmdTempOutput
+forceResetBothHandlersAndMakeGoatCmdTempOutput goatState potatoHandlerInput h lh = r where
 
+  -- TODO this is incorrect, we don't want to call pResetHandler as it does not correctly reset the handler state
+  msph_h = pResetHandler h potatoHandlerInput
+  -- lh is layers handler!
+  msph_lh = pResetHandler lh potatoHandlerInput
+
+  r = def {
+      _goatCmdTempOutput_goatState = goatState {
+          _goatState_layersHandler = case msph_lh of
+            Just h  -> h
+            Nothing -> error "expected LayersHandler to return a new handler"
+        }
+      , _goatCmdTempOutput_nextHandler = msph_h
+    }
 
 -- | invariants
 -- * TODO mouse input type can only change after a `_lMouseData_isRelease == True`
@@ -354,10 +370,11 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       GoatCmdMouse mouseData ->
         let
           sameSource = _mouseDrag_isLayerMouse _goatState_mouseDrag == _lMouseData_isLayerMouse mouseData
+          mouseSourceFailure = _mouseDrag_state _goatState_mouseDrag /= MouseDragState_Up && not sameSource
           mouseDrag = case _mouseDrag_state _goatState_mouseDrag of
             MouseDragState_Up        -> newDrag mouseData
-            MouseDragState_Cancelled -> assert sameSource $ (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
-            _                        -> assert sameSource $ continueDrag mouseData _goatState_mouseDrag
+            MouseDragState_Cancelled -> (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
+            _                        ->  continueDrag mouseData _goatState_mouseDrag
 
           canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
           goatState' = goatState { _goatState_mouseDrag = mouseDrag }
@@ -366,6 +383,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
           isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
 
         in case _mouseDrag_state mouseDrag of
+
+          -- hack to recover after sameSource issue
+          -- TODO this is broken, see TODO in forceResetBothHandlersAndMakeGoatCmdTempOutput
+          -- TODO TEST
+          _ | mouseSourceFailure -> assert False $
+            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState' potatoHandlerInput handler _goatState_layersHandler
+
           -- if mouse was cancelled, update _goatState_mouseDrag accordingly
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
             then makeGoatCmdTempOutputFromNothing $ goatState' { _goatState_mouseDrag = def }
@@ -581,8 +605,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             -- it was changed, update selection to newest version
             Just (Just x) -> Just x
         else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
-  
-  
+
+
   (isNewSelection, next_selection) = case mSelectionFromPho of
     Just x  -> assert (not isNewSelection') (True, x)
     -- better/more expensive check to ensure mSelectionFromPho stuff is mutually exclusive to selectionAfterChanges

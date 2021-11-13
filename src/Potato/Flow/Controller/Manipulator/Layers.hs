@@ -278,6 +278,9 @@ instance PotatoHandler LayersHandler where
 
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
+  -- TODO this is incorrect, we may be in the middle of dragging or renaming elements that got deleted
+  pResetHandler h _ = Just $ SomePotatoHandler h
+
   -- TODO generate LHRESS_ChildSelected
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where
     selection = _potatoHandlerInput_selection
@@ -378,7 +381,7 @@ data LayersRenameHandler = LayersRenameHandler {
   }
 
 isValidLayerRenameChar :: Char -> Bool
-isValidLayerRenameChar c = case c of 
+isValidLayerRenameChar c = case c of
   '-' -> True
   '_' -> True
   '.' -> True
