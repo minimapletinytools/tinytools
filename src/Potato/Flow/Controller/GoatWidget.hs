@@ -208,10 +208,10 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
 forceResetBothHandlersAndMakeGoatCmdTempOutput :: (PotatoHandler h, PotatoHandler h') => GoatState -> PotatoHandlerInput -> h -> h' -> GoatCmdTempOutput
 forceResetBothHandlersAndMakeGoatCmdTempOutput goatState potatoHandlerInput h lh = r where
 
-  -- TODO this is incorrect, we don't want to call pResetHandler as it does not correctly reset the handler state
-  msph_h = pResetHandler h potatoHandlerInput
+  -- TODO this is incorrect, we don't want to call pRefreshHandler as it does not correctly reset the handler state
+  msph_h = pRefreshHandler h potatoHandlerInput
   -- lh is layers handler!
-  msph_lh = pResetHandler lh potatoHandlerInput
+  msph_lh = pRefreshHandler lh potatoHandlerInput
 
   r = def {
       _goatCmdTempOutput_goatState = goatState {
@@ -640,7 +640,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
     -- TODO you also want to reset layers handler here too
-    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pResetHandler next_handler' potatoHandlerInput)
+    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
   -- TODO if cslmapForBroadPhase has a newly created folder then we want to enter rename mode for that folder

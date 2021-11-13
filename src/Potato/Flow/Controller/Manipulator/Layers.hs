@@ -279,7 +279,7 @@ instance PotatoHandler LayersHandler where
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
   -- TODO this is incorrect, we may be in the middle of dragging or renaming elements that got deleted
-  pResetHandler h _ = Just $ SomePotatoHandler h
+  pRefreshHandler h _ = Just $ SomePotatoHandler h
 
   -- TODO generate LHRESS_ChildSelected
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where

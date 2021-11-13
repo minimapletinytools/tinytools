@@ -115,7 +115,7 @@ instance PotatoHandler TextAreaHandler where
       KeyboardKey_Paste t -> finish $ foldl' (\acc c -> moveAndWrap (V2 1 0) . setChar c $ acc) start (T.unpack t)
       _ -> Nothing
 
-  pResetHandler tah PotatoHandlerInput {..} = Nothing
+  pRefreshHandler tah PotatoHandlerInput {..} = Nothing
   pRenderHandler tah phi@PotatoHandlerInput {..} = r where
 
     -- TODO maybe store instead of pull from selection?

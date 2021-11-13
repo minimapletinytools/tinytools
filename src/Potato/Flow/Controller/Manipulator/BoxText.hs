@@ -262,7 +262,7 @@ instance PotatoHandler BoxTextHandler where
         }
 
   -- TODO do you need to reset _boxTextHandler_prevHandler as well?
-  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
+  pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
       then Nothing -- selection was change to something else
@@ -463,7 +463,7 @@ instance PotatoHandler BoxLabelHandler where
 
   -- UNTESTED
   -- TODO do you need to reset _boxLabelHandler_prevHandler as well?
-  pResetHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
+  pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
     else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else

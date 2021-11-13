@@ -4,8 +4,8 @@
 `potato-illustrator` is a mono-space text flow-chart editor written in Haskell. It is currently a work in progress and an ALPHA release should be available soon.
 
 # architecture
-`potato-illustrator` is written using [reflex](https://github.com/reflex-frp/reflex) and follows the MVC architecture using. This repository contains the platform-independent model and controller.
-The View is connected to the reflex interface defined by `GoatWidget`. The MC/V separation is very strict.
+`potato-illustrator` is written using [reflex](https://github.com/reflex-frp/reflex) and follows a strict MVC architecture. This repository contains the platform-independent model and controller.
+The View is connected to the reflex interface defined by `GoatWidget`.
 
 [potato-illustrator-vty](https://github.com/pdlla/potato-illustrator-vty) is currently the only view implementation. It is written in [reflex-vty](https://github.com/reflex-frp/reflex-vty) and runs in a terminal yay. Please see [potato-illustrator-vty](https://github.com/pdlla/potato-illustrator-vty) if you'd like to try it out.
 

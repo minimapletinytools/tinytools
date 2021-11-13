@@ -187,9 +187,8 @@ class PotatoHandler h where
   -- FOR NOW this is only allowed to return the existing handler
   -- when we have multi-user, this may return actions (to undo some inprogress state I guess?), and may happen when a handler is active
   --
-  -- TODO rename to pRefreshHandler
-  pResetHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
-  pResetHandler _ _ = Nothing
+  pRefreshHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
+  pRefreshHandler _ _ = Nothing
 
   -- active manipulators will not be overwritten by new handlers via selection from backend
   pIsHandlerActive :: h -> Bool
@@ -222,7 +221,7 @@ instance PotatoHandler SomePotatoHandler where
   pHandleMouse (SomePotatoHandler h) = pHandleMouse h
   pHandleKeyboard (SomePotatoHandler h) = pHandleKeyboard h
   pIsHandlerActive (SomePotatoHandler h) = pIsHandlerActive h
-  pResetHandler (SomePotatoHandler h) = pResetHandler h
+  pRefreshHandler (SomePotatoHandler h) = pRefreshHandler h
   pRenderHandler (SomePotatoHandler h) = pRenderHandler h
   pRenderLayersHandler (SomePotatoHandler h) = pRenderLayersHandler h
   pValidateMouse (SomePotatoHandler h) = pValidateMouse h
