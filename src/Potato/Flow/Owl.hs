@@ -16,6 +16,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 import Potato.Flow.SElts
 import Potato.Flow.Types
+import Potato.Flow.DebugHelpers
 
 import Debug.Pretty.Simple
 
@@ -103,8 +104,13 @@ data OwlEltMeta = OwlEltMeta
 
 instance NFData OwlEltMeta
 
+-- TODO delete replace with PotatoShow
 owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
 owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
+
+instance PotatoShow OwlEltMeta where
+  potatoShow = owlEltMeta_prettyPrintForDebugging
+
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
@@ -146,12 +152,16 @@ instance IsOwl SuperOwl where
     OwlEltSElt (OwlInfo name) selt -> SEltLabel name selt
     OwlEltFolder (OwlInfo name) _ -> SEltLabel name SEltFolderStart
 
+-- TODO delete replace with PotatoShow
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
 superOwl_prettyPrintForDebugging SuperOwl {..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt
   where
     elt = case _superOwl_elt of
       OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
       OwlEltSElt oi selt -> "elt: " <> (_owlInfo_name oi) -- TODO elt type
+
+instance PotatoShow SuperOwl where
+  potatoShow = superOwl_prettyPrintForDebugging
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl
@@ -538,6 +548,7 @@ owlTree_equivalent ota otb = r
 
     r = kiddos_equivalent (_owlTree_topOwls ota) (_owlTree_topOwls otb)
 
+-- TODO delete replace with PotatoShow
 owlTree_prettyPrint :: HasCallStack => OwlTree -> Text
 owlTree_prettyPrint od@OwlTree {..} = r
   where
@@ -551,6 +562,9 @@ owlTree_prettyPrint od@OwlTree {..} = r
     printKiddos :: Seq REltId -> Text
     printKiddos kiddos = foldl foldlfn "" kiddos
     r = printKiddos (fromJust $ mommyOwl_kiddos od)
+
+instance PotatoShow OwlTree where
+  potatoShow = owlTree_prettyPrint
 
 owlTree_validate :: OwlTree -> (Bool, Text)
 owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)

@@ -10,6 +10,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception       (assert)
 import           Data.Aeson
@@ -25,8 +26,12 @@ data OwlPFState = OwlPFState {
   , _owlPFState_canvas    :: SCanvas
 } deriving (Show, Eq, Generic)
 
+-- TODO delete replace with PotatoShow
 owlPFState_prettyPrintForDebugging :: OwlPFState -> Text
 owlPFState_prettyPrintForDebugging OwlPFState {..} = owlTree_prettyPrint _owlPFState_owlTree <> show _owlPFState_canvas
+
+instance PotatoShow OwlPFState where
+  potatoShow = owlPFState_prettyPrintForDebugging
 
 instance NFData OwlPFState
 
