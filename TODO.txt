@@ -22,14 +22,13 @@ stack test --test-arguments='--match "Parliament"' --file-watch
   DONE-MINOR box title allows news lines (they just get hidden, forbid new lines in box title entry method)
   DONE-folder renaming doesn't allow spaces
 -figure out if paste is done via repeated inputs or actually via paste event
-DONE-[graceful handling of bad mouse states] probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel) 
 -make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
 -UT ControllerMeta loading
   -ugh
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
-  -dump state/tree
+  DONE-dump state/tree
 -multi node lines
   -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
   -you really need to design+determine all line types first
@@ -77,6 +76,8 @@ DONE-[graceful handling of bad mouse states] probably add hack to ignore inputs 
   DONE-double focus between filename and folder
   DONE-fix h scrolling in filename input
   DONE-ctrl-s to save
+
+DONE-[graceful handling of bad mouse states] probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel)
 DONE-I think you broke folder depth dots (remember it's only for when you drag)
 DONE-BUG owlTree_addMiniOwlTree order is incorrect for top level elts
 DONE-BUG if elt is drag onto its own spot in list, it crashes

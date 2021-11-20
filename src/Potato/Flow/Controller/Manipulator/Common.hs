@@ -19,6 +19,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.Owl
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception
 import qualified Data.Sequence                as Seq
@@ -54,13 +55,13 @@ restrict8 (V2 x y) = r where
       else (V2 x y)
 
 selectionToSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
-selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
+selectionToSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection == 1) $ Seq.index selection 0
 
 selectionToMaybeSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
-selectionToMaybeSuperOwl (CanvasSelection selection) = assert (Seq.length selection <= 1) $ Seq.lookup 0 selection
+selectionToMaybeSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection <= 1) $ Seq.lookup 0 selection
 
 selectionToFirstSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
-selectionToFirstSuperOwl (CanvasSelection selection) = assert (Seq.length selection > 0) $ Seq.index selection 0
+selectionToFirstSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection > 0) $ Seq.index selection 0
 
 selectionToMaybeFirstSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
 selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
