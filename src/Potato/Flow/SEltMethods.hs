@@ -397,6 +397,15 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
   --x -> x
 
+modify_sElt_with_cLineStyle :: Bool -> SElt -> CLineStyle -> SElt
+modify_sElt_with_cLineStyle isDo selt (CLineStyle style) = case selt of
+  SEltLine sline -> SEltLine $ sline {
+      _sSimpleLine_lineStyle = modifyDelta isDo (_sSimpleLine_lineStyle sline) style
+    }
+  _ -> error $ "Controller - SElt type mismatch: CTagLineStyle - " <> show selt
+  -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
+  --x -> x
+
 modify_sElt_with_cTextStyle :: Bool -> SElt -> CTextStyle -> SElt
 modify_sElt_with_cTextStyle isDo selt (CTextStyle style) = case selt of
   SEltBox sbox -> SEltBox $ sbox {
@@ -465,6 +474,8 @@ updateFnFromController isDo = \case
     SEltLabel sname (modify_sElt_with_cBoundingBox isDo selt d)
   (CTagSuperStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cSuperStyle isDo selt d)
+  (CTagLineStyle :=> Identity d) -> \(SEltLabel sname selt) ->
+    SEltLabel sname (modify_sElt_with_cLineStyle isDo selt d)
   (CTagBoxTextStyle :=> Identity d) -> \(SEltLabel sname selt) ->
     SEltLabel sname (modify_sElt_with_cTextStyle isDo selt d)
 

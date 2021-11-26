@@ -23,6 +23,7 @@ module Potato.Flow.Types (
   , CTag(..)
   , CTextStyle(..)
   , CSuperStyle(..)
+  , CLineStyle(..)
   , CTextAlign(..)
   , CMaybeText(..)
   , CTextArea(..)
@@ -217,6 +218,9 @@ instance NFData CBoundingBox
 data CSuperStyle = CSuperStyle DeltaSuperStyle deriving (Eq, Generic, Show)
 instance NFData CSuperStyle
 
+data CLineStyle = CLineStyle DeltaLineStyle deriving (Eq, Generic, Show)
+instance NFData CLineStyle
+
 data CTextStyle = CTextStyle DeltaTextStyle deriving (Eq, Generic, Show)
 instance NFData CTextStyle
 
@@ -250,6 +254,7 @@ data CTag a where
   CTagTextAreaToggle :: CTag CTextAreaToggle
 
   CTagSuperStyle :: CTag CSuperStyle
+  CTagLineStyle :: CTag CLineStyle
   CTagBoundingBox :: CTag CBoundingBox
 
 
@@ -269,6 +274,7 @@ instance NFData Controller where
   rnf (CTagBoxType DS.:=> Identity a)      = rnf a
   rnf (CTagBoundingBox DS.:=> Identity a)  = rnf a
   rnf (CTagSuperStyle DS.:=> Identity a)   = rnf a
+  rnf (CTagLineStyle DS.:=> Identity a)   = rnf a
   rnf (CTagBoxTextStyle DS.:=> Identity a) = rnf a
   rnf (CTagBoxLabelAlignment DS.:=> Identity a) = rnf a
   rnf (CTagBoxLabelText DS.:=> Identity a) = rnf a
@@ -281,6 +287,7 @@ type ControllersWithId = IntMap Controller
 controller_isParams :: Controller -> Bool
 controller_isParams (CTagBoxType DS.:=> Identity a)      = True
 controller_isParams (CTagSuperStyle DS.:=> Identity a)   = True
+controller_isParams (CTagLineStyle DS.:=> Identity a)   = True
 controller_isParams (CTagBoxTextStyle DS.:=> Identity a) = True
 controller_isParams (CTagBoxLabelAlignment DS.:=> Identity a) = True
 controller_isParams _                                    = False
