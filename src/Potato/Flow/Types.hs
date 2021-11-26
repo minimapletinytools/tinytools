@@ -104,6 +104,12 @@ instance Delta SuperStyle DeltaSuperStyle where
   plusDelta ss (DeltaSuperStyle d) = plusDelta ss d
   minusDelta ss (DeltaSuperStyle d) = minusDelta ss d
 
+data DeltaLineStyle = DeltaLineStyle (LineStyle, LineStyle) deriving (Eq, Generic, Show)
+instance NFData DeltaLineStyle
+instance Delta LineStyle DeltaLineStyle where
+  plusDelta ss (DeltaLineStyle d) = plusDelta ss d
+  minusDelta ss (DeltaLineStyle d) = minusDelta ss d
+
 data DeltaTextStyle = DeltaTextStyle (TextStyle, TextStyle) deriving (Eq, Generic, Show)
 instance NFData DeltaTextStyle
 instance Delta TextStyle DeltaTextStyle where

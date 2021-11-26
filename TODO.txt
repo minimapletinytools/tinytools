@@ -7,10 +7,14 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--omit hidden layers in render function (don't forget to do it for selection rendering too or does it not matter becaues you sholdn't be able to select hidden stuff??)
+-add line ending params
+DONE-connect height correctly in params?
+-omit hidden layers in render function (don't forget to do it for selection rendering too or does it not matter becaues you shouldn't be able to select hidden stuff??)
 -omit locked stuff from selection set somehow
   -inside of handler
-  -direct selection via layersa
+  -direct selection via layers
+-BUG paste does not work for folders
+  -WSEAddRelative needs to use OwlMiniTree
 
 -11/7 feedback
   -auto expand folder after dragging into it
@@ -53,8 +57,6 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -delete layer scrolling support from GoatWidget. I can't remember why I did this anymore
--BUG paste does not work for folders
-  -WSEAddRelative needs to use OwlMiniTree
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
