@@ -7,15 +7,12 @@ stack test --test-arguments='--match "Parliament"' --file-watch
 
 
 ::NEWEST TODO::
--add line ending params
-DONE-connect height correctly in params?
 -omit hidden layers in render function (don't forget to do it for selection rendering too or does it not matter becaues you shouldn't be able to select hidden stuff??)
 -omit locked stuff from selection set somehow
   -inside of handler
   -direct selection via layers
--BUG paste does not work for folders
+DONE-BUG paste does not work for folders
   -WSEAddRelative needs to use OwlMiniTree
-
 -11/7 feedback
   -auto expand folder after dragging into it
   -after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
@@ -79,6 +76,9 @@ DONE-connect height correctly in params?
   DONE-fix h scrolling in filename input
   DONE-ctrl-s to save
 
+DONE-add line ending params
+DONE-connect height correctly in params?
+DONE-fix SBoxType params
 DONE-[graceful handling of bad mouse states] probably add hack to ignore inputs that didn't come from the same source until it's corrected (or force a cancel)
 DONE-I think you broke folder depth dots (remember it's only for when you drag)
 DONE-BUG owlTree_addMiniOwlTree order is incorrect for top level elts

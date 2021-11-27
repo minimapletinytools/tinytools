@@ -876,6 +876,23 @@ owlTree_addSEltTree spot selttree od = r where
   r = owlTree_addMiniOwlTree spot otherod od
 
 
+owlTree_reindex :: Int -> OwlTree -> OwlTree
+owlTree_reindex start ot = traceShow (owlTree_maxId ot) $ traceShow start $ assert valid r where
+  valid = owlTree_maxId ot < start
+  -- TODO someday, when we're actually worried about id space size (i.e. when we have multi user mode) we will need to do this more efficiently
+  adjustkeyfn k = if k == noOwl then noOwl else k + start
+  newMap' = IM.mapKeysMonotonic adjustkeyfn (_owlTree_mapping ot)
+  mapoem oem = oem { _owlEltMeta_parent = adjustkeyfn (_owlEltMeta_parent oem) }
+  mapoe oe = case oe of
+    OwlEltFolder oi kiddos -> OwlEltFolder oi (fmap adjustkeyfn kiddos)
+    x -> x
+  mapowlfn (oem, oe) = (mapoem oem, mapoe oe)
+  newMap = fmap mapowlfn newMap'
+  newTopOwls = fmap adjustkeyfn (_owlTree_topOwls ot)
+  r = OwlTree newMap newTopOwls
+
+
+
 {- DELETE not needed, and not correct for what we needed it for
 groupSimilar :: (Eq b) => (a -> b) -> Seq a -> [[a]]
 groupSimilar f s = r where

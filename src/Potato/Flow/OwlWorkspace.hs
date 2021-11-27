@@ -147,11 +147,14 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
 data WSEvent =
   WSEAddElt (Bool, OwlSpot, OwlElt)
 
+  -- TODO CAN DELETE has been replaced by WSEAddTree
   -- TODO won't work, needs to support OwlElts with kiddos, need MiniOwlTree
   -- it's a little weird that MiniOwlTree is already reindexed though...
   -- maybe just take a selttree D:
   -- I can't remember why I called this WSEAddRelative D:
   | WSEAddRelative (OwlSpot, Seq OwlElt)
+
+  | WSEAddTree (OwlSpot, MiniOwlTree)
 
   | WSEAddFolder (OwlSpot, Text)
   | WSERemoveElt OwlParliament
@@ -268,6 +271,7 @@ updateOwlPFWorkspace evt ws = let
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
     WSEAddRelative x -> doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
+    WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
     WSEManipulate (undo, x) -> if undo

@@ -38,6 +38,7 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
@@ -45,6 +46,7 @@ import           Data.Default
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
+import qualified Data.Text as T
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
@@ -525,11 +527,16 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                     -- TODO this is totally wrong, it won't handle parent/children stuff correctly
                     -- TODO convert to MiniOwlTree :D
                     offsetstree = offsetSEltTree (V2 1 1) stree
-                    tempowltree = owlTree_fromSEltTree offsetstree
-                    pastaoelts = Seq.fromList . fmap snd . toList . _owlTree_mapping $ tempowltree
+                    minitree' = owlTree_fromSEltTree offsetstree
+                    maxid1 = owlTree_maxId minitree' + 1
+                    maxid2 = owlPFState_nextId (_owlPFWorkspace_pFState _goatState_workspace)
+                    minitree = owlTree_reindex (max maxid1 maxid2) minitree'
+                    spot = lastPositionInSelection (goatState_owlTree goatState) _goatState_selection
+                    treePastaEv = WSEAddTree (spot, minitree)
 
-                    pastaEv = WSEAddRelative (lastPositionInSelection (goatState_owlTree goatState) _goatState_selection, pastaoelts)
-                    r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) pastaEv
+
+
+                    r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) treePastaEv
                 KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
                   r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
                 KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
