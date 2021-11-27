@@ -34,6 +34,7 @@ module Potato.Flow.Types (
   -- * delta types
   , DeltaText
   , DeltaSuperStyle(..)
+  , DeltaLineStyle(..)
   , DeltaTextStyle(..)
   , DeltaTextAlign(..)
   , DeltaMaybeText(..)

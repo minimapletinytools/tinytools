@@ -17,6 +17,7 @@ module Potato.Flow.SElts (
   , SBoxType(..)
   , sBoxType_isText
   , sBoxType_hasBorder
+  , make_sBoxType
   , SBox(..)
   , sBox_hasLabel
   , SSimpleLine(..)
@@ -194,6 +195,15 @@ sBoxType_isText sbt = sbt == SBoxType_BoxText || sbt == SBoxType_NoBoxText
 
 sBoxType_hasBorder :: SBoxType -> Bool
 sBoxType_hasBorder sbt = sbt == SBoxType_Box || sbt == SBoxType_BoxText
+
+make_sBoxType :: Bool -> Bool -> SBoxType
+make_sBoxType border text = if border
+  then if text
+    then SBoxType_BoxText
+    else SBoxType_Box
+  else if text
+    then SBoxType_NoBoxText
+    else SBoxType_NoBox
 
 -- |
 data SBox = SBox {
