@@ -654,9 +654,14 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
-  -- TODO if cslmapForBroadPhase has a newly created folder then we want to enter rename mode for that folder
+  -- TODO if cslmapForBroadPhase has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
+    -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
 
+
+  -- TODO omit hidden stuff? Or maybe it's OK to leave inside of broadphase
+  -- we need to ignore in render phase anyways because a non-hidden box could overlap a hidden box causing the hidden box to be rendered
+  -- and of coures in selection we need to ignore both hidden and locked
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
   next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
 
@@ -665,10 +670,11 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
   next_renderedCanvas' = if didScreenRegionMove
+    -- TODO you need to pass in hidden stuff somehow here
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
-  -- render the scene if there were changes, note that it must be mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
+  -- render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
   cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering

@@ -23,8 +23,8 @@ import qualified Data.Sequence                  as Seq
 
 
 
--- TODO ignore locked elements
--- NOTE hidden stuff is already removed from BroadPhaseState
+-- TODO ignore locked and hidden elements here
+-- for now hidden + locked elements ARE inctluded in BroadPhaseState
 selectMagic :: OwlPFState -> BroadPhaseState -> RelMouseDrag -> Selection
 selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
