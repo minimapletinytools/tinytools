@@ -3,6 +3,7 @@
 module Potato.Flow.Controller.Manipulator.Select (
   SelectHandler(..)
   , selectMagic
+  , layerMetaMap_isInheritHiddenOrLocked
 ) where
 
 import           Relude
@@ -10,23 +11,34 @@ import           Relude
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
+import Potato.Flow.Types
 
 import           Data.Default
 import Data.Foldable (maximumBy)
+import qualified Data.IntMap as IM
 import qualified Data.Sequence                  as Seq
 
+
+layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
+layerMetaMap_isInheritHiddenOrLocked ot rid lmm = case IM.lookup rid lmm of
+  -- these may both be false, but it may inherit from a parent where these are true therefore we still need to walk up the tree if these are both false
+  Just lm | _layerMeta_isLocked lm || _layerMeta_isHidden lm -> True
+  _ -> case IM.lookup rid (_owlTree_mapping ot) of
+    Nothing -> False
+    Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlEltMeta_parent oem) lmm
 
 
 -- TODO ignore locked and hidden elements here
 -- for now hidden + locked elements ARE inctluded in BroadPhaseState
-selectMagic :: OwlPFState -> BroadPhaseState -> RelMouseDrag -> Selection
-selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
+selectMagic :: OwlPFState -> LayerMetaMap -> BroadPhaseState -> RelMouseDrag -> Selection
+selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
   -- always expand selection by 1
   selectBox = LBox pos' (sz' + V2 1 1)
@@ -40,10 +52,13 @@ selectMagic pfs bps (RelMouseDrag MouseDrag {..}) = r where
 
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
   unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid) unculledrids
-  selectedsowls' = flip filter unculledsowls $ \case
+  selectedsowls'' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True
     sowl -> doesSEltIntersectBox selectBox (isOwl_toSElt_hack sowl)
+
+  -- remove lock and hidden stuff
+  selectedsowls' = flip filter selectedsowls'' $ \sowl -> not (layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) lmm)
 
   -- TODO consider using makeSortedSuperOwlParliament instead (prob a little faster?)
   selectedsowls = if singleClick
@@ -75,7 +90,7 @@ instance PotatoHandler SelectHandler where
       }
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)
-      newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase rmd
+      newSelection = selectMagic _potatoHandlerInput_pFState (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
   pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput (fmap defaultRenderHandle $ substract_lBox full inside) where

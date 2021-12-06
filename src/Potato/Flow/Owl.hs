@@ -421,9 +421,8 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
 
 newtype CanvasSelection = CanvasSelection { unCanvasSelection :: Seq SuperOwl } deriving (Show, Eq)
 
--- TODO test
--- TODO filterfn type what we want?
--- | convert SuperOwlParliament to CanvasSelection (omits locked/hidden elts, includes children and no folders)
+-- | convert SuperOwlParliament to CanvasSelection (includes children and no folders)
+-- does not omits locked/hidden elts since Owl should not depend on Layers, you should do this using filterfn I guess??
 superOwlParliament_convertToCanvasSelection :: OwlTree -> (SuperOwl -> Bool) -> SuperOwlParliament -> CanvasSelection
 superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlParliament sowls) = r where
   filtered = Seq.filter filterfn sowls

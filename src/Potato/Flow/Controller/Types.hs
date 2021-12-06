@@ -8,8 +8,6 @@ module Potato.Flow.Controller.Types (
   , LayerMeta(..)
   , LayerMetaMap
   , layerMetaMap_isCollapsed
-  , layerMetaMap_isHidden
-  , layerMetaMap_isHiddenOrLocked
   , ControllerMeta(..)
   , emptyControllerMeta
   , EverythingLoadState
@@ -71,17 +69,17 @@ layerMetaMap_isCollapsed rid lmm = case IM.lookup rid lmm of
   Nothing -> True
   Just lm -> _layerMeta_isCollapsed lm
 
-
+{-
+-- these aren't very useful because they won't tell you if it has inherited lock/hidden state
 layerMetaMap_isHidden :: REltId -> LayerMetaMap -> Bool
 layerMetaMap_isHidden rid lmm = case IM.lookup rid lmm of
   Nothing -> False
   Just lm -> _layerMeta_isHidden lm
-
 layerMetaMap_isHiddenOrLocked :: REltId -> LayerMetaMap -> Bool
 layerMetaMap_isHiddenOrLocked rid lmm = case IM.lookup rid lmm of
   Nothing -> False
   Just lm -> _layerMeta_isLocked lm || _layerMeta_isHidden lm
-
+-}
 
 data ControllerMeta = ControllerMeta {
   _controllerMeta_pan      :: XY -- do we really want this?

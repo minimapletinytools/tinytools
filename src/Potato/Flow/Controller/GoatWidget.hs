@@ -351,6 +351,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
+  last_layerMetaMap = _layersState_meta _goatState_layersState
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
@@ -444,7 +445,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-              nextSelection@(SuperOwlParliament sowls) = selectMagic last_pFState _goatState_broadPhaseState canvasDrag
+              nextSelection@(SuperOwlParliament sowls) = selectMagic last_pFState last_layerMetaMap _goatState_broadPhaseState canvasDrag
               -- since selection came from canvas, it's definitely a valid CanvasSelection, no need to convert
               nextCanvasSelection = CanvasSelection sowls
               shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
@@ -631,12 +632,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
   next_layersState' = next_layersState''
 
-
-
-
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
 
-  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) (const True) next_selection
+  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree next_pFState) (_superOwl_id sowl) (_layersState_meta next_layersState')
+  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) filterHiddenOrLocked next_selection
 
   nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
 
