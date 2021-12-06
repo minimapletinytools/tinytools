@@ -7,6 +7,9 @@ module Potato.Flow.Controller.Types (
   , Selection
   , LayerMeta(..)
   , LayerMetaMap
+  , layerMetaMap_isCollapsed
+  , layerMetaMap_isHidden
+  , layerMetaMap_isHiddenOrLocked
   , ControllerMeta(..)
   , emptyControllerMeta
   , EverythingLoadState
@@ -62,6 +65,23 @@ instance Default LayerMeta where
     }
 
 type LayerMetaMap = REltIdMap LayerMeta
+
+layerMetaMap_isCollapsed :: REltId -> LayerMetaMap -> Bool
+layerMetaMap_isCollapsed rid lmm = case IM.lookup rid lmm of
+  Nothing -> True
+  Just lm -> _layerMeta_isCollapsed lm
+
+
+layerMetaMap_isHidden :: REltId -> LayerMetaMap -> Bool
+layerMetaMap_isHidden rid lmm = case IM.lookup rid lmm of
+  Nothing -> False
+  Just lm -> _layerMeta_isHidden lm
+
+layerMetaMap_isHiddenOrLocked :: REltId -> LayerMetaMap -> Bool
+layerMetaMap_isHiddenOrLocked rid lmm = case IM.lookup rid lmm of
+  Nothing -> False
+  Just lm -> _layerMeta_isLocked lm || _layerMeta_isHidden lm
+
 
 data ControllerMeta = ControllerMeta {
   _controllerMeta_pan      :: XY -- do we really want this?
