@@ -297,6 +297,75 @@ everything_newfolder_test = constructTest "new folder" owlpfstate_basic1 bs expe
       , LabelCheck "New Folder (with selection)"
     ]
 
+moveOffset :: Int
+moveOffset = 100
+
+everything_lockhiddenselectionvialayers_test :: Test
+everything_lockhiddenselectionvialayers_test = constructTestWithControllerMeta "lock hidden selection via folders" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff bs expected where
+  bs = [
+      EWCLabel "Select b1" -- locked
+      , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 0) True MouseButton_Left [] True)
+
+      , EWCLabel "Select b2"
+      , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
+
+      , EWCLabel "Select b3" -- hidden
+      , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 moveOffset 2) True MouseButton_Left [] True)
+    ]
+  expected = [
+      -- okay, turns out you can totally select locked/hidden stuff via folders lol
+      -- TODO you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
+      LabelCheck "Select b1"
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 1
+
+      , LabelCheck "Select b2"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 1
+
+      , LabelCheck "Select b3"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 1
+
+    ]
+
+everything_lockhiddenselectionviacanvas_test :: Test
+everything_lockhiddenselectionviacanvas_test = constructTestWithControllerMeta "lock hidden selection via canvas" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff bs expected where
+  bs = [
+      EWCLabel "Select b1" -- locked
+      , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 0) True MouseButton_Left [] False)
+
+      , EWCLabel "Select b2"
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+
+      , EWCLabel "Select b3" -- hidden
+      , EWCMouse (LMouseData (V2 0 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 10) True MouseButton_Left [] False)
+    ]
+  expected = [
+      -- can't select b1 because locked
+      LabelCheck "Select b1"
+      , numSelectedEltsEqualPredicate 0
+      , numSelectedEltsEqualPredicate 0
+
+      -- select b2 OK
+      , LabelCheck "Select b2"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 1
+
+      -- can't select b3 because hidden
+      , LabelCheck "Select b3"
+      , numSelectedEltsEqualPredicate 1
+      , numSelectedEltsEqualPredicate 0
+
+    ]
+
+
 
 everything_basic_test :: Test
 everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
@@ -548,5 +617,7 @@ spec = do
     fromHUnitTest $ everything_layers_test
     fromHUnitTest $ everything_canvasSize_test
     fromHUnitTest $ everything_keyboard_test
+    fromHUnitTest $ everything_lockhiddenselectionvialayers_test
+    fromHUnitTest $ everything_lockhiddenselectionviacanvas_test
     fromHUnitTest $ everything_basic_test
     fromHUnitTest $ everything_inputfocusing_test

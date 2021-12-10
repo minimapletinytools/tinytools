@@ -16,6 +16,7 @@ module Potato.Flow.Common
   , firstSelectedSuperOwlWithOwlTreePredicate
   , firstSuperOwlPredicate
   , constructTest
+  , constructTestWithControllerMeta
   )
 where
 

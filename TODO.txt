@@ -22,13 +22,16 @@ WIDE
 🙈
 
 ::NEWEST TODO::
+-folder stuff
+  -BUG you can stil drag folder into itself which causes crash wtf I thought I fixed this
+  -when you select a folder and it auto selects children, you can't click and drag the children
 DONE-locked/hidden stuff
   DONE-BUG, right now if you select via folders, do and operation, unselect, it will allow you to reselect locked/hidden stuff for some reason 😱
     -this must be happening because something is being set incorrectly inside of layerMetaMap??
-  DOEN-because folders allows selecting locked/hidden stuff, you need to remove this stuff before generating handler from selection
+  DONE-because folders allows selecting locked/hidden stuff, you need to remove this stuff before generating handler from selection
     DONE-you also need to remove locked/hidden stuff into selection that gets passed into handlers
--test locked/hidden stuff
-  -pipe through ControllerMeta into GoatWidgetConfig such that you can instantiate tests with various lock/hidden/collapse states
+  -you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
+  DONE-pipe through ControllerMeta into GoatWidgetConfig such that you can instantiate tests with various lock/hidden/collapse states
   -omit hidden layers in render function (don't forget to do it for selection rendering too or does it not matter becaues you shouldn't be able to select hidden stuff??)
   -omit locked stuff from selection set somehow
     DONE-inside of handler and drag+select case in GoatWidget
@@ -41,7 +44,7 @@ DONE-locked/hidden stuff
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
 -make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
--UT ControllerMeta loading
+DONEE-UT ControllerMeta loading
   -ugh
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0

@@ -14,6 +14,7 @@ module Potato.Flow.TestStates (
   , owlpfstate_someInvalidState2
   , owlpfstate_basic0
   , owlpfstate_basic1
+  , controllermeta_basic1_lockandhidestuff
   , owlpfstate_basic2
   , owlpfstate_zero
 ) where
@@ -24,8 +25,18 @@ import           Potato.Flow
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
 
+import qualified Data.IntMap as IM
+
 someOwlElt :: OwlElt
 someOwlElt = OwlEltSElt (OwlInfo "some elt") SEltNone
+
+
+makeLayerMeta :: Bool -> Bool -> Bool -> LayerMeta
+makeLayerMeta isLocked isHidden isCollapsed = LayerMeta {
+    _layerMeta_isLocked      = isLocked
+    , _layerMeta_isHidden    = isHidden
+    , _layerMeta_isCollapsed = isCollapsed
+  }
 
 pFState_to_owlPFState :: PFState -> OwlPFState
 pFState_to_owlPFState pfs@PFState {..} = OwlPFState {
@@ -50,6 +61,15 @@ owlpfstate_basic0 = pFState_to_owlPFState pfstate_basic0
 
 owlpfstate_basic1 :: OwlPFState
 owlpfstate_basic1 = pFState_to_owlPFState pfstate_basic1
+
+controllermeta_basic1_lockandhidestuff :: ControllerMeta
+controllermeta_basic1_lockandhidestuff = ControllerMeta {
+    _controllerMeta_pan = 0
+    , _controllerMeta_layers = IM.fromList [
+        (0, makeLayerMeta True False False) -- b1  is locked
+        , (2, makeLayerMeta False True False) -- b3 is hidden
+      ]
+  }
 
 -- | same as owlpfstate_basic1 except with folders
 owlpfstate_basic2 :: OwlPFState

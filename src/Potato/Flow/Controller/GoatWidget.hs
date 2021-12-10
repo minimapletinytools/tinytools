@@ -235,7 +235,6 @@ forceResetBothHandlersAndMakeGoatCmdTempOutput goatState potatoHandlerInput h lh
 data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- initialization parameters
-  -- TODO should really also include ControllerMeta
   _goatWidgetConfig_initialState     :: (OwlPFState, ControllerMeta)
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
@@ -756,7 +755,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace (fst _goatWidgetConfig_initialState) emptyWorkspace
         , _goatState_selectedTool    = Tool_Select
-        , _goatState_pan             = 0
+        , _goatState_pan             = _controllerMeta_pan (snd _goatWidgetConfig_initialState)
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
