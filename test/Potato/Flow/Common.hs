@@ -49,11 +49,12 @@ data GoatWidgetCmd =
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
   => OwlPFState
+  -> ControllerMeta
   -> AppIn t () GoatWidgetCmd -> TestGuestT t m (AppOut t GoatState GoatState)
-everything_network_app pfs (AppIn _ ev) = do
+everything_network_app pfs cm (AppIn _ ev) = do
   let ewc = GoatWidgetConfig  {
       -- TODO pass in actual ControllerMeta
-      _goatWidgetConfig_initialState = (pfs, emptyControllerMeta)
+      _goatWidgetConfig_initialState = (pfs, cm)
       , _goatWidgetConfig_load = fforMaybe ev $ \case
         EWCLoad x -> Just x
         _ -> Nothing
@@ -185,10 +186,10 @@ firstSuperOwlPredicate mlabel f = FunctionPredicate $
   . _owlPFState_owlTree . goatState_pFState
 
 
-constructTest :: String -> OwlPFState -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
-constructTest label pfs bs expected = TestLabel label $ TestCase $ do
+constructTestWithControllerMeta :: String -> OwlPFState -> ControllerMeta -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
+constructTestWithControllerMeta label pfs cm bs expected = TestLabel label $ TestCase $ do
   let
-    run = runApp (everything_network_app pfs) () (fmap (Just . That) bs)
+    run = runApp (everything_network_app pfs cm) () (fmap (Just . That) bs)
   values :: [[(GoatState, Maybe GoatState)]]
     <- liftIO run
 
@@ -217,3 +218,6 @@ constructTest label pfs bs expected = TestLabel label $ TestCase $ do
     in case me of
       Just e  -> testfn e
       Nothing -> testfn b
+
+constructTest :: String -> OwlPFState -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
+constructTest label pfs bs expected = constructTestWithControllerMeta label pfs emptyControllerMeta bs expected
