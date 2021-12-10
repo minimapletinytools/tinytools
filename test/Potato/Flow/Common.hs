@@ -52,7 +52,8 @@ everything_network_app
   -> AppIn t () GoatWidgetCmd -> TestGuestT t m (AppOut t GoatState GoatState)
 everything_network_app pfs (AppIn _ ev) = do
   let ewc = GoatWidgetConfig  {
-      _goatWidgetConfig_initialState = pfs
+      -- TODO pass in actual ControllerMeta
+      _goatWidgetConfig_initialState = (pfs, emptyControllerMeta)
       , _goatWidgetConfig_load = fforMaybe ev $ \case
         EWCLoad x -> Just x
         _ -> Nothing

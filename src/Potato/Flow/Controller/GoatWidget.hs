@@ -236,7 +236,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- initialization parameters
   -- TODO should really also include ControllerMeta
-  _goatWidgetConfig_initialState     :: OwlPFState
+  _goatWidgetConfig_initialState     :: (OwlPFState, ControllerMeta)
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
   -- canvas direct input
@@ -261,7 +261,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
 
 emptyGoatWidgetConfig :: (Reflex t) => GoatWidgetConfig t
 emptyGoatWidgetConfig = GoatWidgetConfig {
-    _goatWidgetConfig_initialState = emptyOwlPFState
+    _goatWidgetConfig_initialState = (emptyOwlPFState, emptyControllerMeta)
     , _goatWidgetConfig_selectTool  = never
     , _goatWidgetConfig_load = never
     , _goatWidgetConfig_mouse     = never
@@ -741,20 +741,20 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
 
     -- initialize broadphase with initial state
-    initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
+    initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
     (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
-    initiallayersstate = makeLayersStateFromOwlPFState _goatWidgetConfig_initialState IM.empty
+    initiallayersstate = makeLayersStateFromOwlPFState (fst _goatWidgetConfig_initialState) (_controllerMeta_layers $ snd _goatWidgetConfig_initialState)
 
     -- TODO DELETE
     -- TODO wrap this in a helper function in Render
     -- TODO we want to render the whole screen, not just the canvas
-    initialCanvasBox = _sCanvas_box $ _owlPFState_canvas _goatWidgetConfig_initialState
-    initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ _goatWidgetConfig_initialState
+    initialCanvasBox = _sCanvas_box . _owlPFState_canvas $ fst _goatWidgetConfig_initialState
+    initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
     initialemptyrcr = emptyRenderedCanvasRegion initialCanvasBox
     initialrc = render initialCanvasBox initialselts initialemptyrcr
 
     initialgoat = GoatState {
-        _goatState_workspace      = loadOwlPFStateIntoWorkspace _goatWidgetConfig_initialState emptyWorkspace
+        _goatState_workspace      = loadOwlPFStateIntoWorkspace (fst _goatWidgetConfig_initialState) emptyWorkspace
         , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = 0
         , _goatState_mouseDrag       = def
