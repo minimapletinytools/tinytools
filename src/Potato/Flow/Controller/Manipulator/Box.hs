@@ -233,11 +233,14 @@ instance PotatoHandler BoxHandler where
 
       boxToAdd = def {
           _sBox_box     = canonicalLBox_from_lBox_ $ LBox _mouseDrag_from dragDelta
+          -- consider using _potatoDefaultParameters_boxType instead
           , _sBox_boxType  = if _boxHandler_creation == BoxCreationType_Text
             then SBoxType_BoxText -- TODO pull from params
             else SBoxType_Box
-          , _sBox_style = def { _superStyle_fill = FillStyle_Simple ' '}
-          --, _sBox_title :: Maybe SBoxTitle -- TODO pull from params
+          , _sBox_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
+          , _sBox_title = def { _sBoxTitle_align = _potatoDefaultParameters_box_label_textAlign _potatoHandlerInput_potatoDefaultParameters }
+          , _sBox_text = def { _sBoxText_style = def { _textStyle_alignment = _potatoDefaultParameters_box_text_textAlign _potatoHandlerInput_potatoDefaultParameters } }
+
         }
 
       textAreaToAdd = def {
