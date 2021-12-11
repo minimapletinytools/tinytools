@@ -96,6 +96,9 @@ spec = do
         fst (owlTree_validate ot1) `shouldBe` True
       it "owlTree_equivalent" $ do
         owlTree_equivalent owlTree0 owlTree0 `shouldBe` True
+      it "owlTree_findSuperOwlAtOwlSpot" $ do
+        -- TODO test against owlTree_findSuperOwlAtOwlSpot owlTree (owlTree_owlEltMeta_toOwlSpot owlTree0 ....)
+        True `shouldBe` True
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlTree_prettyPrint owlTree0)

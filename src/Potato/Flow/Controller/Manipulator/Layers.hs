@@ -201,10 +201,17 @@ instance PotatoHandler LayersHandler where
                   x | x == noOwl -> Nothing
                   x -> Just x
 
+        -- check if spot is valid
+        -- instead we do this check when we drop instead, that behavior "felt" nicer to me even though this is probably more correct
+        --spotParent = _owlSpot_parent targetspot
+        --SuperOwlParliament selectedsowls = _potatoHandlerInput_selection
+        --isSpotValid = isNothing $ Seq.findIndexL (\sowl -> _superOwl_id sowl == spotParent) selectedsowls
+        isSpotValid = True
+
         r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
               _layersHandler_cursorPos = _mouseDrag_to
-              , _layersHandler_dropSpot = Just targetspot
+              , _layersHandler_dropSpot = if isSpotValid then Just targetspot else Nothing
             }
         }
 
@@ -254,9 +261,13 @@ instance PotatoHandler LayersHandler where
         mev = do
           spot <- _layersHandler_dropSpot
           let
-            -- TODO spot is invalid if it's the child of a already select elt
-            isSpotValid = True
-            -- TODO modify if we drag on top of existing elt
+
+            -- spot is invalid if it's the child of a already selected element
+            spotParent = _owlSpot_parent spot
+            SuperOwlParliament selectedsowls = _potatoHandlerInput_selection
+            isSpotValid = isNothing $ Seq.findIndexL (\sowl -> _superOwl_id sowl == spotParent) selectedsowls
+
+            -- TODO modify if we drag on top of existing elt... Is there anything to do here? I can't remember why I added this comment. Pretty sure there's nothing to do
             modifiedSpot = spot
           guard isSpotValid
           return $ WSEMoveElt (modifiedSpot, superOwlParliament_toOwlParliament selection)
