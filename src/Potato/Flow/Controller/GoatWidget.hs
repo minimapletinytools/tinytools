@@ -87,6 +87,7 @@ goatState_pFState = _owlPFWorkspace_pFState . _goatState_workspace
 goatState_owlTree :: GoatState -> OwlTree
 goatState_owlTree = _owlPFState_owlTree . goatState_pFState
 
+-- TODO deprecate this in favor of Endo style
 data GoatCmd =
   GoatCmdTool Tool
   | GoatCmdLoad EverythingLoadState
@@ -253,6 +254,8 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
   , _goatWidgetConfig_canvasSize     :: Event t XY
   , _goatWidgetConfig_newFolder :: Event t ()
+  , _goatWidgetConfig_setPotatoDefaultParameters :: Event t SetPotatoDefaultParameters
+
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
@@ -718,28 +721,17 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       , _goatState_layersState     = next_layersState
     }
 
+foldGoatCmdSetDefaultParams :: SetPotatoDefaultParameters -> GoatState -> GoatState
+foldGoatCmdSetDefaultParams spdp gs = gs {
+    _goatState_potatoDefaultParameters = potatoDefaultParameters_set (_goatState_potatoDefaultParameters gs) spdp
+  }
+
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => GoatWidgetConfig t
   -> m (GoatWidget t)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
-    --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
-    --goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
-    goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
-      [ GoatCmdTool <$> _goatWidgetConfig_selectTool
-      , GoatCmdLoad <$> _goatWidgetConfig_load
-      , GoatCmdMouse <$> _goatWidgetConfig_mouse
-      , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
-      , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
-      , GoatCmdNewFolder <$ _goatWidgetConfig_newFolder
-      , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
-      , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
-      , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
-      , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
-      ]
-
-
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
     (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
@@ -772,8 +764,33 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
       }
 
+    -- TODO switch to Endo style
+    -- old Cmd based folding
+    --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
+    --goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
+    goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
+      [ GoatCmdTool <$> _goatWidgetConfig_selectTool
+      , GoatCmdLoad <$> _goatWidgetConfig_load
+      , GoatCmdMouse <$> _goatWidgetConfig_mouse
+      , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
+      , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
+      , GoatCmdNewFolder <$ _goatWidgetConfig_newFolder
+      , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
+      , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
+      , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
+      , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
+      ]
+
+    goatEndoEvent = fmap foldGoatFn goatEvent
+
+    -- new Endo folding
+    setDefaultParamsEndoEvent = fmap foldGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
+
+  -- DELETE
+  --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
+
   goatDyn' :: Dynamic t GoatState
-    <- foldDyn foldGoatFn initialgoat goatEvent
+    <- foldDyn ($) initialgoat $ leftmostWarn "Goat Endo" [goatEndoEvent, setDefaultParamsEndoEvent]
 
   -- reduces # of calls to foldGoatFn to 2 :\
   let goatDyn = fmap id goatDyn'

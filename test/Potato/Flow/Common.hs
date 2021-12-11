@@ -80,6 +80,7 @@ everything_network_app pfs cm (AppIn _ ev) = do
       , _goatWidgetConfig_newFolder = fforMaybe ev $ \case
         EWCNewFolder -> Just ()
         _ -> Nothing
+      , _goatWidgetConfig_setPotatoDefaultParameters = never
       , _goatWidgetConfig_bypassEvent = never
       , _goatWidgetConfig_canvasRegionDim = never
       , _goatWidgetConfig_unicodeWidthFn = Nothing

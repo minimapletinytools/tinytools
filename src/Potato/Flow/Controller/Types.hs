@@ -6,6 +6,7 @@ module Potato.Flow.Controller.Types (
   , tool_isCreate
   , PotatoDefaultParameters(..)
   , SetPotatoDefaultParameters(..)
+  , potatoDefaultParameters_set
   , Selection
   , LayerMeta(..)
   , LayerMetaMap
