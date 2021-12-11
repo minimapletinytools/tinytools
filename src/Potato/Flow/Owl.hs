@@ -631,7 +631,6 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
     (_, oelt) <- IM.lookup x _owlTree_mapping
     mommyOwl_kiddos oelt
 
--- UNTESTED
 owlTree_findSuperOwlAtOwlSpot :: OwlTree -> OwlSpot -> Maybe SuperOwl
 owlTree_findSuperOwlAtOwlSpot od@OwlTree {..} OwlSpot {..} = do
   kiddos <- owlTree_findKiddos od _owlSpot_parent
