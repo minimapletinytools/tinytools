@@ -11,7 +11,7 @@ The View is connected to the reflex interface defined by `GoatWidget`.
 
 # features (completed)
 - sophisticated hierarchical layer system
-- transaction based undo stack
+- transactional operations and change history
 - several configurable primitives including boxes, lines and text boxes
 
 # roadmap
@@ -36,3 +36,15 @@ The View is connected to the reflex interface defined by `GoatWidget`.
   - ordering service interface
   - basic single client authoritative implementation of ordering service interface (for now)
 - scripting
+
+
+# Contribution Guide
+
+Help wanted! I will of course review any PR. For large or small ideas, it would be best to drop me an email first at chippermonky at gmail dot com
+
+Below are a list of tasks that I think would be extra good projects to work on
+
+- CI scripts for creating binary releases
+- UNICODE wide character support
+- add text selection support to current `TextZipper` implementation
+- refactoring 😑
