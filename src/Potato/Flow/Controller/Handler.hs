@@ -46,6 +46,7 @@ instance Default PotatoHandlerOutput where
 data PotatoHandlerInput = PotatoHandlerInput {
     -- * from PFOutput
     _potatoHandlerInput_pFState       :: OwlPFState
+    , _potatoHandlerInput_potatoDefaultParameters :: PotatoDefaultParameters
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
 
     -- * from Frontend

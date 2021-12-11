@@ -333,6 +333,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
   last_pFState = _owlPFWorkspace_pFState last_workspace
   r = PotatoHandlerInput {
     _potatoHandlerInput_pFState       = last_pFState
+    , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
     , _potatoHandlerInput_tool = _goatState_selectedTool
 

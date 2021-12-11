@@ -22,6 +22,10 @@ WIDE
 🙈
 
 ::NEWEST TODO::
+-finish SetPotatoDefaultParams...
+  -use these settings when creating new elts inside of Handler
+  -read these settings in Params when nothing is selected
+  -set these settings in Params when nothing is selected
 -locked/hidden stuff
   DONE-BUG, right now if you select via folders, do and operation, unselect, it will allow you to reselect locked/hidden stuff for some reason 😱
     -this must be happening because something is being set incorrectly inside of layerMetaMap??
