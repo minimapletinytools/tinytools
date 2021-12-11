@@ -190,6 +190,9 @@ instance ToJSON SBoxType
 instance Binary SBoxType
 instance NFData SBoxType
 
+instance Default SBoxType where
+  def = SBoxType_Box
+
 sBoxType_isText :: SBoxType -> Bool
 sBoxType_isText sbt = sbt == SBoxType_BoxText || sbt == SBoxType_NoBoxText
 

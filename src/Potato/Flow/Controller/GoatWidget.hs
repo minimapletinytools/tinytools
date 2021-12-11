@@ -63,6 +63,7 @@ data GoatState = GoatState {
     , _goatState_canvasSelection :: CanvasSelection
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
+    , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
 
     , _goatState_renderedCanvas  :: RenderedCanvasRegion
     , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
@@ -759,6 +760,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
+        , _goatState_potatoDefaultParameters = def
         , _goatState_debugLabel      = ""
         , _goatState_selection       = isParliament_empty
         , _goatState_canvasSelection = CanvasSelection Seq.empty

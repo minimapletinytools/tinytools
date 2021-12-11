@@ -4,6 +4,8 @@ module Potato.Flow.Controller.Types (
   UnicodeWidthFn(..)
   , Tool(..)
   , tool_isCreate
+  , PotatoDefaultParameters(..)
+  , SetPotatoDefaultParameters(..)
   , Selection
   , LayerMeta(..)
   , LayerMetaMap
@@ -39,6 +41,46 @@ tool_isCreate = \case
   Tool_Select -> False
   Tool_Pan -> False
   _ -> True
+
+data PotatoDefaultParameters = PotatoDefaultParameters {
+  _potatoDefaultParameters_sBoxType :: SBoxType
+  , _potatoDefaultParameters_lineStyle :: LineStyle
+  , _potatoDefaultParameters_box_label_textAlign :: TextAlign
+  , _potatoDefaultParameters_box_text_textAlign :: TextAlign
+} deriving (Show)
+
+
+instance Default PotatoDefaultParameters where
+  def = PotatoDefaultParameters {
+      _potatoDefaultParameters_sBoxType = def
+      , _potatoDefaultParameters_lineStyle = def
+      , _potatoDefaultParameters_box_label_textAlign = def
+      , _potatoDefaultParameters_box_text_textAlign = def
+    }
+
+data SetPotatoDefaultParameters = SetPotatoDefaultParameters {
+  _setPotatoDefaultParameters_sBoxType :: Maybe SBoxType
+  , _setPotatoDefaultParameters_lineStyle :: Maybe LineStyle
+  , _setPotatoDefaultParameters_box_label_textAlign :: Maybe TextAlign
+  , _setPotatoDefaultParameters_box_text_textAlign :: Maybe TextAlign
+} deriving (Show)
+
+instance Default SetPotatoDefaultParameters where
+  def = SetPotatoDefaultParameters {
+      _setPotatoDefaultParameters_sBoxType = Nothing
+      , _setPotatoDefaultParameters_lineStyle = Nothing
+      , _setPotatoDefaultParameters_box_label_textAlign = Nothing
+      , _setPotatoDefaultParameters_box_text_textAlign = Nothing
+    }
+
+potatoDefaultParameters_set :: PotatoDefaultParameters -> SetPotatoDefaultParameters -> PotatoDefaultParameters
+potatoDefaultParameters_set PotatoDefaultParameters {..} SetPotatoDefaultParameters {..} = PotatoDefaultParameters {
+    _potatoDefaultParameters_sBoxType = fromMaybe _potatoDefaultParameters_sBoxType _setPotatoDefaultParameters_sBoxType
+    , _potatoDefaultParameters_lineStyle = fromMaybe _potatoDefaultParameters_lineStyle _setPotatoDefaultParameters_lineStyle
+    , _potatoDefaultParameters_box_label_textAlign = fromMaybe _potatoDefaultParameters_box_label_textAlign _setPotatoDefaultParameters_box_label_textAlign
+    , _potatoDefaultParameters_box_text_textAlign = fromMaybe _potatoDefaultParameters_box_text_textAlign _setPotatoDefaultParameters_box_text_textAlign
+
+  }
 
 type Selection = SuperOwlParliament
 
