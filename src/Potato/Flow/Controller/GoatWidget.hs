@@ -284,6 +284,7 @@ data GoatWidget t = GoatWidget {
 
 
   , _goatWidget_selection           :: Dynamic t Selection
+  , _goatWidget_potatoDefaultParameters :: Dynamic t PotatoDefaultParameters
 
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
 
@@ -803,6 +804,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- i.e. OwlPFStateChangeFlag and have each OwlPFState operation return a change flag as well
   r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
+  r_potatoDefaultParams <- holdUniqDyn $ fmap _goatState_potatoDefaultParameters goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
   r_pan <- holdUniqDyn $ fmap _goatState_pan goatDyn
   r_layers <- holdUniqDyn $ fmap _goatState_layersState goatDyn
@@ -834,6 +836,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     {
       _goatWidget_tool           = r_tool
       , _goatWidget_selection    = r_selection
+      , _goatWidget_potatoDefaultParameters = r_potatoDefaultParams
       , _goatWidget_layers       = r_layers
       , _goatWidget_pan          = r_pan
       , _goatWidget_broadPhase   = r_broadphase

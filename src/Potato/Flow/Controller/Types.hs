@@ -49,7 +49,7 @@ data PotatoDefaultParameters = PotatoDefaultParameters {
   , _potatoDefaultParameters_lineStyle :: LineStyle
   , _potatoDefaultParameters_box_label_textAlign :: TextAlign
   , _potatoDefaultParameters_box_text_textAlign :: TextAlign
-} deriving (Show)
+} deriving (Eq, Show)
 
 
 instance Default PotatoDefaultParameters where

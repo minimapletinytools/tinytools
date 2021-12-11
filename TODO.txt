@@ -23,7 +23,7 @@ WIDE
 
 ::NEWEST TODO::
 -finish SetPotatoDefaultParams...
-  -use these settings when creating new elts inside of Handler
+  DONE-use these settings when creating new elts inside of Handler
   -read these settings in Params when nothing is selected
   -set these settings in Params when nothing is selected
 -locked/hidden stuff
