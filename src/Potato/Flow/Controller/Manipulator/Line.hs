@@ -99,7 +99,7 @@ instance PotatoHandler SimpleLineHandler where
         }
 
       op = if _simpleLineHandler_isCreation
-        then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ SEltLine $ SSimpleLine _mouseDrag_from _mouseDrag_to def def)
+        then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
         else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
 
       r = def {
