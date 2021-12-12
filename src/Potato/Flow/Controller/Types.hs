@@ -67,7 +67,7 @@ data SetPotatoDefaultParameters = SetPotatoDefaultParameters {
   , _setPotatoDefaultParameters_superStyle :: Maybe SuperStyle
   , _setPotatoDefaultParameters_box_label_textAlign :: Maybe TextAlign
   , _setPotatoDefaultParameters_box_text_textAlign :: Maybe TextAlign
-} deriving (Show)
+} deriving (Eq, Show)
 
 instance Default SetPotatoDefaultParameters where
   def = SetPotatoDefaultParameters {
