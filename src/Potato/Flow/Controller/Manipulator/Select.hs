@@ -4,6 +4,7 @@ module Potato.Flow.Controller.Manipulator.Select (
   SelectHandler(..)
   , selectMagic
   , layerMetaMap_isInheritHiddenOrLocked
+  , layerMetaMap_isInheritHidden
 ) where
 
 import           Relude
@@ -33,6 +34,13 @@ layerMetaMap_isInheritHiddenOrLocked ot rid lmm = case IM.lookup rid lmm of
   _ -> case IM.lookup rid (_owlTree_mapping ot) of
     Nothing -> False
     Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlEltMeta_parent oem) lmm
+
+layerMetaMap_isInheritHidden :: OwlTree -> REltId -> LayerMetaMap -> Bool
+layerMetaMap_isInheritHidden ot rid lmm = case IM.lookup rid lmm of
+  Just lm | _layerMeta_isHidden lm -> True
+  _ -> case IM.lookup rid (_owlTree_mapping ot) of
+    Nothing -> False
+    Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlEltMeta_parent oem) lmm
 
 
 -- TODO ignore locked and hidden elements here

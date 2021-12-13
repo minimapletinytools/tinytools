@@ -30,6 +30,8 @@ import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.Types
+import           Potato.Flow.Controller.Types
+import Potato.Flow.Controller.Manipulator.Select
 
 import qualified Data.IntMap             as IM
 import qualified Data.List.Ordered       as L
@@ -166,13 +168,30 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
 
-renderWithBroadPhase :: BPTree -> OwlTree -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
+-- rather pointless abstraction kthxby
+class OwlRenderSet a where
+  findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
+  sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
+
+instance OwlRenderSet OwlTree where
+  findSuperOwlForRendering = owlTree_findSuperOwl
+  sortForRendering a sowls = unSuperOwlParliament $ makeSortedSuperOwlParliament a sowls
+
+instance OwlRenderSet (OwlTree, LayerMetaMap) where
+  findSuperOwlForRendering (ot,lmm) rid = r where
+    hidden = layerMetaMap_isInheritHidden ot rid lmm
+    r = if hidden
+      then Nothing
+      else findSuperOwlForRendering (ot,lmm) rid
+  sortForRendering (ot,_) sowls = sortForRendering ot sowls
+
+renderWithBroadPhase :: (OwlRenderSet a ) => BPTree -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
-  sowls' = flip fmap rids $ \rid -> case owlTree_findSuperOwl ot rid of
+  sowls' = flip fmap rids $ \rid -> case findSuperOwlForRendering ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
       Just sowl -> sowl
-  SuperOwlParliament sowls = makeSortedSuperOwlParliament ot $ Seq.fromList sowls'
+  sowls = sortForRendering ot $ Seq.fromList sowls'
   selts = fmap superOwl_toSElt_hack $ toList sowls
   r = render lbx selts rc
 
@@ -198,12 +217,12 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
     }
 
 -- TODO test
-moveRenderedCanvasRegion :: BroadPhaseState -> OwlTree -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
+moveRenderedCanvasRegion :: (OwlRenderSet a) => BroadPhaseState -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasRegionNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
--- TODO pass in LayerMetaMap so hidden stuff can be ommitteed 
+-- TODO pass in LayerMetaMap so hidden stuff can be ommitteed
 updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case needsUpdate of
   [] -> rc
@@ -218,7 +237,7 @@ updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case n
       rids = L.sortBy sortfn rids'
 
       -- TODO filter rids to exclude hidden stuff
-      
+
       sowls' = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
         Nothing -> case owlTree_findSuperOwl _owlPFState_owlTree rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"

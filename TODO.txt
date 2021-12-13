@@ -23,14 +23,7 @@ WIDE
 
 ::NEWEST TODO::
 
--finish SetPotatoDefaultParams...
-  DONE-use these settings when creating new elts inside of Handler
-  DONE-read these settings in Params when nothing is selected
-  DONE-set these settings in Params when nothing is selected
-  DONE-set _setPotatoDefaultParameters_sBoxType correctly in Params
-  DONE-you broke TextAlignment params update somehow (clicking to change text alignment does not update the choice)
-  DONE-linestyle default setting does not work
--clicking from params to canvas causes changes to reset :(
+-clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
 -locked/hidden stuff
   DONE-BUG, right now if you select via folders, do and operation, unselect, it will allow you to reselect locked/hidden stuff for some reason 😱
     -this must be happening because something is being set incorrectly inside of layerMetaMap??
@@ -51,8 +44,6 @@ WIDE
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
 -make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
-DONE-UT ControllerMeta loading
-  -ugh
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
@@ -110,6 +101,15 @@ DONE-UT ControllerMeta loading
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 
+DONE-UT ControllerMeta loading
+  -ugh
+DONE-finish SetPotatoDefaultParams...
+  DONE-use these settings when creating new elts inside of Handler
+  DONE-read these settings in Params when nothing is selected
+  DONE-set these settings in Params when nothing is selected
+  DONE-set _setPotatoDefaultParameters_sBoxType correctly in Params
+  DONE-you broke TextAlignment params update somehow (clicking to change text alignment does not update the choice)
+  DONE-linestyle default setting does not work
 DONE-BUG radiolist width counting function is wrong (I think you forgot spaces between boxes)
 DONE-MINOR box title allows news lines (they just get hidden, forbid new lines in box title entry method)
 DONE-folder renaming doesn't allow spaces
