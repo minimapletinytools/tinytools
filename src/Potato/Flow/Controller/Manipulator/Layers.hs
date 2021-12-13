@@ -277,7 +277,11 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_pFEvent = mev
           }
 
-      (MouseDragState_Up, LDS_None) -> Just $ setHandlerOnly lh
+      (MouseDragState_Up, LDS_None) -> Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
+          , _potatoHandlerOutput_select = Just (False, isParliament_empty)
+        }
+
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly (resetLayersHandler lh)
       _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 

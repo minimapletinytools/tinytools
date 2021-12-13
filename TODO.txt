@@ -22,7 +22,7 @@ WIDE
 🙈
 
 ::NEWEST TODO::
--allow deselect in layers by clicking where there are no items
+DONE-allow deselect in layers by clicking where there are no items
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
 -locked/hidden stuff
   DONE-BUG, right now if you select via folders, do and operation, unselect, it will allow you to reselect locked/hidden stuff for some reason 😱
