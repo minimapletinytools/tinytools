@@ -231,15 +231,7 @@ updateCanvas cslmap needsUpdate BroadPhaseState {..} ot rc = case needsUpdate of
   (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
     Nothing -> rc
     Just aabb -> r where
-      rids' = broadPhase_cull aabb _broadPhaseState_bPTree
-
-      -- TODO pretty sure you can DELETE this stuff, we sort properly later on
-      --sortfn rid1 rid2 = compare (layerPosMap IM.! rid1) (layerPosMap IM.! rid2)
-      -- TODO proper comparison function
-      sortfn rid1 rid2 = compare rid1 rid2
-      rids = L.sortBy sortfn rids'
-
-
+      rids = broadPhase_cull aabb _broadPhaseState_bPTree
 
       msowls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
         Nothing -> case findSuperOwl ot rid of

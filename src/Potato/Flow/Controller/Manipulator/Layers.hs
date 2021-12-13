@@ -108,7 +108,7 @@ instance PotatoHandler LayersHandler where
         (nextDragState, mNextLayerState, changes) = case clickLayerNew lentries leposxy of
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
-          Just (downsowl, ldtdown, _) -> traceShow (ldtdown) $ case ldtdown of
+          Just (downsowl, ldtdown, _) -> case ldtdown of
 
             LDT_Normal -> if shift || (not $ doesSelectionContainREltId_linear (_superOwl_id downsowl) selection)
               -- TODO check if element is descendent of selected element and return LDS_None if so
