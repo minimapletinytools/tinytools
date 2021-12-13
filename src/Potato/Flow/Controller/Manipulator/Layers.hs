@@ -108,7 +108,7 @@ instance PotatoHandler LayersHandler where
         (nextDragState, mNextLayerState, changes) = case clickLayerNew lentries leposxy of
           Nothing -> (LDS_None, Nothing, IM.empty)
           -- (you can only click + drag selected elements)
-          Just (downsowl, ldtdown, _) -> case ldtdown of
+          Just (downsowl, ldtdown, _) -> traceShow (ldtdown) $ case ldtdown of
 
             LDT_Normal -> if shift || (not $ doesSelectionContainREltId_linear (_superOwl_id downsowl) selection)
               -- TODO check if element is descendent of selected element and return LDS_None if so
@@ -140,11 +140,11 @@ instance PotatoHandler LayersHandler where
                 exclusivedescendent = owlParliamentSet_descendent owltree rid selectionset && not isselected
             -}
 
-            LDT_Hide -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleHide, IM.empty)
-            LDT_Lock -> r' where
-              nextLayersState = toggleLayerEntry pfs ls lepos LHCO_ToggleLock
+            LDT_Hide -> r' where
+              nextLayersState = toggleLayerEntry pfs ls lepos LHCO_ToggleHide
               hideChanges = changesFromToggleHide pfs nextLayersState lepos
               r' = (LDS_None, Just $ nextLayersState, hideChanges)
+            LDT_Lock -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleLock, IM.empty)
             LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleCollapse, IM.empty)
 
         r = Just $ def {

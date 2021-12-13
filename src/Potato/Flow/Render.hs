@@ -170,19 +170,22 @@ printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCa
 
 -- rather pointless abstraction kthxby
 class OwlRenderSet a where
-  findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
+  findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
   sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
+  findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
+  findSuperOwlForRendering ors rid = case findSuperOwl ors rid of
+    Nothing -> Nothing
+    Just (sowl, b) -> if b then Just sowl else Nothing
+
 
 instance OwlRenderSet OwlTree where
-  findSuperOwlForRendering = owlTree_findSuperOwl
+  findSuperOwl ot = fmap (,True) . owlTree_findSuperOwl ot
   sortForRendering a sowls = unSuperOwlParliament $ makeSortedSuperOwlParliament a sowls
 
 instance OwlRenderSet (OwlTree, LayerMetaMap) where
-  findSuperOwlForRendering (ot,lmm) rid = r where
+  findSuperOwl (ot,lmm) rid = r where
     hidden = layerMetaMap_isInheritHidden ot rid lmm
-    r = if hidden
-      then Nothing
-      else findSuperOwlForRendering (ot,lmm) rid
+    r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
 renderWithBroadPhase :: (OwlRenderSet a ) => BPTree -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
@@ -216,35 +219,36 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
       , _renderedCanvasRegion_contents = newv
     }
 
--- TODO test
 moveRenderedCanvasRegion :: (OwlRenderSet a) => BroadPhaseState -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasRegionNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
--- TODO pass in LayerMetaMap so hidden stuff can be ommitteed
-updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
-updateCanvas cslmap needsUpdate BroadPhaseState {..} OwlPFState {..} rc = case needsUpdate of
+updateCanvas :: (OwlRenderSet a) => SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> a -> RenderedCanvasRegion -> RenderedCanvasRegion
+updateCanvas cslmap needsUpdate BroadPhaseState {..} ot rc = case needsUpdate of
   [] -> rc
   -- TODO incremental rendering
   (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
     Nothing -> rc
     Just aabb -> r where
       rids' = broadPhase_cull aabb _broadPhaseState_bPTree
+
+      -- TODO pretty sure you can DELETE this stuff, we sort properly later on
       --sortfn rid1 rid2 = compare (layerPosMap IM.! rid1) (layerPosMap IM.! rid2)
       -- TODO proper comparison function
       sortfn rid1 rid2 = compare rid1 rid2
       rids = L.sortBy sortfn rids'
 
-      -- TODO filter rids to exclude hidden stuff
 
-      sowls' = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
-        Nothing -> case owlTree_findSuperOwl _owlPFState_owlTree rid of
+
+      msowls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
+        Nothing -> case findSuperOwl ot rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-          Just sowl -> sowl
+          -- changes could indicate hidden, if that's the case, give a dummy object to render
+          Just (sowl, hidden) -> if hidden then Nothing else Just sowl
         Just msowl -> case msowl of
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-          Just sowl -> sowl
-      SuperOwlParliament sowls = makeSortedSuperOwlParliament _owlPFState_owlTree $ Seq.fromList sowls'
+          Just sowl -> Just sowl
+      sowls = sortForRendering ot $ Seq.fromList (catMaybes msowls)
       selts = fmap superOwl_toSElt_hack $ toList sowls
       r = render aabb selts rc

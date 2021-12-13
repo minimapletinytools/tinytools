@@ -189,7 +189,7 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
     , _goatCmdTempOutput_pFEvent     = fmap (\x -> (True,x)) _potatoHandlerOutput_pFEvent
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
-    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide
+    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide -- actually not needed, only used by layers
   }
 
 
@@ -206,6 +206,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     , _goatCmdTempOutput_pFEvent     = fmap (\x -> (False,x)) _potatoHandlerOutput_pFEvent
     , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
+    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide
   }
 
 -- | hack function for resetting both handlers
@@ -564,14 +565,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                 _ -> makeGoatCmdTempOutputFromNothing goatState
 
   -- update OwlPFWorkspace from pho
-  (next_workspace, cslmapForBroadPhase) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+  (next_workspace, cslmap) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_workspace, IM.empty)
     Just (_, wsev) -> (r1,r2) where
       r1 = updateOwlPFWorkspace wsev _goatState_workspace
       r2 = _owlPFWorkspace_lastChanges r1
   next_pFState = _owlPFWorkspace_pFState next_workspace
-  cslmap =  cslmapForBroadPhase
 
   -- update pan from pho
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
@@ -658,39 +658,34 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
-  -- TODO if cslmapForBroadPhase has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
+  -- TODO if cslmap has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
     -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
 
-
-  -- TODO omit hidden stuff? Or maybe it's OK to leave inside of broadphase
-  -- we need to ignore in render phase anyways because a non-hidden box could overlap a hidden box causing the hidden box to be rendered
-  -- and of coures in selection we need to ignore both hidden and locked
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForBroadPhase (_broadPhaseState_bPTree _goatState_broadPhaseState)
-  next_layersState = updateLayers next_pFState cslmapForBroadPhase next_layersState'
+  next_layersState = updateLayers next_pFState cslmap next_layersState'
+  cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
+  cslmapForRendering = cslmap `IM.union` cslmapFromHide
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- update the rendered region if we moved the screen
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
   next_renderedCanvas' = if didScreenRegionMove
-    -- TODO you need to pass in hidden stuff somehow here
-    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedCanvas
+    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
   -- render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
-  cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
-  cslmapForRendering = cslmapForBroadPhase `IM.union` cslmapFromHide
   next_renderedCanvas = if IM.null cslmapForRendering
     then next_renderedCanvas'
-    -- TODO you need to pass in hidden stuff somehow here
-    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState next_pFState next_renderedCanvas'
+    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) next_renderedCanvas'
 
   -- render the selection (just rerender it every time)
   selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
   next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmapForRendering
     -- nothing changed, we can keep our selection rendering
     then _goatState_renderedSelection
+    -- TODO omit hidden stuff here???  (or maybe not!)
     else render newBox selectionselts (emptyRenderedCanvasRegion newBox)
 
   {- TODO render only parts of selection that have changed TODO broken

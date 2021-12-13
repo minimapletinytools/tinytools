@@ -111,6 +111,6 @@ spec = do
         changes1 = IM.empty
         (aabbs1, bps1) = update_bPTree IM.empty bpt0
         state1 = state0
-        canvas1 = updateCanvas changes1 aabbs1 bps1 state1 canvas0
+        canvas1 = updateCanvas changes1 aabbs1 bps1 (_owlPFState_owlTree state1) canvas0
       -- TODO test something
       canvas1 `shouldBe` canvas1
