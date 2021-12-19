@@ -13,9 +13,6 @@ module Potato.Flow.Controller.Goat (
 
 import           Relude
 
-import           Reflex
-import           Reflex.Potato.Helpers
-
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
@@ -31,20 +28,16 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
-import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
-import Potato.Flow.DebugHelpers
 
 import           Control.Exception                         (assert)
-import           Control.Monad.Fix
 import           Data.Default
 import qualified Data.IntMap                               as IM
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
-import qualified Data.Text as T
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
