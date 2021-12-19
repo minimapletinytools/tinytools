@@ -105,7 +105,7 @@ test_LayersHandler_basic = constructTest "basic" owlpfstate_basic1 bs expected w
 
       , LabelCheck "out of bounds"
       , numSelectedEltsEqualPredicate 2
-      , numSelectedEltsEqualPredicate 2 -- TODO change to 0 once deselect via LayersHandler is supported
+      , numSelectedEltsEqualPredicate 0
     ]
 
 test_LayersHandler_toggle :: Test
