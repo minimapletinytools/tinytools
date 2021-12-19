@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Potato.Flow.Controller(
   module Potato.Flow.Controller.Manipulator.Box
   , module Potato.Flow.Controller.Manipulator.Line
@@ -8,14 +6,14 @@ module Potato.Flow.Controller(
   , module Potato.Flow.Controller.Handler
   , module Potato.Flow.Controller.Manipulator.BoxText
   , module Potato.Flow.Controller.Manipulator.Common
-  , module Potato.Flow.Controller.GoatWidget
+  , module Potato.Flow.Controller.Goat
   , module Potato.Flow.Controller.Input
   , module Potato.Flow.Controller.OwlLayers
   , module Potato.Flow.Controller.Types
 
 ) where
 
-import           Potato.Flow.Controller.GoatWidget
+import           Potato.Flow.Controller.Goat
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.OwlLayers

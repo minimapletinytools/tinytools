@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.GoatWidget (
+module Potato.Flow.Controller.Goat (
   goatState_pFState
   , GoatState(..)
   , GoatCmd(..)

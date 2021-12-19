@@ -13,7 +13,7 @@ import           Relude
 import           Reflex
 import           Reflex.Potato.Helpers
 
-import Potato.Flow.Controller.GoatWidget
+import Potato.Flow.Controller.Goat
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
