@@ -9,6 +9,7 @@ module Potato.Flow (
   , module Potato.Flow.OwlWorkspace
   , module Potato.Flow.OwlState
   , module Potato.Flow.Owl
+  , module Potato.Flow.Reflex.GoatWidget
 ) where
 
 import           Potato.Flow.BroadPhase
@@ -21,3 +22,4 @@ import           Potato.Flow.Types
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.OwlState
 import Potato.Flow.Owl
+import Potato.Flow.Reflex.GoatWidget

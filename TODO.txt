@@ -21,6 +21,32 @@ WIDE
 👁️
 🙈
 
+:: attachments
+
+data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT
+
+data Attach = Attach {
+  attach_location :: AttachmentLocation
+  -- + is right or down - is left or up
+  , attach_offset_abs :: Int
+  , attach_offset_rel :: Float
+}
+
+-attachment operations that need fixing
+  -keep a cache `Map REltId (Set REltId)` to track what is attached to what
+  -after change, add all elts that are attached to it as well (does this break anything? i.e. auto select after create?)
+    -maybe fix by tracking what the last operation was?
+  -when copy pasting, do a local update of all attached REltId
+    -decide if you want to break connection that aren't in local copy pasta set or not
+
+:: MDI
+-Flow needs some kind of switcher on all input events/dynamics
+  -GoatSwitcher?
+-must support empty doc state
+  -or maybe it just always creates a new empty file in these cases?
+
+
+
 ::NEWEST TODO::
 DONE-allow deselect in layers by clicking where there are no items
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
@@ -47,7 +73,7 @@ DONE-allow deselect in layers by clicking where there are no items
     -locking only does not hide
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
--make sure it's not possible to open up a pop up whilee mouse dragging (or you will break mouse drag pane2 stuff again)
+-make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
 -BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
@@ -104,6 +130,8 @@ DONE-allow deselect in layers by clicking where there are no items
   DONE-ctrl-s to save
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
+-split up GoatWidget into Goat and GoatWidget
+  -move GoatWidget into Reflex folder
 
 DONE-UT ControllerMeta loading
   -ugh
