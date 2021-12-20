@@ -84,10 +84,10 @@ owlElt_updateAttachments breakNonExistng ridremap oelt = case oelt of
     where
       remapAttachment ma = case ma of
         Nothing -> Nothing
-        Just a -> case IM.lookup (attachment_target a) ridremap of
+        Just a -> case IM.lookup (_attachment_target a) ridremap of
           -- could not find attachment, break it
           Nothing -> if breakNonExistng then Nothing else Just a
-          Just t -> Just $ a { attachment_target = t }
+          Just t -> Just $ a { _attachment_target = t }
   x -> x
 
 
@@ -721,12 +721,12 @@ owlTree_makeAttachmentMap od@OwlTree {..} = r where
       Nothing -> (Set.singleton stuff)
       Just s -> Set.insert stuff s
     innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
-    newmap = foldr innerfoldrfn m (fmap attachment_target attachedstuff)
+    newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
   r = foldr foldrfn IM.empty sowls
 
 -- | return fales if any attachments are dangling (i.e. they are attached to a target that does not exist in the tree)
 owlTree_hasDanglingAttachments :: OwlTree -> Bool
-owlTree_hasDanglingAttachments od@OwlTree {..} = not $ all (\sowl -> all (\x -> IM.member x (_owlTree_mapping)) (fmap attachment_target $ superOwl_getAttachments sowl)) (owliterateall od)
+owlTree_hasDanglingAttachments od@OwlTree {..} = not $ all (\sowl -> all (\x -> IM.member x (_owlTree_mapping)) (fmap _attachment_target $ superOwl_getAttachments sowl)) (owliterateall od)
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r

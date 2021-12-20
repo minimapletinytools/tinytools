@@ -160,8 +160,8 @@ instance Binary AttachmentLocation
 instance NFData AttachmentLocation
 
 data Attachment = Attachment {
-  attachment_target :: REltId
-  , attachment_location :: AttachmentLocation
+  _attachment_target :: REltId
+  , _attachment_location :: AttachmentLocation
   -- you can prob just delete these, don't think we need them.
   -- + is right or down - is left or up
   -- , _attach_offset_abs :: Int

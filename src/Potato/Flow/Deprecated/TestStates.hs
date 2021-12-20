@@ -206,11 +206,11 @@ pfstate_attachments1 = PFState {
                 _sSimpleLine_start = V2 0 100
                 , _sSimpleLine_end = V2 0 110
                 , _sSimpleLine_attachStart = Just (Attachment {
-                    attachment_target = 2
+                    _attachment_target = 2
                     , attachment_location = AL_RIGHT
                   })
                 , _sSimpleLine_attachEnd = Just (Attachment {
-                    attachment_target = 3
+                    _attachment_target = 3
                     , attachment_location = AL_LEFT
                   })
                 , _sSimpleLine_style = def
@@ -220,11 +220,11 @@ pfstate_attachments1 = PFState {
                 _sSimpleLine_start = V2 0 100
                 , _sSimpleLine_end = V2 0 110
                 , _sSimpleLine_attachStart = Just (Attachment {
-                    attachment_target = 3
+                    _attachment_target = 3
                     , attachment_location = AL_BOT
                   })
                 , _sSimpleLine_attachEnd = Just (Attachment {
-                    attachment_target = 4
+                    _attachment_target = 4
                     , attachment_location = AL_TOP
                   })
                 , _sSimpleLine_style = def
