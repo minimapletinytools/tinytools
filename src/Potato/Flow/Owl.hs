@@ -173,16 +173,31 @@ instance IsOwl SuperOwl where
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
-{-
+attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
+attachmentMap_addSuperOwls sowls am = r where
+  foldrfn sowl m = newmap where
+    attachedstuff = superOwl_getAttachments sowl
+    alterfn stuff ms = Just $ case ms of
+      Nothing -> (IS.singleton stuff)
+      Just s -> IS.insert stuff s
+    innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
+    newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
+  r = foldr foldrfn am sowls
+
+-- TODO test I have no idea if I did this right...
 updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
-updateAttachmentMapFromSuperOwlChanges changes am = r where
+updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   -- remove deleted stuff from keys
+  newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
 
   -- remove changed keys from all value sets (this could be done more efficiently if we know the previous things they were attached to, but oh well)
-  IM.keys changes
+  setToRemove = IM.keysSet changes
+  newam_2 = fmap (\s -> IS.difference s setToRemove) newam_1
 
   -- add targets of changes to value sets
--}
+  justChanges = catMaybes . IM.elems $ changes
+  newam_3 = attachmentMap_addSuperOwls justChanges newam_2
+
 
 
 -- TODO delete replace with PotatoShow
@@ -727,16 +742,7 @@ owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
 
 -- |
 owlTree_makeAttachmentMap :: OwlTree -> AttachmentMap
-owlTree_makeAttachmentMap od@OwlTree {..} = r where
-  sowls = owliterateall od
-  foldrfn sowl m = newmap where
-    attachedstuff = superOwl_getAttachments sowl
-    alterfn stuff ms = Just $ case ms of
-      Nothing -> (IS.singleton stuff)
-      Just s -> IS.insert stuff s
-    innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
-    newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
-  r = foldr foldrfn IM.empty sowls
+owlTree_makeAttachmentMap od = attachmentMap_addSuperOwls (owliterateall od) IM.empty
 
 -- | return fales if any attachments are dangling (i.e. they are attached to a target that does not exist in the tree)
 owlTree_hasDanglingAttachments :: OwlTree -> Bool
