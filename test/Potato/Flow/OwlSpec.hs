@@ -102,14 +102,16 @@ spec = do
           b2sowl = owlTree_mustFindSuperOwl owlTree0 2
         owlTree_findSuperOwlAtOwlSpot owlTree0 (owlTree_owlEltMeta_toOwlSpot owlTree0 (_superOwl_meta $ b2sowl)) `shouldBe` Just b2sowl
 
+      let
+        owlTreeWithAttachments0 = owlTree_fromOldState (_pFState_directory pfstate_attachments1) (_pFState_layers pfstate_attachments1)
+        am0 = owlTree_makeAttachmentMap owlTreeWithAttachments0
       it "owlTree_makeAttachmentMap" $ do
-        let
-          owlTreeWithAttachments0 = owlTree_fromOldState (_pFState_directory pfstate_attachments1) (_pFState_layers pfstate_attachments1)
-          am0 = owlTree_makeAttachmentMap owlTreeWithAttachments0
         liftIO $ print am0
         IM.lookup 2 am0 `shouldBe` (Just $ Set.fromList [7])
         IM.lookup 3 am0 `shouldBe` (Just $ Set.fromList [7,8])
         IM.lookup 4 am0 `shouldBe` (Just $ Set.fromList [8])
+      it "owlTree_hasDanglingAttachments" $ do
+        owlTree_hasDanglingAttachments owlTreeWithAttachments0 `shouldBe` False
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlTree_prettyPrint owlTree0)

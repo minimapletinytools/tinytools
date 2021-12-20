@@ -185,6 +185,15 @@ superOwl_parentId SuperOwl {..} = _owlEltMeta_parent _superOwl_meta
 superOwl_depth :: SuperOwl -> Int
 superOwl_depth SuperOwl {..} = _owlEltMeta_depth _superOwl_meta
 
+-- |
+-- does not get attachments in children
+superOwl_getAttachments :: SuperOwl -> [Attachment]
+superOwl_getAttachments sowl = case _superOwl_elt sowl of
+  OwlEltFolder _ _ -> []
+  OwlEltSElt _ selt -> case selt of
+    SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
+    _ -> []
+
 owlTree_superOwlNthParentId :: OwlTree -> SuperOwl -> Int -> REltId
 owlTree_superOwlNthParentId _ sowl 0 = _superOwl_id sowl
 owlTree_superOwlNthParentId od sowl n
@@ -687,11 +696,7 @@ owlTree_makeAttachmentMap :: OwlTree -> AttachmentMap
 owlTree_makeAttachmentMap od@OwlTree {..} = r where
   sowls = owliterateall od
   foldrfn sowl m = newmap where
-    attachedstuff = case _superOwl_elt sowl of
-      OwlEltFolder _ _ -> []
-      OwlEltSElt _ selt -> case selt of
-        SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
-        _ -> []
+    attachedstuff = superOwl_getAttachments sowl
     alterfn stuff ms = Just $ case ms of
       Nothing -> (Set.singleton stuff)
       Just s -> Set.insert stuff s
@@ -699,7 +704,9 @@ owlTree_makeAttachmentMap od@OwlTree {..} = r where
     newmap = foldr innerfoldrfn m (fmap attachment_target attachedstuff)
   r = foldr foldrfn IM.empty sowls
 
-
+-- | return fales if any attachments are dangling (i.e. they are attached to a target that does not exist in the tree)
+owlTree_hasDanglingAttachments :: OwlTree -> Bool
+owlTree_hasDanglingAttachments od@OwlTree {..} = not $ all (\sowl -> all (\x -> IM.member x (_owlTree_mapping)) (fmap attachment_target $ superOwl_getAttachments sowl)) (owliterateall od)
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r
@@ -894,6 +901,8 @@ owlTree_addSEltTree spot selttree od = r where
   r = owlTree_addMiniOwlTree spot otherod od
 
 
+-- TODO attachment reindexing
+-- missing
 owlTree_reindex :: Int -> OwlTree -> OwlTree
 owlTree_reindex start ot = traceShow (owlTree_maxId ot) $ traceShow start $ assert valid r where
   valid = owlTree_maxId ot < start
@@ -926,6 +935,7 @@ groupSimilar f s = r where
 elts = join . fmap reverse . (\xs -> traceShow (_superOwl_id <<$>> xs) xs) . groupSimilar (_owlEltMeta_parent . _superOwl_meta) . owliterateall $ miniot
 -}
 
+-- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step
 owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od0)

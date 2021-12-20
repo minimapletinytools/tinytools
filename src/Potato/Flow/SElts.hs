@@ -164,8 +164,8 @@ data Attachment = Attachment {
   , attachment_location :: AttachmentLocation
   -- you can prob just delete these, don't think we need them.
   -- + is right or down - is left or up
-  -- , attach_offset_abs :: Int
-  -- , attach_offset_rel :: Float
+  -- , _attach_offset_abs :: Int
+  -- , _attach_offset_rel :: Float
 } deriving (Eq, Generic, Show)
 
 instance FromJSON Attachment
