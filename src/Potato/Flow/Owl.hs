@@ -199,6 +199,21 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   newam_3 = attachmentMap_addSuperOwls justChanges newam_2
 
 
+-- TODO test
+addChangesFromAttachmentMapToSuperOwlChanges :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
+addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am changes = r where
+  -- collect all stuff attaching to changed stuff
+  changeset = IS.unions . catMaybes $ foldr (\k acc -> IM.lookup k am : acc) [] (IM.keys changes)
+
+  -- add it to changes
+  newchanges = IM.fromList . filter (\(_,x) -> isJust x) . fmap (\rid -> (rid, owlTree_findSuperOwl owltreeafterchanges rid)) .  IS.toList $ changeset
+
+  -- return the combined changes
+  r = IM.union changes newchanges
+
+
+
+
 
 -- TODO delete replace with PotatoShow
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text

@@ -33,7 +33,7 @@ data Attach = Attach {
 }
 
 -attachment operations that need fixing
-  -keep a cache `Map REltId (Set REltId)` to track what is attached to what
+  DONE-keep a cache `Map REltId IntSet` to track what is attached to what
     -you can probabyl update this cache using the changeset that gets returned after a change
   -after change, add all elts that are attached to it as well
     -does this break anything? i.e. auto select after create?
