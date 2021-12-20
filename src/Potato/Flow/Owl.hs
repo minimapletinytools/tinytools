@@ -157,8 +157,6 @@ data SuperOwl = SuperOwl
 
 instance NFData SuperOwl
 
-type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
-
 instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
   mommyOwl_id = _superOwl_id
@@ -170,6 +168,21 @@ instance IsOwl SuperOwl where
   isOwl_toSEltLabel_hack sowl = case _superOwl_elt sowl of
     OwlEltSElt (OwlInfo name) selt -> SEltLabel name selt
     OwlEltFolder (OwlInfo name) _ -> SEltLabel name SEltFolderStart
+
+
+type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
+
+{-
+updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
+updateAttachmentMapFromSuperOwlChanges changes am = r where
+  -- remove deleted stuff from keys
+
+  -- remove changed keys from all value sets (this could be done more efficiently if we know the previous things they were attached to, but oh well)
+  IM.keys changes
+
+  -- add targets of changes to value sets
+-}
+
 
 -- TODO delete replace with PotatoShow
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
