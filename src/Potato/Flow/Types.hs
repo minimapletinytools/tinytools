@@ -58,7 +58,7 @@ import           Data.Binary
 import           Data.Constraint.Extras.TH
 import           Data.Default
 import qualified Data.Dependent.Sum        as DS
-import qualified Data.Set as Set
+import qualified Data.IntSet as IS
 import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
 import qualified Data.IntMap.Strict        as IM
@@ -70,7 +70,7 @@ import qualified Text.Show
 type LayerPos = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
-type AttachmentMap = REltIdMap (Set.Set REltId) -- key is target, value is set of things attaching to target
+type AttachmentMap = REltIdMap (IS.IntSet) -- key is target, value is set of things attaching to target
 
 -- TODO ugg, pretty sure this could just be SElt instead of SEltLabel
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)

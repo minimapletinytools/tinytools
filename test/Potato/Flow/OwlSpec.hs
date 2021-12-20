@@ -9,7 +9,7 @@ import           Test.Hspec
 
 import qualified Data.Text as T
 import qualified Data.Sequence            as Seq
-import qualified Data.Set as Set
+import qualified Data.IntSet as IS
 import qualified Data.IntMap as IM
 import           Potato.Flow.Owl
 import           Potato.Flow.Deprecated.TestStates
@@ -107,9 +107,9 @@ spec = do
         am0 = owlTree_makeAttachmentMap owlTreeWithAttachments0
       it "owlTree_makeAttachmentMap" $ do
         liftIO $ print am0
-        IM.lookup 2 am0 `shouldBe` (Just $ Set.fromList [7])
-        IM.lookup 3 am0 `shouldBe` (Just $ Set.fromList [7,8])
-        IM.lookup 4 am0 `shouldBe` (Just $ Set.fromList [8])
+        IM.lookup 2 am0 `shouldBe` (Just $ IS.fromList [7])
+        IM.lookup 3 am0 `shouldBe` (Just $ IS.fromList [7,8])
+        IM.lookup 4 am0 `shouldBe` (Just $ IS.fromList [8])
       it "owlTree_hasDanglingAttachments" $ do
         owlTree_hasDanglingAttachments owlTreeWithAttachments0 `shouldBe` False
         owlTree_hasDanglingAttachments (owlTree_reindex 100 owlTreeWithAttachments0) `shouldBe` False

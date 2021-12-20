@@ -13,6 +13,7 @@ import Data.Maybe (fromJust)
 import Data.Sequence ((><), (|>), (<|))
 import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
+import qualified Data.IntSet as IS
 import qualified Data.Text as T
 import Potato.Flow.SElts
 import Potato.Flow.Types
@@ -533,13 +534,13 @@ owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = ass
     }
 
 
-type OwlParliamentSet = Set.Set REltId
+type OwlParliamentSet = IS.IntSet
 
 superOwlParliament_toOwlParliamentSet :: SuperOwlParliament -> OwlParliamentSet
-superOwlParliament_toOwlParliamentSet (SuperOwlParliament sowls) = Set.fromList . toList . fmap _superOwl_id $ sowls
+superOwlParliament_toOwlParliamentSet (SuperOwlParliament sowls) = IS.fromList . toList . fmap _superOwl_id $ sowls
 
 owlParliamentSet_member :: REltId -> OwlParliamentSet -> Bool
-owlParliamentSet_member = Set.member
+owlParliamentSet_member = IS.member
 
 -- | returns true if rid is a contained in sset or is a descendent of sset
 owlParliamentSet_descendent :: OwlTree -> REltId -> OwlParliamentSet -> Bool
@@ -731,8 +732,8 @@ owlTree_makeAttachmentMap od@OwlTree {..} = r where
   foldrfn sowl m = newmap where
     attachedstuff = superOwl_getAttachments sowl
     alterfn stuff ms = Just $ case ms of
-      Nothing -> (Set.singleton stuff)
-      Just s -> Set.insert stuff s
+      Nothing -> (IS.singleton stuff)
+      Just s -> IS.insert stuff s
     innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
     newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
   r = foldr foldrfn IM.empty sowls
