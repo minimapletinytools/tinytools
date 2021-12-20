@@ -2,10 +2,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Potato.Flow.Types (
-  REltId
-  , REltIdMap
+  REltIdMap
   , ControllersWithId
   , controllerWithId_isParams
+  , AttachmentMap
 
   -- DELETE
   , LayerPos
@@ -58,6 +58,7 @@ import           Data.Binary
 import           Data.Constraint.Extras.TH
 import           Data.Default
 import qualified Data.Dependent.Sum        as DS
+import qualified Data.Set as Set
 import           Data.GADT.Compare.TH
 import           Data.GADT.Show.TH
 import qualified Data.IntMap.Strict        as IM
@@ -67,9 +68,9 @@ import qualified Text.Show
 
 
 type LayerPos = Int
-type REltId = Int
 type REltIdMap a = IM.IntMap a
 type SuperSEltLabel = (REltId, LayerPos, SEltLabel)
+type AttachmentMap = REltIdMap (Set.Set REltId) -- key is target, value is set of things attaching to target
 
 -- TODO ugg, pretty sure this could just be SElt instead of SEltLabel
 type SEltLabelChanges = REltIdMap (Maybe SEltLabel)

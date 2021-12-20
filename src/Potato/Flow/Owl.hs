@@ -682,6 +682,25 @@ owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
     sowls = owliterateall od
     r = fromMaybe (-1) $ Seq.findIndexL (\sowl -> _superOwl_id sowl == rid) sowls
 
+-- |
+owlTree_makeAttachmentMap :: OwlTree -> AttachmentMap
+owlTree_makeAttachmentMap od@OwlTree {..} = r where
+  sowls = owliterateall od
+  foldrfn sowl m = newmap where
+    attachedstuff = case _superOwl_elt sowl of
+      OwlEltFolder _ _ -> []
+      OwlEltSElt _ selt -> case selt of
+        SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
+        _ -> []
+    alterfn stuff ms = Just $ case ms of
+      Nothing -> (Set.singleton stuff)
+      Just s -> Set.insert stuff s
+    innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
+    newmap = foldr innerfoldrfn m (fmap attachment_target attachedstuff)
+  r = foldr foldrfn IM.empty sowls
+
+
+
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r
   where

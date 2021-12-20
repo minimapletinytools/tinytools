@@ -42,6 +42,7 @@ data Attach = Attach {
 :: MDI
 -Flow needs some kind of switcher on all input events/dynamics
   -GoatSwitcher?
+    -Prob better to do this in Goat rather than GoatWidget (i.e. don't use reflex)
 -must support empty doc state
   -or maybe it just always creates a new empty file in these cases?
 

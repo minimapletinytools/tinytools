@@ -16,6 +16,7 @@ module Potato.Flow.TestStates (
   , owlpfstate_basic1
   , controllermeta_basic1_lockandhidestuff
   , owlpfstate_basic2
+  , owlpfstate_attachments1
   , owlpfstate_zero
 ) where
 
@@ -74,6 +75,10 @@ controllermeta_basic1_lockandhidestuff = ControllerMeta {
 -- | same as owlpfstate_basic1 except with folders
 owlpfstate_basic2 :: OwlPFState
 owlpfstate_basic2 = pFState_to_owlPFState pfstate_basic2
+
+
+owlpfstate_attachments1 :: OwlPFState
+owlpfstate_attachments1 = pFState_to_owlPFState pfstate_attachments1
 
 -- contains SElts of size 0
 owlpfstate_zero :: OwlPFState

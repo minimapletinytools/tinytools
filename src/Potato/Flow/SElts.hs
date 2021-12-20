@@ -1,7 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.SElts (
-  PChar
+  REltId
+  , PChar
   , MPChar
   , FillStyle(..)
   , SuperStyle(..)
@@ -12,6 +13,8 @@ module Potato.Flow.SElts (
   , TextStyle(..)
   , LineStyle(..)
   , LineAutoStyle(..)
+  , AttachmentLocation(..)
+  , Attachment(..)
   , SBoxTitle(..)
   , SBoxText(..)
   , SBoxType(..)
@@ -39,6 +42,7 @@ import qualified Data.List         as L
 import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper                          as TZ
 
+type REltId = Int
 type PChar = Char
 type MPChar = Maybe PChar
 
@@ -52,8 +56,6 @@ instance NFData FillStyle
 instance Default FillStyle where
   -- TODO change to ' ' prob
   def = FillStyle_Simple '@'
-
-
 
 -- TODO add line ends?
 -- TODO add line thickness?
@@ -148,6 +150,28 @@ instance NFData TextStyle
 
 instance Default TextStyle where
   def = TextStyle { _textStyle_alignment = def }
+
+
+data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT deriving (Eq, Generic, Show)
+
+instance FromJSON AttachmentLocation
+instance ToJSON AttachmentLocation
+instance Binary AttachmentLocation
+instance NFData AttachmentLocation
+
+data Attachment = Attachment {
+  attachment_target :: REltId
+  , attachment_location :: AttachmentLocation
+  -- you can prob just delete these, don't think we need them.
+  -- + is right or down - is left or up
+  -- , attach_offset_abs :: Int
+  -- , attach_offset_rel :: Float
+} deriving (Eq, Generic, Show)
+
+instance FromJSON Attachment
+instance ToJSON Attachment
+instance Binary Attachment
+instance NFData Attachment
 
 -- |
 data SBoxTitle = SBoxTitle {
@@ -279,6 +303,9 @@ data SSimpleLine = SSimpleLine {
   -- TODO Rename to _superStyle
   , _sSimpleLine_style     :: SuperStyle
   , _sSimpleLine_lineStyle :: LineStyle
+
+  , _sSimpleLine_attachStart :: Maybe Attachment
+  , _sSimpleLine_attachEnd :: Maybe Attachment
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SSimpleLine

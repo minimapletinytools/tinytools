@@ -96,6 +96,8 @@ instance PotatoHandler SimpleLineHandler where
           , _sSimpleLine_end = _mouseDrag_to
           , _sSimpleLine_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
           , _sSimpleLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
+          , _sSimpleLine_attachStart = Nothing
+          , _sSimpleLine_attachEnd = Nothing
         }
 
       op = if _simpleLineHandler_isCreation

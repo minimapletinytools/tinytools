@@ -231,7 +231,7 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , checkHandlerNameAndState handlerName_simpleLine True
       , firstSuperOwlPredicate (Just "sl1") $ \sowl -> case isOwl_toSElt_hack sowl of
-        SEltLine (SSimpleLine start end _ _) -> start == (V2 0 100) && end == (V2 0 120)
+        SEltLine sline -> (_sSimpleLine_start sline) == (V2 0 100) && (_sSimpleLine_end sline) == (V2 0 120)
         _                                  -> False
 
       , LabelCheck "select sl2"
@@ -245,7 +245,7 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , checkHandlerNameAndState handlerName_simpleLine True
       , firstSuperOwlPredicate (Just "sl2") $ \sowl -> case isOwl_toSElt_hack sowl of
-        SEltLine (SSimpleLine start end _ _) -> start == (V2 0 90) && end == (V2 10 100)
+        SEltLine sline -> (_sSimpleLine_start sline) == (V2 0 90) && (_sSimpleLine_end sline) == (V2 10 100)
         _                                  -> False
     ]
 
@@ -292,7 +292,7 @@ test_Common_create = constructTest "create" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine True
       , Combine [
           firstSuperOwlPredicate (Just "<line>") $ \sowl -> case isOwl_toSElt_hack sowl of
-            SEltLine (SSimpleLine start end _ _) -> start == (V2 10 10) && end == (V2 20 20)
+            SEltLine sline -> (_sSimpleLine_start sline) == (V2 10 10) && (_sSimpleLine_end sline) == (V2 20 20)
             _                    -> False
           , numSelectedEltsEqualPredicate 1
         ]
