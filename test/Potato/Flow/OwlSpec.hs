@@ -112,6 +112,7 @@ spec = do
         IM.lookup 4 am0 `shouldBe` (Just $ Set.fromList [8])
       it "owlTree_hasDanglingAttachments" $ do
         owlTree_hasDanglingAttachments owlTreeWithAttachments0 `shouldBe` False
+        owlTree_hasDanglingAttachments (owlTree_reindex 100 owlTreeWithAttachments0) `shouldBe` False
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
         --putTextLn (owlTree_prettyPrint owlTree0)

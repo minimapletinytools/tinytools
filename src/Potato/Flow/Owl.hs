@@ -72,6 +72,25 @@ owlElt_name :: OwlElt -> Text
 owlElt_name (OwlEltFolder (OwlInfo name) _) = name
 owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 
+-- | update attachments based on remap
+owlElt_updateAttachments :: Bool -> REltIdMap REltId -> OwlElt -> OwlElt
+owlElt_updateAttachments breakNonExistng ridremap oelt = case oelt of
+  OwlEltSElt oi selt -> OwlEltSElt oi $ case selt of
+    SEltLine sline -> SEltLine (sline {
+        _sSimpleLine_attachStart = remapAttachment $ _sSimpleLine_attachStart sline
+        , _sSimpleLine_attachEnd = remapAttachment $ _sSimpleLine_attachEnd sline
+      })
+    x -> x
+    where
+      remapAttachment ma = case ma of
+        Nothing -> Nothing
+        Just a -> case IM.lookup (attachment_target a) ridremap of
+          -- could not find attachment, break it
+          Nothing -> if breakNonExistng then Nothing else Just a
+          Just t -> Just $ a { attachment_target = t }
+  x -> x
+
+
 -- this is just position index in children
 type SiblingPosition = Int
 
@@ -186,6 +205,7 @@ superOwl_depth :: SuperOwl -> Int
 superOwl_depth SuperOwl {..} = _owlEltMeta_depth _superOwl_meta
 
 -- |
+-- TODO probably change this to isOwl_getAttachments
 -- does not get attachments in children
 superOwl_getAttachments :: SuperOwl -> [Attachment]
 superOwl_getAttachments sowl = case _superOwl_elt sowl of
@@ -900,24 +920,28 @@ owlTree_addSEltTree spot selttree od = r where
   otherod = owlTree_fromSEltTree selttree
   r = owlTree_addMiniOwlTree spot otherod od
 
-
--- TODO attachment reindexing
--- missing
 owlTree_reindex :: Int -> OwlTree -> OwlTree
 owlTree_reindex start ot = traceShow (owlTree_maxId ot) $ traceShow start $ assert valid r where
   valid = owlTree_maxId ot < start
   -- TODO someday, when we're actually worried about id space size (i.e. when we have multi user mode) we will need to do this more efficiently
   adjustkeyfn k = if k == noOwl then noOwl else k + start
-  newMap' = IM.mapKeysMonotonic adjustkeyfn (_owlTree_mapping ot)
+  -- adjust keys to their new ones
+  oldmap = _owlTree_mapping ot
+  newMap' = IM.mapKeysMonotonic adjustkeyfn oldmap
+  -- next adjust children and attachments to the new ids
+  ridremap = IM.mapWithKey (\rid _ -> adjustkeyfn rid) oldmap
   mapoem oem = oem { _owlEltMeta_parent = adjustkeyfn (_owlEltMeta_parent oem) }
-  mapoe oe = case oe of
-    OwlEltFolder oi kiddos -> OwlEltFolder oi (fmap adjustkeyfn kiddos)
-    x -> x
+  mapoe oe =
+    -- remap attachments
+    owlElt_updateAttachments True ridremap
+    -- remap kiddos
+    $ (case oe of
+      OwlEltFolder oi kiddos -> OwlEltFolder oi (fmap adjustkeyfn kiddos)
+      x -> x)
   mapowlfn (oem, oe) = (mapoem oem, mapoe oe)
   newMap = fmap mapowlfn newMap'
   newTopOwls = fmap adjustkeyfn (_owlTree_topOwls ot)
   r = OwlTree newMap newTopOwls
-
 
 
 {- DELETE not needed, and not correct for what we needed it for
@@ -935,7 +959,8 @@ groupSimilar f s = r where
 elts = join . fmap reverse . (\xs -> traceShow (_superOwl_id <<$>> xs) xs) . groupSimilar (_owlEltMeta_parent . _superOwl_meta) . owliterateall $ miniot
 -}
 
--- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step
+-- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step, use owlTree_hasDanglingAttachments
+-- ^ actually this might be OK... or at least we want to check against tree we are attaching to such that if we copy paste something that was attached it keeps those attachments (or maybe we don't!)
 owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od0)
