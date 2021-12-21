@@ -68,7 +68,7 @@ owlPFState_getSuperOwls :: OwlPFState -> [REltId] -> REltIdMap (Maybe SuperOwl)
 owlPFState_getSuperOwls OwlPFState {..} rids = foldr (\rid acc -> IM.insert rid (owlTree_findSuperOwl _owlPFState_owlTree rid) acc) IM.empty rids
 
 emptyOwlPFState :: OwlPFState
-emptyOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 0))
+emptyOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 1))
 
 sPotatoFlow_to_owlPFState :: SPotatoFlow -> OwlPFState
 sPotatoFlow_to_owlPFState SPotatoFlow {..} = r where

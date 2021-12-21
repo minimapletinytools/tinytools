@@ -2,6 +2,7 @@
 
 
 ----------
+stack exec -- potato-flow-vty-exe mycommandlineargs
 stack test --test-arguments='--match "Parliament"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
@@ -50,6 +51,12 @@ data Attach = Attach {
     -Prob better to do this in Goat rather than GoatWidget (i.e. don't use reflex)
 -must support empty doc state
   -or maybe it just always creates a new empty file in these cases?
+
+:: no MDI
+-CLI open file
+  -opens file, sets directory to file's root dir
+-no open file
+  -opens tutorial, sets directory to home dir
 
 
 
