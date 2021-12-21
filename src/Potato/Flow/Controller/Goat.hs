@@ -283,6 +283,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
+  -- | Process commands |
   goatCmdTempOutput = case _goatState_handler of
     SomePotatoHandler handler -> case cmd of
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
@@ -486,7 +487,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                 -- unhandled input
                 _ -> makeGoatCmdTempOutputFromNothing goatState
 
-  -- update OwlPFWorkspace from pho
+  -- | update OwlPFWorkspace from GoatCmdTempOutput |
   (next_workspace, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_workspace, IM.empty)
@@ -495,18 +496,18 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       r2 = _owlPFWorkspace_lastChanges r1
   next_pFState = _owlPFWorkspace_pFState next_workspace
 
-  -- update pan from pho
+  -- | update pan from GoatCmdTempOutput |
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
     Nothing -> _goatState_pan
     Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
       V2 cx0 cy0 = _goatState_pan
 
-  -- update layersState from pho
+  -- | get layersState from GoatCmdTempOutput |
   next_layersState'' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
     Nothing -> _goatState_layersState
     Just ls -> ls
 
-  -- get selection from pho
+  -- | get selection from GoatCmdTempOutput |
   mSelectionFromPho = case _goatCmdTempOutput_select goatCmdTempOutput of
     Nothing -> Nothing
     --Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
@@ -517,7 +518,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         else sel
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
-  -- update selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate)
+  -- | compute selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate) |
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap_afterEvent
     then (False, _goatState_selection)
     else r where
@@ -545,33 +546,28 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             Just (Just x) -> Just x
         else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
 
-
+  -- | update the new selection based on previous computations|
   (isNewSelection, next_selection) = case mSelectionFromPho of
     Just x  -> assert (not isNewSelection') (True, x)
     -- better/more expensive check to ensure mSelectionFromPho stuff is mutually exclusive to selectionAfterChanges
     --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
     Nothing -> (isNewSelection', selectionAfterChanges)
 
-
-
-
+  -- | TODO auto-expand folders and compute LayersState |
   -- TODO auto expand folders for selected elements
   -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
   next_layersState' = next_layersState''
 
+  -- | update the next handler |
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
-
   filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree next_pFState) (_superOwl_id sowl) (_layersState_meta next_layersState')
   next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) filterHiddenOrLocked next_selection
-
   nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
-
   next_handler' = if isNewSelection
     -- if there is a new selection, update the handler with new selection if handler wasn't active
     then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_canvasSelection
     -- otherwise, use the returned handler or make a new one from selection
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
-
   next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- TODO you only need to do this if handler is one that came from mHandlerFromPho
     -- if there was a non-canvas event, reset the handler D:
@@ -580,16 +576,20 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
+  -- | TODO enter rename mode for newly created folders |
   -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
     -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
 
+  -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState = updateLayers next_pFState cslmap_afterEvent next_layersState'
+
+  -- | compute SuperOwlChanges for rendering
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_afterEvent `IM.union` cslmap_fromLayersHide
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
-  -- update the rendered region if we moved the screen
+  -- | update the rendered region if we moved the screen |
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
@@ -597,12 +597,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
-  -- render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
+  -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
   next_renderedCanvas = if IM.null cslmap_forRendering
     then next_renderedCanvas'
     else (assert $ not didScreenRegionMove) $ updateCanvas cslmap_forRendering needsupdateaabbs next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) next_renderedCanvas'
 
-  -- render the selection (just rerender it every time)
+  -- | render the selection |
+  -- we just re-render everything for now
   selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
   next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering

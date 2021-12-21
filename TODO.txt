@@ -37,8 +37,9 @@ data Attach = Attach {
   DONE-keep a cache `Map REltId IntSet` to track what is attached to what
     -you can probabyl update this cache using the changeset that gets returned after a change
   -after change, add all elts that are attached to it as well
-    -does this break anything? i.e. auto select after create?
+    IGNORE-does this break anything? i.e. auto select after create?
       -maybe fix by tracking what the last operation was
+      -oh, no you can just add it in Goat and do selection without the new stuff
     -can be generated after change set is made (maybe even inside of Goat)
       DONE-lookup all changed ids in the cache and add everything in found sets to change set
         -currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
