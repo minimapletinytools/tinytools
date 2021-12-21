@@ -40,7 +40,7 @@ data Attach = Attach {
     -does this break anything? i.e. auto select after create?
       -maybe fix by tracking what the last operation was
     -can be generated after change set is made (maybe even inside of Goat)
-      -lookup all changed ids in the cache and add everything in found sets to change set
+      DONE-lookup all changed ids in the cache and add everything in found sets to change set
         -currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
   DONE-when copy pasting, do a local update of all attached REltId
     -decide if you want to break connection that aren't in local copy pasta set or not

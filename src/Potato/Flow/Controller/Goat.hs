@@ -265,6 +265,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_canvasSelection = _goatState_canvasSelection
   }
 
+
 -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
 -- TODO extract this method into another file
 -- TODO make State monad for this
@@ -486,7 +487,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                 _ -> makeGoatCmdTempOutputFromNothing goatState
 
   -- update OwlPFWorkspace from pho
-  (next_workspace, cslmap) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+  (next_workspace, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_workspace, IM.empty)
     Just (_, wsev) -> (r1,r2) where
@@ -517,7 +518,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
   -- update selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate)
-  (isNewSelection', selectionAfterChanges) = if IM.null cslmap
+  (isNewSelection', selectionAfterChanges) = if IM.null cslmap_afterEvent
     then (False, _goatState_selection)
     else r where
 
@@ -526,7 +527,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       newEltFoldMapFn rid v = case v of
         Nothing     -> []
         Just sowl -> if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
-      newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap
+      newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap_afterEvent
 
       wasLoad = case cmd of
         GoatCmdLoad _ -> True
@@ -535,7 +536,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
         then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament _goatState_selection) $ \sowl ->
-          case IM.lookup (_superOwl_id sowl) cslmap of
+          case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
             -- no changes means not deleted
             Nothing                  -> Just sowl
             -- if deleted, remove it
@@ -579,14 +580,14 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
     _ -> next_handler'
 
-  -- TODO if cslmap has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
+  -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
     -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
 
-  next_layersState = updateLayers next_pFState cslmap next_layersState'
-  cslmapFromHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
-  cslmapForRendering = cslmap `IM.union` cslmapFromHide
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmapForRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
+  next_layersState = updateLayers next_pFState cslmap_afterEvent next_layersState'
+  cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
+  cslmap_forRendering = cslmap_afterEvent `IM.union` cslmap_fromLayersHide
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- update the rendered region if we moved the screen
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
@@ -597,13 +598,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     else _goatState_renderedCanvas
 
   -- render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't)
-  next_renderedCanvas = if IM.null cslmapForRendering
+  next_renderedCanvas = if IM.null cslmap_forRendering
     then next_renderedCanvas'
-    else (assert $ not didScreenRegionMove) $ updateCanvas cslmapForRendering needsupdateaabbs next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) next_renderedCanvas'
+    else (assert $ not didScreenRegionMove) $ updateCanvas cslmap_forRendering needsupdateaabbs next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) next_renderedCanvas'
 
   -- render the selection (just rerender it every time)
   selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
-  next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmapForRendering
+  next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then _goatState_renderedSelection
     -- TODO omit hidden stuff here???  (or maybe not!)
@@ -615,7 +616,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     else _goatState_renderedSelection
   prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
   curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
-  -- TODO you can be even smarter about this by combining cslmapForRendering I think
+  -- TODO you can be even smarter about this by combining cslmap_forRendering I think
   cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
   -- you need to do something like this but this is wrong....
   --(needsupdateaabbsforrenderselection, _) = update_bPTree cslmapForSelectionRendering (_broadPhaseState_bPTree next_broadPhaseState)

@@ -206,6 +206,7 @@ addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am
   changeset = IS.unions . catMaybes $ foldr (\k acc -> IM.lookup k am : acc) [] (IM.keys changes)
 
   -- add it to changes
+  -- currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
   newchanges = IM.fromList . filter (\(_,x) -> isJust x) . fmap (\rid -> (rid, owlTree_findSuperOwl owltreeafterchanges rid)) .  IS.toList $ changeset
 
   -- return the combined changes
