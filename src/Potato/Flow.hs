@@ -10,6 +10,7 @@ module Potato.Flow (
   , module Potato.Flow.OwlState
   , module Potato.Flow.Owl
   , module Potato.Flow.Reflex
+  , module Potato.Flow.TutorialState
 ) where
 
 import           Potato.Flow.BroadPhase
@@ -23,3 +24,4 @@ import Potato.Flow.OwlWorkspace
 import Potato.Flow.OwlState
 import Potato.Flow.Owl
 import Potato.Flow.Reflex
+import Potato.Flow.TutorialState

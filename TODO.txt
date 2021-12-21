@@ -52,15 +52,16 @@ data Attach = Attach {
 -must support empty doc state
   -or maybe it just always creates a new empty file in these cases?
 
-:: no MDI
--CLI open file
-  -opens file, sets directory to file's root dir
--no open file
-  -opens tutorial, sets directory to home dir
-
 
 
 ::NEWEST TODO::
+-no MDI file stuff
+  DONE-CLI open file
+    DONE-opens file, sets directory to file's root dir
+  -no open file
+    DONE-sets directory to home dir
+    -opens tutorial
+
 DONE-allow deselect in layers by clicking where there are no items
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
 -locked/hidden stuff
@@ -258,6 +259,7 @@ DONE/IGNORE-color config object
   -text
   -etc
 
+-maybe make styles references instead of stored per elt
 -make a set of Goat verifiers for testing in vty UTs
 -glpyh selector-search widget
   -at least basic version which has a tab listing standard ASCII stuff
