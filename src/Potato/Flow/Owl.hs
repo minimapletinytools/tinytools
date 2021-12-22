@@ -173,6 +173,7 @@ instance IsOwl SuperOwl where
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
+-- internal helper function
 attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls sowls am = r where
   foldrfn sowl m = newmap where
@@ -185,6 +186,7 @@ attachmentMap_addSuperOwls sowls am = r where
   r = foldr foldrfn am sowls
 
 -- TODO test I have no idea if I did this right...
+-- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
 updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   -- remove deleted stuff from keys
@@ -200,6 +202,7 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
 
 
 -- TODO test
+-- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
 addChangesFromAttachmentMapToSuperOwlChanges :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
 addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am changes = r where
   -- collect all stuff attaching to changed stuff

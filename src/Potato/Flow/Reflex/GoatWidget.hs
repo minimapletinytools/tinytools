@@ -137,6 +137,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_handler         = SomePotatoHandler EmptyHandler
         , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
         , _goatState_potatoDefaultParameters = def
+        , _goatState_attachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree . fst $ _goatWidgetConfig_initialState)
         , _goatState_debugLabel      = ""
         , _goatState_selection       = isParliament_empty
         , _goatState_canvasSelection = CanvasSelection Seq.empty

@@ -46,29 +46,30 @@ catMaybesSeq = fmap fromJust . Seq.filter isJust
 
 data GoatState = GoatState {
 
-    -- TODO Refactor these out into GoatTab or something like that
-    -- TODO consider including handlers (vs regenerating from selection each time you switch tabs)
+    -- TODO make GoatTab
+    -- unique to each document
     _goatState_workspace       :: OwlPFWorkspace
     , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection       :: Selection
     , _goatState_canvasSelection :: CanvasSelection
     , _goatState_broadPhaseState :: BroadPhaseState
     , _goatState_layersState     :: LayersState
-    , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
-
     , _goatState_renderedCanvas  :: RenderedCanvasRegion
     , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
-    , _goatState_screenRegion    :: XY
-
-    , _goatState_selectedTool    :: Tool
-    , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
-
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
+    , _goatState_potatoDefaultParameters :: PotatoDefaultParameters -- TODO consider sharing this across documents?
+    , _goatState_attachmentMap   :: AttachmentMap
+
+    -- shared across documents
+    , _goatState_selectedTool    :: Tool
+    , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
+    , _goatState_screenRegion    :: XY
     , _goatState_clipboard       :: Maybe SEltTree
 
+    -- debug stuff (shared across documents)
     , _goatState_debugLabel      :: Text
-    , _goatState_debugCammands   :: [GoatCmd]
+    , _goatState_debugCommands   :: [GoatCmd]
 
   } deriving (Show)
 
@@ -274,7 +275,7 @@ foldGoatFn :: GoatCmd -> GoatState -> GoatState
 foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
-  goatState = goatStateIgnore { _goatState_debugCammands = cmd:_goatState_debugCammands }
+  goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
   --goatState = goatStateIgnore
 
   last_workspace = _goatState_workspace
@@ -584,9 +585,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState = updateLayers next_pFState cslmap_afterEvent next_layersState'
 
+  -- | update AttachmentMap based on new state  |
+  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
+
   -- | compute SuperOwlChanges for rendering
+  cslmap_withAttachments = addChangesFromAttachmentMapToSuperOwlChanges (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
-  cslmap_forRendering = cslmap_afterEvent `IM.union` cslmap_fromLayersHide
+  cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- | update the rendered region if we moved the screen |
@@ -639,4 +644,5 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       , _goatState_renderedCanvas = next_renderedCanvas
       , _goatState_renderedSelection = next_renderedSelection
       , _goatState_layersState     = next_layersState
+      , _goatState_attachmentMap = next_attachmentMap
     }
