@@ -40,7 +40,7 @@ test_basic = constructTest "keyboard movement" emptyOwlPFState bs expected where
       , EWCKeyboard (KeyboardData (KeyboardKey_Right) [])
 
     ]
-  testFirstBoxIs lbox = firstSuperOwlPredicate (Just "<box>") $ \sowl -> case isOwl_toSElt_hack sowl of
+  testFirstBoxIs lbox = firstSuperOwlPredicate (Just "<box>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
     SEltBox (SBox lbox _ _ _ _) -> lbox == lbox
     _                           -> False
   expected = [

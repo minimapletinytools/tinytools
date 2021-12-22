@@ -124,4 +124,5 @@ instance PotatoHandler SimpleLineHandler where
         else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
       _ -> []
     r = HandlerRenderOutput (fmap defaultRenderHandle boxes)
+
   pIsHandlerActive = _simpleLineHandler_active

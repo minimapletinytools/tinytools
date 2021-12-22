@@ -50,12 +50,12 @@ boxTextInputState_basic_test = let
 
 
 checkSBoxText :: Text -> Text -> EverythingPredicate
-checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
+checkSBoxText label text = firstSuperOwlPredicate (Just label) $ \sowl -> case hasOwlElt_toSElt_hack sowl of
   SEltBox (SBox _ _ _ (SBoxText {..}) _) -> _sBoxText_text == text
   _                                         -> False
 
 checkSBoxLabel :: Text -> Text -> EverythingPredicate
-checkSBoxLabel label text = firstSuperOwlPredicate (Just label) $ \sowl -> case isOwl_toSElt_hack sowl of
+checkSBoxLabel label text = firstSuperOwlPredicate (Just label) $ \sowl -> case hasOwlElt_toSElt_hack sowl of
   SEltBox sbox -> _sBoxTitle_title (_sBox_title sbox) == Just text
   _                                         -> False
 
@@ -102,7 +102,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -134,7 +134,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox _ _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
         _                                 -> False
       , checkHandlerNameAndState handlerName_boxText True
@@ -175,7 +175,7 @@ test_handler_state = constructTest "handler state" emptyOwlPFState bs expected w
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -234,7 +234,7 @@ test_negative = constructTest "negative" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             -- old non-canonical version, keeping here in case we ever decide to go back to non-canonical version
             --SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 (-10) (-10))
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 0 0) (V2 (10) (10))
@@ -282,7 +282,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 2 2)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -297,7 +297,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , EqPredicate _goatState_selectedTool Tool_Select
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case isOwl_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 0 0)
         _                           -> False
 
@@ -450,7 +450,7 @@ test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case isOwl_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1

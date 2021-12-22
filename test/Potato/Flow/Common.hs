@@ -162,9 +162,9 @@ firstSelectedSuperOwlWithOwlTreePredicate mlabel f = FunctionPredicate fn where
     owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
     mfirst = case mlabel of
       Nothing    -> Seq.lookup 0 s
-      Just label -> find (\sowl -> isOwl_name sowl == label) s
+      Just label -> find (\sowl -> hasOwlElt_name sowl == label) s
     r = case mfirst of
-      Nothing    -> ("No elt with label " <> show mlabel <> show (fmap isOwl_name s), False)
+      Nothing    -> ("No elt with label " <> show mlabel <> show (fmap hasOwlElt_name s), False)
       Just first -> ("First selected: " <> show first, f owltree first)
 
 firstSelectedSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
@@ -179,7 +179,7 @@ firstSuperOwlPredicate mlabel f = FunctionPredicate $
         Nothing -> case sowls of
           []  -> Nothing
           x:_ -> Just x
-        Just label -> case find (\sowl -> isOwl_name sowl == label) sowls of
+        Just label -> case find (\sowl -> hasOwlElt_name sowl == label) sowls of
           Nothing     -> Nothing
           Just sowl -> Just sowl
     in case mfirst of

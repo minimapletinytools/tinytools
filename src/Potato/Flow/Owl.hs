@@ -33,11 +33,16 @@ class MommyOwl o where
   mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
   mommyOwl_id :: o -> REltId
 
-class IsOwl o where
-  isOwl_name :: o -> Text
-  isOwl_isFolder :: o -> Bool
-  isOwl_toSElt_hack :: o -> SElt
-  isOwl_toSEltLabel_hack :: o -> SEltLabel
+class HasOwlElt o where
+  hasOwlElt_owlElt :: o -> OwlElt
+  hasOwlElt_name :: o -> Text
+  hasOwlElt_name = hasOwlElt_name . hasOwlElt_owlElt
+  hasOwlElt_isFolder :: o -> Bool
+  hasOwlElt_isFolder = hasOwlElt_isFolder . hasOwlElt_owlElt
+  hasOwlElt_toSElt_hack :: o -> SElt
+  hasOwlElt_toSElt_hack = hasOwlElt_toSElt_hack . hasOwlElt_owlElt
+  hasOwlElt_toSEltLabel_hack :: o -> SEltLabel
+  hasOwlElt_toSEltLabel_hack = hasOwlElt_toSEltLabel_hack . hasOwlElt_owlElt
 
 data OwlInfo = OwlInfo {
     _owlInfo_name :: Text
@@ -55,17 +60,18 @@ instance MommyOwl OwlElt where
   mommyOwl_kiddos (OwlEltFolder _ kiddos) = Just kiddos
   mommyOwl_kiddos _ = Nothing
 
-instance IsOwl OwlElt where
-  isOwl_name (OwlEltFolder (OwlInfo name) _) = name
-  isOwl_name (OwlEltSElt (OwlInfo name) _) = name
-  isOwl_isFolder (OwlEltFolder _ _) = True
-  isOwl_isFolder _ = False
-  isOwl_toSElt_hack = \case
+instance HasOwlElt OwlElt where
+  hasOwlElt_owlElt = id
+  hasOwlElt_name (OwlEltFolder (OwlInfo name) _) = name
+  hasOwlElt_name (OwlEltSElt (OwlInfo name) _) = name
+  hasOwlElt_isFolder (OwlEltFolder _ _) = True
+  hasOwlElt_isFolder _ = False
+  hasOwlElt_toSElt_hack = \case
     OwlEltSElt _ selt -> selt
     _ -> SEltFolderStart
-  isOwl_toSEltLabel_hack o = case o of
-    OwlEltSElt _ selt -> SEltLabel (isOwl_name o) selt
-    _ -> SEltLabel (isOwl_name o) SEltFolderStart
+  hasOwlElt_toSEltLabel_hack o = case o of
+    OwlEltSElt _ selt -> SEltLabel (hasOwlElt_name o) selt
+    _ -> SEltLabel (hasOwlElt_name o) SEltFolderStart
 
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
 
@@ -162,13 +168,8 @@ instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
   mommyOwl_id = _superOwl_id
 
-instance IsOwl SuperOwl where
-  isOwl_name sowl = isOwl_name $ _superOwl_elt sowl
-  isOwl_isFolder sowl = isOwl_isFolder $ _superOwl_elt sowl
-  isOwl_toSElt_hack = owlElt_toSElt_hack . _superOwl_elt
-  isOwl_toSEltLabel_hack sowl = case _superOwl_elt sowl of
-    OwlEltSElt (OwlInfo name) selt -> SEltLabel name selt
-    OwlEltFolder (OwlInfo name) _ -> SEltLabel name SEltFolderStart
+instance HasOwlElt SuperOwl where
+  hasOwlElt_owlElt = _superOwl_elt
 
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
@@ -253,7 +254,7 @@ superOwl_depth :: SuperOwl -> Int
 superOwl_depth SuperOwl {..} = _owlEltMeta_depth _superOwl_meta
 
 -- |
--- TODO probably change this to isOwl_getAttachments
+-- TODO probably change this to hasOwlElt_getAttachments
 -- does not get attachments in children
 superOwl_getAttachments :: SuperOwl -> [Attachment]
 superOwl_getAttachments sowl = case _superOwl_elt sowl of
@@ -809,6 +810,18 @@ owliteratechildrenat od rid = owlTree_foldChildrenAt (|>) Seq.empty od rid where
 -- | iterates everything in the directory
 owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
+
+class HasOwlTree o where
+  hasOwlTree_toOwlTree :: o -> OwlTree
+  hasOwlTree_findSuperOwl :: o -> REltId -> Maybe SuperOwl
+  hasOwlTree_findSuperOwl o rid = hasOwlTree_findSuperOwl (hasOwlTree_toOwlTree o) rid
+  hasOwlTree_mustFindSuperOwl :: HasCallStack => o -> REltId -> SuperOwl
+  hasOwlTree_mustFindSuperOwl o rid = hasOwlTree_mustFindSuperOwl (hasOwlTree_toOwlTree o) rid
+
+instance HasOwlTree OwlTree where
+  hasOwlTree_toOwlTree = id
+  hasOwlTree_findSuperOwl = owlTree_findSuperOwl
+  hasOwlTree_mustFindSuperOwl = owlTree_mustFindSuperOwl
 
 -- TODO
 --owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a

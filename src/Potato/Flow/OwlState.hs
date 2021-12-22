@@ -26,6 +26,9 @@ data OwlPFState = OwlPFState {
   , _owlPFState_canvas    :: SCanvas
 } deriving (Show, Eq, Generic)
 
+instance HasOwlTree OwlPFState where
+  hasOwlTree_toOwlTree = _owlPFState_owlTree
+
 -- TODO delete replace with PotatoShow
 owlPFState_prettyPrintForDebugging :: OwlPFState -> Text
 owlPFState_prettyPrintForDebugging OwlPFState {..} = owlTree_prettyPrint _owlPFState_owlTree <> show _owlPFState_canvas

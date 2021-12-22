@@ -290,7 +290,7 @@ everything_newfolder_test = constructTest "new folder" owlpfstate_basic1 bs expe
     ]
   expected = [
       LabelCheck "New Folder (no selection)"
-      , firstSelectedSuperOwlPredicate (Just "<folder>") (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate (Just "<folder>") (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltFolderStart -> True
         _                                        -> False)
 
@@ -578,7 +578,7 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       -- check that it got moved to 0 0
-      , firstSelectedSuperOwlPredicate Nothing (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate Nothing (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == (-2) && y == (-2)
         _                                        -> False)
 
@@ -591,19 +591,19 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       -- check that first elt A got moved over by 2
       -- TODO also check elt B
-      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 
       , LabelCheck "Mainpulate A+B then cancel"
       , checkHandlerNameAndState handlerName_box True
-      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 3 && y == 3
         _                                        -> False)
-      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
-      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case isOwl_toSElt_hack sowl of
+      , firstSelectedSuperOwlPredicate (Just "<box>") (\sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 0 && y == (-2)
         _                                        -> False)
 

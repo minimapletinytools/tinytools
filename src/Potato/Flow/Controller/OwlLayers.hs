@@ -77,7 +77,7 @@ layerEntry_depth :: LayerEntry -> Int
 layerEntry_depth LayerEntry {..} = _owlEltMeta_depth . _superOwl_meta $ _layerEntry_superOwl
 
 layerEntry_display :: LayerEntry -> Text
-layerEntry_display LayerEntry {..} = isOwl_name _layerEntry_superOwl
+layerEntry_display LayerEntry {..} = hasOwlElt_name _layerEntry_superOwl
 
 layerEntry_isFolder :: LayerEntry -> Bool
 layerEntry_isFolder LayerEntry {..} = mommyOwl_hasKiddos _layerEntry_superOwl
@@ -108,7 +108,7 @@ layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
       LHS_True_InheritTrue  -> "▓"
       LHS_False_InheritTrue -> "▒"
     sowl = _layerEntry_superOwl
-    r = T.replicate (layerEntry_depth le) " " <> collapseText <> hideText <> lockText <> " " <> isOwl_name sowl <> "\n" <> acc
+    r = T.replicate (layerEntry_depth le) " " <> collapseText <> hideText <> lockText <> " " <> hasOwlElt_name sowl <> "\n" <> acc
 
 data LayersState = LayersState {
     -- mapping from REltId to element meta data

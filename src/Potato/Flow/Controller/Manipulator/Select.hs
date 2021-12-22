@@ -63,7 +63,7 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   selectedsowls'' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True
-    sowl -> doesSEltIntersectBox selectBox (isOwl_toSElt_hack sowl)
+    sowl -> doesSEltIntersectBox selectBox (hasOwlElt_toSElt_hack sowl)
 
   -- remove lock and hidden stuff
   selectedsowls' = flip filter selectedsowls'' $ \sowl -> not (layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) lmm)
