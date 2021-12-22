@@ -39,6 +39,8 @@ class HasOwlElt o where
   hasOwlElt_name = hasOwlElt_name . hasOwlElt_owlElt
   hasOwlElt_isFolder :: o -> Bool
   hasOwlElt_isFolder = hasOwlElt_isFolder . hasOwlElt_owlElt
+  hasOwlElt_attachments :: o -> [Attachment]
+  hasOwlElt_attachments = hasOwlElt_attachments . hasOwlElt_owlElt
   hasOwlElt_toSElt_hack :: o -> SElt
   hasOwlElt_toSElt_hack = hasOwlElt_toSElt_hack . hasOwlElt_owlElt
   hasOwlElt_toSEltLabel_hack :: o -> SEltLabel
@@ -66,6 +68,11 @@ instance HasOwlElt OwlElt where
   hasOwlElt_name (OwlEltSElt (OwlInfo name) _) = name
   hasOwlElt_isFolder (OwlEltFolder _ _) = True
   hasOwlElt_isFolder _ = False
+  hasOwlElt_attachments = \case
+    OwlEltFolder _ _ -> []
+    OwlEltSElt _ selt -> case selt of
+      SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
+      _ -> []
   hasOwlElt_toSElt_hack = \case
     OwlEltSElt _ selt -> selt
     _ -> SEltFolderStart
@@ -178,7 +185,7 @@ type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls sowls am = r where
   foldrfn sowl m = newmap where
-    attachedstuff = superOwl_getAttachments sowl
+    attachedstuff = hasOwlElt_attachments sowl
     alterfn stuff ms = Just $ case ms of
       Nothing -> (IS.singleton stuff)
       Just s -> IS.insert stuff s
@@ -253,15 +260,6 @@ superOwl_parentId SuperOwl {..} = _owlEltMeta_parent _superOwl_meta
 superOwl_depth :: SuperOwl -> Int
 superOwl_depth SuperOwl {..} = _owlEltMeta_depth _superOwl_meta
 
--- |
--- TODO probably change this to hasOwlElt_getAttachments
--- does not get attachments in children
-superOwl_getAttachments :: SuperOwl -> [Attachment]
-superOwl_getAttachments sowl = case _superOwl_elt sowl of
-  OwlEltFolder _ _ -> []
-  OwlEltSElt _ selt -> case selt of
-    SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
-    _ -> []
 
 owlTree_superOwlNthParentId :: OwlTree -> SuperOwl -> Int -> REltId
 owlTree_superOwlNthParentId _ sowl 0 = _superOwl_id sowl
@@ -766,7 +764,7 @@ owlTree_makeAttachmentMap od = attachmentMap_addSuperOwls (owliterateall od) IM.
 
 -- | return fales if any attachments are dangling (i.e. they are attached to a target that does not exist in the tree)
 owlTree_hasDanglingAttachments :: OwlTree -> Bool
-owlTree_hasDanglingAttachments od@OwlTree {..} = not $ all (\sowl -> all (\x -> IM.member x (_owlTree_mapping)) (fmap _attachment_target $ superOwl_getAttachments sowl)) (owliterateall od)
+owlTree_hasDanglingAttachments od@OwlTree {..} = not $ all (\sowl -> all (\x -> IM.member x (_owlTree_mapping)) (fmap _attachment_target $ hasOwlElt_attachments sowl)) (owliterateall od)
 
 owlTree_topSuperOwls :: OwlTree -> Seq SuperOwl
 owlTree_topSuperOwls od = r
