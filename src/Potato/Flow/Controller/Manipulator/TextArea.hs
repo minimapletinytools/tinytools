@@ -124,6 +124,7 @@ instance PotatoHandler TextAreaHandler where
     cursor = RenderHandle {
         _renderHandle_box = LBox (p + _textAreaHandler_relCursor tah) (V2 1 1)
         , _renderHandle_char = Map.lookup (_textAreaHandler_relCursor tah) _sTextArea_text
+        , _renderHandle_color = RHC_Default
       }
     r = pRenderHandler (_textAreaHandler_prevHandler tah) phi <>  HandlerRenderOutput [cursor]
   pIsHandlerActive tah = False

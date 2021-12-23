@@ -110,17 +110,17 @@ instance Default LayersViewHandlerRenderOutput where
       _layersViewHandlerRenderOutput_entries = Seq.empty
     }
 
+data RenderHandleColor = RHC_Default | RHC_Attachment | RHC_AttachmentHighlight deriving (Show, Eq)
+
 -- TODO come up with better name
 data RenderHandle = RenderHandle {
     _renderHandle_box :: LBox
     , _renderHandle_char :: Maybe PChar
+    , _renderHandle_color :: RenderHandleColor
   } deriving (Show, Eq)
 
 defaultRenderHandle :: LBox -> RenderHandle
-defaultRenderHandle lbox = RenderHandle lbox (Just 'X')
-
-makeRenderHandle :: LBox -> PChar -> RenderHandle
-makeRenderHandle lbox c = RenderHandle lbox (Just c)
+defaultRenderHandle lbox = RenderHandle lbox (Just 'X') RHC_Default
 
 -- TODO come up with better name
 data HandlerRenderOutput = HandlerRenderOutput {

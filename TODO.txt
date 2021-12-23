@@ -33,7 +33,8 @@ WIDE
 
 :: FANCY LINES ::
 -convert simple line to auto connect to attachments
-  -attachment rendering when adding / editing lines...
+  DONE-attachment rendering when adding / editing lines...
+  -if attaching to box X then change highlight on all box X stuff
   -auto attach solver
 -multiline
   -no attachments for now
@@ -46,6 +47,7 @@ WIDE
     DONE-sets directory to home dir
     -opens tutorial
 
+-different color highlighting on render handles
 DONE-allow deselect in layers by clicking where there are no items
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
 -locked/hidden stuff

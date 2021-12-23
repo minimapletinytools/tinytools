@@ -56,18 +56,18 @@ drag 2 up
 -}
 
 isCartesian :: XY -> XY -> Bool
-isCartesian (V2 ax ay) (V2 bx by) = ax == bx || ay == by 
+isCartesian (V2 ax ay) (V2 bx by) = ax == bx || ay == by
 
 -- | predicate holds if pt is between a and b
 -- expects a b to be in the same cartesian plane
 isBetween :: XY -> (XY, XY) -> Bool
 isBetween (V2 px py) (a@(V2 ax ay), b@(V2 bx by)) = assert (isCartesian a b) $ if ax == bx && ax == px
   -- if in same vertical line
-  then (py >= ay && py <= by) || (py <= ay && py >= by) 
+  then (py >= ay && py <= by) || (py <= ay && py >= by)
   else if ay == by && ay == py
     -- if in same horizontal line
-    then (px >= ax && px <= bx) || (px <= ax && px >= bx) 
-    else False 
+    then (px >= ax && px <= bx) || (px <= ax && px >= bx)
+    else False
 
 splitFind :: (a -> Bool) -> [a] -> ([a],[a])
 splitFind p l = r where
@@ -79,8 +79,8 @@ splitFind p l = r where
   r = splitFind' [] l
 
 -- first elt of second list is currently selected anchor (no anchor selected if empty)
--- by assumption each anchor can only differ in one component from the previous one 
--- anchors must not continue forward in same direction 
+-- by assumption each anchor can only differ in one component from the previous one
+-- anchors must not continue forward in same direction
 -- not ok: 1----2----3
 --     ok: 1-3--2
 data AnchorZipper = AnchorZipper [XY] [XY] deriving (Show)
@@ -96,7 +96,7 @@ flattenAnchorsInCreation :: AnchorZipper -> [XY]
 flattenAnchorsInCreation az@(AnchorZipper xs ys) = assert (length ys == 0) $ flattenAnchors az
 
 
--- | adjacentPairs [1,2,3,4] `shouldBe` [(1,2),(2,3),(3,4)] 
+-- | adjacentPairs [1,2,3,4] `shouldBe` [(1,2),(2,3),(3,4)]
 adjacentPairs :: [a] -> [(a,a)]
 adjacentPairs [] = []
 adjacentPairs (x:[]) = []
@@ -117,14 +117,14 @@ validateAnchorZipper (AnchorZipper xs1 xs2) = r where
     -- last one was horizontal, expect vertical or reversal
     else ex == l1x || l1y - l2y > ey - l2y
 
-  foldfn e (pass, mlast1, mlast2) = if not pass 
+  foldfn e (pass, mlast1, mlast2) = if not pass
     then (False, Nothing, Nothing)
     else case mlast1 of
       Just last1 -> case mlast2 of
         Just last2 -> (check2 e last1 last2 , Just e, Just last1)
         Nothing -> (check1 e last1, Just e, Just last1)
       Nothing -> (True, Just e, Nothing)
-  
+
   (r, _, _) = foldr foldfn (True, Nothing, Nothing) (xs1<>xs2)
 
 data CartLineHandler = CartLineHandler {
@@ -156,13 +156,13 @@ last2 e1 e2 es = r where
   r = (l1, l2)
 
 -- helper method for creating new anchor at the end of a sequence of anchors (when creating new lines)
--- both input and output anchor list is REVERSED 
+-- both input and output anchor list is REVERSED
 elbowFromEnd :: XY -> [XY] -> [XY]
 elbowFromEnd pos [] = [pos]
 elbowFromEnd pos (e:[]) = r where
   V2 e1x e1y = e
   V2 dx dy = pos - e
-  r = reverse $ if dx > dy 
+  r = reverse $ if dx > dy
     then [e, V2 (e1x+dx) e1y] <> if dy == 0 then [] else [V2 (e1x+dx) (e1y + dy)]
     else [e, V2 e1x (e1y + dy)] <> if dx == 0 then [] else [V2 (e1x+dx) (e1y + dy)]
 elbowFromEnd pos ls@(e1:(e2:es)) = r where
@@ -184,7 +184,7 @@ elbowFromEnd pos ls@(e1:(e2:es)) = r where
         then pos:e2:es
         --last was horizontal, go vertical first
         else (if dx == 0 then [] else [V2 (e1x+dx) (e1y + dy)]) <> (V2 e1x (e1y + dy) : ls)
-  
+
 
 smartAutoPathDown :: XY -> [XY] -> [XY]
 smartAutoPathDown pos es = reverse $ elbowFromEnd pos (reverse es)
@@ -229,11 +229,11 @@ instance PotatoHandler CartLineHandler where
             }
           -- otherwise, smartly path dot to destination (always make 90 degree bend from current if possible)
           else Just $ setHandlerOnly $ clh {
-              _cartLineHandler_anchors = AnchorZipper 
-                (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors)) 
+              _cartLineHandler_anchors = AnchorZipper
+                (smartAutoPathDown mousexy (flattenAnchorsInCreation _cartLineHandler_anchors))
                 []
             }
-      -- TODO someday allow dragging dots on in creation case (to adjust position)  
+      -- TODO someday allow dragging dots on in creation case (to adjust position)
       MouseDragState_Dragging | _cartLineHandler_isCreation -> Just $ setHandlerOnly clh
       MouseDragState_Up | _cartLineHandler_isCreation ->  Just $ setHandlerOnly clh {
           -- disable creation mode on release (no reason besides it being convenient code wise)
@@ -247,7 +247,7 @@ instance PotatoHandler CartLineHandler where
         -- then go through and find any lines we may have clicked on
         (linefs, linebs) = splitFind (isBetween mousexy) (adjacentPairs anchors)
 
-        r = if null dotbs 
+        r = if null dotbs
           -- we did not click on any dots
           then if null linebs
             -- we found nothing, input not captured
@@ -256,7 +256,7 @@ instance PotatoHandler CartLineHandler where
             else undefined -- TODO
           -- we clicked on a dot
           else undefined -- TODO
-      
+
       -- TODO
       MouseDragState_Dragging -> r where
         r = undefined
@@ -276,6 +276,7 @@ instance PotatoHandler CartLineHandler where
     toBoxHandle isactive xy = RenderHandle {
         _renderHandle_box = LBox xy 1
         , _renderHandle_char = if isactive then Just '+' else Just 'X'
+        , _renderHandle_color = RHC_Default
       }
     AnchorZipper fronts' backs' = _cartLineHandler_anchors
     fronts = fmap (toBoxHandle False) fronts'

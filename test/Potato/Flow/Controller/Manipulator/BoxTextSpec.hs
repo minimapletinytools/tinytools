@@ -319,7 +319,7 @@ checkRenderHandlerPos pos = FunctionPredicate $ \gs ->
   -- cursor is always 4th position in HandlerRenderOutput
   in case lookup 4 hs of
     Nothing -> ("could not find render handler for " <> pHandlerName h <> " got: " <> show hs, False)
-    Just (RenderHandle (LBox p _) _) -> if p == pos
+    Just (RenderHandle (LBox p _) _ _) -> if p == pos
       then ("", True)
       else ("handler output mismatch expected: " <> show pos <> " got: " <> show p, False)
 
@@ -458,7 +458,7 @@ test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
         ]
 
       , LabelCheck "select <box> label"
-      , checkHandlerNameAndState handlerName_box True 
+      , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_boxLabel False
 
       , LabelCheck "modify <box> label"
@@ -478,5 +478,4 @@ spec = do
     fromHUnitTest $ test_zero
     fromHUnitTest $ test_output
   describe "BoxLabelHandler" $ do
-    fromHUnitTest $ test_boxlabel_basic    
-
+    fromHUnitTest $ test_boxlabel_basic

@@ -126,8 +126,12 @@ instance PotatoHandler SimpleLineHandler where
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-    attachmentBoxes' = fmap (\(a,p) -> makeRenderHandle (LBox p 1) (attachmentRenderChar a)) attachments
-    attachmentBoxes = if _simpleLineHandler_isCreation || _simpleLineHandler_active then attachmentBoxes' else []
+    fmapattachmentfn (a,p) = RenderHandle {
+        _renderHandle_box = (LBox p 1)
+        , _renderHandle_char = Just (attachmentRenderChar a)
+        , _renderHandle_color = RHC_Default
+      }
+    attachmentBoxes = if _simpleLineHandler_isCreation || _simpleLineHandler_active then fmap fmapattachmentfn attachments else []
 
     r = HandlerRenderOutput (fmap defaultRenderHandle boxes <> attachmentBoxes)
 
