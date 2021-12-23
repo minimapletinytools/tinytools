@@ -52,6 +52,8 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- * from Frontend
     , _potatoHandlerInput_tool        :: Tool
     , _potatoHandlerInput_layersState :: LayersState
+    , _potatoHandlerInput_screenRegion :: LBox
+
 
     -- * from Backend
     -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
@@ -116,6 +118,9 @@ data RenderHandle = RenderHandle {
 
 defaultRenderHandle :: LBox -> RenderHandle
 defaultRenderHandle lbox = RenderHandle lbox (Just 'X')
+
+makeRenderHandle :: LBox -> PChar -> RenderHandle
+makeRenderHandle lbox c = RenderHandle lbox (Just c)
 
 -- TODO come up with better name
 data HandlerRenderOutput = HandlerRenderOutput {

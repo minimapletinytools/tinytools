@@ -22,29 +22,6 @@ WIDE
 👁️
 🙈
 
-:: attachments
-
-data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT
-
-data Attach = Attach {
-  attach_location :: AttachmentLocation
-  -- + is right or down - is left or up
-  , attach_offset_abs :: Int
-  , attach_offset_rel :: Float
-}
-
--attachment operations that need fixing
-  DONE-keep a cache `Map REltId IntSet` to track what is attached to what
-    -you can probabyl update this cache using the changeset that gets returned after a change
-  -after change, add all elts that are attached to it as well
-    IGNORE-does this break anything? i.e. auto select after create?
-      -maybe fix by tracking what the last operation was
-      -oh, no you can just add it in Goat and do selection without the new stuff
-    -can be generated after change set is made (maybe even inside of Goat)
-      DONE-lookup all changed ids in the cache and add everything in found sets to change set
-        -currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
-  DONE-when copy pasting, do a local update of all attached REltId
-    -decide if you want to break connection that aren't in local copy pasta set or not
 
 :: MDI
 -Flow needs some kind of switcher on all input events/dynamics
@@ -54,6 +31,12 @@ data Attach = Attach {
   -or maybe it just always creates a new empty file in these cases?
 
 
+:: FANCY LINES ::
+-convert simple line to auto connect to attachments
+  -attachment rendering when adding / editing lines...
+  -auto attach solver
+-multiline
+  -no attachments for now
 
 ::NEWEST TODO::
 -no MDI file stuff
@@ -145,9 +128,10 @@ DONE-allow deselect in layers by clicking where there are no items
   DONE-ctrl-s to save
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
--split up GoatWidget into Goat and GoatWidget
-  -move GoatWidget into Reflex folder
+-add mouse hover support (for when you do web port)
 
+DONE-split up GoatWidget into Goat and GoatWidget
+  -move GoatWidget into Reflex folder
 DONE-UT ControllerMeta loading
   -ugh
 DONE-finish SetPotatoDefaultParams...
@@ -229,21 +213,21 @@ DONE-box labels
   -keyboard input
     DONE-box handler
     -for line handler it should operate on the last anchor selected
-  -layer show/hide
-    -test impl
-    -refine UI
-    -probably easiest to do inside of updateCanvas
-  -save, save as, open, print dialogs
-    -you want a settings widget to track which is current directory/file
   -live selection preview
   -handlerrenderoutput should be bale to do grey background for text boxes and stuff
   -multi-line handler
-  DONE-freeform
   -toggle box to textbox to freeform
     -this operation can not be reversed popup :O
   -user settings object in vty
   -MDI refactor
   -box label text alignment parameters
+  DONE-freeform
+  DONE-layer show/hide
+    -test impl
+    -refine UI
+    -probably easiest to do inside of updateCanvas
+  DONE/IGNORE-save, save as, open, print dialogs
+    -you want a settings widget to track which is current directory/file
   DONE-selection box
   DONE-separate selection rendering
 DONE-still getting same source assert when dragging to/from layers/canvas
@@ -806,6 +790,29 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+:: 12/21/2021 attachments
+data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT
+
+data Attach = Attach {
+  attach_location :: AttachmentLocation
+  -- + is right or down - is left or up
+  , attach_offset_abs :: Int
+  , attach_offset_rel :: Float
+}
+
+DONE-attachment operations that need fixing
+  DONE-keep a cache `Map REltId IntSet` to track what is attached to what
+    -you can probabyl update this cache using the changeset that gets returned after a change
+  DONE-after change, add all elts that are attached to it as well
+    IGNORE-does this break anything? i.e. auto select after create?
+      -maybe fix by tracking what the last operation was
+      -oh, no you can just add it in Goat and do selection without the new stuff
+    -can be generated after change set is made (maybe even inside of Goat)
+      DONE-lookup all changed ids in the cache and add everything in found sets to change set
+        -currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
+  DONE-when copy pasting, do a local update of all attached REltId
+    -decide if you want to break connection that aren't in local copy pasta set or not
 
 :: 3/2020 Menu Spec
 

@@ -16,6 +16,7 @@ import           Potato.Flow.Types
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
+import           Potato.Flow.Attachments
 
 import           Control.Exception
 import           Data.Default
@@ -123,6 +124,11 @@ instance PotatoHandler SimpleLineHandler where
         then [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
         else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
       _ -> []
-    r = HandlerRenderOutput (fmap defaultRenderHandle boxes)
+
+    attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+    attachmentBoxes' = fmap (\(a,p) -> makeRenderHandle (LBox p 1) (attachmentRenderChar a)) attachments
+    attachmentBoxes = if _simpleLineHandler_isCreation || _simpleLineHandler_active then attachmentBoxes' else []
+
+    r = HandlerRenderOutput (fmap defaultRenderHandle boxes <> attachmentBoxes)
 
   pIsHandlerActive = _simpleLineHandler_active

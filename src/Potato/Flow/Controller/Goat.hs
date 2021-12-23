@@ -260,6 +260,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
     , _potatoHandlerInput_tool = _goatState_selectedTool
+    , _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
 
     , _potatoHandlerInput_layersState     = _goatState_layersState
     , _potatoHandlerInput_selection   = _goatState_selection

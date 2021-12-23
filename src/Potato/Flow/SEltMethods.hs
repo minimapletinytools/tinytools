@@ -244,6 +244,11 @@ sBox_drawer sbox@SBox {..} = r where
         _                  -> rfnborder
     }
 
+-- TODO 
+simpleLineSolver :: (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> [XY]
+simpleLineSolver = undefined
+
+
 sSimpleLine_drawer :: SSimpleLine -> SEltDrawer
 sSimpleLine_drawer sline@SSimpleLine {..} = r where
 

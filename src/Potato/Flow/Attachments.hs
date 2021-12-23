@@ -3,6 +3,7 @@ module Potato.Flow.Attachments (
   attachLocationsFromLBox
   , owlElt_availableAttachments
   , getAvailableAttachments
+  , attachmentRenderChar
 ) where
 
 import           Relude
@@ -17,18 +18,18 @@ import           Potato.Flow.Types
 
 -- TODO put me elsewhere
 attachLocationsFromLBox :: Bool -> LBox -> [(AttachmentLocation, XY)]
-attachLocationsFromLBox offsetBorder (LBox (V2 x y) (V2 w h)) = if offsetBorder
+attachLocationsFromLBox offsetBorder (LBox (V2 x y) (V2 w h)) = if not offsetBorder
   then
-    [ (AL_TOP, V2 ((x+w) `div` 2) y)
-    , (AL_BOT, V2 ((x+w) `div` 2) (y+h))
-    , (AL_LEFT, V2 x ((y+h) `div` 2))
-    , (AL_RIGHT, V2 (x+w) ((y+h) `div` 2))
+    [ (AL_TOP, V2 (x+w `div` 2) y)
+    , (AL_BOT, V2 (x+w `div` 2) (y+h-1))
+    , (AL_LEFT, V2 x (y+h `div` 2 ))
+    , (AL_RIGHT, V2 (x+w-1) (y+h `div` 2 ))
     ]
   else
-    [ (AL_TOP, V2 ((x+w) `div` 2) (y-1))
-    , (AL_BOT, V2 ((x+w) `div` 2) (y+h+1))
-    , (AL_LEFT, V2 (x-1) ((y+h) `div` 2))
-    , (AL_RIGHT, V2 (x+w-1) ((y+h) `div` 2))
+    [ (AL_TOP, V2 (x+w `div` 2) (y-1))
+    , (AL_BOT, V2 (x+w `div` 2) (y+h))
+    , (AL_LEFT, V2 (x-1) (y+h `div` 2))
+    , (AL_RIGHT, V2 (x+w) (y+h `div` 2))
     ]
 
 owlElt_availableAttachments :: Bool -> OwlElt -> [(AttachmentLocation, XY)]
@@ -46,3 +47,10 @@ getAvailableAttachments offsetBorder pfs bps screenRegion = r where
   sowls = fmap (hasOwlTree_mustFindSuperOwl pfs) culled
   fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlElt_availableAttachments offsetBorder (_superOwl_elt sowl)
   r = join $ fmap fmapfn sowls
+
+attachmentRenderChar :: Attachment -> PChar
+attachmentRenderChar att = case _attachment_location att of
+  AL_TOP -> '⇈'
+  AL_BOT -> '⇊'
+  AL_LEFT -> '⇇'
+  AL_RIGHT -> '⇉'
