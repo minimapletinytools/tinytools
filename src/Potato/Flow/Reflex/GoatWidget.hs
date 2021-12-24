@@ -104,6 +104,7 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_canvas              :: Dynamic t SCanvas -- TODO DELETE just use OwlPFState
   , _goatWidget_renderedCanvas      :: Dynamic t RenderedCanvasRegion
   , _goatWidget_renderedSelection      :: Dynamic t RenderedCanvasRegion
+  , _goatWidget_unsavedChanges     :: Dynamic t Bool
 
   -- TODO this is no longer debug (or maybe expose just OwlPFState part)
   -- debug stuff prob
@@ -206,6 +207,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_layersHandlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
+  r_unsavedChanges <- holdUniqDyn $ fmap (goatState_hasUnsavedChanges) goatDyn
 
   {- this causes 4 calls to foldGoatFn per tick :(
   let
@@ -239,5 +241,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _goatWidget_renderedSelection = r_renderedSelection
       , _goatWidget_handlerRenderOutput =  r_handlerRenderOutput
       , _goatWidget_layersHandlerRenderOutput = r_layersHandlerRenderOutput
+      , _goatWidget_unsavedChanges = r_unsavedChanges
       , _goatWidget_DEBUG_goatState = goatDyn
     }
