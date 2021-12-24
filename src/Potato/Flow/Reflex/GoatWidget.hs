@@ -58,7 +58,10 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   , _goatWidgetConfig_paramsEvent    :: Event t ControllersWithId
   , _goatWidgetConfig_canvasSize     :: Event t XY
   , _goatWidgetConfig_newFolder :: Event t ()
+
+  -- command based (via new endo style)
   , _goatWidgetConfig_setPotatoDefaultParameters :: Event t SetPotatoDefaultParameters
+  , _goatWidgetConfig_markSaved :: Event t ()
 
 
   -- debugging
@@ -74,11 +77,13 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_mouse     = never
     , _goatWidgetConfig_keyboard = never
     , _goatWidgetConfig_paramsEvent = never
-    , _goatWidgetConfig_setDebugLabel = never
     , _goatWidgetConfig_unicodeWidthFn = Nothing
     , _goatWidgetConfig_canvasRegionDim = never
     , _goatWidgetConfig_canvasSize = never
     , _goatWidgetConfig_newFolder = never
+    , _goatWidgetConfig_setPotatoDefaultParameters = never
+    , _goatWidgetConfig_markSaved = never
+    , _goatWidgetConfig_setDebugLabel = never
     , _goatWidgetConfig_bypassEvent = never
   }
 
@@ -108,6 +113,11 @@ data GoatWidget t = GoatWidget {
 foldGoatCmdSetDefaultParams :: SetPotatoDefaultParameters -> GoatState -> GoatState
 foldGoatCmdSetDefaultParams spdp gs = gs {
     _goatState_potatoDefaultParameters = potatoDefaultParameters_set (_goatState_potatoDefaultParameters gs) spdp
+  }
+
+foldGoatCmdMarkSaved :: () -> GoatState -> GoatState
+foldGoatCmdMarkSaved _ gs = gs {
+    _goatState_workspace = markWorkspaceSaved (_goatState_workspace gs)
   }
 
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
@@ -170,12 +180,13 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
     -- new Endo folding
     setDefaultParamsEndoEvent = fmap foldGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
+    markSavedEvent = fmap foldGoatCmdMarkSaved _goatWidgetConfig_markSaved
 
   -- DELETE
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
 
   goatDyn' :: Dynamic t GoatState
-    <- foldDyn ($) initialgoat $ leftmostWarn "Goat Endo" [goatEndoEvent, setDefaultParamsEndoEvent]
+    <- foldDyn ($) initialgoat $ leftmostWarn "Goat Endo" [goatEndoEvent, setDefaultParamsEndoEvent, markSavedEvent]
 
   -- reduces # of calls to foldGoatFn to 2 :\
   let goatDyn = fmap id goatDyn'

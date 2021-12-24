@@ -22,9 +22,13 @@ import qualified Data.List.Ordered                 as L
 import qualified Data.Sequence                     as Seq
 
 
+hasUnsavedChanges  :: Bool -> EverythingPredicate
+hasUnsavedChanges unsavedchanges = FunctionPredicate $
+  (\gs -> ("expected " <> show unsavedchanges,
+    goatState_hasUnsavedChanges gs == unsavedchanges))
+
 expectState :: OwlPFState -> EverythingPredicate
 expectState pfs = FunctionPredicate $
-  -- TODO need to use fuzzy equal
   (\pfs' -> ("expected owlpfstate_basic1",
     owlTree_equivalent (_owlPFState_owlTree pfs) (_owlPFState_owlTree pfs')
     && _owlPFState_canvas pfs == _owlPFState_canvas pfs'))
@@ -610,6 +614,66 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
 
     ]
 
+-- test specific behaviour on input focus between layers and canvas
+everything_hasSavedChanges_test :: Test
+everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_basic1 bs expected where
+  bs = [
+      EWCLabel "Start"
+      , EWCNothing
+
+      , EWCLabel "Create A"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+
+      , EWCLabel "undo redo"
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+
+      , EWCLabel "save undo redo undo do"
+      , EWCMarkSaved
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+      , EWCKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
+      -- TODO
+
+      , EWCLabel "Create B"
+      , EWCTool Tool_Box
+      , EWCMouse (LMouseData (V2 1 1) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
+
+
+    ]
+  expected = [
+      LabelCheck "Start"
+      , hasUnsavedChanges False
+
+      , LabelCheck "Create A"
+      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , AlwaysPass
+      , AlwaysPass
+      , hasUnsavedChanges True
+
+      , LabelCheck "undo redo"
+      , hasUnsavedChanges False
+      , hasUnsavedChanges True
+
+      , LabelCheck "save undo redo undo do"
+      , hasUnsavedChanges False
+      , hasUnsavedChanges True
+      , hasUnsavedChanges False
+      , hasUnsavedChanges True
+
+      , LabelCheck "Create B"
+      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , AlwaysPass
+      , AlwaysPass
+      , hasUnsavedChanges True
+
+    ]
+
 spec :: Spec
 spec = do
   describe "EverythingWidget" $ do
@@ -621,3 +685,4 @@ spec = do
     fromHUnitTest $ everything_lockhiddenselectionviacanvas_test
     fromHUnitTest $ everything_basic_test
     fromHUnitTest $ everything_inputfocusing_test
+    fromHUnitTest $ everything_hasSavedChanges_test

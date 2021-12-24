@@ -2,7 +2,8 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.Goat (
-  goatState_pFState
+  goatState_hasUnsavedChanges
+  , goatState_pFState
   , GoatState(..)
   , GoatCmd(..)
   , foldGoatFn
@@ -44,6 +45,7 @@ catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
 
+-- TODO move into its own file
 data GoatState = GoatState {
 
     -- TODO make GoatTab
@@ -76,8 +78,12 @@ data GoatState = GoatState {
 goatState_pFState :: GoatState -> OwlPFState
 goatState_pFState = _owlPFWorkspace_pFState . _goatState_workspace
 
+-- TODO instance GoatState HasOwlTree
 goatState_owlTree :: GoatState -> OwlTree
 goatState_owlTree = _owlPFState_owlTree . goatState_pFState
+
+goatState_hasUnsavedChanges :: GoatState -> Bool
+goatState_hasUnsavedChanges = actionStack_hasUnsavedChanges . _owlPFWorkspace_actionStack . _goatState_workspace
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
