@@ -91,8 +91,8 @@ instance Delta Text DeltaText where
 
 instance (Show a, Eq a) => Delta a (a,a) where
   plusDelta s (b, a) = if b /= s
-    then assert (b == s) a
-    else assert (b == s) a
+    then error $ show s <> " " <> show b <> " " <> show a
+    else a
   minusDelta s (b, a) = assert (a == s) b
 
 data DeltaTextAlign = DeltaTextAlign (TextAlign, TextAlign) deriving (Eq, Generic, Show)
@@ -155,10 +155,12 @@ instance Delta SEltLabel CRename where
 data CLine = CLine {
   _cLine_deltaStart :: Maybe DeltaXY
   , _cLine_deltaEnd :: Maybe DeltaXY
+  , _cLine_deltaAttachStart :: Maybe (Maybe Attachment, Maybe Attachment)
+  , _cLine_deltaAttachEnd :: Maybe (Maybe Attachment, Maybe Attachment)
 } deriving (Eq, Generic, Show)
 instance NFData CLine
 instance Default CLine where
-  def = CLine Nothing Nothing
+  def = CLine Nothing Nothing Nothing Nothing
 
 instance Delta SSimpleLine CLine where
   plusDelta sline@SSimpleLine {..} CLine {..} = sline {
@@ -168,14 +170,26 @@ instance Delta SSimpleLine CLine where
       , _sSimpleLine_end   =  case _cLine_deltaEnd of
         Nothing -> _sSimpleLine_end
         Just d  -> plusDelta _sSimpleLine_end d
+      , _sSimpleLine_attachStart = case _cLine_deltaAttachStart of
+        Nothing -> _sSimpleLine_attachStart
+        Just d  -> plusDelta _sSimpleLine_attachStart d
+      , _sSimpleLine_attachEnd = case _cLine_deltaAttachEnd of
+        Nothing -> _sSimpleLine_attachEnd
+        Just d  -> plusDelta _sSimpleLine_attachEnd d
     }
   minusDelta sline@SSimpleLine {..} CLine {..} = sline {
       _sSimpleLine_start   = case _cLine_deltaStart of
         Nothing -> _sSimpleLine_start
         Just d  -> minusDelta _sSimpleLine_start d
-        , _sSimpleLine_end   =  case _cLine_deltaEnd of
-          Nothing -> _sSimpleLine_end
-          Just d  -> minusDelta _sSimpleLine_end d
+      , _sSimpleLine_end   =  case _cLine_deltaEnd of
+        Nothing -> _sSimpleLine_end
+        Just d  -> minusDelta _sSimpleLine_end d
+      , _sSimpleLine_attachStart = case _cLine_deltaAttachStart of
+        Nothing -> _sSimpleLine_attachStart
+        Just d  -> minusDelta _sSimpleLine_attachStart d
+      , _sSimpleLine_attachEnd = case _cLine_deltaAttachEnd of
+        Nothing -> _sSimpleLine_attachEnd
+        Just d  -> minusDelta _sSimpleLine_attachEnd d
     }
 
 data CBoxText = CBoxText {

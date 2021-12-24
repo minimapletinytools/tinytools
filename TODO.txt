@@ -36,8 +36,14 @@ WIDE
   DONE-attachment rendering when adding / editing lines...
   -if attaching to box X then change highlight on all box X stuff
   -auto attach solver
+  -move no longer makes sense on attached lines, find a way to disable it
+    -or don't disable it...
+    -remove it from Box select handler selection?
+  -we want to show line attachment points when line tool is selected, right now it will only show when you start creating a line :(
+  -UTs
 -multiline
   -no attachments for now
+
 
 ::NEWEST TODO::
 -no MDI file stuff
@@ -46,8 +52,13 @@ WIDE
   -no open file
     DONE-sets directory to home dir
     -opens tutorial
-
--different color highlighting on render handles
+-refactor
+  -consider doing some sort of generic cache method
+    -options
+      -generic call to `updateCache` method that gets called before each update operation in Goat as appropriate
+      -wrap handler in some sort of monad so you can just doUpdateCache
+  -consider adding available Attachments to PotatoHandlerInput
+DONE-different color highlighting on render handles
 DONE-allow deselect in layers by clicking where there are no items
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
 -locked/hidden stuff
