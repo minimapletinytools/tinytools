@@ -46,6 +46,9 @@ WIDE
 
 
 ::NEWEST TODO::
+-prompt save on exit
+  -proper save state handling inside of goat...
+-add state into render methods fack
 -no MDI file stuff
   DONE-CLI open file
     DONE-opens file, sets directory to file's root dir
@@ -122,7 +125,7 @@ DONE-allow deselect in layers by clicking where there are no items
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
 -disable selection highlight in some modes
--pull settings from home directory
+DONE-pull settings from home directory
   -what does this do on windows?
 -file explorer
   -getting filename and last folder confused

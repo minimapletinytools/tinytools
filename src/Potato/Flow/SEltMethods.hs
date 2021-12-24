@@ -244,7 +244,16 @@ sBox_drawer sbox@SBox {..} = r where
         _                  -> rfnborder
     }
 
--- TODO 
+
+-- cases
+-- '⇇' '⇇'
+-- '⇇' '⇉'
+-- '⇉' '⇇'
+-- '⇇' '⇊'
+-- '⇇' '⇈'
+-- '⇉' '⇊'
+
+-- TODO
 simpleLineSolver :: (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> [XY]
 simpleLineSolver = undefined
 

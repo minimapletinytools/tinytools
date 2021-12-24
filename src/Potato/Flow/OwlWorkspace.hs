@@ -4,6 +4,8 @@ module Potato.Flow.OwlWorkspace (
   OwlPFWorkspace(..)
   , emptyWorkspace
   , emptyActionStack
+  , markWorkspaceSaved
+  , hasUnsavedChanges
   , undoWorkspace
   , redoWorkspace
   , undoPermanentWorkspace
@@ -52,15 +54,24 @@ data OwlPFCmd =
 
 instance NFData OwlPFCmd
 
+-- TODO rename vars
 data ActionStack = ActionStack {
+  -- TODO change these to Seq
   doStack     :: [OwlPFCmd] -- maybe just do something lke [PFCmd, Maybe OwlPFState] here for state based undo
-  , undoStack :: [OwlPFCmd]
+  , undoStack :: [OwlPFCmd] -- stack of things we've undone
+  , lastSaved :: Maybe Int -- size of do stacks on last save
 } deriving (Show, Generic)
 
 instance NFData ActionStack
 
 emptyActionStack :: ActionStack
-emptyActionStack = ActionStack [] []
+emptyActionStack = ActionStack [] [] (Just 0)
+
+-- UNTESTED
+hasUnsavedChanges :: ActionStack -> Bool
+hasUnsavedChanges ActionStack {..} = case lastSaved of
+  Nothing -> True
+  Just x -> x /= length doStack
 
 -- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
@@ -82,12 +93,18 @@ loadOwlPFStateIntoWorkspace pfs ws = r where
 emptyWorkspace :: OwlPFWorkspace
 emptyWorkspace = OwlPFWorkspace emptyOwlPFState IM.empty emptyActionStack
 
+markWorkspaceSaved :: OwlPFWorkspace -> OwlPFWorkspace
+markWorkspaceSaved pfw = r where
+  as@ActionStack {..} = _owlPFWorkspace_actionStack pfw
+  newas = as { lastSaved = Just (length doStack) }
+  r = pfw { _owlPFWorkspace_actionStack = newas }
+
 undoWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 undoWorkspace pfw =  r where
   ActionStack {..} = _owlPFWorkspace_actionStack pfw
   r = case doStack of
     --c : cs -> trace "UNDO: " .traceShow c $ OwlPFWorkspace (undoCmdState c _owlPFWorkspace_pFState) (ActionStack cs (c:undoStack))
-    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs (c:undoStack))
+    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs (c:undoStack) lastSaved)
     _ -> pfw
 
 redoWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
@@ -95,15 +112,24 @@ redoWorkspace pfw = r where
   ActionStack {..} = _owlPFWorkspace_actionStack pfw
   r = case undoStack of
     --c : cs -> trace "REDO: " . traceShow c $ OwlPFWorkspace (doCmdState c _owlPFWorkspace_pFState) (ActionStack (c:doStack) cs)
-    c : cs -> uncurry OwlPFWorkspace (doCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack (c:doStack) cs)
+    c : cs -> uncurry OwlPFWorkspace (doCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack (c:doStack) cs lastSaved)
     _ -> pfw
+
 
 undoPermanentWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 undoPermanentWorkspace pfw =  r where
   ActionStack {..} = _owlPFWorkspace_actionStack pfw
+  -- NOTE this step is rather unecessary as this is always followed by a doCmdWorkspace but it's best to keep the state correct in between in case anything changes in the future
+  newLastSaved = case lastSaved of
+    Nothing -> Nothing
+    Just x -> if length doStack > x
+      -- we are undoing a change that came after last save
+      then Just x
+      -- we are permanently undoing a change from last saved
+      else Nothing
   r = case doStack of
     --c : cs -> trace "UNDO: " .traceShow c $ OwlPFWorkspace (undoCmdState c _owlPFWorkspace_pFState) (ActionStack cs (c:undoStack))
-    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs undoStack)
+    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs undoStack newLastSaved)
     _ -> pfw
 
 doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> OwlPFWorkspace
@@ -111,7 +137,14 @@ doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> OwlPFWorkspace
 doCmdWorkspace cmd pfw = force r where
   newState = doCmdState cmd (_owlPFWorkspace_pFState pfw)
   ActionStack {..} = (_owlPFWorkspace_actionStack pfw)
-  newStack = ActionStack (cmd:doStack) []
+  newLastSaved = case lastSaved of
+    Nothing -> Nothing
+    Just x -> if length doStack < x
+      -- we "did" something when last save is still on undostack, so we can never recover to last saved
+      then Nothing
+      -- we can still undo back to last save state
+      else Just x
+  newStack = ActionStack (cmd:doStack) [] newLastSaved
   --newMaxId = owlPFState_maxID _owlPFWorkspace_pFState
   r = uncurry OwlPFWorkspace newState newStack
 
@@ -170,6 +203,7 @@ data WSEvent =
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
 
+
 doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> OwlPFWorkspace
 doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
@@ -177,6 +211,7 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   undoedpfs = _owlPFWorkspace_pFState undoedws
   cmd = cmdFn undoedpfs
   r = doCmdWorkspace cmd undoedws
+
 
 ------ helpers for converting events to cmds
 -- TODO assert elts are valid
