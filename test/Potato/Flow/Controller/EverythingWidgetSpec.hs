@@ -13,6 +13,7 @@ import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
+import Potato.Flow.Render
 
 -- test imports
 import           Potato.Flow.Common
@@ -20,6 +21,7 @@ import           Potato.Flow.TestStates
 
 import qualified Data.List.Ordered                 as L
 import qualified Data.Sequence                     as Seq
+import qualified Data.Vector.Unboxed     as V
 
 
 hasUnsavedChanges  :: Bool -> EverythingPredicate
@@ -305,7 +307,7 @@ moveOffset :: Int
 moveOffset = 100
 
 everything_lockhiddenselectionvialayers_test :: Test
-everything_lockhiddenselectionvialayers_test = constructTestWithControllerMeta "lock hidden selection via folders" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff bs expected where
+everything_lockhiddenselectionvialayers_test = constructTestWithControllerMeta "lock hidden selection via folders" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff1 bs expected where
   bs = [
       EWCLabel "Select b1" -- locked
       , EWCMouse (LMouseData (V2 moveOffset 0) False MouseButton_Left [] True)
@@ -337,7 +339,7 @@ everything_lockhiddenselectionvialayers_test = constructTestWithControllerMeta "
     ]
 
 everything_lockhiddenselectionviacanvas_test :: Test
-everything_lockhiddenselectionviacanvas_test = constructTestWithControllerMeta "lock hidden selection via canvas" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff bs expected where
+everything_lockhiddenselectionviacanvas_test = constructTestWithControllerMeta "lock hidden selection via canvas" owlpfstate_basic1 controllermeta_basic1_lockandhidestuff1 bs expected where
   bs = [
       EWCLabel "Select b1" -- locked
       , EWCMouse (LMouseData (V2 0 0) False MouseButton_Left [] False)
@@ -674,6 +676,78 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
 
     ]
 
+-- bad because this function assumes:
+-- - element render fills the entire box
+-- - nothing else is overlapping it
+-- - element is canonical and non zero
+badTestVisibility  :: Text -> Bool -> EverythingPredicate
+badTestVisibility name cansee = FunctionPredicate f where
+  f gs = r where
+    testForChar :: RenderedCanvasRegion -> XY -> Bool
+    testForChar rc pos = case toIndexSafe (_renderedCanvasRegion_box rc) pos of
+      Nothing -> False
+      Just i -> _renderedCanvasRegion_contents rc V.! i /= ' '
+
+    pfs = goatState_pFState gs
+
+    -- why doesn't this work??? Nothing is getting rendered :(((
+    rc = _goatState_renderedCanvas gs
+
+    --rc = potatoRenderPFState pfs (emptyRenderedCanvasRegion (LBox 0 100))
+
+    lmm = _layersState_meta $ _goatState_layersState gs
+
+    msowl = hasOwlTree_test_findFirstSuperOwlByName pfs name
+    wasrendered = case msowl of
+      Nothing -> False
+      Just sowl -> case getSEltBox (hasOwlElt_toSElt_hack sowl) of
+        Nothing -> False
+        Just box -> wasrendered' where
+          wasrendered' = testForChar rc (_lBox_tl box)
+    r = (show (_renderedCanvasRegion_box rc) <> show lmm <> " expected " <> show cansee <> " got " <> show wasrendered <> "\n\n" <> renderedCanvasToText rc <> "\n\n", cansee == wasrendered)
+
+everything_hideStuff_test :: Test
+everything_hideStuff_test = constructTestWithControllerMeta "render hide via folders test" owlpfstate_basic2 controllermeta_basic2_expandEverything bs expected where
+  bs = [
+      EWCLabel "Nothing"
+      , EWCScreenRegion 25 -- must set the screen so we can see stuff
+
+      , EWCLabel "hide b1"
+      , EWCMouse (LMouseData (V2 3 2) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 3 2) True MouseButton_Left [] True)
+      , EWCNothing
+      , EWCNothing
+
+      , EWCLabel "hide fstart1"
+      , EWCMouse (LMouseData (V2 1 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 0) True MouseButton_Left [] True)
+
+      , EWCLabel "show fstart1"
+      , EWCMouse (LMouseData (V2 1 0) False MouseButton_Left [] True)
+      , EWCMouse (LMouseData (V2 1 0) True MouseButton_Left [] True)
+
+    ]
+  expected = [
+      LabelCheck "Nothing"
+      , badTestVisibility "b1" True -- test b1 is not hidden
+
+      , LabelCheck "hide b1"
+      , AlwaysPass
+      , AlwaysPass
+      , badTestVisibility "b1" False -- test b1 is hidden
+      , badTestVisibility "b2" True -- test b2 is not hidden
+
+      , LabelCheck "hide fstart1"
+      , badTestVisibility "b1" False -- test b1 is hidden
+      , badTestVisibility "b2" False -- test b2 is hidden
+
+      , LabelCheck "show fstart1"
+      , badTestVisibility "b1" False -- test b1 is hidden
+      , badTestVisibility "b2" True -- test b2 is not hidden
+
+    ]
+
+
 spec :: Spec
 spec = do
   describe "EverythingWidget" $ do
@@ -686,3 +760,4 @@ spec = do
     fromHUnitTest $ everything_basic_test
     fromHUnitTest $ everything_inputfocusing_test
     fromHUnitTest $ everything_hasSavedChanges_test
+    fromHUnitTest $ everything_hideStuff_test
