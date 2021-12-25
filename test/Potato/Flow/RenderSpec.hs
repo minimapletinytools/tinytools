@@ -97,10 +97,27 @@ spec = do
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
         -- only thing changed is the canvas size
         canvas1 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) target canvas0
+        canvas2 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) initial canvas1
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
       -- TODO test something
-      canvas1 `shouldBe` canvas1
+      canvas0 `shouldBe` canvas2
+    it "moveRenderedCanvasRegion - from zero" $ do
+      let
+        initial = LBox (V2 0 0) (V2 0 0)
+        target = LBox (V2 0 0) (V2 50 50)
+        selt = SEltBox $ def {
+            _sBox_box    = LBox (V2 0 0) (V2 100 100)
+          }
+        state0 = owlPFState_fromSElts [selt] initial
+        bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
+        canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
+        -- only thing changed is the canvas size
+        canvas1 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) target canvas0
+        canvas1Text = renderedCanvasToText canvas1
+      --liftIO $ printRenderedCanvasRegion canvas0
+      --liftIO $ printRenderedCanvasRegion canvas1
+      T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas1Text) `shouldBe` 50*50
     it "updateCanvas - basic" $ do
       let
         --makeChange rid lb = IM.singleton rid $ Just (SEltLabel (show rid) (SEltBox $ SBox lb def def def SBoxType_Box))

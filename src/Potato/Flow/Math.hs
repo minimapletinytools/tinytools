@@ -19,6 +19,7 @@ module Potato.Flow.Math (
   , make_lBox_from_axis
   , union_lBox
   , intersect_lBox
+  , intersect_lBox_include_zero_area
   , does_lBox_intersect
   , does_lBox_intersect_include_zero_area
   , substract_lBox
@@ -163,6 +164,25 @@ intersect_lBox lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2))
     then Just $ make_lBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
     else Nothing
 
+intersect_lBox_include_zero_area :: LBox -> LBox -> Maybe LBox
+intersect_lBox_include_zero_area lb1@(LBox (V2 x1 y1) (V2 w1 h1)) lb2@(LBox (V2 x2 y2) (V2 w2 h2)) = r where
+  cx1 = x1 + w1
+  cy1 = y1 + h1
+  cx2 = x2 + w2
+  cy2 = y2 + h2
+  l1 = min cx1 x1
+  l2 = min cx2 x2
+  r1 = max cx1 x1
+  r2 = max cx2 x2
+  t1 = min cy1 y1
+  t2 = min cy2 y2
+  b1 = max cy1 y1
+  b2 = max cy2 y2
+  r = if does_lBox_intersect_include_zero_area lb1 lb2
+    then Just $ make_lBox_from_axis (max l1 l2, min r1 r2, max t1 t2, min b1 b2)
+    else Nothing
+
+
 does_lBox_intersect :: LBox -> LBox -> Bool
 does_lBox_intersect lb1 lb2 = r where
   (l1,r1,t1,b1) = lBox_to_axis lb1
@@ -179,7 +199,8 @@ does_lBox_intersect_include_zero_area :: LBox -> LBox -> Bool
 does_lBox_intersect_include_zero_area lb1 lb2 = r where
   (l1,r1,t1,b1) = lBox_to_axis lb1
   (l2,r2,t2,b2) = lBox_to_axis lb2
-  r | l1 >= r2 = False
+  r | lb1 == lb2 = True -- this covers the case of 2 0 area boxes over each other
+    | l1 >= r2 = False
     | l2 >= r1 = False
     | t1 >= b2 = False
     | t2 >= b1 = False
