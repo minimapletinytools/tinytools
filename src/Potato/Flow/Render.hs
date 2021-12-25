@@ -26,6 +26,7 @@ import           Relude
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
+import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl

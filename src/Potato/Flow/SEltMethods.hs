@@ -14,9 +14,6 @@ module Potato.Flow.SEltMethods (
   , doesSEltIntersectBox
   , doesSEltIntersectPoint
   , updateFnFromController
-  , RenderFn
-  , SEltDrawer(..)
-  , sEltDrawer_renderToLines
   , getDrawer
   , offsetSEltTree
 ) where
@@ -27,6 +24,7 @@ import  qualified         Relude.Unsafe
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.Methods.Types
 
 import qualified Data.Map as Map
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
@@ -136,32 +134,8 @@ getSEltBoxType = \case
 getSEltLabelBoxType :: SEltLabel -> Maybe SBoxType
 getSEltLabelBoxType (SEltLabel _ x) = getSEltBoxType x
 
-type RenderFn = XY -> Maybe PChar
 
-makePotatoRenderer :: LBox -> RenderFn
-makePotatoRenderer lbox pt = if does_lBox_contains_XY lbox pt
-  then Just '#'
-  else Nothing
 
-data SEltDrawer = SEltDrawer {
-  _sEltDrawer_box        :: LBox
-  , _sEltDrawer_renderFn :: RenderFn -- switch to [RenderFn] for better performance
-
-  --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance
-}
-
-nilDrawer :: SEltDrawer
-nilDrawer = SEltDrawer {
-    _sEltDrawer_box = nilLBox
-    , _sEltDrawer_renderFn = const Nothing
-  }
-
-sEltDrawer_renderToLines :: SEltDrawer -> [Text]
-sEltDrawer_renderToLines SEltDrawer {..} = r where
-  LBox (V2 sx sy) (V2 w h) = _sEltDrawer_box
-  pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
-  r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn (V2 (sx+x) (sy+y))))) pts
-  r = fmap T.pack r'
 
 sBox_drawer :: SBox -> SEltDrawer
 sBox_drawer sbox@SBox {..} = r where
@@ -243,20 +217,6 @@ sBox_drawer sbox@SBox {..} = r where
         SBoxType_NoBoxText -> rfnnoborder
         _                  -> rfnborder
     }
-
-
--- cases
--- '⇇' '⇇'
--- '⇇' '⇉'
--- '⇉' '⇇'
--- '⇇' '⇊'
--- '⇇' '⇈'
--- '⇉' '⇊'
-
--- TODO
-simpleLineSolver :: (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> [XY]
-simpleLineSolver = undefined
-
 
 sSimpleLine_drawer :: SSimpleLine -> SEltDrawer
 sSimpleLine_drawer sline@SSimpleLine {..} = r where

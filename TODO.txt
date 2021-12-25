@@ -46,8 +46,8 @@ WIDE
 
 
 ::NEWEST TODO::
--prompt save on exit
-  -proper save state handling inside of goat...
+DONE-prompt save on exit
+  DONE-proper save state handling inside of goat...
 -add state into render methods fack
 -no MDI file stuff
   DONE-CLI open file
