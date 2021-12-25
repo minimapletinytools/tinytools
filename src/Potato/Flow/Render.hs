@@ -18,6 +18,7 @@ module Potato.Flow.Render (
   , updateCanvas
 
   -- exposed for testing
+  , toIndexSafe
   , moveRenderedCanvasRegionNoReRender
 ) where
 
@@ -150,7 +151,7 @@ renderedCanvasRegionToText :: LBox -> RenderedCanvasRegion -> Text
 renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvasRegion_box)
   else T.unfoldr unfoldfn (0, False) where
 
-  validBoxes = intersect_lBox lbx _renderedCanvasRegion_box == Just lbx
+  validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
 
   l = lBox_area lbx
   (LBox (V2 px py) _) = _renderedCanvasRegion_box
@@ -176,11 +177,11 @@ class OwlRenderSet a where
   findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
   findSuperOwlForRendering ors rid = case findSuperOwl ors rid of
     Nothing -> Nothing
-    Just (sowl, b) -> if b then Just sowl else Nothing
+    Just (sowl, b) -> if b then Nothing else Just sowl
 
 
 instance OwlRenderSet OwlTree where
-  findSuperOwl ot = fmap (,True) . owlTree_findSuperOwl ot
+  findSuperOwl ot = fmap (,False) . owlTree_findSuperOwl ot
   sortForRendering a sowls = unSuperOwlParliament $ makeSortedSuperOwlParliament a sowls
 
 instance OwlRenderSet (OwlTree, LayerMetaMap) where
@@ -192,9 +193,13 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
 renderWithBroadPhase :: (OwlRenderSet a ) => BPTree -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
-  sowls' = flip fmap rids $ \rid -> case findSuperOwlForRendering ot rid of
+
+  -- TODO I THINK THIS IS INCORRECT DELETE, specifically, broadPhase_cull will give hidden elements that we can't find with findSuperOwlForRendering
+  {-sowls' = flip fmap rids $ \rid -> case findSuperOwlForRendering ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-      Just sowl -> sowl
+      Just sowl -> sowl-}
+  sowls' = catMaybes $ fmap (\rid -> findSuperOwlForRendering ot rid) rids
+
   sowls = sortForRendering ot $ Seq.fromList sowls'
   selts = fmap superOwl_toSElt_hack $ toList sowls
   r = render lbx selts rc
