@@ -49,9 +49,19 @@ lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
   rest = undefined
   r = _lineAnchorsForRender_start : rest
 
+data SimpleLineSolverParameters = SimpleLineSolverParameters {
+  _simpleLineSolverParameters_offsetBorder :: Bool -- whether we attach directly to the box or offset by the border (note this still applies just the same for borderless boxes, w/e)
+  , _simpleLineSolverParameters_attachOffset :: Int -- cells to offset attach to box by
+}
+
 -- TODO
-sSimpleLineSolver :: (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> [XY]
-sSimpleLineSolver = undefined
+sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
+sSimpleLineSolver SimpleLineSolverParameters {..} (lbx1, al1) (lbx2, al2) = r where
+  LBox (V2 x1 y1) (V2 w1 h1) = lbx1
+  LBox (V2 x2 y2) (V2 w2 h2) = lbx2
+  r = undefined
+
+
 
 sSimpleLineNewRenderFn :: LineStyle -> LineAnchorsForRender -> SEltDrawer
 sSimpleLineNewRenderFn LineStyle {..} anchors = r where

@@ -44,6 +44,22 @@ import qualified Data.Vector.Unboxed     as V
 import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
+{-
+-- TODO
+data RenderCache
+
+data RenderContext = RenderContext {
+  _renderContext_owlTree :: OwlTree
+  , _renderContext_layerMetaMap :: LayerMetaMap
+  , _renderContext_cache :: REltIdMap RenderCache
+  , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
+}
+
+data RenderOutput :: RenderOutput {
+  _renderOutput_cache :: REltIdMap RenderCache
+  , _renderOutput_renderedCanvasRegion :: RenderedCanvasRegion
+}
+-}
 
 emptyChar :: PChar
 emptyChar = ' '
