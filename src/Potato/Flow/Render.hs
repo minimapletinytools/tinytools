@@ -44,22 +44,46 @@ import qualified Data.Vector.Unboxed     as V
 import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
-{-
--- TODO
-data RenderCache
+-- rather pointless abstraction but it's useful to have during refactors
+class OwlRenderSet a where
+  findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
+  sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
+  findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
+  findSuperOwlForRendering ors rid = case findSuperOwl ors rid of
+    Nothing -> Nothing
+    Just (sowl, b) -> if b then Nothing else Just sowl
+
+instance OwlRenderSet OwlTree where
+  findSuperOwl ot = fmap (,False) . owlTree_findSuperOwl ot
+  sortForRendering a sowls = unSuperOwlParliament $ makeSortedSuperOwlParliament a sowls
+
+instance OwlRenderSet (OwlTree, LayerMetaMap) where
+  findSuperOwl (ot,lmm) rid = r where
+    hidden = layerMetaMap_isInheritHidden ot rid lmm
+    r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
+  sortForRendering (ot,_) sowls = sortForRendering ot sowls
+
+data RenderCache = RenderCache
 
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
   , _renderContext_layerMetaMap :: LayerMetaMap
-  , _renderContext_cache :: REltIdMap RenderCache
+  , _renderContext_cache :: RenderCache
   , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
 }
 
-data RenderOutput :: RenderOutput {
-  _renderOutput_cache :: REltIdMap RenderCache
+data RenderOutput = RenderOutput {
+  _renderOutput_cache :: RenderCache
   , _renderOutput_renderedCanvasRegion :: RenderedCanvasRegion
 }
--}
+
+instance HasOwlTree RenderContext where
+  hasOwlTree_toOwlTree = hasOwlTree_toOwlTree . _renderContext_owlTree
+
+instance OwlRenderSet RenderContext where
+  findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
+  sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
+
 
 emptyChar :: PChar
 emptyChar = ' '
@@ -186,26 +210,6 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
 
--- rather pointless abstraction kthxby
-class OwlRenderSet a where
-  findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
-  sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
-  findSuperOwlForRendering :: a -> REltId -> Maybe SuperOwl
-  findSuperOwlForRendering ors rid = case findSuperOwl ors rid of
-    Nothing -> Nothing
-    Just (sowl, b) -> if b then Nothing else Just sowl
-
-
-instance OwlRenderSet OwlTree where
-  findSuperOwl ot = fmap (,False) . owlTree_findSuperOwl ot
-  sortForRendering a sowls = unSuperOwlParliament $ makeSortedSuperOwlParliament a sowls
-
-instance OwlRenderSet (OwlTree, LayerMetaMap) where
-  findSuperOwl (ot,lmm) rid = r where
-    hidden = layerMetaMap_isInheritHidden ot rid lmm
-    r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
-  sortForRendering (ot,_) sowls = sortForRendering ot sowls
-
 renderWithBroadPhase :: (OwlRenderSet a ) => BPTree -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 renderWithBroadPhase bpt ot lbx rc = r where
   rids = broadPhase_cull lbx bpt
@@ -247,7 +251,7 @@ moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
 updateCanvas :: (OwlRenderSet a) => SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> a -> RenderedCanvasRegion -> RenderedCanvasRegion
-updateCanvas cslmap needsUpdate BroadPhaseState {..} ot rc = case needsUpdate of
+updateCanvas cslmap needsupdateaabbs BroadPhaseState {..} ot rc = case needsupdateaabbs of
   [] -> rc
   -- TODO incremental rendering
   (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of

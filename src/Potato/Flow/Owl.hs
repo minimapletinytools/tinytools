@@ -810,6 +810,7 @@ owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
 
 class HasOwlTree o where
+  -- TODO rename to hasOwlTree_owlTree
   hasOwlTree_toOwlTree :: o -> OwlTree
   hasOwlTree_findSuperOwl :: o -> REltId -> Maybe SuperOwl
   hasOwlTree_findSuperOwl o rid = hasOwlTree_findSuperOwl (hasOwlTree_toOwlTree o) rid
