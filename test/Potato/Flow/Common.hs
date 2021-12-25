@@ -47,6 +47,7 @@ data GoatWidgetCmd =
   | EWCCanvasResize XY
   | EWCNewFolder
   | EWCMarkSaved
+  | EWCScreenRegion XY
 
 everything_network_app
   :: forall t m. (t ~ SpiderTimeline Global, m ~ SpiderHost Global)
@@ -86,7 +87,9 @@ everything_network_app pfs cm (AppIn _ ev) = do
         EWCMarkSaved -> Just ()
         _ -> Nothing
       , _goatWidgetConfig_bypassEvent = never
-      , _goatWidgetConfig_canvasRegionDim = never
+      , _goatWidgetConfig_canvasRegionDim = fforMaybe ev $ \case
+        EWCScreenRegion x -> Just x
+        _ -> Nothing
       , _goatWidgetConfig_unicodeWidthFn = Nothing
 
     }

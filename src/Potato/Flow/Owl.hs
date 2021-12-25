@@ -816,10 +816,15 @@ class HasOwlTree o where
   hasOwlTree_mustFindSuperOwl :: HasCallStack => o -> REltId -> SuperOwl
   hasOwlTree_mustFindSuperOwl o rid = hasOwlTree_mustFindSuperOwl (hasOwlTree_toOwlTree o) rid
 
+  -- only intended for use in tests
+  hasOwlTree_test_findFirstSuperOwlByName :: o -> Text -> Maybe SuperOwl
+  hasOwlTree_test_findFirstSuperOwlByName o t = hasOwlTree_test_findFirstSuperOwlByName (hasOwlTree_toOwlTree o) t
+
 instance HasOwlTree OwlTree where
   hasOwlTree_toOwlTree = id
   hasOwlTree_findSuperOwl = owlTree_findSuperOwl
   hasOwlTree_mustFindSuperOwl = owlTree_mustFindSuperOwl
+  hasOwlTree_test_findFirstSuperOwlByName ot label = find (\sowl -> hasOwlElt_name sowl == label) . toList $ owliterateall ot
 
 -- TODO
 --owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a
@@ -971,7 +976,7 @@ owlTree_addSEltTree spot selttree od = r where
   r = owlTree_addMiniOwlTree spot otherod od
 
 owlTree_reindex :: Int -> OwlTree -> OwlTree
-owlTree_reindex start ot = traceShow (owlTree_maxId ot) $ traceShow start $ assert valid r where
+owlTree_reindex start ot = assert valid r where
   valid = owlTree_maxId ot < start
   -- TODO someday, when we're actually worried about id space size (i.e. when we have multi user mode) we will need to do this more efficiently
   adjustkeyfn k = if k == noOwl then noOwl else k + start

@@ -14,7 +14,8 @@ module Potato.Flow.TestStates (
   , owlpfstate_someInvalidState2
   , owlpfstate_basic0
   , owlpfstate_basic1
-  , controllermeta_basic1_lockandhidestuff
+  , controllermeta_basic1_lockandhidestuff1
+  , controllermeta_basic2_expandEverything
   , owlpfstate_basic2
   , owlpfstate_attachments1
   , owlpfstate_zero
@@ -63,8 +64,8 @@ owlpfstate_basic0 = pFState_to_owlPFState pfstate_basic0
 owlpfstate_basic1 :: OwlPFState
 owlpfstate_basic1 = pFState_to_owlPFState pfstate_basic1
 
-controllermeta_basic1_lockandhidestuff :: ControllerMeta
-controllermeta_basic1_lockandhidestuff = ControllerMeta {
+controllermeta_basic1_lockandhidestuff1 :: ControllerMeta
+controllermeta_basic1_lockandhidestuff1 = ControllerMeta {
     _controllerMeta_pan = 0
     , _controllerMeta_layers = IM.fromList [
         (0, makeLayerMeta True False False) -- b1  is locked
@@ -76,6 +77,16 @@ controllermeta_basic1_lockandhidestuff = ControllerMeta {
 owlpfstate_basic2 :: OwlPFState
 owlpfstate_basic2 = pFState_to_owlPFState pfstate_basic2
 
+
+controllermeta_basic2_expandEverything :: ControllerMeta
+controllermeta_basic2_expandEverything = ControllerMeta {
+    _controllerMeta_pan = 0
+    , _controllerMeta_layers = IM.fromList [
+        (0, makeLayerMeta False False False) -- fstart1 is expanded
+        , (1, makeLayerMeta False False False) -- fstart2 is expanded
+        , (7, makeLayerMeta False False False) -- fstart3 is expanded
+      ]
+  }
 
 owlpfstate_attachments1 :: OwlPFState
 owlpfstate_attachments1 = pFState_to_owlPFState pfstate_attachments1
