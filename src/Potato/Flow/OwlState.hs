@@ -31,7 +31,7 @@ instance HasOwlTree OwlPFState where
 
 -- TODO delete replace with PotatoShow
 owlPFState_prettyPrintForDebugging :: OwlPFState -> Text
-owlPFState_prettyPrintForDebugging OwlPFState {..} = owlTree_prettyPrint _owlPFState_owlTree <> show _owlPFState_canvas
+owlPFState_prettyPrintForDebugging OwlPFState {..} = potatoShow _owlPFState_owlTree <> show _owlPFState_canvas
 
 instance PotatoShow OwlPFState where
   potatoShow = owlPFState_prettyPrintForDebugging
@@ -47,9 +47,9 @@ owlPFState_lastId pfs = owlTree_maxId . _owlPFState_owlTree $ pfs
 owlPFState_numElts :: OwlPFState -> Int
 owlPFState_numElts pfs = IM.size . _owlTree_mapping . _owlPFState_owlTree $ pfs
 
--- TODO DELETE replace with owlTree_prettyPrint
+-- TODO DELETE replace with potatoShow
 debugPrintOwlPFState :: (IsString a) => OwlPFState -> a
-debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ owlTree_prettyPrint _owlPFState_owlTree
+debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ potatoShow _owlPFState_owlTree
 
 -- TODO owlPFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _owlPFState_layers - 1]
 owlPFState_isValid :: OwlPFState -> Bool

@@ -44,7 +44,7 @@ spec = do
         --putTextLn $ show $ owlTree_validate owlTree0
         fst (owlTree_validate owlTree0) `shouldBe` True
       it "owlTree_fromOldState" $ do
-        --forM (owlTree_prettyPrint owlTree0) print
+        --forM (potatoShow owlTree0) print
         (Seq.length (owlTree_topSuperOwls owlTree0) `shouldBe` 1)
         owlTree_owlCount owlTree0 `shouldBe` 9
       it "owliterateall" $ do
@@ -74,7 +74,7 @@ spec = do
         fst (owlTree_validate ot1) `shouldBe` True
         fst (owlTree_validate ot2) `shouldBe` True
         -- too lazy to write proper test, just print and verify manually
-        --putTextLn (owlTree_prettyPrint $ owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree0)
+        --putTextLn (potatoShow $ owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree0)
       it "owlTree_moveOwlParliament" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
@@ -85,7 +85,7 @@ spec = do
         length c1 `shouldBe` 5
         fst (owlTree_validate ot1) `shouldBe` True
         -- too lazy to write proper test, just print and verify manually
-        --putTextLn (owlTree_prettyPrint . fst $ owlTree_moveOwlParliament parliament owlSpot1 owlTree0)
+        --putTextLn (potatoShow . fst $ owlTree_moveOwlParliament parliament owlSpot1 owlTree0)
       it "owlTree_addSEltTree" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
@@ -115,7 +115,7 @@ spec = do
         owlTree_hasDanglingAttachments (owlTree_reindex 100 owlTreeWithAttachments0) `shouldBe` False
     describe "OwlParliament" $ do
       it "superOwlParliament_isValid" $ do
-        --putTextLn (owlTree_prettyPrint owlTree0)
+        --putTextLn (potatoShow owlTree0)
         let
           validParliament = owlParliament_toSuperOwlParliament owlTree0 (OwlParliament $ Seq.fromList [2,3,7])
           invalidParliament = owlParliament_toSuperOwlParliament owlTree0 (OwlParliament $ Seq.fromList [2,3,7,9])
@@ -150,7 +150,7 @@ spec = do
       it "owlParliament_convertToMiniOwltree" $ do
         let
           mot = owlParliament_convertToMiniOwltree owlTree0 (OwlParliament (_owlTree_topOwls owlTree0))
-        --putTextLn (owlTree_prettyPrint mot)
+        --putTextLn (potatoShow mot)
         -- also tests owlTree_equivalent :D
         owlTree_equivalent mot owlTree0 `shouldBe` True
         owlTree_equivalent owlTree0 mot `shouldBe` True

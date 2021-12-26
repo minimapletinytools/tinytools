@@ -217,8 +217,8 @@ constructTestWithControllerMeta label pfs cm bs expected = TestLabel label $ Tes
           <> " \n[label = " <> _goatState_debugLabel ewcd
           <> ", index = " <> show i <> "]"
           <> "\ntree = " <> case me of
-            Just e -> (owlTree_prettyPrint . _owlPFState_owlTree . goatState_pFState $ e)
-            Nothing -> (owlTree_prettyPrint . _owlPFState_owlTree . goatState_pFState $ b))
+            Just e -> (potatoShow . _owlPFState_owlTree . goatState_pFState $ e)
+            Nothing -> (potatoShow . _owlPFState_owlTree . goatState_pFState $ b))
           {-<> "\nstate = " <> case me of
             Just e  -> show (goatState_pFState e)
             Nothing -> show (goatState_pFState b))-}

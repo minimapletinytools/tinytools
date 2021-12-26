@@ -626,10 +626,8 @@ owlTree_equivalent ota otb = r
 
     r = kiddos_equivalent (_owlTree_topOwls ota) (_owlTree_topOwls otb)
 
--- TODO delete replace with PotatoShow
-owlTree_prettyPrint :: HasCallStack => OwlTree -> Text
-owlTree_prettyPrint od@OwlTree {..} = r
-  where
+instance PotatoShow OwlTree where
+  potatoShow od@OwlTree {..} = r where
     foldlfn acc rid =
       let sowl = owlTree_mustFindSuperOwl od rid
           selfEntry' = T.replicate (_owlEltMeta_depth . _superOwl_meta $ sowl) " " <> potatoShow sowl
@@ -640,9 +638,6 @@ owlTree_prettyPrint od@OwlTree {..} = r
     printKiddos :: Seq REltId -> Text
     printKiddos kiddos = foldl foldlfn "" kiddos
     r = printKiddos (fromJust $ mommyOwl_kiddos od)
-
-instance PotatoShow OwlTree where
-  potatoShow = owlTree_prettyPrint
 
 owlTree_validate :: OwlTree -> (Bool, Text)
 owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)
