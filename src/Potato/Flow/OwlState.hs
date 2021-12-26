@@ -27,7 +27,7 @@ data OwlPFState = OwlPFState {
 } deriving (Show, Eq, Generic)
 
 instance HasOwlTree OwlPFState where
-  hasOwlTree_toOwlTree = _owlPFState_owlTree
+  hasOwlTree_owlTree = _owlPFState_owlTree
 
 -- TODO delete replace with PotatoShow
 owlPFState_prettyPrintForDebugging :: OwlPFState -> Text

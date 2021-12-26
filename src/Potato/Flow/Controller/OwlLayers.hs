@@ -212,7 +212,7 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
 
 expandAllCollapsedParents :: Selection -> OwlPFState -> LayersState -> LayersState
 expandAllCollapsedParents selection pfs ls = r where
-  ops = owlParliamentSet_findParents (hasOwlTree_toOwlTree pfs) . superOwlParliament_toOwlParliamentSet $  selection
+  ops = owlParliamentSet_findParents (hasOwlTree_owlTree pfs) . superOwlParliament_toOwlParliamentSet $  selection
   oldlmm = _layersState_meta ls
   iscollapsedfilterfn rid = case IM.lookup rid oldlmm of
     Just lm -> _layerMeta_isCollapsed lm

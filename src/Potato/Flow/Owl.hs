@@ -137,13 +137,8 @@ data OwlEltMeta = OwlEltMeta
 
 instance NFData OwlEltMeta
 
--- TODO delete replace with PotatoShow
-owlEltMeta_prettyPrintForDebugging :: OwlEltMeta -> Text
-owlEltMeta_prettyPrintForDebugging OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
-
 instance PotatoShow OwlEltMeta where
-  potatoShow = owlEltMeta_prettyPrintForDebugging
-
+  potatoShow OwlEltMeta {..} = "(meta: " <> show _owlEltMeta_parent <> " " <> show _owlEltMeta_depth <> " " <> show _owlEltMeta_position <> ")"
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
@@ -229,7 +224,7 @@ addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am
 
 -- TODO delete replace with PotatoShow
 superOwl_prettyPrintForDebugging :: SuperOwl -> Text
-superOwl_prettyPrintForDebugging SuperOwl {..} = show _superOwl_id <> " " <> owlEltMeta_prettyPrintForDebugging _superOwl_meta <> " " <> elt
+superOwl_prettyPrintForDebugging SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt
   where
     elt = case _superOwl_elt of
       OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
@@ -824,19 +819,18 @@ owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
 
 class HasOwlTree o where
-  -- TODO rename to hasOwlTree_owlTree
-  hasOwlTree_toOwlTree :: o -> OwlTree
+  hasOwlTree_owlTree :: o -> OwlTree
   hasOwlTree_findSuperOwl :: o -> REltId -> Maybe SuperOwl
-  hasOwlTree_findSuperOwl o rid = hasOwlTree_findSuperOwl (hasOwlTree_toOwlTree o) rid
+  hasOwlTree_findSuperOwl o rid = hasOwlTree_findSuperOwl (hasOwlTree_owlTree o) rid
   hasOwlTree_mustFindSuperOwl :: HasCallStack => o -> REltId -> SuperOwl
-  hasOwlTree_mustFindSuperOwl o rid = hasOwlTree_mustFindSuperOwl (hasOwlTree_toOwlTree o) rid
+  hasOwlTree_mustFindSuperOwl o rid = hasOwlTree_mustFindSuperOwl (hasOwlTree_owlTree o) rid
 
   -- only intended for use in tests
   hasOwlTree_test_findFirstSuperOwlByName :: o -> Text -> Maybe SuperOwl
-  hasOwlTree_test_findFirstSuperOwlByName o t = hasOwlTree_test_findFirstSuperOwlByName (hasOwlTree_toOwlTree o) t
+  hasOwlTree_test_findFirstSuperOwlByName o t = hasOwlTree_test_findFirstSuperOwlByName (hasOwlTree_owlTree o) t
 
 instance HasOwlTree OwlTree where
-  hasOwlTree_toOwlTree = id
+  hasOwlTree_owlTree = id
   hasOwlTree_findSuperOwl = owlTree_findSuperOwl
   hasOwlTree_mustFindSuperOwl = owlTree_mustFindSuperOwl
   hasOwlTree_test_findFirstSuperOwlByName ot label = find (\sowl -> hasOwlElt_name sowl == label) . toList $ owliterateall ot

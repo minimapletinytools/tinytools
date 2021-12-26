@@ -79,7 +79,7 @@ data RenderOutput = RenderOutput {
 }
 
 instance HasOwlTree RenderContext where
-  hasOwlTree_toOwlTree = hasOwlTree_toOwlTree . _renderContext_owlTree
+  hasOwlTree_owlTree = hasOwlTree_owlTree . _renderContext_owlTree
 
 instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
