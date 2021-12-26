@@ -44,3 +44,11 @@ sEltDrawer_renderToLines SEltDrawer {..} = r where
   pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
   r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn (V2 (sx+x) (sy+y))))) pts
   r = fmap T.pack r'
+
+
+{-
+TODO something like this
+data CachedAreaDrawer = CachedAreaDrawer {
+  _cachedAreaDrawer_box :: LBox
+  , _cachedAreaDrawer_cache :: V.Vector (Maybe PChar) -- ^ row major
+}-}

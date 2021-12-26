@@ -87,7 +87,7 @@ WIDE
   -add invalid folder drag test
   -when you select a folder and it auto selects children, you can't click and drag the children
 -create new folder stuff
-  -auto expand folder after dragging into it
+  DONE-auto expand folder after dragging into it
   -after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
       -can you tie this into graceful handling of bad mouse states?
