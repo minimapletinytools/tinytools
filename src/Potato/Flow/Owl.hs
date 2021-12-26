@@ -142,7 +142,7 @@ instance PotatoShow OwlEltMeta where
 
 -- a simpler version of OwlEltMeta used for inserting new Owls
 data OwlSpot = OwlSpot {
-    -- TODO _owlSpot_parent is redundant if _owlSpot_leftSibling is not Nothing
+    -- NOTE _owlSpot_parent is redundant if _owlSpot_leftSibling is not Nothing
     _owlSpot_parent :: REltId,
     _owlSpot_leftSibling :: Maybe REltId
   }
@@ -219,19 +219,12 @@ addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am
   r = IM.union changes newchanges
 
 
-
-
-
--- TODO delete replace with PotatoShow
-superOwl_prettyPrintForDebugging :: SuperOwl -> Text
-superOwl_prettyPrintForDebugging SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt
-  where
-    elt = case _superOwl_elt of
-      OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
-      OwlEltSElt oi selt -> "elt: " <> (_owlInfo_name oi) -- TODO elt type
-
 instance PotatoShow SuperOwl where
-  potatoShow = superOwl_prettyPrintForDebugging
+  potatoShow SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt
+    where
+      elt = case _superOwl_elt of
+        OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
+        OwlEltSElt oi selt -> "elt: " <> (_owlInfo_name oi) -- TODO elt type
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl
@@ -639,7 +632,7 @@ owlTree_prettyPrint od@OwlTree {..} = r
   where
     foldlfn acc rid =
       let sowl = owlTree_mustFindSuperOwl od rid
-          selfEntry' = T.replicate (_owlEltMeta_depth . _superOwl_meta $ sowl) " " <> superOwl_prettyPrintForDebugging sowl
+          selfEntry' = T.replicate (_owlEltMeta_depth . _superOwl_meta $ sowl) " " <> potatoShow sowl
           selfEntry = selfEntry' <> "\n"
        in acc <> case mommyOwl_kiddos sowl of
             Nothing -> selfEntry
