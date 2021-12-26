@@ -88,6 +88,11 @@ resetLayersHandler lh = lh {
   }
 
 
+-- spot is invalid if it's a descendent of a already selected element
+isSpotValidToDrop :: OwlTree -> Selection -> OwlSpot -> Bool
+isSpotValidToDrop ot sel spot = not $ owlParliamentSet_descendent ot (_owlSpot_parent spot) (superOwlParliament_toOwlParliamentSet sel)
+
+
 instance PotatoHandler LayersHandler where
   pHandlerName _ = handlerName_layers
 
@@ -204,9 +209,8 @@ instance PotatoHandler LayersHandler where
 
         -- check if spot is valid
         -- instead we do this check when we drop instead, that behavior "felt" nicer to me even though this is probably more correct
-        --spotParent = _owlSpot_parent targetspot
         --SuperOwlParliament selectedsowls = _potatoHandlerInput_selection
-        --isSpotValid = isNothing $ Seq.findIndexL (\sowl -> _superOwl_id sowl == spotParent) selectedsowls
+        --isSpotValid = isSpotValidToDrop owltree _potatoHandlerInput_selection spot
         isSpotValid = True
 
         r = Just $ def {
@@ -262,11 +266,8 @@ instance PotatoHandler LayersHandler where
         mev = do
           spot <- _layersHandler_dropSpot
           let
-
-            -- spot is invalid if it's the child of a already selected element
-            spotParent = _owlSpot_parent spot
             SuperOwlParliament selectedsowls = _potatoHandlerInput_selection
-            isSpotValid = isNothing $ Seq.findIndexL (\sowl -> _superOwl_id sowl == spotParent) selectedsowls
+            isSpotValid = isSpotValidToDrop owltree _potatoHandlerInput_selection spot
 
             -- TODO modify if we drag on top of existing elt... Is there anything to do here? I can't remember why I added this comment. Pretty sure there's nothing to do
             modifiedSpot = spot

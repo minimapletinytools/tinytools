@@ -563,7 +563,7 @@ superOwlParliament_toOwlParliamentSet (SuperOwlParliament sowls) = IS.fromList .
 owlParliamentSet_member :: REltId -> OwlParliamentSet -> Bool
 owlParliamentSet_member = IS.member
 
--- | returns true if rid is a contained in sset or is a descendent of sset
+-- | returns true if rid is a contained in the OwlParliamentSet or is a descendent of sset
 owlParliamentSet_descendent :: OwlTree -> REltId -> OwlParliamentSet -> Bool
 owlParliamentSet_descendent ot rid sset = if owlParliamentSet_member rid sset
   then True
