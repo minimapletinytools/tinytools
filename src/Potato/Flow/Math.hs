@@ -42,11 +42,12 @@ module Potato.Flow.Math (
 
 import           Relude
 
-import           Control.Exception (assert)
 import           Data.Aeson
 import           Data.Binary
 import           Linear.V2
 import qualified Text.Show
+
+import Control.Exception (assert)
 
 {-
  CORDINATE SYSTEM
@@ -278,6 +279,11 @@ instance Delta XY XY where
   plusDelta = (+)
   minusDelta = (-)
 
+instance (Show a, Eq a) => Delta a (a,a) where
+  plusDelta s (b, a) = if b /= s
+    then error $ show s <> " " <> show b <> " " <> show a
+    else a
+  minusDelta s (b, a) = assert (a == s) b
 
 newtype DeltaXY = DeltaXY XY deriving (Eq, Generic, Show)
 

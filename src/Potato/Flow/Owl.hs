@@ -19,18 +19,18 @@ import Potato.Flow.SElts
 import Potato.Flow.Types
 import Potato.Flow.DebugHelpers
 
-import Debug.Pretty.Simple
 
 errorMsg_owlTree_lookupFail :: OwlTree -> REltId -> Text
 errorMsg_owlTree_lookupFail OwlTree {..} rid = errorMsg_owlMapping_lookupFail _owlTree_mapping rid
 
 errorMsg_owlMapping_lookupFail :: OwlMapping -> REltId -> Text
-errorMsg_owlMapping_lookupFail om rid = "expected to find REltId " <> show rid <> " in OwlMapping"
+errorMsg_owlMapping_lookupFail _ rid = "expected to find REltId " <> show rid <> " in OwlMapping"
 
 class MommyOwl o where
   mommyOwl_kiddos :: o -> Maybe (Seq REltId)
   mommyOwl_hasKiddos :: o -> Bool
   mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
+  -- TODO DELETE, this can't be implemented by OwlElt
   mommyOwl_id :: o -> REltId
 
 class HasOwlElt o where
@@ -108,8 +108,9 @@ owlElt_updateAttachments breakNonExistng ridremap oelt = case oelt of
 -- this is just position index in children
 type SiblingPosition = Int
 
+-- TODO remove OwlMapping arg not needed
 locateLeftSiblingIdFromSiblingPosition :: OwlMapping -> Seq REltId -> SiblingPosition -> Maybe REltId
-locateLeftSiblingIdFromSiblingPosition om s sp = case sp of
+locateLeftSiblingIdFromSiblingPosition _ s sp = case sp of
   0 -> Nothing
   x -> case Seq.lookup (x - 1) s of
     Nothing -> error $ "expected to find index " <> show (x - 1) <> " in seq"
@@ -218,12 +219,11 @@ addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am
   -- return the combined changes
   r = IM.union changes newchanges
 
-
 instance PotatoShow SuperOwl where
   potatoShow SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt
     where
       elt = case _superOwl_elt of
-        OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi)
+        OwlEltFolder oi kiddos -> "folder: " <> (_owlInfo_name oi) <> ": " <> show kiddos
         OwlEltSElt oi selt -> "elt: " <> (_owlInfo_name oi) -- TODO elt type
 
 --superOwl_id :: Lens' SuperOwl REltId
@@ -335,9 +335,9 @@ makeSortedSuperOwlParliament od sowls = r where
     frontid (x:_) = _superOwl_id x
     frontid _ = error "should never happen"
 
-    groupedParentChains = partitionN (\(front:_) -> _superOwl_id front) chains
+    groupedParentChains = partitionN frontid chains
 
-    removeFront (x:xs) = xs
+    removeFront (_:xs) = xs
     removeFront [] = error "should never happen"
 
     -- it's not necessary to look up rid as it will be the first element in each Seq elt in the value but whatever this is easier (to fix, you should rewrite partitionN)
@@ -360,21 +360,11 @@ makeSortedSuperOwlParliament od sowls = r where
 -- TODO test
 -- assumes s1 is and s2 are valid
 superOwlParliament_disjointUnionAndCorrect :: OwlTree -> SuperOwlParliament -> SuperOwlParliament -> SuperOwlParliament
-superOwlParliament_disjointUnionAndCorrect od sop1@(SuperOwlParliament s1) (SuperOwlParliament s2) = r where
-  --ops = superOwlParliament_toOwlParliamentSet sop1
-  --(des, notdes) = Seq.partition (\sowl -> owlParliamentSet_descendent od (_superOwl_id sowl) ops)
+superOwlParliament_disjointUnionAndCorrect od (SuperOwlParliament s1) (SuperOwlParliament s2) = r where
 
   -- first convert s1 into a map
   mapsop0 :: IM.IntMap SuperOwl
   mapsop0 = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, sowl)) $ s1
-
-  -- DELETE
-  -- helper method from removing parents
-  removeParents parentrid mapsop = case IM.lookup parentrid mapsop of
-    -- found parent, remove it and recurse
-    Just psowl -> removeParents (superOwl_parentId psowl) (IM.delete parentrid mapsop)
-    -- parent already removed
-    Nothing -> mapsop
 
   addToSelection :: SuperOwl -> IM.IntMap SuperOwl -> IM.IntMap SuperOwl
   addToSelection sowl mapsop = rslt where
@@ -434,7 +424,7 @@ superOwlParliament_isValid od sop@(SuperOwlParliament owls) = r
     -- check if a mommy owl is selected, that no descendant of that mommy owl is selected
     kiddosFirst = Seq.sortBy (\a b -> flip compare (_owlEltMeta_depth (_superOwl_meta a)) (_owlEltMeta_depth (_superOwl_meta b))) owls
     acc0 = (Set.empty, Set.fromList . toList . fmap _superOwl_id $ owls, True)
-    foldlfn (visited, mommies', passing) sowl = (nextVisited, mommies, pass && passing)
+    foldlfn (visited, mommies', passing) sowl = (nextVisited, mommies, passMommyCheck && passing)
       where
         -- remove self from list of mommies
         -- TODO you  don't actually need to check two elts at the same level, you can be smarter about removing mommies at each level
@@ -453,10 +443,10 @@ superOwlParliament_isValid od sop@(SuperOwlParliament owls) = r
                 Nothing -> error $ errorMsg_owlMapping_lookupFail om rid
                 -- add self to list of mommies to visit and recurse
                 Just (oem, _) -> checkMommyRec (_owlEltMeta_parent oem) (Set.insert rid toVisit)
-        (toVisit, pass) = checkMommyRec (_owlEltMeta_parent (_superOwl_meta sowl)) Set.empty
+        (visitedMommies, passMommyCheck) = checkMommyRec (_owlEltMeta_parent (_superOwl_meta sowl)) Set.empty
         nextVisited =
-          if pass
-            then Set.union visited toVisit
+          if passMommyCheck
+            then Set.union visited visitedMommies
             else visited
 
     (_, _, r1) = foldl foldlfn acc0 kiddosFirst

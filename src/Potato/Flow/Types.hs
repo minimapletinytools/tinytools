@@ -89,12 +89,6 @@ instance Delta Text DeltaText where
   minusDelta s (b, a) = assert (a == s) b
 -}
 
-instance (Show a, Eq a) => Delta a (a,a) where
-  plusDelta s (b, a) = if b /= s
-    then error $ show s <> " " <> show b <> " " <> show a
-    else a
-  minusDelta s (b, a) = assert (a == s) b
-
 data DeltaTextAlign = DeltaTextAlign (TextAlign, TextAlign) deriving (Eq, Generic, Show)
 instance NFData DeltaTextAlign
 instance Delta TextAlign DeltaTextAlign where
@@ -301,11 +295,11 @@ instance NFData Controller where
 type ControllersWithId = IntMap Controller
 
 controller_isParams :: Controller -> Bool
-controller_isParams (CTagBoxType DS.:=> Identity a)      = True
-controller_isParams (CTagSuperStyle DS.:=> Identity a)   = True
-controller_isParams (CTagLineStyle DS.:=> Identity a)   = True
-controller_isParams (CTagBoxTextStyle DS.:=> Identity a) = True
-controller_isParams (CTagBoxLabelAlignment DS.:=> Identity a) = True
+controller_isParams (CTagBoxType DS.:=> Identity _)      = True
+controller_isParams (CTagSuperStyle DS.:=> Identity _)   = True
+controller_isParams (CTagLineStyle DS.:=> Identity _)   = True
+controller_isParams (CTagBoxTextStyle DS.:=> Identity _) = True
+controller_isParams (CTagBoxLabelAlignment DS.:=> Identity _) = True
 controller_isParams _                                    = False
 
 controllerWithId_isParams :: ControllersWithId -> Bool

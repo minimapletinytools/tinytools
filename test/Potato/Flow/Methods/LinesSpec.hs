@@ -8,8 +8,6 @@ import           Relude           hiding (empty, fromList)
 
 import           Test.Hspec
 
-import           Data.Default     (def)
-
 import           Potato.Flow.Methods.Lines
 import           Potato.Flow.Math
 

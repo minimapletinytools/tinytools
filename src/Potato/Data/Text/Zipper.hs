@@ -12,7 +12,7 @@ module Potato.Data.Text.Zipper where
 import           Prelude
 
 import Control.Exception (assert)
-import Control.Monad.State (evalState, forM, get, put, join)
+import Control.Monad.State (evalState, forM, get, put)
 import Data.Char (isSpace)
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
