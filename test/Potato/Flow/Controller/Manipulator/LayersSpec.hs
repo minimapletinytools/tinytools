@@ -285,12 +285,15 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
       , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True) -- must enter "Dragging" state for handler to work correctly
       , EWCMouse (LMouseData (V2 moveOffset 1) True MouseButton_Left [] True)
 
-      -- drag b1 into fstart3 (collapsed)
+      -- drag b1 into fstart3 (collapsed) (this will auto expand fastart3)
       , EWCMouse (LMouseData (V2 moveOffset 1) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 moveOffset 7) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 moveOffset 7) True MouseButton_Left [] True) -- go far to the right so it goes inside the folder
 
-      , EWCLabel "expand fstart3"
+      , EWCLabel "deselect everything"
+      , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
+
+      , EWCLabel "collapse fstart3"
       , EWCMouse (LMouseData (V2 1 5) False MouseButton_Left [] True)
       , EWCMouse (LMouseData (V2 1 5) True MouseButton_Left [] True)
 
@@ -315,15 +318,18 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
 
       , AlwaysPass
       , AlwaysPass
-      , numLayerEntriesEqualPredicate 6
+      , numLayerEntriesEqualPredicate 9 -- fstart3 auto expands
 
-      , LabelCheck "expand fstart3"
-      , numLayerEntriesEqualPredicate 9
+      , LabelCheck "deselect everything"
+      , numSelectedEltsEqualPredicate 0
+
+      , LabelCheck "collapse fstart3"
+      , numLayerEntriesEqualPredicate 6
       , AlwaysPass
 
       , LabelCheck "collapse fstart2"
-      , numLayerEntriesEqualPredicate 6
-      , numLayerEntriesEqualPredicate 6
+      , numLayerEntriesEqualPredicate 3
+      , numLayerEntriesEqualPredicate 3
 
       , LabelCheck "collapse fstart1"
       , numLayerEntriesEqualPredicate 1

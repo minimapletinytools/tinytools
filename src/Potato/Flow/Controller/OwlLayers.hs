@@ -218,7 +218,7 @@ expandAllCollapsedParents selection pfs ls = r where
     Just lm -> _layerMeta_isCollapsed lm
     Nothing -> True
   collapsedParents = IS.filter iscollapsedfilterfn ops
-  alterfn mlm = trace "collapsed" $ case mlm of
+  alterfn mlm = case mlm of
     Nothing -> Just (def { _layerMeta_isCollapsed = False })
     Just x -> Just (x { _layerMeta_isCollapsed = False })
   newlmm = IS.foldr (IM.alter alterfn) oldlmm collapsedParents
