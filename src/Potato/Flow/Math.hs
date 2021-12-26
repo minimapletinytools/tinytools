@@ -18,6 +18,7 @@ module Potato.Flow.Math (
 
   , make_lBox_from_axis
   , union_lBox
+  , lBox_expand
   , intersect_lBox
   , intersect_lBox_include_zero_area
   , does_lBox_intersect
@@ -144,6 +145,10 @@ union_lBox (LBox (V2 x1 y1) (V2 w1 h1)) (LBox (V2 x2 y2) (V2 w2 h2)) = combined 
   cx2 = x2 + w2
   cy2 = y2 + h2
   combined = make_lBox_from_axis (min4 x1 cx1 x2 cx2, max4 x1 cx1 x2 cx2, min4 y1 cy1 y2 cy2, max4 y1 cy1 y2 cy2)
+
+-- assumes lbox is canonical
+lBox_expand :: LBox -> (Int, Int, Int, Int) -> LBox
+lBox_expand (LBox (V2 x y) (V2 w h)) (l, r, u, d) = LBox (V2 (x-l) (y-u)) (V2 (w+l+r) (h+u+d))
 
 -- | inverted LBox are treated as if not inverted
 intersect_lBox :: LBox -> LBox -> Maybe LBox

@@ -2,6 +2,8 @@
 
 module Potato.Flow.Methods.Lines (
 
+  -- * exposed for testing
+  determineSeparation
 ) where
 
 import           Relude
@@ -27,6 +29,14 @@ import Linear.Vector ((^*))
 -- '⇇' '⇊'
 -- '⇇' '⇈'
 -- '⇉' '⇊'
+
+determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
+determineSeparation (lbx1, p1) (lbx2, p2) = r where
+  (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
+  (l2,r2,t2,b2) = lBox_to_axis $ lBox_expand lbx2 p2
+  hsep = l1 >= r2 || l2 >= r1
+  vsep = t1 >= b2 || t2 >= b1
+  r = (hsep, vsep)
 
 
 data CartDir = CD_Up | CD_Down | CD_Left | CD_Right

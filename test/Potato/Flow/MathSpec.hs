@@ -16,6 +16,8 @@ import           Potato.Flow.Math
 spec :: Spec
 spec = do
   describe "Math" $ do
+    it "lBox_expand" $ do
+      lBox_expand (LBox (V2 0 0) (V2 10 10)) (1,1,1,1) `shouldBe` (LBox (V2 (-1) (-1)) (V2 12 12))
     it "substract_lBox" $ do
       let
         lb1 = LBox (V2 0 0) (V2 10 10)
