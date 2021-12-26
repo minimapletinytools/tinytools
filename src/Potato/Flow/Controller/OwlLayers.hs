@@ -15,6 +15,7 @@ import           Control.Lens                 (over, _2)
 import Data.Foldable (foldl)
 import           Data.Default
 import qualified Data.IntMap                  as IM
+import qualified Data.IntSet as IS
 import           Data.Sequence                ((><), (|>))
 import qualified Data.Sequence                as Seq
 import qualified Data.Text as T
@@ -209,6 +210,22 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
     LHCO_ToggleLock -> togglefn _layerEntry_lockState (\lm' x -> lm' { _layerMeta_isLocked = x }) (\le' x -> le' { _layerEntry_lockState = x })
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\lm' x -> lm' { _layerMeta_isHidden = x }) (\le' x -> le' { _layerEntry_hideState = x })
 
+expandAllCollapsedParents :: Selection -> OwlPFState -> LayersState -> LayersState
+expandAllCollapsedParents selection pfs ls = r where
+  ops = owlParliamentSet_findParents (hasOwlTree_toOwlTree pfs) . superOwlParliament_toOwlParliamentSet $  selection
+  oldlmm = _layersState_meta ls
+  iscollapsedfilterfn rid = case IM.lookup rid oldlmm of
+    Just lm -> _layerMeta_isCollapsed lm
+    Nothing -> True
+  collapsedParents = IS.filter iscollapsedfilterfn ops
+  alterfn mlm = trace "collapsed" $ case mlm of
+    Nothing -> Just (def { _layerMeta_isCollapsed = False })
+    Just x -> Just (x { _layerMeta_isCollapsed = False })
+  newlmm = IS.foldr (IM.alter alterfn) oldlmm collapsedParents
+  r = if IS.null collapsedParents
+    then ls
+    -- can we do this more efficiently?
+    else (makeLayersStateFromOwlPFState pfs newlmm) { _layersState_scrollPos = _layersState_scrollPos ls }
 
 makeLayersStateFromOwlPFState :: OwlPFState -> LayerMetaMap -> LayersState
 makeLayersStateFromOwlPFState pfs lmm = LayersState {

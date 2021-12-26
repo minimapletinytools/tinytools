@@ -561,14 +561,20 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
     Nothing -> (isNewSelection', selectionAfterChanges)
 
-  -- | TODO auto-expand folders and compute LayersState |
-  -- TODO auto expand folders for selected elements
+  -- | update LayersState based from SuperOwlChanges after applying events |
+  next_layersState' = updateLayers next_pFState cslmap_afterEvent next_layersState''
+
+  -- | auto-expand folders and compute LayersState |
+  -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
+  -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
   -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
-  next_layersState' = next_layersState''
+  -- TODO I don't think this is quite the behavior you want, it will auto expand stuff all over the place
+  next_layersState = expandAllCollapsedParents next_selection next_pFState next_layersState'
+
 
   -- | update the next handler |
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
-  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree next_pFState) (_superOwl_id sowl) (_layersState_meta next_layersState')
+  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree next_pFState) (_superOwl_id sowl) (_layersState_meta next_layersState)
   next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) filterHiddenOrLocked next_selection
   nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
   next_handler' = if isNewSelection
@@ -588,9 +594,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
     -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
-
-  -- | update LayersState based from SuperOwlChanges after applying events |
-  next_layersState = updateLayers next_pFState cslmap_afterEvent next_layersState'
 
   -- | update AttachmentMap based on new state  |
   next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap

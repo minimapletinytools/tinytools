@@ -583,6 +583,20 @@ owlParliamentSet_descendent ot rid sset = if owlParliamentSet_member rid sset
     Nothing -> False
     Just x -> owlParliamentSet_descendent ot (superOwl_parentId x) sset
 
+-- UNTESTED
+owlParliamentSet_findParents :: OwlTree -> OwlParliamentSet -> OwlParliamentSet
+owlParliamentSet_findParents od ops = r where
+  foldrfn rid acc = case owlTree_findSuperOwl od rid of
+    Nothing -> acc
+    Just sowl -> let
+        prid = _owlEltMeta_parent (_superOwl_meta sowl)
+      in if prid == noOwl
+        then acc
+        else IS.insert prid acc
+  parents = IS.foldr foldrfn IS.empty ops
+  superparents = if IS.null parents then IS.empty else owlParliamentSet_findParents od parents
+  r = IS.union parents superparents
+
 
 
 
