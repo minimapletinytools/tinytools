@@ -502,9 +502,9 @@ superOwlParliament_convertToSeqWithChildren od@OwlTree {..} (SuperOwlParliament 
 -- relies on OwlParliament being correctly ordered
 owlParliament_convertToMiniOwltree :: OwlTree -> OwlParliament -> MiniOwlTree
 owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = assert valid r where
-
   valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od op
 
+  -- TODO you can get rid of SiblingPosition return arg
   addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition)
   addOwl newprid rid newchildrids (om, ridremap, nrid, pos) = (newom, newridremap, nrid+1, pos+1) where
     sowl = owlTree_mustFindSuperOwl od rid
@@ -526,7 +526,7 @@ owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = ass
     newprid = if prid == noOwl then noOwl else ridremap IM.! prid
 
     -- add self (note that nrid is the new rid of the owl we just added)
-    (newom', newridremap', newnrid', newpos) = addOwl newprid rid (newchildrids) (om, ridremap, nrid, pos)
+    (newom', newridremap', newnrid', _) = addOwl newprid rid (newchildrids) (om, ridremap, nrid, pos)
 
     children = fromMaybe Seq.empty $ mommyOwl_kiddos $ owlTree_mustFindSuperOwl od rid
 
@@ -537,7 +537,7 @@ owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = ass
 
 
   -- recursively add all children to owltree and reindex
-  ((om1, ridremap1, _, _), newtopowls) = mapAccumL (\acc rid -> addOwlRecursive 0 noOwl rid acc) (IM.empty, IM.empty, owlTree_maxId od + 1, 0) owls
+  ((om1, _, _, _), newtopowls) = mapAccumL (\acc rid -> addOwlRecursive 0 noOwl rid acc) (IM.empty, IM.empty, owlTree_maxId od + 1, 0) owls
 
   r = OwlTree {
       _owlTree_mapping = om1
@@ -613,6 +613,7 @@ owlTree_equivalent ota otb = r
 
     owl_equivalent (OwlEltSElt oia selta) (OwlEltSElt oib seltb) = oia == oib && selta == seltb
     owl_equivalent (OwlEltFolder oia kiddosa) (OwlEltFolder oib kiddosb) = oia == oib && kiddos_equivalent kiddosa kiddosb
+    owl_equivalent _ _ = False
 
     r = kiddos_equivalent (_owlTree_topOwls ota) (_owlTree_topOwls otb)
 
@@ -705,7 +706,7 @@ owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
 -- throws if OwlEltMeta is invalid in OwlTree
 -- TODO make naming consistent in this file...
 owlTree_owlEltMeta_toOwlSpot :: OwlTree -> OwlEltMeta -> OwlSpot
-owlTree_owlEltMeta_toOwlSpot od@OwlTree {..} OwlEltMeta {..} = r
+owlTree_owlEltMeta_toOwlSpot OwlTree {..} OwlEltMeta {..} = r
   where
     msiblings = case _owlEltMeta_parent of
       x | x == noOwl -> return _owlTree_topOwls
@@ -815,7 +816,7 @@ owlTree_removeREltId :: REltId -> OwlTree -> OwlTree
 owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl od rid) od
 
 owlTree_removeSuperOwl :: SuperOwl -> OwlTree -> OwlTree
-owlTree_removeSuperOwl sowl od@OwlTree {..} = r
+owlTree_removeSuperOwl sowl OwlTree {..} = r
   where
     -- remove the element itself
     newMapping'' = IM.delete (_superOwl_id sowl) _owlTree_mapping
@@ -829,18 +830,18 @@ owlTree_removeSuperOwl sowl od@OwlTree {..} = r
       OwlEltFolder _ children -> foldr removeEltWithoutAdjustMommyFn newMapping'' children
       _ -> newMapping''
 
-    removeSuperOwlFromSeq :: OwlMapping -> Seq REltId -> SuperOwl -> Seq REltId
-    removeSuperOwlFromSeq om s so = assert (Seq.length s == Seq.length r + 1) r
+    removeSuperOwlFromSeq :: Seq REltId -> SuperOwl -> Seq REltId
+    removeSuperOwlFromSeq s so = assert (Seq.length s == Seq.length r' + 1) r'
       where
-        sp = _owlEltMeta_position . _superOwl_meta $ so
         -- sowl meta may be incorrect at this point so we do linear search to remove the elt
-        r = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
+        r' = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
         -- TODO switch to this version once you fix issue in owlTree_moveOwlParliament (see comments there)
+        --sp = _owlEltMeta_position . _superOwl_meta $ so
         --r = Seq.deleteAt sp s
 
     -- remove from children of the element's mommy if needed
     removeChildFn parent = case parent of
-      (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq _owlTree_mapping children sowl))
+      (oem, OwlEltFolder oi children) -> (oem, OwlEltFolder oi (removeSuperOwlFromSeq children sowl))
       _ -> error "expected parent to be a folder"
     newMapping = case _owlEltMeta_parent (_superOwl_meta sowl) of
       x | x == noOwl -> newMapping'
@@ -849,7 +850,7 @@ owlTree_removeSuperOwl sowl od@OwlTree {..} = r
     -- remove from top owls if needed
     newTopOwls =
       if superOwl_isTopOwl sowl
-        then removeSuperOwlFromSeq _owlTree_mapping _owlTree_topOwls sowl
+        then removeSuperOwlFromSeq _owlTree_topOwls sowl
         else _owlTree_topOwls
 
     r' =
@@ -996,10 +997,10 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
 
 -- parents NOT allowed :O
 internal_owlTree_addOwlElt :: OwlSpot -> REltId -> OwlElt -> OwlTree -> (OwlTree, SuperOwl)
-internal_owlTree_addOwlElt OwlSpot {..} rid oelt od@OwlTree {..} = assert pass r
+internal_owlTree_addOwlElt OwlSpot {..} rid oelt OwlTree {..} = assert nochildrenifaddingfolder r
   where
     -- if we're adding a folder (in the normal case), ensure it has no children
-    pass = case oelt of
+    nochildrenifaddingfolder = case oelt of
       OwlEltFolder _ children -> Seq.null children
       _ -> True
 
@@ -1023,8 +1024,8 @@ internal_owlTree_addOwlElt OwlSpot {..} rid oelt od@OwlTree {..} = assert pass r
       where
         position = case _owlSpot_leftSibling of
           Nothing -> 0
-          Just rid -> case Seq.elemIndexL rid kiddos of
-            Nothing -> error $ "expected to find leftmost sibling " <> show rid <> " in " <> show kiddos
+          Just leftsibrid -> case Seq.elemIndexL leftsibrid kiddos of
+            Nothing -> error $ "expected to find leftmost sibling " <> show leftsibrid <> " in " <> show kiddos
             Just x -> x + 1
     adjustfn (oem, oe) = case oe of
       OwlEltFolder oi kiddos -> (oem, OwlEltFolder oi (modifyKiddos kiddos))
