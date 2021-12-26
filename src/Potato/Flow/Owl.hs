@@ -665,14 +665,6 @@ owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)
 owlTree_maxId :: OwlTree -> REltId
 owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 
--- TODO why is this function such a pain to write
-owlTree_rEltId_position :: OwlTree -> REltId -> Int
-owlTree_rEltId_position ot@OwlTree {..} rid = case owlTree_findSuperOwl ot rid of
-  Nothing -> -1
-  Just SuperOwl {..} -> case _owlEltMeta_parent _superOwl_meta of
-    x | x == noOwl -> undefined -- _owlEltMeta
-    _ -> undefined
-
 -- reorganize the children of the given parent
 -- i.e. update their position in the directory
 internal_owlTree_reorgKiddos :: OwlTree -> REltId -> OwlTree
@@ -823,10 +815,6 @@ instance HasOwlTree OwlTree where
   hasOwlTree_mustFindSuperOwl = owlTree_mustFindSuperOwl
   hasOwlTree_test_findFirstSuperOwlByName ot label = find (\sowl -> hasOwlElt_name sowl == label) . toList $ owliterateall ot
 
--- TODO
---owlTree_foldWithParent :: (a -> Maybe SuperOwl -> SuperOwl -> a) -> a -> OwlTree -> a
---owlTree_foldWithParent = undefined
-
 -- | select everything in the OwlTree
 owlTree_toSuperOwlParliament :: OwlTree -> SuperOwlParliament
 owlTree_toSuperOwlParliament od@OwlTree {..} = r
@@ -896,8 +884,8 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
 
     -- WIP start
+    -- ??? I can't remember what this is anymore, did I aready fix this or no?
     -- TODO now that we've removed owls, this might invalidate our target position, so we need to reconstruct it
-
 {-
     -- first find the first position to the left (inclusive) of where we our original drop position is that isn't a removed element
     -- ()
@@ -961,13 +949,6 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
 -- assumes SEltTree REltIds do not collide with OwlTree
 owlTree_addSEltTree :: OwlSpot -> SEltTree -> OwlTree -> (OwlTree, [SuperOwl])
 owlTree_addSEltTree spot selttree od = r where
-
-  -- reindexing version below (forget why I kept this here, CAN DELETE)
-  -- reindex the selttree
-  --startid = owlTree_maxId od + 1
-  -- TODO this is fine, but it would be better to set the id rather than add it to the old one
-  --reindexed = fmap (\(rid,seltl) -> (rid + startid, seltl)) selttree
-
   -- convert to OwlDirectory
   otherod = owlTree_fromSEltTree selttree
   r = owlTree_addMiniOwlTree spot otherod od
@@ -994,22 +975,6 @@ owlTree_reindex start ot = assert valid r where
   newMap = fmap mapowlfn newMap'
   newTopOwls = fmap adjustkeyfn (_owlTree_topOwls ot)
   r = OwlTree newMap newTopOwls
-
-
-{- DELETE not needed, and not correct for what we needed it for
-groupSimilar :: (Eq b) => (a -> b) -> Seq a -> [[a]]
-groupSimilar f s = r where
-  grouplast x [] = [[x]]
-  grouplast x (y:ys) = (x:y):ys
-  foldrfn x (mlastfx, out) = case mlastfx of
-    Nothing -> (Just (f x), [x]:out)
-    Just lastfx -> if f x == lastfx
-      then (mlastfx, grouplast x out)
-      else (Just (f x), [x]:out)
-  (_,r) = foldr foldrfn (Nothing,[]) s
--- we need to add in reverse order for elts that share the same parent, but we need to add their parents first so we group by parent and reverse each group
-elts = join . fmap reverse . (\xs -> traceShow (_superOwl_id <<$>> xs) xs) . groupSimilar (_owlEltMeta_parent . _superOwl_meta) . owliterateall $ miniot
--}
 
 -- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step, use owlTree_hasDanglingAttachments
 -- ^ actually this might be OK... or at least we want to check against tree we are attaching to such that if we copy paste something that was attached it keeps those attachments (or maybe we don't!)
