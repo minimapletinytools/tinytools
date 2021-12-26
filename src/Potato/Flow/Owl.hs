@@ -831,13 +831,13 @@ owlTree_removeSuperOwl sowl OwlTree {..} = r
       _ -> newMapping''
 
     removeSuperOwlFromSeq :: Seq REltId -> SuperOwl -> Seq REltId
-    removeSuperOwlFromSeq s so = assert (Seq.length s == Seq.length r' + 1) r'
+    removeSuperOwlFromSeq s so = assert (Seq.length s == Seq.length deletedSeq + 1) deletedSeq
       where
         -- sowl meta may be incorrect at this point so we do linear search to remove the elt
-        r' = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
+        deletedSeq = Seq.deleteAt (fromJust (Seq.elemIndexL (_superOwl_id so) s)) s
         -- TODO switch to this version once you fix issue in owlTree_moveOwlParliament (see comments there)
         --sp = _owlEltMeta_position . _superOwl_meta $ so
-        --r = Seq.deleteAt sp s
+        --deletedSeq = Seq.deleteAt sp s
 
     -- remove from children of the element's mommy if needed
     removeChildFn parent = case parent of
