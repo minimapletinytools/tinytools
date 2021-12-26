@@ -504,9 +504,8 @@ owlParliament_convertToMiniOwltree :: OwlTree -> OwlParliament -> MiniOwlTree
 owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = assert valid r where
   valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od op
 
-  -- TODO you can get rid of SiblingPosition return arg
-  addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition)
-  addOwl newprid rid newchildrids (om, ridremap, nrid, pos) = (newom, newridremap, nrid+1, pos+1) where
+  addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId)
+  addOwl newprid rid newchildrids (om, ridremap, nrid, pos) = (newom, newridremap, nrid+1) where
     sowl = owlTree_mustFindSuperOwl od rid
     newoem = OwlEltMeta {
         _owlEltMeta_parent = newprid
@@ -526,7 +525,7 @@ owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = ass
     newprid = if prid == noOwl then noOwl else ridremap IM.! prid
 
     -- add self (note that nrid is the new rid of the owl we just added)
-    (newom', newridremap', newnrid', _) = addOwl newprid rid (newchildrids) (om, ridremap, nrid, pos)
+    (newom', newridremap', newnrid') = addOwl newprid rid (newchildrids) (om, ridremap, nrid, pos)
 
     children = fromMaybe Seq.empty $ mommyOwl_kiddos $ owlTree_mustFindSuperOwl od rid
 
