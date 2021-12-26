@@ -209,13 +209,8 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
 
 -- | hack function for resetting both handlers
 -- It would be nice if we actually cancel/reset the handlers (such that in progress operations are undone), but I don't think it really matters
-forceResetBothHandlersAndMakeGoatCmdTempOutput :: (PotatoHandler h, PotatoHandler h') => GoatState -> PotatoHandlerInput -> h -> h' -> GoatCmdTempOutput
-forceResetBothHandlersAndMakeGoatCmdTempOutput goatState potatoHandlerInput h lh = r where
-
-  -- TODO this is incorrect, we don't want to call pRefreshHandler as it does not correctly reset the handler state
-  --msph_h = pRefreshHandler h potatoHandlerInput
-  -- lh is layers handler!
-  --msph_lh = pRefreshHandler lh potatoHandlerInput
+forceResetBothHandlersAndMakeGoatCmdTempOutput :: GoatState -> GoatCmdTempOutput
+forceResetBothHandlersAndMakeGoatCmdTempOutput goatState = r where
 
   -- I think this is Ok
   msph_h = Nothing
@@ -224,7 +219,7 @@ forceResetBothHandlersAndMakeGoatCmdTempOutput goatState potatoHandlerInput h lh
   r = def {
       _goatCmdTempOutput_goatState = goatState {
           _goatState_layersHandler = case msph_lh of
-            Just h  -> h
+            Just x  -> x
             Nothing -> error "expected LayersHandler to return a new handler"
         }
       , _goatCmdTempOutput_nextHandler = msph_h
@@ -332,7 +327,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
           -- hack to recover after sameSource issue
           -- TODO TEST
           _ | mouseSourceFailure -> assert False $
-            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState' potatoHandlerInput handler _goatState_layersHandler
+            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState'
 
           -- if mouse was cancelled, update _goatState_mouseDrag accordingly
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
