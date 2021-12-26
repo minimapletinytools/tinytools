@@ -28,6 +28,7 @@ import           Reflex
 import           Reflex.Test.Host
 
 import           Potato.Flow
+import           Potato.Flow.DebugHelpers
 
 import qualified Data.IntMap                       as IM
 import qualified Data.Sequence                     as Seq
