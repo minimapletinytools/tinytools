@@ -314,7 +314,7 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
       , LabelCheck "drag b1"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \od sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 0
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 0
 
       , AlwaysPass
       , AlwaysPass

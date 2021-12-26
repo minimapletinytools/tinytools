@@ -16,11 +16,7 @@ import           Potato.Flow
 
 import           Potato.Flow.Common
 
-import           Data.Default
-import           Data.Dependent.Sum                         (DSum ((:=>)))
-import qualified Data.IntMap                                as IM
 import qualified Data.Map                                as Map
-import qualified Potato.Data.Text.Zipper                           as TZ
 
 checkSTextAreaTextAt :: Text -> XY -> PChar -> EverythingPredicate
 checkSTextAreaTextAt label k c = firstSuperOwlPredicate (Just label) $ \sowl -> case hasOwlElt_toSElt_hack sowl of

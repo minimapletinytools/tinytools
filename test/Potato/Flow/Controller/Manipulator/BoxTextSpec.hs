@@ -46,7 +46,7 @@ boxTextInputState_basic_test = let
       _boxTextInputState_original tais1 `shouldBe` Just testText1
       _boxTextInputState_original tais2 `shouldBe` Just testText1
       -- TZ has no Eq instance but show works fine, whatever
-      show (TZ.right (_boxTextInputState_zipper tais1)) `shouldBe` show (_boxTextInputState_zipper tais2)
+      show @[Char] (TZ.right (_boxTextInputState_zipper tais1)) `shouldBe` show (_boxTextInputState_zipper tais2)
 
 
 checkSBoxText :: Text -> Text -> EverythingPredicate
