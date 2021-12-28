@@ -13,7 +13,6 @@ import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
-import Potato.Flow.Render
 
 -- test imports
 import           Potato.Flow.Common
@@ -676,6 +675,12 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
 
     ]
 
+testForChar_internal :: RenderedCanvasRegion -> XY -> Bool
+testForChar_internal rc pos = case toIndexSafe (_renderedCanvasRegion_box rc) pos of
+  Nothing -> False
+  Just i -> _renderedCanvasRegion_contents rc V.! i /= ' '
+
+
 -- bad because this function assumes:
 -- - element render fills the entire box
 -- - nothing else is overlapping it
@@ -683,10 +688,6 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
 badTestVisibility  :: Text -> Bool -> EverythingPredicate
 badTestVisibility name cansee = FunctionPredicate f where
   f gs = r where
-    testForChar :: RenderedCanvasRegion -> XY -> Bool
-    testForChar rc pos = case toIndexSafe (_renderedCanvasRegion_box rc) pos of
-      Nothing -> False
-      Just i -> _renderedCanvasRegion_contents rc V.! i /= ' '
 
     pfs = goatState_pFState gs
 
@@ -703,7 +704,7 @@ badTestVisibility name cansee = FunctionPredicate f where
       Just sowl -> case getSEltBox (hasOwlElt_toSElt_hack sowl) of
         Nothing -> False
         Just box -> wasrendered' where
-          wasrendered' = testForChar rc (_lBox_tl box)
+          wasrendered' = testForChar_internal rc (_lBox_tl box)
     r = (show (_renderedCanvasRegion_box rc) <> show lmm <> " expected " <> show cansee <> " got " <> show wasrendered <> "\n\n" <> renderedCanvasToText rc <> "\n\n", cansee == wasrendered)
 
 everything_hideStuff_test :: Test
@@ -761,3 +762,4 @@ spec = do
     fromHUnitTest $ everything_inputfocusing_test
     fromHUnitTest $ everything_hasSavedChanges_test
     fromHUnitTest $ everything_hideStuff_test
+    --fromHUnitTest $ everything_newfolder_test

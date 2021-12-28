@@ -26,8 +26,6 @@ import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Data.Text as T
 import Data.Char (isAlphaNum)
 
-import Debug.Pretty.Simple
-
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
@@ -105,7 +103,7 @@ instance PotatoHandler LayersHandler where
     pfs = _potatoHandlerInput_pFState
     owltree = (_owlPFState_owlTree pfs)
 
-    rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
+    V2 rawxoffset rawlepos = _mouseDrag_to
     leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
 
     in case (_mouseDrag_state, _layersHandler_dragState) of
@@ -266,7 +264,6 @@ instance PotatoHandler LayersHandler where
         mev = do
           spot <- _layersHandler_dropSpot
           let
-            SuperOwlParliament selectedsowls = _potatoHandlerInput_selection
             isSpotValid = isSpotValidToDrop owltree _potatoHandlerInput_selection spot
 
             -- TODO modify if we drag on top of existing elt... Is there anything to do here? I can't remember why I added this comment. Pretty sure there's nothing to do
@@ -285,7 +282,6 @@ instance PotatoHandler LayersHandler where
         }
 
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly (resetLayersHandler lh)
-      _ -> error $ "unexpected mouse state passed to handler " <> show _mouseDrag_state <> " " <> show _layersHandler_dragState
 
   pHandleKeyboard lh phi kbd = case kbd of
     KeyboardData (KeyboardKey_Scroll scroll) _ -> Just $ handleScroll lh phi scroll
@@ -301,7 +297,7 @@ instance PotatoHandler LayersHandler where
   -- TODO generate LHRESS_ChildSelected
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where
     selection = _potatoHandlerInput_selection
-    ls@(LayersState lmm lentries scrollPos) = _potatoHandlerInput_layersState
+    LayersState _ lentries _ = _potatoHandlerInput_layersState
     --pfs = _potatoHandlerInput_pFState
     --owltree = (_owlPFState_owlTree pfs)
 
@@ -372,7 +368,7 @@ instance PotatoHandler LayersHandler where
         else if selected
           then case selstack of
             [] -> (False, [True]) -- this happens if on the first element that we mapAccumR on
-            x:xs -> (False, True:xs)
+            _:xs -> (False, True:xs)
           else if depth < lastdepth
             then case selstack of
               [] -> error "this should never happen"
@@ -420,7 +416,7 @@ renameTextZipperTransform = \case
   _                                   -> Nothing
 
 renameToAndReturn :: LayersRenameHandler -> Text -> PotatoHandlerOutput
-renameToAndReturn lh@LayersRenameHandler {..} newName = r where
+renameToAndReturn LayersRenameHandler {..} newName = r where
   controller = CTagRename :=> (Identity $ CRename {
       _cRename_deltaLabel = (hasOwlElt_name _layersRenameHandler_renaming, newName)
     })
@@ -440,10 +436,8 @@ instance PotatoHandler LayersRenameHandler where
   -- pan offset should always be set to 0 in RelMouseDrag
   pHandleMouse lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
-    ls@(LayersState _ lentries scrollPos) = _potatoHandlerInput_layersState
-    pfs = _potatoHandlerInput_pFState
-    owltree = (_owlPFState_owlTree pfs)
-    rawleposxy@(V2 rawxoffset rawlepos) = _mouseDrag_to
+    LayersState _ lentries scrollPos = _potatoHandlerInput_layersState
+    V2 rawxoffset rawlepos = _mouseDrag_to
     leposxy@(V2 _ lepos) = V2 rawxoffset (rawlepos + scrollPos)
 
     renaminglepos = _layersRenameHandler_index
@@ -452,7 +446,7 @@ instance PotatoHandler LayersRenameHandler where
       MouseDragState_Down | lepos == renaminglepos -> r where
         xpos = case clickLayerNew lentries leposxy of
           Nothing -> error "this should never happen"
-          Just (downsowl, _, xoff) -> xoff - 6
+          Just (_, _, xoff) -> xoff - 6
 
         dl = toDisplayLines lh
         nexttz = TZ.goToDisplayLinePosition xpos 0 dl _layersRenameHandler_zipper
@@ -498,7 +492,7 @@ instance PotatoHandler LayersRenameHandler where
 
   pIsHandlerActive LayersRenameHandler {..} = False
 
-  pRenderLayersHandler lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
+  pRenderLayersHandler LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
     r' = pRenderLayersHandler _layersRenameHandler_original phi
     entries' = _layersViewHandlerRenderOutput_entries r'
 
@@ -507,7 +501,7 @@ instance PotatoHandler LayersRenameHandler where
     -- solution 2: take over entire row from very left
     -- solution 3: ignore, user may need to resize layers area
     -- we will just do solution 3 cuz it's easiest
-    adjustfn (LayersHandlerRenderEntryNormal lhress dots renaming lentry) = LayersHandlerRenderEntryNormal lhress dots (Just _layersRenameHandler_zipper) lentry where
+    adjustfn (LayersHandlerRenderEntryNormal lhress dots _ lentry) = LayersHandlerRenderEntryNormal lhress dots (Just _layersRenameHandler_zipper) lentry where
     adjustfn (LayersHandlerRenderEntryDummy _) = error "this should never happen"
     entries = Seq.adjust'  adjustfn _layersRenameHandler_index entries'
     r = LayersViewHandlerRenderOutput { _layersViewHandlerRenderOutput_entries = entries }

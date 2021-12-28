@@ -19,7 +19,6 @@ import           Potato.Flow.Owl
 import           Potato.Flow.Attachments
 
 import           Control.Exception
-import Data.Maybe (fromJust)
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
@@ -178,10 +177,10 @@ instance PotatoHandler SimpleLineHandler where
         }
     MouseDragState_Up -> Just def
     MouseDragState_Cancelled -> Just def
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = case kbd of
+  pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
     _                              -> Nothing
-  pRenderHandler slh@SimpleLineHandler {..} PotatoHandlerInput {..} = r where
+  pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
     boxes = case mselt of
       Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active

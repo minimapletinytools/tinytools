@@ -312,7 +312,7 @@ instance PotatoHandler BoxHandler where
     MouseDragState_Cancelled -> Just $ def { _potatoHandlerOutput_pFEvent = Just WSEUndo }
 
 
-  pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key mods) = r where
+  pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key _) = r where
 
     todlbox (x,y) = Just $ DeltaLBox (V2 x y) 0
     mmove = case key of

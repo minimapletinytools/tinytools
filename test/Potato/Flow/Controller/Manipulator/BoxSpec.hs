@@ -16,12 +16,6 @@ import           Potato.Flow
 
 import           Potato.Flow.Common
 
-import           Data.Default
-import           Data.Dependent.Sum                         (DSum ((:=>)))
-import qualified Data.IntMap                                as IM
-import qualified Potato.Data.Text.Zipper                           as TZ
-
-
 
 
 test_basic :: Test

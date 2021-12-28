@@ -12,12 +12,10 @@ module Potato.Flow.Attachments (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Controller.Types
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import Potato.Flow.SElts
-import           Potato.Flow.Types
 
 
 attachLocationFromLBox :: Bool -> LBox -> AttachmentLocation -> XY

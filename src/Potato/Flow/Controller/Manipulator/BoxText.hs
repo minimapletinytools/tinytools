@@ -21,7 +21,6 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
@@ -159,12 +158,12 @@ makeTextHandlerRenderOutput btis offset = r where
     (alignxoff,_) <- Map.lookup y offsetMap
     let
       LBox p _ = _boxTextInputState_box $ btis
-      handle = RenderHandle {
+      cursorh = RenderHandle {
           _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
           , _renderHandle_char = mCursorChar
           , _renderHandle_color = RHC_Default
         }
-    return [handle]
+    return [cursorh]
 
   r = HandlerRenderOutput $ fromMaybe [] mlbox
 
@@ -299,7 +298,7 @@ data BoxLabelHandler = BoxLabelHandler {
 
 lBox_to_boxLabelBox :: LBox -> LBox
 lBox_to_boxLabelBox lbx = r where
-  CanonicalLBox _ _ (LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox lbx
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox lbx
   width = max 0 (w - 2)
   r = LBox (V2 (x+1) y) (V2 width 1)
 

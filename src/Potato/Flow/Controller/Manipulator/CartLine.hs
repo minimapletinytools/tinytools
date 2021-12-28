@@ -9,17 +9,10 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
-import           Potato.Flow.Types
-import           Potato.Flow.Deprecated.Workspace
 
 import           Control.Exception
 import           Data.Default
-import           Data.Dependent.Sum                        (DSum ((:=>)))
-import qualified Data.IntMap                               as IM
-import qualified Data.Sequence                             as Seq
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 

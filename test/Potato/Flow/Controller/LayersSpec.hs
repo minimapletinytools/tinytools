@@ -126,7 +126,7 @@ spec = do
 
         -- close first folder
         let
-          (LayersState lmm_final lentries_final _) = toggleLayerEntry someState1 (LayersState lmm_5 lentries_5 0) 0 LHCO_ToggleCollapse
+          (LayersState _ lentries_final _) = toggleLayerEntry someState1 (LayersState lmm_5 lentries_5 0) 0 LHCO_ToggleCollapse
         Seq.length lentries_final `shouldBe` 1
         lentries_final `shouldBe` lentries_0
       it "basic2" $ do
@@ -140,7 +140,7 @@ spec = do
 
         -- collapse layer entry 7, which should do nothing because it's an empty folder
         let
-          (LayersState lmm_1 lentries_1 _) = toggleLayerEntry someState1 (LayersState lmm_0 lentries_0 0) 7 LHCO_ToggleCollapse
+          (LayersState _ lentries_1 _) = toggleLayerEntry someState1 (LayersState lmm_0 lentries_0 0) 7 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 8
 
       it "basic3" $ do
@@ -154,7 +154,7 @@ spec = do
 
         -- expand last folder, there should be one more element
         let
-          (LayersState lmm_1 lentries_1 _) = toggleLayerEntry someState3 (LayersState lmm_0 lentries_0 0) 3 LHCO_ToggleCollapse
+          (LayersState _ lentries_1 _) = toggleLayerEntry someState3 (LayersState lmm_0 lentries_0 0) 3 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
     describe "updateLayers" $ do
       it "basic" $ do
@@ -169,5 +169,5 @@ spec = do
           oelt = _superOwl_elt deleteme
 
           (state_1, changes) = do_deleteElts [(rid,spot,oelt)] state_0
-          (LayersState lmm_1 lentries_1 _) = updateLayers state_1 changes (LayersState lmm_0 lentries_0 0)
+          (LayersState _ lentries_1 _) = updateLayers state_1 changes (LayersState lmm_0 lentries_0 0)
         Seq.length lentries_1 `shouldBe` 4
