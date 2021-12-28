@@ -21,6 +21,7 @@ import qualified Potato.Data.Text.Zipper   as TZ
 import Data.Default
 
 import Linear.Vector ((^*))
+import Linear.Matrix (M22, (!*))
 
 -- cases
 -- '⇇' '⇇'
@@ -30,6 +31,7 @@ import Linear.Vector ((^*))
 -- '⇇' '⇈'
 -- '⇉' '⇊'
 
+-- TODO don't take expansion parameters, do this before so it's more rotation friendly
 determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
 determineSeparation (lbx1, p1) (lbx2, p2) = r where
   (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
@@ -39,8 +41,60 @@ determineSeparation (lbx1, p1) (lbx2, p2) = r where
   r = (hsep, vsep)
 
 
+matrix_cw_90 :: M22 Int
+matrix_cw_90 = V2 (V2 0 (-1)) (V2 1 0)
+matrix_ccw_90 :: M22 Int
+matrix_ccw_90 = V2 (V2 0 1) (V2 (-1) 0)
+
+class RotateMe a where
+  -- CCW
+  rotateMe_Left :: a -> a
+  -- CW
+  rotateMe_Right :: a -> a
+  rotateMe_validate :: (Eq a) => a -> Bool
+  rotateMe_validate a = (rotateMe_Left . rotateMe_Right $ a) == a && (rotateMe_Right . rotateMe_Left $ a) == a
+
+instance RotateMe CartDir where
+  rotateMe_Left = \case
+    CD_Up -> CD_Left
+    CD_Down -> CD_Right
+    CD_Left -> CD_Down
+    CD_Right -> CD_Up
+  rotateMe_Right = \case
+    CD_Up -> CD_Right
+    CD_Down -> CD_Left
+    CD_Left -> CD_Up
+    CD_Right -> CD_Down
+
+instance RotateMe AnchorType where
+  rotateMe_Left = \case
+    AT_End_Up -> AT_End_Left
+    AT_End_Down -> AT_End_Right
+    AT_End_Left -> AT_End_Down
+    AT_End_Right -> AT_End_Up
+    AT_Elbow_TL -> AT_Elbow_BL
+    AT_Elbow_TR -> AT_Elbow_TL
+    AT_Elbow_BR -> AT_Elbow_TR
+    AT_Elbow_BL -> AT_Elbow_BR
+    AT_Elbow_Invalid -> AT_Elbow_Invalid
+  rotateMe_Right = \case
+    AT_End_Up -> AT_End_Right
+    AT_End_Down -> AT_End_Left
+    AT_End_Left -> AT_End_Up
+    AT_End_Right -> AT_End_Down
+    AT_Elbow_TL -> AT_Elbow_TR
+    AT_Elbow_TR -> AT_Elbow_BR
+    AT_Elbow_BR -> AT_Elbow_BL
+    AT_Elbow_BL -> AT_Elbow_TL
+    AT_Elbow_Invalid -> AT_Elbow_Invalid
+
+instance RotateMe XY where
+  rotateMe_Left = (!*) matrix_ccw_90
+  rotateMe_Right = (!*) matrix_cw_90
+
+
 data CartDir = CD_Up | CD_Down | CD_Left | CD_Right
-data AnchorType = AT_End_Up | AT_End_Down | AT_End_Left | AT_End_Right | AT_Elbow_UR | AT_Elbow_RD | AT_Elbow_DL | AT_Elbow_LU | AT_Elbow_Invalid
+data AnchorType = AT_End_Up | AT_End_Down | AT_End_Left | AT_End_Right | AT_Elbow_TL | AT_Elbow_TR | AT_Elbow_BR | AT_Elbow_BL | AT_Elbow_Invalid
 
 maybeIndex :: Text -> Int -> Maybe MPChar
 maybeIndex t i = if i < T.length t
@@ -70,10 +124,10 @@ renderAnchorType ss@SuperStyle {..} ls@LineStyle {..} at = r where
     AT_End_Down -> renderLineEnd ss ls CD_Down 0
     AT_End_Left -> renderLineEnd ss ls CD_Left 0
     AT_End_Right -> renderLineEnd ss ls CD_Right 0
-    AT_Elbow_UR -> _superStyle_tl
-    AT_Elbow_RD -> _superStyle_tr
-    AT_Elbow_DL -> _superStyle_br
-    AT_Elbow_LU -> _superStyle_bl
+    AT_Elbow_TL -> _superStyle_tl
+    AT_Elbow_TR -> _superStyle_tr
+    AT_Elbow_BR -> _superStyle_br
+    AT_Elbow_BL -> _superStyle_bl
     AT_Elbow_Invalid -> Just '?'
 
 flipCartDir :: CartDir -> CartDir
@@ -99,20 +153,20 @@ cartDirToAnchor start mnext = case mnext of
     CD_Right -> AT_End_Right
   Just next -> case start of
     CD_Up -> case next of
-      CD_Left -> AT_Elbow_RD
-      CD_Right -> AT_Elbow_UR
+      CD_Left -> AT_Elbow_TR
+      CD_Right -> AT_Elbow_TL
       _ -> AT_Elbow_Invalid
     CD_Down -> case next of
-      CD_Left -> AT_Elbow_DL
-      CD_Right -> AT_Elbow_LU
+      CD_Left -> AT_Elbow_BR
+      CD_Right -> AT_Elbow_BL
       _ -> AT_Elbow_Invalid
     CD_Left -> case next of
-      CD_Up -> AT_Elbow_LU
-      CD_Down -> AT_Elbow_UR
+      CD_Up -> AT_Elbow_BL
+      CD_Down -> AT_Elbow_TL
       _ -> AT_Elbow_Invalid
     CD_Right -> case next of
-      CD_Up -> AT_Elbow_DL
-      CD_Down -> AT_Elbow_RD
+      CD_Up -> AT_Elbow_BR
+      CD_Down -> AT_Elbow_TR
       _ -> AT_Elbow_Invalid
 
 
