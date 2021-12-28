@@ -149,7 +149,10 @@ goatCmdTempOutput_screenRegion = _goatState_screenRegion . _goatCmdTempOutput_go
 
 instance Default GoatCmdTempOutput where
   def = GoatCmdTempOutput {
-      _goatCmdTempOutput_goatState = undefined
+
+      -- TODO just don't use Default if you're gonna do this...
+      _goatCmdTempOutput_goatState = undefined --error "this is expected to be overwritten during initialization"
+      
       , _goatCmdTempOutput_nextHandler  = Nothing
       , _goatCmdTempOutput_select      = Nothing
       , _goatCmdTempOutput_pFEvent     = Nothing
@@ -277,8 +280,10 @@ foldGoatFn :: GoatCmd -> GoatState -> GoatState
 foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
-  goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
-  --goatState = goatStateIgnore
+  -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
+  --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
+
+  goatState = goatStateIgnore
 
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace

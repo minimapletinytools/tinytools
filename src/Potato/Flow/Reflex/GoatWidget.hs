@@ -158,6 +158,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
         , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
+        , _goatState_debugCommands = []
       }
 
     -- TODO switch to Endo style
