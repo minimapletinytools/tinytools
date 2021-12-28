@@ -21,12 +21,9 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.OwlState
-import           Potato.Flow.Types
 
 import           Control.Exception (assert)
 import           Data.Default
-import qualified Data.List         as L
-import qualified Data.Sequence     as Seq
 
 -- TODO consider adding space as a modifier so you can do space drag panning in web version
 data KeyModifier = KeyModifier_Shift | KeyModifier_Alt | KeyModifier_Ctrl deriving (Show, Eq)

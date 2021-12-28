@@ -33,6 +33,6 @@ instance PotatoHandler PanHandler where
         , _potatoHandlerOutput_pan = Just (delta - _panHandler_pan)
       } where delta = _mouseDrag_to - _mouseDrag_from
 
-  pHandleKeyboard PanHandler {..} PotatoHandlerInput {..} kbd = Nothing
+  pHandleKeyboard PanHandler {..} PotatoHandlerInput {..} _ = Nothing
   pRenderHandler _ PotatoHandlerInput {..} = def
   pIsHandlerActive _ = True

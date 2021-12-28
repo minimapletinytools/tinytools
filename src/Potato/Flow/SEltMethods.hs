@@ -335,11 +335,13 @@ getDrawer selt = case selt of
   SEltBox sbox    -> sBox_drawer sbox
   SEltLine sline  -> sSimpleLine_drawer sline
   SEltTextArea stextarea  -> sTextArea_drawer stextarea
+  {-
   where
     potatoDrawer = SEltDrawer {
         _sEltDrawer_box = fromJust (getSEltBox selt)
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
+  -}
 
 modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
 modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of

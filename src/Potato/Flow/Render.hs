@@ -31,13 +31,10 @@ import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
-import           Potato.Flow.Types
 import           Potato.Flow.Controller.Types
 import Potato.Flow.Controller.Manipulator.Select
 
 import qualified Data.IntMap             as IM
-import qualified Data.List.Ordered       as L
-import           Data.Maybe              (fromJust)
 import qualified Data.Text               as T
 import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
@@ -155,12 +152,12 @@ potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . f
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvasRegion
 -- caller is expected to provide all SElts that intersect the rendered LBox
-render :: (HasCallStack) => LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
-render llbx@(LBox (V2 x y) _) seltls RenderedCanvasRegion {..} = r where
+render :: LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+render llbx seltls RenderedCanvasRegion {..} = r where
   drawers = map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
-    pt@(V2 lx ly) = toPoint llbx i
+    pt = toPoint llbx i
     pindex = toIndex _renderedCanvasRegion_box pt
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
@@ -197,7 +194,7 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
   validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
 
   l = lBox_area lbx
-  (LBox (V2 px py) _) = _renderedCanvasRegion_box
+  (LBox (V2 _ _) _) = _renderedCanvasRegion_box
   (LBox _ (V2 lw _)) = lbx
   unfoldfn (i, eol) = if i == l
     then Nothing

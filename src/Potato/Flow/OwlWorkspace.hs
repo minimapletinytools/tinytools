@@ -17,8 +17,6 @@ module Potato.Flow.OwlWorkspace (
 
 import           Relude
 
-import           Potato.Flow.Cmd
-import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import Potato.Flow.SEltMethods
@@ -27,10 +25,9 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.Types
 
 import           Control.Exception  (assert)
-import           Data.Dependent.Sum (DSum ((:=>)), (==>))
+import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Sequence      as Seq
-import qualified Data.Text as T
 
 
 
@@ -250,7 +247,7 @@ pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pf
 -- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical
 -- assumes input box is canonical
 clampNoNegDeltaLBoxTransformation :: LBox -> DeltaLBox -> DeltaLBox
-clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) dlbx@(DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
+clampNoNegDeltaLBoxTransformation lbx@(LBox (V2 x y) (V2 w h)) (DeltaLBox (V2 dx dy) (V2 dw dh)) = assert (lBox_isCanonicalLBox lbx) r where
 
   -- var legend
   -- ogt = original translation

@@ -19,7 +19,6 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
-import Potato.Flow.Types
 
 import           Data.Default
 import Data.Foldable (maximumBy)
@@ -100,7 +99,7 @@ instance PotatoHandler SelectHandler where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)
       newSelection = selectMagic _potatoHandlerInput_pFState (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
-  pHandleKeyboard sh PotatoHandlerInput {..} kbd = Nothing
+  pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput (fmap defaultRenderHandle $ substract_lBox full inside) where
     full@(LBox (V2 x y) (V2 w h)) = _selectHandler_selectArea sh
     inside = if w > 2 && h > 2

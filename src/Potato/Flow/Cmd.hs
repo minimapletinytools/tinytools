@@ -32,6 +32,7 @@ data PFCmdTag a where
 instance Text.Show.Show (PFCmdTag a) where
   show PFCNewElts      = "PFCNewElts"
   show PFCDeleteElts   = "PFCDeleteElts"
+  show PFCMove = "PFCMove"
   show PFCManipulate   = "PFCManipulate"
   show PFCResizeCanvas = "PFCResize"
 

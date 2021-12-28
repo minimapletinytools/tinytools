@@ -17,11 +17,9 @@ import           Relude
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
 import           Potato.Flow.Owl
 import Potato.Flow.DebugHelpers
 
-import           Control.Exception
 import qualified Data.Sequence                as Seq
 
 data SelectionManipulatorType = SMTNone | SMTBox | SMTBoxText | SMTLine | SMTTextArea | SMTBoundingBox deriving (Show, Eq)
@@ -63,10 +61,10 @@ selectionToMaybeSuperOwl (CanvasSelection selection) = assertShowAndDump selecti
 selectionToFirstSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToFirstSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection > 0) $ Seq.index selection 0
 
-selectionToMaybeFirstSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
+selectionToMaybeFirstSuperOwl :: CanvasSelection -> Maybe SuperOwl
 selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
 
-lastPositionInSelection :: (HasCallStack) => OwlTree -> Selection -> OwlSpot
+lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where
   r = case Seq.lookup (Seq.length selection - 1) selection of
     Nothing -> topSpot

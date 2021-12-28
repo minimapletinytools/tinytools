@@ -10,7 +10,6 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
-import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
@@ -38,7 +37,7 @@ data TextAreaHandler = TextAreaHandler {
   }
 
 getCursorPosHelper :: CanvasSelection -> RelMouseDrag -> (XY, Bool)
-getCursorPosHelper selection rmd@(RelMouseDrag MouseDrag {..}) = r where
+getCursorPosHelper selection (RelMouseDrag MouseDrag {..}) = r where
   (_, STextArea {..}) = getSTextArea selection
   CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
   newrelpos = _mouseDrag_to - p
@@ -78,7 +77,7 @@ instance PotatoHandler TextAreaHandler where
 
   pHandleKeyboard tah PotatoHandlerInput {..} (KeyboardData k _) = let
       (rid, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
-      CanonicalLBox _ _ lbox@(LBox _ (V2 width height)) = canonicalLBox_from_lBox _sTextArea_box
+      CanonicalLBox _ _ (LBox _ (V2 width height)) = canonicalLBox_from_lBox _sTextArea_box
       wrapBox (V2 x y) = V2 (x `mod` width) (y `mod` height)
 
 
@@ -115,16 +114,16 @@ instance PotatoHandler TextAreaHandler where
       KeyboardKey_Paste t -> finish $ foldl' (\acc c -> moveAndWrap (V2 1 0) . setChar c $ acc) start (T.unpack t)
       _ -> Nothing
 
-  pRefreshHandler tah PotatoHandlerInput {..} = Nothing
+  pRefreshHandler _ PotatoHandlerInput {..} = Nothing
   pRenderHandler tah phi@PotatoHandlerInput {..} = r where
 
     -- TODO maybe store instead of pull from selection?
     (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
-    CanonicalLBox _ _ lbox@(LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
+    CanonicalLBox _ _ (LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box
     cursor = RenderHandle {
         _renderHandle_box = LBox (p + _textAreaHandler_relCursor tah) (V2 1 1)
         , _renderHandle_char = Map.lookup (_textAreaHandler_relCursor tah) _sTextArea_text
         , _renderHandle_color = RHC_Default
       }
     r = pRenderHandler (_textAreaHandler_prevHandler tah) phi <>  HandlerRenderOutput [cursor]
-  pIsHandlerActive tah = False
+  pIsHandlerActive _ = False
