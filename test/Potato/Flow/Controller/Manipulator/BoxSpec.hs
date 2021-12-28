@@ -41,7 +41,7 @@ test_basic = constructTest "keyboard movement" emptyOwlPFState bs expected where
 
     ]
   testFirstBoxIs lbox = firstSuperOwlPredicate (Just "<box>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
-    SEltBox (SBox lbox _ _ _ _) -> lbox == lbox
+    SEltBox (SBox lbox' _ _ _ _) -> lbox' == lbox
     _                           -> False
   expected = [
       LabelCheck "Create A"
