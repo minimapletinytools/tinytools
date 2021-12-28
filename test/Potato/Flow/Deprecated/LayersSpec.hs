@@ -9,10 +9,8 @@ import           Relude
 import           Test.Hspec
 
 import qualified Data.Sequence            as Seq
-import           Potato.Flow
 
 import           Potato.Flow.Deprecated.Layers
-import           Potato.Flow.Types
 
 someSeq1 :: Seq.Seq Int
 someSeq1 = Seq.fromList [0,0,0,0,0]

@@ -30,8 +30,6 @@ class MommyOwl o where
   mommyOwl_kiddos :: o -> Maybe (Seq REltId)
   mommyOwl_hasKiddos :: o -> Bool
   mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
-  -- TODO DELETE, this can't be implemented by OwlElt
-  mommyOwl_id :: o -> REltId
 
 class HasOwlElt o where
   hasOwlElt_owlElt :: o -> OwlElt
@@ -169,7 +167,6 @@ instance NFData SuperOwl
 
 instance MommyOwl SuperOwl where
   mommyOwl_kiddos sowl = mommyOwl_kiddos (_superOwl_elt sowl)
-  mommyOwl_id = _superOwl_id
 
 instance HasOwlElt SuperOwl where
   hasOwlElt_owlElt = _superOwl_elt
@@ -588,7 +585,6 @@ instance NFData OwlTree
 
 instance MommyOwl OwlTree where
   mommyOwl_kiddos o = Just $ _owlTree_topOwls o
-  mommyOwl_id _ = noOwl
 
 type MiniOwlTree = OwlTree
 
@@ -731,7 +727,7 @@ owlTree_rEltId_toOwlSpot od@OwlTree {..} rid = r
 
 -- |
 -- super inefficient implementation for testing only
-owlTree_rEltId_toFlattenedIndex_debug :: (HasCallStack) => OwlTree -> REltId -> Int
+owlTree_rEltId_toFlattenedIndex_debug :: OwlTree -> REltId -> Int
 owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
   where
     sowls = owliterateall od

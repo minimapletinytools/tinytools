@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-unused-local-binds #-}
 
 module Potato.Flow.SEltMethodsSpec(
   spec

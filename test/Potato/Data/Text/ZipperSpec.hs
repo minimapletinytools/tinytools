@@ -15,6 +15,7 @@ import Control.Monad
 import           Potato.Data.Text.Zipper
 
 
+someSentence :: T.Text
 someSentence = "12345 1234 12"
 
 splitSentenceAtDisplayWidth :: Int -> T.Text -> [(T.Text, Bool)]
