@@ -1,5 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
+{-# OPTIONS_GHC -Wunused-top-binds #-}
+
 
 module Potato.Flow.Controller.Manipulator.TextAreaSpec (
   spec

@@ -7,7 +7,6 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.Text as T
 import qualified Data.Sequence            as Seq
 import Data.Maybe (fromJust)
 import           Potato.Flow.Owl
@@ -15,7 +14,6 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
-import Potato.Flow.Types
 import Potato.Flow.SElts
 
 verifyOwlAt :: OwlPFWorkspace -> OwlSpot -> (SuperOwl -> Bool) -> Bool
@@ -61,7 +59,6 @@ spec = do
         let
           wse1 = WSEAddElt (False, spot1, owlElt1)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
-          ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
         verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlElt_name owlElt1)) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         let
@@ -111,7 +108,6 @@ spec = do
           b1spot = owlTree_rEltId_toOwlSpot owlTree0 2
           wse1 = WSEMoveElt (b1spot, (OwlParliament $ Seq.fromList [3]))
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
-          ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
         verifyOwlAt newws1 b1spot (pred_nameIs "b2") `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         {-

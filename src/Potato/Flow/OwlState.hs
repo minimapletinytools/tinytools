@@ -5,7 +5,6 @@ module Potato.Flow.OwlState where
 import           Relude
 
 import Potato.Flow.Owl
-import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
@@ -13,11 +12,9 @@ import           Potato.Flow.Types
 import Potato.Flow.DebugHelpers
 
 import           Control.Exception       (assert)
-import           Data.Aeson
 import qualified Data.IntMap.Strict      as IM
 import           Data.List.Ordered       (isSortedBy)
 import           Data.Maybe
-import qualified Data.Sequence           as Seq
 import qualified Data.Text as T
 
 -- TODO rename
@@ -53,7 +50,7 @@ debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ potatoShow _owlPF
 
 -- TODO owlPFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _owlPFState_layers - 1]
 owlPFState_isValid :: OwlPFState -> Bool
-owlPFState_isValid pfs@OwlPFState {..} = True
+owlPFState_isValid OwlPFState {..} = True
 
 owlPFState_selectionIsValid :: OwlPFState -> OwlParliament -> Bool
 owlPFState_selectionIsValid OwlPFState {..} (OwlParliament op) = validElts where
@@ -152,7 +149,7 @@ do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
 undo_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undo_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
+undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
 
   -- NOTE that sop is likely invalid in pfs at this point
 

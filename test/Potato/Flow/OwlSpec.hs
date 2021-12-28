@@ -7,7 +7,6 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.Text as T
 import qualified Data.Sequence            as Seq
 import qualified Data.IntSet as IS
 import qualified Data.IntMap as IM
