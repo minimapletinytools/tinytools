@@ -8,6 +8,7 @@ import           Relude           hiding (empty, fromList)
 
 import           Test.Hspec
 
+import Potato.Flow.SElts
 import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Math
 
@@ -31,3 +32,10 @@ spec = do
       determineSeparation (lb1, (0,0,0,0)) (lb2, (0,0,0,0)) `shouldBe` (True, True)
       determineSeparation (lb1, (2,2,0,0)) (lb2, (0,0,0,0)) `shouldBe` (False, True)
       determineSeparation (lb1, (1,1,1,1)) (lb2, (1,1,1,1)) `shouldBe` (False, False)
+    it "lineAnchorsForRender_simplify" $ do
+      let
+        lineanchors = LineAnchorsForRender {
+            _lineAnchorsForRender_start = 0
+            , _lineAnchorsForRender_rest = [(CD_Up, 10),(CD_Up, 15),(CD_Up, 1),(CD_Right, 10)]
+          }
+      _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]

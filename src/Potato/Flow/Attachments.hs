@@ -1,6 +1,7 @@
 
 module Potato.Flow.Attachments (
-  attachLocationsFromLBox
+  attachLocationFromLBox
+  , attachLocationsFromLBox
   , owlElt_availableAttachments
   , getAvailableAttachments
   , isOverAttachment
