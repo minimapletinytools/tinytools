@@ -3,7 +3,8 @@
 module Potato.Flow.Methods.LineDrawer (
 
   -- * exposed for testing
-  determineSeparation
+  RotateMe(..)
+  , determineSeparation
 ) where
 
 import           Relude
@@ -22,6 +23,8 @@ import Data.Default
 
 import Linear.Vector ((^*))
 import Linear.Matrix (M22, (!*))
+
+import Control.Exception (assert)
 
 -- cases
 -- '⇇' '⇇'
@@ -51,8 +54,6 @@ class RotateMe a where
   rotateMe_Left :: a -> a
   -- CW
   rotateMe_Right :: a -> a
-  rotateMe_validate :: (Eq a) => a -> Bool
-  rotateMe_validate a = (rotateMe_Left . rotateMe_Right $ a) == a && (rotateMe_Right . rotateMe_Left $ a) == a
 
 instance RotateMe CartDir where
   rotateMe_Left = \case
@@ -94,12 +95,12 @@ instance RotateMe XY where
 
 -- assumes LBox is Canonical)
 instance RotateMe LBox where
-  rotateMe_Left lbox@(LBox tl (V2 w h))) = assert (lBox_isCanonicalLBox lbox) r where
-    (blx, bly) = rotateMe_Left tl
+  rotateMe_Left lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+    V2 blx bly = rotateMe_Left tl
     r = LBox (V2 blx (bly - w)) (V2 h w)
-  rotateMe_Right lbox@(LBox tl (V2 w h))) = assert (lBox_isCanonicalLBox lbox) r where
-    (trx, try) = rotateMe_Right tl
-    r = LBox (V2 (trx-h) try) (V2 h w) 
+  rotateMe_Right lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+    V2 trx try = rotateMe_Right tl
+    r = LBox (V2 (trx-h) try) (V2 h w)
 
 instance RotateMe AttachmentLocation where
   rotateMe_Left = \case
@@ -107,7 +108,7 @@ instance RotateMe AttachmentLocation where
     AL_BOT -> AL_RIGHT
     AL_LEFT -> AL_BOT
     AL_RIGHT -> AL_TOP
-  rotateMe_Left = \case
+  rotateMe_Right = \case
       AL_TOP -> AL_RIGHT
       AL_BOT -> AL_LEFT
       AL_LEFT -> AL_TOP
@@ -227,7 +228,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} (lbx1, al1) (lbx2, al2) = 
   LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 x2 y2) (V2 w2 h2) = lbx2
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
-  lbx1isleft = x1 < x2 
+  lbx1isleft = x1 < x2
   r = undefined
 
   -- determine which case we are in
@@ -242,16 +243,16 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} (lbx1, al1) (lbx2, al2) = 
 
   something = case al1 of
     -- 1->  <-2
-    AL_RIGHT | bl2 == AL_LEFT && lbx1isleft && hsep -> undefined 
-    -- <-2  1-> 
-    AL_RIGHT | bl2 == AL_LEFT && not vsep -> undefined 
-    -- <-2  
-    --      1-> 
-    AL_RIGHT | bl2 == AL_LEFT && vsep -> undefined 
-    -- 
-    AL_RIGHT | bl2 == AL_RIGHT && not vsep -> undefined
-  
-    _ -> rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx1 2, rotateMe_Left al2)
+    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> undefined
+    -- <-2  1->
+    AL_RIGHT | al2 == AL_LEFT && not vsep -> undefined
+    -- <-2
+    --      1->
+    AL_RIGHT | al2 == AL_LEFT && vsep -> undefined
+    --
+    AL_RIGHT | al2 == AL_RIGHT && not vsep -> undefined
+
+    _ -> rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
 
 
 
