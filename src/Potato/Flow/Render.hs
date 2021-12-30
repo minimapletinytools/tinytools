@@ -146,14 +146,15 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
   then Just $ toIndex lbx xy
   else Nothing
 
--- | brute force renders a RenderedCanvasRegion
+-- TODO you need to pass in OwlTree for this to render attachments correctly
+-- | brute force renders a RenderedCanvasRegion (ignores broadphase)
 potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRender seltls RenderedCanvasRegion {..} = r where
   drawers = map getDrawer seltls
   genfn i = newc' where
     pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
+    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d emptyOwlTree pt) drawers)
     newc' = case mdrawn of
       Just c  -> c
       Nothing -> ' '
@@ -170,7 +171,7 @@ potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . f
 
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvasRegion
--- caller is expected to provide all SElts that intersect the rendered LBox
+-- caller is expected to provide all SElts that intersect the rendered LBox (broadphase is ignored)
 render :: LBox -> [SElt] -> RenderContext -> RenderContext
 render llbx seltls rctx@RenderContext {..} = r where
   prevrcr = _renderContext_renderedCanvasRegion
@@ -180,7 +181,7 @@ render llbx seltls rctx@RenderContext {..} = r where
     pt = toPoint llbx i
     pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
+    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
     -- render what we found or empty otherwise
     newc' = case mdrawn of
       Just c  -> (pindex, c)

@@ -17,6 +17,8 @@ import           Potato.Flow
 
 spec :: Spec
 spec = do
+  let
+    renderfn sd = _sEltDrawer_renderFn sd emptyOwlTree
   describe "SEltMethod" $ do
     describe "getDrawer" $ do
       describe "SBox" $ do
@@ -61,40 +63,40 @@ spec = do
           }
         it "SBoxType_NoBoxText" $ do
           let
-            SEltDrawer {..} = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
-          _sEltDrawer_renderFn (V2 100 0) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 (-1) 0) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just 'm'
-          _sEltDrawer_renderFn (V2 1 0) `shouldBe` Just ' '
-          _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'o'
+            sd = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
+          renderfn sd (V2 100 0) `shouldBe` Nothing
+          renderfn sd (V2 (-1) 0) `shouldBe` Nothing
+          renderfn sd (V2 0 0) `shouldBe` Just 'm'
+          renderfn sd (V2 1 0) `shouldBe` Just ' '
+          renderfn sd (V2 2 0) `shouldBe` Just 'o'
           -- TODO it seems EOL space characters are not rendered and this gives the fill char. Maybe this is desired behavior thought?
-          --_sEltDrawer_renderFn (V2 3 0) `shouldBe` Just ' '
-          _sEltDrawer_renderFn (V2 1 1) `shouldBe` Just 'e'
-          _sEltDrawer_renderFn (V2 4 4) `shouldBe` Just '@'
+          --renderfn sd (V2 3 0) `shouldBe` Just ' '
+          renderfn sd (V2 1 1) `shouldBe` Just 'e'
+          renderfn sd (V2 4 4) `shouldBe` Just '@'
         it "SBoxType_Box" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox2 SBoxType_Box))
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` _superStyle_point def
+            sd = getDrawer (SEltBox (somesbox2 SBoxType_Box))
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 0 0) `shouldBe` _superStyle_point def
         it "SBoxType_NoBoxText_alignRight" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '@'
+            sd = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 0 0) `shouldBe` Just '@'
         it "SBoxType_NoBoxText_widechar" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just 'ｔ'
-          _sEltDrawer_renderFn (V2 1 0) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 2 0) `shouldBe` Just 'ｈ'
-          _sEltDrawer_renderFn (V2 3 0) `shouldBe` Nothing
+            sd = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 0 0) `shouldBe` Just 'ｔ'
+          renderfn sd (V2 1 0) `shouldBe` Nothing
+          renderfn sd (V2 2 0) `shouldBe` Just 'ｈ'
+          renderfn sd (V2 3 0) `shouldBe` Nothing
         it "box label" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 0 0) `shouldBe` Just '╔'
-          _sEltDrawer_renderFn (V2 8 0) `shouldBe` Just 'p'
+            sd = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 0 0) `shouldBe` Just '╔'
+          renderfn sd (V2 8 0) `shouldBe` Just 'p'
 
 
       describe "SSimpleLine" $ do
@@ -126,32 +128,32 @@ spec = do
             }
         it "LineAutoStyle_AutoStraight - 1" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline1 LineAutoStyle_AutoStraight)
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '<'
-          _sEltDrawer_renderFn (V2 11 10) `shouldBe` Just '='
-          _sEltDrawer_renderFn (V2 16 10) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 12 10) `shouldBe` _superStyle_horizontal def
-          _sEltDrawer_renderFn (V2 15 10) `shouldBe` _superStyle_tr def
-          _sEltDrawer_renderFn (V2 15 15) `shouldBe` _superStyle_vertical def
-          _sEltDrawer_renderFn (V2 20 20) `shouldBe` Just '>'
+            sd = getDrawer (SEltLine $ someline1 LineAutoStyle_AutoStraight)
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 10 10) `shouldBe` Just '<'
+          renderfn sd (V2 11 10) `shouldBe` Just '='
+          renderfn sd (V2 16 10) `shouldBe` Nothing
+          renderfn sd (V2 12 10) `shouldBe` _superStyle_horizontal def
+          renderfn sd (V2 15 10) `shouldBe` _superStyle_tr def
+          renderfn sd (V2 15 15) `shouldBe` _superStyle_vertical def
+          renderfn sd (V2 20 20) `shouldBe` Just '>'
         it "LineAutoStyle_AutoStraight - 2" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline2 LineAutoStyle_AutoStraight)
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '^'
-          _sEltDrawer_renderFn (V2 10 12) `shouldBe` Just '*'
-          _sEltDrawer_renderFn (V2 16 10) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 10 20) `shouldBe` Just 'V'
-          _sEltDrawer_renderFn (V2 10 15) `shouldBe` _superStyle_vertical def
+            sd = getDrawer (SEltLine $ someline2 LineAutoStyle_AutoStraight)
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 10 10) `shouldBe` Just '^'
+          renderfn sd (V2 10 12) `shouldBe` Just '*'
+          renderfn sd (V2 16 10) `shouldBe` Nothing
+          renderfn sd (V2 10 20) `shouldBe` Just 'V'
+          renderfn sd (V2 10 15) `shouldBe` _superStyle_vertical def
         it "LineAutoStyle_AutoStraight - 3" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltLine $ someline3 LineAutoStyle_AutoStraight)
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just '^'
-          _sEltDrawer_renderFn (V2 9 10) `shouldBe` Nothing
-          _sEltDrawer_renderFn (V2 10 14) `shouldBe` _superStyle_vertical def
-          _sEltDrawer_renderFn (V2 10 15) `shouldBe` _superStyle_br def
+            sd = getDrawer (SEltLine $ someline3 LineAutoStyle_AutoStraight)
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 10 10) `shouldBe` Just '^'
+          renderfn sd (V2 9 10) `shouldBe` Nothing
+          renderfn sd (V2 10 14) `shouldBe` _superStyle_vertical def
+          renderfn sd (V2 10 15) `shouldBe` _superStyle_br def
 
       describe "STextArea" $ do
         let
@@ -162,8 +164,8 @@ spec = do
             }
         it "basic" $ do
           let
-            sd@SEltDrawer {..} = getDrawer (SEltTextArea $ sometextarea)
-          --forM_ (sEltDrawer_renderToLines sd) putTextLn
-          _sEltDrawer_renderFn (V2 1 1) `shouldBe` Just 'a'
-          _sEltDrawer_renderFn (V2 10 10) `shouldBe` Just 'c'
-          _sEltDrawer_renderFn (V2 100 0) `shouldBe` Nothing
+            sd = getDrawer (SEltTextArea $ sometextarea)
+          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          renderfn sd (V2 1 1) `shouldBe` Just 'a'
+          renderfn sd (V2 10 10) `shouldBe` Just 'c'
+          renderfn sd (V2 100 0) `shouldBe` Nothing

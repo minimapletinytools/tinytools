@@ -24,6 +24,7 @@ import  qualified         Relude.Unsafe
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Owl
 import Potato.Flow.Methods.Types
 
 import qualified Data.Map as Map
@@ -213,7 +214,7 @@ sBox_drawer sbox@SBox {..} = r where
 
   r = SEltDrawer {
       _sEltDrawer_box = lbox
-      , _sEltDrawer_renderFn = case _sBox_boxType of
+      , _sEltDrawer_renderFn = \_ -> case _sBox_boxType of
         SBoxType_NoBoxText -> rfnnoborder
         _                  -> rfnborder
     }
@@ -295,7 +296,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
 
   r = SEltDrawer {
       _sEltDrawer_box = lbox
-      , _sEltDrawer_renderFn = case _lineStyle_autoStyle _sSimpleLine_lineStyle of
+      , _sEltDrawer_renderFn = \_ -> case _lineStyle_autoStyle _sSimpleLine_lineStyle of
         LineAutoStyle_Auto                     -> autorenderfn
         LineAutoStyle_AutoStraight             -> autorenderfn
         LineAutoStyle_StraightAlwaysHorizontal -> horizrenderfn
@@ -319,7 +320,7 @@ sTextArea_drawer stextarea@STextArea {..} = r where
 
   r = SEltDrawer {
       _sEltDrawer_box = lbox
-      , _sEltDrawer_renderFn = renderfn
+      , _sEltDrawer_renderFn = \_ -> renderfn
     }
 
 
