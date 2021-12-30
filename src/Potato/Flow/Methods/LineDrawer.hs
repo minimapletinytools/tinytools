@@ -294,7 +294,27 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
         }
     -- <-2  1->
     AL_RIGHT | al2 == AL_LEFT && not vsep -> r where
-      r = undefined
+      start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
+      (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
+      (_,_,t1_inc, b1) = lBox_to_axis lbx1
+      (_,_,t2_inc, b2) = lBox_to_axis lbx2
+      t = min (t1_inc-1) (t2_inc-1)
+      b = max b1 b2
+      goup = (y1-t)+(y2-t) < (b-y1)+(b-y2)
+
+      lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      right_to_torb = if goup
+        then (CD_Up, y1-t)
+        else (CD_Down, b-y1)
+      torb = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (r1-l2))
+      torb_to_left = if goup
+        then (CD_Down, y2-t)
+        else (CD_Up, b-y2)
+      left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      r = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_right, right_to_torb, torb, torb_to_left, left_to_lb2]
+        }
     -- <-2
     --      1->
     AL_RIGHT | al2 == AL_LEFT && vsep -> undefined
