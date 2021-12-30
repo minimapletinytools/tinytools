@@ -609,26 +609,26 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
   -- TODO rename these rendercontext variables so it's not ''...
-  rendercontext'' = RenderContext {
+  rendercontext_forMove = RenderContext {
       _renderContext_owlTree = hasOwlTree_owlTree next_pFState
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_cache = RenderCache
       , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas
     }
-  rendercontext' = if didScreenRegionMove
-    then moveRenderedCanvasRegion newBox rendercontext''
-    else rendercontext''
+  rendercontext_forUpdate = if didScreenRegionMove
+    then moveRenderedCanvasRegion newBox rendercontext_forMove
+    else rendercontext_forMove
 
   -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
-  rendercontext = if IM.null cslmap_forRendering
-    then rendercontext'
-    else updateCanvas cslmap_forRendering needsupdateaabbs rendercontext'
+  rendercontext_afterUpdate = if IM.null cslmap_forRendering
+    then rendercontext_forUpdate
+    else updateCanvas cslmap_forRendering needsupdateaabbs rendercontext_forUpdate
 
-  next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext
+  next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext_afterUpdate
 
   -- | render the selection |
-  rendercontext_forSelection = rendercontext {
+  rendercontext_forSelection = rendercontext_afterUpdate {
       -- NOTE this will render hidden stuff that's selected via layers!!
       _renderContext_layerMetaMap = IM.empty
       -- empty canvas to render our selection in
