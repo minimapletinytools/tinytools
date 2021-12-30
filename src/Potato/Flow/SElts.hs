@@ -152,6 +152,8 @@ instance Default TextStyle where
   def = TextStyle { _textStyle_alignment = def }
 
 
+-- TODO you need support for AL_Any and maybe AL_Center
+-- TODO lowercase plz
 data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT deriving (Eq, Generic, Show)
 
 instance FromJSON AttachmentLocation

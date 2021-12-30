@@ -1,9 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.SEltMethods (
-  getSEltBox
-  , getSEltLabelBox
-  , getSEltSuperStyle
+  getSEltSuperStyle
   , getSEltLabelSuperStyle
   , getSEltLineStyle
   , getSEltLabelLineStyle
@@ -68,25 +66,6 @@ subWidth t = join . fmap fn . T.unpack $ t where
     1 -> [Just c]
     2 -> [Just c, Nothing]
     n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
-
-
-
--- TODO rename to getSEltBoundingBox or something
--- | gets an 'LBox' that contains the entire RElt
-getSEltBox :: SElt -> Maybe LBox
-getSEltBox selt = case selt of
-  SEltNone        -> Nothing
-  SEltFolderStart -> Nothing
-  SEltFolderEnd   -> Nothing
-  -- TODO return canonical
-  SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
-  SEltLine x      -> Just $ union_lBox
-    (make_lBox_from_XYs (_sSimpleLine_start x) (_sSimpleLine_end x))
-    (make_lBox_from_XYs (_sSimpleLine_start x + 1) (_sSimpleLine_end x + 1))
-  SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
-
-getSEltLabelBox :: SEltLabel -> Maybe LBox
-getSEltLabelBox (SEltLabel _ x) = getSEltBox x
 
 doesSEltIntersectBox :: LBox -> SElt -> Bool
 doesSEltIntersectBox lbox selt = case selt of

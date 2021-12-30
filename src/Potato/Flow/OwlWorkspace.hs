@@ -23,6 +23,7 @@ import Potato.Flow.SEltMethods
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
+import Potato.Flow.Methods.Types
 
 import           Control.Exception  (assert)
 import           Data.Dependent.Sum (DSum ((:=>)))

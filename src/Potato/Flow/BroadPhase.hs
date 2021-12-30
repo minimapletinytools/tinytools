@@ -24,6 +24,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.Types
+import Potato.Flow.Methods.Types
 
 import qualified Data.IntMap.Strict      as IM
 

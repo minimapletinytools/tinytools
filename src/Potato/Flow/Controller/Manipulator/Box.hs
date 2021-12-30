@@ -24,6 +24,7 @@ import           Potato.Flow.Types
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
+import Potato.Flow.Methods.Types
 
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))

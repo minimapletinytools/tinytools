@@ -1,12 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Methods.Types (
-  SEltDrawerRenderFn
-  , makePotatoRenderer
-  , SEltDrawer(..)
-  , sEltDrawer_renderToLines
-  , nilDrawer
-) where
+-- TODO rename to common
+module Potato.Flow.Methods.Types where
 
 
 import           Relude
@@ -53,3 +48,22 @@ data CachedAreaDrawer = CachedAreaDrawer {
   _cachedAreaDrawer_box :: LBox
   , _cachedAreaDrawer_cache :: V.Vector (Maybe PChar) -- ^ row major
 }-}
+
+
+
+-- TODO rename to getSEltBoundingBox or something
+-- | gets an 'LBox' that contains the entire RElt
+getSEltBox :: SElt -> Maybe LBox
+getSEltBox selt = case selt of
+  SEltNone        -> Nothing
+  SEltFolderStart -> Nothing
+  SEltFolderEnd   -> Nothing
+  -- TODO return canonical
+  SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
+  SEltLine x      -> Just $ union_lBox
+    (make_lBox_from_XYs (_sSimpleLine_start x) (_sSimpleLine_end x))
+    (make_lBox_from_XYs (_sSimpleLine_start x + 1) (_sSimpleLine_end x + 1))
+  SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
+
+getSEltLabelBox :: SEltLabel -> Maybe LBox
+getSEltLabelBox (SEltLabel _ x) = getSEltBox x
