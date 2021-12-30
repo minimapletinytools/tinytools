@@ -614,7 +614,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_cache = RenderCache
-      , _renderContext_prevRenderedCanvasRegion = _goatState_renderedCanvas
+      , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas
     }
   rendercontext' = if didScreenRegionMove
     then moveRenderedCanvasRegion newBox rendercontext''
@@ -625,7 +625,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then rendercontext'
     else updateCanvas cslmap_forRendering needsupdateaabbs rendercontext'
 
-  next_renderedCanvas = _renderContext_prevRenderedCanvasRegion rendercontext
+  next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext
 
   -- | render the selection |
   rendercontext_forSelection = rendercontext {
@@ -633,13 +633,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       _renderContext_layerMetaMap = IM.empty
       -- empty canvas to render our selection in
       -- we just re-render everything for now (in the future you can try and do partial rendering though)
-      , _renderContext_prevRenderedCanvasRegion = emptyRenderedCanvasRegion newBox
+      , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
     }
   selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
   next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then _goatState_renderedSelection
-    else _renderContext_prevRenderedCanvasRegion $ render newBox selectionselts rendercontext_forSelection
+    else _renderContext_renderedCanvasRegion $ render newBox selectionselts rendercontext_forSelection
 
   {- TODO render only parts of selection that have changed TODO broken
   next_renderedSelection' = if didScreenRegionMove

@@ -24,7 +24,7 @@ makeRenderContextForTest a bps rc = RenderContext {
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = bps
     , _renderContext_cache = RenderCache
-    , _renderContext_prevRenderedCanvasRegion = rc
+    , _renderContext_renderedCanvasRegion = rc
   }
 
 spec :: Spec
@@ -62,12 +62,12 @@ spec = do
         renderBox = LBox (V2 (-1) 10) (V2 10 10)
         canvas1 = emptyRenderedCanvasRegion fillBox
         rendercontext1 = (emptyRenderContext fillBox) {
-            _renderContext_prevRenderedCanvasRegion = canvas1
+            _renderContext_renderedCanvasRegion = canvas1
           }
         selt = SEltBox $ def {
             _sBox_box    = fillBox
           }
-        canvas2 = _renderContext_prevRenderedCanvasRegion $ render renderBox [selt] rendercontext1
+        canvas2 = _renderContext_renderedCanvasRegion $ render renderBox [selt] rendercontext1
         canvas2Text = renderedCanvasToText canvas2
         canvas2TextRegion = renderedCanvasRegionToText renderBox canvas2
       --putTextLn $ canvas2Text
@@ -109,10 +109,10 @@ spec = do
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         rendercontext1 = moveRenderedCanvasRegion target rendercontext0
-        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
+        canvas1 = _renderContext_renderedCanvasRegion rendercontext1
         -- only thing changed is the canvas size, so we can keep using rendercontext
         rendercontext2 = moveRenderedCanvasRegion initial rendercontext1
-        canvas2 = _renderContext_prevRenderedCanvasRegion rendercontext2
+        canvas2 = _renderContext_renderedCanvasRegion rendercontext2
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
       -- TODO test something
@@ -130,7 +130,7 @@ spec = do
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         -- only thing changed is the canvas size
         rendercontext1 = moveRenderedCanvasRegion target rendercontext0
-        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
+        canvas1 = _renderContext_renderedCanvasRegion rendercontext1
         canvas1Text = renderedCanvasToText canvas1
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
@@ -148,6 +148,6 @@ spec = do
 
         rendercontext0 = makeRenderContextForTest state1 bps1 canvas0
         rendercontext1 = updateCanvas changes1 aabbs1 rendercontext0
-        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
+        canvas1 = _renderContext_renderedCanvasRegion rendercontext1
       -- TODO test something
       canvas1 `shouldBe` canvas1

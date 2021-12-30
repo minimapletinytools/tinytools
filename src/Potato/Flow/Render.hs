@@ -79,7 +79,7 @@ data RenderContext = RenderContext {
   , _renderContext_layerMetaMap :: LayerMetaMap
   , _renderContext_broadPhase :: BroadPhaseState
   , _renderContext_cache :: RenderCache
-  , _renderContext_prevRenderedCanvasRegion :: RenderedCanvasRegion
+  , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
 }
 
 emptyRenderContext :: LBox -> RenderContext
@@ -88,7 +88,7 @@ emptyRenderContext lbox = RenderContext {
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = emptyBroadPhaseState
     , _renderContext_cache = emptyRenderCache
-    , _renderContext_prevRenderedCanvasRegion = emptyRenderedCanvasRegion lbox
+    , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion lbox
   }
 
 
@@ -173,7 +173,7 @@ potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . f
 -- caller is expected to provide all SElts that intersect the rendered LBox
 render :: LBox -> [SElt] -> RenderContext -> RenderContext
 render llbx seltls rctx@RenderContext {..} = r where
-  prevrcr = _renderContext_prevRenderedCanvasRegion
+  prevrcr = _renderContext_renderedCanvasRegion
   drawers = map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
@@ -189,7 +189,7 @@ render llbx seltls rctx@RenderContext {..} = r where
   newc = V.generate (lBox_area llbx) genfn
   r = rctx {
       -- TODO update cache
-      _renderContext_prevRenderedCanvasRegion = prevrcr {
+      _renderContext_renderedCanvasRegion = prevrcr {
           _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
         }
     }
@@ -272,9 +272,9 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
 moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderContext
 moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
   bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
-  prevrc = _renderContext_prevRenderedCanvasRegion
+  prevrc = _renderContext_renderedCanvasRegion
   rctx1 = rctx {
-      _renderContext_prevRenderedCanvasRegion = moveRenderedCanvasRegionNoReRender lbx prevrc
+      _renderContext_renderedCanvasRegion = moveRenderedCanvasRegionNoReRender lbx prevrc
     }
   r = foldr renderWithBroadPhase rctx1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
 
@@ -282,7 +282,7 @@ updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderCont
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
   [] -> rctx
   -- TODO incremental rendering
-  (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_prevRenderedCanvasRegion) (foldl' union_lBox b bs) of
+  (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_renderedCanvasRegion) (foldl' union_lBox b bs) of
     Nothing -> rctx
     Just aabb -> r where
       rids = broadPhase_cull aabb (_broadPhaseState_bPTree _renderContext_broadPhase)

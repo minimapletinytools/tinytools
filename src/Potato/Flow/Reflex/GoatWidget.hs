@@ -144,9 +144,9 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , _renderContext_layerMetaMap = _layersState_meta initiallayersstate
       , _renderContext_broadPhase = initialbp -- this is ignored but we may as well set in correctly
       , _renderContext_cache = RenderCache
-      , _renderContext_prevRenderedCanvasRegion = initialemptyrcr
+      , _renderContext_renderedCanvasRegion = initialemptyrcr
     }
-    initialrc = _renderContext_prevRenderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
+    initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
 
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace (fst _goatWidgetConfig_initialState) emptyWorkspace
