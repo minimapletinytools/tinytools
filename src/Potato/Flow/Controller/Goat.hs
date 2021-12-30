@@ -608,6 +608,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
+  -- TODO rename these rendercontext variables so it's not ''...
   rendercontext'' = RenderContext {
       _renderContext_owlTree = hasOwlTree_owlTree next_pFState
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
@@ -627,13 +628,18 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   next_renderedCanvas = _renderContext_prevRenderedCanvasRegion rendercontext
 
   -- | render the selection |
-  -- we just re-render everything for now
+  rendercontext_forSelection = rendercontext {
+      -- NOTE this will render hidden stuff that's selected via layers!!
+      _renderContext_layerMetaMap = IM.empty
+      -- empty canvas to render our selection in
+      -- we just re-render everything for now (in the future you can try and do partial rendering though)
+      , _renderContext_prevRenderedCanvasRegion = emptyRenderedCanvasRegion newBox
+    }
   selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
   next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then _goatState_renderedSelection
-    -- TODO omit hidden stuff here???  (or maybe not!)
-    else render newBox selectionselts (emptyRenderedCanvasRegion newBox)
+    else _renderContext_prevRenderedCanvasRegion $ render newBox selectionselts rendercontext_forSelection
 
   {- TODO render only parts of selection that have changed TODO broken
   next_renderedSelection' = if didScreenRegionMove

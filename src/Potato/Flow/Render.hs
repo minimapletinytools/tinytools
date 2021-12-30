@@ -4,6 +4,7 @@
 module Potato.Flow.Render (
   RenderCache(..)
   , RenderContext(..)
+  , emptyRenderContext
   , emptyRenderCache
 
   , RenderedCanvasRegion(..)
@@ -81,6 +82,16 @@ data RenderContext = RenderContext {
   , _renderContext_prevRenderedCanvasRegion :: RenderedCanvasRegion
 }
 
+emptyRenderContext :: LBox -> RenderContext
+emptyRenderContext lbox = RenderContext {
+    _renderContext_owlTree = emptyOwlTree
+    , _renderContext_layerMetaMap = IM.empty
+    , _renderContext_broadPhase = emptyBroadPhaseState
+    , _renderContext_cache = emptyRenderCache
+    , _renderContext_prevRenderedCanvasRegion = emptyRenderedCanvasRegion lbox
+  }
+
+
 instance HasOwlTree RenderContext where
   hasOwlTree_owlTree = hasOwlTree_owlTree . _renderContext_owlTree
 
@@ -155,16 +166,19 @@ potatoRender seltls RenderedCanvasRegion {..} = r where
 potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree
 
+
+
 -- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvasRegion
 -- caller is expected to provide all SElts that intersect the rendered LBox
-render :: LBox -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
-render llbx seltls RenderedCanvasRegion {..} = r where
+render :: LBox -> [SElt] -> RenderContext -> RenderContext
+render llbx seltls rctx@RenderContext {..} = r where
+  prevrcr = _renderContext_prevRenderedCanvasRegion
   drawers = map getDrawer seltls
   genfn i = newc' where
     -- construct parent point and index
     pt = toPoint llbx i
-    pindex = toIndex _renderedCanvasRegion_box pt
+    pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d pt) drawers)
     -- render what we found or empty otherwise
@@ -173,9 +187,11 @@ render llbx seltls RenderedCanvasRegion {..} = r where
       Nothing -> (pindex,emptyChar)
   -- go through each point in target LBox and render it
   newc = V.generate (lBox_area llbx) genfn
-  r = RenderedCanvasRegion {
-      _renderedCanvasRegion_box = _renderedCanvasRegion_box
-      , _renderedCanvasRegion_contents = V.update _renderedCanvasRegion_contents newc
+  r = rctx {
+      -- TODO update cache
+      _renderContext_prevRenderedCanvasRegion = prevrcr {
+          _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
+        }
     }
 
 renderedCanvasToText :: RenderedCanvasRegion -> Text
@@ -230,9 +246,7 @@ renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
   sowls = sortForRendering _renderContext_owlTree $ Seq.fromList sowls'
   selts = fmap superOwl_toSElt_hack $ toList sowls
 
-  r = rctx {
-      _renderContext_prevRenderedCanvasRegion = render lbx selts _renderContext_prevRenderedCanvasRegion
-    }
+  r = render lbx selts rctx
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) outrcr where
@@ -283,6 +297,4 @@ updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdatea
           Just sowl -> Just sowl
       sowls = sortForRendering _renderContext_owlTree $ Seq.fromList (catMaybes msowls)
       selts = fmap superOwl_toSElt_hack $ toList sowls
-      r = rctx {
-          _renderContext_prevRenderedCanvasRegion = render aabb selts _renderContext_prevRenderedCanvasRegion
-        }
+      r = render aabb selts rctx

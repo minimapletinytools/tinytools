@@ -127,18 +127,26 @@ holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
+    initialowlpfstate = fst _goatWidgetConfig_initialState
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
     (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
-    initiallayersstate = makeLayersStateFromOwlPFState (fst _goatWidgetConfig_initialState) (_controllerMeta_layers $ snd _goatWidgetConfig_initialState)
+    initiallayersstate = makeLayersStateFromOwlPFState initialowlpfstate (_controllerMeta_layers $ snd _goatWidgetConfig_initialState)
 
     -- TODO DELETE
     -- TODO wrap this in a helper function in Render
     -- TODO we want to render the whole screen, not just the canvas
-    initialCanvasBox = _sCanvas_box . _owlPFState_canvas $ fst _goatWidgetConfig_initialState
-    initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
+    initialCanvasBox = _sCanvas_box . _owlPFState_canvas $ initialowlpfstate
+    initialselts = fmap (\(_, oelt) -> owlElt_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ initialowlpfstate
     initialemptyrcr = emptyRenderedCanvasRegion initialCanvasBox
-    initialrc = render initialCanvasBox initialselts initialemptyrcr
+    initialrendercontext = RenderContext {
+      _renderContext_owlTree = hasOwlTree_owlTree initialowlpfstate
+      , _renderContext_layerMetaMap = _layersState_meta initiallayersstate
+      , _renderContext_broadPhase = initialbp -- this is ignored but we may as well set in correctly
+      , _renderContext_cache = RenderCache
+      , _renderContext_prevRenderedCanvasRegion = initialemptyrcr
+    }
+    initialrc = _renderContext_prevRenderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
 
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace (fst _goatWidgetConfig_initialState) emptyWorkspace

@@ -61,10 +61,13 @@ spec = do
         fillBox = LBox (V2 (-12) (-44)) (V2 100 100)
         renderBox = LBox (V2 (-1) 10) (V2 10 10)
         canvas1 = emptyRenderedCanvasRegion fillBox
+        rendercontext1 = (emptyRenderContext fillBox) {
+            _renderContext_prevRenderedCanvasRegion = canvas1
+          }
         selt = SEltBox $ def {
             _sBox_box    = fillBox
           }
-        canvas2 = render renderBox [selt] canvas1
+        canvas2 = _renderContext_prevRenderedCanvasRegion $ render renderBox [selt] rendercontext1
         canvas2Text = renderedCanvasToText canvas2
         canvas2TextRegion = renderedCanvasRegionToText renderBox canvas2
       --putTextLn $ canvas2Text
