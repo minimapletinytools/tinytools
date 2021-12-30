@@ -206,6 +206,12 @@ data LineAnchorsForRender = LineAnchorsForRender {
   , _lineAnchorsForRender_rest :: [(CartDir, Int)]
 }
 
+emptyLineAnchorsForRender :: LineAnchorsForRender
+emptyLineAnchorsForRender = LineAnchorsForRender {
+  _lineAnchorsForRender_start = 0
+  , _lineAnchorsForRender_rest = []
+}
+
 lineAnchorsForRender_simplify :: LineAnchorsForRender -> LineAnchorsForRender
 lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
   foldrfn (cd, 0) acc = acc
@@ -317,12 +323,12 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
         }
     -- <-2
     --      1->
-    AL_RIGHT | al2 == AL_LEFT && vsep -> undefined
+    AL_RIGHT | al2 == AL_LEFT && vsep -> emptyLineAnchorsForRender
     -- ->1
     --     ->2
-    AL_RIGHT | al2 == AL_RIGHT && vsep -> undefined
+    AL_RIGHT | al2 == AL_RIGHT && vsep -> emptyLineAnchorsForRender
     -- ->1 ->2
-    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> undefined
+    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> emptyLineAnchorsForRender
     -- ->2 ->1 (will not get covered by rotation)
     AL_RIGHT | al2 == AL_RIGHT && not vsep -> lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
@@ -330,7 +336,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- 1
     -- ^
     -- |   ->2
-    AL_TOP | al2 == AL_RIGHT -> undefined
+    AL_TOP | al2 == AL_RIGHT -> emptyLineAnchorsForRender
     -- TODO more elbow cases
 
     --      1

@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Methods.Types (
-  RenderFn
+  SEltDrawerRenderFn
   , makePotatoRenderer
   , SEltDrawer(..)
   , sEltDrawer_renderToLines
@@ -18,16 +18,16 @@ import           Potato.Flow.Types
 import qualified Data.Text          as T
 
 
-type RenderFn = XY -> Maybe PChar
+type SEltDrawerRenderFn = XY -> Maybe PChar
 
-makePotatoRenderer :: LBox -> RenderFn
+makePotatoRenderer :: LBox -> SEltDrawerRenderFn
 makePotatoRenderer lbox pt = if does_lBox_contains_XY lbox pt
   then Just '#'
   else Nothing
 
 data SEltDrawer = SEltDrawer {
   _sEltDrawer_box        :: LBox
-  , _sEltDrawer_renderFn :: RenderFn -- switch to [RenderFn] for better performance
+  , _sEltDrawer_renderFn :: SEltDrawerRenderFn -- switch to [SEltDrawerRenderFn] for better performance
 
   --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance
 }
