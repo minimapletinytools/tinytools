@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Methods.Lines (
+module Potato.Flow.Methods.LineDrawer (
 
   -- * exposed for testing
   determineSeparation
@@ -31,7 +31,6 @@ import Linear.Matrix (M22, (!*))
 -- '⇇' '⇈'
 -- '⇉' '⇊'
 
--- TODO don't take expansion parameters, do this before so it's more rotation friendly
 determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
 determineSeparation (lbx1, p1) (lbx2, p2) = r where
   (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
@@ -46,6 +45,7 @@ matrix_cw_90 = V2 (V2 0 (-1)) (V2 1 0)
 matrix_ccw_90 :: M22 Int
 matrix_ccw_90 = V2 (V2 0 1) (V2 (-1) 0)
 
+-- TODO rename so it's lower case
 class RotateMe a where
   -- CCW
   rotateMe_Left :: a -> a
@@ -92,6 +92,26 @@ instance RotateMe XY where
   rotateMe_Left = (!*) matrix_ccw_90
   rotateMe_Right = (!*) matrix_cw_90
 
+-- assumes LBox is Canonical)
+instance RotateMe LBox where
+  rotateMe_Left lbox@(LBox tl (V2 w h))) = assert (lBox_isCanonicalLBox lbox) r where
+    (blx, bly) = rotateMe_Left tl
+    r = LBox (V2 blx (bly - w)) (V2 h w)
+  rotateMe_Right lbox@(LBox tl (V2 w h))) = assert (lBox_isCanonicalLBox lbox) r where
+    (trx, try) = rotateMe_Right tl
+    r = LBox (V2 (trx-h) try) (V2 h w) 
+
+instance RotateMe AttachmentLocation where
+  rotateMe_Left = \case
+    AL_TOP -> AL_LEFT
+    AL_BOT -> AL_RIGHT
+    AL_LEFT -> AL_BOT
+    AL_RIGHT -> AL_TOP
+  rotateMe_Left = \case
+      AL_TOP -> AL_RIGHT
+      AL_BOT -> AL_LEFT
+      AL_LEFT -> AL_TOP
+      AL_RIGHT -> AL_BOT
 
 data CartDir = CD_Up | CD_Down | CD_Left | CD_Right
 data AnchorType = AT_End_Up | AT_End_Down | AT_End_Left | AT_End_Right | AT_Elbow_TL | AT_Elbow_TR | AT_Elbow_BR | AT_Elbow_BL | AT_Elbow_Invalid
@@ -176,6 +196,16 @@ data LineAnchorsForRender = LineAnchorsForRender {
 }
 
 
+instance RotateMe LineAnchorsForRender where
+  rotateMe_Left LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = rotateMe_Left _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Left cd, d)) _lineAnchorsForRender_rest
+    }
+  rotateMe_Right LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = rotateMe_Right _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Right cd, d)) _lineAnchorsForRender_rest
+    }
+
 -- TODO
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
@@ -187,12 +217,44 @@ data SimpleLineSolverParameters = SimpleLineSolverParameters {
   , _simpleLineSolverParameters_attachOffset :: Int -- cells to offset attach to box by
 }
 
+instance RotateMe SimpleLineSolverParameters where
+  rotateMe_Left = id
+  rotateMe_Right = id
+
 -- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
-sSimpleLineSolver SimpleLineSolverParameters {..} (lbx1, al1) (lbx2, al2) = r where
+sSimpleLineSolver sls@SimpleLineSolverParameters {..} (lbx1, al1) (lbx2, al2) = r where
   LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 x2 y2) (V2 w2 h2) = lbx2
+  (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
+  lbx1isleft = x1 < x2 
   r = undefined
+
+  -- determine which case we are in
+  -- rotate to standard case
+  -- translate solution back to original
+
+
+
+
+  -- WIP
+
+
+  something = case al1 of
+    -- 1->  <-2
+    AL_RIGHT | bl2 == AL_LEFT && lbx1isleft && hsep -> undefined 
+    -- <-2  1-> 
+    AL_RIGHT | bl2 == AL_LEFT && not vsep -> undefined 
+    -- <-2  
+    --      1-> 
+    AL_RIGHT | bl2 == AL_LEFT && vsep -> undefined 
+    -- 
+    AL_RIGHT | bl2 == AL_RIGHT && not vsep -> undefined
+  
+    _ -> rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx1 2, rotateMe_Left al2)
+
+
+
 
 
 walkToRender :: Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
