@@ -152,7 +152,7 @@ instance Default GoatCmdTempOutput where
 
       -- TODO just don't use Default if you're gonna do this...
       _goatCmdTempOutput_goatState = undefined --error "this is expected to be overwritten during initialization"
-      
+
       , _goatCmdTempOutput_nextHandler  = Nothing
       , _goatCmdTempOutput_select      = Nothing
       , _goatCmdTempOutput_pFEvent     = Nothing
@@ -612,10 +612,17 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) newBox _goatState_renderedCanvas
     else _goatState_renderedCanvas
 
+  rendercontext = RenderContext {
+      _renderContext_owlTree = hasOwlTree_owlTree next_pFState
+      , _renderContext_layerMetaMap = _layersState_meta next_layersState
+      , _renderContext_broadPhase = next_broadPhaseState
+      , _renderContext_cache = RenderCache
+      , _renderContext_prevRenderedCanvasRegion = next_renderedCanvas'
+    }
   -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
   next_renderedCanvas = if IM.null cslmap_forRendering
     then next_renderedCanvas'
-    else (assert $ not didScreenRegionMove) $ updateCanvas cslmap_forRendering needsupdateaabbs next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) next_renderedCanvas'
+    else (assert $ not didScreenRegionMove) . _renderOutput_nextRenderedCanvasRegion $ updateCanvas cslmap_forRendering needsupdateaabbs rendercontext
 
   -- | render the selection |
   -- we just re-render everything for now

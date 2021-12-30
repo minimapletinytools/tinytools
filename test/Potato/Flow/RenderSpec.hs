@@ -18,6 +18,15 @@ import           Potato.Flow.TestStates
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvasRegion
 testCanvas x y w h = emptyRenderedCanvasRegion (LBox (V2 x y) (V2 w h))
 
+makeRenderContextForTest :: (HasOwlTree a) => a -> BroadPhaseState -> RenderedCanvasRegion -> RenderContext
+makeRenderContextForTest a bps rc = RenderContext {
+    _renderContext_owlTree = hasOwlTree_owlTree a
+    , _renderContext_layerMetaMap = IM.empty
+    , _renderContext_broadPhase = bps
+    , _renderContext_cache = RenderCache
+    , _renderContext_prevRenderedCanvasRegion = rc
+  }
+
 spec :: Spec
 spec = do
   describe "Canvas" $ do
@@ -128,6 +137,9 @@ spec = do
         changes1 = IM.empty
         (aabbs1, bps1) = update_bPTree IM.empty bpt0
         state1 = state0
-        canvas1 = updateCanvas changes1 aabbs1 bps1 (_owlPFState_owlTree state1) canvas0
+
+        rendercontext = makeRenderContextForTest state1 bps1 canvas0
+        output1 = updateCanvas changes1 aabbs1 rendercontext
+        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
       -- TODO test something
       canvas1 `shouldBe` canvas1

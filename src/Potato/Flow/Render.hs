@@ -2,7 +2,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Render (
-  RenderedCanvasRegion(..)
+  RenderCache(..)
+  , RenderContext(..)
+  , RenderOutput(..)
+  , emptyRenderCache
+
+
+  , RenderedCanvasRegion(..)
   , renderedCanvas_box
   , renderedCanvasRegion_nonEmptyCount
   , emptyRenderedCanvasRegion
@@ -65,6 +71,9 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
 -- BEGIN WIP RENDER CONTEXT STUFF
 data RenderCache = RenderCache
 
+emptyRenderCache :: RenderCache
+emptyRenderCache = RenderCache
+
 -- includes helper methods needed for render but not what to render
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
@@ -85,6 +94,12 @@ instance HasOwlTree RenderContext where
 instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
   sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
+
+renderContext_to_renderOutput_noChange :: RenderContext -> RenderOutput
+renderContext_to_renderOutput_noChange RenderContext {..} = RenderOutput {
+    _renderOutput_cache = _renderContext_cache
+    , _renderOutput_nextRenderedCanvasRegion = _renderContext_prevRenderedCanvasRegion
+  }
 -- END WIP RENDER CONTEXT STUFF
 
 
@@ -254,23 +269,27 @@ moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasRegionNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
-updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> a -> RenderedCanvasRegion -> RenderedCanvasRegion
-updateCanvas cslmap needsupdateaabbs BroadPhaseState {..} ot rc = case needsupdateaabbs of
-  [] -> rc
+updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderOutput
+updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
+  [] -> renderContext_to_renderOutput_noChange rctx
   -- TODO incremental rendering
-  (b:bs) -> case intersect_lBox (renderedCanvas_box rc) (foldl' union_lBox b bs) of
-    Nothing -> rc
+  (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_prevRenderedCanvasRegion) (foldl' union_lBox b bs) of
+    Nothing -> renderContext_to_renderOutput_noChange rctx
     Just aabb -> r where
-      rids = broadPhase_cull aabb _broadPhaseState_bPTree
+      rids = broadPhase_cull aabb (_broadPhaseState_bPTree _renderContext_broadPhase)
 
       msowls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
-        Nothing -> case findSuperOwl ot rid of
+        Nothing -> case findSuperOwl _renderContext_owlTree rid of
           Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
           -- changes could indicate hidden, if that's the case, give a dummy object to render
           Just (sowl, hidden) -> if hidden then Nothing else Just sowl
         Just msowl -> case msowl of
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
           Just sowl -> Just sowl
-      sowls = sortForRendering ot $ Seq.fromList (catMaybes msowls)
+      sowls = sortForRendering _renderContext_owlTree $ Seq.fromList (catMaybes msowls)
       selts = fmap superOwl_toSElt_hack $ toList sowls
-      r = render aabb selts rc
+      r = RenderOutput {
+          -- TODO update cache
+          _renderOutput_cache = _renderContext_cache
+          , _renderOutput_nextRenderedCanvasRegion = render aabb selts _renderContext_prevRenderedCanvasRegion
+        }
