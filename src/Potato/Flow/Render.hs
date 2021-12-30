@@ -60,19 +60,22 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
     r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
-data RenderCache = RenderCache
+
 
 -- BEGIN WIP RENDER CONTEXT STUFF
+data RenderCache = RenderCache
+
+-- includes helper methods needed for render but not what to render
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
   , _renderContext_layerMetaMap :: LayerMetaMap
   , _renderContext_cache :: RenderCache
-  , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
+  , _renderContext_prevRenderedCanvasRegion :: RenderedCanvasRegion
 }
 
 data RenderOutput = RenderOutput {
   _renderOutput_cache :: RenderCache
-  , _renderOutput_renderedCanvasRegion :: RenderedCanvasRegion
+  , _renderOutput_nextRenderedCanvasRegion :: RenderedCanvasRegion
 }
 
 instance HasOwlTree RenderContext where
