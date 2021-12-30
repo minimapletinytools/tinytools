@@ -237,19 +237,25 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
 
-renderWithBroadPhase :: (OwlRenderSet a ) => BPTree -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
-renderWithBroadPhase bpt ot lbx rc = r where
+renderWithBroadPhase :: LBox -> RenderContext -> RenderOutput
+renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
+  bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
   rids = broadPhase_cull lbx bpt
 
   -- TODO I THINK THIS IS INCORRECT DELETE, specifically, broadPhase_cull will give hidden elements that we can't find with findSuperOwlForRendering
   {-sowls' = flip fmap rids $ \rid -> case findSuperOwlForRendering ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
       Just sowl -> sowl-}
-  sowls' = catMaybes $ fmap (\rid -> findSuperOwlForRendering ot rid) rids
+  sowls' = catMaybes $ fmap (\rid -> findSuperOwlForRendering _renderContext_owlTree rid) rids
 
-  sowls = sortForRendering ot $ Seq.fromList sowls'
+  sowls = sortForRendering _renderContext_owlTree $ Seq.fromList sowls'
   selts = fmap superOwl_toSElt_hack $ toList sowls
-  r = render lbx selts rc
+
+  r = RenderOutput {
+      -- TODO update cache
+      _renderOutput_cache = _renderContext_cache
+      , _renderOutput_nextRenderedCanvasRegion = render lbx selts _renderContext_prevRenderedCanvasRegion
+    }
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) outrcr where
@@ -276,13 +282,12 @@ moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderOutput
 moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
   bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
   prevrc = _renderContext_prevRenderedCanvasRegion
-  r1 = moveRenderedCanvasRegionNoReRender lbx prevrc
-  nextrc = foldr (\sublbx accrc -> renderWithBroadPhase bpt _renderContext_owlTree sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
-  r = RenderOutput {
-      -- TODO update cache
-      _renderOutput_cache = _renderContext_cache
-      , _renderOutput_nextRenderedCanvasRegion = nextrc
+  rctx1 = rctx {
+      _renderContext_prevRenderedCanvasRegion = moveRenderedCanvasRegionNoReRender lbx prevrc
     }
+  foldrfn sublbx accrctx = renderContext_updateWithRenderOutput accrctx $ renderWithBroadPhase sublbx accrctx
+  nextrctx = foldr foldrfn rctx1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
+  r = renderContext_to_renderOutput_noChange nextrctx
 
 updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderOutput
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
