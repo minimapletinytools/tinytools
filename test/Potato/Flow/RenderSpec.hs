@@ -104,9 +104,13 @@ spec = do
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
-        -- only thing changed is the canvas size
-        canvas1 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) target canvas0
-        canvas2 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) initial canvas1
+        rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
+        output1 = moveRenderedCanvasRegion target rendercontext0
+        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
+        -- only thing changed is the canvas size, so we reuse state0 and bps0
+        rendercontext1 = makeRenderContextForTest state0 bps0 canvas1
+        output2 = moveRenderedCanvasRegion initial rendercontext1
+        canvas2 = _renderOutput_nextRenderedCanvasRegion output2
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
       -- TODO test something
@@ -121,8 +125,10 @@ spec = do
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
+        rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         -- only thing changed is the canvas size
-        canvas1 = moveRenderedCanvasRegion bps0 (_owlPFState_owlTree state0) target canvas0
+        output1 = moveRenderedCanvasRegion target rendercontext0
+        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
         canvas1Text = renderedCanvasToText canvas1
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1

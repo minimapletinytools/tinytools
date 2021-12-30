@@ -6,6 +6,8 @@ module Potato.Flow.Render (
   , RenderContext(..)
   , RenderOutput(..)
   , emptyRenderCache
+  , renderContext_to_renderOutput_noChange
+  , renderContext_updateWithRenderOutput
 
 
   , RenderedCanvasRegion(..)
@@ -99,6 +101,12 @@ renderContext_to_renderOutput_noChange :: RenderContext -> RenderOutput
 renderContext_to_renderOutput_noChange RenderContext {..} = RenderOutput {
     _renderOutput_cache = _renderContext_cache
     , _renderOutput_nextRenderedCanvasRegion = _renderContext_prevRenderedCanvasRegion
+  }
+
+renderContext_updateWithRenderOutput :: RenderContext -> RenderOutput -> RenderContext
+renderContext_updateWithRenderOutput rc RenderOutput {..} = rc {
+    _renderContext_cache = _renderOutput_cache
+    , _renderContext_prevRenderedCanvasRegion = _renderOutput_nextRenderedCanvasRegion
   }
 -- END WIP RENDER CONTEXT STUFF
 
@@ -264,10 +272,17 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
       , _renderedCanvasRegion_contents = newv
     }
 
-moveRenderedCanvasRegion :: (OwlRenderSet a) => BroadPhaseState -> a -> LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
-moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
-  r1 = moveRenderedCanvasRegionNoReRender lbx rc
-  r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
+moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderOutput
+moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
+  bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
+  prevrc = _renderContext_prevRenderedCanvasRegion
+  r1 = moveRenderedCanvasRegionNoReRender lbx prevrc
+  nextrc = foldr (\sublbx accrc -> renderWithBroadPhase bpt _renderContext_owlTree sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
+  r = RenderOutput {
+      -- TODO update cache
+      _renderOutput_cache = _renderContext_cache
+      , _renderOutput_nextRenderedCanvasRegion = nextrc
+    }
 
 updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderOutput
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of

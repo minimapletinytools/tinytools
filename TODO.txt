@@ -32,6 +32,8 @@ WIDE
 
 
 :: FANCY LINES ::
+-BUG selecting elts causes folders collapse sometimes for some reason
+-BUG enter rename when clicking on show hied collapse stuff
 -convert simple line to auto connect to attachments
   DONE-attachment rendering when adding / editing lines...
   -if attaching to box X then change highlight on all box X stuff

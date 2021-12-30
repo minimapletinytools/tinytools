@@ -608,21 +608,25 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
-  next_renderedCanvas' = if didScreenRegionMove
-    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState, _layersState_meta next_layersState) newBox _goatState_renderedCanvas
-    else _goatState_renderedCanvas
-
-  rendercontext = RenderContext {
+  rendercontext' = RenderContext {
       _renderContext_owlTree = hasOwlTree_owlTree next_pFState
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_cache = RenderCache
-      , _renderContext_prevRenderedCanvasRegion = next_renderedCanvas'
+      , _renderContext_prevRenderedCanvasRegion = _goatState_renderedCanvas
     }
+  renderOutput' = if didScreenRegionMove
+    then moveRenderedCanvasRegion newBox rendercontext'
+    else renderContext_to_renderOutput_noChange rendercontext'
+
+  rendercontext = renderContext_updateWithRenderOutput rendercontext' renderOutput'
+
   -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
-  next_renderedCanvas = if IM.null cslmap_forRendering
-    then next_renderedCanvas'
-    else (assert $ not didScreenRegionMove) . _renderOutput_nextRenderedCanvasRegion $ updateCanvas cslmap_forRendering needsupdateaabbs rendercontext
+  renderOutput = if IM.null cslmap_forRendering
+    then renderOutput'
+    else updateCanvas cslmap_forRendering needsupdateaabbs rendercontext
+
+  next_renderedCanvas = _renderOutput_nextRenderedCanvasRegion renderOutput
 
   -- | render the selection |
   -- we just re-render everything for now
