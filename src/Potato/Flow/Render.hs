@@ -69,6 +69,7 @@ data RenderCache = RenderCache
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
   , _renderContext_layerMetaMap :: LayerMetaMap
+  , _renderContext_broadPhase :: BroadPhaseState
   , _renderContext_cache :: RenderCache
   , _renderContext_prevRenderedCanvasRegion :: RenderedCanvasRegion
 }
@@ -253,7 +254,7 @@ moveRenderedCanvasRegion (BroadPhaseState bpt) ot lbx rc = r where
   r1 = moveRenderedCanvasRegionNoReRender lbx rc
   r = foldr (\sublbx accrc -> renderWithBroadPhase bpt ot sublbx accrc) r1 (substract_lBox lbx (_renderedCanvasRegion_box rc))
 
-updateCanvas :: (OwlRenderSet a) => SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> a -> RenderedCanvasRegion -> RenderedCanvasRegion
+updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> BroadPhaseState -> a -> RenderedCanvasRegion -> RenderedCanvasRegion
 updateCanvas cslmap needsupdateaabbs BroadPhaseState {..} ot rc = case needsupdateaabbs of
   [] -> rc
   -- TODO incremental rendering
