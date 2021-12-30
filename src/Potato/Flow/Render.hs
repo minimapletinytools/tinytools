@@ -4,11 +4,7 @@
 module Potato.Flow.Render (
   RenderCache(..)
   , RenderContext(..)
-  , RenderOutput(..)
   , emptyRenderCache
-  , renderContext_to_renderOutput_noChange
-  , renderContext_updateWithRenderOutput
-
 
   , RenderedCanvasRegion(..)
   , renderedCanvas_box
@@ -85,29 +81,12 @@ data RenderContext = RenderContext {
   , _renderContext_prevRenderedCanvasRegion :: RenderedCanvasRegion
 }
 
-data RenderOutput = RenderOutput {
-  _renderOutput_cache :: RenderCache
-  , _renderOutput_nextRenderedCanvasRegion :: RenderedCanvasRegion
-}
-
 instance HasOwlTree RenderContext where
   hasOwlTree_owlTree = hasOwlTree_owlTree . _renderContext_owlTree
 
 instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
   sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
-
-renderContext_to_renderOutput_noChange :: RenderContext -> RenderOutput
-renderContext_to_renderOutput_noChange RenderContext {..} = RenderOutput {
-    _renderOutput_cache = _renderContext_cache
-    , _renderOutput_nextRenderedCanvasRegion = _renderContext_prevRenderedCanvasRegion
-  }
-
-renderContext_updateWithRenderOutput :: RenderContext -> RenderOutput -> RenderContext
-renderContext_updateWithRenderOutput rc RenderOutput {..} = rc {
-    _renderContext_cache = _renderOutput_cache
-    , _renderContext_prevRenderedCanvasRegion = _renderOutput_nextRenderedCanvasRegion
-  }
 -- END WIP RENDER CONTEXT STUFF
 
 
@@ -237,7 +216,7 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
 
-renderWithBroadPhase :: LBox -> RenderContext -> RenderOutput
+renderWithBroadPhase :: LBox -> RenderContext -> RenderContext
 renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
   bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
   rids = broadPhase_cull lbx bpt
@@ -251,10 +230,8 @@ renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
   sowls = sortForRendering _renderContext_owlTree $ Seq.fromList sowls'
   selts = fmap superOwl_toSElt_hack $ toList sowls
 
-  r = RenderOutput {
-      -- TODO update cache
-      _renderOutput_cache = _renderContext_cache
-      , _renderOutput_nextRenderedCanvasRegion = render lbx selts _renderContext_prevRenderedCanvasRegion
+  r = rctx {
+      _renderContext_prevRenderedCanvasRegion = render lbx selts _renderContext_prevRenderedCanvasRegion
     }
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
@@ -278,23 +255,21 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
       , _renderedCanvasRegion_contents = newv
     }
 
-moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderOutput
+moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderContext
 moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
   bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
   prevrc = _renderContext_prevRenderedCanvasRegion
   rctx1 = rctx {
       _renderContext_prevRenderedCanvasRegion = moveRenderedCanvasRegionNoReRender lbx prevrc
     }
-  foldrfn sublbx accrctx = renderContext_updateWithRenderOutput accrctx $ renderWithBroadPhase sublbx accrctx
-  nextrctx = foldr foldrfn rctx1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
-  r = renderContext_to_renderOutput_noChange nextrctx
+  r = foldr renderWithBroadPhase rctx1 (substract_lBox lbx (_renderedCanvasRegion_box prevrc))
 
-updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderOutput
+updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderContext
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
-  [] -> renderContext_to_renderOutput_noChange rctx
+  [] -> rctx
   -- TODO incremental rendering
   (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_prevRenderedCanvasRegion) (foldl' union_lBox b bs) of
-    Nothing -> renderContext_to_renderOutput_noChange rctx
+    Nothing -> rctx
     Just aabb -> r where
       rids = broadPhase_cull aabb (_broadPhaseState_bPTree _renderContext_broadPhase)
 
@@ -308,8 +283,6 @@ updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdatea
           Just sowl -> Just sowl
       sowls = sortForRendering _renderContext_owlTree $ Seq.fromList (catMaybes msowls)
       selts = fmap superOwl_toSElt_hack $ toList sowls
-      r = RenderOutput {
-          -- TODO update cache
-          _renderOutput_cache = _renderContext_cache
-          , _renderOutput_nextRenderedCanvasRegion = render aabb selts _renderContext_prevRenderedCanvasRegion
+      r = rctx {
+          _renderContext_prevRenderedCanvasRegion = render aabb selts _renderContext_prevRenderedCanvasRegion
         }

@@ -105,12 +105,11 @@ spec = do
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
-        output1 = moveRenderedCanvasRegion target rendercontext0
-        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
-        -- only thing changed is the canvas size, so we reuse state0 and bps0
-        rendercontext1 = makeRenderContextForTest state0 bps0 canvas1
-        output2 = moveRenderedCanvasRegion initial rendercontext1
-        canvas2 = _renderOutput_nextRenderedCanvasRegion output2
+        rendercontext1 = moveRenderedCanvasRegion target rendercontext0
+        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
+        -- only thing changed is the canvas size, so we can keep using rendercontext
+        rendercontext2 = moveRenderedCanvasRegion initial rendercontext1
+        canvas2 = _renderContext_prevRenderedCanvasRegion rendercontext2
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
       -- TODO test something
@@ -127,8 +126,8 @@ spec = do
         canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         -- only thing changed is the canvas size
-        output1 = moveRenderedCanvasRegion target rendercontext0
-        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
+        rendercontext1 = moveRenderedCanvasRegion target rendercontext0
+        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
         canvas1Text = renderedCanvasToText canvas1
       --liftIO $ printRenderedCanvasRegion canvas0
       --liftIO $ printRenderedCanvasRegion canvas1
@@ -144,8 +143,8 @@ spec = do
         (aabbs1, bps1) = update_bPTree IM.empty bpt0
         state1 = state0
 
-        rendercontext = makeRenderContextForTest state1 bps1 canvas0
-        output1 = updateCanvas changes1 aabbs1 rendercontext
-        canvas1 = _renderOutput_nextRenderedCanvasRegion output1
+        rendercontext0 = makeRenderContextForTest state1 bps1 canvas0
+        rendercontext1 = updateCanvas changes1 aabbs1 rendercontext0
+        canvas1 = _renderContext_prevRenderedCanvasRegion rendercontext1
       -- TODO test something
       canvas1 `shouldBe` canvas1
