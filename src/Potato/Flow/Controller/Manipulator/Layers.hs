@@ -39,14 +39,25 @@ layersHandlerRenderEntry_selected _ = False
 doesSelectionContainREltId_linear :: REltId -> Selection -> Bool
 doesSelectionContainREltId_linear rid = isJust . find (\sowl -> rid == _superOwl_id sowl) . unSuperOwlParliament
 
+collapseOffset :: Int
+collapseOffset = 0
+
+hideOffset :: Int
+hideOffset = 1
+
+lockOffset :: Int
+lockOffset = 2
+
+titleOffset :: Int
+titleOffset = 3
 
 clickLayerNew :: Seq LayerEntry -> XY -> Maybe (SuperOwl, LayerDownType, Int)
 clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
   Nothing                      -> Nothing
   Just le -> Just . (,,absx - layerEntry_depth le) sowl $ case () of
-    () | layerEntry_isFolder le && layerEntry_depth le == absx -> LDT_Collapse
-    () | layerEntry_depth le + 1 == absx   -> LDT_Hide
-    () | layerEntry_depth le + 2 == absx -> LDT_Lock
+    () | layerEntry_isFolder le && layerEntry_depth le + collapseOffset == absx -> LDT_Collapse
+    () | layerEntry_depth le + hideOffset == absx   -> LDT_Hide
+    () | layerEntry_depth le + lockOffset == absx -> LDT_Lock
     () -> LDT_Normal
     where
       sowl = _layerEntry_superOwl le
@@ -240,7 +251,7 @@ instance PotatoHandler LayersHandler where
         Nothing -> error "pretty sure this should never happen "
         -- (you can only click + drag selected elements)
         Just (downsowl, ldtdown, offset) -> case ldtdown of
-          LDT_Normal | offset > 0 -> r where
+          LDT_Normal | offset >= titleOffset -> r where
 
             -- TODO great place for TZ.selectAll when you add selection capability into TZ
             zipper = TZ.fromText $ hasOwlElt_name downsowl

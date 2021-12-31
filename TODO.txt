@@ -48,7 +48,7 @@ WIDE
 
 ::NEWEST TODO::
 -BUG selecting elts causes folders collapse sometimes for some reason
--BUG enter rename when clicking on show hied collapse stuff
+DONE-BUG enter rename when clicking on show hied collapse stuff
 -BUG save failure still registers as a good save
 -ctrl shift q to force quit
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
