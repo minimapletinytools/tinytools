@@ -19,7 +19,6 @@ module Potato.Flow.BroadPhase (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl

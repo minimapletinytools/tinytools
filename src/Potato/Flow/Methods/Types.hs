@@ -22,7 +22,10 @@ makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
   else Nothing
 
 data SEltDrawer = SEltDrawer {
+
+  -- TODO this won't work, we need OwlTree to generate this properly
   _sEltDrawer_box        :: LBox
+
   , _sEltDrawer_renderFn :: SEltDrawerRenderFn -- switch to [SEltDrawerRenderFn] for better performance
 
   --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance

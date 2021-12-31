@@ -20,6 +20,7 @@ import           Relude
 import  qualified         Relude.Unsafe
 
 import           Potato.Flow.Math
+import Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.Owl
@@ -314,6 +315,7 @@ getDrawer selt = case selt of
   SEltFolderEnd   -> nilDrawer
   SEltBox sbox    -> sBox_drawer sbox
   SEltLine sline  -> sSimpleLine_drawer sline
+  --SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
   SEltTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where

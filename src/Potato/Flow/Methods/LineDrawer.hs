@@ -2,6 +2,7 @@
 
 module Potato.Flow.Methods.LineDrawer (
   LineAnchorsForRender(..)
+  , sSimpleLineNewRenderFn
 
 
 
@@ -19,6 +20,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import Potato.Flow.Methods.Types
 import Potato.Flow.Attachments
+import Potato.Flow.Owl
 
 import qualified Data.Map as Map
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
@@ -272,18 +274,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   -- so I think you need determineSeparationForAttachment (only needed for hsep)
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
   lbx1isleft = x1 < x2
-  r = undefined
-
-  -- determine which case we are in
-  -- rotate to standard case
-  -- translate solution back to original
-
-
 
 
   -- WIP
 
-  something = case al1 of
+  r = case al1 of
     -- 1->  <-2
     AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
@@ -350,6 +345,14 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
 
 
+-- TODO test, boundaries may be incorrect
+doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
+doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
+  CD_Left | py == sy -> if px < sx && px >= sx+tl then Just (sx-px) else Nothing
+  CD_Right | py == sy -> if px > sx && px <= sx+tl then Just (px-sx) else Nothing
+  CD_Up | px == sx -> if py < sy && py >= sy+tl then Just (sy-py) else Nothing
+  CD_Down | px == sx -> if py > sy && py <= sy+tl then Just (py-sy) else Nothing
+  _ -> Nothing
 
 walkToRender :: Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
 walkToRender isstart begin (tcd, tl) mnext d = r where
@@ -372,16 +375,76 @@ walkToRender isstart begin (tcd, tl) mnext d = r where
     else (currentpos, startorregular)
 
 
+-- DELETE not what you need
+mapAccumFind :: (a -> b -> (a, Maybe c)) -> a -> [b] -> Maybe c
+mapAccumFind f acc l = case l of
+  [] -> Nothing
+  x:xs -> case f acc x of
+    (nacc, Nothing) -> mapAccumFind f nacc xs
+    (_, manswer) -> manswer
+
+-- VERY UNTESTED
+lineAnchorsForRender_renderAt :: LineAnchorsForRender -> XY -> MPChar
+lineAnchorsForRender_renderAt LineAnchorsForRender {..} pos = r where
+  walk (isstart, curbegin) ls = case ls of
+    [] -> Nothing
+    x:xs -> case doesLineContain pos curbegin x of
+      Nothing -> walk (False, nextbegin) xs
+      Just d -> Just $ case xs of
+        [] -> walkToRender isstart curbegin x Nothing d
+        y:ys -> walkToRender isstart curbegin x (Just y) d
+      where
+        nextbegin = curbegin + cartDirWithDistanceToV2 x
+
+  findfn (index, start) cdl = case doesLineContain pos start cdl of
+    Nothing -> (nextacc, Nothing)
+    Just d -> (nextacc, Just (index, (start, cdl),d))
+    where
+      nextacc = (index+1, start + cartDirWithDistanceToV2 cdl)
+  manswer = walk (True, _lineAnchorsForRender_start) _lineAnchorsForRender_rest
+  r = case manswer of
+    Nothing -> Nothing
+    Just (pos', mpchar) -> assert (pos == pos') mpchar
+
+sSimpleLineNewRenderFn :: SSimpleLine -> Maybe LineAnchorsForRender -> SEltDrawer
+sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
+  params = SimpleLineSolverParameters {
+      _simpleLineSolverParameters_offsetBorder = True
+      -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
+      , _simpleLineSolverParameters_attachOffset = 1
+    }
+
+  renderfn :: SEltDrawerRenderFn
+  renderfn ot xy = r where
+
+    maybeGetBox mattachment = do
+      Attachment rid al <- mattachment
+      sowl <- hasOwlTree_findSuperOwl ot rid
+      sbox <- getSEltBox $ hasOwlElt_toSElt_hack sowl
+      return (sbox, al)
+
+    -- TODO AL_Any
+    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_TOP) $ maybeGetBox _sSimpleLine_attachStart
+    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_TOP) $ maybeGetBox _sSimpleLine_attachEnd
+
+    regenanchors = sSimpleLineSolver params lbal1 lbal2
+    anchors = case mcache of
+      Just x -> x
+      Nothing -> regenanchors
+
+    {-
+    box = case nonEmpty (lineAnchorsForRenderToPointList anchors) of
+      Nothing -> LBox 0 0
+      Just (x :| xs) -> foldr add_XY_to_LBox (make_lBox_from_XY x) xs
+    -}
+
+    r = lineAnchorsForRender_renderAt anchors xy
 
 
+  drawer = SEltDrawer {
 
-sSimpleLineNewRenderFn :: LineStyle -> LineAnchorsForRender -> SEltDrawer
-sSimpleLineNewRenderFn LineStyle {..} anchors = r where
-  box = case nonEmpty (lineAnchorsForRenderToPointList anchors) of
-    Nothing -> LBox 0 0
-    Just (x :| xs) -> foldr add_XY_to_LBox (make_lBox_from_XY x) xs
+      -- TODO this is incorrect
+      _sEltDrawer_box = fromJust $ getSEltBox (SEltLine ssline)
 
-  r = SEltDrawer {
-      _sEltDrawer_box = box
-      , _sEltDrawer_renderFn = undefined
+      , _sEltDrawer_renderFn = renderfn
     }

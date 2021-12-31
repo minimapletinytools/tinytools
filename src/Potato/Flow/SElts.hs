@@ -315,6 +315,17 @@ instance ToJSON SSimpleLine
 instance Binary SSimpleLine
 instance NFData SSimpleLine
 
+-- makes writing tests easier...
+instance Default SSimpleLine where
+  def = SSimpleLine {
+      _sSimpleLine_start       = 0
+      , _sSimpleLine_end       = 0
+      , _sSimpleLine_style     = def
+      , _sSimpleLine_lineStyle = def
+      , _sSimpleLine_attachStart = Nothing
+      , _sSimpleLine_attachEnd = Nothing
+    }
+
 -- TODO make manipulator
 -- TODO rename
 -- |

@@ -108,19 +108,19 @@ spec = do
               , _lineStyle_downArrows  = "V"
               , _lineStyle_autoStyle   = autoStyle
             }
-          someline1 autoStyle = SSimpleLine {
+          someline1 autoStyle = def {
               _sSimpleLine_start       = V2 10 10
               , _sSimpleLine_end       = V2 20 20
               , _sSimpleLine_style     = def
               , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
-          someline2 autoStyle = SSimpleLine {
+          someline2 autoStyle = def {
               _sSimpleLine_start       = V2 10 10
               , _sSimpleLine_end       = V2 10 20
               , _sSimpleLine_style     = def
               , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
-          someline3 autoStyle = SSimpleLine {
+          someline3 autoStyle = def {
               _sSimpleLine_start       = V2 5 20
               , _sSimpleLine_end       = V2 10 10
               , _sSimpleLine_style     = def
