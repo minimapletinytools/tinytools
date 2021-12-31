@@ -570,6 +570,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
   -- TODO I don't think this is quite the behavior you want, it will auto expand stuff all over the place
   next_layersState = expandAllCollapsedParents next_selection next_pFState next_layersState'
+  --next_layersState = next_layersState'
 
 
   -- | update the next handler |

@@ -32,9 +32,7 @@ WIDE
 
 
 :: FANCY LINES ::
--BUG selecting elts causes folders collapse sometimes for some reason
--BUG enter rename when clicking on show hied collapse stuff
--BUG save failure still registers as a good save
+
 -convert simple line to auto connect to attachments
   DONE-attachment rendering when adding / editing lines...
   -if attaching to box X then change highlight on all box X stuff
@@ -49,6 +47,10 @@ WIDE
 
 
 ::NEWEST TODO::
+-BUG selecting elts causes folders collapse sometimes for some reason
+-BUG enter rename when clicking on show hied collapse stuff
+-BUG save failure still registers as a good save
+-ctrl shift q to force quit
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -add state into render methods fack
 -no MDI file stuff
