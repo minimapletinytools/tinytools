@@ -47,14 +47,17 @@ WIDE
 
 
 ::NEWEST TODO::
--BUG selecting elts causes folders collapse sometimes for some reason
-DONE-BUG enter rename when clicking on show hied collapse stuff
-DONE-BUG save failure still registers as a good save
-DONE/FAIL-ctrl shift q to force quit
--click on file in file explorer should populate it as filename IF file extension is correct
+ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
+-file stuff
+  -file explorer
+    -add highlight on click
+    -grey out invalid files extensions
+    -add double clikc support to file explorer
+    -auto add extension on save
+  -open file dialog
+  -make alert on unsaved changes generic and save popupmanager
 -click release on lock/hide/collapse on selected element should not deselect
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
--add state into render methods fack
 -no MDI file stuff
   DONE-CLI open file
     DONE-opens file, sets directory to file's root dir
@@ -72,10 +75,6 @@ DONE/FAIL-ctrl shift q to force quit
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
 -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
--BUG hitting assert
-  selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
-  repro (select a bunch of stuff and try and shift click a bunch on linux???)
-  DONE-dump state/tree
 -multi node lines
   -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
   -you really need to design+determine all line types first
@@ -128,6 +127,15 @@ DONE/FAIL-ctrl shift q to force quit
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+IGNORE??-BUG hitting assert
+  selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
+  repro (select a bunch of stuff and try and shift click a bunch on linux???)
+  DONE-dump state/tree
+DONE????-BUG selecting elts causes folders collapse sometimes for some reason
+DONE-BUG enter rename when clicking on show hied collapse stuff
+DONE-BUG save failure still registers as a good save
+DONE/FAIL-ctrl shift q to force quit
+DONE-add state into render methods fack
 DONE-prompt save on exit
   DONE-proper save state handling inside of goat...
 DONE-different color highlighting on render handles

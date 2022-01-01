@@ -1,24 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Common
-  (
-  GoatWidgetCmd(..)
-  , everything_network_app
-  , EverythingPredicate(..)
-  , testEverythingPredicate
-  , showEverythingPredicate
-  , checkNumElts
-  , checkHandlerName
-  , checkHandlerNameAndState
-  , numEltsInLBoxUsingBroadphasePredicate
-  , numSelectedEltsEqualPredicate
-  , firstSelectedSuperOwlPredicate
-  , firstSelectedSuperOwlWithOwlTreePredicate
-  , firstSuperOwlPredicate
-  , constructTest
-  , constructTestWithControllerMeta
-  )
-where
+module Potato.Flow.Common where
 
 import           Relude                            hiding (empty, fromList, first)
 
@@ -231,3 +213,12 @@ constructTestWithControllerMeta label pfs cm bs expected = TestLabel label $ Tes
 
 constructTest :: String -> OwlPFState -> [GoatWidgetCmd] -> [EverythingPredicate] -> Test
 constructTest label pfs bs expected = constructTestWithControllerMeta label pfs emptyControllerMeta bs expected
+
+
+
+
+-- partial function to get SSimpleLine
+hasOwlElt_test_toSSimpleLine :: (HasOwlElt a) => a -> SSimpleLine
+hasOwlElt_test_toSSimpleLine o = case hasOwlElt_toSElt_hack o of
+  SEltLine ssline  -> ssline
+  selt -> error $ "expected SSimpleLine, got " <> show selt

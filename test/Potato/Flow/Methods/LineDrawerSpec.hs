@@ -8,9 +8,12 @@ import           Relude           hiding (empty, fromList)
 
 import           Test.Hspec
 
-import Potato.Flow.SElts
+
+import Potato.Flow
 import           Potato.Flow.Methods.LineDrawer
-import           Potato.Flow.Math
+import Potato.Flow.TestStates
+
+import Potato.Flow.Common
 
 
 rotateMe_validate :: (Eq a, RotateMe a) => a -> Bool
@@ -18,7 +21,7 @@ rotateMe_validate a = (rotateMe_Left . rotateMe_Right $ a) == a && (rotateMe_Rig
 
 spec :: Spec
 spec = do
-  describe "Lines" $ do
+  describe "Lines - internal" $ do
     it "rotateMe" $ do
       let
         somelbx1 = LBox (V2 12 (-2)) (V2 12323 (143))
@@ -39,3 +42,14 @@ spec = do
             , _lineAnchorsForRender_rest = [(CD_Up, 10),(CD_Up, 15),(CD_Up, 1),(CD_Right, 10)]
           }
       _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
+  describe "Lines - rendering" $ do
+    let
+      pfs = owlpfstate_attachments1
+      somessline = hasOwlElt_test_toSSimpleLine $ hasOwlTree_mustFindSuperOwl pfs 7
+      owltree = _owlPFState_owlTree pfs
+      sd = sSimpleLineNewRenderFn somessline Nothing
+    it "basic" $ do
+      forM_ (sEltDrawer_renderToLines owltree sd) putTextLn
+      -- TODO test stuff
+      --sd (V2 0 0) owltree `shouldBe` Just '<'
+      True `shouldBe` True

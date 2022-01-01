@@ -15,7 +15,6 @@ assertShowAndDump a v b = if v
   then b
   else error $ "assert failed:\n" <> show a
 
-
 assertPotatoShowAndDump :: (HasCallStack, PotatoShow a) => a -> Bool -> b -> b
 assertPotatoShowAndDump a v b = if v
   then b
