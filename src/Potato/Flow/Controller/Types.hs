@@ -27,6 +27,7 @@ import           Potato.Flow.Owl
 import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap            as IM
+import qualified Text.Show
 
 
 -- someday it would be nice to support graphene clusters and RTL 😭
@@ -97,7 +98,10 @@ data LayerMeta = LayerMeta {
   , _layerMeta_isHidden    :: Bool
   , _layerMeta_isCollapsed :: Bool
 
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
+
+instance Show LayerMeta where
+  show LayerMeta {..} = "LayerMeta (l,h,c): " <> show _layerMeta_isLocked <> " " <> show _layerMeta_isHidden <> " " <> show _layerMeta_isCollapsed
 
 instance FromJSON LayerMeta
 instance ToJSON LayerMeta

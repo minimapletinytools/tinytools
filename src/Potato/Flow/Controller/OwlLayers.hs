@@ -10,6 +10,7 @@ import           Potato.Flow.Types
 import Potato.Flow.SElts
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
+import Potato.Flow.DebugHelpers
 
 import           Control.Lens                 (over, _2)
 import Data.Foldable (foldl)
@@ -19,6 +20,7 @@ import qualified Data.IntSet as IS
 import           Data.Sequence                ((><), (|>))
 import qualified Data.Sequence                as Seq
 import qualified Data.Text as T
+import qualified Text.Show
 
 data LockHiddenState = LHS_True | LHS_False | LHS_True_InheritTrue | LHS_False_InheritTrue deriving (Eq, Show)
 
@@ -72,7 +74,14 @@ data LayerEntry = LayerEntry {
   , _layerEntry_hideState      :: LockHiddenState
   , _layerEntry_isCollapsed    :: Bool -- this parameter is ignored if not a folder, Maybe Bool instead?
   , _layerEntry_superOwl :: SuperOwl
-} deriving (Eq, Show)
+} deriving (Eq)
+
+instance Show LayerEntry where
+  show LayerEntry {..} = "LayerEntry (lhc: "
+    <> show _layerEntry_lockState
+    <> "," <> show _layerEntry_hideState
+    <> "," <> show _layerEntry_isCollapsed
+    <> "):\n" <> (T.unpack $ potatoShow _layerEntry_superOwl)
 
 layerEntry_depth :: LayerEntry -> Int
 layerEntry_depth LayerEntry {..} = _owlEltMeta_depth . _superOwl_meta $ _layerEntry_superOwl
@@ -118,6 +127,13 @@ data LayersState = LayersState {
     , _layersState_entries :: LayerEntries
     , _layersState_scrollPos :: Int
   } deriving (Show, Eq)
+
+instance PotatoShow LayersState where
+  potatoShow LayersState{..} = r where
+    r = "LayersState: "
+      <> show _layersState_meta
+      <> "\nLayerEntries:\n"
+      <> showFoldable _layersState_entries
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 

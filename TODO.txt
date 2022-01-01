@@ -49,9 +49,10 @@ WIDE
 ::NEWEST TODO::
 -BUG selecting elts causes folders collapse sometimes for some reason
 DONE-BUG enter rename when clicking on show hied collapse stuff
--BUG save failure still registers as a good save
+DONE-BUG save failure still registers as a good save
+DONE/FAIL-ctrl shift q to force quit
+-click on file in file explorer should populate it as filename IF file extension is correct
 -click release on lock/hide/collapse on selected element should not deselect
--ctrl shift q to force quit
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -add state into render methods fack
 -no MDI file stuff
