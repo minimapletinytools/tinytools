@@ -216,7 +216,7 @@ expandAllCollapsedParents selection pfs ls = r where
   oldlmm = _layersState_meta ls
   iscollapsedfilterfn rid = case IM.lookup rid oldlmm of
     Just lm -> _layerMeta_isCollapsed lm
-    Nothing -> True
+    Nothing -> defaultFolderCollapseState
   collapsedParents = IS.filter iscollapsedfilterfn ops
   alterfn mlm = case mlm of
     Nothing -> Just (def { _layerMeta_isCollapsed = False })

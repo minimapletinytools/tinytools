@@ -78,28 +78,35 @@ someState3 = pFState_to_owlPFState $ PFState {
       , _pFState_canvas = someSCanvas
   }
 
+
 generateLayersNew' :: OwlPFState -> LayerMetaMap -> Seq LayerEntry
 generateLayersNew' pfs lmm = generateLayersNew (_owlPFState_owlTree pfs) lmm
 
-createExpandAllLayerMetaMap :: OwlPFState -> LayerMetaMap
-createExpandAllLayerMetaMap OwlPFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = False }) (_owlTree_mapping _owlPFState_owlTree)
+createLayerMetaMap :: Bool -> OwlPFState -> LayerMetaMap
+createLayerMetaMap collapseAll OwlPFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = collapseAll }) (_owlTree_mapping _owlPFState_owlTree)
 
 
 spec :: Spec
 spec = do
   describe "Layers" $ do
     describe "generateLayersNew'" $ do
-      it "basic" $ do
-        -- empty LayerMetaMap means everything is collapsed by default
-        Seq.length (generateLayersNew' someState1 IM.empty) `shouldBe` 1
-        Seq.length (generateLayersNew' someState2 IM.empty) `shouldBe` 1
+      it "basic" $ if defaultFolderCollapseState
+        then do
+          -- empty LayerMetaMap means everything is collapsed by default
+          Seq.length (generateLayersNew' someState1 IM.empty) `shouldBe` 1
+          Seq.length (generateLayersNew' someState2 IM.empty) `shouldBe` 1
+        else do
+          -- empty LayerMetaMap means everything is collapsed by default
+          Seq.length (generateLayersNew' someState1 IM.empty) `shouldBe` 5
+          Seq.length (generateLayersNew' someState2 IM.empty) `shouldBe` 8
       it "handles empty state" $ do
         Seq.length (generateLayersNew' emptyOwlPFState IM.empty) `shouldBe` 0
     describe "toggleLayerEntry" $ do
       it "basic1" $ do
         -- open 0
         let
-          lmm_0 = IM.empty -- everything collapsed
+          -- start with everything collapsed
+          lmm_0 = createLayerMetaMap True someState1
           lentries_0 = generateLayersNew' someState1 lmm_0
           (LayersState lmm_1 lentries_1 _) = toggleLayerEntry someState1 (LayersState lmm_0 lentries_0 0) 0 LHCO_ToggleCollapse
         Seq.length lentries_1 `shouldBe` 5
@@ -131,7 +138,7 @@ spec = do
         lentries_final `shouldBe` lentries_0
       it "basic2" $ do
         let
-          lmm_0 = createExpandAllLayerMetaMap someState2 -- everything expanded
+          lmm_0 = createLayerMetaMap False someState2 -- everything expanded
           lentries_0 = generateLayersNew' someState2 lmm_0
         Seq.length lentries_0 `shouldBe` 8
 
@@ -145,7 +152,7 @@ spec = do
 
       it "basic3" $ do
         let
-          lmm_0 = IM.empty -- everything collapsed
+          lmm_0 = createLayerMetaMap True someState3 -- everything collapsed
           lentries_0 = generateLayersNew' someState3 lmm_0
         Seq.length lentries_0 `shouldBe` 4
 
@@ -160,7 +167,7 @@ spec = do
       it "basic" $ do
         let
           state_0 = someState1
-          lmm_0 = createExpandAllLayerMetaMap state_0 -- everything expanded
+          lmm_0 = createLayerMetaMap False state_0 -- everything expanded
           lentries_0 = generateLayersNew' state_0 lmm_0
 
           deleteme = owlTree_mustFindSuperOwl (_owlPFState_owlTree state_0) 4

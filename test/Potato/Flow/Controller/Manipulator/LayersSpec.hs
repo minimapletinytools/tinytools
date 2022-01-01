@@ -18,6 +18,7 @@ import           Potato.Flow.Common
 import           Potato.Flow.TestStates
 
 import qualified Data.Sequence                     as Seq
+import Data.Default
 
 moveOffset :: Int
 moveOffset = 100
@@ -135,8 +136,14 @@ test_LayersHandler_toggle = constructTest "toggle" owlpfstate_basic1 bs expected
       , numVisibleHiddenLayerEntriesEqualPredicate 1
     ]
 
+createLayerMetaMap :: Bool -> OwlPFState -> LayerMetaMap
+createLayerMetaMap collapseAll OwlPFState {..} = fmap (\_ -> def { _layerMeta_isCollapsed = collapseAll }) (_owlTree_mapping _owlPFState_owlTree)
+
+controllermeta_basic2_collapseall :: ControllerMeta
+controllermeta_basic2_collapseall = emptyControllerMeta { _controllerMeta_layers = createLayerMetaMap True owlpfstate_basic2 }
+
 test_LayersHandler_collapse :: Test
-test_LayersHandler_collapse = constructTest "collapse" owlpfstate_basic2 bs expected where
+test_LayersHandler_collapse = constructTestWithControllerMeta "collapse" owlpfstate_basic2 controllermeta_basic2_collapseall bs expected where
   bs = [
 
       EWCLabel "expand fstart1"
@@ -272,8 +279,9 @@ expandfoldersforbasic2_expected = [
     , numLayerEntriesEqualPredicate 7
   ]
 
+
 test_LayersHandler_folders :: Test
-test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expected where
+test_LayersHandler_folders = constructTestWithControllerMeta "folders" owlpfstate_basic2 controllermeta_basic2_collapseall bs expected where
   bs = expandfoldersforbasic2 <> [
       EWCLabel "select b1"
       , EWCMouse (LMouseData (V2 moveOffset 2) False MouseButton_Left [] True)
@@ -337,7 +345,7 @@ test_LayersHandler_folders = constructTest "folders" owlpfstate_basic2 bs expect
     ]
 
 test_LayersHandler_folders2 :: Test
-test_LayersHandler_folders2 = constructTest "folders2" owlpfstate_basic2 bs expected where
+test_LayersHandler_folders2 = constructTestWithControllerMeta "folders2" owlpfstate_basic2 controllermeta_basic2_collapseall bs expected where
   bs = expandfoldersforbasic2 <> [
       EWCLabel "expand fstart3"
       , EWCMouse (LMouseData (V2 1 6) False MouseButton_Left [] True)

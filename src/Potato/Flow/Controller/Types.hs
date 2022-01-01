@@ -8,6 +8,7 @@ module Potato.Flow.Controller.Types (
   , SetPotatoDefaultParameters(..)
   , potatoDefaultParameters_set
   , Selection
+  , defaultFolderCollapseState
   , LayerMeta(..)
   , LayerMetaMap
   , layerMetaMap_isCollapsed
@@ -90,7 +91,6 @@ potatoDefaultParameters_set PotatoDefaultParameters {..} SetPotatoDefaultParamet
 
 type Selection = SuperOwlParliament
 
-
 data LayerMeta = LayerMeta {
   -- if False, these will inherit from parent
   _layerMeta_isLocked      :: Bool
@@ -103,11 +103,15 @@ instance FromJSON LayerMeta
 instance ToJSON LayerMeta
 instance NFData LayerMeta
 
+-- Not sure which way I want to do it, so make it configurable for now.
+defaultFolderCollapseState :: Bool
+defaultFolderCollapseState = False
+
 instance Default LayerMeta where
   def = LayerMeta {
       _layerMeta_isLocked = False
       , _layerMeta_isHidden = False
-      , _layerMeta_isCollapsed = True
+      , _layerMeta_isCollapsed = defaultFolderCollapseState
     }
 
 type LayerMetaMap = REltIdMap LayerMeta
