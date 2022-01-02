@@ -244,11 +244,10 @@ instance RotateMe LineAnchorsForRender where
       ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Right cd, d)) _lineAnchorsForRender_rest
     }
 
--- TODO
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
-  rest = undefined
-  r = _lineAnchorsForRender_start : rest
+  scanlfn pos (cd,d) = pos + (cartDirToUnit cd) ^* d
+  r = scanl scanlfn _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
 data SimpleLineSolverParameters = SimpleLineSolverParameters {
   _simpleLineSolverParameters_offsetBorder :: Bool -- whether we attach directly to the box or offset by the border (note this still applies just the same for borderless boxes, w/e)
