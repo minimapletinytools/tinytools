@@ -342,15 +342,12 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     _ -> trace "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
 
 
-
-
--- TODO test, boundaries may be incorrect
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
 doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
   CD_Left | py == sy -> if px < sx && px >= sx+tl then Just (sx-px) else Nothing
-  CD_Right | py == sy -> if px > sx && px <= sx+tl then Just (px-sx) else Nothing
+  CD_Right | py == sy -> if px >= sx && px <= sx+tl then Just (px-sx) else Nothing
   CD_Up | px == sx -> if py < sy && py >= sy+tl then Just (sy-py) else Nothing
-  CD_Down | px == sx -> if py > sy && py <= sy+tl then Just (py-sy) else Nothing
+  CD_Down | px == sx -> if py >= sy && py <= sy+tl then Just (py-sy) else Nothing
   _ -> Nothing
 
 walkToRender :: Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
@@ -360,7 +357,7 @@ walkToRender isstart begin (tcd, tl) mnext d = r where
   ls@LineStyle {..} = def
   endorelbow = renderAnchorType ss ls $ cartDirToAnchor tcd (fmap fst mnext)
   startorregular = if isstart
-    then if d < tl `div` 2
+    then if d <= tl `div` 2
       -- if we are at the start and near the beginning then render start of line
       then renderLineEnd ss ls (flipCartDir tcd) d
       else if isNothing mnext
