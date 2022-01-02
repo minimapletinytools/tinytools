@@ -14,7 +14,9 @@ import Potato.Flow.Owl
 import qualified Data.Text          as T
 
 
+-- TODO probably add HasRenderCache constraint or something to this in the future?
 type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
+type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
 
 makePotatoRenderer :: LBox -> SEltDrawerRenderFn
 makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
@@ -23,8 +25,8 @@ makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
 
 data SEltDrawer = SEltDrawer {
 
-  -- TODO this won't work, we need OwlTree to generate this properly
-  _sEltDrawer_box        :: LBox
+  -- TODO renameto boxFn
+  _sEltDrawer_box        :: SEltDrawerBoxFn
 
   , _sEltDrawer_renderFn :: SEltDrawerRenderFn -- switch to [SEltDrawerRenderFn] for better performance
 
@@ -33,13 +35,13 @@ data SEltDrawer = SEltDrawer {
 
 nilDrawer :: SEltDrawer
 nilDrawer = SEltDrawer {
-    _sEltDrawer_box = nilLBox
+    _sEltDrawer_box = const nilLBox
     , _sEltDrawer_renderFn = \_ _ -> Nothing
   }
 
 sEltDrawer_renderToLines :: (HasOwlTree a) => a -> SEltDrawer -> [Text]
 sEltDrawer_renderToLines ot SEltDrawer {..} = r where
-  LBox (V2 sx sy) (V2 w h) = _sEltDrawer_box
+  LBox (V2 sx sy) (V2 w h) = _sEltDrawer_box ot
   pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
   r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn ot (V2 (sx+x) (sy+y))))) pts
   r = fmap T.pack r'

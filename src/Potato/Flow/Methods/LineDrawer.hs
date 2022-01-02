@@ -414,9 +414,10 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
       , _simpleLineSolverParameters_attachOffset = 1
     }
 
-  renderfn :: SEltDrawerRenderFn
-  renderfn ot xy = r where
-
+  -- inefficient since this gets evaled both for renderfn and boxfn
+  -- TODO figure out a way to do this smarter (either generate render/boxfn at the same time and/or use RenderCache)
+  getAnchors :: (HasOwlTree a) => a -> LineAnchorsForRender
+  getAnchors ot = anchors where
     maybeGetBox mattachment = do
       Attachment rid al <- mattachment
       sowl <- hasOwlTree_findSuperOwl ot rid
@@ -432,19 +433,20 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
       Just x -> x
       Nothing -> regenanchors
 
-    {-
-    box = case nonEmpty (lineAnchorsForRenderToPointList anchors) of
-      Nothing -> LBox 0 0
-      Just (x :| xs) -> foldr add_XY_to_LBox (make_lBox_from_XY x) xs
-    -}
+  renderfn :: SEltDrawerRenderFn
+  renderfn ot xy = r where
+    anchors = getAnchors ot
 
     r = lineAnchorsForRender_renderAt anchors xy
 
+  boxfn :: SEltDrawerBoxFn
+  boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
+    Nothing -> LBox 0 0
+    Just (x :| xs) -> foldr add_XY_to_LBox (make_lBox_from_XY x) xs
+
+
 
   drawer = SEltDrawer {
-
-      -- TODO this is incorrect
-      _sEltDrawer_box = fromJust $ getSEltBox (SEltLine ssline)
-
+      _sEltDrawer_box = boxfn
       , _sEltDrawer_renderFn = renderfn
     }

@@ -90,7 +90,7 @@ spec =
     let
       someText = top $ fromText "0123456789abcdefgh"
     -- outer span length should be invariant when changing TextAlignment and CursorPosition
-    print $ displayLinesWithAlignment TextAlignment_Left 5 () () someText
+    --print $ displayLinesWithAlignment TextAlignment_Left 5 () () someText
     forM_ [0..4] $ \x -> do
       forM_ [TextAlignment_Left, TextAlignment_Center, TextAlignment_Right] $ \ta -> do
         let t = rightN x $ someText

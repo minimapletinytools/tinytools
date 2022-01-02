@@ -193,7 +193,7 @@ sBox_drawer sbox@SBox {..} = r where
     | otherwise = rfnnoborder pt
 
   r = SEltDrawer {
-      _sEltDrawer_box = lbox
+      _sEltDrawer_box = const lbox
       , _sEltDrawer_renderFn = \_ -> case _sBox_boxType of
         SBoxType_NoBoxText -> rfnnoborder
         _                  -> rfnborder
@@ -275,7 +275,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
   autorenderfn = if w >= h then horizrenderfn else vertrenderfn
 
   r = SEltDrawer {
-      _sEltDrawer_box = lbox
+      _sEltDrawer_box = const lbox
       , _sEltDrawer_renderFn = \_ -> case _lineStyle_autoStyle _sSimpleLine_lineStyle of
         LineAutoStyle_Auto                     -> autorenderfn
         LineAutoStyle_AutoStraight             -> autorenderfn
@@ -299,7 +299,7 @@ sTextArea_drawer stextarea@STextArea {..} = r where
       else Nothing
 
   r = SEltDrawer {
-      _sEltDrawer_box = lbox
+      _sEltDrawer_box = const lbox
       , _sEltDrawer_renderFn = \_ -> renderfn
     }
 
@@ -314,13 +314,13 @@ getDrawer selt = case selt of
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
   SEltBox sbox    -> sBox_drawer sbox
-  SEltLine sline  -> sSimpleLine_drawer sline
-  --SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
+  --SEltLine sline  -> sSimpleLine_drawer sline
+  SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
   SEltTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where
     potatoDrawer = SEltDrawer {
-        _sEltDrawer_box = fromJust (getSEltBox selt)
+        _sEltDrawer_box = const $ fromJust (getSEltBox selt)
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
   -}
