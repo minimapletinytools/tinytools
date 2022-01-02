@@ -274,12 +274,15 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
   lbx1isleft = x1 < x2
 
+  --traceStep = trace
+  traceStep _ x = x
 
   -- WIP
 
   anchors = case al1 of
+    -- WORKING
     -- 1->  <-2
-    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> trace "case 1" $ r where
+    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> traceStep "case 1" $ r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
       (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
       halfway = (l2+r1) `div` 2
@@ -292,8 +295,10 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_center, centerverticalline, center_to_lb2]
         }
+
+    -- WORKING
     -- <-2  1->
-    AL_RIGHT | al2 == AL_LEFT && not vsep -> trace "case 2" $ r where
+    AL_RIGHT | al2 == AL_LEFT && not vsep -> traceStep "case 2" $ r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
       (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
       (_,_,t1_inc, b1) = lBox_to_axis lbx1
@@ -317,36 +322,36 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
         }
     -- <-2
     --      1->
-    AL_RIGHT | al2 == AL_LEFT && vsep -> trace "case 3" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ emptyLineAnchorsForRender
     -- ->1
     --     ->2
-    AL_RIGHT | al2 == AL_RIGHT && vsep -> trace "case 4" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && vsep -> traceStep "case 4" $ emptyLineAnchorsForRender
     -- ->1 ->2
-    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> trace "case 5" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> traceStep "case 5" $ emptyLineAnchorsForRender
     -- ->2 ->1 (will not get covered by rotation)
-    AL_RIGHT | al2 == AL_RIGHT && not vsep -> trace "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_RIGHT | al2 == AL_RIGHT && not vsep -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
     -- TODO add restrictions
     -- 1
     -- ^
     -- |   ->2
-    AL_TOP | al2 == AL_RIGHT -> trace "case 7" $ emptyLineAnchorsForRender
+    AL_TOP | al2 == AL_RIGHT -> traceStep "case 7" $ emptyLineAnchorsForRender
     -- TODO more elbow cases
 
     --      1
     --      ^
     -- 2<-  | (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT -> trace "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_TOP | al2 == AL_LEFT -> traceStep "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
 
-    _ -> trace "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
+    _ -> traceStep "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
 doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
-  CD_Left | py == sy -> if px < sx && px >= sx+tl then Just (sx-px) else Nothing
+  CD_Left | py == sy -> if px <= sx && px >= sx-tl then Just (sx-px) else Nothing
   CD_Right | py == sy -> if px >= sx && px <= sx+tl then Just (px-sx) else Nothing
-  CD_Up | px == sx -> if py < sy && py >= sy+tl then Just (sy-py) else Nothing
+  CD_Up | px == sx -> if py <= sy && py >= sy-tl then Just (sy-py) else Nothing
   CD_Down | px == sx -> if py >= sy && py <= sy+tl then Just (py-sy) else Nothing
   _ -> Nothing
 
@@ -385,18 +390,13 @@ lineAnchorsForRender_renderAt LineAnchorsForRender {..} pos = r where
   walk (isstart, curbegin) ls = case ls of
     [] -> Nothing
     x:xs -> case doesLineContain pos curbegin x of
-      Nothing -> walk (False, nextbegin) xs
+      Nothing ->  walk (False, nextbegin) xs
       Just d -> Just $ case xs of
         [] -> walkToRender isstart curbegin x Nothing d
         y:ys -> walkToRender isstart curbegin x (Just y) d
       where
         nextbegin = curbegin + cartDirWithDistanceToV2 x
 
-  findfn (index, start) cdl = case doesLineContain pos start cdl of
-    Nothing -> (nextacc, Nothing)
-    Just d -> (nextacc, Just (index, (start, cdl),d))
-    where
-      nextacc = (index+1, start + cartDirWithDistanceToV2 cdl)
   manswer = walk (True, _lineAnchorsForRender_start) _lineAnchorsForRender_rest
   r = case manswer of
     Nothing -> Nothing
@@ -439,7 +439,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
     Nothing -> LBox 0 0
-    Just (x :| xs) -> lBox_expand (foldr add_XY_to_LBox (make_0area_lBox_from_XY x) xs) (0,1,0,1)
+    Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_LBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
 
 
 
