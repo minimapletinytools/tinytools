@@ -277,6 +277,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
 
   lbx1isleft = ax1 < ax2
+  lbx1isabove = ay1 < ay2
 
   --traceStep = trace
   traceStep _ x = x
@@ -323,7 +324,21 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
         }
     -- <-2
     --      1->
-    AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ r where
+      halfway = (ay2+ay1) `div` 2
+      lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      right_to_center = if lbx1isabove
+        then (CD_Down, halfway-ay1)
+        else (CD_Up, ay1-halfway)
+      center = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (ax1-ax2))
+      center_to_left = if lbx1isabove
+        then (CD_Down, ay2-halfway)
+        else (CD_Up, halfway-ay2)
+      left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      r = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_right, right_to_center, center, center_to_left, left_to_lb2]
+        }
     -- 1->
     --     2->
     AL_RIGHT | al2 == AL_RIGHT && vsep -> traceStep "case 4" $ emptyLineAnchorsForRender
@@ -332,24 +347,24 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ->2 ->1 (will not get covered by rotation)
     AL_RIGHT | al2 == AL_RIGHT && not vsep -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
-    -- TODO add restrictions
     -- ^
     -- |
     -- 1   2->
     AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ emptyLineAnchorsForRender
+      -- subcase lbx1isabove
     -- ^
     -- |
     -- 1   <-2
-    AL_TOP | al2 == AL_LEFT && lbx1isleft-> traceStep "case 7" $ emptyLineAnchorsForRender
-    -- TODO more elbow cases
+    AL_TOP | al2 == AL_LEFT && lbx1isleft-> traceStep "case 8" $ emptyLineAnchorsForRender
+      -- subcase lbx1isabove
 
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
 
-    _ -> traceStep "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
+    _ -> traceStep "case 10 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int

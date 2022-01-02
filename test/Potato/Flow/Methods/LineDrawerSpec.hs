@@ -48,11 +48,14 @@ spec = do
       owltree = _owlPFState_owlTree pfs
       somessline1 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> <-b4"
       somessline2 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "<-b1 b2->"
+      somessline3 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "<-b1 b4->"
       sd1 = sSimpleLineNewRenderFn somessline1 Nothing
       sd2 = sSimpleLineNewRenderFn somessline2 Nothing
+      sd3 = sSimpleLineNewRenderFn somessline3 Nothing
     it "basic" $ do
       forM_ (sEltDrawer_renderToLines owltree sd1) putTextLn
       forM_ (sEltDrawer_renderToLines owltree sd2) putTextLn
+      forM_ (sEltDrawer_renderToLines owltree sd3) putTextLn
       -- TODO test stuff
       --sd (V2 0 0) owltree `shouldBe` Just '<'
       True `shouldBe` True
