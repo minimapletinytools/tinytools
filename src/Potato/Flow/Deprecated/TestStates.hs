@@ -233,6 +233,7 @@ pfstate_attachments1 = PFState {
           , _sSimpleLine_lineStyle = def
         }))
       ]
+    , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
 pfstate_attachments2 :: PFState

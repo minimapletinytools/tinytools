@@ -376,7 +376,9 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
       b = max b1 b2
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
+      -- TODO maybe it would be nice if this traveled a little further right
       lb1_to_right1 = (CD_Right, _simpleLineSolverParameters_attachOffset)
+
       right1_to_torb = if goup
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
