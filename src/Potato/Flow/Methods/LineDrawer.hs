@@ -262,7 +262,7 @@ instance RotateMe SimpleLineSolverParameters where
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
 sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = lineAnchorsForRender_simplify anchors where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
-  --LBox (V2 x2 y2) (V2 w2 h2) = lbx2
+  LBox (V2 _ y2) (V2 _ h2) = lbx2
 
   start@(V2 ax1 ay1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
   (V2 ax2 ay2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
@@ -278,6 +278,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   lbx1isleft = ax1 < ax2
   lbx1isabove = ay1 < ay2
+  ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
   --traceStep = trace
   traceStep _ x = x
@@ -339,13 +340,47 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_right, right_to_center, center, center_to_left, left_to_lb2]
         }
+
+    -- not vsep is the wrong condition here, we want ay1 to be above or below lbx2
     -- 1->
     --     2->
-    AL_RIGHT | al2 == AL_RIGHT && vsep -> traceStep "case 4" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
+      (_,r1,_,_) = lBox_to_axis lbx1
+      (_,r2,_,_) = lBox_to_axis lbx2
+      r = max r1 r2 + _simpleLineSolverParameters_attachOffset
+      lb1_to_right1 = (CD_Right, r-r1)
+      right1_to_right2 = if lbx1isabove
+        then (CD_Down, ay2-ay1)
+        else (CD_Up, ay1-ay2)
+      right2_to_lb2 = (CD_Left, r-r2)
+      answer = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_right2, right2_to_lb2]
+        }
+
     -- ->1 ->2
-    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> traceStep "case 5" $ emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
+      (_,r1,t1_inc,b1) = lBox_to_axis lbx1
+      (_,r2,t2_inc,b2) = lBox_to_axis lbx2
+      t = min (t1_inc-1) (t2_inc-1)
+      b = max b1 b2
+      goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
+
+      lb1_to_right1 = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      right1_to_torb = if goup
+        then (CD_Up, ay1-t)
+        else (CD_Down, b-ay1)
+      torb = (CD_Right, _simpleLineSolverParameters_attachOffset + (r2-r1))
+      torb_to_right2 = if goup
+        then (CD_Down, ay2-t)
+        else (CD_Up, b-ay2)
+      right2_to_lb2 = (CD_Left, _simpleLineSolverParameters_attachOffset)
+      r = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
+        }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_RIGHT | al2 == AL_RIGHT && not vsep -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
     -- ^
     -- |

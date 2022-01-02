@@ -237,7 +237,7 @@ pfstate_attachments1 = PFState {
 
 pfstate_attachments2 :: PFState
 pfstate_attachments2 = PFState {
-    _pFState_layers = Seq.fromList [0..7]
+    _pFState_layers = Seq.fromList [0..9]
     , _pFState_directory = IM.fromList [
       -- 4 boxes in a grid
       (0, SEltLabel "b1" (SEltBox def {
@@ -300,7 +300,37 @@ pfstate_attachments2 = PFState {
           , _sSimpleLine_style = def
           , _sSimpleLine_lineStyle = def
         }))
-      , (7, SEltLabel "b1v ^b3" (SEltLine SSimpleLine {
+      , (7, SEltLabel "b1-> b4->" (SEltLine SSimpleLine {
+          _sSimpleLine_start = V2 0 100
+          , _sSimpleLine_end = V2 0 110
+          , _sSimpleLine_attachStart = Just (Attachment {
+              _attachment_target = 0
+              , _attachment_location = AL_RIGHT
+            })
+
+          , _sSimpleLine_attachEnd = Just (Attachment {
+              _attachment_target = 3
+              , _attachment_location = AL_RIGHT
+            })
+          , _sSimpleLine_style = def
+          , _sSimpleLine_lineStyle = def
+        }))
+        , (8, SEltLabel "b1-> b2->" (SEltLine SSimpleLine {
+            _sSimpleLine_start = V2 0 100
+            , _sSimpleLine_end = V2 0 110
+            , _sSimpleLine_attachStart = Just (Attachment {
+                _attachment_target = 0
+                , _attachment_location = AL_RIGHT
+              })
+
+            , _sSimpleLine_attachEnd = Just (Attachment {
+                _attachment_target = 1
+                , _attachment_location = AL_RIGHT
+              })
+            , _sSimpleLine_style = def
+            , _sSimpleLine_lineStyle = def
+          }))
+      , (9, SEltLabel "b1v ^b3" (SEltLine SSimpleLine {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
