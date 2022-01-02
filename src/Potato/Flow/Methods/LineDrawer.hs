@@ -261,8 +261,11 @@ instance RotateMe SimpleLineSolverParameters where
 -- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
 sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = lineAnchorsForRender_simplify anchors where
-  LBox (V2 x1 y1) (V2 w1 h1) = lbx1
-  LBox (V2 x2 y2) (V2 w2 h2) = lbx2
+  --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
+  --LBox (V2 x2 y2) (V2 w2 h2) = lbx2
+
+  start@(V2 ax1 ay1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
+  (V2 ax2 ay2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
 
   -- TODO set _simpleLineSolverParameters_attachOffset here
   -- TODO NOTE that line ends can connect directly to each other so you may need to hack the offset or something??
@@ -272,7 +275,8 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   -- *-+
   -- so I think you need determineSeparationForAttachment (only needed for hsep)
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
-  lbx1isleft = x1 < x2
+
+  lbx1isleft = ax1 < ax2
 
   --traceStep = trace
   traceStep _ x = x
@@ -283,14 +287,13 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- WORKING
     -- 1->  <-2
     AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> traceStep "case 1" $ r where
-      start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
-      (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
-      halfway = (l2+r1) `div` 2
-      lb1_to_center = (CD_Right, (halfway-r1))
-      centerverticalline = if y1 < y2
-        then (CD_Down, y2-y1)
-        else (CD_Up, y1-y2)
-      center_to_lb2 = (CD_Right, (l2-halfway))
+
+      halfway = (ax2+ax1) `div` 2
+      lb1_to_center = (CD_Right, (halfway-ax1))
+      centerverticalline = if ay1 < ay2
+        then (CD_Down, ay2-ay1)
+        else (CD_Up, ay1-ay2)
+      center_to_lb2 = (CD_Right, (ax2-halfway))
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_center, centerverticalline, center_to_lb2]
@@ -299,22 +302,20 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- WORKING
     -- <-2  1->
     AL_RIGHT | al2 == AL_LEFT && not vsep -> traceStep "case 2" $ r where
-      start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
-      (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
       (_,_,t1_inc, b1) = lBox_to_axis lbx1
       (_,_,t2_inc, b2) = lBox_to_axis lbx2
       t = min (t1_inc-1) (t2_inc-1)
       b = max b1 b2
-      goup = (y1-t)+(y2-t) < (b-y1)+(b-y2)
+      goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
       lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
       right_to_torb = if goup
-        then (CD_Up, y1-t)
-        else (CD_Down, b-y1)
-      torb = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (r1-l2))
+        then (CD_Up, ay1-t)
+        else (CD_Down, b-ay1)
+      torb = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (ax1-ax2))
       torb_to_left = if goup
-        then (CD_Down, y2-t)
-        else (CD_Up, b-y2)
+        then (CD_Down, ay2-t)
+        else (CD_Up, b-ay2)
       left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
@@ -323,8 +324,8 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- <-2
     --      1->
     AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ emptyLineAnchorsForRender
-    -- ->1
-    --     ->2
+    -- 1->
+    --     2->
     AL_RIGHT | al2 == AL_RIGHT && vsep -> traceStep "case 4" $ emptyLineAnchorsForRender
     -- ->1 ->2
     AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> traceStep "case 5" $ emptyLineAnchorsForRender
@@ -332,16 +333,20 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     AL_RIGHT | al2 == AL_RIGHT && not vsep -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
     -- TODO add restrictions
-    -- 1
     -- ^
-    -- |   ->2
-    AL_TOP | al2 == AL_RIGHT -> traceStep "case 7" $ emptyLineAnchorsForRender
+    -- |
+    -- 1   2->
+    AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ emptyLineAnchorsForRender
+    -- ^
+    -- |
+    -- 1   <-2
+    AL_TOP | al2 == AL_LEFT && lbx1isleft-> traceStep "case 7" $ emptyLineAnchorsForRender
     -- TODO more elbow cases
 
-    --      1
-    --      ^
-    -- 2<-  | (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT -> traceStep "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    --        ^
+    --        |
+    -- <-2->  1 (will not get covered by rotation)
+    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
 
     _ -> traceStep "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
