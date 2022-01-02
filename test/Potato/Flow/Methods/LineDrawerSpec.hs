@@ -44,8 +44,8 @@ spec = do
       _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
   describe "Lines - rendering" $ do
     let
-      pfs = owlpfstate_attachments1
-      somessline = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> <-b3"
+      pfs = owlpfstate_attachments2
+      somessline = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1v ^b3"
       owltree = _owlPFState_owlTree pfs
       sd = sSimpleLineNewRenderFn somessline Nothing
     it "basic" $ do

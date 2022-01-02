@@ -18,6 +18,7 @@ module Potato.Flow.TestStates (
   , controllermeta_basic2_expandEverything
   , owlpfstate_basic2
   , owlpfstate_attachments1
+  , owlpfstate_attachments2
   , owlpfstate_zero
 ) where
 
@@ -90,6 +91,9 @@ controllermeta_basic2_expandEverything = ControllerMeta {
 
 owlpfstate_attachments1 :: OwlPFState
 owlpfstate_attachments1 = pFState_to_owlPFState pfstate_attachments1
+
+owlpfstate_attachments2 :: OwlPFState
+owlpfstate_attachments2 = pFState_to_owlPFState pfstate_attachments2
 
 -- contains SElts of size 0
 owlpfstate_zero :: OwlPFState
