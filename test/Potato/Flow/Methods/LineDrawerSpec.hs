@@ -49,6 +49,7 @@ spec = do
       owltree = _owlPFState_owlTree pfs
       sd = sSimpleLineNewRenderFn somessline Nothing
     it "basic" $ do
+      print $ _sEltDrawer_box sd owltree
       forM_ (sEltDrawer_renderToLines owltree sd) putTextLn
       -- TODO test stuff
       --sd (V2 0 0) owltree `shouldBe` Just '<'

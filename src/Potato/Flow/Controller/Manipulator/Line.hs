@@ -207,8 +207,8 @@ instance PotatoHandler SimpleLineHandler where
     boxes = case mselt of
       Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
-        then [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
-        else [make_lBox_from_XY _sSimpleLine_start, make_lBox_from_XY _sSimpleLine_end]
+        then [make_1area_lBox_from_XY _sSimpleLine_start, make_1area_lBox_from_XY _sSimpleLine_end]
+        else [make_1area_lBox_from_XY _sSimpleLine_start, make_1area_lBox_from_XY _sSimpleLine_end]
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion

@@ -206,7 +206,7 @@ cartDirWithDistanceToV2 (cd, d) = cartDirToUnit cd ^* d
 data LineAnchorsForRender = LineAnchorsForRender {
   _lineAnchorsForRender_start :: XY
   , _lineAnchorsForRender_rest :: [(CartDir, Int)]
-}
+} deriving (Show)
 
 emptyLineAnchorsForRender :: LineAnchorsForRender
 emptyLineAnchorsForRender = LineAnchorsForRender {
@@ -245,7 +245,7 @@ instance RotateMe LineAnchorsForRender where
     }
 
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
-lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
+lineAnchorsForRenderToPointList LineAnchorsForRender {..} = traceShowId $ r where
   scanlfn pos (cd,d) = pos + (cartDirToUnit cd) ^* d
   r = scanl scanlfn _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
@@ -279,21 +279,21 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   r = case al1 of
     -- 1->  <-2
-    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> r where
+    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> trace "case 1" $ r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
       (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
-      halfway = (l2-r1) `div` 2
+      halfway = (l2+r1) `div` 2
       lb1_to_center = (CD_Right, (halfway-r1))
       centerverticalline = if y1 < y2
-        then (CD_Up, y2-y1)
-        else (CD_Down, y1-y2)
+        then (CD_Down, y2-y1)
+        else (CD_Up, y1-y2)
       center_to_lb2 = (CD_Right, (l2-halfway))
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_center, centerverticalline, center_to_lb2]
         }
     -- <-2  1->
-    AL_RIGHT | al2 == AL_LEFT && not vsep -> r where
+    AL_RIGHT | al2 == AL_LEFT && not vsep -> trace "case 2" $ r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
       (V2 l2 y2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
       (_,_,t1_inc, b1) = lBox_to_axis lbx1
@@ -317,29 +317,29 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
         }
     -- <-2
     --      1->
-    AL_RIGHT | al2 == AL_LEFT && vsep -> emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_LEFT && vsep -> trace "case 3" $ emptyLineAnchorsForRender
     -- ->1
     --     ->2
-    AL_RIGHT | al2 == AL_RIGHT && vsep -> emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && vsep -> trace "case 4" $ emptyLineAnchorsForRender
     -- ->1 ->2
-    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> emptyLineAnchorsForRender
+    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not vsep -> trace "case 5" $ emptyLineAnchorsForRender
     -- ->2 ->1 (will not get covered by rotation)
-    AL_RIGHT | al2 == AL_RIGHT && not vsep -> lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_RIGHT | al2 == AL_RIGHT && not vsep -> trace "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
     -- TODO add restrictions
     -- 1
     -- ^
     -- |   ->2
-    AL_TOP | al2 == AL_RIGHT -> emptyLineAnchorsForRender
+    AL_TOP | al2 == AL_RIGHT -> trace "case 7" $ emptyLineAnchorsForRender
     -- TODO more elbow cases
 
     --      1
     --      ^
     -- 2<-  | (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT -> lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_TOP | al2 == AL_LEFT -> trace "case 8 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
 
-    _ -> rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
+    _ -> trace "case 9 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
 
 
 
@@ -416,6 +416,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   -- inefficient since this gets evaled both for renderfn and boxfn
   -- TODO figure out a way to do this smarter (either generate render/boxfn at the same time and/or use RenderCache)
   getAnchors :: (HasOwlTree a) => a -> LineAnchorsForRender
+  --getAnchors ot = traceShowId $ anchors where
   getAnchors ot = anchors where
     maybeGetBox mattachment = do
       Attachment rid al <- mattachment
@@ -441,7 +442,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
     Nothing -> LBox 0 0
-    Just (x :| xs) -> foldr add_XY_to_LBox (make_lBox_from_XY x) xs
+    Just (x :| xs) -> lBox_expand (foldr add_XY_to_LBox (make_0area_lBox_from_XY x) xs) (0,1,0,1)
 
 
 

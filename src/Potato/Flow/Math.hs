@@ -2,13 +2,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- TODO rename stuff in this file to be consistent
 module Potato.Flow.Math (
   XY
   , LBox(..)
   , nilLBox
 
-  -- TODO rename this to lBox for consistency...
-  , make_lBox_from_XY
+  , make_0area_lBox_from_XY
+  , make_1area_lBox_from_XY
   , make_lBox_from_XYs
   , does_lBox_contains_XY
   , lBox_tl
@@ -95,8 +96,12 @@ lBox_tl :: LBox -> XY
 lBox_tl (LBox p _) = p
 
 -- | returns a 1 area LBox
-make_lBox_from_XY :: XY -> LBox
-make_lBox_from_XY p = LBox p 1
+make_0area_lBox_from_XY :: XY -> LBox
+make_0area_lBox_from_XY p = LBox p 0
+
+-- | returns a 1 area LBox
+make_1area_lBox_from_XY :: XY -> LBox
+make_1area_lBox_from_XY p = LBox p 1
 
 -- | always returns a canonical LBox
 make_lBox_from_XYs :: XY -> XY -> LBox
@@ -107,6 +112,7 @@ make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
   }
 
 -- | always returns a canonical LBox
+-- bottom/right XYs are not included
 add_XY_to_LBox :: XY -> LBox -> LBox
 add_XY_to_LBox (V2 px py) lbox = r where
   (LBox (V2 bx by) (V2 bw bh)) = canonicalLBox_from_lBox_ lbox
@@ -115,6 +121,7 @@ add_XY_to_LBox (V2 px py) lbox = r where
     , _lBox_size  = V2 (max bw (abs (px-bx))) (max bh (abs (py-by)))
   }
 
+-- specifically `make_1area_lBox_from_XY pos` must be contained in lbox
 does_lBox_contains_XY :: LBox -> XY -> Bool
 does_lBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
