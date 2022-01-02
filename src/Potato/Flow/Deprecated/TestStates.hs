@@ -244,17 +244,19 @@ pfstate_attachments2 = PFState {
           _sBox_box = LBox (V2 0 0) (V2 5 5)
         }))
       , (1, SEltLabel "b2" (SEltBox def {
-          _sBox_box = LBox (V2 10 10) (V2 5 5)
+          _sBox_box = LBox (V2 10 0) (V2 5 5)
         }))
       , (2, SEltLabel "b3" (SEltBox def {
           _sBox_box = LBox (V2 0 10) (V2 5 5)
         }))
       , (3, SEltLabel "b4" (SEltBox def {
-          _sBox_box = LBox (V2 10 0) (V2 5 5)
+          _sBox_box = LBox (V2 10 10) (V2 5 5)
         }))
 
+
+
       -- 2 lines sharing a start point at (0,100)
-      , (4, SEltLabel "b1-> <-b3" (SEltLine SSimpleLine {
+      , (4, SEltLabel "b1-> <-b4" (SEltLine SSimpleLine {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -262,23 +264,23 @@ pfstate_attachments2 = PFState {
               , _attachment_location = AL_RIGHT
             })
           , _sSimpleLine_attachEnd = Just (Attachment {
-              _attachment_target = 2
+              _attachment_target = 3
               , _attachment_location = AL_LEFT
             })
           , _sSimpleLine_style = def
           , _sSimpleLine_lineStyle = def
         }))
-      , (5, SEltLabel "b2v ^b4" (SEltLine SSimpleLine {
+      , (5, SEltLabel "<-b1 b2->" (SEltLine SSimpleLine {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
-              _attachment_target = 2
-              , _attachment_location = AL_BOT
+              _attachment_target = 0
+              , _attachment_location = AL_LEFT
             })
 
           , _sSimpleLine_attachEnd = Just (Attachment {
-              _attachment_target = 3
-              , _attachment_location = AL_TOP
+              _attachment_target = 1
+              , _attachment_location = AL_RIGHT
             })
           , _sSimpleLine_style = def
           , _sSimpleLine_lineStyle = def
