@@ -216,14 +216,24 @@ emptyLineAnchorsForRender = LineAnchorsForRender {
 
 lineAnchorsForRender_simplify :: LineAnchorsForRender -> LineAnchorsForRender
 lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
-  foldrfn (cd, 0) acc = acc
   foldrfn (cd, d) [] = [(cd, d)]
   foldrfn (cd, d) ((cd',d'):xs) = if cd == cd'
     then (cd, d'+d):xs
     else (cd,d):(cd',d'):xs
+  withzeros = foldr foldrfn [] _lineAnchorsForRender_rest
+  -- remove 0 distance lines except at front and back
+  withoutzeros = case withzeros of
+    [] -> []
+    x:xs -> x:withoutzerosback xs
+    where
+      withoutzerosback = \case
+        [] -> []
+        x:[] -> [x]
+        (cd, 0):xs -> xs
+        x:xs -> x:withoutzerosback xs
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = _lineAnchorsForRender_start
-      , _lineAnchorsForRender_rest = foldr foldrfn [] _lineAnchorsForRender_rest
+      , _lineAnchorsForRender_rest = withoutzeros
     }
 
 lineAnchorsForRender_flip :: LineAnchorsForRender -> LineAnchorsForRender
