@@ -794,6 +794,8 @@ class HasOwlTree o where
   -- only intended for use in tests
   hasOwlTree_test_findFirstSuperOwlByName :: o -> Text -> Maybe SuperOwl
   hasOwlTree_test_findFirstSuperOwlByName o t = hasOwlTree_test_findFirstSuperOwlByName (hasOwlTree_owlTree o) t
+  hasOwlTree_test_mustFindFirstSuperOwlByName :: o -> Text -> SuperOwl
+  hasOwlTree_test_mustFindFirstSuperOwlByName o t = fromJust (hasOwlTree_test_findFirstSuperOwlByName o t)
 
 instance HasOwlTree OwlTree where
   hasOwlTree_owlTree = id

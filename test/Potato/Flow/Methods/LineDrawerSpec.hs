@@ -45,7 +45,7 @@ spec = do
   describe "Lines - rendering" $ do
     let
       pfs = owlpfstate_attachments1
-      somessline = hasOwlElt_test_toSSimpleLine $ hasOwlTree_mustFindSuperOwl pfs 7
+      somessline = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> <-b3"
       owltree = _owlPFState_owlTree pfs
       sd = sSimpleLineNewRenderFn somessline Nothing
     it "basic" $ do

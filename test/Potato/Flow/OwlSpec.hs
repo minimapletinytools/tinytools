@@ -106,9 +106,9 @@ spec = do
         am0 = owlTree_makeAttachmentMap owlTreeWithAttachments0
       it "owlTree_makeAttachmentMap" $ do
         liftIO $ print am0
-        IM.lookup 2 am0 `shouldBe` (Just $ IS.fromList [7])
-        IM.lookup 3 am0 `shouldBe` (Just $ IS.fromList [7,8])
-        IM.lookup 4 am0 `shouldBe` (Just $ IS.fromList [8])
+        IM.lookup 0 am0 `shouldBe` (Just $ IS.fromList [4])
+        IM.lookup 2 am0 `shouldBe` (Just $ IS.fromList [4,5])
+        IM.lookup 3 am0 `shouldBe` (Just $ IS.fromList [5])
       it "owlTree_hasDanglingAttachments" $ do
         owlTree_hasDanglingAttachments owlTreeWithAttachments0 `shouldBe` False
         owlTree_hasDanglingAttachments (owlTree_reindex 100 owlTreeWithAttachments0) `shouldBe` False

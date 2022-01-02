@@ -185,57 +185,54 @@ pfstate_basic2 = PFState {
 
 pfstate_attachments1 :: PFState
 pfstate_attachments1 = PFState {
-      _pFState_layers = Seq.fromList [0..10]
-      , _pFState_directory = IM.fromList [
-          (0, SEltLabel "fstart1" SEltFolderStart)
-            , (1, SEltLabel "fstart2" SEltFolderStart)
-              -- 4 boxes in a grid
-              , (2, SEltLabel "b1" (SEltBox def {
-                  _sBox_box = LBox (V2 0 0) (V2 5 5)
-                }))
-              , (3, SEltLabel "b2" (SEltBox def {
-                  _sBox_box = LBox (V2 10 10) (V2 5 5)
-                }))
-              , (4, SEltLabel "b3" (SEltBox def {
-                  _sBox_box = LBox (V2 0 10) (V2 5 5)
-                }))
-              , (5, SEltLabel "fend2" SEltFolderEnd)
-          , (6, SEltLabel "fstart3" SEltFolderStart)
-            -- 2 lines sharing a start point at (0,100)
-            , (7, SEltLabel "b1_to_b2_line" (SEltLine SSimpleLine {
-                _sSimpleLine_start = V2 0 100
-                , _sSimpleLine_end = V2 0 110
-                , _sSimpleLine_attachStart = Just (Attachment {
-                    _attachment_target = 2
-                    , _attachment_location = AL_RIGHT
-                  })
-                , _sSimpleLine_attachEnd = Just (Attachment {
-                    _attachment_target = 3
-                    , _attachment_location = AL_LEFT
-                  })
-                , _sSimpleLine_style = def
-                , _sSimpleLine_lineStyle = def
-              }))
-            , (8, SEltLabel "b2_to_b1_line" (SEltLine SSimpleLine {
-                _sSimpleLine_start = V2 0 100
-                , _sSimpleLine_end = V2 0 110
-                , _sSimpleLine_attachStart = Just (Attachment {
-                    _attachment_target = 3
-                    , _attachment_location = AL_BOT
-                  })
+    _pFState_layers = Seq.fromList [0..5]
+    , _pFState_directory = IM.fromList [
+      -- 4 boxes in a grid
+      (0, SEltLabel "b1" (SEltBox def {
+          _sBox_box = LBox (V2 0 0) (V2 5 5)
+        }))
+      , (1, SEltLabel "b2" (SEltBox def {
+          _sBox_box = LBox (V2 10 10) (V2 5 5)
+        }))
+      , (2, SEltLabel "b3" (SEltBox def {
+          _sBox_box = LBox (V2 0 10) (V2 5 5)
+        }))
+      , (3, SEltLabel "b4" (SEltBox def {
+          _sBox_box = LBox (V2 10 0) (V2 5 5)
+        }))
 
-                , _sSimpleLine_attachEnd = Just (Attachment {
-                    _attachment_target = 4
-                    , _attachment_location = AL_TOP
-                  })
-                , _sSimpleLine_style = def
-                , _sSimpleLine_lineStyle = def
-              }))
-            , (9, SEltLabel "fend3" SEltFolderEnd)
-          , (10, SEltLabel "fend1" SEltFolderEnd)
-        ]
-      , _pFState_canvas = SCanvas defaultCanvasLBox
-    }
+      -- 2 lines sharing a start point at (0,100)
+      , (4, SEltLabel "b1-> <-b3" (SEltLine SSimpleLine {
+          _sSimpleLine_start = V2 0 100
+          , _sSimpleLine_end = V2 0 110
+          , _sSimpleLine_attachStart = Just (Attachment {
+              _attachment_target = 0
+              , _attachment_location = AL_RIGHT
+            })
+          , _sSimpleLine_attachEnd = Just (Attachment {
+              _attachment_target = 2
+              , _attachment_location = AL_LEFT
+            })
+          , _sSimpleLine_style = def
+          , _sSimpleLine_lineStyle = def
+        }))
+      , (5, SEltLabel "b2v ^b4" (SEltLine SSimpleLine {
+          _sSimpleLine_start = V2 0 100
+          , _sSimpleLine_end = V2 0 110
+          , _sSimpleLine_attachStart = Just (Attachment {
+              _attachment_target = 2
+              , _attachment_location = AL_BOT
+            })
+
+          , _sSimpleLine_attachEnd = Just (Attachment {
+              _attachment_target = 3
+              , _attachment_location = AL_TOP
+            })
+          , _sSimpleLine_style = def
+          , _sSimpleLine_lineStyle = def
+        }))
+      ]
+  }
 
 -- contains SElts of size 0
 pfstate_zero :: PFState
