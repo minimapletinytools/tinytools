@@ -260,7 +260,7 @@ instance RotateMe SimpleLineSolverParameters where
 
 -- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
-sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = r where
+sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = lineAnchorsForRender_simplify anchors where
   LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 x2 y2) (V2 w2 h2) = lbx2
 
@@ -277,7 +277,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   -- WIP
 
-  r = case al1 of
+  anchors = case al1 of
     -- 1->  <-2
     AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> trace "case 1" $ r where
       start@(V2 r1 y1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
