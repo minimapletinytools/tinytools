@@ -67,7 +67,6 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
 
 
 
--- BEGIN WIP RENDER CONTEXT STUFF
 data RenderCache = RenderCache
 
 emptyRenderCache :: RenderCache
@@ -78,7 +77,10 @@ data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
   , _renderContext_layerMetaMap :: LayerMetaMap
   , _renderContext_broadPhase :: BroadPhaseState
+
+  -- TODO use me
   , _renderContext_cache :: RenderCache
+  
   , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
 }
 
@@ -98,7 +100,6 @@ instance HasOwlTree RenderContext where
 instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
   sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
--- END WIP RENDER CONTEXT STUFF
 
 
 
