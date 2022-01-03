@@ -54,7 +54,9 @@ WIDE
 
 ::NEWEST TODO::
 -BUG drag off attachment logic is wrong for Line handler
-  -Maybe just completely redo the way you handle undo operations??
+  -just do the controller refactor!! D:
+-preset interface for choosing line ends
+  -easy way to turn on/off line ends for both sides
 ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
 -refactor SEltMethods/getDrawer stuff
   -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....

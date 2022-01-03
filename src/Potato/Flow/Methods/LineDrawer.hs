@@ -339,6 +339,8 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_right, right_to_torb, torb, torb_to_left, left_to_lb2]
         }
+
+    -- WORKING
     -- <-2
     --      1->
     AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ r where
@@ -357,6 +359,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right, right_to_center, center, center_to_left, left_to_lb2]
         }
 
+    -- WORKING
     -- not vsep is the wrong condition here, we want ay1 to be above or below lbx2
     -- 1->
     --     2->
@@ -374,6 +377,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_right2, right2_to_lb2]
         }
 
+    -- WORKING
     -- ->1 ->2
     AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
       (_,r1,t1_inc,b1) = lBox_to_axis lbx1
@@ -400,11 +404,25 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ->2 ->1 (will not get covered by rotation)
     AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
+    -- WORKING
     -- ^
     -- |
     -- 1   2->
-    AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ emptyLineAnchorsForRender
-      -- subcase lbx1isabove
+    AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ r where
+      upd = if not lbx1isabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
+      lb1_to_up = (CD_Up, upd)
+      up_to_right1 = (CD_Right, ax2-ax1+_simpleLineSolverParameters_attachOffset)
+      right1_to_right2 = if lbx1isabove
+        then (CD_Down, ay2-ay1+upd)
+        else (CD_Up, max 0 (ay1-ay2-upd))
+      right2_to_lb2 = (CD_Left, _simpleLineSolverParameters_attachOffset)
+      r = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
+        }
+
+
+
     -- ^
     -- |
     -- 1   <-2
