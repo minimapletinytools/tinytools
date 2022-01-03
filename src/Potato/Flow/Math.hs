@@ -111,6 +111,7 @@ make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
+-- TODO rename to add_XY_to_lBox
 -- | always returns a canonical LBox
 -- bottom/right XYs are not included
 add_XY_to_LBox :: XY -> LBox -> LBox
@@ -118,7 +119,7 @@ add_XY_to_LBox (V2 px py) lbox = r where
   (LBox (V2 bx by) (V2 bw bh)) = canonicalLBox_from_lBox_ lbox
   r = LBox {
     _lBox_tl = V2 (min px bx) (min py by)
-    , _lBox_size  = V2 (max bw (abs (px-bx))) (max bh (abs (py-by)))
+    , _lBox_size  = V2 (max bw $ max (abs (px-bx)) (abs (px-(bx+bw)))) (max bh $ max (abs (py-by)) (abs (py-(by+bh))))
   }
 
 -- specifically `make_1area_lBox_from_XY pos` must be contained in lbox
