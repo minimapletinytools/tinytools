@@ -244,14 +244,9 @@ emptyLineAnchorsForRender = LineAnchorsForRender {
 }
 
 lineAnchorsForRender_simplify :: LineAnchorsForRender -> LineAnchorsForRender
-lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
-  foldrfn (cd, d) [] = [(cd, d)]
-  foldrfn (cd, d) ((cd',d'):xs) = if cd == cd'
-    then (cd, d'+d):xs
-    else (cd,d):(cd',d'):xs
-  withzeros = foldr foldrfn [] _lineAnchorsForRender_rest
+lineAnchorsForRender_simplify lafr@LineAnchorsForRender {..} = r where
   -- remove 0 distance lines except at front and back
-  withoutzeros = case withzeros of
+  withoutzeros = case _lineAnchorsForRender_rest of
     [] -> []
     x:xs -> x:withoutzerosback xs
     where
@@ -260,9 +255,15 @@ lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
         x:[] -> [x]
         (cd, 0):xs -> xs
         x:xs -> x:withoutzerosback xs
+
+  foldrfn (cd, d) [] = [(cd, d)]
+  foldrfn (cd, d) ((cd',d'):xs) = if cd == cd'
+    then (cd, d+d'):xs
+    else (cd,d):(cd',d'):xs
+  withoutdoubles = foldr foldrfn [] withoutzeros
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = _lineAnchorsForRender_start
-      , _lineAnchorsForRender_rest = withoutzeros
+      , _lineAnchorsForRender_rest = withoutdoubles
     }
 
 lineAnchorsForRender_reverse :: LineAnchorsForRender -> LineAnchorsForRender
@@ -288,7 +289,7 @@ instance TransformMe LineAnchorsForRender where
     }
 
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
-lineAnchorsForRenderToPointList LineAnchorsForRender {..} = traceShowId $ r where
+lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
   scanlfn pos (cd,d) = pos + (cartDirToUnit cd) ^* d
   r = scanl scanlfn _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
@@ -311,6 +312,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   start@(V2 ax1 ay1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
   (V2 ax2 ay2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
 
+
   -- TODO set _simpleLineSolverParameters_attachOffset here
   -- TODO NOTE that line ends can connect directly to each other so you may need to hack the offset or something??
   -- e.g. both ends are offset by 2 but they only need a space of 3 between them
@@ -323,6 +325,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   lbx1isstrictlyleft = ax1 < ax2
   lbx1isleft = ax1 <= ax2
   lbx1isstrictlyabove = ay1 < ay2
+  lbx1isabove = ay1 <= ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
   --traceStep = trace
@@ -330,8 +333,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   -- WIP
 
-  (_,r1,t1_inc,b1) = lBox_to_axis lbx1
-  (_,r2,t2_inc,b2) = lBox_to_axis lbx2
+  (l1_inc,r1,t1_inc,b1) = lBox_to_axis lbx1
+  (l2_inc,r2,t2_inc,b2) = lBox_to_axis lbx2
+
+  -- TODO offset by boundaryoffset from parameters
+  l = min (l1_inc-1) (l2_inc-1)
   t = min (t1_inc-1) (t2_inc-1)
   b = max b1 b2
 
@@ -402,12 +408,12 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- 1->
     --     2->
     AL_RIGHT | al2 == AL_RIGHT && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
-      r = max r1 r2 + _simpleLineSolverParameters_attachOffset
-      lb1_to_right1 = (CD_Right, r-r1)
+      rightedge = max r1 r2 + _simpleLineSolverParameters_attachOffset
+      lb1_to_right1 = (CD_Right, rightedge-r1)
       right1_to_right2 = if lbx1isstrictlyabove
         then (CD_Down, ay2-ay1)
         else (CD_Up, ay1-ay2)
-      right2_to_lb2 = (CD_Left, r-r2)
+      right2_to_lb2 = (CD_Left, rightedge-r2)
       answer = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_right2, right2_to_lb2]
@@ -440,11 +446,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
     -- ^
     -- |
-    -- 1   2->
-    AL_TOP | al2 == AL_RIGHT && lbx1isleft -> traceStep "case 7" $ r where
+    -- 1
+    --     2-> (this only handles lbx1isstrictlyabove case)
+    AL_TOP | al2 == AL_RIGHT && lbx1isleft && lbx1isstrictlyabove -> traceStep "case 7" $ r where
       upd = if not lbx1isstrictlyabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
       lb1_to_up = (CD_Up, upd)
-      -- TODO this distance is incorrect, it needs to avoid the lbx1
       up_to_right1 = (CD_Right, (max ax2 r1)-ax1+_simpleLineSolverParameters_attachOffset)
       right1_to_right2 = if lbx1isstrictlyabove
         then (CD_Down, ay2-ay1+upd)
@@ -455,22 +461,39 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
         }
 
-
-
+    --     2->
     -- ^
     -- |
-    -- 1   <-2
-    AL_TOP | al2 == AL_LEFT && lbx1isleft -> traceStep "case 8" $ emptyLineAnchorsForRender
-      -- subcase lbx1isstrictlyabove
-      --lb1_to_up =
-      --left_to_
+    -- 1 (this will get handled by the next case, it might have been better to add a third case for the not lbx1isstrictlyabove case)
+    AL_TOP | al2 == AL_RIGHT && lbx1isleft -> traceStep "case 8 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+
+    --     <-2
+    -- ^
+    -- |
+    -- 1   <-2 (this one handles both lbx1isstrictlyabove cases)
+    AL_TOP | al2 == AL_LEFT && lbx1isleft -> traceStep "case 9" $ r where
+      topedge = min (ay1 - _simpleLineSolverParameters_attachOffset) ay2
+      leftedge = l
+      halfway = (ax1 + ax2) `div` 2
+
+      lb1_to_up = (CD_Up, ay1-topedge)
+      (up_to_over, up_to_over_xpos) = if lbx1isstrictlyabove && not hsep
+        -- go around from the left
+        then ((CD_Left, ax1-leftedge), leftedge)
+        else ((CD_Right, halfway-ax1), halfway)
+      over_to_down = (CD_Down, ay2-topedge)
+      down_to_lb2 = (CD_Right, ax2-up_to_over_xpos)
+      r = LineAnchorsForRender {
+          _lineAnchorsForRender_start = start
+          , _lineAnchorsForRender_rest = [lb1_to_up, up_to_over,over_to_down,down_to_lb2]
+        }
 
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
+    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
-    _ -> traceStep "case 10 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+    _ -> traceStep "case 11 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
