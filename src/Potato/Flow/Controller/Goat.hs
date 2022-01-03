@@ -603,7 +603,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   cslmap_withAttachments = addChangesFromAttachmentMapToSuperOwlChanges (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
+
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree next_pFState) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- | update the rendered region if we moved the screen |
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)

@@ -23,6 +23,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.Types
+import Potato.Flow.SEltMethods
 import Potato.Flow.Methods.Types
 
 import qualified Data.IntMap.Strict      as IM
@@ -63,8 +64,8 @@ emptyBroadPhaseState = BroadPhaseState emptyBPTree
 
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly
-update_bPTree :: SuperOwlChanges -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
-update_bPTree changes BPTree {..} = r where
+update_bPTree :: (HasOwlTree a) => a -> SuperOwlChanges -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
+update_bPTree ot changes BPTree {..} = r where
   -- deletions
   deletefn (aabbs, im) rid = (newaabbs, newim) where
     (moldaabb, newim) = IM.updateLookupWithKey (\_ _ -> Nothing) rid im
@@ -79,9 +80,13 @@ update_bPTree changes BPTree {..} = r where
   (insmods, deletes) = foldl'
     (\(insmods',deletes') (rid, msowl) -> case msowl of
       Nothing    -> (insmods', rid:deletes')
+
+      -- TODO don't use getSEltBox like this come on -__-
       Just sowl -> case getSEltBox (superOwl_toSElt_hack sowl) of
         Nothing   -> (insmods', rid:deletes')
-        Just lbox -> ((rid,lbox):insmods', deletes'))
+        Just _ -> ((rid,_sEltDrawer_box (getDrawer (superOwl_toSElt_hack sowl)) ot):insmods', deletes'))
+
+
     ([],[])
     (IM.toList changes)
   (aabbs', nbpt) = foldl' insmodfn (foldl' deletefn ([], _bPTree_potato_tree) deletes) insmods

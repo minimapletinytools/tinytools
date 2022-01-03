@@ -190,6 +190,7 @@ attachmentMap_addSuperOwls sowls am = r where
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
 updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
+
   -- remove deleted stuff from keys
   newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
 

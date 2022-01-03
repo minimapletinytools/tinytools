@@ -45,6 +45,11 @@ WIDE
 -multiline
   -no attachments for now
 
+-rotation to up/down creates off by 1 offsetting errors D:
+-need to support ANY attach style for unattached ends etc
+-line handle positions need to be updated if attached
+-use better function to determine if you clicked on lines (you can do this now)
+  -this should have access to the RenderCache/OwlTree 
 
 ::NEWEST TODO::
 ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct

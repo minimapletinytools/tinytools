@@ -130,7 +130,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialowlpfstate = fst _goatWidgetConfig_initialState
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ fst _goatWidgetConfig_initialState
-    (_, initialbp) = update_bPTree initialAsSuperOwlChanges emptyBPTree
+    (_, initialbp) = update_bPTree initialowlpfstate initialAsSuperOwlChanges emptyBPTree
     initiallayersstate = makeLayersStateFromOwlPFState initialowlpfstate (_controllerMeta_layers $ snd _goatWidgetConfig_initialState)
 
     -- TODO DELETE

@@ -143,7 +143,7 @@ spec = do
         bpt0 = bPTreeFromOwlPFState state0
         -- TODO actual changes
         changes1 = IM.empty
-        (aabbs1, bps1) = update_bPTree IM.empty bpt0
+        (aabbs1, bps1) = update_bPTree emptyOwlTree IM.empty bpt0
         state1 = state0
 
         rendercontext0 = makeRenderContextForTest state1 bps1 canvas0
