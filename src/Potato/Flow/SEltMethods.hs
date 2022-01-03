@@ -76,7 +76,7 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltBox x                    -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
   SEltTextArea x                   -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
-  -- we use does_lBox_intersect since it's impossibl efor a SSimpleLine to have zero sized box
+  -- we use does_lBox_intersect since it's impossible for a SSimpleLine to have zero sized box
   SEltLine sline@SSimpleLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool

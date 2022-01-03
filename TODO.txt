@@ -55,6 +55,8 @@ WIDE
 
 ::NEWEST TODO::
 ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
+-refactor SEltMethods/getDrawer stuff
+  -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....
 -file stuff
   -file explorer
     -add highlight on click

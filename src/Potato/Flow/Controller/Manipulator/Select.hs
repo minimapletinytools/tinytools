@@ -62,6 +62,8 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   selectedsowls'' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True
+
+    -- TODO rewrite doesSEltIntersectBox so it works with attachments
     sowl -> doesSEltIntersectBox selectBox (hasOwlElt_toSElt_hack sowl)
 
   -- remove lock and hidden stuff
