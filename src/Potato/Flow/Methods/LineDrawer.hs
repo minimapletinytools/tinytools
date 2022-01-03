@@ -51,7 +51,7 @@ determineSeparation (lbx1, p1) (lbx2, p2) = r where
   vsep = t1 >= b2 || t2 >= b1
   r = (hsep, vsep)
 
-
+-- NOTE our coordinate system is LEFT HANDED
 matrix_cw_90 :: M22 Int
 matrix_cw_90 = V2 (V2 0 (-1)) (V2 1 0)
 matrix_ccw_90 :: M22 Int
@@ -98,19 +98,17 @@ instance RotateMe AnchorType where
     AT_Elbow_BL -> AT_Elbow_TL
     AT_Elbow_Invalid -> AT_Elbow_Invalid
 
--- TODO this is incorrect D: (I think you need to conjugate by  (0.5, 0.5) translation basically.... (of course just do it logically))
 instance RotateMe XY where
-  rotateMe_Left = (!*) matrix_ccw_90
-  rotateMe_Right = (!*) matrix_cw_90
+  rotateMe_Left p = (!*) matrix_ccw_90 p - (V2 0 1)
+  rotateMe_Right p = (!*) matrix_cw_90 p - (V2 1 0)
 
--- TODO this is incorrect D: (actually this one is probably correct)
 -- assumes LBox is Canonical)
 instance RotateMe LBox where
   rotateMe_Left lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
-    V2 blx bly = rotateMe_Left tl -- TODO use matrix rotation here, rotateMe_Left on XY should do something else
+    V2 blx bly = (!*) matrix_ccw_90 tl
     r = LBox (V2 blx (bly - w)) (V2 h w)
   rotateMe_Right lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
-    V2 trx try = rotateMe_Right tl -- TODO use matrix rotation here, rotateMe_Right on XY should do something else
+    V2 trx try = (!*) matrix_cw_90 tl
     r = LBox (V2 (trx-h) try) (V2 h w)
 
 instance RotateMe AttachmentLocation where

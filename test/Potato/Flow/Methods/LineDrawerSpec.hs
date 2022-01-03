@@ -24,8 +24,8 @@ generateTestCases = r where
   --al2s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
   al1s = [AL_LEFT, AL_RIGHT]
   al2s = [AL_RIGHT]
-  box1s = [LBox 0 5]
-  box2s = [LBox (V2 10 0) 5]
+  box1s = [LBox 0 6]
+  box2s = [LBox (V2 10 0) 6]
   canvasbox = LBox (-3) 25
   startrid = 0
   endrid = 0
@@ -83,6 +83,8 @@ spec = do
     True `shouldBe` True
 
     -- TODO write a test such that reversing start/end parts of lines always renders the same thing
+    -- (actually, this won't work because rotation messed with whether we go up/down for midpoint stuff)
+    -- (you could fix this by keeping a rotation counter flag of course)
 
 {-
   -- TODO DELETE ME
