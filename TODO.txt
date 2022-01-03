@@ -32,7 +32,6 @@ WIDE
 
 
 :: FANCY LINES ::
-
 -convert simple line to auto connect to attachments
   DONE-attachment rendering when adding / editing lines...
   -if attaching to box X then change highlight on all box X stuff
@@ -54,6 +53,8 @@ WIDE
   -the render box is still too small by 1 to the bottom/right in the <- -> case D:
 
 ::NEWEST TODO::
+-BUG drag off attachment logic is wrong for Line handler
+  -Maybe just completely redo the way you handle undo operations??
 ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
 -refactor SEltMethods/getDrawer stuff
   -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....

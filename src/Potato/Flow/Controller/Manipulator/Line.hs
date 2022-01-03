@@ -56,6 +56,10 @@ getAttachmentPosition offsetBorder pfs a = r where
       _ -> error "expected SEltBox"
     _ -> error "expecteed OwlEltSelt"
 
+maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
+maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
+
+
 -- TODO rename to AutoLine
 data SimpleLineHandler = SimpleLineHandler {
     _simpleLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
@@ -96,17 +100,21 @@ instance Default SimpleLineHandler where
     }
 
 
-findFirstLineManipulator :: RelMouseDrag -> CanvasSelection -> Maybe Bool
-findFirstLineManipulator (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
+findFirstLineManipulator :: Bool -> OwlPFState -> RelMouseDrag -> CanvasSelection -> Maybe Bool
+findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
   msowl = Seq.lookup 0 selection
   selt = case msowl of
     Nothing -> error "expected selection"
     Just sowl -> superOwl_toSElt_hack sowl
   r = case selt of
     SEltLine SSimpleLine {..} ->
-      if _mouseDrag_to == _sSimpleLine_start then Just True
-        else if _mouseDrag_to == _sSimpleLine_end then Just False
-          else Nothing
+      let
+        start = fromMaybe _sSimpleLine_start $ maybeLookupAttachment _sSimpleLine_attachStart offsetBorder pfs
+        end = fromMaybe _sSimpleLine_end $ maybeLookupAttachment _sSimpleLine_attachEnd offsetBorder pfs
+      in
+        if _mouseDrag_to == start then Just True
+          else if _mouseDrag_to == end then Just False
+            else Nothing
     x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
 
 
@@ -132,7 +140,7 @@ instance PotatoHandler SimpleLineHandler where
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
       (_, sline) = getSLine _potatoHandlerInput_canvasSelection
-      mistart = findFirstLineManipulator rmd _potatoHandlerInput_canvasSelection
+      mistart = findFirstLineManipulator _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
       r = case mistart of
         Nothing -> Nothing -- did not click on manipulator, no capture
         Just isstart -> Just $ def {
@@ -149,6 +157,8 @@ instance PotatoHandler SimpleLineHandler where
       ogslinestart = _sSimpleLine_attachStart _simpleLineHandler_original
       ogslineend = _sSimpleLine_attachEnd _simpleLineHandler_original
 
+      -- TODO this is wrong for attachment cases
+      -- but you currently can't fix this as it is because you can't compute previous attach position reliably in undoFirst cases (well you could probably hack around it...)
       -- TODO handle shift click using restrict8
       dragDelta = _mouseDrag_to - _mouseDrag_from
 
@@ -163,7 +173,6 @@ instance PotatoHandler SimpleLineHandler where
 
 
       -- for manipulation
-      -- TODO connect to attachments here
       controller = CTagLine :=> (Identity $ if _simpleLineHandler_isStart
         then def {
             _cLine_deltaStart = Just $ DeltaXY dragDelta
@@ -205,17 +214,14 @@ instance PotatoHandler SimpleLineHandler where
   pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
 
-    maybeLookupAttachment matt = getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> matt
-
-
     boxes = case mselt of
       Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         else [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         where
-          startHandle = fromMaybe _sSimpleLine_start (maybeLookupAttachment _sSimpleLine_attachStart)
-          endHandle = fromMaybe _sSimpleLine_end (maybeLookupAttachment _sSimpleLine_attachEnd)
+          startHandle = fromMaybe _sSimpleLine_start (maybeLookupAttachment _sSimpleLine_attachStart _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
+          endHandle = fromMaybe _sSimpleLine_end (maybeLookupAttachment _sSimpleLine_attachEnd _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
