@@ -57,12 +57,17 @@ matrix_cw_90 = V2 (V2 0 (-1)) (V2 1 0)
 matrix_ccw_90 :: M22 Int
 matrix_ccw_90 = V2 (V2 0 1) (V2 (-1) 0)
 
+-- TODO rename me so it include reflection
 -- TODO rename so it's lower case
 class RotateMe a where
   -- CCW
   rotateMe_Left :: a -> a
+  rotateMe_Left = rotateMe_Right . rotateMe_Right . rotateMe_Right
   -- CW
   rotateMe_Right :: a -> a
+  rotateMe_Right = rotateMe_Left . rotateMe_Left . rotateMe_Left
+
+  rotateMe_hReflect :: a -> a
 
 instance RotateMe CartDir where
   rotateMe_Left = \case
@@ -75,6 +80,10 @@ instance RotateMe CartDir where
     CD_Down -> CD_Left
     CD_Left -> CD_Up
     CD_Right -> CD_Down
+  rotateMe_hReflect = \case
+    CD_Right -> CD_Left
+    CD_Left -> CD_Right
+    x -> x
 
 instance RotateMe AnchorType where
   rotateMe_Left = \case
@@ -97,10 +106,24 @@ instance RotateMe AnchorType where
     AT_Elbow_BR -> AT_Elbow_BL
     AT_Elbow_BL -> AT_Elbow_TL
     AT_Elbow_Invalid -> AT_Elbow_Invalid
+  rotateMe_hReflect = \case
+    AT_End_Left -> AT_End_Right
+    AT_End_Right -> AT_End_Left
+    AT_Elbow_TL -> AT_Elbow_TR
+    AT_Elbow_TR -> AT_Elbow_TL
+    AT_Elbow_BR -> AT_Elbow_BL
+    AT_Elbow_BL -> AT_Elbow_BR
+    AT_Elbow_Invalid -> AT_Elbow_Invalid
 
 instance RotateMe XY where
   rotateMe_Left p = (!*) matrix_ccw_90 p - (V2 0 1)
   rotateMe_Right p = (!*) matrix_cw_90 p - (V2 1 0)
+  rotateMe_hReflect (V2 x y) = V2 (-(x+1)) y
+
+instance (RotateMe a, RotateMe b) => RotateMe (a,b) where
+  rotateMe_Left (a,b) = (rotateMe_Left a, rotateMe_Left b)
+  rotateMe_Right (a,b) = (rotateMe_Right a, rotateMe_Right b)
+  rotateMe_hReflect (a,b) = (rotateMe_hReflect a, rotateMe_hReflect b)
 
 -- assumes LBox is Canonical)
 instance RotateMe LBox where
@@ -110,6 +133,8 @@ instance RotateMe LBox where
   rotateMe_Right lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     V2 trx try = (!*) matrix_cw_90 tl
     r = LBox (V2 (trx-h) try) (V2 h w)
+  rotateMe_hReflect lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+    r = LBox (V2 (-(x+w)) y) (V2 w h)
 
 instance RotateMe AttachmentLocation where
   rotateMe_Left = \case
@@ -118,10 +143,14 @@ instance RotateMe AttachmentLocation where
     AL_LEFT -> AL_BOT
     AL_RIGHT -> AL_TOP
   rotateMe_Right = \case
-      AL_TOP -> AL_RIGHT
-      AL_BOT -> AL_LEFT
-      AL_LEFT -> AL_TOP
-      AL_RIGHT -> AL_BOT
+    AL_TOP -> AL_RIGHT
+    AL_BOT -> AL_LEFT
+    AL_LEFT -> AL_TOP
+    AL_RIGHT -> AL_BOT
+  rotateMe_hReflect = \case
+    AL_LEFT -> AL_RIGHT
+    AL_RIGHT -> AL_LEFT
+    x -> x
 
 data CartDir = CD_Up | CD_Down | CD_Left | CD_Right deriving (Eq, Show)
 data AnchorType = AT_End_Up | AT_End_Down | AT_End_Left | AT_End_Right | AT_Elbow_TL | AT_Elbow_TR | AT_Elbow_BR | AT_Elbow_BL | AT_Elbow_Invalid deriving (Eq, Show)
@@ -236,8 +265,8 @@ lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
       , _lineAnchorsForRender_rest = withoutzeros
     }
 
-lineAnchorsForRender_flip :: LineAnchorsForRender -> LineAnchorsForRender
-lineAnchorsForRender_flip LineAnchorsForRender {..} = r where
+lineAnchorsForRender_reverse :: LineAnchorsForRender -> LineAnchorsForRender
+lineAnchorsForRender_reverse LineAnchorsForRender {..} = r where
   end = foldl' (\p cdd -> p + cartDirWithDistanceToV2 cdd) _lineAnchorsForRender_start _lineAnchorsForRender_rest
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = end
@@ -253,6 +282,10 @@ instance RotateMe LineAnchorsForRender where
       _lineAnchorsForRender_start = rotateMe_Right _lineAnchorsForRender_start
       ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Right cd, d)) _lineAnchorsForRender_rest
     }
+  rotateMe_hReflect LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = rotateMe_hReflect _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_hReflect cd, d)) _lineAnchorsForRender_rest
+    }
 
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRenderToPointList LineAnchorsForRender {..} = traceShowId $ r where
@@ -267,6 +300,7 @@ data SimpleLineSolverParameters = SimpleLineSolverParameters {
 instance RotateMe SimpleLineSolverParameters where
   rotateMe_Left = id
   rotateMe_Right = id
+  rotateMe_hReflect = id
 
 -- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
@@ -286,8 +320,9 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   -- so I think you need determineSeparationForAttachment (only needed for hsep)
   (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
 
-  lbx1isleft = ax1 < ax2
-  lbx1isabove = ay1 < ay2
+  lbx1isstrictlyleft = ax1 < ax2
+  lbx1isleft = ax1 <= ax2
+  lbx1isstrictlyabove = ay1 < ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
   --traceStep = trace
@@ -300,6 +335,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   t = min (t1_inc-1) (t2_inc-1)
   b = max b1 b2
 
+  --anchors = trace (show al1 <> " " <> show al2) $ case al1 of
   anchors = case al1 of
     -- WORKING
     -- degenerate case
@@ -309,7 +345,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
       }
     -- WORKING
     -- 1->  <-2
-    AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> traceStep "case 1" $ r where
+    AL_RIGHT | al2 == AL_LEFT && lbx1isstrictlyleft && hsep -> traceStep "case 1" $ r where
 
       halfway = (ax2+ax1) `div` 2
       lb1_to_center = (CD_Right, (halfway-ax1))
@@ -348,11 +384,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ r where
       halfway = (ay2+ay1) `div` 2
       lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
-      right_to_center = if lbx1isabove
+      right_to_center = if lbx1isstrictlyabove
         then (CD_Down, halfway-ay1)
         else (CD_Up, ay1-halfway)
       center = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (ax1-ax2))
-      center_to_left = if lbx1isabove
+      center_to_left = if lbx1isstrictlyabove
         then (CD_Down, ay2-halfway)
         else (CD_Up, halfway-ay2)
       left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
@@ -368,7 +404,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     AL_RIGHT | al2 == AL_RIGHT && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
       r = max r1 r2 + _simpleLineSolverParameters_attachOffset
       lb1_to_right1 = (CD_Right, r-r1)
-      right1_to_right2 = if lbx1isabove
+      right1_to_right2 = if lbx1isstrictlyabove
         then (CD_Down, ay2-ay1)
         else (CD_Up, ay1-ay2)
       right2_to_lb2 = (CD_Left, r-r2)
@@ -400,17 +436,17 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
 
     -- ^
     -- |
     -- 1   2->
-    AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ r where
-      upd = if not lbx1isabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
+    AL_TOP | al2 == AL_RIGHT && lbx1isleft -> traceStep "case 7" $ r where
+      upd = if not lbx1isstrictlyabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
       lb1_to_up = (CD_Up, upd)
       -- TODO this distance is incorrect, it needs to avoid the lbx1
       up_to_right1 = (CD_Right, (max ax2 r1)-ax1+_simpleLineSolverParameters_attachOffset)
-      right1_to_right2 = if lbx1isabove
+      right1_to_right2 = if lbx1isstrictlyabove
         then (CD_Down, ay2-ay1+upd)
         else (CD_Up, max 0 (ay1-ay2-upd))
       right2_to_lb2 = (CD_Left, _simpleLineSolverParameters_attachOffset)
@@ -424,18 +460,17 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ^
     -- |
     -- 1   <-2
-    AL_TOP | al2 == AL_LEFT && lbx1isleft-> traceStep "case 8" $ emptyLineAnchorsForRender
-      -- subcase lbx1isabove
+    AL_TOP | al2 == AL_LEFT && lbx1isleft -> traceStep "case 8" $ emptyLineAnchorsForRender
+      -- subcase lbx1isstrictlyabove
       --lb1_to_up =
       --left_to_
 
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
+    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  rotateMe_hReflect $ sSimpleLineSolver (rotateMe_hReflect sls) (rotateMe_hReflect lbal1) (rotateMe_hReflect lbal2)
 
-
-    _ -> traceStep "case 10 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbx1, rotateMe_Left al1) (rotateMe_Left lbx2, rotateMe_Left al2)
+    _ -> traceStep "case 10 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbal1) (rotateMe_Left lbal2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
