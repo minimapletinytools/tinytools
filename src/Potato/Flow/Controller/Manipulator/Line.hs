@@ -204,11 +204,18 @@ instance PotatoHandler SimpleLineHandler where
     _                              -> Nothing
   pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
+
+    maybeLookupAttachment matt = getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> matt
+
+
     boxes = case mselt of
       Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
-        then [make_1area_lBox_from_XY _sSimpleLine_start, make_1area_lBox_from_XY _sSimpleLine_end]
-        else [make_1area_lBox_from_XY _sSimpleLine_start, make_1area_lBox_from_XY _sSimpleLine_end]
+        then [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
+        else [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
+        where
+          startHandle = fromMaybe _sSimpleLine_start (maybeLookupAttachment _sSimpleLine_attachStart)
+          endHandle = fromMaybe _sSimpleLine_end (maybeLookupAttachment _sSimpleLine_attachEnd)
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
@@ -224,6 +231,6 @@ instance PotatoHandler SimpleLineHandler where
         matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
     attachmentBoxes = fmap fmapattachmentfn attachments
 
-    r = HandlerRenderOutput (fmap defaultRenderHandle boxes <> attachmentBoxes)
+    r = HandlerRenderOutput (attachmentBoxes <> fmap defaultRenderHandle boxes)
 
   pIsHandlerActive = _simpleLineHandler_active

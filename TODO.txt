@@ -48,7 +48,7 @@ WIDE
 -BUGS
   -rotation to up/down creates off by 1 offsetting errors D:
   -need to support ANY attach style for unattached ends etc
-  -line handle positions need to be updated if attached
+  DONE-line handle positions need to be updated if attached
   -use better function to determine if you clicked on lines (you can do this now)
     -this should have access to the RenderCache/OwlTree
   -the render box is still too small by 1 to the bottom/right in the <- -> case D:
