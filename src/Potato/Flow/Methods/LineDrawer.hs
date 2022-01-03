@@ -296,6 +296,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   -- WIP
 
   anchors = case al1 of
+    -- degenerate case needs special handling
+    AL_RIGHT | ax1 == ax2 && ay1 == ay2 -> LineAnchorsForRender {
+        _lineAnchorsForRender_start = start
+        , _lineAnchorsForRender_rest = []
+      }
     -- WORKING
     -- 1->  <-2
     AL_RIGHT | al2 == AL_LEFT && lbx1isleft && hsep -> traceStep "case 1" $ r where
