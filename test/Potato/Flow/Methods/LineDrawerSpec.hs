@@ -15,6 +15,35 @@ import Potato.Flow.TestStates
 
 import Potato.Flow.Common
 
+import Data.Default
+
+generateTestCases = r where
+
+  -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
+  --al1s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
+  --al2s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
+  al1s = [AL_LEFT, AL_RIGHT]
+  al2s = [AL_RIGHT]
+  box1s = [LBox 0 5]
+  box2s = [LBox (V2 10 0) 5]
+  canvasbox = LBox (-3) 25
+
+  boxpairs = [(b1,b2) | b1 <- box1s, b2 <- box2s]
+  attachmentpairs = [(al1,al2) | al1 <- al1s, al2 <- al2s]
+
+  makestree (b1,b2) (al1, al2) =
+    [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
+    , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
+    , (2, SEltLabel "l" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 0 al1), _sSimpleLine_attachEnd = Just (Attachment 1 al2)})))
+    ]
+
+  topfs ot = OwlPFState {
+      _owlPFState_owlTree = ot
+      , _owlPFState_canvas = SCanvas $ canvasbox
+    }
+
+  r = [topfs $ owlTree_fromSEltTree (makestree bp ap) | bp <- boxpairs, ap <- attachmentpairs]
+
 
 rotateMe_validate :: (Eq a, RotateMe a) => a -> Bool
 rotateMe_validate a = (rotateMe_Left . rotateMe_Right $ a) == a && (rotateMe_Right . rotateMe_Left $ a) == a
@@ -42,6 +71,14 @@ spec = do
             , _lineAnchorsForRender_rest = [(CD_Up, 10),(CD_Up, 15),(CD_Up, 1),(CD_Right, 10)]
           }
       _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
+  describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
+    let
+      rc = potatoRenderPFState pfs
+    putTextLn (renderedCanvasToText rc)
+    True `shouldBe` True
+
+{-
+  -- TODO DELETE ME
   describe "Lines - rendering" $ do
     let
       pfs = owlpfstate_attachments2
@@ -68,3 +105,4 @@ spec = do
       --sd (V2 0 0) owltree `shouldBe` Just '<'
       True `shouldBe` True
     -- TODO change order of attachments and render and make sure it's still the same
+-}

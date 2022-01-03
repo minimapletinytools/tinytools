@@ -106,7 +106,7 @@ spec = do
           }
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
-        canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
+        canvas0 = potatoRenderPFState state0
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         rendercontext1 = moveRenderedCanvasRegion target rendercontext0
         canvas1 = _renderContext_renderedCanvasRegion rendercontext1
@@ -126,7 +126,7 @@ spec = do
           }
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
-        canvas0 = potatoRenderPFState state0 $ emptyRenderedCanvasRegion initial
+        canvas0 = potatoRenderPFState state0
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         -- only thing changed is the canvas size
         rendercontext1 = moveRenderedCanvasRegion target rendercontext0

@@ -34,6 +34,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts
+import Potato.Flow.Types
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
@@ -80,7 +81,7 @@ data RenderContext = RenderContext {
 
   -- TODO use me
   , _renderContext_cache :: RenderCache
-  
+
   , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
 }
 
@@ -147,15 +148,15 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
   then Just $ toIndex lbx xy
   else Nothing
 
--- TODO you need to pass in OwlTree for this to render attachments correctly
+-- TODO rename to just potatoRender
 -- | brute force renders a RenderedCanvasRegion (ignores broadphase)
-potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
-potatoRender seltls RenderedCanvasRegion {..} = r where
+potatoRenderWithOwlTree :: OwlTree -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+potatoRenderWithOwlTree ot seltls RenderedCanvasRegion {..} = r where
   drawers = map getDrawer seltls
   genfn i = newc' where
     pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d emptyOwlTree pt) drawers)
+    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d ot pt) drawers)
     newc' = case mdrawn of
       Just c  -> c
       Nothing -> ' '
@@ -165,8 +166,12 @@ potatoRender seltls RenderedCanvasRegion {..} = r where
       , _renderedCanvasRegion_contents = newc
     }
 
-potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion -> RenderedCanvasRegion
-potatoRenderPFState OwlPFState {..} = potatoRender . fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree
+-- TODO rename to potatoRenderWithEmptyOwlTree
+potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+potatoRender = potatoRenderWithOwlTree emptyOwlTree
+
+potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion
+potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
 
 
 

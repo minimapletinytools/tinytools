@@ -691,10 +691,7 @@ badTestVisibility name cansee = FunctionPredicate f where
 
     pfs = goatState_pFState gs
 
-    -- why doesn't this work??? Nothing is getting rendered :(((
     rc = _goatState_renderedCanvas gs
-
-    --rc = potatoRenderPFState pfs (emptyRenderedCanvasRegion (LBox 0 100))
 
     lmm = _layersState_meta $ _goatState_layersState gs
 

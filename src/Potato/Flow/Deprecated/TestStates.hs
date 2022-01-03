@@ -236,6 +236,7 @@ pfstate_attachments1 = PFState {
     , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
+-- TODO DELETE ME
 pfstate_attachments2 :: PFState
 pfstate_attachments2 = PFState {
     _pFState_layers = Seq.fromList [0..9]
@@ -347,6 +348,7 @@ pfstate_attachments2 = PFState {
           , _sSimpleLine_lineStyle = def
         }))
       ]
+    , _pFState_canvas = SCanvas defaultCanvasLBox
   }
 
 
