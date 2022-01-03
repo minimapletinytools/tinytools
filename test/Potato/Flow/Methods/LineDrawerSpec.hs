@@ -27,14 +27,19 @@ generateTestCases = r where
   box1s = [LBox 0 5]
   box2s = [LBox (V2 10 0) 5]
   canvasbox = LBox (-3) 25
+  startrid = 0
+  endrid = 0
 
   boxpairs = [(b1,b2) | b1 <- box1s, b2 <- box2s]
   attachmentpairs = [(al1,al2) | al1 <- al1s, al2 <- al2s]
+
+
 
   makestree (b1,b2) (al1, al2) =
     [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
     , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
     , (2, SEltLabel "l" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 0 al1), _sSimpleLine_attachEnd = Just (Attachment 1 al2)})))
+    , (3, SEltLabel "lreverse" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 1 al2), _sSimpleLine_attachEnd = Just (Attachment 0 al1)})))
     ]
 
   topfs ot = OwlPFState {
@@ -76,6 +81,8 @@ spec = do
       rc = potatoRenderPFState pfs
     putTextLn (renderedCanvasToText rc)
     True `shouldBe` True
+
+    -- TODO write a test such that reversing start/end parts of lines always renders the same thing
 
 {-
   -- TODO DELETE ME

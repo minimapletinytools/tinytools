@@ -98,17 +98,19 @@ instance RotateMe AnchorType where
     AT_Elbow_BL -> AT_Elbow_TL
     AT_Elbow_Invalid -> AT_Elbow_Invalid
 
+-- TODO this is incorrect D: (I think you need to conjugate by  (0.5, 0.5) translation basically.... (of course just do it logically))
 instance RotateMe XY where
   rotateMe_Left = (!*) matrix_ccw_90
   rotateMe_Right = (!*) matrix_cw_90
 
+-- TODO this is incorrect D: (actually this one is probably correct)
 -- assumes LBox is Canonical)
 instance RotateMe LBox where
   rotateMe_Left lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
-    V2 blx bly = rotateMe_Left tl
+    V2 blx bly = rotateMe_Left tl -- TODO use matrix rotation here, rotateMe_Left on XY should do something else
     r = LBox (V2 blx (bly - w)) (V2 h w)
   rotateMe_Right lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
-    V2 trx try = rotateMe_Right tl
+    V2 trx try = rotateMe_Right tl -- TODO use matrix rotation here, rotateMe_Right on XY should do something else
     r = LBox (V2 (trx-h) try) (V2 h w)
 
 instance RotateMe AttachmentLocation where
