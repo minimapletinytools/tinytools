@@ -295,6 +295,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   -- WIP
 
+  (_,r1,t1_inc,b1) = lBox_to_axis lbx1
+  (_,r2,t2_inc,b2) = lBox_to_axis lbx2
+  t = min (t1_inc-1) (t2_inc-1)
+  b = max b1 b2
+
   anchors = case al1 of
     -- WORKING
     -- degenerate case
@@ -320,10 +325,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- WORKING
     -- <-2  1->
     AL_RIGHT | al2 == AL_LEFT && not vsep -> traceStep "case 2" $ r where
-      (_,_,t1_inc, b1) = lBox_to_axis lbx1
-      (_,_,t2_inc, b2) = lBox_to_axis lbx2
-      t = min (t1_inc-1) (t2_inc-1)
-      b = max b1 b2
+
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
       lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
@@ -364,8 +366,6 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- 1->
     --     2->
     AL_RIGHT | al2 == AL_RIGHT && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
-      (_,r1,_,_) = lBox_to_axis lbx1
-      (_,r2,_,_) = lBox_to_axis lbx2
       r = max r1 r2 + _simpleLineSolverParameters_attachOffset
       lb1_to_right1 = (CD_Right, r-r1)
       right1_to_right2 = if lbx1isabove
@@ -380,8 +380,6 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- WORKING
     -- ->1 ->2
     AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
-      (_,r1,t1_inc,b1) = lBox_to_axis lbx1
-      (_,r2,t2_inc,b2) = lBox_to_axis lbx2
       t = min (t1_inc-1) (t2_inc-1)
       b = max b1 b2
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
@@ -404,14 +402,14 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ->2 ->1 (will not get covered by rotation)
     AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_flip $ sSimpleLineSolver sls lbal2 lbal1
 
-    -- WORKING
     -- ^
     -- |
     -- 1   2->
     AL_TOP | al2 == AL_RIGHT && lbx1isleft-> traceStep "case 7" $ r where
       upd = if not lbx1isabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
       lb1_to_up = (CD_Up, upd)
-      up_to_right1 = (CD_Right, ax2-ax1+_simpleLineSolverParameters_attachOffset)
+      -- TODO this distance is incorrect, it needs to avoid the lbx1
+      up_to_right1 = (CD_Right, (max ax2 r1)-ax1+_simpleLineSolverParameters_attachOffset)
       right1_to_right2 = if lbx1isabove
         then (CD_Down, ay2-ay1+upd)
         else (CD_Up, max 0 (ay1-ay2-upd))
@@ -428,6 +426,8 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- 1   <-2
     AL_TOP | al2 == AL_LEFT && lbx1isleft-> traceStep "case 8" $ emptyLineAnchorsForRender
       -- subcase lbx1isabove
+      --lb1_to_up =
+      --left_to_
 
     --        ^
     --        |
@@ -530,6 +530,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
     Nothing -> LBox 0 0
+    -- add_XY_to_LBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
     Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_LBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
 
 
