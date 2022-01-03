@@ -20,10 +20,10 @@ import Data.Default
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
-  --al1s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
-  --al2s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
-  al1s = [AL_RIGHT]
-  al2s = [AL_TOP]
+  al1s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
+  al2s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
+  --al1s = [AL_RIGHT]
+  --al2s = [AL_TOP]
   box1s = [LBox 0 5]
   box2s = [LBox (V2 0 10) 5]
   canvasbox = LBox (-3) (V2 25 25)
@@ -50,8 +50,11 @@ generateTestCases = r where
   r = [topfs $ owlTree_fromSEltTree (makestree bp ap) | bp <- boxpairs, ap <- attachmentpairs]
 
 
-rotateMe_validate :: (Eq a, RotateMe a) => a -> Bool
-rotateMe_validate a = (rotateMe_Left . rotateMe_Right $ a) == a && (rotateMe_Right . rotateMe_Left $ a) == a
+validateTransformMe :: (Eq a, TransformMe a) => a -> Bool
+validateTransformMe a =
+  (transformMe_rotateLeft . transformMe_rotateRight $ a) == a
+  && (transformMe_rotateRight . transformMe_rotateLeft $ a) == a
+  && (transformMe_reflectHorizontally . transformMe_reflectHorizontally $ a) == a
 
 spec :: Spec
 spec = do
@@ -60,8 +63,8 @@ spec = do
       let
         somelbx1 = LBox (V2 12 (-2)) (V2 12323 (143))
         somexy1 :: XY = V2 345 21
-      rotateMe_validate somelbx1 `shouldBe` True
-      rotateMe_validate somexy1 `shouldBe` True
+      validateTransformMe somelbx1 `shouldBe` True
+      validateTransformMe somexy1 `shouldBe` True
     it "determineSeparation" $ do
       let
         lb1 = LBox (V2 0 0) (V2 10 10)

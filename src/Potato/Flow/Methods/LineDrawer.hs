@@ -8,7 +8,7 @@ module Potato.Flow.Methods.LineDrawer (
 
   -- * exposed for testing
   , CartDir(..)
-  , RotateMe(..)
+  , TransformMe(..)
   , determineSeparation
   , lineAnchorsForRender_simplify
 ) where
@@ -59,34 +59,34 @@ matrix_ccw_90 = V2 (V2 0 1) (V2 (-1) 0)
 
 -- TODO rename me so it include reflection
 -- TODO rename so it's lower case
-class RotateMe a where
+class TransformMe a where
   -- CCW
-  rotateMe_Left :: a -> a
-  rotateMe_Left = rotateMe_Right . rotateMe_Right . rotateMe_Right
+  transformMe_rotateLeft :: a -> a
+  transformMe_rotateLeft = transformMe_rotateRight . transformMe_rotateRight . transformMe_rotateRight
   -- CW
-  rotateMe_Right :: a -> a
-  rotateMe_Right = rotateMe_Left . rotateMe_Left . rotateMe_Left
+  transformMe_rotateRight :: a -> a
+  transformMe_rotateRight = transformMe_rotateLeft . transformMe_rotateLeft . transformMe_rotateLeft
 
-  rotateMe_hReflect :: a -> a
+  transformMe_reflectHorizontally :: a -> a
 
-instance RotateMe CartDir where
-  rotateMe_Left = \case
+instance TransformMe CartDir where
+  transformMe_rotateLeft = \case
     CD_Up -> CD_Left
     CD_Down -> CD_Right
     CD_Left -> CD_Down
     CD_Right -> CD_Up
-  rotateMe_Right = \case
+  transformMe_rotateRight = \case
     CD_Up -> CD_Right
     CD_Down -> CD_Left
     CD_Left -> CD_Up
     CD_Right -> CD_Down
-  rotateMe_hReflect = \case
+  transformMe_reflectHorizontally = \case
     CD_Right -> CD_Left
     CD_Left -> CD_Right
     x -> x
 
-instance RotateMe AnchorType where
-  rotateMe_Left = \case
+instance TransformMe AnchorType where
+  transformMe_rotateLeft = \case
     AT_End_Up -> AT_End_Left
     AT_End_Down -> AT_End_Right
     AT_End_Left -> AT_End_Down
@@ -96,7 +96,7 @@ instance RotateMe AnchorType where
     AT_Elbow_BR -> AT_Elbow_TR
     AT_Elbow_BL -> AT_Elbow_BR
     AT_Elbow_Invalid -> AT_Elbow_Invalid
-  rotateMe_Right = \case
+  transformMe_rotateRight = \case
     AT_End_Up -> AT_End_Right
     AT_End_Down -> AT_End_Left
     AT_End_Left -> AT_End_Up
@@ -106,7 +106,7 @@ instance RotateMe AnchorType where
     AT_Elbow_BR -> AT_Elbow_BL
     AT_Elbow_BL -> AT_Elbow_TL
     AT_Elbow_Invalid -> AT_Elbow_Invalid
-  rotateMe_hReflect = \case
+  transformMe_reflectHorizontally = \case
     AT_End_Left -> AT_End_Right
     AT_End_Right -> AT_End_Left
     AT_Elbow_TL -> AT_Elbow_TR
@@ -115,39 +115,39 @@ instance RotateMe AnchorType where
     AT_Elbow_BL -> AT_Elbow_BR
     AT_Elbow_Invalid -> AT_Elbow_Invalid
 
-instance RotateMe XY where
-  rotateMe_Left p = (!*) matrix_ccw_90 p - (V2 0 1)
-  rotateMe_Right p = (!*) matrix_cw_90 p - (V2 1 0)
-  rotateMe_hReflect (V2 x y) = V2 (-(x+1)) y
+instance TransformMe XY where
+  transformMe_rotateLeft p = (!*) matrix_ccw_90 p - (V2 0 1)
+  transformMe_rotateRight p = (!*) matrix_cw_90 p - (V2 1 0)
+  transformMe_reflectHorizontally (V2 x y) = V2 (-(x+1)) y
 
-instance (RotateMe a, RotateMe b) => RotateMe (a,b) where
-  rotateMe_Left (a,b) = (rotateMe_Left a, rotateMe_Left b)
-  rotateMe_Right (a,b) = (rotateMe_Right a, rotateMe_Right b)
-  rotateMe_hReflect (a,b) = (rotateMe_hReflect a, rotateMe_hReflect b)
+instance (TransformMe a, TransformMe b) => TransformMe (a,b) where
+  transformMe_rotateLeft (a,b) = (transformMe_rotateLeft a, transformMe_rotateLeft b)
+  transformMe_rotateRight (a,b) = (transformMe_rotateRight a, transformMe_rotateRight b)
+  transformMe_reflectHorizontally (a,b) = (transformMe_reflectHorizontally a, transformMe_reflectHorizontally b)
 
 -- assumes LBox is Canonical)
-instance RotateMe LBox where
-  rotateMe_Left lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+instance TransformMe LBox where
+  transformMe_rotateLeft lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     V2 blx bly = (!*) matrix_ccw_90 tl
     r = LBox (V2 blx (bly - w)) (V2 h w)
-  rotateMe_Right lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+  transformMe_rotateRight lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     V2 trx try = (!*) matrix_cw_90 tl
     r = LBox (V2 (trx-h) try) (V2 h w)
-  rotateMe_hReflect lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
+  transformMe_reflectHorizontally lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     r = LBox (V2 (-(x+w)) y) (V2 w h)
 
-instance RotateMe AttachmentLocation where
-  rotateMe_Left = \case
+instance TransformMe AttachmentLocation where
+  transformMe_rotateLeft = \case
     AL_TOP -> AL_LEFT
     AL_BOT -> AL_RIGHT
     AL_LEFT -> AL_BOT
     AL_RIGHT -> AL_TOP
-  rotateMe_Right = \case
+  transformMe_rotateRight = \case
     AL_TOP -> AL_RIGHT
     AL_BOT -> AL_LEFT
     AL_LEFT -> AL_TOP
     AL_RIGHT -> AL_BOT
-  rotateMe_hReflect = \case
+  transformMe_reflectHorizontally = \case
     AL_LEFT -> AL_RIGHT
     AL_RIGHT -> AL_LEFT
     x -> x
@@ -273,18 +273,18 @@ lineAnchorsForRender_reverse LineAnchorsForRender {..} = r where
       , _lineAnchorsForRender_rest = reverse . fmap (\(cd,d) -> (flipCartDir cd, d)) $ _lineAnchorsForRender_rest
     }
 
-instance RotateMe LineAnchorsForRender where
-  rotateMe_Left LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = rotateMe_Left _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Left cd, d)) _lineAnchorsForRender_rest
+instance TransformMe LineAnchorsForRender where
+  transformMe_rotateLeft LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_rotateLeft _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_rotateLeft cd, d)) _lineAnchorsForRender_rest
     }
-  rotateMe_Right LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = rotateMe_Right _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_Right cd, d)) _lineAnchorsForRender_rest
+  transformMe_rotateRight LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_rotateRight _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_rotateRight cd, d)) _lineAnchorsForRender_rest
     }
-  rotateMe_hReflect LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = rotateMe_hReflect _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (rotateMe_hReflect cd, d)) _lineAnchorsForRender_rest
+  transformMe_reflectHorizontally LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_reflectHorizontally _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_reflectHorizontally cd, d)) _lineAnchorsForRender_rest
     }
 
 lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
@@ -297,10 +297,10 @@ data SimpleLineSolverParameters = SimpleLineSolverParameters {
   , _simpleLineSolverParameters_attachOffset :: Int -- cells to offset attach to box by
 }
 
-instance RotateMe SimpleLineSolverParameters where
-  rotateMe_Left = id
-  rotateMe_Right = id
-  rotateMe_hReflect = id
+instance TransformMe SimpleLineSolverParameters where
+  transformMe_rotateLeft = id
+  transformMe_rotateRight = id
+  transformMe_reflectHorizontally = id
 
 -- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
@@ -468,9 +468,9 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  rotateMe_hReflect $ sSimpleLineSolver (rotateMe_hReflect sls) (rotateMe_hReflect lbal1) (rotateMe_hReflect lbal2)
+    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 9 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
-    _ -> traceStep "case 10 (rotate)" $ rotateMe_Right $ sSimpleLineSolver (rotateMe_Left sls) (rotateMe_Left lbal1) (rotateMe_Left lbal2)
+    _ -> traceStep "case 10 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
