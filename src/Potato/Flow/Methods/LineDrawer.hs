@@ -382,7 +382,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
       right1_to_torb = if goup
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
-      torb = (CD_Right, _simpleLineSolverParameters_attachOffset + (r2-r1))
+      torb = (CD_Right, r2-r1)
       torb_to_right2 = if goup
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)
