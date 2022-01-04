@@ -876,7 +876,7 @@ DONE-hook up PF
 DONE-manipulatingDyn can be moved into backend
 
 :: 12/21/2021 attachments
-data AttachmentLocation = AL_TOP | AL_BOT | AL_LEFT | AL_RIGHT
+data AttachmentLocation = AL_Top | AL_Bot | AL_Left | AL_Right
 
 data Attach = Attach {
   attach_location :: AttachmentLocation

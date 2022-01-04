@@ -138,18 +138,18 @@ instance TransformMe LBox where
 
 instance TransformMe AttachmentLocation where
   transformMe_rotateLeft = \case
-    AL_TOP -> AL_LEFT
-    AL_BOT -> AL_RIGHT
-    AL_LEFT -> AL_BOT
-    AL_RIGHT -> AL_TOP
+    AL_Top -> AL_Left
+    AL_Bot -> AL_Right
+    AL_Left -> AL_Bot
+    AL_Right -> AL_Top
   transformMe_rotateRight = \case
-    AL_TOP -> AL_RIGHT
-    AL_BOT -> AL_LEFT
-    AL_LEFT -> AL_TOP
-    AL_RIGHT -> AL_BOT
+    AL_Top -> AL_Right
+    AL_Bot -> AL_Left
+    AL_Left -> AL_Top
+    AL_Right -> AL_Bot
   transformMe_reflectHorizontally = \case
-    AL_LEFT -> AL_RIGHT
-    AL_RIGHT -> AL_LEFT
+    AL_Left -> AL_Right
+    AL_Right -> AL_Left
     x -> x
 
 data CartDir = CD_Up | CD_Down | CD_Left | CD_Right deriving (Eq, Show)
@@ -345,13 +345,13 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
   anchors = case al1 of
     -- WORKING
     -- degenerate case
-    AL_RIGHT | ax1 == ax2 && ay1 == ay2 -> LineAnchorsForRender {
+    AL_Right | ax1 == ax2 && ay1 == ay2 -> LineAnchorsForRender {
         _lineAnchorsForRender_start = start
         , _lineAnchorsForRender_rest = []
       }
     -- WORKING
     -- 1->  <-2
-    AL_RIGHT | al2 == AL_LEFT && lbx1isstrictlyleft && hsep -> traceStep "case 1" $ r where
+    AL_Right | al2 == AL_Left && lbx1isstrictlyleft && hsep -> traceStep "case 1" $ r where
 
       halfway = (ax2+ax1) `div` 2
       lb1_to_center = (CD_Right, (halfway-ax1))
@@ -366,7 +366,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
     -- WORKING
     -- <-2  1->
-    AL_RIGHT | al2 == AL_LEFT && not vsep -> traceStep "case 2" $ r where
+    AL_Right | al2 == AL_Left && not vsep -> traceStep "case 2" $ r where
 
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
@@ -387,7 +387,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- WORKING
     -- <-2
     --      1->
-    AL_RIGHT | al2 == AL_LEFT && vsep -> traceStep "case 3" $ r where
+    AL_Right | al2 == AL_Left && vsep -> traceStep "case 3" $ r where
       halfway = (ay2+ay1) `div` 2
       lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
       right_to_center = if lbx1isstrictlyabove
@@ -407,7 +407,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- not vsep is the wrong condition here, we want ay1 to be above or below lbx2
     -- 1->
     --     2->
-    AL_RIGHT | al2 == AL_RIGHT && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
+    AL_Right | al2 == AL_Right && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
       rightedge = max r1 r2 + _simpleLineSolverParameters_attachOffset
       lb1_to_right1 = (CD_Right, rightedge-r1)
       right1_to_right2 = if lbx1isstrictlyabove
@@ -421,7 +421,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
     -- WORKING
     -- ->1 ->2
-    AL_RIGHT | al2 == AL_RIGHT && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
+    AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
       t = min (t1_inc-1) (t2_inc-1)
       b = max b1 b2
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
@@ -442,13 +442,13 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_RIGHT | al2 == AL_RIGHT && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
 
     -- ^
     -- |
     -- 1
     --     2-> (this only handles lbx1isstrictlyabove case)
-    AL_TOP | al2 == AL_RIGHT && lbx1isleft && lbx1isstrictlyabove -> traceStep "case 7" $ r where
+    AL_Top | al2 == AL_Right && lbx1isleft && lbx1isstrictlyabove -> traceStep "case 7" $ r where
       upd = if not lbx1isstrictlyabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
       lb1_to_up = (CD_Up, upd)
       up_to_right1 = (CD_Right, (max ax2 r1)-ax1+_simpleLineSolverParameters_attachOffset)
@@ -465,13 +465,13 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ^
     -- |
     -- 1 (this will get handled by the next case, it might have been better to add a third case for the not lbx1isstrictlyabove case)
-    AL_TOP | al2 == AL_RIGHT && lbx1isleft -> traceStep "case 8 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
 
     --     <-2
     -- ^
     -- |
     -- 1   <-2 (this one handles both lbx1isstrictlyabove cases)
-    AL_TOP | al2 == AL_LEFT && lbx1isleft -> traceStep "case 9" $ r where
+    AL_Top | al2 == AL_Left && lbx1isleft -> traceStep "case 9" $ r where
       topedge = min (ay1 - _simpleLineSolverParameters_attachOffset) ay2
       leftedge = l
       halfway = (ax1 + ax2) `div` 2
@@ -491,7 +491,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_TOP | al2 == AL_LEFT || al2 == AL_RIGHT -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
+    AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
     _ -> traceStep "case 11 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
@@ -571,8 +571,8 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
       return (sbox, al)
 
     -- TODO AL_Any
-    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_TOP) $ maybeGetBox _sSimpleLine_attachStart
-    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_TOP) $ maybeGetBox _sSimpleLine_attachEnd
+    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_Top) $ maybeGetBox _sSimpleLine_attachStart
+    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_Top) $ maybeGetBox _sSimpleLine_attachEnd
 
     regenanchors = sSimpleLineSolver params lbal1 lbal2
     anchors = case mcache of

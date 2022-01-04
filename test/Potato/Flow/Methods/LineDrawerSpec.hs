@@ -20,10 +20,10 @@ import Data.Default
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
-  --al1s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
-  --al2s = [AL_LEFT, AL_RIGHT, AL_TOP, AL_BOT]
-  al1s = [AL_TOP]
-  al2s = [AL_LEFT]
+  --al1s = [AL_Left, AL_Right, AL_Top, AL_Bot]
+  --al2s = [AL_Left, AL_Right, AL_Top, AL_Bot]
+  al1s = [AL_Top]
+  al2s = [AL_Left]
   box1s = [LBox 0 5]
   box2s = [LBox (V2 3 10) 5]
   canvasbox = LBox (-5) (V2 25 25)
