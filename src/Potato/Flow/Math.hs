@@ -2,7 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
--- TODO rename stuff in this file to be consistent
 module Potato.Flow.Math (
   XY
   , LBox(..)
@@ -15,7 +14,7 @@ module Potato.Flow.Math (
   , lBox_tl
   , lBox_area
   , lBox_to_axis
-  , add_XY_to_LBox
+  , add_XY_to_lBox
 
   , make_lBox_from_axis
   , union_lBox
@@ -95,7 +94,7 @@ lBox_area (LBox _ (V2 w h)) = w*h
 lBox_tl :: LBox -> XY
 lBox_tl (LBox p _) = p
 
--- | returns a 1 area LBox
+-- | returns a 0 area LBox
 make_0area_lBox_from_XY :: XY -> LBox
 make_0area_lBox_from_XY p = LBox p 0
 
@@ -111,11 +110,10 @@ make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
 
--- TODO rename to add_XY_to_lBox
 -- | always returns a canonical LBox
--- bottom/right XYs are not included
-add_XY_to_LBox :: XY -> LBox -> LBox
-add_XY_to_LBox (V2 px py) lbox = r where
+-- bottom/right XYs cells are not included in
+add_XY_to_lBox :: XY -> LBox -> LBox
+add_XY_to_lBox (V2 px py) lbox = r where
   (LBox (V2 bx by) (V2 bw bh)) = canonicalLBox_from_lBox_ lbox
   r = LBox {
     _lBox_tl = V2 (min px bx) (min py by)
@@ -123,6 +121,7 @@ add_XY_to_LBox (V2 px py) lbox = r where
   }
 
 -- specifically `make_1area_lBox_from_XY pos` must be contained in lbox
+-- so XYs on the bottom/right border are not included
 does_lBox_contains_XY :: LBox -> XY -> Bool
 does_lBox_contains_XY (LBox (V2 bx by) (V2 bw bh)) (V2 px py) =
   px >= bx && py >= by && px < (bx + bw) && py < (by + bh)
@@ -305,8 +304,6 @@ instance (Delta a c, Delta b d) => Delta (a,b) (c,d) where
   plusDelta (a,b) (c,d) = (plusDelta a c, plusDelta b d)
   minusDelta (a,b) (c,d) = (minusDelta a c, minusDelta b d)
 
-
--- TODO rename with _ in front
 data DeltaLBox = DeltaLBox {
   _deltaLBox_translate  :: XY
   , _deltaLBox_resizeBy :: XY

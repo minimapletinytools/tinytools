@@ -588,8 +588,8 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
     Nothing -> LBox 0 0
-    -- add_XY_to_LBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
-    Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_LBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
+    -- add_XY_to_lBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
+    Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_lBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
 
 
 
