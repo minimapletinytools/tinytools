@@ -23,6 +23,50 @@ WIDE
 🙈
 
 
+
+:: CONTROLLER REFACTOR
+
+                       ╔══════>compute previous state<══════════════════════════════>
+                       ║                 ^                                           ^
+                       ║                 ║                                           ║
+                       ║                 ║                                           ║
+                       ║                 v                                           ║
+                       ║            ┌─────────┐                                      ║
+                       ║            │old state│<══════════════════════════════╗      ║
+                       ║            └─────────┘                               ║      ║
+                       ║                 ^                                    ║      ║
+                       v                 ║                                    ║      ║
+                 ╔═══════════╗           v          ┌──────────┐              v      ║
+               ╔>║Controller ║<═══╗═══>apply<══════>│new state │            apply    ║
+               ║ ╚═══════════╝    ║                 └──────────┘              ^      ║
+               ║       ^          ║                      ^                    ║      ║
+               ║       ║          ║               ╔══════╝                    v      ║
+               ║       ║          ║               v                     ╔══════════╗ ║
+               v       ║          ╚════>compute previous state<════════>║Controller║<╝
+           serialize   ║                                                ╚══════════╝
+               ^       ║
+               ║       ║
+               ║       v            ┌──────────┐
+               ║  deserialize<═════>│state     │
+               ║       ^            └──────────┘
+               ║       ║
+               ║       ║
+               ║       ║
+               ║       v
+               ║ ╔═══════════╗
+               ╚>║SController║
+                 ╚═══════════╝
+
+
+
+
+
+
+
+
+
+
+
 :: MDI
 -Flow needs some kind of switcher on all input events/dynamics
   -GoatSwitcher?
@@ -30,37 +74,22 @@ WIDE
 -must support empty doc state
   -or maybe it just always creates a new empty file in these cases?
 
-
-:: FANCY LINES ::
--convert simple line to auto connect to attachments
-  DONE-attachment rendering when adding / editing lines...
-  -if attaching to box X then change highlight on all box X stuff
-  -auto attach solver
+::NEWEST TODO::
+-BUG setting line ends style seems to be broken again
+-attachment stuff
+  -attachment handle rendering
+    -just having line handler selected should not render attachment handles (only when dragging handle end)
+    -having Line tool selected should highlight attachment points so you can create a linee and attach right away
   -move no longer makes sense on attached lines, find a way to disable it
     -or don't disable it...
     -remove it from Box select handler selection?
-  -we want to show line attachment points when line tool is selected, right now it will only show when you start creating a line :(
-  -UTs
--multiline
-  -no attachments for now
-
--BUGS
+  -BUG drag off attachment logic is wrong for Line handler
+    -just do the controller refactor!! D:
   -need to support ANY attach style for unattached ends etc
   -use better function to determine if you clicked on lines (you can do this now)
     -this should have access to the RenderCache/OwlTree
-  DONE-the render box is still too small by 1 to the bottom/right in the <- -> case D:
-  DONE-rotation to up/down creates off by 1 offsetting errors D:
-  DONE-line handle positions need to be updated if attached
-
-::NEWEST TODO::
--attachment handle rendering
-  -just having line handler selected should not render attachment handles (only when dragging handle end)
-  -having Line tool selected should highligh attachment points so you can create a linee and attach right away
--BUG drag off attachment logic is wrong for Line handler
-  -just do the controller refactor!! D:
 -preset interface for choosing line ends
   -easy way to turn on/off line ends for both sides
-ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
 -refactor SEltMethods/getDrawer stuff
   -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....
 -file stuff
@@ -142,6 +171,14 @@ ALREADY DONE-click on file in file explorer should populate it as filename IF fi
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
+DONE-BUG the render box is still too small by 1 to the bottom/right in the <- -> case D:
+DONE-BUG rotation to up/down creates off by 1 offsetting errors D:
+DONE-BUG line handle positions need to be updated if attached
+DONE-convert simple line to auto connect to attachments
+  DONE-attachment rendering when adding / editing lines...
+  DONE-if attaching to box X then change highlight on all box X stuff
+  DONE-auto attach solver
 IGNORE??-BUG hitting assert
   selectionToSuperOwl (CanvasSelection selection) = assert (Seq.length selection == 1) $ Seq.index selection 0
   repro (select a bunch of stuff and try and shift click a bunch on linux???)
