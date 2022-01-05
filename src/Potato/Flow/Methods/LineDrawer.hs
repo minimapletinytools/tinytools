@@ -142,11 +142,13 @@ instance TransformMe AttachmentLocation where
     AL_Bot -> AL_Right
     AL_Left -> AL_Bot
     AL_Right -> AL_Top
+    AL_Any -> AL_Any
   transformMe_rotateRight = \case
     AL_Top -> AL_Right
     AL_Bot -> AL_Left
     AL_Left -> AL_Top
     AL_Right -> AL_Bot
+    AL_Any -> AL_Any
   transformMe_reflectHorizontally = \case
     AL_Left -> AL_Right
     AL_Right -> AL_Left
@@ -493,7 +495,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- <-2->  1 (will not get covered by rotation)
     AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
-    _ -> traceStep "case 11 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+    -- TODO be smarter about how you transform to existing case
+    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver sls lbal1 (lbx2, AL_Left)
+    AL_Any | al2 == AL_Any -> traceStep "case 12 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) (lbx2, AL_Left)
+
+    _ -> traceStep "case 13 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
@@ -570,9 +576,8 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
       sbox <- getSEltBox $ hasOwlElt_toSElt_hack sowl
       return (sbox, al)
 
-    -- TODO AL_Any
-    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_Top) $ maybeGetBox _sSimpleLine_attachStart
-    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_Top) $ maybeGetBox _sSimpleLine_attachEnd
+    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_Any) $ maybeGetBox _sSimpleLine_attachStart
+    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_Any) $ maybeGetBox _sSimpleLine_attachEnd
 
     regenanchors = sSimpleLineSolver params lbal1 lbal2
     anchors = case mcache of

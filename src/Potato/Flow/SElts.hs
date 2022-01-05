@@ -154,7 +154,7 @@ instance Default TextStyle where
 
 -- TODO you need support for AL_Any and maybe AL_Center
 -- TODO lowercase plz
-data AttachmentLocation = AL_Top | AL_Bot | AL_Left | AL_Right deriving (Eq, Generic, Show)
+data AttachmentLocation = AL_Top | AL_Bot | AL_Left | AL_Right | AL_Any deriving (Eq, Generic, Show)
 
 instance FromJSON AttachmentLocation
 instance ToJSON AttachmentLocation
