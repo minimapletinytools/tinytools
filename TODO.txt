@@ -59,6 +59,26 @@ WIDE
 
 
 
+Controller options:
+type Controller = DS.DSum CTag Identity
+
+data Controller = C_ResizeBox DeltaBox
+
+data Controller = Controller {
+  _controller_isValidOperation :: SElt -> Bool
+  , _controller_serialize :: SController
+  , _controller_apply :: PFState -> (PFState, Controller)
+
+  -- would it be nice to have something like this for debugging??
+  , _controller_operation :: SEltLabel -> SEltLabel
+  , _controller_targets :: IntSet
+}
+
+makeResizeBoxController :: DeltaBox -> Controller
+
+-- why not always use this? They aren't as merge friendly as delta based controllers.
+-- do we support changing SElt type?? I think you need to add handling for folder -> not folder as SuperOwlChanges doesn't know what the element use to be (although we do a total regen on layers right so so it just doesn't matter)
+makeSetController :: (REltId, SEltLabel) -> Controller
 
 
 
@@ -115,6 +135,9 @@ WIDE
       -wrap handler in some sort of monad so you can just doUpdateCache
   -consider adding available Attachments to PotatoHandlerInput
 -clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
+  -this happens for 2 reasons
+    -1 the params widget may get closed on if you change selection
+    -2 unfocus event never happens because input does not get passed into left widget
 -you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event

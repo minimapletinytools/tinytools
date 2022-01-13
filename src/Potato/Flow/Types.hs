@@ -77,6 +77,43 @@ type SEltLabelChanges = REltIdMap (Maybe SEltLabel)
 type SEltLabelChangesWithLayerPos = REltIdMap (Maybe (LayerPos, SEltLabel))
 type LayerPosMap = REltIdMap LayerPos
 
+
+type SEltTree = [(REltId,SEltLabel)]
+
+data SCanvas = SCanvas {
+  _sCanvas_box :: LBox
+} deriving (Eq, Generic)
+
+instance Show SCanvas where
+  show s = "SCanvas " <> show (_sCanvas_box s)
+
+instance FromJSON SCanvas
+instance ToJSON SCanvas
+instance Binary SCanvas
+instance NFData SCanvas
+
+-- TODO serialize PFState instead
+data SPotatoFlow = SPotatoFlow {
+  _sPotatoFlow_sCanvas    :: SCanvas
+  , _sPotatoFlow_sEltTree :: SEltTree
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SPotatoFlow
+instance ToJSON SPotatoFlow
+instance Binary SPotatoFlow
+instance NFData SPotatoFlow
+
+
+
+
+
+
+
+
+
+
+-- TODO DELETE ALL CONTROLLER STUFF
+
 -- | (old text, new text)
 
 type DeltaText = (Text,Text)
@@ -304,28 +341,3 @@ controller_isParams _                                    = False
 
 controllerWithId_isParams :: ControllersWithId -> Bool
 controllerWithId_isParams = all controller_isParams
-
-type SEltTree = [(REltId,SEltLabel)]
-
-data SCanvas = SCanvas {
-  _sCanvas_box :: LBox
-} deriving (Eq, Generic)
-
-instance Show SCanvas where
-  show s = "SCanvas " <> show (_sCanvas_box s)
-
-instance FromJSON SCanvas
-instance ToJSON SCanvas
-instance Binary SCanvas
-instance NFData SCanvas
-
--- TODO serialize PFState instead
-data SPotatoFlow = SPotatoFlow {
-  _sPotatoFlow_sCanvas    :: SCanvas
-  , _sPotatoFlow_sEltTree :: SEltTree
-} deriving (Eq, Generic, Show)
-
-instance FromJSON SPotatoFlow
-instance ToJSON SPotatoFlow
-instance Binary SPotatoFlow
-instance NFData SPotatoFlow

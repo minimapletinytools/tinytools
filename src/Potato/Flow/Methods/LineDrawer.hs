@@ -513,8 +513,11 @@ doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
 walkToRender :: Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
 walkToRender isstart begin (tcd, tl) mnext d = r where
   currentpos = begin + (cartDirToUnit tcd) ^* d
+
+  -- TODO set these correctly
   ss@SuperStyle {..} = def
   ls@LineStyle {..} = def
+
   endorelbow = renderAnchorType ss ls $ cartDirToAnchor tcd (fmap fst mnext)
   startorregular = if isstart
     then if d <= tl `div` 2

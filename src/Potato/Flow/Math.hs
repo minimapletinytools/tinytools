@@ -278,6 +278,10 @@ lBox_isCanonicalLBox :: LBox -> Bool
 lBox_isCanonicalLBox lbx = canonicalLBox_from_lBox_ lbx == lbx
 
 
+
+
+
+-- TODO maybe DELETE?
 class Delta x dx where
   plusDelta :: x -> dx -> x
   minusDelta :: x -> dx -> x
