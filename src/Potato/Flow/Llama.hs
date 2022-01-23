@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- WIP
 
 
@@ -12,7 +14,7 @@ import           Potato.Flow.Types
 
 import qualified Data.IntMap as IM
 
-data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text)
+data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama]
 
 data ApplyLlamaError = ApplyLlamaError_Generic Text
 
@@ -72,7 +74,21 @@ makeSetLlama (rid, selt) = r where
       , _llama_serialize = serialize
     }
 
+-- TODO finish
+makeCompositionLlama :: [Llama] -> Llama
+makeCompositionLlama llamas = r where
+
+  -- TODO mapaccum whatever
+  apply pfs = undefined
+
+  serialize = SLlama_Compose $ fmap _llama_serialize llamas
+  r = Llama {
+      _llama_apply = apply
+      , _llama_serialize = serialize
+    }
 
 
-sLlama_deserialize :: SLlama -> Llama
-sLlama_deserialize (SLlama_Set xs) = undefined
+sLlama_deserialize :: OwlPFState -> SLlama -> Llama
+sLlama_deserialize _ sllama = case sllama of
+  SLlama_Set pairs -> makeCompositionLlama (fmap makeSetLlama pairs)
+  SLlama_Rename x -> makeRenameLlama x
