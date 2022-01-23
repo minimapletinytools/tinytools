@@ -13,15 +13,23 @@ import Potato.Flow.OwlState
 import           Potato.Flow.Types
 
 import qualified Data.IntMap as IM
+import qualified Text.Show
 
-data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama]
+data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama] deriving (Show, Generic)
+
+instance NFData SLlama
 
 data ApplyLlamaError = ApplyLlamaError_Generic Text
 
 data Llama = Llama {
   _llama_apply :: OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges, Llama)
   , _llama_serialize :: SLlama
-}
+} deriving (Generic)
+
+instance NFData Llama
+
+instance Show Llama where
+  show = show . _llama_serialize
 
 makeRenameLlama :: (REltId, Text) -> Llama
 makeRenameLlama (rid, newname) = r where

@@ -95,6 +95,7 @@ makeSetController :: (REltId, SEltLabel) -> Controller
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+-LINE LABELS :O
 -BUG setting line ends style seems to be broken again
 -attachment stuff
   -attachment handle rendering

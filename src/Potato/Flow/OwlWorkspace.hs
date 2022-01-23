@@ -23,6 +23,7 @@ import Potato.Flow.SEltMethods
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
+import Potato.Flow.Llama
 import Potato.Flow.Methods.Types
 
 import           Control.Exception  (assert)
@@ -41,7 +42,11 @@ data OwlPFCmd =
   | OwlPFCNewTree (MiniOwlTree, OwlSpot)
   | OwlPFCDeleteTree (MiniOwlTree, OwlSpot)
 
+  -- DEPRECATE
   | OwlPFCManipulate ControllersWithId
+
+  | OwlPFCApplyLlama Llama
+
   -- we need SuperOwlParliament for undo
   | OwlPFCMove (OwlSpot, SuperOwlParliament)
 
@@ -158,6 +163,9 @@ doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wher
     OwlPFCDeleteTree x -> do_deleteMiniOwlTree x s
 
     OwlPFCManipulate x   ->  do_manipulate x s
+
+    --OwlPFCApplyLlama x   -> do_llama x s
+
     OwlPFCMove x         -> do_move x s
     OwlPFCResizeCanvas x -> (do_resizeCanvas x s, IM.empty)
 
@@ -172,6 +180,10 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
     OwlPFCDeleteTree x -> undo_deleteMiniOwlTree x s
 
     OwlPFCManipulate x   ->  undo_manipulate x s
+
+    -- TODO this can't bet hesame operaiton, we need to stick a different operation on the undo stack...
+    --OwlPFCApplyLlama x   -> do_llama x s
+
     OwlPFCMove x         -> undo_move x s
     OwlPFCResizeCanvas x -> (undo_resizeCanvas x s, IM.empty)
 
@@ -192,7 +204,12 @@ data WSEvent =
   | WSERemoveElt OwlParliament
   | WSEMoveElt (OwlSpot, OwlParliament)
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
+
+  -- DEPRECATE
   | WSEManipulate (Bool, ControllersWithId)
+
+  | WSEApplyLlama (Bool, Llama)
+
   | WSEResizeCanvas DeltaLBox
   | WSEUndo
   | WSERedo
@@ -311,6 +328,13 @@ updateOwlPFWorkspace evt ws = let
     WSEManipulate (undo, x) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_manipulate_to_manipulate pfs x) ws
       else doCmdWorkspace (pfc_manipulate_to_manipulate lastState x) ws
+
+    -- TODO
+    WSEApplyLlama (undo, x) -> if undo
+      then undefined
+      else undefined
+
+
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
     WSEUndo -> undoWorkspace ws
