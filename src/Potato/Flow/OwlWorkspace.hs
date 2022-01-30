@@ -33,30 +33,6 @@ import qualified Data.Sequence      as Seq
 
 
 
-
--- TODO rename
-data OwlPFCmd =
-  OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
-  | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
-
-  | OwlPFCNewTree (MiniOwlTree, OwlSpot)
-  | OwlPFCDeleteTree (MiniOwlTree, OwlSpot)
-
-  -- DEPRECATE
-  | OwlPFCManipulate ControllersWithId
-
-  | OwlPFCApplyLlama Llama
-
-  -- we need SuperOwlParliament for undo
-  | OwlPFCMove (OwlSpot, SuperOwlParliament)
-
-  | OwlPFCResizeCanvas DeltaLBox
-
-  -- | OwlPFCSnap (OwlPFState, OwlPFState) --(before, after)
-  deriving (Show, Generic)
-
-instance NFData OwlPFCmd
-
 -- TODO rename vars
 data ActionStack = ActionStack {
   -- TODO change these to Seq
@@ -151,41 +127,6 @@ doCmdWorkspace cmd pfw = force r where
   newStack = ActionStack (cmd:_actionStack_doStack) [] newLastSaved
   --newMaxId = owlPFState_maxID _owlPFWorkspace_pFState
   r = uncurry OwlPFWorkspace newState newStack
-
-doCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
-  (newState, changes) = case cmd of
-
-    OwlPFCNewElts x      ->  do_newElts x s
-    OwlPFCDeleteElts x   ->  do_deleteElts x s
-
-    OwlPFCNewTree x -> do_newMiniOwlTree x s
-    OwlPFCDeleteTree x -> do_deleteMiniOwlTree x s
-
-    OwlPFCManipulate x   ->  do_manipulate x s
-
-    --OwlPFCApplyLlama x   -> do_llama x s
-
-    OwlPFCMove x         -> do_move x s
-    OwlPFCResizeCanvas x -> (do_resizeCanvas x s, IM.empty)
-
-undoCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
-  (newState, changes) =  case cmd of
-
-    OwlPFCNewElts x      ->  undo_newElts x s
-    OwlPFCDeleteElts x   ->  undo_deleteElts x s
-
-    OwlPFCNewTree x -> undo_newMiniOwlTree x s
-    OwlPFCDeleteTree x -> undo_deleteMiniOwlTree x s
-
-    OwlPFCManipulate x   ->  undo_manipulate x s
-
-    -- TODO this can't bet hesame operaiton, we need to stick a different operation on the undo stack...
-    --OwlPFCApplyLlama x   -> do_llama x s
-
-    OwlPFCMove x         -> undo_move x s
-    OwlPFCResizeCanvas x -> (undo_resizeCanvas x s, IM.empty)
 
 ------ update functions via commands
 data WSEvent =
