@@ -305,7 +305,6 @@ instance TransformMe SimpleLineSolverParameters where
   transformMe_rotateRight = id
   transformMe_reflectHorizontally = id
 
--- TODO
 sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
 sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = lineAnchorsForRender_simplify anchors where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
@@ -497,9 +496,11 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
     -- TODO be smarter about how you transform to existing case
     AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver sls lbal1 (lbx2, AL_Left)
-    AL_Any | al2 == AL_Any -> traceStep "case 12 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) (lbx2, AL_Left)
+    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) lbal2
 
-    _ -> traceStep "case 13 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) (lbx2, AL_Left)
+
+    _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
@@ -561,7 +562,7 @@ lineAnchorsForRender_renderAt LineAnchorsForRender {..} pos = r where
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
 sSimpleLineNewRenderFn :: SSimpleLine -> Maybe LineAnchorsForRender -> SEltDrawer
-sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
+sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = traceShow ssline $ drawer where
   params = SimpleLineSolverParameters {
       _simpleLineSolverParameters_offsetBorder = True
       -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
@@ -582,7 +583,9 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
     lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_Any) $ maybeGetBox _sSimpleLine_attachStart
     lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_Any) $ maybeGetBox _sSimpleLine_attachEnd
 
+    -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
     regenanchors = sSimpleLineSolver params lbal1 lbal2
+
     anchors = case mcache of
       Just x -> x
       Nothing -> regenanchors

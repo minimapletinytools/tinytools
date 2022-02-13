@@ -314,8 +314,8 @@ getDrawer selt = case selt of
   SEltFolderStart -> nilDrawer
   SEltFolderEnd   -> nilDrawer
   SEltBox sbox    -> sBox_drawer sbox
-  SEltLine sline  -> sSimpleLine_drawer sline
-  --SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
+  --SEltLine sline  -> sSimpleLine_drawer sline
+  SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
   SEltTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where

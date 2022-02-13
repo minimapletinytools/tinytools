@@ -18,6 +18,7 @@ import Potato.Flow.BroadPhase
 import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.Attachments
+import Potato.Flow.Llama
 
 import           Control.Exception
 import           Data.Default
@@ -139,7 +140,7 @@ instance PotatoHandler SimpleLineHandler where
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
     MouseDragState_Down -> r where
-      (_, sline) = getSLine _potatoHandlerInput_canvasSelection
+      (_, ssline) = getSLine _potatoHandlerInput_canvasSelection
       mistart = findFirstLineManipulator _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
       r = case mistart of
         Nothing -> Nothing -- did not click on manipulator, no capture
@@ -147,7 +148,7 @@ instance PotatoHandler SimpleLineHandler where
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _simpleLineHandler_isStart = isstart
                 , _simpleLineHandler_active = True
-                , _simpleLineHandler_original = sline
+                , _simpleLineHandler_original = ssline
               }
           }
     MouseDragState_Dragging -> Just r where
@@ -170,18 +171,17 @@ instance PotatoHandler SimpleLineHandler where
         then fmap fst . isOverAttachment _mouseDrag_to $ attachments
         else Nothing
 
-
-
-      -- for manipulation
-      controller = CTagLine :=> (Identity $ if _simpleLineHandler_isStart
-        then def {
-            _cLine_deltaStart = Just $ DeltaXY dragDelta
-            , _cLine_deltaAttachStart = if _simpleLineHandler_isStart then dontChangeUnlessNecessary (ogslinestart, mattachend) else Nothing
+      newline = if _simpleLineHandler_isStart
+        then _simpleLineHandler_original {
+            _sSimpleLine_start       = _mouseDrag_to
+            , _sSimpleLine_attachStart = mattachend
           }
-        else def {
-            _cLine_deltaEnd = Just $ DeltaXY dragDelta
-            , _cLine_deltaAttachEnd = if _simpleLineHandler_isStart then Nothing else dontChangeUnlessNecessary (ogslineend, mattachend)
-          })
+        else _simpleLineHandler_original {
+            _sSimpleLine_end       = _mouseDrag_to
+            , _sSimpleLine_attachEnd = mattachend
+          }
+
+      llama = makeSetLlama (rid, SEltLine newline)
 
       -- for creating new elt
       newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
@@ -196,7 +196,7 @@ instance PotatoHandler SimpleLineHandler where
 
       op = if _simpleLineHandler_isCreation
         then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
-        else WSEManipulate (_simpleLineHandler_undoFirst, IM.singleton rid controller)
+        else WSEApplyLlama (_simpleLineHandler_undoFirst, llama)
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {

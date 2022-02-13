@@ -97,15 +97,17 @@ makeSetController :: (REltId, SEltLabel) -> Controller
 ::NEWEST TODO::
 -LINE LABELS :O
 -BUG setting line ends style seems to be broken again
+  -I think this might be because of params mouse focus issue again...
+-switch OwlPFCManipulate over to Llama
 -attachment stuff
   -attachment handle rendering
     -just having line handler selected should not render attachment handles (only when dragging handle end)
-    -having Line tool selected should highlight attachment points so you can create a linee and attach right away
+    -having Line tool selected should highlight attachment points so you can create a line and attach right away
   -move no longer makes sense on attached lines, find a way to disable it
     -or don't disable it...
     -remove it from Box select handler selection?
-  -BUG drag off attachment logic is wrong for Line handler
-    -just do the controller refactor!! D:
+  DONE?-BUG drag off attachment logic is wrong for Line handler
+    DONE-just do the controller refactor!! D:
   -need to support ANY attach style for unattached ends etc
   -use better function to determine if you clicked on lines (you can do this now)
     -this should have access to the RenderCache/OwlTree
