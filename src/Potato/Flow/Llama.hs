@@ -72,7 +72,7 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
 
 
 
-data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama] | SLlama_OwlPFCmd OwlPFCmd deriving (Show, Generic)
+data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama] | SLlama_OwlPFCmd OwlPFCmd Bool deriving (Show, Generic)
 
 instance NFData SLlama
 
@@ -151,7 +151,7 @@ makePFCLlama' isDo cmd = r where
       (newState, changes) = if isDo then doCmdState cmd pfs else undoCmdState cmd pfs
     in Right $ (newState, changes, unset)
 
-  serialize = SLlama_OwlPFCmd cmd
+  serialize = SLlama_OwlPFCmd cmd isDo
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
@@ -178,3 +178,4 @@ sLlama_deserialize :: OwlPFState -> SLlama -> Llama
 sLlama_deserialize _ sllama = case sllama of
   SLlama_Set pairs -> makeCompositionLlama (fmap makeSetLlama pairs)
   SLlama_Rename x -> makeRenameLlama x
+  SLlama_OwlPFCmd pfc isDo -> makePFCLlama' isDo pfc
