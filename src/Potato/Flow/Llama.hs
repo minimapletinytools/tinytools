@@ -76,7 +76,7 @@ data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlam
 
 instance NFData SLlama
 
-data ApplyLlamaError = ApplyLlamaError_Generic Text
+data ApplyLlamaError = ApplyLlamaError_Generic Text deriving (Show)
 
 data Llama = Llama {
   _llama_apply :: OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges, Llama)
@@ -89,9 +89,22 @@ instance Show Llama where
   show = show . _llama_serialize
 
 data LlamaStack = LlamaStack {
-  _llamaStack_do :: [Llama] -- stuff we've done, applying these Llamas will *undo* the operation that put them on the stack!
-  , _llamaStack_undo :: [Llama] -- stuff we've undone, applying these Llamas will *redo* the operation that put them on the stack!
-}
+  _llamaStack_done :: [Llama] -- stuff we've done, applying these Llamas will *undo* the operation that put them on the stack!
+  , _llamaStack_undone :: [Llama] -- stuff we've undone, applying these Llamas will *redo* the operation that put them on the stack!
+  , _llamaStack_lastSaved :: Maybe Int -- size of do stacks on last save
+} deriving (Show, Generic)
+
+instance NFData LlamaStack
+
+emptyLlamaStack :: LlamaStack
+emptyLlamaStack = LlamaStack [] [] (Just 0)
+
+
+-- UNTESTED
+llamaStack_hasUnsavedChanges :: LlamaStack -> Bool
+llamaStack_hasUnsavedChanges LlamaStack {..} = case _llamaStack_lastSaved of
+  Nothing -> True
+  Just x -> x /= length _llamaStack_done
 
 makeRenameLlama :: (REltId, Text) -> Llama
 makeRenameLlama (rid, newname) = r where
