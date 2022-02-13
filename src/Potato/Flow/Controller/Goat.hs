@@ -33,6 +33,7 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
+import Potato.Flow.Llama
 
 import           Control.Exception                         (assert)
 import           Data.Default
@@ -83,7 +84,7 @@ goatState_owlTree :: GoatState -> OwlTree
 goatState_owlTree = _owlPFState_owlTree . goatState_pFState
 
 goatState_hasUnsavedChanges :: GoatState -> Bool
-goatState_hasUnsavedChanges = actionStack_hasUnsavedChanges . _owlPFWorkspace_actionStack . _goatState_workspace
+goatState_hasUnsavedChanges = llamaStack_hasUnsavedChanges . _owlPFWorkspace_llamaStack . _goatState_workspace
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =

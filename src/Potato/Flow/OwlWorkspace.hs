@@ -3,9 +3,7 @@
 module Potato.Flow.OwlWorkspace (
   OwlPFWorkspace(..)
   , emptyWorkspace
-  , emptyActionStack
   , markWorkspaceSaved
-  , actionStack_hasUnsavedChanges
   , undoWorkspace
   , redoWorkspace
   , undoPermanentWorkspace
@@ -31,33 +29,12 @@ import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Sequence      as Seq
 
-
-
--- TODO rename vars
-data ActionStack = ActionStack {
-  -- TODO change these to Seq
-  _actionStack_doStack     :: [OwlPFCmd] -- maybe just do something lke [PFCmd, Maybe OwlPFState] here for state based undo
-  , _actionStack_undoStack :: [OwlPFCmd] -- stack of things we've undone
-  , _actionStack_lastSaved :: Maybe Int -- size of do stacks on last save
-} deriving (Show, Generic)
-
-instance NFData ActionStack
-
-emptyActionStack :: ActionStack
-emptyActionStack = ActionStack [] [] (Just 0)
-
--- UNTESTED
-actionStack_hasUnsavedChanges :: ActionStack -> Bool
-actionStack_hasUnsavedChanges ActionStack {..} = case _actionStack_lastSaved of
-  Nothing -> True
-  Just x -> x /= length _actionStack_doStack
-
 -- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
   -- TODO rename owlPFState
   _owlPFWorkspace_pFState       :: OwlPFState
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges
-  , _owlPFWorkspace_actionStack :: ActionStack
+  , _owlPFWorkspace_llamaStack :: LlamaStack
 } deriving (Show, Generic)
 
 instance NFData OwlPFWorkspace
@@ -67,66 +44,96 @@ loadOwlPFStateIntoWorkspace pfs ws = r where
   removeOld = fmap (const Nothing) (_owlTree_mapping . _owlPFState_owlTree . _owlPFWorkspace_pFState $ ws)
   addNew = IM.mapWithKey (\rid (oem,oe) -> Just (SuperOwl rid oem oe)) (_owlTree_mapping . _owlPFState_owlTree $ pfs)
   changes = IM.union addNew removeOld
-  r = OwlPFWorkspace pfs changes emptyActionStack
+  r = OwlPFWorkspace pfs changes emptyLlamaStack
 
 emptyWorkspace :: OwlPFWorkspace
-emptyWorkspace = OwlPFWorkspace emptyOwlPFState IM.empty emptyActionStack
+emptyWorkspace = OwlPFWorkspace emptyOwlPFState IM.empty emptyLlamaStack
 
 -- UNTESTED
 markWorkspaceSaved :: OwlPFWorkspace -> OwlPFWorkspace
 markWorkspaceSaved pfw = r where
-  as@ActionStack {..} = _owlPFWorkspace_actionStack pfw
-  newas = as { _actionStack_lastSaved = Just (length _actionStack_doStack) }
-  r = pfw { _owlPFWorkspace_actionStack = newas }
+  as@LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
+  newas = as { _llamaStack_lastSaved = Just (length _llamaStack_done) }
+  r = pfw { _owlPFWorkspace_llamaStack = newas }
 
 undoWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 undoWorkspace pfw =  r where
-  ActionStack {..} = _owlPFWorkspace_actionStack pfw
-  r = case _actionStack_doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ OwlPFWorkspace (undoCmdState c _owlPFWorkspace_pFState) (ActionStack cs (c:_actionStack_undoStack))
-    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs (c:_actionStack_undoStack) _actionStack_lastSaved)
+  LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
+  r = case _llamaStack_done of
+    c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs (undollama:_llamaStack_undone) _llamaStack_lastSaved) where
+      (newpfs, changes, undollama) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+        Left e -> error $ show e
+        Right x -> x
     _ -> pfw
 
 redoWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 redoWorkspace pfw = r where
-  ActionStack {..} = _owlPFWorkspace_actionStack pfw
-  r = case _actionStack_undoStack of
-    --c : cs -> trace "REDO: " . traceShow c $ OwlPFWorkspace (doCmdState c _owlPFWorkspace_pFState) (ActionStack (c:_actionStack_doStack) cs)
-    c : cs -> uncurry OwlPFWorkspace (doCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack (c:_actionStack_doStack) cs _actionStack_lastSaved)
+  LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
+  r = case _llamaStack_undone of
+    c : cs -> OwlPFWorkspace newpfs changes (LlamaStack (dollama:_llamaStack_done) cs _llamaStack_lastSaved) where
+      (newpfs, changes, dollama) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+        Left e -> error $ show e
+        Right x -> x
     _ -> pfw
-
 
 undoPermanentWorkspace :: OwlPFWorkspace -> OwlPFWorkspace
 undoPermanentWorkspace pfw =  r where
-  ActionStack {..} = _owlPFWorkspace_actionStack pfw
+  LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
   -- NOTE this step is rather unecessary as this is always followed by a doCmdWorkspace but it's best to keep the state correct in between in case anything changes in the future
-  newLastSaved = case _actionStack_lastSaved of
+  newLastSaved = case _llamaStack_lastSaved of
     Nothing -> Nothing
-    Just x -> if length _actionStack_doStack > x
+    Just x -> if length _llamaStack_done > x
       -- we are undoing a change that came after last save
       then Just x
       -- we are permanently undoing a change from last saved
       else Nothing
-  r = case _actionStack_doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ OwlPFWorkspace (undoCmdState c _owlPFWorkspace_pFState) (ActionStack cs (c:_actionStack_undoStack))
-    c : cs -> uncurry OwlPFWorkspace (undoCmdState c (_owlPFWorkspace_pFState pfw)) (ActionStack cs _actionStack_undoStack newLastSaved)
+  r = case _llamaStack_done of
+    c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs _llamaStack_undone newLastSaved) where
+      (newpfs, changes, _) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+        Left e -> error $ show e
+        Right x -> x
     _ -> pfw
 
-doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> OwlPFWorkspace
---doCmdWorkspace cmd OwlPFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem
-doCmdWorkspace cmd pfw = force r where
-  newState = doCmdState cmd (_owlPFWorkspace_pFState pfw)
-  ActionStack {..} = (_owlPFWorkspace_actionStack pfw)
-  newLastSaved = case _actionStack_lastSaved of
+doLlamaWorkspace :: Llama -> OwlPFWorkspace -> OwlPFWorkspace
+doLlamaWorkspace llama pfw = r where
+  (newpfs, changes, undollama) = case _llama_apply llama (_owlPFWorkspace_pFState pfw) of
+    Left e -> error $ show e
+    Right x -> x
+  LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
+  newLastSaved = case _llamaStack_lastSaved of
     Nothing -> Nothing
-    Just x -> if length _actionStack_doStack < x
+    Just x -> if length _llamaStack_done < x
       -- we "did" something when last save is still on undo stack, so we can never recover to last saved
       then Nothing
       -- we can still undo back to last save state
       else Just x
-  newStack = ActionStack (cmd:_actionStack_doStack) [] newLastSaved
-  --newMaxId = owlPFState_maxID _owlPFWorkspace_pFState
-  r = uncurry OwlPFWorkspace newState newStack
+  r = OwlPFWorkspace {
+      _owlPFWorkspace_pFState       = newpfs
+      , _owlPFWorkspace_lastChanges = changes
+      , _owlPFWorkspace_llamaStack  = LlamaStack {
+          _llamaStack_done = undollama : _llamaStack_done
+          , _llamaStack_undone = _llamaStack_undone
+          , _llamaStack_lastSaved = newLastSaved
+        }
+    }
+
+doLlamaWorkspaceUndoPermanentFirst :: Llama -> OwlPFWorkspace -> OwlPFWorkspace
+doLlamaWorkspaceUndoPermanentFirst llama ws = r where
+  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
+  undoedws = undoPermanentWorkspace ws
+  r = doLlamaWorkspace llama undoedws
+
+doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> OwlPFWorkspace
+doCmdWorkspace cmd pfw = force r where
+  r = doLlamaWorkspace (makePFCLlama cmd) pfw
+
+doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> OwlPFWorkspace
+doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
+  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
+  undoedws = undoPermanentWorkspace ws
+  undoedpfs = _owlPFWorkspace_pFState undoedws
+  cmd = cmdFn undoedpfs
+  r = doLlamaWorkspace (makePFCLlama cmd) undoedws
 
 ------ update functions via commands
 data WSEvent =
@@ -149,6 +156,7 @@ data WSEvent =
   -- DEPRECATE
   | WSEManipulate (Bool, ControllersWithId)
 
+  -- TODO support
   | WSEApplyLlama (Bool, Llama)
 
   | WSEResizeCanvas DeltaLBox
@@ -159,15 +167,6 @@ data WSEvent =
 
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
-
-
-doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> OwlPFWorkspace
-doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
-  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
-  undoedws = undoPermanentWorkspace ws
-  undoedpfs = _owlPFWorkspace_pFState undoedws
-  cmd = cmdFn undoedpfs
-  r = doCmdWorkspace cmd undoedws
 
 
 ------ helpers for converting events to cmds
@@ -266,14 +265,16 @@ updateOwlPFWorkspace evt ws = let
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
+
+    -- DELETE
     WSEManipulate (undo, x) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_manipulate_to_manipulate pfs x) ws
       else doCmdWorkspace (pfc_manipulate_to_manipulate lastState x) ws
 
     -- TODO
     WSEApplyLlama (undo, x) -> if undo
-      then undefined
-      else undefined
+      then doLlamaWorkspaceUndoPermanentFirst x ws
+      else doLlamaWorkspace x ws
 
 
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
