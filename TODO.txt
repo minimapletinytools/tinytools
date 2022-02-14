@@ -124,12 +124,13 @@ makeSetController :: (REltId, SEltLabel) -> Controller
     -this should have access to the RenderCache/OwlTree
   -attachment handle rendering
     -just having line handler selected should not render attachment handles (only when dragging handle end)
-    -having Line tool selected should highlight attachment points so you can create a line and attach right away
-      -TODO I think you want to make it so selecting tool changes the handler.. You'll need to update each handler to handle empty (non selection) states though D:
+    DONE-having Line tool selected should highlight attachment points so you can create a line and attach right away
+      DONE-TODO I think you want to make it so selecting tool changes the handler.. You'll need to update each handler to handle empty (non selection) states though D:
   -move no longer makes sense on attached lines, find a way to disable it
     -or don't disable it...
     -remove it from Box select handler selection?
   -add intermediate points in SimpleLine like it is in lucidchart, you can use the same solver
+  DONE-lines can't be attached on first drag
   DONE?-BUG drag off attachment logic is wrong for Line handler
     DONE-just do the controller refactor!! D:
 -preset interface for choosing line ends

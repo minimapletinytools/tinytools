@@ -72,6 +72,7 @@ data SimpleLineHandler = SimpleLineHandler {
 
     , _simpleLineHandler_offsetAttach :: Bool -- who sets this?
 
+    -- where the current modified line is attached to (_simpleLineHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
     , _simpleLineHandler_attachStart :: Maybe Attachment
     , _simpleLineHandler_attachEnd :: Maybe Attachment
   } deriving (Show)
@@ -126,88 +127,90 @@ dontChangeUnlessNecessary (ma, mb) = if ma == mb
   else Just (ma, mb)
 
 
+
 instance PotatoHandler SimpleLineHandler where
   pHandlerName _ = handlerName_simpleLine
-  pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+  pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
-    MouseDragState_Down | _simpleLineHandler_isCreation -> Just $ def {
-        _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-            _simpleLineHandler_active = True
-            , _simpleLineHandler_attachStart = fmap fst . isOverAttachment _mouseDrag_from $ getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-          }
-      }
-    -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
-    -- TODO consider moving this into GoatWidget since it's needed by many manipulators
-    MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
-    MouseDragState_Down -> r where
-      (_, ssline) = getSLine _potatoHandlerInput_canvasSelection
-      mistart = findFirstLineManipulator _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
-      r = case mistart of
-        Nothing -> Nothing -- did not click on manipulator, no capture
-        Just isstart -> Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                _simpleLineHandler_isStart = isstart
-                , _simpleLineHandler_active = True
-                , _simpleLineHandler_original = ssline
-              }
-          }
-    MouseDragState_Dragging -> Just r where
-      rid = _superOwl_id $ selectionToSuperOwl _potatoHandlerInput_canvasSelection
+    attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+    mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
 
-      -- line should always have been set in MouseDragState_Down
-      ogslinestart = _sSimpleLine_attachStart _simpleLineHandler_original
-      ogslineend = _sSimpleLine_attachEnd _simpleLineHandler_original
+    in case _mouseDrag_state of
 
-      -- TODO this is wrong for attachment cases
-      -- but you currently can't fix this as it is because you can't compute previous attach position reliably in undoFirst cases (well you could probably hack around it...)
-      -- TODO handle shift click using restrict8
-      dragDelta = _mouseDrag_to - _mouseDrag_from
-
-      attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-      nontrivialline = if _simpleLineHandler_isStart
-        then Just _mouseDrag_to /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
-        else Just _mouseDrag_from /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslinestart)
-      mattachend = if nontrivialline
-        then fmap fst . isOverAttachment _mouseDrag_to $ attachments
-        else Nothing
-
-      newline = if _simpleLineHandler_isStart
-        then _simpleLineHandler_original {
-            _sSimpleLine_start       = _mouseDrag_to
-            , _sSimpleLine_attachStart = mattachend
-          }
-        else _simpleLineHandler_original {
-            _sSimpleLine_end       = _mouseDrag_to
-            , _sSimpleLine_attachEnd = mattachend
-          }
-
-      llama = makeSetLlama (rid, SEltLine newline)
-
-      -- for creating new elt
-      newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
-      lineToAdd = SEltLine $ SSimpleLine {
-          _sSimpleLine_start = _mouseDrag_from
-          , _sSimpleLine_end = _mouseDrag_to
-          , _sSimpleLine_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
-          , _sSimpleLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
-          , _sSimpleLine_attachStart = _simpleLineHandler_attachStart
-          , _sSimpleLine_attachEnd = Nothing
-        }
-
-      op = if _simpleLineHandler_isCreation
-        then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
-        else WSEApplyLlama (_simpleLineHandler_undoFirst, llama)
-
-      r = def {
+      MouseDragState_Down | _simpleLineHandler_isCreation -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-              _simpleLineHandler_undoFirst = True
-              , _simpleLineHandler_attachStart = if _simpleLineHandler_isStart then mattachend else Nothing
-              , _simpleLineHandler_attachEnd = if _simpleLineHandler_isStart then Nothing else mattachend
+              _simpleLineHandler_active = True
+              , _simpleLineHandler_isStart = False
+              , _simpleLineHandler_attachStart = traceShowId mattachend
             }
-          , _potatoHandlerOutput_pFEvent = Just op
         }
-    MouseDragState_Up -> Just def
-    MouseDragState_Cancelled -> Just def
+      -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
+      -- TODO consider moving this into GoatWidget since it's needed by many manipulators
+      MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
+      MouseDragState_Down -> r where
+        (_, ssline) = getSLine _potatoHandlerInput_canvasSelection
+        mistart = findFirstLineManipulator _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+        r = case mistart of
+          Nothing -> Nothing -- did not click on manipulator, no capture
+          Just isstart -> Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                  _simpleLineHandler_isStart = isstart
+                  , _simpleLineHandler_active = True
+                  , _simpleLineHandler_original = ssline
+                }
+            }
+      MouseDragState_Dragging -> Just r where
+        rid = _superOwl_id $ selectionToSuperOwl _potatoHandlerInput_canvasSelection
+
+        -- line should always have been set in MouseDragState_Down
+        ogslinestart = _sSimpleLine_attachStart _simpleLineHandler_original
+        ogslineend = _sSimpleLine_attachEnd _simpleLineHandler_original
+
+        -- only attach on non trivial changes so we don't attach to our starting point
+        nontrivialline = if _simpleLineHandler_isStart
+          then Just _mouseDrag_to /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
+          else Just _mouseDrag_from /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslinestart)
+        mattachendnontrivial = if nontrivialline
+          then mattachend
+          else Nothing
+
+        -- for modifying an existing elt
+        modifiedline = if _simpleLineHandler_isStart
+          then _simpleLineHandler_original {
+              _sSimpleLine_start       = _mouseDrag_to
+              , _sSimpleLine_attachStart = mattachendnontrivial
+            }
+          else _simpleLineHandler_original {
+              _sSimpleLine_end       = _mouseDrag_to
+              , _sSimpleLine_attachEnd = mattachendnontrivial
+            }
+        llama = makeSetLlama (rid, SEltLine modifiedline)
+
+        -- for creating new elt
+        newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
+        lineToAdd = SEltLine $ SSimpleLine {
+            _sSimpleLine_start = _mouseDrag_from
+            , _sSimpleLine_end = _mouseDrag_to
+            , _sSimpleLine_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
+            , _sSimpleLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
+            , _sSimpleLine_attachStart = _simpleLineHandler_attachStart
+            , _sSimpleLine_attachEnd = mattachendnontrivial
+          }
+
+        op = if _simpleLineHandler_isCreation
+          then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
+          else WSEApplyLlama (_simpleLineHandler_undoFirst, llama)
+
+        r = def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _simpleLineHandler_undoFirst = True
+                , _simpleLineHandler_attachStart = if _simpleLineHandler_isStart then mattachendnontrivial else _simpleLineHandler_attachStart
+                , _simpleLineHandler_attachEnd = if not _simpleLineHandler_isStart then mattachendnontrivial else _simpleLineHandler_attachEnd
+              }
+            , _potatoHandlerOutput_pFEvent = Just op
+          }
+      MouseDragState_Up -> Just def
+      MouseDragState_Cancelled -> Just def
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
     _                              -> Nothing
