@@ -19,3 +19,6 @@ assertPotatoShowAndDump :: (HasCallStack, PotatoShow a) => a -> Bool -> b -> b
 assertPotatoShowAndDump a v b = if v
   then b
   else error $ "assert failed:\n" <> potatoShow a
+
+traceWith :: (a -> String) -> a -> a
+traceWith f x = trace (f x) x

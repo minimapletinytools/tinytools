@@ -95,26 +95,47 @@ makeSetController :: (REltId, SEltLabel) -> Controller
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+-BUG
+                      ╔═════╗
+                      ║     v
+                      ║   ╔═══╗
+                      ║   ║@@@║            ╔═══╗
+                      ║   ║@@@║<═══════════║@@@║════════╗
+                      ║   ║@@@║          ╔>║@@@║        ║
+             ╔═══╗    ║   ╚═══╝          ║ ║@@@║        ║
+             ║@@@║    ║                  ║ ╚═══╝        ║
+             ║@@@║    ║                  ║              ║
+             ║@@@║    ║                  ║              ║
+             ╚═══╝    ║                  ║              ║
+               ^      ║           ╔══════║════════════╗ ║
+               ╚══════╝           ║@@@@@@║@@@@@@@@@@@@║ ║
+                                  ║@@@@@@║@@@@@@@@@@@@║<╝
+                                  ║@@@@@@║@@@@@@@@@@@@║
+                                  ╚══════║════════════╝
+                                         ║  ^
+                                         ╚══╝
 -LINE LABELS :O
 -BUG setting line ends style seems to be broken again
   -I think this might be because of params mouse focus issue again...
--switch OwlPFCManipulate over to Llama
 -attachment stuff
+  -need to support ANY attach style for unattached ends etc
+    -tries to do a best guess based on where line is coming from
+  -use better function to determine if you clicked on lines (you can do this now)
+    -this should have access to the RenderCache/OwlTree
   -attachment handle rendering
     -just having line handler selected should not render attachment handles (only when dragging handle end)
     -having Line tool selected should highlight attachment points so you can create a line and attach right away
+      -TODO I think you want to make it so selecting tool changes the handler.. You'll need to update each handler to handle empty (non selection) states though D:
   -move no longer makes sense on attached lines, find a way to disable it
     -or don't disable it...
     -remove it from Box select handler selection?
+  -add intermediate points in SimpleLine like it is in lucidchart, you can use the same solver
   DONE?-BUG drag off attachment logic is wrong for Line handler
     DONE-just do the controller refactor!! D:
-  -need to support ANY attach style for unattached ends etc
-  -use better function to determine if you clicked on lines (you can do this now)
-    -this should have access to the RenderCache/OwlTree
 -preset interface for choosing line ends
   -easy way to turn on/off line ends for both sides
--refactor SEltMethods/getDrawer stuff
-  -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....
+
+
 -file stuff
   -file explorer
     -add highlight on click
@@ -132,12 +153,17 @@ makeSetController :: (REltId, SEltLabel) -> Controller
     DONE-sets directory to home dir
     -opens tutorial
 -refactor
+  -refactor SEltMethods/getDrawer stuff
+    -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....
+  -switch OwlPFCManipulate over to Llama
   -consider doing some sort of generic cache method
     -options
       -generic call to `updateCache` method that gets called before each update operation in Goat as appropriate
       -wrap handler in some sort of monad so you can just doUpdateCache
   -consider adding available Attachments to PotatoHandlerInput
--clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
+    -why?
+
+-BUG clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
   -this happens for 2 reasons
     -1 the params widget may get closed on if you change selection
     -2 unfocus event never happens because input does not get passed into left widget

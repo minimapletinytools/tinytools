@@ -470,7 +470,7 @@ test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
 
 spec :: Spec
 spec = do
-  describe "BoxTextHandel" $ do
+  describe "BoxTextHandler" $ do
     boxTextInputState_basic_test
     fromHUnitTest $ test_basic
     fromHUnitTest $ test_handler_state

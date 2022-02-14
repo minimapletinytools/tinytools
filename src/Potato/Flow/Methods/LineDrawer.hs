@@ -562,7 +562,7 @@ lineAnchorsForRender_renderAt LineAnchorsForRender {..} pos = r where
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
 sSimpleLineNewRenderFn :: SSimpleLine -> Maybe LineAnchorsForRender -> SEltDrawer
-sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = traceShow ssline $ drawer where
+sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   params = SimpleLineSolverParameters {
       _simpleLineSolverParameters_offsetBorder = True
       -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)

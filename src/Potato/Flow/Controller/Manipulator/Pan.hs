@@ -28,7 +28,7 @@ instance PotatoHandler PanHandler where
     _ -> def {
         _potatoHandlerOutput_nextHandler = case _mouseDrag_state of
           MouseDragState_Dragging -> Just $ SomePotatoHandler ph { _panHandler_pan = delta }
-          MouseDragState_Up -> Nothing
+          MouseDragState_Up -> Just $ SomePotatoHandler (def :: PanHandler)
           _ -> error "not posible"
         , _potatoHandlerOutput_pan = Just (delta - _panHandler_pan)
       } where delta = _mouseDrag_to - _mouseDrag_from

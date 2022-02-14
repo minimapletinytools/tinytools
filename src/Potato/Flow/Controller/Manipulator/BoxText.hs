@@ -478,7 +478,6 @@ instance PotatoHandler BoxLabelHandler where
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
 
-  -- UNTESTED
   pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
     tah = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxLabelHandler_state tah

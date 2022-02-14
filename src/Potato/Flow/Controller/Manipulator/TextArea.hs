@@ -117,6 +117,8 @@ instance PotatoHandler TextAreaHandler where
   pRefreshHandler _ PotatoHandlerInput {..} = Nothing
   pRenderHandler tah phi@PotatoHandlerInput {..} = r where
 
+    -- TODO maybe version of this
+  
     -- TODO maybe store instead of pull from selection?
     (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
     CanonicalLBox _ _ (LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box

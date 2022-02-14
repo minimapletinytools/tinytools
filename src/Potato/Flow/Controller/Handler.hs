@@ -173,7 +173,7 @@ class PotatoHandler h where
 
   -- TODO do the generic thing where (Show h) whatever (I guess this only works when you use deriving or something though?)
   pHandlerDebugShow :: h -> Text
-  pHandlerDebugShow _ = "<no debug info>"
+  pHandlerDebugShow h = pHandlerName h <> " <no debug info>"
 
   -- TODO consider removing Selection from input args since it should be static through lifetime of handler and therefore passed in during construction
   -- i.e. invariant is selection changed -> new handler
