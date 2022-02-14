@@ -382,33 +382,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             -- TODO pass input on to SelectHandler instead
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-              nextSelection@(SuperOwlParliament sowls) = selectMagic last_pFState last_layerMetaMap _goatState_broadPhaseState canvasDrag
-              -- since selection came from canvas, it's definitely a valid CanvasSelection, no need to convert
-              nextCanvasSelection = CanvasSelection sowls
-              shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers mouseDrag)
-              r = if isParliament_null nextSelection || shiftClick
-                -- clicked on nothing or shift click, start SelectHandler
-                -- NOTE this is weird because:
-                -- 1. doesn't select until mouse up, which is regression from when you do regular click on an elt (via BoxHandler which immediately selects)
-                -- 2. if you let go of shift before mouse up, it just does a standard mouse selection
-                -- I think this is still better than letting BoxHandler handle this case
-                then case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                  Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
-                  Nothing -> error "handler was expected to capture this mouse state"
-
-                -- special select+drag case, override the selection
-                -- alternative, we could let the BoxHandler do this but that would mean we query broadphase twice
-                -- (once to determine that we should create the BoxHandler, and again to set the selection in BoxHandler)
-                -- also NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case GoatWidget will set the correct handler type
-                else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (potatoHandlerInput { _potatoHandlerInput_selection = nextSelection, _potatoHandlerInput_canvasSelection = nextCanvasSelection }) canvasDrag of
-                  -- it's a little weird because we are forcing the selection from outside the handler and ignoring the new selection results returned by pho (which should always be Nothing)
-                  Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
-                    $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' (pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
-                  Nothing -> error "handler was expected to capture this mouse state"
-
-
-
-                  
+              r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
+                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+                Nothing -> error "handler was expected to capture this mouse state"
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 

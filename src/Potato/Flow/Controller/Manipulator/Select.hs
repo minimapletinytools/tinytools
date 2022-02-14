@@ -9,6 +9,7 @@ module Potato.Flow.Controller.Manipulator.Select (
 
 import           Relude
 
+import Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
@@ -24,6 +25,7 @@ import           Data.Default
 import Data.Foldable (maximumBy)
 import qualified Data.IntMap as IM
 import qualified Data.Sequence                  as Seq
+import           Control.Exception                         (assert)
 
 
 layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
@@ -92,8 +94,26 @@ instance Default SelectHandler where
 
 instance PotatoHandler SelectHandler where
   pHandlerName _ = handlerName_select
-  pHandleMouse sh PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
-    MouseDragState_Down -> captureWithNoChange sh
+  pHandleMouse sh phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
+    MouseDragState_Down -> r where
+
+      nextSelection@(SuperOwlParliament sowls) = selectMagic _potatoHandlerInput_pFState (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
+      -- since selection came from canvas, it's definitely a valid CanvasSelection, no need to convert
+      nextCanvasSelection = CanvasSelection sowls
+      shiftClick = isJust $ find (==KeyModifier_Shift) _mouseDrag_modifiers
+
+      r = if isParliament_null nextSelection || shiftClick
+        then captureWithNoChange sh
+
+        -- special select+drag case, override the selection
+        -- NOTE BoxHandler here is used to move all SElt types, upon release, it will either return the correct handler type or not capture the input in which case Goat will set the correct handler type
+        else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (phi { _potatoHandlerInput_selection = nextSelection, _potatoHandlerInput_canvasSelection = nextCanvasSelection }) rmd of
+          -- force the selection from outside the handler and ignore the new selection results returned by pho (which should always be Nothing)
+          Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
+            $ pho { _potatoHandlerOutput_select = Just (False, nextSelection) }
+          Nothing -> error "handler was expected to capture this mouse state"
+
+
     MouseDragState_Dragging -> setHandlerOnly sh {
         _selectHandler_selectArea = make_lBox_from_XYs _mouseDrag_from _mouseDrag_to
       }

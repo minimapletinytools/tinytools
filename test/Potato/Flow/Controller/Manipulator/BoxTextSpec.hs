@@ -75,7 +75,6 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
 
       , EWCLabel "move cursor <text>"
-      , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 12 11) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 12 11) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
@@ -116,7 +115,6 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
       , checkSBoxText "<text>" "poop"
 
       , LabelCheck "move cursor <text>"
-      , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "paoop"
@@ -221,7 +219,6 @@ test_negative = constructTest "negative" emptyOwlPFState bs expected where
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
 
       , EWCLabel "move cursor <text>"
-      , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 2 1) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 2 1) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
@@ -250,7 +247,6 @@ test_negative = constructTest "negative" emptyOwlPFState bs expected where
       , checkSBoxText "<text>" "goop"
 
       , LabelCheck "move cursor <text>"
-      , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "gaoop"
@@ -271,7 +267,6 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
       , EWCLabel "resize box to 0"
-      , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 12 12) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
@@ -294,7 +289,6 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box False
 
       , LabelCheck "resize box to 0"
-      , EqPredicate _goatState_selectedTool Tool_Select
       , AlwaysPass
       , AlwaysPass
       , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
@@ -339,7 +333,6 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'p') [])
 
       , EWCLabel "move cursor <text>"
-      , EWCTool Tool_Select
       , EWCMouse (LMouseData (V2 12 11) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 12 11) True MouseButton_Left [] False)
       , EWCKeyboard (KeyboardData (KeyboardKey_Char 'a') [])
@@ -385,7 +378,6 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
       , checkRenderHandlerPos (V2 15 11)
 
       , LabelCheck "move cursor <text>"
-      , EqPredicate _goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_boxText True
       , checkRenderHandlerPos (V2 12 11)
       , checkRenderHandlerPos (V2 13 11)
