@@ -34,6 +34,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
 import Potato.Flow.Llama
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception                         (assert)
 import           Data.Default
@@ -298,12 +299,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
-      GoatCmdTool x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState $  _goatState_workspace) _goatState_selection
         newFolderEv = WSEAddFolder (folderPos, "folder")
-
       GoatCmdLoad (spf, cm) -> r where
         -- HACK this won't get generated until later but we need this to generate layersState...
         -- someday we'll split up foldGoatFn by `GoatCmd` (or switch to Endo `GoatState`) and clean this up
@@ -311,7 +310,25 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         r = (makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)) {
             _goatCmdTempOutput_pan = Just $ _controllerMeta_pan cm
             , _goatCmdTempOutput_layersState = Just $ makeLayersStateFromOwlPFState tempOwlPFStateHack (_controllerMeta_layers cm)
-          }
+           }
+
+
+      GoatCmdTool x -> r where
+        someNewHandler = case x of
+          Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
+          Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
+          Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
+          Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
+          Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
+          Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }
+          Tool_Pan           -> SomePotatoHandler $ (def :: PanHandler)
+
+        -- TODO do we need to cancel the old handler?
+        r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_selectedTool = x, _goatState_handler = someNewHandler })
+
+
+
+
       --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
       GoatCmdMouse mouseData ->
         let
@@ -347,28 +364,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
           -- TODO for non-layers mouse input case, you want to send some event to layers such that we can exit "renaming" mode 🤔
 
-          -- special case, if mouse down and pan tool, we override with a new handler
-          MouseDragState_Down | _goatState_selectedTool == Tool_Pan -> case pHandleMouse (def :: PanHandler) potatoHandlerInput canvasDrag of
-            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
-            Nothing  -> error "this should never happen"
-          -- special case, if mouse down and creation tool, we override with a new handler
-          MouseDragState_Down | tool_isCreate _goatState_selectedTool -> assert (not $ pIsHandlerActive handler) r where
-            someNewHandler = case _goatState_selectedTool of
-              Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
-              Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
-              Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
-              Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
-              Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
-              Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }
-              _           -> error "not valid tool"
-
-            -- pass input onto newly created handler
-            r = case someNewHandler of
-              SomePotatoHandler newHandler -> case pHandleMouse newHandler potatoHandlerInput canvasDrag of
-                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
-                Nothing -> error "this should never happen, although if it did, we have many choices to gracefully recover (and I couldn't pick which one so I just did the error thing instead)"
-
-
           -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
             Just pho -> r where
@@ -381,6 +376,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                       else _goatState_selectedTool
                 }
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
+
+
+
+            -- TODO pass input on to SelectHandler instead
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               nextSelection@(SuperOwlParliament sowls) = selectMagic last_pFState last_layerMetaMap _goatState_broadPhaseState canvasDrag
@@ -406,6 +405,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                   Just pho -> assert (isNothing . _potatoHandlerOutput_select $ pho)
                     $ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' (pho { _potatoHandlerOutput_select = Just (False, nextSelection) })
                   Nothing -> error "handler was expected to capture this mouse state"
+
+
+
+                  
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 
