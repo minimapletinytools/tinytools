@@ -170,7 +170,7 @@ renderLine SuperStyle {..} cd = case cd of
   CD_Right -> _superStyle_horizontal
 
 renderLineEnd :: SuperStyle -> LineStyle -> CartDir -> Int -> MPChar
-renderLineEnd SuperStyle {..} LineStyle {..} cd distancefromend = r where
+renderLineEnd SuperStyle {..} ls@LineStyle {..} cd distancefromend = r where
   r = case cd of
     CD_Up -> fromMaybe _superStyle_vertical $ maybeIndex _lineStyle_upArrows distancefromend
     CD_Down -> fromMaybe _superStyle_vertical $ maybeIndex (T.reverse _lineStyle_downArrows) distancefromend
@@ -511,13 +511,9 @@ doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
   CD_Down | px == sx -> if py >= sy && py <= sy+tl then Just (py-sy) else Nothing
   _ -> Nothing
 
-walkToRender :: Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
-walkToRender isstart begin (tcd, tl) mnext d = r where
+walkToRender :: SuperStyle -> LineStyle -> Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
+walkToRender ss@SuperStyle {..} ls@LineStyle {..} isstart begin (tcd, tl) mnext d = r where
   currentpos = begin + (cartDirToUnit tcd) ^* d
-
-  -- TODO set these correctly
-  ss@SuperStyle {..} = def
-  ls@LineStyle {..} = def
 
   endorelbow = renderAnchorType ss ls $ cartDirToAnchor tcd (fmap fst mnext)
   startorregular = if isstart
@@ -543,16 +539,15 @@ mapAccumFind f acc l = case l of
     (nacc, Nothing) -> mapAccumFind f nacc xs
     (_, manswer) -> manswer
 
--- VERY UNTESTED
-lineAnchorsForRender_renderAt :: LineAnchorsForRender -> XY -> MPChar
-lineAnchorsForRender_renderAt LineAnchorsForRender {..} pos = r where
-  walk (isstart, curbegin) ls = case ls of
+lineAnchorsForRender_renderAt :: SuperStyle -> LineStyle -> LineAnchorsForRender -> XY -> MPChar
+lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
+  walk (isstart, curbegin) a = case a of
     [] -> Nothing
     x:xs -> case doesLineContain pos curbegin x of
       Nothing ->  walk (False, nextbegin) xs
       Just d -> Just $ case xs of
-        [] -> walkToRender isstart curbegin x Nothing d
-        y:ys -> walkToRender isstart curbegin x (Just y) d
+        [] -> walkToRender ss ls isstart curbegin x Nothing d
+        y:ys -> walkToRender ss ls isstart curbegin x (Just y) d
       where
         nextbegin = curbegin + cartDirWithDistanceToV2 x
 
@@ -593,8 +588,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   renderfn :: SEltDrawerRenderFn
   renderfn ot xy = r where
     anchors = getAnchors ot
-
-    r = lineAnchorsForRender_renderAt anchors xy
+    r = lineAnchorsForRender_renderAt _sSimpleLine_style _sSimpleLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of

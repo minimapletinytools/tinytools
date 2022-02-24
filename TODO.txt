@@ -23,65 +23,19 @@ WIDE
 🙈
 
 
-
-:: CONTROLLER REFACTOR
-
-                       ╔══════>compute previous state<══════════════════════════════>
-                       ║                 ^                                           ^
-                       ║                 ║                                           ║
-                       ║                 ║                                           ║
-                       ║                 v                                           ║
-                       ║            ┌─────────┐                                      ║
-                       ║            │old state│<══════════════════════════════╗      ║
-                       ║            └─────────┘                               ║      ║
-                       ║                 ^                                    ║      ║
-                       v                 ║                                    ║      ║
-                 ╔═══════════╗           v          ┌──────────┐              v      ║
-               ╔>║Controller ║<═══╗═══>apply<══════>│new state │            apply    ║
-               ║ ╚═══════════╝    ║                 └──────────┘              ^      ║
-               ║       ^          ║                      ^                    ║      ║
-               ║       ║          ║               ╔══════╝                    v      ║
-               ║       ║          ║               v                     ╔══════════╗ ║
-               v       ║          ╚════>compute previous state<════════>║Controller║<╝
-           serialize   ║                                                ╚══════════╝
-               ^       ║
-               ║       ║
-               ║       v            ┌──────────┐
-               ║  deserialize<═════>│state     │
-               ║       ^            └──────────┘
-               ║       ║
-               ║       ║
-               ║       ║
-               ║       v
-               ║ ╔═══════════╗
-               ╚>║SController║
-                 ╚═══════════╝
-
-
-
-Controller options:
-type Controller = DS.DSum CTag Identity
-
-data Controller = C_ResizeBox DeltaBox
-
-data Controller = Controller {
-  _controller_isValidOperation :: SElt -> Bool
-  , _controller_serialize :: SController
-  , _controller_apply :: PFState -> (PFState, Controller)
-
-  -- would it be nice to have something like this for debugging??
-  , _controller_operation :: SEltLabel -> SEltLabel
-  , _controller_targets :: IntSet
-}
-
-makeResizeBoxController :: DeltaBox -> Controller
-
--- why not always use this? They aren't as merge friendly as delta based controllers.
--- do we support changing SElt type?? I think you need to add handling for folder -> not folder as SuperOwlChanges doesn't know what the element use to be (although we do a total regen on layers right so so it just doesn't matter)
-makeSetController :: (REltId, SEltLabel) -> Controller
-
-
-
+:: MULTI POINT LINE AND LABEL SPEC
+-midpoints
+  -rendered in segments
+  -midpoints treated as ANY attachments
+-ANY attachment style
+  -pass in neighbors, and direction determined by position of neigbor
+    -process from left to right, disallow double backing in same direction
+-click once to select line
+  -click + drag end/midpoint to manipulate
+  -click + drag text label to enter modify mode
+    -refactor modify stuff out of BoxText and BoxLabel (why didn't you do this correctly the first time...)
+  -click + release to create new text label
+    -erase all text to destroy text label
 
 
 
@@ -114,9 +68,26 @@ makeSetController :: (REltId, SEltLabel) -> Controller
                                   ╚══════║════════════╝
                                          ║  ^
                                          ╚══╝
+-BUG
+                               ║
+                               ║
+                               ║                           ╔═══╗
+                               ║                           ║@@@║
+                               ╚══════════════════════════>║@@@║                                            
+                                                           ║@@@║
+                                                           ╚═══╝
+                  ╔══════════════════════════════════════════╝
+                  d
+                ╔═══╗
+                ║@@@║
+                ║@@@║
+                ║@@@║
+                ╚═══╝
+
 -LINE LABELS :O
 -BUG setting line ends style seems to be broken again
   -I think this might be because of params mouse focus issue again...
+  -no it's because you aren't using line style in the new line render stuff doh
 -attachment stuff
   -need to support ANY attach style for unattached ends etc
     -tries to do a best guess based on where line is coming from
@@ -135,8 +106,6 @@ makeSetController :: (REltId, SEltLabel) -> Controller
     DONE-just do the controller refactor!! D:
 -preset interface for choosing line ends
   -easy way to turn on/off line ends for both sides
-
-
 -file stuff
   -file explorer
     -add highlight on click
@@ -927,6 +896,67 @@ DONE-hook up PF
   DONE-pass in initial state into EverythingFrontend
   -prob output PF in EverythingBackend
 DONE-manipulatingDyn can be moved into backend
+
+:: 1/1/22 CONTROLLER REFACTOR
+
+                       ╔══════>compute previous state<══════════════════════════════>
+                       ║                 ^                                           ^
+                       ║                 ║                                           ║
+                       ║                 ║                                           ║
+                       ║                 v                                           ║
+                       ║            ┌─────────┐                                      ║
+                       ║            │old state│<══════════════════════════════╗      ║
+                       ║            └─────────┘                               ║      ║
+                       ║                 ^                                    ║      ║
+                       v                 ║                                    ║      ║
+                 ╔═══════════╗           v          ┌──────────┐              v      ║
+               ╔>║Controller ║<═══╗═══>apply<══════>│new state │            apply    ║
+               ║ ╚═══════════╝    ║                 └──────────┘              ^      ║
+               ║       ^          ║                      ^                    ║      ║
+               ║       ║          ║               ╔══════╝                    v      ║
+               ║       ║          ║               v                     ╔══════════╗ ║
+               v       ║          ╚════>compute previous state<════════>║Controller║<╝
+           serialize   ║                                                ╚══════════╝
+               ^       ║
+               ║       ║
+               ║       v            ┌──────────┐
+               ║  deserialize<═════>│state     │
+               ║       ^            └──────────┘
+               ║       ║
+               ║       ║
+               ║       ║
+               ║       v
+               ║ ╔═══════════╗
+               ╚>║SController║
+                 ╚═══════════╝
+
+
+
+Controller options:
+type Controller = DS.DSum CTag Identity
+
+data Controller = C_ResizeBox DeltaBox
+
+data Controller = Controller {
+  _controller_isValidOperation :: SElt -> Bool
+  , _controller_serialize :: SController
+  , _controller_apply :: PFState -> (PFState, Controller)
+
+  -- would it be nice to have something like this for debugging??
+  , _controller_operation :: SEltLabel -> SEltLabel
+  , _controller_targets :: IntSet
+}
+
+makeResizeBoxController :: DeltaBox -> Controller
+
+-- why not always use this? They aren't as merge friendly as delta based controllers.
+-- do we support changing SElt type?? I think you need to add handling for folder -> not folder as SuperOwlChanges doesn't know what the element use to be (although we do a total regen on layers right so so it just doesn't matter)
+makeSetController :: (REltId, SEltLabel) -> Controller
+
+
+
+
+
 
 :: 12/21/2021 attachments
 data AttachmentLocation = AL_Top | AL_Bot | AL_Left | AL_Right
