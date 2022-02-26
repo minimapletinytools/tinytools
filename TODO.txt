@@ -49,40 +49,6 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
--BUG
-                      ╔═════╗
-                      ║     v
-                      ║   ╔═══╗
-                      ║   ║@@@║            ╔═══╗
-                      ║   ║@@@║<═══════════║@@@║════════╗
-                      ║   ║@@@║          ╔>║@@@║        ║
-             ╔═══╗    ║   ╚═══╝          ║ ║@@@║        ║
-             ║@@@║    ║                  ║ ╚═══╝        ║
-             ║@@@║    ║                  ║              ║
-             ║@@@║    ║                  ║              ║
-             ╚═══╝    ║                  ║              ║
-               ^      ║           ╔══════║════════════╗ ║
-               ╚══════╝           ║@@@@@@║@@@@@@@@@@@@║ ║
-                                  ║@@@@@@║@@@@@@@@@@@@║<╝
-                                  ║@@@@@@║@@@@@@@@@@@@║
-                                  ╚══════║════════════╝
-                                         ║  ^
-                                         ╚══╝
--BUG
-                               ║
-                               ║
-                               ║                           ╔═══╗
-                               ║                           ║@@@║
-                               ╚══════════════════════════>║@@@║
-                                                           ║@@@║
-                                                           ╚═══╝
-                  ╔══════════════════════════════════════════╝
-                  d
-                ╔═══╗
-                ║@@@║
-                ║@@@║
-                ║@@@║
-                ╚═══╝
 
 -LINE LABELS :O
 DONE-BUG setting line ends style seems to be broken again
@@ -193,6 +159,40 @@ DONE-BUG setting line ends style seems to be broken again
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-BUG
+                      ╔═════╗
+                      ║     v
+                      ║   ╔═══╗
+                      ║   ║@@@║            ╔═══╗
+                      ║   ║@@@║<═══════════║@@@║════════╗
+                      ║   ║@@@║          ╔>║@@@║        ║
+             ╔═══╗    ║   ╚═══╝          ║ ║@@@║        ║
+             ║@@@║    ║                  ║ ╚═══╝        ║
+             ║@@@║    ║                  ║              ║
+             ║@@@║    ║                  ║              ║
+             ╚═══╝    ║                  ║              ║
+               ^      ║           ╔══════║════════════╗ ║
+               ╚══════╝           ║@@@@@@║@@@@@@@@@@@@║ ║
+                                  ║@@@@@@║@@@@@@@@@@@@║<╝
+                                  ║@@@@@@║@@@@@@@@@@@@║
+                                  ╚══════║════════════╝
+                                         ║  ^
+                                         ╚══╝
+DONE-BUG
+                               ║
+                               ║
+                               ║                           ╔═══╗
+                               ║                           ║@@@║
+                               ╚══════════════════════════>║@@@║
+                                                           ║@@@║
+                                                           ╚═══╝
+                  ╔══════════════════════════════════════════╝
+                  d
+                ╔═══╗
+                ║@@@║
+                ║@@@║
+                ║@@@║
+                ╚═══╝
 ALREADY DONE-click on file in file explorer should populate it as filename IF file extension is correct
 DONE-BUG the render box is still too small by 1 to the bottom/right in the <- -> case D:
 DONE-BUG rotation to up/down creates off by 1 offsetting errors D:

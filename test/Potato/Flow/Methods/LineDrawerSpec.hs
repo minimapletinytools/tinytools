@@ -20,12 +20,12 @@ import Data.Default
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
-  --al1s = [AL_Left, AL_Right, AL_Top, AL_Bot]
-  --al2s = [AL_Left, AL_Right, AL_Top, AL_Bot]
-  al1s = [AL_Left]
-  al2s = [AL_Bot]
-  box1s = [LBox (V2 5 0) 5]
-  box2s = [LBox (V2 0 10) (V2 20 5)]
+  al1s = [AL_Left, AL_Right, AL_Top, AL_Bot]
+  al2s = [AL_Left, AL_Right, AL_Top, AL_Bot]
+  --al1s = [AL_Top]
+  --al2s = [AL_Bot]
+  box1s = [LBox (V2 0 5) 5]
+  box2s = [LBox (V2 10 (-2)) 5]
   canvasbox = LBox (-5) (V2 25 25)
   startrid = 0
   endrid = 0
@@ -39,7 +39,7 @@ generateTestCases = r where
     [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
     , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
     , (2, SEltLabel "l" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 0 al1), _sSimpleLine_attachEnd = Just (Attachment 1 al2)})))
-    , (3, SEltLabel "lreverse" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 1 al2), _sSimpleLine_attachEnd = Just (Attachment 0 al1)})))
+    --, (3, SEltLabel "lreverse" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 1 al2), _sSimpleLine_attachEnd = Just (Attachment 0 al1)})))
     ]
 
   topfs ot = OwlPFState {

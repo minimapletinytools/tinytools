@@ -51,6 +51,20 @@ determineSeparation (lbx1, p1) (lbx2, p2) = r where
   vsep = t1 >= b2 || t2 >= b1
   r = (hsep, vsep)
 
+
+-- in order to be separated for attachment, there must be space for a line in between the two boxes
+-- e.g. both ends are offset by 2 but they only need a space of 3 between them
+--   +-*
+--   |
+-- *-+
+determineSeparationForAttachment :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
+determineSeparationForAttachment (lbx1, p1) (lbx2, p2) = r where
+  (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
+  (l2,r2,t2,b2) = lBox_to_axis $ lBox_expand lbx2 p2
+  hsep = l1 >= r2+1 || l2 >= r1+1
+  vsep = t1 >= b2+1 || t2 >= b1+1
+  r = (hsep, vsep)
+
 -- NOTE our coordinate system is LEFT HANDED
 --  --> +x
 -- |
@@ -319,13 +333,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
 
   -- TODO set _simpleLineSolverParameters_attachOffset here
-  -- TODO NOTE that line ends can connect directly to each other so you may need to hack the offset or something??
-  -- e.g. both ends are offset by 2 but they only need a space of 3 between them
-  --   +-*
-  --   |
-  -- *-+
-  -- so I think you need determineSeparationForAttachment (only needed for hsep)
-  (hsep, vsep) = determineSeparation (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
+  (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
 
   lbx1isstrictlyleft = ax1 < ax2
   lbx1isleft = ax1 <= ax2
