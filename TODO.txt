@@ -73,7 +73,7 @@ WIDE
                                ║
                                ║                           ╔═══╗
                                ║                           ║@@@║
-                               ╚══════════════════════════>║@@@║                                            
+                               ╚══════════════════════════>║@@@║
                                                            ║@@@║
                                                            ╚═══╝
                   ╔══════════════════════════════════════════╝
@@ -85,7 +85,7 @@ WIDE
                 ╚═══╝
 
 -LINE LABELS :O
--BUG setting line ends style seems to be broken again
+DONE-BUG setting line ends style seems to be broken again
   -I think this might be because of params mouse focus issue again...
   -no it's because you aren't using line style in the new line render stuff doh
 -attachment stuff

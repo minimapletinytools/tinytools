@@ -52,6 +52,10 @@ determineSeparation (lbx1, p1) (lbx2, p2) = r where
   r = (hsep, vsep)
 
 -- NOTE our coordinate system is LEFT HANDED
+--  --> +x
+-- |
+-- v
+-- +y
 matrix_cw_90 :: M22 Int
 matrix_cw_90 = V2 (V2 0 (-1)) (V2 1 0)
 matrix_ccw_90 :: M22 Int
@@ -443,20 +447,21 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
 
     -- ^
     -- |
     -- 1
     --     2-> (this only handles lbx1isstrictlyabove case)
-    AL_Top | al2 == AL_Right && lbx1isleft && lbx1isstrictlyabove -> traceStep "case 7" $ r where
-      upd = if not lbx1isstrictlyabove then min _simpleLineSolverParameters_attachOffset (ay1-ay2) else _simpleLineSolverParameters_attachOffset
+    AL_Top | al2 == AL_Right && lbx1isleft && vsep -> traceStep "case 7" $ r where
+      upd = _simpleLineSolverParameters_attachOffset
       lb1_to_up = (CD_Up, upd)
-      up_to_right1 = (CD_Right, (max ax2 r1)-ax1+_simpleLineSolverParameters_attachOffset)
+      right = (max ax2 r1)
+      up_to_right1 =  (CD_Right, right-ax1+_simpleLineSolverParameters_attachOffset)
       right1_to_right2 = if lbx1isstrictlyabove
         then (CD_Down, ay2-ay1+upd)
         else (CD_Up, max 0 (ay1-ay2-upd))
-      right2_to_lb2 = (CD_Left, _simpleLineSolverParameters_attachOffset)
+      right2_to_lb2 = (CD_Left, right-ax2)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
@@ -466,7 +471,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ^
     -- |
     -- 1 (this will get handled by the next case, it might have been better to add a third case for the not lbx1isstrictlyabove case)
-    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (flip)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
 
     --     <-2
     -- ^
@@ -587,6 +592,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
 
   renderfn :: SEltDrawerRenderFn
   renderfn ot xy = r where
+    -- SUPER INEFFICIENT, gets evaled once for each point :(, you really need to implement the cache
     anchors = getAnchors ot
     r = lineAnchorsForRender_renderAt _sSimpleLine_style _sSimpleLine_lineStyle anchors xy
 
