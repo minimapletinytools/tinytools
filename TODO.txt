@@ -6,6 +6,8 @@ stack exec -- potato-flow-vty-exe mycommandlineargs
 stack test --test-arguments='--match "Parliament"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+https://www.vertex42.com/ExcelTips/unicode-symbols.html
+
 normal
 ø×Ø⁐₪
 ↺↻
@@ -51,9 +53,6 @@ WIDE
 ::NEWEST TODO::
 
 -LINE LABELS :O
-DONE-BUG setting line ends style seems to be broken again
-  -I think this might be because of params mouse focus issue again...
-  -no it's because you aren't using line style in the new line render stuff doh
 -attachment stuff
   -need to support ANY attach style for unattached ends etc
     -tries to do a best guess based on where line is coming from
@@ -72,6 +71,7 @@ DONE-BUG setting line ends style seems to be broken again
     DONE-just do the controller refactor!! D:
 -preset interface for choosing line ends
   -easy way to turn on/off line ends for both sides
+-you should really implement the render cache, it's pretty terrible right now :(
 -file stuff
   -file explorer
     -add highlight on click
@@ -103,11 +103,11 @@ DONE-BUG setting line ends style seems to be broken again
   -this happens for 2 reasons
     -1 the params widget may get closed on if you change selection
     -2 unfocus event never happens because input does not get passed into left widget
--you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
+IGNORE-you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
 -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
--multi node lines
+DONE-multi node lines
   -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
   -you really need to design+determine all line types first
   -cartline needs a SElt type
@@ -159,6 +159,9 @@ DONE-BUG setting line ends style seems to be broken again
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-BUG setting line ends style seems to be broken again
+  -I think this might be because of params mouse focus issue again...
+  -no it's because you aren't using line style in the new line render stuff doh
 DONE-BUG
                       ╔═════╗
                       ║     v

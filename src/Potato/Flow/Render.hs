@@ -47,7 +47,8 @@ import qualified Data.Vector.Unboxed     as V
 import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
--- rather pointless abstraction but it's useful to have during refactors
+-- this abstraction is rather pointless as we always want to use (OwlTree, LayerMetaMap) instance
+-- but OwlTree instance is useful during refactor and testing
 class OwlRenderSet a where
   findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
   sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
@@ -69,10 +70,6 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
 
 
 data RenderCache = RenderCache
-
-emptyRenderCache :: RenderCache
-emptyRenderCache = RenderCache
-
 -- includes helper methods needed for render but not what to render
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree
@@ -102,6 +99,8 @@ instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
   sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
 
+instance HasRenderCache RenderContext where
+  hasRenderCache_renderCache = _renderContext_cache
 
 
 emptyChar :: PChar
@@ -187,7 +186,7 @@ render llbx seltls rctx@RenderContext {..} = r where
     pt = toPoint llbx i
     pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d rctx pt) drawers)
     -- render what we found or empty otherwise
     newc' = case mdrawn of
       Just c  -> (pindex, c)

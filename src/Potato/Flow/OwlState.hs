@@ -9,6 +9,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.Methods.Types
 import Potato.Flow.DebugHelpers
 
 import           Control.Exception       (assert)
@@ -25,6 +26,9 @@ data OwlPFState = OwlPFState {
 
 instance HasOwlTree OwlPFState where
   hasOwlTree_owlTree = _owlPFState_owlTree
+
+instance HasRenderCache OwlPFState where
+  hasRenderCache_renderCache _ = emptyRenderCache
 
 -- TODO delete replace with PotatoShow
 owlPFState_prettyPrintForDebugging :: OwlPFState -> Text

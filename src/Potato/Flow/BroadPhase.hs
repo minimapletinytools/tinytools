@@ -64,7 +64,7 @@ emptyBroadPhaseState = BroadPhaseState emptyBPTree
 
 -- | updates a BPTree and returns list of AABBs that were affected
 -- exposed for testing only, do not call this directly
-update_bPTree :: (HasOwlTree a) => a -> SuperOwlChanges -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
+update_bPTree :: (HasOwlTree a, HasRenderCache a) => a -> SuperOwlChanges -> BPTree -> (NeedsUpdateSet, BroadPhaseState)
 update_bPTree ot changes BPTree {..} = r where
   -- deletions
   deletefn (aabbs, im) rid = (newaabbs, newim) where

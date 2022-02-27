@@ -14,9 +14,19 @@ import Potato.Flow.Owl
 import qualified Data.Text          as T
 
 
--- TODO probably add HasRenderCache constraint or something to this in the future?
-type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
-type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
+class HasRenderCache a where
+  hasRenderCache_renderCache :: a -> RenderCache
+
+data RenderCache = RenderCache
+
+emptyRenderCache :: RenderCache
+emptyRenderCache = RenderCache
+
+instance HasRenderCache OwlTree where
+  hasRenderCache_renderCache _ = emptyRenderCache
+
+type SEltDrawerRenderFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> XY -> Maybe PChar
+type SEltDrawerBoxFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> LBox
 
 makePotatoRenderer :: LBox -> SEltDrawerRenderFn
 makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
@@ -39,7 +49,7 @@ nilDrawer = SEltDrawer {
     , _sEltDrawer_renderFn = \_ _ -> Nothing
   }
 
-sEltDrawer_renderToLines :: (HasOwlTree a) => SEltDrawer -> a -> [Text]
+sEltDrawer_renderToLines :: (HasOwlTree a, HasRenderCache a) => SEltDrawer -> a -> [Text]
 sEltDrawer_renderToLines SEltDrawer {..} ot = r where
   LBox (V2 sx sy) (V2 w h) = _sEltDrawer_box ot
   pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
