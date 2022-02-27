@@ -82,39 +82,9 @@ spec = do
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
     let
       rc = potatoRenderPFState pfs
-    putTextLn (renderedCanvasToText rc)
+    --putTextLn (renderedCanvasToText rc)
     True `shouldBe` True
 
     -- TODO write a test such that reversing start/end parts of lines always renders the same thing
     -- (actually, this won't work because rotation messed with whether we go up/down for midpoint stuff)
     -- (you could fix this by keeping a rotation counter flag of course)
-
-{-
-  -- TODO DELETE ME
-  describe "Lines - rendering" $ do
-    let
-      pfs = owlpfstate_attachments2
-      owltree = _owlPFState_owlTree pfs
-      somessline1 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> <-b4"
-      somessline2 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "<-b1 b2->"
-      somessline3 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "<-b1 b4->"
-      somessline4 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> b4->"
-      somessline5 = hasOwlElt_test_toSSimpleLine $ hasOwlTree_test_mustFindFirstSuperOwlByName pfs "b1-> b2->"
-      sd1 = sSimpleLineNewRenderFn somessline1 Nothing
-      sd2 = sSimpleLineNewRenderFn somessline2 Nothing
-      sd3 = sSimpleLineNewRenderFn somessline3 Nothing
-      sd4 = sSimpleLineNewRenderFn somessline4 Nothing
-      sd5 = sSimpleLineNewRenderFn somessline5 Nothing
-
-
-    it "basic" $ do
-      forM_ (sEltDrawer_renderToLines owltree sd1) putTextLn
-      forM_ (sEltDrawer_renderToLines owltree sd2) putTextLn
-      forM_ (sEltDrawer_renderToLines owltree sd3) putTextLn
-      forM_ (sEltDrawer_renderToLines owltree sd4) putTextLn
-      forM_ (sEltDrawer_renderToLines owltree sd5) putTextLn
-      -- TODO test stuff
-      --sd (V2 0 0) owltree `shouldBe` Just '<'
-      True `shouldBe` True
-    -- TODO change order of attachments and render and make sure it's still the same
--}

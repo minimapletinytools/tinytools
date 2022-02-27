@@ -76,17 +76,17 @@ spec = do
         it "SBoxType_Box" $ do
           let
             sd = getDrawer (SEltBox (somesbox2 SBoxType_Box))
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` _superStyle_point def
         it "SBoxType_NoBoxText_alignRight" $ do
           let
             sd = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just '@'
         it "SBoxType_NoBoxText_widechar" $ do
           let
             sd = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just 'ｔ'
           renderfn sd (V2 1 0) `shouldBe` Nothing
           renderfn sd (V2 2 0) `shouldBe` Just 'ｈ'
@@ -94,11 +94,12 @@ spec = do
         it "box label" $ do
           let
             sd = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just '╔'
           renderfn sd (V2 8 0) `shouldBe` Just 'p'
 
 
+{-- CAN DELETE
       describe "SSimpleLine" $ do
         let
           somelinestyle autoStyle = LineStyle {
@@ -129,7 +130,7 @@ spec = do
         it "LineAutoStyle_AutoStraight - 1" $ do
           let
             sd = getDrawer (SEltLine $ someline1 LineAutoStyle_AutoStraight)
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '<'
           renderfn sd (V2 11 10) `shouldBe` Just '='
           renderfn sd (V2 16 10) `shouldBe` Nothing
@@ -140,7 +141,7 @@ spec = do
         it "LineAutoStyle_AutoStraight - 2" $ do
           let
             sd = getDrawer (SEltLine $ someline2 LineAutoStyle_AutoStraight)
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '^'
           renderfn sd (V2 10 12) `shouldBe` Just '*'
           renderfn sd (V2 16 10) `shouldBe` Nothing
@@ -149,12 +150,12 @@ spec = do
         it "LineAutoStyle_AutoStraight - 3" $ do
           let
             sd = getDrawer (SEltLine $ someline3 LineAutoStyle_AutoStraight)
-          --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
+          forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '^'
           renderfn sd (V2 9 10) `shouldBe` Nothing
           renderfn sd (V2 10 14) `shouldBe` _superStyle_vertical def
           renderfn sd (V2 10 15) `shouldBe` _superStyle_br def
-
+--}
       describe "STextArea" $ do
         let
           sometextarea = STextArea {

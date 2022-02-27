@@ -28,7 +28,7 @@ data SEltDrawer = SEltDrawer {
   -- TODO renameto boxFn
   _sEltDrawer_box        :: SEltDrawerBoxFn
 
-  , _sEltDrawer_renderFn :: SEltDrawerRenderFn -- switch to [SEltDrawerRenderFn] for better performance
+  , _sEltDrawer_renderFn :: SEltDrawerRenderFn
 
   --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance
 }
@@ -39,8 +39,8 @@ nilDrawer = SEltDrawer {
     , _sEltDrawer_renderFn = \_ _ -> Nothing
   }
 
-sEltDrawer_renderToLines :: (HasOwlTree a) => a -> SEltDrawer -> [Text]
-sEltDrawer_renderToLines ot SEltDrawer {..} = r where
+sEltDrawer_renderToLines :: (HasOwlTree a) => SEltDrawer -> a -> [Text]
+sEltDrawer_renderToLines SEltDrawer {..} ot = r where
   LBox (V2 sx sy) (V2 w h) = _sEltDrawer_box ot
   pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
   r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn ot (V2 (sx+x) (sy+y))))) pts
