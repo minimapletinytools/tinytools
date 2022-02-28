@@ -3,14 +3,14 @@
 -- TODO probably move this to Manipulator.Box.Text
 module Potato.Flow.Controller.Manipulator.BoxText (
   BoxTextHandler(..)
-  , BoxTextInputState(..)
+  , TextInputState(..)
   , makeBoxTextHandler
   , BoxLabelHandler(..)
   , makeBoxLabelHandler
   , lBox_to_boxLabelBox
 
   -- exposed for testing
-  , makeBoxTextInputState
+  , makeTextInputState
   , mouseText
   , getBoxTextOffset
 
@@ -46,7 +46,7 @@ getSBox selection = case superOwl_toSElt_hack sowl of
     sowl = selectionToSuperOwl selection
     rid = _superOwl_id sowl
 
-data BoxTextInputState = BoxTextInputState {
+data TextInputState = TextInputState {
   _boxTextInputState_rid            :: REltId
   , _boxTextInputState_original     :: Maybe Text -- needed to properly create DeltaText for undo
   , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
@@ -56,7 +56,7 @@ data BoxTextInputState = BoxTextInputState {
 } deriving (Show)
 
 -- TODO define behavior for when you click outside box or assert
-mouseText :: BoxTextInputState -> LBox -> RelMouseDrag -> XY -> BoxTextInputState
+mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
 mouseText tais lbox rmd (V2 xoffset yoffset)= r where
   RelMouseDrag MouseDrag {..} = rmd
   ogtz = _boxTextInputState_zipper tais
@@ -66,8 +66,8 @@ mouseText tais lbox rmd (V2 xoffset yoffset)= r where
   r = tais { _boxTextInputState_zipper = newtz }
 
 
-updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
-updateBoxTextInputStateWithSBox sbox btis = r where
+updateTextInputStateWithSBox :: SBox -> TextInputState -> TextInputState
+updateTextInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
   CanonicalLBox _ _ newBox@(LBox _ (V2 width' _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   width = case _sBox_boxType sbox of
@@ -81,11 +81,11 @@ updateBoxTextInputStateWithSBox sbox btis = r where
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
-makeBoxTextInputState :: REltId -> SBox -> RelMouseDrag -> BoxTextInputState
-makeBoxTextInputState rid sbox rmd = r where
+makeTextInputState :: REltId -> SBox -> RelMouseDrag -> TextInputState
+makeTextInputState rid sbox rmd = r where
   ogtext = _sBoxText_text . _sBox_text $ sbox
   ogtz = TZ.fromText ogtext
-  r' = BoxTextInputState {
+  r' = TextInputState {
       _boxTextInputState_rid = rid
       , _boxTextInputState_original   = Just ogtext
       , _boxTextInputState_zipper   = ogtz
@@ -96,7 +96,7 @@ makeBoxTextInputState rid sbox rmd = r where
 
       --, _boxTextInputState_selected = 0
     }
-  r'' = updateBoxTextInputStateWithSBox sbox r'
+  r'' = updateTextInputStateWithSBox sbox r'
   r = mouseText r'' (_sBox_box sbox) rmd (getBoxTextOffset sbox)
 
 getBoxTextOffset :: HasCallStack => SBox -> XY
@@ -108,9 +108,9 @@ getBoxTextOffset sbox =  case _sBox_boxType sbox of
 
 
 -- TODO support shift selecting text someday meh
--- | returns zipper in BoxTextInputState after keyboard input has been applied
+-- | returns zipper in TextInputState after keyboard input has been applied
 -- Bool indicates if there was any real input
-inputBoxTextZipper :: BoxTextInputState -> KeyboardKey -> (Bool, BoxTextInputState)
+inputBoxTextZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
 inputBoxTextZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
 
   oldZip = _boxTextInputState_zipper tais
@@ -133,7 +133,7 @@ inputBoxTextZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip
 
     k                   -> error $ "unexpected keyboard char (event should have been handled outside of this handler)" <> show k
 
-inputBoxText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputBoxText :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
 inputBoxText tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputBoxTextZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
@@ -143,7 +143,7 @@ inputBoxText tais undoFirst sowl kk = (newtais, mop) where
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
-makeTextHandlerRenderOutput :: BoxTextInputState -> XY -> HandlerRenderOutput
+makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
 makeTextHandlerRenderOutput btis offset = r where
   dls = _boxTextInputState_displayLines btis
   origBox = _boxTextInputState_box $ btis
@@ -171,7 +171,7 @@ makeTextHandlerRenderOutput btis offset = r where
 data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
-    , _boxTextHandler_state       :: BoxTextInputState
+    , _boxTextHandler_state       :: TextInputState
     -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
     , _boxTextHandler_prevHandler :: SomePotatoHandler
     , _boxTextHandler_undoFirst   :: Bool
@@ -180,7 +180,7 @@ data BoxTextHandler = BoxTextHandler {
 makeBoxTextHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
 makeBoxTextHandler prev selection rmd = BoxTextHandler {
       _boxTextHandler_isActive = False
-      , _boxTextHandler_state = uncurry makeBoxTextInputState (getSBox selection) rmd
+      , _boxTextHandler_state = uncurry makeTextInputState (getSBox selection) rmd
       , _boxTextHandler_prevHandler = prev
       , _boxTextHandler_undoFirst = False
     }
@@ -197,7 +197,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
 
-  nextstate = updateBoxTextInputStateWithSBox sbox _boxTextHandler_state
+  nextstate = updateTextInputStateWithSBox sbox _boxTextHandler_state
 
   r = tah {
     _boxTextHandler_state = if reset
@@ -292,7 +292,7 @@ instance PotatoHandler BoxTextHandler where
 data BoxLabelHandler = BoxLabelHandler {
     _boxLabelHandler_active      :: Bool
     -- NOTE some fields in here are ignored or interpreted differently from BoxTextHandler
-    , _boxLabelHandler_state       :: BoxTextInputState
+    , _boxLabelHandler_state       :: TextInputState
     , _boxLabelHandler_prevHandler :: SomePotatoHandler
     , _boxLabelHandler_undoFirst   :: Bool
   }
@@ -304,7 +304,7 @@ lBox_to_boxLabelBox lbx = r where
   r = LBox (V2 (x+1) y) (V2 width 1)
 
 
-updateBoxLabelInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
+updateBoxLabelInputStateWithSBox :: SBox -> TextInputState -> TextInputState
 updateBoxLabelInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
   newBox@(LBox _ (V2 width _)) =  lBox_to_boxLabelBox $ _sBox_box sbox
@@ -313,11 +313,11 @@ updateBoxLabelInputStateWithSBox sbox btis = r where
       , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
     }
 
-makeBoxLabelInputState :: REltId -> SBox -> RelMouseDrag -> BoxTextInputState
+makeBoxLabelInputState :: REltId -> SBox -> RelMouseDrag -> TextInputState
 makeBoxLabelInputState rid sbox rmd = r where
   mogtext = _sBoxTitle_title . _sBox_title $ sbox
   ogtz = TZ.fromText (fromMaybe "" mogtext)
-  r' = BoxTextInputState {
+  r' = TextInputState {
       _boxTextInputState_rid = rid
       , _boxTextInputState_original   = mogtext
       , _boxTextInputState_zipper   = ogtz
@@ -364,9 +364,9 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   }
 
 -- TODO support shift selecting text someday meh
--- | returns zipper in BoxTextInputState after keyboard input has been applied for BoxLabel (does not allow line breaks)
+-- | returns zipper in TextInputState after keyboard input has been applied for BoxLabel (does not allow line breaks)
 -- Bool indicates if there was any real input
-inputBoxLabelZipper :: BoxTextInputState -> KeyboardKey -> (Bool, BoxTextInputState)
+inputBoxLabelZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
 inputBoxLabelZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
 
   oldZip = _boxTextInputState_zipper tais
@@ -386,7 +386,7 @@ inputBoxLabelZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZi
 
     _ -> (False, oldZip)
 
-inputBoxLabel :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
+inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
 inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputBoxLabelZipper tais kk
   newtext = TZ.value (_boxTextInputState_zipper newtais)
