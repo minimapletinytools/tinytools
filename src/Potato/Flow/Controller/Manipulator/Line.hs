@@ -179,7 +179,7 @@ instance PotatoHandler SimpleLineHandler where
         lineToAdd = SEltLine $ def {
             _sSimpleLine_start = _mouseDrag_from
             , _sSimpleLine_end = _mouseDrag_to
-            , _sSimpleLine_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
+            , _sSimpleLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
             , _sSimpleLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
             , _sSimpleLine_attachStart = _simpleLineHandler_attachStart
             , _sSimpleLine_attachEnd = mattachendnontrivial

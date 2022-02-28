@@ -602,7 +602,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   renderfn ot xy = r where
     -- SUPER INEFFICIENT, gets evaled once for each point :(, you really need to implement the cache
     anchors = getAnchors ot
-    r = lineAnchorsForRender_renderAt _sSimpleLine_style _sSimpleLine_lineStyle anchors xy
+    r = lineAnchorsForRender_renderAt _sSimpleLine_superStyle _sSimpleLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of

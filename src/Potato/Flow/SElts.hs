@@ -102,7 +102,6 @@ superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
     , _superStyle_fill = if l == 7 then FillStyle_Blank else FillStyle_Simple (chars L.!! 7)
   }
 
--- TODO test
 -- superStyle_fromListFormat "╔╗╚╝║═█" `shouldBe` def
 -- empty styles are converted to space character
 superStyle_toListFormat :: SuperStyle -> [PChar]
@@ -302,14 +301,11 @@ instance Default LineStyle where
 data SSimpleLine = SSimpleLine {
   _sSimpleLine_start       :: XY
   , _sSimpleLine_end       :: XY
-  -- TODO Rename to _superStyle
-  , _sSimpleLine_style     :: SuperStyle
+  , _sSimpleLine_superStyle     :: SuperStyle
   , _sSimpleLine_lineStyle :: LineStyle
-
   , _sSimpleLine_attachStart :: Maybe Attachment
   , _sSimpleLine_attachEnd :: Maybe Attachment
-
-  , _sSimpleLine_midpoints :: [XY]
+  , _sSimpleLine_midpoints :: [XY] --  WIP currently does nothing
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SSimpleLine
@@ -322,15 +318,14 @@ instance Default SSimpleLine where
   def = SSimpleLine {
       _sSimpleLine_start       = 0
       , _sSimpleLine_end       = 0
-      , _sSimpleLine_style     = def
+      , _sSimpleLine_superStyle     = def
       , _sSimpleLine_lineStyle = def
       , _sSimpleLine_attachStart = Nothing
       , _sSimpleLine_attachEnd = Nothing
       , _sSimpleLine_midpoints = []
     }
 
--- TODO make manipulator
--- TODO rename
+-- TODO DELETE
 -- |
 data SCartLines = SCartLines {
   _sCartLines_start   :: XY

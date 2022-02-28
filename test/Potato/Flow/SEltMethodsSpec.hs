@@ -112,19 +112,19 @@ spec = do
           someline1 autoStyle = def {
               _sSimpleLine_start       = V2 10 10
               , _sSimpleLine_end       = V2 20 20
-              , _sSimpleLine_style     = def
+              , _sSimpleLine_superStyle     = def
               , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
           someline2 autoStyle = def {
               _sSimpleLine_start       = V2 10 10
               , _sSimpleLine_end       = V2 10 20
-              , _sSimpleLine_style     = def
+              , _sSimpleLine_superStyle     = def
               , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
           someline3 autoStyle = def {
               _sSimpleLine_start       = V2 5 20
               , _sSimpleLine_end       = V2 10 10
-              , _sSimpleLine_style     = def
+              , _sSimpleLine_superStyle     = def
               , _sSimpleLine_lineStyle = somelinestyle autoStyle
             }
         it "LineAutoStyle_AutoStraight - 1" $ do
