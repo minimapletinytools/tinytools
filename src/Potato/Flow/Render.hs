@@ -68,8 +68,6 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
 
-
-data RenderCache = RenderCache
 -- includes helper methods needed for render but not what to render
 data RenderContext = RenderContext {
   _renderContext_owlTree :: OwlTree

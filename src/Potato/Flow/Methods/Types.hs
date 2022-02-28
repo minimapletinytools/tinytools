@@ -6,6 +6,7 @@ module Potato.Flow.Methods.Types where
 
 import           Relude
 
+import Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
@@ -17,13 +18,18 @@ import qualified Data.Text          as T
 class HasRenderCache a where
   hasRenderCache_renderCache :: a -> RenderCache
 
-data RenderCache = RenderCache
+data RenderCache = RenderCache {
+
+}
 
 emptyRenderCache :: RenderCache
 emptyRenderCache = RenderCache
 
 instance HasRenderCache OwlTree where
   hasRenderCache_renderCache _ = emptyRenderCache
+
+--type SEltDrawerRenderFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> XY -> (RenderCache, Maybe PChar)
+--type SEltDrawerBoxFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> (RenderCache, LBox)
 
 type SEltDrawerRenderFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> XY -> Maybe PChar
 type SEltDrawerBoxFn = forall a. (HasOwlTree a, HasRenderCache a) => a -> LBox

@@ -6,7 +6,6 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import Potato.Flow.Methods.Types
 import Potato.Flow.Attachments
 import Potato.Flow.Owl
 
