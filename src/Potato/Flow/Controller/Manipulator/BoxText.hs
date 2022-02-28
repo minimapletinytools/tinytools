@@ -47,23 +47,23 @@ getSBox selection = case superOwl_toSElt_hack sowl of
     rid = _superOwl_id sowl
 
 data TextInputState = TextInputState {
-  _boxTextInputState_rid            :: REltId
-  , _boxTextInputState_original     :: Maybe Text -- needed to properly create DeltaText for undo
-  , _boxTextInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
-  , _boxTextInputState_zipper       :: TZ.TextZipper
-  , _boxTextInputState_displayLines :: TZ.DisplayLines ()
-  --, _boxTextInputState_selected :: Int -- WIP
+  _textInputState_ rid            :: REltId
+  , _textInputState_original     :: Maybe Text -- needed to properly create DeltaText for undo
+  , _textInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
+  , _textInputState_zipper       :: TZ.TextZipper
+  , _textInputState_displayLines :: TZ.DisplayLines ()
+  --, _textInputState_selected :: Int -- WIP
 } deriving (Show)
 
 -- TODO define behavior for when you click outside box or assert
 mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
 mouseText tais lbox rmd (V2 xoffset yoffset)= r where
   RelMouseDrag MouseDrag {..} = rmd
-  ogtz = _boxTextInputState_zipper tais
+  ogtz = _textInputState_zipper tais
   CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox lbox
   V2 mousex mousey = _mouseDrag_to
-  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
-  r = tais { _boxTextInputState_zipper = newtz }
+  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_textInputState_displayLines tais) ogtz
+  r = tais { _textInputState_zipper = newtz }
 
 
 updateTextInputStateWithSBox :: SBox -> TextInputState -> TextInputState
@@ -75,8 +75,8 @@ updateTextInputStateWithSBox sbox btis = r where
     SBoxType_NoBoxText -> width'
     _                  -> error "wrong type"
   r = btis {
-      _boxTextInputState_box = newBox
-      , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
+      _textInputState_box = newBox
+      , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)
     }
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
@@ -86,15 +86,15 @@ makeTextInputState rid sbox rmd = r where
   ogtext = _sBoxText_text . _sBox_text $ sbox
   ogtz = TZ.fromText ogtext
   r' = TextInputState {
-      _boxTextInputState_rid = rid
-      , _boxTextInputState_original   = Just ogtext
-      , _boxTextInputState_zipper   = ogtz
+      _textInputState_rid = rid
+      , _textInputState_original   = Just ogtext
+      , _textInputState_zipper   = ogtz
 
       -- these fields get updated in next pass
-      , _boxTextInputState_box = error "expected to be filled"
-      , _boxTextInputState_displayLines = error "expected to be filled"
+      , _textInputState_box = error "expected to be filled"
+      , _textInputState_displayLines = error "expected to be filled"
 
-      --, _boxTextInputState_selected = 0
+      --, _textInputState_selected = 0
     }
   r'' = updateTextInputStateWithSBox sbox r'
   r = mouseText r'' (_sBox_box sbox) rmd (getBoxTextOffset sbox)
@@ -111,9 +111,9 @@ getBoxTextOffset sbox =  case _sBox_boxType sbox of
 -- | returns zipper in TextInputState after keyboard input has been applied
 -- Bool indicates if there was any real input
 inputBoxTextZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
-inputBoxTextZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
+inputBoxTextZipper tais kk = (changed, tais { _textInputState_zipper = newZip }) where
 
-  oldZip = _boxTextInputState_zipper tais
+  oldZip = _textInputState_zipper tais
   (changed, newZip) = case kk of
     KeyboardKey_Left    -> (False, TZ.left oldZip)
     KeyboardKey_Right   -> (False, TZ.right oldZip)
@@ -137,7 +137,7 @@ inputBoxText :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputS
 inputBoxText tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputBoxTextZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
-      _cBoxText_deltaText = (fromMaybe "" (_boxTextInputState_original tais), TZ.value (_boxTextInputState_zipper newtais))
+      _cBoxText_deltaText = (fromMaybe "" (_textInputState_original tais), TZ.value (_textInputState_zipper newtais))
     })
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
@@ -145,12 +145,12 @@ inputBoxText tais undoFirst sowl kk = (newtais, mop) where
 
 makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
 makeTextHandlerRenderOutput btis offset = r where
-  dls = _boxTextInputState_displayLines btis
-  origBox = _boxTextInputState_box $ btis
+  dls = _textInputState_displayLines btis
+  origBox = _textInputState_box $ btis
   (x, y) = TZ._displayLines_cursorPos dls
   offsetMap = TZ._displayLines_offsetMap dls
 
-  mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _boxTextInputState_zipper $ btis
+  mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _textInputState_zipper $ btis
 
   mlbox = do
     guard $ lBox_area origBox > 0
@@ -158,7 +158,7 @@ makeTextHandlerRenderOutput btis offset = r where
     -- TODO would be nice to assert that this exists...
     (alignxoff,_) <- Map.lookup y offsetMap
     let
-      LBox p _ = _boxTextInputState_box $ btis
+      LBox p _ = _textInputState_box $ btis
       cursorh = RenderHandle {
           _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
           , _renderHandle_char = mCursorChar
@@ -192,7 +192,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
   newText = _sBoxText_text . _sBox_text $ sbox
 
   recomputetz = TZ.fromText newText
-  oldtz = _boxTextInputState_zipper _boxTextHandler_state
+  oldtz = _textInputState_zipper _boxTextHandler_state
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
@@ -202,7 +202,7 @@ updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsC
   r = tah {
     _boxTextHandler_state = if reset
       then nextstate {
-          _boxTextInputState_original = Just newText
+          _textInputState_original = Just newText
         }
       else nextstate
     , _boxTextHandler_undoFirst = if reset
@@ -218,7 +218,7 @@ instance PotatoHandler BoxTextHandler where
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
-        clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
+        clickInside = does_lBox_contains_XY (_textInputState_box _boxTextHandler_state) _mouseDrag_to
         newState = mouseText _boxTextHandler_state (_sBox_box sbox) rmd (getBoxTextOffset sbox)
         r = if clickInside
           then Just $ def {
@@ -265,7 +265,7 @@ instance PotatoHandler BoxTextHandler where
   -- TODO do you need to reset _boxTextHandler_prevHandler as well?
   pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
-    else if rid /= (_boxTextInputState_rid $ _boxTextHandler_state tah)
+    else if rid /= (_textInputState_rid $ _boxTextHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
         SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
@@ -309,8 +309,8 @@ updateBoxLabelInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
   newBox@(LBox _ (V2 width _)) =  lBox_to_boxLabelBox $ _sBox_box sbox
   r = btis {
-      _boxTextInputState_box = newBox
-      , _boxTextInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_boxTextInputState_zipper btis)
+      _textInputState_box = newBox
+      , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)
     }
 
 makeBoxLabelInputState :: REltId -> SBox -> RelMouseDrag -> TextInputState
@@ -318,13 +318,13 @@ makeBoxLabelInputState rid sbox rmd = r where
   mogtext = _sBoxTitle_title . _sBox_title $ sbox
   ogtz = TZ.fromText (fromMaybe "" mogtext)
   r' = TextInputState {
-      _boxTextInputState_rid = rid
-      , _boxTextInputState_original   = mogtext
-      , _boxTextInputState_zipper   = ogtz
+      _textInputState_rid = rid
+      , _textInputState_original   = mogtext
+      , _textInputState_zipper   = ogtz
 
       -- these fields get updated in next pass
-      , _boxTextInputState_box = error "expected to be filled"
-      , _boxTextInputState_displayLines = error "expected to be filled"
+      , _textInputState_box = error "expected to be filled"
+      , _textInputState_displayLines = error "expected to be filled"
     }
   r'' = updateBoxLabelInputStateWithSBox sbox r'
   r = mouseText r'' (_sBox_box sbox) rmd (V2 1 0)
@@ -346,7 +346,7 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   mNewText = _sBoxTitle_title . _sBox_title $ sbox
 
   recomputetz = TZ.fromText (fromMaybe "" mNewText)
-  oldtz = _boxTextInputState_zipper _boxLabelHandler_state
+  oldtz = _textInputState_zipper _boxLabelHandler_state
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
@@ -355,7 +355,7 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   r = tah {
     _boxLabelHandler_state = if reset
       then nextstate {
-          _boxTextInputState_original = mNewText
+          _textInputState_original = mNewText
         }
       else nextstate
     , _boxLabelHandler_undoFirst = if reset
@@ -367,9 +367,9 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
 -- | returns zipper in TextInputState after keyboard input has been applied for BoxLabel (does not allow line breaks)
 -- Bool indicates if there was any real input
 inputBoxLabelZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
-inputBoxLabelZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
+inputBoxLabelZipper tais kk = (changed, tais { _textInputState_zipper = newZip }) where
 
-  oldZip = _boxTextInputState_zipper tais
+  oldZip = _textInputState_zipper tais
   (changed, newZip) = case kk of
     KeyboardKey_Left    -> (False, TZ.left oldZip)
     KeyboardKey_Right   -> (False, TZ.right oldZip)
@@ -389,8 +389,8 @@ inputBoxLabelZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZi
 inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
 inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputBoxLabelZipper tais kk
-  newtext = TZ.value (_boxTextInputState_zipper newtais)
-  controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_boxTextInputState_original tais, if newtext == "" then Nothing else Just newtext)))
+  newtext = TZ.value (_textInputState_zipper newtais)
+  controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
   mop = if changed
     then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
@@ -399,7 +399,7 @@ inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
 -- | just a helper for pHandleMouse
 handleMouseDownOrFirstUpForBoxLabelHandler :: BoxLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> SBox -> Bool -> Maybe PotatoHandlerOutput
 handleMouseDownOrFirstUpForBoxLabelHandler tah@BoxLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) sbox isdown = r where
-  clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
+  clickInside = does_lBox_contains_XY (_textInputState_box _boxLabelHandler_state) _mouseDrag_to
   newState = mouseText _boxLabelHandler_state (_sBox_box sbox) rmd (V2 1 0)
   r = if clickInside
     then Just $ def {
@@ -466,7 +466,7 @@ instance PotatoHandler BoxLabelHandler where
   -- TODO do you need to reset _boxLabelHandler_prevHandler as well?
   pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
-    else if rid /= (_boxTextInputState_rid $ _boxLabelHandler_state tah)
+    else if rid /= (_textInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
         SEltBox sbox -> if sBoxType_hasBorder (_sBox_boxType sbox)
