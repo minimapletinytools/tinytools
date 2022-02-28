@@ -23,7 +23,7 @@ module Potato.Flow.SElts (
   , make_sBoxType
   , SBox(..)
   , sBox_hasLabel
-  , SSimpleLine(..)
+  , SAutoLine(..)
   , TextAreaMapping
   , STextArea(..)
   , SElt(..)
@@ -298,31 +298,31 @@ instance Default LineStyle where
     }
 
 -- |
-data SSimpleLine = SSimpleLine {
-  _sSimpleLine_start       :: XY
-  , _sSimpleLine_end       :: XY
-  , _sSimpleLine_superStyle     :: SuperStyle
-  , _sSimpleLine_lineStyle :: LineStyle
-  , _sSimpleLine_attachStart :: Maybe Attachment
-  , _sSimpleLine_attachEnd :: Maybe Attachment
-  , _sSimpleLine_midpoints :: [XY] --  WIP currently does nothing
+data SAutoLine = SAutoLine {
+  _sAutoLine_start       :: XY
+  , _sAutoLine_end       :: XY
+  , _sAutoLine_superStyle     :: SuperStyle
+  , _sAutoLine_lineStyle :: LineStyle
+  , _sAutoLine_attachStart :: Maybe Attachment
+  , _sAutoLine_attachEnd :: Maybe Attachment
+  , _sAutoLine_midpoints :: [XY] --  WIP currently does nothing
 } deriving (Eq, Generic, Show)
 
-instance FromJSON SSimpleLine
-instance ToJSON SSimpleLine
-instance Binary SSimpleLine
-instance NFData SSimpleLine
+instance FromJSON SAutoLine
+instance ToJSON SAutoLine
+instance Binary SAutoLine
+instance NFData SAutoLine
 
 -- makes writing tests easier...
-instance Default SSimpleLine where
-  def = SSimpleLine {
-      _sSimpleLine_start       = 0
-      , _sSimpleLine_end       = 0
-      , _sSimpleLine_superStyle     = def
-      , _sSimpleLine_lineStyle = def
-      , _sSimpleLine_attachStart = Nothing
-      , _sSimpleLine_attachEnd = Nothing
-      , _sSimpleLine_midpoints = []
+instance Default SAutoLine where
+  def = SAutoLine {
+      _sAutoLine_start       = 0
+      , _sAutoLine_end       = 0
+      , _sAutoLine_superStyle     = def
+      , _sAutoLine_lineStyle = def
+      , _sAutoLine_attachStart = Nothing
+      , _sAutoLine_attachEnd = Nothing
+      , _sAutoLine_midpoints = []
     }
 
 -- TODO DELETE
@@ -366,7 +366,7 @@ data SElt =
   | SEltFolderStart
   | SEltFolderEnd
   | SEltBox SBox
-  | SEltLine SSimpleLine -- TODO rename to SEltSimpleLine?
+  | SEltLine SAutoLine -- TODO rename to SEltSimpleLine?
   | SEltTextArea STextArea
   deriving (Eq, Generic, Show)
 

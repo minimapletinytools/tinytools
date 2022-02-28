@@ -217,8 +217,8 @@ constructTest label pfs bs expected = constructTestWithControllerMeta label pfs 
 
 
 
--- partial function to get SSimpleLine
-hasOwlElt_test_toSSimpleLine :: (HasOwlElt a) => a -> SSimpleLine
-hasOwlElt_test_toSSimpleLine o = case hasOwlElt_toSElt_hack o of
+-- partial function to get SAutoLine
+hasOwlElt_test_toSAutoLine :: (HasOwlElt a) => a -> SAutoLine
+hasOwlElt_test_toSAutoLine o = case hasOwlElt_toSElt_hack o of
   SEltLine ssline  -> ssline
-  selt -> error $ "expected SSimpleLine, got " <> show selt
+  selt -> error $ "expected SAutoLine, got " <> show selt

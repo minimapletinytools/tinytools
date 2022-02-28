@@ -69,7 +69,7 @@ instance HasOwlElt OwlElt where
   hasOwlElt_attachments = \case
     OwlEltFolder _ _ -> []
     OwlEltSElt _ selt -> case selt of
-      SEltLine sline -> catMaybes [_sSimpleLine_attachStart sline, _sSimpleLine_attachEnd sline]
+      SEltLine sline -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
       _ -> []
   hasOwlElt_toSElt_hack = \case
     OwlEltSElt _ selt -> selt
@@ -89,8 +89,8 @@ owlElt_updateAttachments :: Bool -> REltIdMap REltId -> OwlElt -> OwlElt
 owlElt_updateAttachments breakNonExistng ridremap oelt = case oelt of
   OwlEltSElt oi selt -> OwlEltSElt oi $ case selt of
     SEltLine sline -> SEltLine (sline {
-        _sSimpleLine_attachStart = remapAttachment $ _sSimpleLine_attachStart sline
-        , _sSimpleLine_attachEnd = remapAttachment $ _sSimpleLine_attachEnd sline
+        _sAutoLine_attachStart = remapAttachment $ _sAutoLine_attachStart sline
+        , _sAutoLine_attachEnd = remapAttachment $ _sAutoLine_attachEnd sline
       })
     x -> x
     where

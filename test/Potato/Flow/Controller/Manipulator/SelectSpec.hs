@@ -30,7 +30,7 @@ test_Select_zero = constructTest "zero" owlpfstate_zero bs expected where
       , EWCLabel "deselect"
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
-      -- sl1 isn't actually zero area because SSimpleLine can't be zero area
+      -- sl1 isn't actually zero area because SAutoLine can't be zero area
       , EWCLabel "select sl1"
       , EWCMouse (LMouseData (V2 9 9) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 11 11) True MouseButton_Left [] False)

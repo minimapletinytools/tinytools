@@ -1418,7 +1418,7 @@ DONE-move
 ::ATTACHING::
 -getSEltAttachPoints :: SElt -> IntMap XY
   -key is attach id, XY is position
--_sSimpleLine_attachments :: (Maybe (REltId, Int), Maybe (REltId, Int))
+-_sAutoLine_attachments :: (Maybe (REltId, Int), Maybe (REltId, Int))
   -attach points for each end of the line, really you should use an Either
     -or another option is to have both attach and hard values, and ensure they are always in sync
 -type AttachMap = REltIdMap [REltId]

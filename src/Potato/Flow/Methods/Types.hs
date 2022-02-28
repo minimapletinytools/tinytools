@@ -66,8 +66,8 @@ getSEltBox selt = case selt of
   -- TODO return canonical
   SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
   SEltLine x      -> Just $ union_lBox
-    (make_lBox_from_XYs (_sSimpleLine_start x) (_sSimpleLine_end x))
-    (make_lBox_from_XYs (_sSimpleLine_start x + 1) (_sSimpleLine_end x + 1))
+    (make_lBox_from_XYs (_sAutoLine_start x) (_sAutoLine_end x))
+    (make_lBox_from_XYs (_sAutoLine_start x + 1) (_sAutoLine_end x + 1))
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
 getSEltLabelBox :: SEltLabel -> Maybe LBox

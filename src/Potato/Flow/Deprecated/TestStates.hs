@@ -84,8 +84,8 @@ pfstate_basic0 = PFState {
             _sBox_box = LBox (V2 1 1) (V2 5 5)
           }))
         , (1, SEltLabel "line" (SEltLine def {
-            _sSimpleLine_start = V2 7 2
-            , _sSimpleLine_end = V2 20 18
+            _sAutoLine_start = V2 7 2
+            , _sAutoLine_end = V2 20 18
           }))
         , (2, SEltLabel "text" (SEltBox def {
             _sBox_box = LBox (V2 0 10) (V2 15 5)
@@ -115,12 +115,12 @@ pfstate_basic1 = PFState {
 
         -- 2 lines sharing a start point at (0,100)
         , (4, SEltLabel "sl1" (SEltLine def {
-            _sSimpleLine_start = V2 0 100
-            , _sSimpleLine_end = V2 0 110
+            _sAutoLine_start = V2 0 100
+            , _sAutoLine_end = V2 0 110
           }))
         , (5, SEltLabel "sl2" (SEltLine def {
-            _sSimpleLine_start = V2 0 100
-            , _sSimpleLine_end = V2 10 100
+            _sAutoLine_start = V2 0 100
+            , _sAutoLine_end = V2 10 100
           }))
 
       ]
@@ -151,12 +151,12 @@ pfstate_basic2 = PFState {
         , (7, SEltLabel "fstart3" SEltFolderStart)
           -- 2 lines sharing a start point at (0,100)
           , (8, SEltLabel "sl1" (SEltLine def {
-              _sSimpleLine_start = V2 0 100
-              , _sSimpleLine_end = V2 0 110
+              _sAutoLine_start = V2 0 100
+              , _sAutoLine_end = V2 0 110
             }))
           , (9, SEltLabel "sl2" (SEltLine def {
-              _sSimpleLine_start = V2 0 100
-              , _sSimpleLine_end = V2 10 100
+              _sAutoLine_start = V2 0 100
+              , _sAutoLine_end = V2 10 100
             }))
           , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)
@@ -184,26 +184,26 @@ pfstate_attachments1 = PFState {
 
       -- 2 lines sharing a start point at (0,100)
       , (4, SEltLabel "b1-> <-b3" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
             })
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Left
             })
         }))
       , (5, SEltLabel "b2v ^b4" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Bot
             })
 
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Top
             })
@@ -235,78 +235,78 @@ pfstate_attachments2 = PFState {
 
       -- 2 lines sharing a start point at (0,100)
       , (4, SEltLabel "b1-> <-b4" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
             })
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Left
             })
         }))
       , (5, SEltLabel "<-b1 b2->" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Left
             })
 
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 1
               , _attachment_location = AL_Right
             })
         }))
       , (6, SEltLabel "<-b1 b4->" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Left
             })
 
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Right
             })
         }))
       , (7, SEltLabel "b1-> b4->" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
             })
 
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Right
             })
         }))
         , (8, SEltLabel "b1-> b2->" (SEltLine def {
-            _sSimpleLine_start = V2 0 100
-            , _sSimpleLine_end = V2 0 110
-            , _sSimpleLine_attachStart = Just (Attachment {
+            _sAutoLine_start = V2 0 100
+            , _sAutoLine_end = V2 0 110
+            , _sAutoLine_attachStart = Just (Attachment {
                 _attachment_target = 0
                 , _attachment_location = AL_Right
               })
 
-            , _sSimpleLine_attachEnd = Just (Attachment {
+            , _sAutoLine_attachEnd = Just (Attachment {
                 _attachment_target = 1
                 , _attachment_location = AL_Right
               })
           }))
       , (9, SEltLabel "b1v ^b3" (SEltLine def {
-          _sSimpleLine_start = V2 0 100
-          , _sSimpleLine_end = V2 0 110
-          , _sSimpleLine_attachStart = Just (Attachment {
+          _sAutoLine_start = V2 0 100
+          , _sAutoLine_end = V2 0 110
+          , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Bot
             })
 
-          , _sSimpleLine_attachEnd = Just (Attachment {
+          , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Top
             })
@@ -325,8 +325,8 @@ pfstate_zero = PFState {
             _sBox_box = LBox (V2 0 0) (V2 0 0)
           }))
         , (1, SEltLabel "sl1" (SEltLine def {
-            _sSimpleLine_start = V2 10 10
-            , _sSimpleLine_end = V2 10 10
+            _sAutoLine_start = V2 10 10
+            , _sAutoLine_end = V2 10 10
           }))
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox

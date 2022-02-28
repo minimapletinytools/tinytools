@@ -76,8 +76,8 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltBox x                    -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
   SEltTextArea x                   -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
-  -- we use does_lBox_intersect since it's impossible for a SSimpleLine to have zero sized box
-  SEltLine sline@SSimpleLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
+  -- we use does_lBox_intersect since it's impossible for a SAutoLine to have zero sized box
+  SEltLine sline@SAutoLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool
 doesSEltIntersectPoint pos selt = doesSEltIntersectBox (LBox pos (V2 1 1)) selt
@@ -85,7 +85,7 @@ doesSEltIntersectPoint pos selt = doesSEltIntersectBox (LBox pos (V2 1 1)) selt
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
   SEltBox SBox {..}         -> Just _sBox_style
-  SEltLine SSimpleLine {..} -> Just _sSimpleLine_superStyle
+  SEltLine SAutoLine {..} -> Just _sAutoLine_superStyle
   _                         -> Nothing
 
 getSEltLabelSuperStyle :: SEltLabel -> Maybe SuperStyle
@@ -93,7 +93,7 @@ getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
 
 getSEltLineStyle :: SElt -> Maybe LineStyle
 getSEltLineStyle selt = case selt of
-  SEltLine SSimpleLine {..} -> Just _sSimpleLine_lineStyle
+  SEltLine SAutoLine {..} -> Just _sAutoLine_lineStyle
   _                         -> Nothing
 
 getSEltLabelLineStyle :: SEltLabel -> Maybe LineStyle
@@ -199,38 +199,38 @@ sBox_drawer sbox@SBox {..} = r where
         _                  -> rfnborder
     }
 
-sSimpleLine_drawer :: SSimpleLine -> SEltDrawer
-sSimpleLine_drawer sline@SSimpleLine {..} = r where
+sSimpleLine_drawer :: SAutoLine -> SEltDrawer
+sSimpleLine_drawer sline@SAutoLine {..} = r where
 
   lbox@(LBox (V2 x y) (V2 w h)) = fromJust $ getSEltBox (SEltLine sline)
   xsplit = x + w `div` 2
   ysplit = y + h `div` 2
-  V2 startx starty = _sSimpleLine_start
-  V2 endx endy = _sSimpleLine_end
+  V2 startx starty = _sAutoLine_start
+  V2 endx endy = _sAutoLine_end
 
-  larr = _lineStyle_leftArrows _sSimpleLine_lineStyle
-  rarr = T.reverse $ _lineStyle_rightArrows _sSimpleLine_lineStyle
-  tarr = _lineStyle_upArrows _sSimpleLine_lineStyle
-  barr = T.reverse $ _lineStyle_downArrows _sSimpleLine_lineStyle
+  larr = _lineStyle_leftArrows _sAutoLine_lineStyle
+  rarr = T.reverse $ _lineStyle_rightArrows _sAutoLine_lineStyle
+  tarr = _lineStyle_upArrows _sAutoLine_lineStyle
+  barr = T.reverse $ _lineStyle_downArrows _sAutoLine_lineStyle
 
   horizrenderfn pt@(V2 x' y')
     | not (does_lBox_contains_XY lbox pt) = Nothing
     | w <= 1 = vertrenderfn pt
     -- render as much of the left arrow as you can and then render the rest
     | isLeft && isLeftHoriz && x'-x < (T.length larr) = Just $ T.index larr (x'-x)
-    | isLeft && isLeftHoriz = _superStyle_horizontal _sSimpleLine_superStyle
+    | isLeft && isLeftHoriz = _superStyle_horizontal _sAutoLine_superStyle
     -- render as much of the right arrow as you can and then render the rest
     | isRight && isRightHoriz && farend-x' < (T.length rarr) = Just $ T.index rarr (farend-x')
-    | isRight && isRightHoriz = _superStyle_horizontal _sSimpleLine_superStyle
+    | isRight && isRightHoriz = _superStyle_horizontal _sAutoLine_superStyle
     -- render the corners
-    | isCenter && isTop && isLeftHoriz = _superStyle_tr _sSimpleLine_superStyle
-    | isCenter && isBot && isLeftHoriz = _superStyle_br _sSimpleLine_superStyle
-    | isCenter && isTop && isRightHoriz = _superStyle_tl _sSimpleLine_superStyle
-    | isCenter && isBot && isRightHoriz = _superStyle_bl _sSimpleLine_superStyle
+    | isCenter && isTop && isLeftHoriz = _superStyle_tr _sAutoLine_superStyle
+    | isCenter && isBot && isLeftHoriz = _superStyle_br _sAutoLine_superStyle
+    | isCenter && isTop && isRightHoriz = _superStyle_tl _sAutoLine_superStyle
+    | isCenter && isBot && isRightHoriz = _superStyle_bl _sAutoLine_superStyle
     -- special case
-    | h == 1 = _superStyle_horizontal _sSimpleLine_superStyle
+    | h == 1 = _superStyle_horizontal _sAutoLine_superStyle
     -- render the vertical line
-    | isCenter = _superStyle_vertical _sSimpleLine_superStyle
+    | isCenter = _superStyle_vertical _sAutoLine_superStyle
     | otherwise = Nothing
     where
       isLeft = x' < xsplit
@@ -244,23 +244,23 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
 
   vertrenderfn pt@(V2 x' y')
     | not (does_lBox_contains_XY lbox pt) = Nothing
-    | w <= 1 && h <= 1 = _superStyle_point _sSimpleLine_superStyle
+    | w <= 1 && h <= 1 = _superStyle_point _sAutoLine_superStyle
     | h <= 1 = horizrenderfn pt
     -- render as much of the top arrow as you can and then render the rest
     | isTop && isTopVert && y'-y < (T.length tarr) = Just $ T.index tarr (y'-y)
-    | isTop && isTopVert = _superStyle_vertical _sSimpleLine_superStyle
+    | isTop && isTopVert = _superStyle_vertical _sAutoLine_superStyle
     -- render as much of the right arrow as you can and then render the rest
     | isBot && isBotVert && farend-y' < (T.length barr) = Just $ T.index barr (farend-y')
-    | isBot && isBotVert = _superStyle_vertical _sSimpleLine_superStyle
+    | isBot && isBotVert = _superStyle_vertical _sAutoLine_superStyle
     -- render the corners
-    | isCenter && isLeft && isTopVert = _superStyle_bl _sSimpleLine_superStyle
-    | isCenter && isRight && isTopVert = _superStyle_br _sSimpleLine_superStyle
-    | isCenter && isLeft && isBotVert = _superStyle_tl _sSimpleLine_superStyle
-    | isCenter && isRight && isBotVert = _superStyle_tr _sSimpleLine_superStyle
+    | isCenter && isLeft && isTopVert = _superStyle_bl _sAutoLine_superStyle
+    | isCenter && isRight && isTopVert = _superStyle_br _sAutoLine_superStyle
+    | isCenter && isLeft && isBotVert = _superStyle_tl _sAutoLine_superStyle
+    | isCenter && isRight && isBotVert = _superStyle_tr _sAutoLine_superStyle
     -- special case
-    | w == 1 = _superStyle_vertical _sSimpleLine_superStyle
+    | w == 1 = _superStyle_vertical _sAutoLine_superStyle
     -- render the horizontal line
-    | isCenter = _superStyle_horizontal _sSimpleLine_superStyle
+    | isCenter = _superStyle_horizontal _sAutoLine_superStyle
     | otherwise = Nothing
     where
       isLeft = (x' == startx && startx < endx) || (x' == endx && startx > endx)
@@ -276,7 +276,7 @@ sSimpleLine_drawer sline@SSimpleLine {..} = r where
 
   r = SEltDrawer {
       _sEltDrawer_box = const lbox
-      , _sEltDrawer_renderFn = \_ -> case _lineStyle_autoStyle _sSimpleLine_lineStyle of
+      , _sEltDrawer_renderFn = \_ -> case _lineStyle_autoStyle _sAutoLine_lineStyle of
         LineAutoStyle_Auto                     -> autorenderfn
         LineAutoStyle_AutoStraight             -> autorenderfn
         LineAutoStyle_StraightAlwaysHorizontal -> horizrenderfn
@@ -331,13 +331,13 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
       _sBox_box = modifyDelta isDo (_sBox_box sbox) _cBoundingBox_deltaBox
     }
   -- TODO handle resize parameter
-  SEltLine sline@SSimpleLine {..} -> SEltLine $ sline {
-      _sSimpleLine_start = modifyDelta isDo _sSimpleLine_start
+  SEltLine sline@SAutoLine {..} -> SEltLine $ sline {
+      _sAutoLine_start = modifyDelta isDo _sAutoLine_start
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sSimpleLine_end = modifyDelta isDo _sSimpleLine_end
+      , _sAutoLine_end = modifyDelta isDo _sAutoLine_end
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sSimpleLine_midpoints = fmap (\xy -> modifyDelta isDo xy
-        (_deltaLBox_translate _cBoundingBox_deltaBox)) _sSimpleLine_midpoints
+      , _sAutoLine_midpoints = fmap (\xy -> modifyDelta isDo xy
+        (_deltaLBox_translate _cBoundingBox_deltaBox)) _sAutoLine_midpoints
     }
   SEltTextArea stext -> SEltTextArea $ stext {
       _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox
@@ -351,7 +351,7 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
     }
   -- TODO handle resize parameter
   SEltLine sline -> SEltLine $ sline {
-      _sSimpleLine_superStyle = modifyDelta isDo (_sSimpleLine_superStyle sline) style
+      _sAutoLine_superStyle = modifyDelta isDo (_sAutoLine_superStyle sline) style
     }
   _ -> error $ "Controller - SElt type mismatch: CTagSuperStyle - " <> show selt
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
@@ -360,7 +360,7 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
 modify_sElt_with_cLineStyle :: Bool -> SElt -> CLineStyle -> SElt
 modify_sElt_with_cLineStyle isDo selt (CLineStyle style) = case selt of
   SEltLine sline -> SEltLine $ sline {
-      _sSimpleLine_lineStyle = modifyDelta isDo (_sSimpleLine_lineStyle sline) style
+      _sAutoLine_lineStyle = modifyDelta isDo (_sAutoLine_lineStyle sline) style
     }
   _ -> error $ "Controller - SElt type mismatch: CTagLineStyle - " <> show selt
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk

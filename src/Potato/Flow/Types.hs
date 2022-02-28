@@ -193,34 +193,34 @@ instance NFData CLine
 instance Default CLine where
   def = CLine Nothing Nothing Nothing Nothing
 
-instance Delta SSimpleLine CLine where
-  plusDelta sline@SSimpleLine {..} CLine {..} = sline {
-      _sSimpleLine_start   = case _cLine_deltaStart of
-        Nothing -> _sSimpleLine_start
-        Just d  -> plusDelta _sSimpleLine_start d
-      , _sSimpleLine_end   =  case _cLine_deltaEnd of
-        Nothing -> _sSimpleLine_end
-        Just d  -> plusDelta _sSimpleLine_end d
-      , _sSimpleLine_attachStart = case _cLine_deltaAttachStart of
-        Nothing -> _sSimpleLine_attachStart
-        Just d  -> plusDelta _sSimpleLine_attachStart d
-      , _sSimpleLine_attachEnd = case _cLine_deltaAttachEnd of
-        Nothing -> _sSimpleLine_attachEnd
-        Just d  -> plusDelta _sSimpleLine_attachEnd d
+instance Delta SAutoLine CLine where
+  plusDelta sline@SAutoLine {..} CLine {..} = sline {
+      _sAutoLine_start   = case _cLine_deltaStart of
+        Nothing -> _sAutoLine_start
+        Just d  -> plusDelta _sAutoLine_start d
+      , _sAutoLine_end   =  case _cLine_deltaEnd of
+        Nothing -> _sAutoLine_end
+        Just d  -> plusDelta _sAutoLine_end d
+      , _sAutoLine_attachStart = case _cLine_deltaAttachStart of
+        Nothing -> _sAutoLine_attachStart
+        Just d  -> plusDelta _sAutoLine_attachStart d
+      , _sAutoLine_attachEnd = case _cLine_deltaAttachEnd of
+        Nothing -> _sAutoLine_attachEnd
+        Just d  -> plusDelta _sAutoLine_attachEnd d
     }
-  minusDelta sline@SSimpleLine {..} CLine {..} = sline {
-      _sSimpleLine_start   = case _cLine_deltaStart of
-        Nothing -> _sSimpleLine_start
-        Just d  -> minusDelta _sSimpleLine_start d
-      , _sSimpleLine_end   =  case _cLine_deltaEnd of
-        Nothing -> _sSimpleLine_end
-        Just d  -> minusDelta _sSimpleLine_end d
-      , _sSimpleLine_attachStart = case _cLine_deltaAttachStart of
-        Nothing -> _sSimpleLine_attachStart
-        Just d  -> minusDelta _sSimpleLine_attachStart d
-      , _sSimpleLine_attachEnd = case _cLine_deltaAttachEnd of
-        Nothing -> _sSimpleLine_attachEnd
-        Just d  -> minusDelta _sSimpleLine_attachEnd d
+  minusDelta sline@SAutoLine {..} CLine {..} = sline {
+      _sAutoLine_start   = case _cLine_deltaStart of
+        Nothing -> _sAutoLine_start
+        Just d  -> minusDelta _sAutoLine_start d
+      , _sAutoLine_end   =  case _cLine_deltaEnd of
+        Nothing -> _sAutoLine_end
+        Just d  -> minusDelta _sAutoLine_end d
+      , _sAutoLine_attachStart = case _cLine_deltaAttachStart of
+        Nothing -> _sAutoLine_attachStart
+        Just d  -> minusDelta _sAutoLine_attachStart d
+      , _sAutoLine_attachEnd = case _cLine_deltaAttachEnd of
+        Nothing -> _sAutoLine_attachEnd
+        Just d  -> minusDelta _sAutoLine_attachEnd d
     }
 
 data CBoxText = CBoxText {

@@ -34,8 +34,8 @@ generateTestCases = r where
   makestree (b1,b2) (al1, al2) =
     [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
     , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
-    , (2, SEltLabel "l" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 0 al1), _sSimpleLine_attachEnd = Just (Attachment 1 al2)})))
-    --, (3, SEltLabel "lreverse" (SEltLine (def {_sSimpleLine_attachStart = Just (Attachment 1 al2), _sSimpleLine_attachEnd = Just (Attachment 0 al1)})))
+    , (2, SEltLabel "l" (SEltLine (def {_sAutoLine_attachStart = Just (Attachment 0 al1), _sAutoLine_attachEnd = Just (Attachment 1 al2)})))
+    --, (3, SEltLabel "lreverse" (SEltLine (def {_sAutoLine_attachStart = Just (Attachment 1 al2), _sAutoLine_attachEnd = Just (Attachment 0 al1)})))
     ]
 
   topfs ot = OwlPFState {

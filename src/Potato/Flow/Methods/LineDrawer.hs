@@ -569,8 +569,8 @@ lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
-sSimpleLineNewRenderFn :: SSimpleLine -> Maybe LineAnchorsForRender -> SEltDrawer
-sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
+sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer
+sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
   params = SimpleLineSolverParameters {
       _simpleLineSolverParameters_offsetBorder = True
       -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
@@ -588,8 +588,8 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
       sbox <- getSEltBox $ hasOwlElt_toSElt_hack sowl
       return (sbox, al)
 
-    lbal1 = fromMaybe (LBox _sSimpleLine_start 0, AL_Any) $ maybeGetBox _sSimpleLine_attachStart
-    lbal2 = fromMaybe (LBox _sSimpleLine_end 0, AL_Any) $ maybeGetBox _sSimpleLine_attachEnd
+    lbal1 = fromMaybe (LBox _sAutoLine_start 0, AL_Any) $ maybeGetBox _sAutoLine_attachStart
+    lbal2 = fromMaybe (LBox _sAutoLine_end 0, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
 
     -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
     regenanchors = sSimpleLineSolver params lbal1 lbal2
@@ -602,7 +602,7 @@ sSimpleLineNewRenderFn ssline@SSimpleLine {..} mcache = drawer where
   renderfn ot xy = r where
     -- SUPER INEFFICIENT, gets evaled once for each point :(, you really need to implement the cache
     anchors = getAnchors ot
-    r = lineAnchorsForRender_renderAt _sSimpleLine_superStyle _sSimpleLine_lineStyle anchors xy
+    r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of

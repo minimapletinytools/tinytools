@@ -24,10 +24,10 @@ import           Data.Default
 import qualified Data.Sequence                             as Seq
 
 
-getSLine :: CanvasSelection -> (REltId, SSimpleLine)
+getSLine :: CanvasSelection -> (REltId, SAutoLine)
 getSLine selection = case superOwl_toSElt_hack sowl of
   SEltLine sline  -> (rid, sline)
-  selt -> error $ "expected SSimpleLine, got " <> show selt
+  selt -> error $ "expected SAutoLine, got " <> show selt
   where
     sowl = selectionToSuperOwl selection
     rid = _superOwl_id sowl
@@ -65,7 +65,7 @@ data SimpleLineHandler = SimpleLineHandler {
     , _simpleLineHandler_isCreation :: Bool
     , _simpleLineHandler_active     :: Bool
 
-    , _simpleLineHandler_original :: SSimpleLine -- track original so we can set proper "undo" point with undoFirst operations
+    , _simpleLineHandler_original :: SAutoLine -- track original so we can set proper "undo" point with undoFirst operations
 
     , _simpleLineHandler_offsetAttach :: Bool -- who sets this?
 
@@ -94,15 +94,15 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
     Nothing -> error "expected selection"
     Just sowl -> superOwl_toSElt_hack sowl
   r = case selt of
-    SEltLine SSimpleLine {..} ->
+    SEltLine SAutoLine {..} ->
       let
-        start = fromMaybe _sSimpleLine_start $ maybeLookupAttachment _sSimpleLine_attachStart offsetBorder pfs
-        end = fromMaybe _sSimpleLine_end $ maybeLookupAttachment _sSimpleLine_attachEnd offsetBorder pfs
+        start = fromMaybe _sAutoLine_start $ maybeLookupAttachment _sAutoLine_attachStart offsetBorder pfs
+        end = fromMaybe _sAutoLine_end $ maybeLookupAttachment _sAutoLine_attachEnd offsetBorder pfs
       in
         if _mouseDrag_to == start then Just True
           else if _mouseDrag_to == end then Just False
             else Nothing
-    x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
+    x -> error $ "expected SAutoLine in selection but got " <> show x <> " instead"
 
 
 instance PotatoHandler SimpleLineHandler where
@@ -140,8 +140,8 @@ instance PotatoHandler SimpleLineHandler where
         rid = _superOwl_id $ selectionToSuperOwl _potatoHandlerInput_canvasSelection
 
         -- line should always have been set in MouseDragState_Down
-        ogslinestart = _sSimpleLine_attachStart _simpleLineHandler_original
-        ogslineend = _sSimpleLine_attachEnd _simpleLineHandler_original
+        ogslinestart = _sAutoLine_attachStart _simpleLineHandler_original
+        ogslineend = _sAutoLine_attachEnd _simpleLineHandler_original
 
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _simpleLineHandler_isStart
@@ -154,24 +154,24 @@ instance PotatoHandler SimpleLineHandler where
         -- for modifying an existing elt
         modifiedline = if _simpleLineHandler_isStart
           then _simpleLineHandler_original {
-              _sSimpleLine_start       = _mouseDrag_to
-              , _sSimpleLine_attachStart = mattachendnontrivial
+              _sAutoLine_start       = _mouseDrag_to
+              , _sAutoLine_attachStart = mattachendnontrivial
             }
           else _simpleLineHandler_original {
-              _sSimpleLine_end       = _mouseDrag_to
-              , _sSimpleLine_attachEnd = mattachendnontrivial
+              _sAutoLine_end       = _mouseDrag_to
+              , _sAutoLine_attachEnd = mattachendnontrivial
             }
         llama = makeSetLlama (rid, SEltLine modifiedline)
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
         lineToAdd = SEltLine $ def {
-            _sSimpleLine_start = _mouseDrag_from
-            , _sSimpleLine_end = _mouseDrag_to
-            , _sSimpleLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
-            , _sSimpleLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
-            , _sSimpleLine_attachStart = _simpleLineHandler_attachStart
-            , _sSimpleLine_attachEnd = mattachendnontrivial
+            _sAutoLine_start = _mouseDrag_from
+            , _sAutoLine_end = _mouseDrag_to
+            , _sAutoLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
+            , _sAutoLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
+            , _sAutoLine_attachStart = _simpleLineHandler_attachStart
+            , _sAutoLine_attachEnd = mattachendnontrivial
           }
 
         op = if _simpleLineHandler_isCreation
@@ -195,13 +195,13 @@ instance PotatoHandler SimpleLineHandler where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
 
     boxes = case mselt of
-      Just (SEltLine SSimpleLine {..}) -> if _simpleLineHandler_active
+      Just (SEltLine SAutoLine {..}) -> if _simpleLineHandler_active
         -- TODO if active, color selected handler
         then [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         else [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         where
-          startHandle = fromMaybe _sSimpleLine_start (maybeLookupAttachment _sSimpleLine_attachStart _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
-          endHandle = fromMaybe _sSimpleLine_end (maybeLookupAttachment _sSimpleLine_attachEnd _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
+          startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
+          endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion

@@ -100,7 +100,7 @@ spec = do
 
 
 {-- CAN DELETE
-      describe "SSimpleLine" $ do
+      describe "SAutoLine" $ do
         let
           somelinestyle autoStyle = LineStyle {
               _lineStyle_leftArrows    = "<="
@@ -110,22 +110,22 @@ spec = do
               , _lineStyle_autoStyle   = autoStyle
             }
           someline1 autoStyle = def {
-              _sSimpleLine_start       = V2 10 10
-              , _sSimpleLine_end       = V2 20 20
-              , _sSimpleLine_superStyle     = def
-              , _sSimpleLine_lineStyle = somelinestyle autoStyle
+              _sAutoLine_start       = V2 10 10
+              , _sAutoLine_end       = V2 20 20
+              , _sAutoLine_superStyle     = def
+              , _sAutoLine_lineStyle = somelinestyle autoStyle
             }
           someline2 autoStyle = def {
-              _sSimpleLine_start       = V2 10 10
-              , _sSimpleLine_end       = V2 10 20
-              , _sSimpleLine_superStyle     = def
-              , _sSimpleLine_lineStyle = somelinestyle autoStyle
+              _sAutoLine_start       = V2 10 10
+              , _sAutoLine_end       = V2 10 20
+              , _sAutoLine_superStyle     = def
+              , _sAutoLine_lineStyle = somelinestyle autoStyle
             }
           someline3 autoStyle = def {
-              _sSimpleLine_start       = V2 5 20
-              , _sSimpleLine_end       = V2 10 10
-              , _sSimpleLine_superStyle     = def
-              , _sSimpleLine_lineStyle = somelinestyle autoStyle
+              _sAutoLine_start       = V2 5 20
+              , _sAutoLine_end       = V2 10 10
+              , _sAutoLine_superStyle     = def
+              , _sAutoLine_lineStyle = somelinestyle autoStyle
             }
         it "LineAutoStyle_AutoStraight - 1" $ do
           let
