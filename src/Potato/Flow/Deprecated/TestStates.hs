@@ -83,13 +83,9 @@ pfstate_basic0 = PFState {
         (0, SEltLabel "box" (SEltBox def {
             _sBox_box = LBox (V2 1 1) (V2 5 5)
           }))
-        , (1, SEltLabel "line" (SEltLine SSimpleLine {
+        , (1, SEltLabel "line" (SEltLine def {
             _sSimpleLine_start = V2 7 2
             , _sSimpleLine_end = V2 20 18
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-            , _sSimpleLine_attachStart = Nothing
-            , _sSimpleLine_attachEnd = Nothing
           }))
         , (2, SEltLabel "text" (SEltBox def {
             _sBox_box = LBox (V2 0 10) (V2 15 5)
@@ -118,21 +114,13 @@ pfstate_basic1 = PFState {
           }))
 
         -- 2 lines sharing a start point at (0,100)
-        , (4, SEltLabel "sl1" (SEltLine SSimpleLine {
+        , (4, SEltLabel "sl1" (SEltLine def {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 0 110
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-            , _sSimpleLine_attachStart = Nothing
-            , _sSimpleLine_attachEnd = Nothing
           }))
-        , (5, SEltLabel "sl2" (SEltLine SSimpleLine {
+        , (5, SEltLabel "sl2" (SEltLine def {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 10 100
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-            , _sSimpleLine_attachStart = Nothing
-            , _sSimpleLine_attachEnd = Nothing
           }))
 
       ]
@@ -162,21 +150,13 @@ pfstate_basic2 = PFState {
             , (6, SEltLabel "fend2" SEltFolderEnd)
         , (7, SEltLabel "fstart3" SEltFolderStart)
           -- 2 lines sharing a start point at (0,100)
-          , (8, SEltLabel "sl1" (SEltLine SSimpleLine {
+          , (8, SEltLabel "sl1" (SEltLine def {
               _sSimpleLine_start = V2 0 100
               , _sSimpleLine_end = V2 0 110
-              , _sSimpleLine_style = def
-              , _sSimpleLine_lineStyle = def
-              , _sSimpleLine_attachStart = Nothing
-              , _sSimpleLine_attachEnd = Nothing
             }))
-          , (9, SEltLabel "sl2" (SEltLine SSimpleLine {
+          , (9, SEltLabel "sl2" (SEltLine def {
               _sSimpleLine_start = V2 0 100
               , _sSimpleLine_end = V2 10 100
-              , _sSimpleLine_style = def
-              , _sSimpleLine_lineStyle = def
-              , _sSimpleLine_attachStart = Nothing
-              , _sSimpleLine_attachEnd = Nothing
             }))
           , (10, SEltLabel "fend3" SEltFolderEnd)
         , (11, SEltLabel "fend1" SEltFolderEnd)
@@ -203,7 +183,7 @@ pfstate_attachments1 = PFState {
         }))
 
       -- 2 lines sharing a start point at (0,100)
-      , (4, SEltLabel "b1-> <-b3" (SEltLine SSimpleLine {
+      , (4, SEltLabel "b1-> <-b3" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -214,10 +194,8 @@ pfstate_attachments1 = PFState {
               _attachment_target = 2
               , _attachment_location = AL_Left
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
-      , (5, SEltLabel "b2v ^b4" (SEltLine SSimpleLine {
+      , (5, SEltLabel "b2v ^b4" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -229,8 +207,6 @@ pfstate_attachments1 = PFState {
               _attachment_target = 3
               , _attachment_location = AL_Top
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox
@@ -258,7 +234,7 @@ pfstate_attachments2 = PFState {
 
 
       -- 2 lines sharing a start point at (0,100)
-      , (4, SEltLabel "b1-> <-b4" (SEltLine SSimpleLine {
+      , (4, SEltLabel "b1-> <-b4" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -269,10 +245,8 @@ pfstate_attachments2 = PFState {
               _attachment_target = 3
               , _attachment_location = AL_Left
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
-      , (5, SEltLabel "<-b1 b2->" (SEltLine SSimpleLine {
+      , (5, SEltLabel "<-b1 b2->" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -284,10 +258,8 @@ pfstate_attachments2 = PFState {
               _attachment_target = 1
               , _attachment_location = AL_Right
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
-      , (6, SEltLabel "<-b1 b4->" (SEltLine SSimpleLine {
+      , (6, SEltLabel "<-b1 b4->" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -299,10 +271,8 @@ pfstate_attachments2 = PFState {
               _attachment_target = 3
               , _attachment_location = AL_Right
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
-      , (7, SEltLabel "b1-> b4->" (SEltLine SSimpleLine {
+      , (7, SEltLabel "b1-> b4->" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -314,10 +284,8 @@ pfstate_attachments2 = PFState {
               _attachment_target = 3
               , _attachment_location = AL_Right
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
-        , (8, SEltLabel "b1-> b2->" (SEltLine SSimpleLine {
+        , (8, SEltLabel "b1-> b2->" (SEltLine def {
             _sSimpleLine_start = V2 0 100
             , _sSimpleLine_end = V2 0 110
             , _sSimpleLine_attachStart = Just (Attachment {
@@ -329,10 +297,8 @@ pfstate_attachments2 = PFState {
                 _attachment_target = 1
                 , _attachment_location = AL_Right
               })
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
           }))
-      , (9, SEltLabel "b1v ^b3" (SEltLine SSimpleLine {
+      , (9, SEltLabel "b1v ^b3" (SEltLine def {
           _sSimpleLine_start = V2 0 100
           , _sSimpleLine_end = V2 0 110
           , _sSimpleLine_attachStart = Just (Attachment {
@@ -344,8 +310,6 @@ pfstate_attachments2 = PFState {
               _attachment_target = 2
               , _attachment_location = AL_Top
             })
-          , _sSimpleLine_style = def
-          , _sSimpleLine_lineStyle = def
         }))
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox
@@ -360,13 +324,9 @@ pfstate_zero = PFState {
         (0, SEltLabel "b1" (SEltBox def {
             _sBox_box = LBox (V2 0 0) (V2 0 0)
           }))
-        , (1, SEltLabel "sl1" (SEltLine SSimpleLine {
+        , (1, SEltLabel "sl1" (SEltLine def {
             _sSimpleLine_start = V2 10 10
             , _sSimpleLine_end = V2 10 10
-            , _sSimpleLine_style = def
-            , _sSimpleLine_lineStyle = def
-            , _sSimpleLine_attachStart = Nothing
-            , _sSimpleLine_attachEnd = Nothing
           }))
       ]
     , _pFState_canvas = SCanvas defaultCanvasLBox

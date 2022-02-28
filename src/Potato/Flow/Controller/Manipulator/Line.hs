@@ -77,25 +77,13 @@ data SimpleLineHandler = SimpleLineHandler {
     , _simpleLineHandler_attachEnd :: Maybe Attachment
   } deriving (Show)
 
--- dummy value to make coding simpler
-dummySSimpleLine :: SSimpleLine
-dummySSimpleLine = SSimpleLine {
-  _sSimpleLine_start       = 0
-  , _sSimpleLine_end       = 0
-  , _sSimpleLine_style     = def
-  , _sSimpleLine_lineStyle = def
-
-  , _sSimpleLine_attachStart = Nothing
-  , _sSimpleLine_attachEnd = Nothing
-}
-
 instance Default SimpleLineHandler where
   def = SimpleLineHandler {
       _simpleLineHandler_isStart = False
       , _simpleLineHandler_undoFirst = False
       , _simpleLineHandler_isCreation = False
       , _simpleLineHandler_active = False
-      , _simpleLineHandler_original = dummySSimpleLine
+      , _simpleLineHandler_original = def
       , _simpleLineHandler_offsetAttach = True
       , _simpleLineHandler_attachStart = Nothing
       , _simpleLineHandler_attachEnd = Nothing
@@ -141,7 +129,7 @@ instance PotatoHandler SimpleLineHandler where
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
               _simpleLineHandler_active = True
               , _simpleLineHandler_isStart = False
-              , _simpleLineHandler_attachStart = traceShowId mattachend
+              , _simpleLineHandler_attachStart = mattachend
             }
         }
       -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
@@ -188,7 +176,7 @@ instance PotatoHandler SimpleLineHandler where
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
-        lineToAdd = SEltLine $ SSimpleLine {
+        lineToAdd = SEltLine $ def {
             _sSimpleLine_start = _mouseDrag_from
             , _sSimpleLine_end = _mouseDrag_to
             , _sSimpleLine_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters

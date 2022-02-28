@@ -336,6 +336,8 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
         (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sSimpleLine_end = modifyDelta isDo _sSimpleLine_end
         (_deltaLBox_translate _cBoundingBox_deltaBox)
+      , _sSimpleLine_midpoints = fmap (\xy -> modifyDelta isDo xy
+        (_deltaLBox_translate _cBoundingBox_deltaBox)) _sSimpleLine_midpoints
     }
   SEltTextArea stext -> SEltTextArea $ stext {
       _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox

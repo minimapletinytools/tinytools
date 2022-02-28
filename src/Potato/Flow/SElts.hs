@@ -308,6 +308,8 @@ data SSimpleLine = SSimpleLine {
 
   , _sSimpleLine_attachStart :: Maybe Attachment
   , _sSimpleLine_attachEnd :: Maybe Attachment
+
+  , _sSimpleLine_midpoints :: [XY]
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SSimpleLine
@@ -324,6 +326,7 @@ instance Default SSimpleLine where
       , _sSimpleLine_lineStyle = def
       , _sSimpleLine_attachStart = Nothing
       , _sSimpleLine_attachEnd = Nothing
+      , _sSimpleLine_midpoints = []
     }
 
 -- TODO make manipulator
