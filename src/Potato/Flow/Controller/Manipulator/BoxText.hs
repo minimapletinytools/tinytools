@@ -55,10 +55,20 @@ data BoxTextInputState = BoxTextInputState {
   --, _boxTextInputState_selected :: Int -- WIP
 } deriving (Show)
 
+-- TODO define behavior for when you click outside box or assert
+mouseText :: BoxTextInputState -> LBox -> RelMouseDrag -> XY -> BoxTextInputState
+mouseText tais lbox rmd (V2 xoffset yoffset)= r where
+  RelMouseDrag MouseDrag {..} = rmd
+  ogtz = _boxTextInputState_zipper tais
+  CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox lbox
+  V2 mousex mousey = _mouseDrag_to
+  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
+  r = tais { _boxTextInputState_zipper = newtz }
+
+
 updateBoxTextInputStateWithSBox :: SBox -> BoxTextInputState -> BoxTextInputState
 updateBoxTextInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
-
   CanonicalLBox _ _ newBox@(LBox _ (V2 width' _)) = canonicalLBox_from_lBox $ _sBox_box sbox
   width = case _sBox_boxType sbox of
     SBoxType_BoxText   -> max 0 (width'-2)
@@ -87,7 +97,7 @@ makeBoxTextInputState rid sbox rmd = r where
       --, _boxTextInputState_selected = 0
     }
   r'' = updateBoxTextInputStateWithSBox sbox r'
-  r = mouseText r'' sbox rmd (getBoxTextOffset sbox)
+  r = mouseText r'' (_sBox_box sbox) rmd (getBoxTextOffset sbox)
 
 getBoxTextOffset :: HasCallStack => SBox -> XY
 getBoxTextOffset sbox =  case _sBox_boxType sbox of
@@ -95,15 +105,6 @@ getBoxTextOffset sbox =  case _sBox_boxType sbox of
   SBoxType_NoBoxText -> 0
   _                  -> error "wrong type"
 
--- TODO define behavior for when you click outside box or assert
-mouseText :: BoxTextInputState -> SBox -> RelMouseDrag -> XY -> BoxTextInputState
-mouseText tais sbox rmd (V2 xoffset yoffset)= r where
-  RelMouseDrag MouseDrag {..} = rmd
-  ogtz = _boxTextInputState_zipper tais
-  CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox $ _sBox_box sbox
-  V2 mousex mousey = _mouseDrag_to
-  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_boxTextInputState_displayLines tais) ogtz
-  r = tais { _boxTextInputState_zipper = newtz }
 
 
 -- TODO support shift selecting text someday meh
@@ -218,7 +219,7 @@ instance PotatoHandler BoxTextHandler where
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxTextHandler_state) _mouseDrag_to
-        newState = mouseText _boxTextHandler_state sbox rmd (getBoxTextOffset sbox)
+        newState = mouseText _boxTextHandler_state (_sBox_box sbox) rmd (getBoxTextOffset sbox)
         r = if clickInside
           then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
@@ -326,7 +327,7 @@ makeBoxLabelInputState rid sbox rmd = r where
       , _boxTextInputState_displayLines = error "expected to be filled"
     }
   r'' = updateBoxLabelInputStateWithSBox sbox r'
-  r = mouseText r'' sbox rmd (V2 1 0)
+  r = mouseText r'' (_sBox_box sbox) rmd (V2 1 0)
 
 makeBoxLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxLabelHandler
 makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
@@ -399,7 +400,7 @@ inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
 handleMouseDownOrFirstUpForBoxLabelHandler :: BoxLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> SBox -> Bool -> Maybe PotatoHandlerOutput
 handleMouseDownOrFirstUpForBoxLabelHandler tah@BoxLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) sbox isdown = r where
   clickInside = does_lBox_contains_XY (_boxTextInputState_box _boxLabelHandler_state) _mouseDrag_to
-  newState = mouseText _boxLabelHandler_state sbox rmd (V2 1 0)
+  newState = mouseText _boxLabelHandler_state (_sBox_box sbox) rmd (V2 1 0)
   r = if clickInside
     then Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
