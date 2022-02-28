@@ -18,6 +18,7 @@ module Potato.Flow.Controller.Manipulator.BoxText (
 
 import           Relude
 
+import Potato.Flow.Controller.Manipulator.TextInputState
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
@@ -45,26 +46,6 @@ getSBox selection = case superOwl_toSElt_hack sowl of
   where
     sowl = selectionToSuperOwl selection
     rid = _superOwl_id sowl
-
-data TextInputState = TextInputState {
-  _textInputState_ rid            :: REltId
-  , _textInputState_original     :: Maybe Text -- needed to properly create DeltaText for undo
-  , _textInputState_box          :: LBox -- we can always pull this from selection, but may as well store it
-  , _textInputState_zipper       :: TZ.TextZipper
-  , _textInputState_displayLines :: TZ.DisplayLines ()
-  --, _textInputState_selected :: Int -- WIP
-} deriving (Show)
-
--- TODO define behavior for when you click outside box or assert
-mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
-mouseText tais lbox rmd (V2 xoffset yoffset)= r where
-  RelMouseDrag MouseDrag {..} = rmd
-  ogtz = _textInputState_zipper tais
-  CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox lbox
-  V2 mousex mousey = _mouseDrag_to
-  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_textInputState_displayLines tais) ogtz
-  r = tais { _textInputState_zipper = newtz }
-
 
 updateTextInputStateWithSBox :: SBox -> TextInputState -> TextInputState
 updateTextInputStateWithSBox sbox btis = r where
