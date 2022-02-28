@@ -109,8 +109,8 @@ mouseText tais sbox rmd (V2 xoffset yoffset)= r where
 -- TODO support shift selecting text someday meh
 -- | returns zipper in BoxTextInputState after keyboard input has been applied
 -- Bool indicates if there was any real input
-inputZipper :: BoxTextInputState -> KeyboardKey -> (Bool, BoxTextInputState)
-inputZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
+inputBoxTextZipper :: BoxTextInputState -> KeyboardKey -> (Bool, BoxTextInputState)
+inputBoxTextZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) where
 
   oldZip = _boxTextInputState_zipper tais
   (changed, newZip) = case kk of
@@ -134,7 +134,7 @@ inputZipper tais kk = (changed, tais { _boxTextInputState_zipper = newZip }) whe
 
 inputBoxText :: BoxTextInputState -> Bool -> SuperOwl -> KeyboardKey -> (BoxTextInputState, Maybe WSEvent)
 inputBoxText tais undoFirst sowl kk = (newtais, mop) where
-  (changed, newtais) = inputZipper tais kk
+  (changed, newtais) = inputBoxTextZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
       _cBoxText_deltaText = (fromMaybe "" (_boxTextInputState_original tais), TZ.value (_boxTextInputState_zipper newtais))
     })
