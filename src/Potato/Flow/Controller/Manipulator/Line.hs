@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.Line (
-  SimpleLineHandler(..)
+  AutoLineHandler(..)
 ) where
 
 import           Relude
@@ -57,33 +57,31 @@ getAttachmentPosition offsetBorder pfs a = r where
 maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
 maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
 
+data AutoLineHandler = AutoLineHandler {
+    _autoLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
+    , _autoLineHandler_undoFirst  :: Bool
+    , _autoLineHandler_isCreation :: Bool
+    , _autoLineHandler_active     :: Bool
 
--- TODO rename to AutoLine
-data SimpleLineHandler = SimpleLineHandler {
-    _simpleLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
-    , _simpleLineHandler_undoFirst  :: Bool
-    , _simpleLineHandler_isCreation :: Bool
-    , _simpleLineHandler_active     :: Bool
+    , _autoLineHandler_original :: SAutoLine -- track original so we can set proper "undo" point with undoFirst operations
 
-    , _simpleLineHandler_original :: SAutoLine -- track original so we can set proper "undo" point with undoFirst operations
+    , _autoLineHandler_offsetAttach :: Bool -- who sets this?
 
-    , _simpleLineHandler_offsetAttach :: Bool -- who sets this?
-
-    -- where the current modified line is attached to (_simpleLineHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
-    , _simpleLineHandler_attachStart :: Maybe Attachment
-    , _simpleLineHandler_attachEnd :: Maybe Attachment
+    -- where the current modified line is attached to (_autoLineHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
+    , _autoLineHandler_attachStart :: Maybe Attachment
+    , _autoLineHandler_attachEnd :: Maybe Attachment
   } deriving (Show)
 
-instance Default SimpleLineHandler where
-  def = SimpleLineHandler {
-      _simpleLineHandler_isStart = False
-      , _simpleLineHandler_undoFirst = False
-      , _simpleLineHandler_isCreation = False
-      , _simpleLineHandler_active = False
-      , _simpleLineHandler_original = def
-      , _simpleLineHandler_offsetAttach = True
-      , _simpleLineHandler_attachStart = Nothing
-      , _simpleLineHandler_attachEnd = Nothing
+instance Default AutoLineHandler where
+  def = AutoLineHandler {
+      _autoLineHandler_isStart = False
+      , _autoLineHandler_undoFirst = False
+      , _autoLineHandler_isCreation = False
+      , _autoLineHandler_active = False
+      , _autoLineHandler_original = def
+      , _autoLineHandler_offsetAttach = True
+      , _autoLineHandler_attachStart = Nothing
+      , _autoLineHandler_attachEnd = Nothing
     }
 
 
@@ -105,20 +103,20 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
     x -> error $ "expected SAutoLine in selection but got " <> show x <> " instead"
 
 
-instance PotatoHandler SimpleLineHandler where
+instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
-  pHandleMouse slh@SimpleLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse slh@AutoLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
     mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
 
     in case _mouseDrag_state of
 
-      MouseDragState_Down | _simpleLineHandler_isCreation -> Just $ def {
+      MouseDragState_Down | _autoLineHandler_isCreation -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-              _simpleLineHandler_active = True
-              , _simpleLineHandler_isStart = False
-              , _simpleLineHandler_attachStart = mattachend
+              _autoLineHandler_active = True
+              , _autoLineHandler_isStart = False
+              , _autoLineHandler_attachStart = mattachend
             }
         }
       -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
@@ -126,38 +124,38 @@ instance PotatoHandler SimpleLineHandler where
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
         (_, ssline) = getSLine _potatoHandlerInput_canvasSelection
-        mistart = findFirstLineManipulator _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+        mistart = findFirstLineManipulator _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
         r = case mistart of
           Nothing -> Nothing -- did not click on manipulator, no capture
           Just isstart -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                  _simpleLineHandler_isStart = isstart
-                  , _simpleLineHandler_active = True
-                  , _simpleLineHandler_original = ssline
+                  _autoLineHandler_isStart = isstart
+                  , _autoLineHandler_active = True
+                  , _autoLineHandler_original = ssline
                 }
             }
       MouseDragState_Dragging -> Just r where
         rid = _superOwl_id $ selectionToSuperOwl _potatoHandlerInput_canvasSelection
 
         -- line should always have been set in MouseDragState_Down
-        ogslinestart = _sAutoLine_attachStart _simpleLineHandler_original
-        ogslineend = _sAutoLine_attachEnd _simpleLineHandler_original
+        ogslinestart = _sAutoLine_attachStart _autoLineHandler_original
+        ogslineend = _sAutoLine_attachEnd _autoLineHandler_original
 
         -- only attach on non trivial changes so we don't attach to our starting point
-        nontrivialline = if _simpleLineHandler_isStart
-          then Just _mouseDrag_to /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
-          else Just _mouseDrag_from /= (getAttachmentPosition _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslinestart)
+        nontrivialline = if _autoLineHandler_isStart
+          then Just _mouseDrag_to /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
+          else Just _mouseDrag_from /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslinestart)
         mattachendnontrivial = if nontrivialline
           then mattachend
           else Nothing
 
         -- for modifying an existing elt
-        modifiedline = if _simpleLineHandler_isStart
-          then _simpleLineHandler_original {
+        modifiedline = if _autoLineHandler_isStart
+          then _autoLineHandler_original {
               _sAutoLine_start       = _mouseDrag_to
               , _sAutoLine_attachStart = mattachendnontrivial
             }
-          else _simpleLineHandler_original {
+          else _autoLineHandler_original {
               _sAutoLine_end       = _mouseDrag_to
               , _sAutoLine_attachEnd = mattachendnontrivial
             }
@@ -170,19 +168,19 @@ instance PotatoHandler SimpleLineHandler where
             , _sAutoLine_end = _mouseDrag_to
             , _sAutoLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
             , _sAutoLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
-            , _sAutoLine_attachStart = _simpleLineHandler_attachStart
+            , _sAutoLine_attachStart = _autoLineHandler_attachStart
             , _sAutoLine_attachEnd = mattachendnontrivial
           }
 
-        op = if _simpleLineHandler_isCreation
-          then WSEAddElt (_simpleLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
-          else WSEApplyLlama (_simpleLineHandler_undoFirst, llama)
+        op = if _autoLineHandler_isCreation
+          then WSEAddElt (_autoLineHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
+          else WSEApplyLlama (_autoLineHandler_undoFirst, llama)
 
         r = def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                _simpleLineHandler_undoFirst = True
-                , _simpleLineHandler_attachStart = if _simpleLineHandler_isStart then mattachendnontrivial else _simpleLineHandler_attachStart
-                , _simpleLineHandler_attachEnd = if not _simpleLineHandler_isStart then mattachendnontrivial else _simpleLineHandler_attachEnd
+                _autoLineHandler_undoFirst = True
+                , _autoLineHandler_attachStart = if _autoLineHandler_isStart then mattachendnontrivial else _autoLineHandler_attachStart
+                , _autoLineHandler_attachEnd = if not _autoLineHandler_isStart then mattachendnontrivial else _autoLineHandler_attachEnd
               }
             , _potatoHandlerOutput_pFEvent = Just op
           }
@@ -191,17 +189,17 @@ instance PotatoHandler SimpleLineHandler where
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
     _                              -> Nothing
-  pRenderHandler SimpleLineHandler {..} PotatoHandlerInput {..} = r where
+  pRenderHandler AutoLineHandler {..} PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
 
     boxes = case mselt of
-      Just (SEltLine SAutoLine {..}) -> if _simpleLineHandler_active
+      Just (SEltLine SAutoLine {..}) -> if _autoLineHandler_active
         -- TODO if active, color selected handler
         then [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         else [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
         where
-          startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
-          endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd _simpleLineHandler_offsetAttach _potatoHandlerInput_pFState)
+          startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart _autoLineHandler_offsetAttach _potatoHandlerInput_pFState)
+          endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd _autoLineHandler_offsetAttach _potatoHandlerInput_pFState)
       _ -> []
 
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
@@ -209,7 +207,7 @@ instance PotatoHandler SimpleLineHandler where
     fmapattachmentfn (a,p) = RenderHandle {
         _renderHandle_box = (LBox p 1)
         , _renderHandle_char = Just (attachmentRenderChar a)
-        , _renderHandle_color = if matches _simpleLineHandler_attachStart || matches _simpleLineHandler_attachEnd
+        , _renderHandle_color = if matches _autoLineHandler_attachStart || matches _autoLineHandler_attachEnd
           then RHC_AttachmentHighlight
           else RHC_Attachment
       } where
@@ -219,4 +217,4 @@ instance PotatoHandler SimpleLineHandler where
 
     r = HandlerRenderOutput (attachmentBoxes <> fmap defaultRenderHandle boxes)
 
-  pIsHandlerActive = _simpleLineHandler_active
+  pIsHandlerActive = _autoLineHandler_active

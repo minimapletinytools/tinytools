@@ -144,7 +144,7 @@ emptyHandlerRenderOutput = HandlerRenderOutput { _handlerRenderOutput_temp = [] 
 handlerName_box :: Text
 handlerName_box = "BoxHandler"
 handlerName_simpleLine :: Text
-handlerName_simpleLine = "SimpleLineHandler"
+handlerName_simpleLine = "AutoLineHandler"
 handlerName_layers :: Text
 handlerName_layers = "LayersHandler"
 handlerName_layersRename :: Text

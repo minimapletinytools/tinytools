@@ -366,7 +366,7 @@ data SElt =
   | SEltFolderStart
   | SEltFolderEnd
   | SEltBox SBox
-  | SEltLine SAutoLine -- TODO rename to SEltSimpleLine?
+  | SEltLine SAutoLine
   | SEltTextArea STextArea
   deriving (Eq, Generic, Show)
 

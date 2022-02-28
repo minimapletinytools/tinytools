@@ -234,7 +234,7 @@ makeHandlerFromSelection :: CanvasSelection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
   SMTBox         -> SomePotatoHandler $ (def :: BoxHandler)
   SMTBoxText     -> SomePotatoHandler $ (def :: BoxHandler)
-  SMTLine        -> SomePotatoHandler $ (def :: SimpleLineHandler)
+  SMTLine        -> SomePotatoHandler $ (def :: AutoLineHandler)
   SMTTextArea    -> SomePotatoHandler $ (def :: BoxHandler)
   SMTBoundingBox -> SomePotatoHandler $ (def :: BoxHandler)
   SMTNone        -> SomePotatoHandler EmptyHandler
@@ -314,7 +314,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       GoatCmdTool x -> r where
         someNewHandler = case x of
           Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
-          Tool_Line   -> SomePotatoHandler $ def { _simpleLineHandler_isCreation = True }
+          Tool_Line   -> SomePotatoHandler $ def { _autoLineHandler_isCreation = True }
           Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
           Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
           Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
