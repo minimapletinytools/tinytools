@@ -223,7 +223,6 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
   validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
 
   l = lBox_area lbx
-  (LBox (V2 _ _) _) = _renderedCanvasRegion_box
   (LBox _ (V2 lw _)) = lbx
   unfoldfn (i, eol) = if i == l
     then Nothing
@@ -278,7 +277,6 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
 
 moveRenderedCanvasRegion ::  LBox -> RenderContext -> RenderContext
 moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
-  bpt = (_broadPhaseState_bPTree _renderContext_broadPhase)
   prevrc = _renderContext_renderedCanvasRegion
   rctx1 = rctx {
       _renderContext_renderedCanvasRegion = moveRenderedCanvasRegionNoReRender lbx prevrc

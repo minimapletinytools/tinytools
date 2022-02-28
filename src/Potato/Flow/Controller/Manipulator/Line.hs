@@ -12,7 +12,6 @@ import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
 import           Potato.Flow.OwlWorkspace
 import Potato.Flow.BroadPhase
 import           Potato.Flow.OwlState
@@ -22,8 +21,6 @@ import Potato.Flow.Llama
 
 import           Control.Exception
 import           Data.Default
-import           Data.Dependent.Sum                        (DSum ((:=>)))
-import qualified Data.IntMap                               as IM
 import qualified Data.Sequence                             as Seq
 
 
@@ -106,14 +103,6 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
           else if _mouseDrag_to == end then Just False
             else Nothing
     x -> error $ "expected SSimpleLine in selection but got " <> show x <> " instead"
-
-
-
-dontChangeUnlessNecessary :: Eq a => (Maybe a, Maybe a) -> Maybe (Maybe a, Maybe a)
-dontChangeUnlessNecessary (ma, mb) = if ma == mb
-  then Nothing
-  else Just (ma, mb)
-
 
 
 instance PotatoHandler SimpleLineHandler where

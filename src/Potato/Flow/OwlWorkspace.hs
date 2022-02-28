@@ -16,8 +16,6 @@ module Potato.Flow.OwlWorkspace (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
-import Potato.Flow.SEltMethods
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types

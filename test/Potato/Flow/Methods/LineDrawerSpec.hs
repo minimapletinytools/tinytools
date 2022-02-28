@@ -11,12 +11,10 @@ import           Test.Hspec
 
 import Potato.Flow
 import           Potato.Flow.Methods.LineDrawer
-import Potato.Flow.TestStates
-
-import Potato.Flow.Common
 
 import Data.Default
 
+generateTestCases :: [OwlPFState]
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
@@ -27,8 +25,6 @@ generateTestCases = r where
   box1s = [LBox (V2 0 5) 5]
   box2s = [LBox (V2 10 (-2)) 5]
   canvasbox = LBox (-5) (V2 25 25)
-  startrid = 0
-  endrid = 0
 
   boxpairs = [(b1,b2) | b1 <- box1s, b2 <- box2s]
   attachmentpairs = [(al1,al2) | al1 <- al1s, al2 <- al2s]
@@ -80,9 +76,7 @@ spec = do
           }
       _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
-    let
-      rc = potatoRenderPFState pfs
-    --putTextLn (renderedCanvasToText rc)
+    --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True
 
     -- TODO write a test such that reversing start/end parts of lines always renders the same thing

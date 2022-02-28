@@ -34,7 +34,6 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
 import Potato.Flow.Llama
-import Potato.Flow.DebugHelpers
 
 import           Control.Exception                         (assert)
 import           Data.Default
@@ -289,7 +288,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
-  last_layerMetaMap = _layersState_meta _goatState_layersState
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 

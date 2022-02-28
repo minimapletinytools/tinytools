@@ -109,7 +109,7 @@ spec = do
         canvas0 = potatoRenderPFState state0
         rendercontext0 = makeRenderContextForTest state0 bps0 canvas0
         rendercontext1 = moveRenderedCanvasRegion target rendercontext0
-        canvas1 = _renderContext_renderedCanvasRegion rendercontext1
+        --canvas1 = _renderContext_renderedCanvasRegion rendercontext1
         -- only thing changed is the canvas size, so we can keep using rendercontext
         rendercontext2 = moveRenderedCanvasRegion initial rendercontext1
         canvas2 = _renderContext_renderedCanvasRegion rendercontext2

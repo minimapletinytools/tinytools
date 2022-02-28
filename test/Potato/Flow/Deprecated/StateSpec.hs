@@ -14,7 +14,6 @@ import qualified Data.Sequence          as Seq
 import           Potato.Flow
 import           Potato.Flow.Deprecated.State
 import           Potato.Flow.Deprecated.TestStates
-import           Potato.Flow.Types
 
 someValidState1 :: PFState
 someValidState1 = PFState {

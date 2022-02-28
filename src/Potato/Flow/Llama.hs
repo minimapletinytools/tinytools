@@ -188,7 +188,8 @@ makeCompositionLlama llamas = r where
 
 
 sLlama_deserialize :: OwlPFState -> SLlama -> Llama
-sLlama_deserialize _ sllama = case sllama of
+sLlama_deserialize pfs sllama = case sllama of
   SLlama_Set pairs -> makeCompositionLlama (fmap makeSetLlama pairs)
   SLlama_Rename x -> makeRenameLlama x
+  SLlama_Compose x -> makeCompositionLlama $ fmap (sLlama_deserialize pfs) x
   SLlama_OwlPFCmd pfc isDo -> makePFCLlama' isDo pfc
