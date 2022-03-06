@@ -169,11 +169,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , _goatState_debugCommands = []
       }
 
-    -- TODO switch to Endo style
-    -- old Cmd based folding
-    --goatEvent = traceEvent "input: " $ leftmostWarn "GoatWidgetConfig_EverythingFrontend"
-    --goatEvent = leftmostWarnWithIndex "GoatWidgetConfig_EverythingFrontend"
-    goatEvent = leftmostWarn "GoatWidgetConfig_EverythingFrontend"
+    -- old command style
+    goatEvent =
       [ GoatCmdTool <$> _goatWidgetConfig_selectTool
       , GoatCmdLoad <$> _goatWidgetConfig_load
       , GoatCmdMouse <$> _goatWidgetConfig_mouse
@@ -186,7 +183,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
       , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
       ]
 
-    goatEndoEvent = fmap foldGoatFn goatEvent
+    -- TODO split up foldGoatFn to be endo style
+    goatEndoEvent = foldGoatFn <<$>> goatEvent
 
     -- new Endo folding
     setDefaultParamsEndoEvent = fmap foldGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
@@ -196,7 +194,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
 
   goatDyn' :: Dynamic t GoatState
-    <- foldDyn ($) initialgoat $ leftmostWarn "Goat Endo" [goatEndoEvent, setDefaultParamsEndoEvent, markSavedEvent]
+    <- foldDyn ($) initialgoat $ mergeWith (.) ([setDefaultParamsEndoEvent, markSavedEvent] <> goatEndoEvent)
 
   -- reduces # of calls to foldGoatFn to 2 :\
   let goatDyn = fmap id goatDyn'

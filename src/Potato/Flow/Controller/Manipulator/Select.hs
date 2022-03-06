@@ -65,6 +65,7 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
     -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
     sowl | isboxshaped sowl -> True
 
+    -- TODO you need to pass / return render cache here
     -- TODO rewrite doesSEltIntersectBox so it works with attachments
     sowl -> doesSEltIntersectBox selectBox (hasOwlElt_toSElt_hack sowl)
 

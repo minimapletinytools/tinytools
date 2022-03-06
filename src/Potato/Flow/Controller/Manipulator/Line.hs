@@ -59,6 +59,7 @@ maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder
 
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
+
     , _autoLineHandler_undoFirst  :: Bool
     , _autoLineHandler_isCreation :: Bool
     , _autoLineHandler_active     :: Bool
@@ -127,6 +128,8 @@ instance PotatoHandler AutoLineHandler where
         mistart = findFirstLineManipulator _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
         r = case mistart of
           Nothing -> Nothing -- did not click on manipulator, no capture
+            -- OR create a new handler?
+            -- TODO mark no manipulator dragging position here
           Just isstart -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                   _autoLineHandler_isStart = isstart

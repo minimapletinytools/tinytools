@@ -49,7 +49,7 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
-
+-I think you need some kind of cache monad
 -LINE LABELS :O
 DONE-BUG setting line ends style seems to be broken again
   -I think this might be because of params mouse focus issue again...
