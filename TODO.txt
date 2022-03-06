@@ -39,8 +39,6 @@ WIDE
 
 
 
-
-
 :: MDI
 -Flow needs some kind of switcher on all input events/dynamics
   -GoatSwitcher?
@@ -51,9 +49,6 @@ WIDE
 ::NEWEST TODO::
 -I think you need some kind of cache monad
 -LINE LABELS :O
-DONE-BUG setting line ends style seems to be broken again
-  -I think this might be because of params mouse focus issue again...
-  -no it's because you aren't using line style in the new line render stuff doh
 -attachment stuff
   -need to support ANY attach style for unattached ends etc
     -tries to do a best guess based on where line is coming from
@@ -98,11 +93,6 @@ DONE-BUG setting line ends style seems to be broken again
       -wrap handler in some sort of monad so you can just doUpdateCache
   -consider adding available Attachments to PotatoHandlerInput
     -why?
-
-DONE-BUG clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
-  -this happens for 2 reasons
-    -1 the params widget may get closed on if you change selection
-    -2 unfocus event never happens because input does not get passed into left widget
 -you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
@@ -159,6 +149,13 @@ DONE-BUG clicking from changed text entry box in Params  to Canvas causes change
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-BUG setting line ends style seems to be broken again
+  -I think this might be because of params mouse focus issue again...
+  -no it's because you aren't using line style in the new line render stuff doh
+DONE-BUG clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
+  -this happens for 2 reasons
+    -1 the params widget may get closed on if you change selection
+    -2 unfocus event never happens because input does not get passed into left widget
 DONE-BUG
                       ╔═════╗
                       ║     v

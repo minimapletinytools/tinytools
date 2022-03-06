@@ -64,7 +64,7 @@ data AutoLineHandler = AutoLineHandler {
     , _autoLineHandler_isCreation :: Bool
     , _autoLineHandler_active     :: Bool
 
-    , _autoLineHandler_original :: SAutoLine -- track original so we can set proper "undo" point with undoFirst operations
+    , _autoLineHandler_original :: SAutoLine -- track original (in undoFirst cases). TODO DELETE not necessary anymore
 
     , _autoLineHandler_offsetAttach :: Bool -- who sets this?
 
@@ -144,6 +144,7 @@ instance PotatoHandler AutoLineHandler where
         ogslinestart = _sAutoLine_attachStart _autoLineHandler_original
         ogslineend = _sAutoLine_attachEnd _autoLineHandler_original
 
+        -- TODO do not need to use original line here since we are only manipulating the other end.
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineHandler_isStart
           then Just _mouseDrag_to /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
@@ -221,3 +222,19 @@ instance PotatoHandler AutoLineHandler where
     r = HandlerRenderOutput (attachmentBoxes <> fmap defaultRenderHandle boxes)
 
   pIsHandlerActive = _autoLineHandler_active
+
+
+-- handles dragging endpoints (which can be attached) and creating new lines
+data AutoLineEndPointHandler = AutoLineEndPointHandler {
+
+}
+
+-- handles dragging and creating new midpoints
+data AutoLineMidPointHandler = AutoLineMidPointHandler{
+
+}
+
+-- handles creating and modifying text labels
+data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
+
+}
