@@ -99,7 +99,7 @@ DONE-BUG setting line ends style seems to be broken again
   -consider adding available Attachments to PotatoHandlerInput
     -why?
 
--BUG clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
+DONE-BUG clicking from changed text entry box in Params  to Canvas causes changes not to apply reset :(
   -this happens for 2 reasons
     -1 the params widget may get closed on if you change selection
     -2 unfocus event never happens because input does not get passed into left widget

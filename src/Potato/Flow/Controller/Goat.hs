@@ -277,7 +277,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
---foldGoatFn cmd goatState@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
+--foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
 foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
