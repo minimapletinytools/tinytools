@@ -23,14 +23,15 @@ import           Control.Exception
 import           Data.Default
 import qualified Data.Sequence                             as Seq
 
-
-getSLine :: CanvasSelection -> (REltId, SAutoLine)
-getSLine selection = case superOwl_toSElt_hack sowl of
-  SEltLine sline  -> (rid, sline)
-  selt -> error $ "expected SAutoLine, got " <> show selt
-  where
-    sowl = selectionToSuperOwl selection
-    rid = _superOwl_id sowl
+maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
+maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
+  then Nothing
+  else case superOwl_toSElt_hack sowl of
+    SEltLine sline  -> Just (rid, sline)
+    selt -> Nothing
+    where
+      sowl = selectionToSuperOwl selection
+      rid = _superOwl_id sowl
 
 
 -- TODO TEST
@@ -64,8 +65,6 @@ data AutoLineHandler = AutoLineHandler {
     , _autoLineHandler_isCreation :: Bool
     , _autoLineHandler_active     :: Bool
 
-    , _autoLineHandler_original :: SAutoLine -- track original (in undoFirst cases). TODO DELETE not necessary anymore
-
     , _autoLineHandler_offsetAttach :: Bool -- who sets this?
 
     -- where the current modified line is attached to (_autoLineHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
@@ -79,7 +78,6 @@ instance Default AutoLineHandler where
       , _autoLineHandler_undoFirst = False
       , _autoLineHandler_isCreation = False
       , _autoLineHandler_active = False
-      , _autoLineHandler_original = def
       , _autoLineHandler_offsetAttach = True
       , _autoLineHandler_attachStart = Nothing
       , _autoLineHandler_attachEnd = Nothing
@@ -107,7 +105,7 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
   pHandleMouse slh@AutoLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-
+    mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
     mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
 
@@ -124,7 +122,6 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
-        (_, ssline) = getSLine _potatoHandlerInput_canvasSelection
         mistart = findFirstLineManipulator _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
         r = case mistart of
           Nothing -> Nothing -- did not click on manipulator, no capture
@@ -134,32 +131,33 @@ instance PotatoHandler AutoLineHandler where
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                   _autoLineHandler_isStart = isstart
                   , _autoLineHandler_active = True
-                  , _autoLineHandler_original = ssline
                 }
             }
       MouseDragState_Dragging -> Just r where
         rid = _superOwl_id $ selectionToSuperOwl _potatoHandlerInput_canvasSelection
 
-        -- line should always have been set in MouseDragState_Down
-        ogslinestart = _sAutoLine_attachStart _autoLineHandler_original
-        ogslineend = _sAutoLine_attachEnd _autoLineHandler_original
+        ssline = case mridssline of
+          Just (_,x) -> x
+          Nothing -> def
 
-        -- TODO do not need to use original line here since we are only manipulating the other end.
+        sslinestart = _sAutoLine_attachStart ssline
+        sslineend = _sAutoLine_attachEnd ssline
+
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineHandler_isStart
-          then Just _mouseDrag_to /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslineend)
-          else Just _mouseDrag_from /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> ogslinestart)
+          then Just _mouseDrag_to /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> sslineend)
+          else Just _mouseDrag_from /= (getAttachmentPosition _autoLineHandler_offsetAttach _potatoHandlerInput_pFState <$> sslinestart)
         mattachendnontrivial = if nontrivialline
           then mattachend
           else Nothing
 
         -- for modifying an existing elt
         modifiedline = if _autoLineHandler_isStart
-          then _autoLineHandler_original {
+          then ssline {
               _sAutoLine_start       = _mouseDrag_to
               , _sAutoLine_attachStart = mattachendnontrivial
             }
-          else _autoLineHandler_original {
+          else ssline {
               _sAutoLine_end       = _mouseDrag_to
               , _sAutoLine_attachEnd = mattachendnontrivial
             }

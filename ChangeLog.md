@@ -1,3 +1,6 @@
-# Changelog for potato-flow
+# Changelog
 
-## Unreleased changes
+## [Unreleased]
+
+## [0.0.1] -
+### Added
