@@ -323,8 +323,8 @@ instance TransformMe SimpleLineSolverParameters where
   transformMe_rotateRight = id
   transformMe_reflectHorizontally = id
 
-sSimpleLineSolver :: SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
-sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = lineAnchorsForRender_simplify anchors where
+sSimpleLineSolver :: (Text, Int) -> SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
+sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = finaloutput where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 _ y2) (V2 _ h2) = lbx2
 
@@ -343,8 +343,8 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
 
   --traceStep = trace
   traceStep _ x = x
-
-  -- WIP
+  stepdetail = show lbal1 <> " | " <> show lbal2 <> "\n"
+  nextmsg step = (errormsg <> " " <> step <> ": " <> stepdetail, depth+1)
 
   (l1_inc,r1,t1_inc,b1) = lBox_to_axis lbx1
   (l2_inc,r2,t2_inc,b2) = lBox_to_axis lbx2
@@ -455,7 +455,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
           , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver (nextmsg "case 6") sls lbal2 lbal1
 
     -- ^
     -- |
@@ -479,7 +479,7 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     -- ^
     -- |
     -- 1 (this will get handled by the next case, it might have been better to add a third case for the not lbx1isstrictlyabove case)
-    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver sls lbal2 lbal1
+    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver (nextmsg "case 8") sls lbal2 lbal1
 
     --     <-2
     -- ^
@@ -505,15 +505,19 @@ sSimpleLineSolver sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(l
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
+    AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver (nextmsg "case 10") (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
     -- TODO be smarter about how you transform to existing case
-    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver sls lbal1 (lbx2, AL_Left)
-    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) lbal2
+    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver (nextmsg "case 11") sls lbal1 (lbx2, AL_Left)
+    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver (nextmsg "case 12") sls (lbx1, AL_Right) lbal2
 
-    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver sls (lbx1, AL_Right) (lbx2, AL_Left)
+    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver (nextmsg "case 13") sls (lbx1, AL_Right) (lbx2, AL_Left)
 
-    _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+    _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver (nextmsg "case 14") (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+
+  finaloutput = if depth > 10
+    then error errormsg
+    else lineAnchorsForRender_simplify anchors
 
 
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
@@ -592,7 +596,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     lbal2 = fromMaybe (LBox _sAutoLine_end 0, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
 
     -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
-    regenanchors = sSimpleLineSolver params lbal1 lbal2
+    regenanchors = sSimpleLineSolver ("",0) params lbal1 lbal2
 
     anchors = case mcache of
       Just x -> x
