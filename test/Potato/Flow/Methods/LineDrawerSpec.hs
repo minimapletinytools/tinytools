@@ -18,10 +18,10 @@ generateTestCases :: [OwlPFState]
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
-  al1s = [AL_Left, AL_Right, AL_Top, AL_Bot]
-  al2s = [AL_Left, AL_Right, AL_Top, AL_Bot]
-  --al1s = [AL_Right]
-  --al2s = [AL_Top]
+  al1s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
+  al2s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
+  --al1s = [AL_Top]
+  --al2s = [AL_Bot]
   box1s = [LBox (V2 0 10) 5]
   box2s = [LBox (V2 5 8) 3]
   canvasbox = LBox (-5) (V2 25 25)

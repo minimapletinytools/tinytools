@@ -324,7 +324,7 @@ instance TransformMe SimpleLineSolverParameters where
   transformMe_reflectHorizontally = id
 
 sSimpleLineSolver :: (Text, Int) -> SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
-sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) = finaloutput where
+sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) =  finaloutput where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 _ y2) (V2 _ h2) = lbx2
 
@@ -382,12 +382,12 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     AL_Right | al2 == AL_Left && not vsep -> traceStep "case 2" $ r where
 
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
-
-      lb1_to_right = (CD_Right, _simpleLineSolverParameters_attachOffset)
+      rightedge = (max (r1+_simpleLineSolverParameters_attachOffset) r2)
+      lb1_to_right = (CD_Right, rightedge-ax1)
       right_to_torb = if goup
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
-      torb = (CD_Left, _simpleLineSolverParameters_attachOffset*2 + (ax1-ax2))
+      torb = (CD_Left, rightedge - ax2 + _simpleLineSolverParameters_attachOffset)
       torb_to_left = if goup
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)
@@ -465,12 +465,12 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 7" $ r where
       upd = if vsep
         then _simpleLineSolverParameters_attachOffset
-        else ay1-t
+        else ay1-t + _simpleLineSolverParameters_attachOffset
       topline = ay1-upd
       lb1_to_up = (CD_Up, upd)
       right = if topline < ay2
         then (max ax2 r1) + _simpleLineSolverParameters_attachOffset
-        else ax2 + _simpleLineSolverParameters_attachOffset 
+        else ax2 + _simpleLineSolverParameters_attachOffset
       up_to_right1 =  (CD_Right, right-ax1)
       right1_to_right2 = if topline < ay2
         then (CD_Down, ay2-topline)

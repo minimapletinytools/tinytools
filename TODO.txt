@@ -47,51 +47,6 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
--BUG
-       ╔══╔═╗╗
-       v  ║@║║
-     ╔═══╗╚═╝║
-     ║@@@║ ^ ║
-     ║@@@║ ╚═╝
-     ║@@@║
-     ╚═══╝
-
--BUG
-
-
-
-        ╔══╗
-        ║ ╔═╗
-        ╚>║@║
-     ╔═══╗╚═╝
-     ║@@@║ ║
-     ║@@@║<╝
-     ║@@@║
-     ╚═══╝
-
--BUG
-
-
-          ╔═╗
-          ║@║<╗
-     ╔═══╗╚═╝ ║
-     ║@@@║    ║
-     ║@@@║    ║
-     ║@@@║    ║
-     ╚═══╝    ║
-       ╚══════╝
-
--BUG
-
-    ╔══════╗
-    ║      v
-    ║     ╔═╗
-    ║     ║@║
-    ║╔═══╗╚═╝
-    ║║@@@║
-    ╚║@@@║
-     ║@@@║
-     ╚═══╝
 
 
 
@@ -197,6 +152,51 @@ WIDE
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
+
+DONE-BUG
+       ╔══╔═╗╗
+       v  ║@║║
+     ╔═══╗╚═╝║
+     ║@@@║ ^ ║
+     ║@@@║ ╚═╝
+     ║@@@║
+     ╚═══╝
+
+DONE-BUG
+
+
+        ╔══╗
+        ║ ╔═╗
+        ╚>║@║
+     ╔═══╗╚═╝
+     ║@@@║ ║
+     ║@@@║<╝
+     ║@@@║
+     ╚═══╝
+
+DONE-BUG
+
+
+          ╔═╗
+          ║@║<╗
+     ╔═══╗╚═╝ ║
+     ║@@@║    ║
+     ║@@@║    ║
+     ║@@@║    ║
+     ╚═══╝    ║
+       ╚══════╝
+
+DONE-BUG
+
+    ╔══════╗
+    ║      v
+    ║     ╔═╗
+    ║     ║@║
+    ║╔═══╗╚═╝
+    ║║@@@║
+    ╚║@@@║
+     ║@@@║
+     ╚═══╝
 
 DONE-BUG setting line ends style seems to be broken again
   -I think this might be because of params mouse focus issue again...
