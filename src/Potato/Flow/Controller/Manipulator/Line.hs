@@ -218,22 +218,9 @@ instance PotatoHandler AutoLineHandler where
     -- TODO keyboard movement
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
-    mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
-
-    --boxes = renderEndPoints (False, False) _autoLineEndPointHandler_offsetAttach phi
-    boxes = case mselt of
-      Just (SEltLine SAutoLine {..}) -> if _autoLineHandler_active
-        -- TODO if active, color selected handler
-        then [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
-        else [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
-        where
-          startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart _autoLineHandler_offsetAttach _potatoHandlerInput_pFState)
-          endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd _autoLineHandler_offsetAttach _potatoHandlerInput_pFState)
-      _ -> []
-
+    boxes = renderEndPoints (False, False) _autoLineHandler_offsetAttach phi
     attachmentBoxes = renderAttachments phi (_autoLineHandler_attachStart, _autoLineHandler_attachEnd)
-
-    r = HandlerRenderOutput (attachmentBoxes <> fmap defaultRenderHandle boxes)
+    r = HandlerRenderOutput (attachmentBoxes <> boxes)
 
   pIsHandlerActive = _autoLineHandler_active
 
@@ -262,7 +249,6 @@ instance PotatoHandler AutoLineEndPointHandler where
     boxes = renderEndPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach phi
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
-
   pIsHandlerActive _ = True
 
 -- handles dragging and creating new midpoints
