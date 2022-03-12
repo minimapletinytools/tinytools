@@ -58,6 +58,20 @@ getAttachmentPosition offsetBorder pfs a = r where
 maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
 maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
 
+renderAttachments :: PotatoHandlerInput -> (Maybe Attachment, Maybe Attachment) -> [RenderHandle]
+renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
+  attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+  fmapattachmentfn (a,p) = RenderHandle {
+      _renderHandle_box = (LBox p 1)
+      , _renderHandle_char = Just (attachmentRenderChar a)
+      , _renderHandle_color = if matches mstart || matches mend
+        then RHC_AttachmentHighlight
+        else RHC_Attachment
+    } where
+      rid = _attachment_target a
+      matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
+  r = fmap fmapattachmentfn attachments
+
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
 
@@ -191,7 +205,7 @@ instance PotatoHandler AutoLineHandler where
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
     _                              -> Nothing
-  pRenderHandler AutoLineHandler {..} PotatoHandlerInput {..} = r where
+  pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
 
     boxes = case mselt of
@@ -204,18 +218,7 @@ instance PotatoHandler AutoLineHandler where
           endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd _autoLineHandler_offsetAttach _potatoHandlerInput_pFState)
       _ -> []
 
-    attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-
-    fmapattachmentfn (a,p) = RenderHandle {
-        _renderHandle_box = (LBox p 1)
-        , _renderHandle_char = Just (attachmentRenderChar a)
-        , _renderHandle_color = if matches _autoLineHandler_attachStart || matches _autoLineHandler_attachEnd
-          then RHC_AttachmentHighlight
-          else RHC_Attachment
-      } where
-        rid = _attachment_target a
-        matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
-    attachmentBoxes = fmap fmapattachmentfn attachments
+    attachmentBoxes = renderAttachments phi (_autoLineHandler_attachStart, _autoLineHandler_attachEnd)
 
     r = HandlerRenderOutput (attachmentBoxes <> fmap defaultRenderHandle boxes)
 

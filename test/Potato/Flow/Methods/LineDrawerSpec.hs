@@ -77,7 +77,7 @@ spec = do
           }
       _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
-    putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
+    --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True
 
     -- TODO write a test such that reversing start/end parts of lines always renders the same thing
