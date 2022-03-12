@@ -72,6 +72,18 @@ renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
       matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
   r = fmap fmapattachmentfn attachments
 
+renderEndPoints :: (Bool,Bool) -> Bool -> PotatoHandlerInput -> [RenderHandle]
+renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {..} = r where
+  mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
+  boxes = case mselt of
+    -- TODO highlight
+    Just (SEltLine SAutoLine {..}) -> [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
+      where
+        startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart offsetAttach _potatoHandlerInput_pFState)
+        endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd offsetAttach _potatoHandlerInput_pFState)
+    _ -> []
+  r = fmap defaultRenderHandle boxes
+
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
 
@@ -208,6 +220,7 @@ instance PotatoHandler AutoLineHandler where
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
 
+    --boxes = renderEndPoints (False, False) _autoLineEndPointHandler_offsetAttach phi
     boxes = case mselt of
       Just (SEltLine SAutoLine {..}) -> if _autoLineHandler_active
         -- TODO if active, color selected handler
@@ -245,7 +258,11 @@ data AutoLineEndPointHandler = AutoLineEndPointHandler {
 instance PotatoHandler AutoLineEndPointHandler where
   pHandlerName _ = handlerName_simpleLine_endPoint
   pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
-  pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
+    boxes = renderEndPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach phi
+    attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
+    r = HandlerRenderOutput (attachmentBoxes <> boxes)
+
   pIsHandlerActive _ = True
 
 -- handles dragging and creating new midpoints
