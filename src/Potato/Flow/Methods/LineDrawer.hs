@@ -457,34 +457,33 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     -- ->2 ->1 (will not get covered by rotation)
     AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver (nextmsg "case 6") sls lbal2 lbal1
 
+    --     2->
     -- ^
     -- |
     -- 1
-    --     2-> (this only handles lbx1isstrictlyabove case)
-    AL_Top | al2 == AL_Right && lbx1isleft && vsep -> traceStep "case 7" $ r where
-      upd = _simpleLineSolverParameters_attachOffset
+    --     2->
+    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 7" $ r where
+      upd = if vsep
+        then _simpleLineSolverParameters_attachOffset
+        else ay1-t
+      topline = ay1-upd
       lb1_to_up = (CD_Up, upd)
-      right = (max ax2 r1)
-      up_to_right1 =  (CD_Right, right-ax1+_simpleLineSolverParameters_attachOffset)
-      right1_to_right2 = if lbx1isstrictlyabove
-        then (CD_Down, ay2-ay1+upd)
-        else (CD_Up, max 0 (ay1-ay2-upd))
+      right = if topline < ay2
+        then (max ax2 r1) + _simpleLineSolverParameters_attachOffset
+        else ax2 + _simpleLineSolverParameters_attachOffset 
+      up_to_right1 =  (CD_Right, right-ax1)
+      right1_to_right2 = if topline < ay2
+        then (CD_Down, ay2-topline)
+        else (CD_Up, topline-ay2)
       right2_to_lb2 = (CD_Left, right-ax2)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
         }
-
-    --     2->
-    -- ^
-    -- |
-    -- 1 (this will get handled by the next case, it might have been better to add a third case for the not lbx1isstrictlyabove case)
-    AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 8 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver (nextmsg "case 8") sls lbal2 lbal1
-
     --     <-2
     -- ^
     -- |
-    -- 1   <-2 (this one handles both lbx1isstrictlyabove cases)
+    -- 1   <-2 (this one handles both vsep cases)
     AL_Top | al2 == AL_Left && lbx1isleft -> traceStep "case 9" $ r where
       topedge = min (ay1 - _simpleLineSolverParameters_attachOffset) ay2
       leftedge = l
@@ -592,8 +591,8 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
       sbox <- getSEltBox $ hasOwlElt_toSElt_hack sowl
       return (sbox, al)
 
-    lbal1 = fromMaybe (LBox _sAutoLine_start 0, AL_Any) $ maybeGetBox _sAutoLine_attachStart
-    lbal2 = fromMaybe (LBox _sAutoLine_end 0, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
+    lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart
+    lbal2 = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
 
     -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
     regenanchors = sSimpleLineSolver ("",0) params lbal1 lbal2
