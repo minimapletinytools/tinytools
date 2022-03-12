@@ -225,17 +225,47 @@ instance PotatoHandler AutoLineHandler where
   pIsHandlerActive = _autoLineHandler_active
 
 
+
+--- WORK IN PROGRESS BELOW HERE
+
 -- handles dragging endpoints (which can be attached) and creating new lines
 data AutoLineEndPointHandler = AutoLineEndPointHandler {
+  _autoLineEndPointHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
 
+  , _autoLineEndPointHandler_undoFirst  :: Bool
+  , _autoLineEndPointHandler_isCreation :: Bool
+
+  , _autoLineEndPointHandler_offsetAttach :: Bool -- who sets this?
+
+  -- where the current modified line is attached to (_autoLineEndPointHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
+  , _autoLineEndPointHandler_attachStart :: Maybe Attachment
+  , _autoLineEndPointHandler_attachEnd :: Maybe Attachment
 }
+
+instance PotatoHandler AutoLineEndPointHandler where
+  pHandlerName _ = handlerName_simpleLine_endPoint
+  pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
+  pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pIsHandlerActive _ = True
 
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
-
+  _autoLineMidPointHandler_dummy :: ()
 }
+
+instance PotatoHandler AutoLineMidPointHandler where
+  pHandlerName _ = handlerName_simpleLine_midPoint
+  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
+  pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pIsHandlerActive _ = undefined
 
 -- handles creating and modifying text labels
 data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
-
+  _autoLineTextLabelHandler_dummy :: ()
 }
+
+instance PotatoHandler AutoLineTextLabelHandler where
+  pHandlerName _ = handlerName_simpleLine_textLabel
+  pHandleMouse slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
+  pRenderHandler AutoLineTextLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pIsHandlerActive _ = undefined
