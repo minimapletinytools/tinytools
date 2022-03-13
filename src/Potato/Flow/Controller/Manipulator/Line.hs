@@ -85,28 +85,15 @@ renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {
   r = fmap defaultRenderHandle boxes
 
 data AutoLineHandler = AutoLineHandler {
-    _autoLineHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
-
-    , _autoLineHandler_undoFirst  :: Bool
-    , _autoLineHandler_isCreation :: Bool
-    , _autoLineHandler_active     :: Bool
-
-    , _autoLineHandler_offsetAttach :: Bool -- who sets this?
-
-    -- where the current modified line is attached to (_autoLineHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
-    , _autoLineHandler_attachStart :: Maybe Attachment
-    , _autoLineHandler_attachEnd :: Maybe Attachment
+    _autoLineHandler_isCreation :: Bool
+    -- TODO who sets this?
+    , _autoLineHandler_offsetAttach :: Bool
   } deriving (Show)
 
 instance Default AutoLineHandler where
   def = AutoLineHandler {
-      _autoLineHandler_isStart = False
-      , _autoLineHandler_undoFirst = False
-      , _autoLineHandler_isCreation = False
-      , _autoLineHandler_active = False
-      , _autoLineHandler_offsetAttach = True
-      , _autoLineHandler_attachStart = Nothing
-      , _autoLineHandler_attachEnd = Nothing
+      _autoLineHandler_isCreation = False
+      , _autoLineHandler_offsetAttach = False
     }
 
 
@@ -174,14 +161,12 @@ instance PotatoHandler AutoLineHandler where
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = renderEndPoints (False, False) _autoLineHandler_offsetAttach phi
-    attachmentBoxes = renderAttachments phi (_autoLineHandler_attachStart, _autoLineHandler_attachEnd)
+    -- TODO set attach endpoints from currently selected line
+    attachmentBoxes = renderAttachments phi (Nothing, Nothing)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
 
-  pIsHandlerActive = _autoLineHandler_active
+  pIsHandlerActive _ = False
 
-
-
---- WORK IN PROGRESS BELOW HERE
 
 -- handles dragging endpoints (which can be attached) and creating new lines
 data AutoLineEndPointHandler = AutoLineEndPointHandler {
@@ -267,6 +252,9 @@ instance PotatoHandler AutoLineEndPointHandler where
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
   pIsHandlerActive _ = True
+
+
+--- WORK IN PROGRESS BELOW HERE
 
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
