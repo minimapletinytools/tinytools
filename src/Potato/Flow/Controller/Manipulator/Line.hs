@@ -86,6 +86,7 @@ renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {
 
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isCreation :: Bool
+    , _autoLineHandler_mDownPos :: Maybe XY
     -- TODO who sets this?
     , _autoLineHandler_offsetAttach :: Bool
   } deriving (Show)
@@ -93,6 +94,7 @@ data AutoLineHandler = AutoLineHandler {
 instance Default AutoLineHandler where
   def = AutoLineHandler {
       _autoLineHandler_isCreation = False
+      , _autoLineHandler_mDownPos = Nothing
       , _autoLineHandler_offsetAttach = False
     }
 
@@ -117,7 +119,7 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
 
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
-  pHandleMouse slh@AutoLineHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse slh@AutoLineHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
     mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
     attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
     mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
@@ -129,7 +131,7 @@ instance PotatoHandler AutoLineHandler where
               _autoLineEndPointHandler_isStart      = False
               , _autoLineEndPointHandler_undoFirst  = False
               , _autoLineEndPointHandler_isCreation = True
-              , _autoLineEndPointHandler_offsetAttach = False
+              , _autoLineEndPointHandler_offsetAttach = _autoLineHandler_offsetAttach
               , _autoLineEndPointHandler_attachStart = mattachend
               , _autoLineEndPointHandler_attachEnd = Nothing
             }
@@ -138,23 +140,51 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
+        -- TODO replace this with a function that also finds midpoints
         mistart = findFirstLineManipulator _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+        -- TODO
+        clickonline = False
         r = case mistart of
-          Nothing -> Nothing -- did not click on manipulator, no capture
-            -- TODO mark no manipulator dragging position here, TBD which handler to create later
+          
+          -- if clicked on line but not on a handler, track the position
+          Nothing | clickonline -> Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                  _autoLineHandler_mDownPos = Just _mouseDrag_to
+                }
+            }
+
+          -- did not click on manipulator, no capture
+          Nothing -> Nothing
+
+          -- TODO click on midpoint, make midpoint handler
+
           Just isstart -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineEndPointHandler {
                   _autoLineEndPointHandler_isStart      = isstart
                   , _autoLineEndPointHandler_undoFirst  = False
                   , _autoLineEndPointHandler_isCreation = False
-                  , _autoLineEndPointHandler_offsetAttach = False
+                  , _autoLineEndPointHandler_offsetAttach = _autoLineHandler_offsetAttach
                   -- TODO I'm pretty sure you need to set these in order for things to be rendered correctly
                   , _autoLineEndPointHandler_attachStart = Nothing
                   , _autoLineEndPointHandler_attachEnd = Nothing
                 }
             }
-      MouseDragState_Dragging -> error "should have been passed off to child handler"
-      MouseDragState_Up -> Just def
+      MouseDragState_Dragging -> case _autoLineHandler_mDownPos of
+        Nothing -> error "unexpected state"
+        Just p -> r where
+          -- TODO setup properly
+          handler = AutoLineMidPointHandler {
+              _autoLineMidPointHandler_dummy = ()
+            }
+          r = pHandleMouse handler phi rmd
+      MouseDragState_Up -> case _autoLineHandler_mDownPos of
+        Nothing -> Just def
+        Just p -> r where
+          -- TODO setup properly
+          handler = AutoLineTextLabelHandler {
+              _autoLineTextLabelHandler_dummy = ()
+            }
+          r = pHandleMouse handler phi rmd
       MouseDragState_Cancelled -> Just def
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
@@ -263,7 +293,7 @@ data AutoLineMidPointHandler = AutoLineMidPointHandler{
 
 instance PotatoHandler AutoLineMidPointHandler where
   pHandlerName _ = handlerName_simpleLine_midPoint
-  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
+  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = undefined
   pIsHandlerActive _ = undefined
 
@@ -274,6 +304,6 @@ data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
 
 instance PotatoHandler AutoLineTextLabelHandler where
   pHandlerName _ = handlerName_simpleLine_textLabel
-  pHandleMouse slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = undefined
+  pHandleMouse slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
   pRenderHandler AutoLineTextLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
   pIsHandlerActive _ = undefined
