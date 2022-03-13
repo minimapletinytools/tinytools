@@ -228,8 +228,8 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
         ]
 
       , LabelCheck "move end of line"
-      , checkHandlerNameAndState handlerName_simpleLine True
-      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , firstSuperOwlPredicate (Just "sl1") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltLine sline -> (_sAutoLine_start sline) == (V2 0 100) && (_sAutoLine_end sline) == (V2 0 120)
         _                                  -> False
@@ -242,8 +242,8 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
         ]
 
       , LabelCheck "move start of line"
-      , checkHandlerNameAndState handlerName_simpleLine True
-      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , firstSuperOwlPredicate (Just "sl2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
         SEltLine sline -> (_sAutoLine_start sline) == (V2 0 90) && (_sAutoLine_end sline) == (V2 10 100)
         _                                  -> False
@@ -288,8 +288,8 @@ test_Common_create = constructTest "create" owlpfstate_basic1 bs expected where
 
       , LabelCheck "create <line>"
       , EqPredicate _goatState_selectedTool Tool_Line
-      , checkHandlerNameAndState handlerName_simpleLine True
-      , checkHandlerNameAndState handlerName_simpleLine True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
+      , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , Combine [
           firstSuperOwlPredicate (Just "<line>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
             SEltLine sline -> (_sAutoLine_start sline) == (V2 10 10) && (_sAutoLine_end sline) == (V2 20 20)
