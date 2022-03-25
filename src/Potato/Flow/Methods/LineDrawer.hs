@@ -382,12 +382,18 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     AL_Right | al2 == AL_Left && not vsep -> traceStep "case 2" $ r where
 
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
+
+      -- TODO don't always need to go to max
       rightedge = (max (r1+_simpleLineSolverParameters_attachOffset) r2)
+
       lb1_to_right = (CD_Right, rightedge-ax1)
       right_to_torb = if goup
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
+
+      -- TODO sometimes need to go further 
       torb = (CD_Left, rightedge - ax2 + _simpleLineSolverParameters_attachOffset)
+
       torb_to_left = if goup
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)

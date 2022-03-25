@@ -59,8 +59,9 @@ WIDE
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
-          ╚═════╝                                        
+          ╚═════╝
 -AL_ANY needs to be a single point and not a box with 4 sides...
+  -i think this is fixed if you set attachOffset to 0...
 -I think you need some kind of cache monad
 -LINE LABELS :O
 -attachment stuff
@@ -79,6 +80,9 @@ WIDE
   DONE-lines can't be attached on first drag
   DONE?-BUG drag off attachment logic is wrong for Line handler
     DONE-just do the controller refactor!! D:
+DONE-need another area for tool options
+-insert vs overwrite option for freeform text
+  -you need some kind of options object to go along side of PotatoDefaultParameters
 -preset interface for choosing line ends
   -easy way to turn on/off line ends for both sides
 -file stuff

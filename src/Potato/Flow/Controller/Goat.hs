@@ -61,10 +61,11 @@ data GoatState = GoatState {
     , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
-    , _goatState_potatoDefaultParameters :: PotatoDefaultParameters -- TODO consider sharing this across documents?
     , _goatState_attachmentMap   :: AttachmentMap
 
     -- shared across documents
+    -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this 
+    , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_screenRegion    :: XY
