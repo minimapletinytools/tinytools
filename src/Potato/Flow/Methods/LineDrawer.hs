@@ -444,7 +444,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     anchors = getAnchors ot
 
     -- TODO RETURN ANCHORS HERE
-    r = lineAnchorsForRender_renderAt _sSimpleLine_style _sSimpleLine_lineStyle anchors xy
+    r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
   boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of

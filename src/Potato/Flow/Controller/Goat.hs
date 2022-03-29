@@ -64,7 +64,7 @@ data GoatState = GoatState {
     , _goatState_attachmentMap   :: AttachmentMap
 
     -- shared across documents
-    -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this 
+    -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
     , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
     , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
@@ -546,8 +546,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- | auto-expand folders and compute LayersState |
   -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
   -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
-  -- the problem comes from when you try and collapse a folder that has a selected child.... therefore maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
-  -- TODO I don't think this is quite the behavior you want, it will auto expand stuff all over the place
+  -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
   next_layersState = expandAllCollapsedParents next_selection next_pFState next_layersState'
   --next_layersState = next_layersState'
 
@@ -578,7 +577,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- | update AttachmentMap based on new state  |
   next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
 
-  -- | compute SuperOwlChanges for rendering
+  -- | compute SuperOwlChanges for rendering |
   cslmap_withAttachments = addChangesFromAttachmentMapToSuperOwlChanges (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
