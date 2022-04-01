@@ -177,11 +177,11 @@ updateFnFromControllerOwl isDo controller = r where
   f = updateFnFromController isDo controller
   -- 😱😱😱
   rewrap oem mkiddos (SEltLabel name elt) = case elt of
-    SEltFolderStart -> (oem, OwlItemFolder (OwlInfo name) (fromJust mkiddos))
-    s -> (oem, OwlItemSElt (OwlInfo name) s)
-  r (oem, oe) = case oe of
-    OwlItemFolder oi kiddos -> rewrap oem (Just kiddos) $ f (SEltLabel (_owlInfo_name oi) SEltFolderStart)
-    OwlItemSElt oi selt -> rewrap oem Nothing $ f (SEltLabel (_owlInfo_name oi) selt)
+    SEltFolderStart -> (oem, OwlItem (OwlInfo name) (OwlSubItemFolder (fromJust mkiddos)))
+    s -> (oem, OwlItem (OwlInfo name) (sElt_to_owlSubItem s))
+  r (oem, oitem) = case _owlItem_subItem oitem of
+    OwlSubItemFolder kiddos -> rewrap oem (Just kiddos) $ f (SEltLabel (owlItem_name oitem) SEltFolderStart)
+    _ -> rewrap oem Nothing $ f (hasOwlItem_toSEltLabel_hack oitem)
 
 manipulate :: Bool -> ControllersWithId -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 manipulate isDo cs pfs = (r, fmap Just changes) where

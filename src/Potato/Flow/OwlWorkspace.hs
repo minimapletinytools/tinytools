@@ -200,7 +200,7 @@ pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
   r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlItemMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
-pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItemFolder (OwlInfo name) Seq.empty)]
+pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItem (OwlInfo name) (OwlSubItemFolder Seq.empty))]
 
 -- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
 -- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical

@@ -64,7 +64,7 @@ spec = do
       it "owlTree_addOwlItem" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
-          owlItem1 = OwlItemSElt (OwlInfo "💩") SEltNone
+          owlItem1 = OwlItem (OwlInfo "💩") OwlSubItemNone
           rid = owlTree_maxId owlTree0 + 1
           owlSpot2 = OwlSpot 7 (Just 9)
           (ot1, _) = owlTree_addOwlItem owlSpot1 rid owlItem1 owlTree0

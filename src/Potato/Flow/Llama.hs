@@ -74,7 +74,13 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
 
 
 
-data SLlama = SLlama_Set [(REltId, SElt)] | SLlama_Rename (REltId, Text) | SLlama_Compose [SLlama] | SLlama_OwlPFCmd OwlPFCmd Bool deriving (Show, Generic)
+data SLlama =
+  SLlama_Set [(REltId, SElt)]
+  | SLlama_Rename (REltId, Text)
+  | SLlama_Compose [SLlama]
+  -- TODO OwlItem contains caches which we don't want to so serialize with Llama so ideally there should be a mirrored type to remove the cache, should be able to use SElt equivalents here instead?
+  | SLlama_OwlPFCmd OwlPFCmd Bool
+  deriving (Show, Generic)
 
 instance NFData SLlama
 
@@ -115,12 +121,10 @@ makeRenameLlama (rid, newname) = r where
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
         Nothing -> Left $ ApplyLlamaError_Generic $ "Element to rename does not exist " <> show rid
-        Just (oldoem, oldoe) -> let
-            (newoe, oldname) = case oldoe of
-              OwlItemFolder oi kiddos -> (OwlItemFolder (oi { _owlInfo_name = newname}) kiddos, _owlInfo_name oi)
-              OwlItemSElt oi selt -> (OwlItemSElt (oi { _owlInfo_name = newname}) selt, _owlInfo_name oi)
-            newsowl = SuperOwl rid oldoem newoe
-            newMapping = IM.insert rid (oldoem, newoe) mapping
+        Just (oldoem, oldoitem) -> let
+            (newoitem, oldname) = (owlItem_setName oldoitem newname, owlItem_name oldoitem)
+            newsowl = SuperOwl rid oldoem newoitem
+            newMapping = IM.insert rid (oldoem, newoitem) mapping
             changes = IM.singleton rid (Just newsowl)
             unset = makeRenameLlama (rid, oldname)
             newState = pfs { _owlPFState_owlTree = (_owlPFState_owlTree pfs) { _owlTree_mapping = newMapping } }
@@ -140,13 +144,13 @@ makeSetLlama (rid, selt) = r where
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
         Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid
-        Just (_, OwlItemFolder _ _) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
-        Just (oldoem, OwlItemSElt oi oldselt) -> let
-            newoe = OwlItemSElt oi selt
-            newsowl = SuperOwl rid oldoem newoe
-            newMapping = IM.insert rid (oldoem, newoe) mapping
+        Just (_, OwlItem _ (OwlSubItemFolder _)) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
+        Just (oldoem, OwlItem oinfo oldsubitem) -> let
+            newoitem = OwlItem oinfo $ sElt_to_owlSubItem selt
+            newsowl = SuperOwl rid oldoem newoitem
+            newMapping = IM.insert rid (oldoem, newoitem) mapping
             changes = IM.singleton rid (Just newsowl)
-            unset = makeSetLlama (rid, oldselt)
+            unset = makeSetLlama (rid, owlSubItem_to_sElt_hack oldsubitem)
             newState = pfs { _owlPFState_owlTree = (_owlPFState_owlTree pfs) { _owlTree_mapping = newMapping } }
           in
             Right $ (newState, changes, unset)

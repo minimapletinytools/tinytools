@@ -9,17 +9,30 @@ import Potato.Flow.Types
 
 
 -- TODO move me somewhere
-data SAutoLineCache = SAutoLineCache
+data SAutoLineCache = SAutoLineCache deriving (Generic, Show, Eq)
+instance NFData SAutoLineCache
 
-{-
+
 data OwlSubItem =
   OwlSubItemFolder (Seq REltId)
   | OwlSubItemBox SBox
   | OwlSubItemLine SAutoLine (Maybe SAutoLineCache)
   | OwlSubItemTextArea STextArea
+  | OwlSubItemNone
+  deriving (Generic, Show, Eq)
 
-data OwlItem = OwlItem OwlInfo OwlSubItem
--}
+instance NFData OwlSubItem
+
+owlSubItem_equivalent :: OwlSubItem -> OwlSubItem -> Bool
+owlSubItem_equivalent (OwlSubItemLine slinea _) (OwlSubItemLine slineb _) = slinea == slineb
+owlSubItem_equivalent a b = a == b
+
+data OwlItem = OwlItem {
+  _owlItem_info :: OwlInfo
+  , _owlItem_subItem :: OwlSubItem
+} deriving (Show, Eq, Generic)
+
+instance NFData OwlItem
 
 
 data OwlInfo = OwlInfo {
@@ -48,42 +61,48 @@ class HasOwlItem o where
   hasOwlItem_toSEltLabel_hack = hasOwlItem_toSEltLabel_hack . hasOwlItem_owlItem
 
 
--- TODO rename to OwlItem
--- TODO OwlItemSElt -> OwlItemElt OwlInfo OwlItem
--- TODO add OwlItemFolder settings (or make it part of owlinfo?)
-data OwlItem = OwlItemFolder OwlInfo (Seq REltId) | OwlItemSElt OwlInfo SElt deriving (Show, Eq, Generic)
-
-instance NFData OwlItem
 
 owlItem_name :: OwlItem -> Text
-owlItem_name (OwlItemFolder (OwlInfo name) _) = name
-owlItem_name (OwlItemSElt (OwlInfo name) _) = name
+owlItem_name = _owlInfo_name . _owlItem_info
+
+owlItem_setName :: OwlItem -> Text -> OwlItem
+owlItem_setName (OwlItem oi x) n = OwlItem (oi { _owlInfo_name = n}) x
 
 instance MommyOwl OwlItem where
-  mommyOwl_kiddos (OwlItemFolder _ kiddos) = Just kiddos
-  mommyOwl_kiddos _ = Nothing
+  mommyOwl_kiddos o = case _owlItem_subItem o of
+    OwlSubItemFolder kiddos -> Just kiddos
+    _ -> Nothing
 
--- temp conversions
-owlItem_toSElt_hack :: OwlItem -> SElt
-owlItem_toSElt_hack = \case
-  OwlItemSElt _ selt -> selt
-  _ -> SEltFolderStart
 
+
+owlSubItem_to_sElt_hack :: OwlSubItem -> SElt
+owlSubItem_to_sElt_hack = \case
+  OwlSubItemFolder _ -> SEltFolderStart
+  OwlSubItemBox sbox -> SEltBox sbox
+  OwlSubItemLine sline _ -> SEltLine sline
+  OwlSubItemTextArea stextarea -> SEltTextArea stextarea
+  OwlSubItemNone -> SEltNone
 
 instance HasOwlItem OwlItem where
   hasOwlItem_owlItem = id
-  hasOwlItem_name (OwlItemFolder (OwlInfo name) _) = name
-  hasOwlItem_name (OwlItemSElt (OwlInfo name) _) = name
-  hasOwlItem_isFolder (OwlItemFolder _ _) = True
-  hasOwlItem_isFolder _ = False
-  hasOwlItem_attachments = \case
-    OwlItemFolder _ _ -> []
-    OwlItemSElt _ selt -> case selt of
-      SEltLine sline -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
-      _ -> []
-  hasOwlItem_toSElt_hack = \case
-    OwlItemSElt _ selt -> selt
-    _ -> SEltFolderStart
-  hasOwlItem_toSEltLabel_hack o = case o of
-    OwlItemSElt _ selt -> SEltLabel (hasOwlItem_name o) selt
-    _ -> SEltLabel (hasOwlItem_name o) SEltFolderStart
+  hasOwlItem_name = owlItem_name
+  hasOwlItem_isFolder o = case _owlItem_subItem o of
+    OwlSubItemFolder _ -> True
+    _ -> False
+  hasOwlItem_attachments o = case _owlItem_subItem o of
+    OwlSubItemLine sline _ -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
+    _ -> []
+  hasOwlItem_toSElt_hack = owlSubItem_to_sElt_hack . _owlItem_subItem
+  hasOwlItem_toSEltLabel_hack o = SEltLabel (hasOwlItem_name o) (hasOwlItem_toSElt_hack o)
+
+-- DELETE use hasOwlItem variant instead
+owlItem_toSElt_hack :: OwlItem -> SElt
+owlItem_toSElt_hack = hasOwlItem_toSElt_hack
+
+sElt_to_owlSubItem :: SElt -> OwlSubItem
+sElt_to_owlSubItem s = case s of
+  SEltBox x -> OwlSubItemBox x
+  SEltLine x -> OwlSubItemLine x Nothing
+  SEltTextArea x -> OwlSubItemTextArea x
+  SEltNone -> OwlSubItemNone
+  _ -> error $ "cannot convert " <> show s

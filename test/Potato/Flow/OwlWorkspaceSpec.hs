@@ -51,9 +51,9 @@ spec = do
       spot1 = OwlSpot (-1) Nothing
       spot2 = OwlSpot 7 (Just 9)
 
-      owlItem1 = OwlItemSElt (OwlInfo "💩") SEltNone
-      owlItem2 = OwlItemSElt (OwlInfo "🍅") SEltNone
-      owlItem3 = OwlItemFolder (OwlInfo "🧀") Seq.empty
+      owlItem1 = OwlItem (OwlInfo "💩") OwlSubItemNone
+      owlItem2 = OwlItem (OwlInfo "🍅") OwlSubItemNone
+      owlItem3 = OwlItem (OwlInfo "🧀") (OwlSubItemFolder Seq.empty)
 
       owlItems = Seq.fromList [owlItem1, owlItem2, owlItem3]
 

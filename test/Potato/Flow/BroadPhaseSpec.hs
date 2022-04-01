@@ -21,7 +21,7 @@ spec = do
       makeChange rid lb = IM.singleton rid $ Just (SuperOwl {
           _superOwl_id = rid
           , _superOwl_meta = OwlItemMeta noOwl 0 0
-          , _superOwl_elt = OwlItemSElt (OwlInfo (show rid)) (SEltBox $ SBox lb def def def SBoxType_Box)
+          , _superOwl_elt = OwlItem (OwlInfo (show rid)) (OwlSubItemBox $ SBox lb def def def SBoxType_Box)
         })
     it "passes basic test" $ do
       let

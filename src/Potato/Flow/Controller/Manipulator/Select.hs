@@ -57,8 +57,8 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   singleClick = boxSize == 1
 
   isboxshaped sowl = case _superOwl_elt sowl of
-    OwlItemSElt _ (SEltBox _)  -> True
-    OwlItemSElt _ (SEltTextArea _) -> True
+    OwlItem _ (OwlSubItemBox _) -> True
+    OwlItem _ (OwlSubItemTextArea _) -> True
     _ -> False
 
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)

@@ -31,7 +31,7 @@ import           Potato.Flow.Deprecated.State
 import qualified Data.IntMap as IM
 
 someOwlItem :: OwlItem
-someOwlItem = OwlItemSElt (OwlInfo "some elt") SEltNone
+someOwlItem = OwlItem (OwlInfo "some elt") OwlSubItemNone
 
 
 makeLayerMeta :: Bool -> Bool -> Bool -> LayerMeta

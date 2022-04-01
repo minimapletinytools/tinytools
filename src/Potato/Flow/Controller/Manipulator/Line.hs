@@ -53,10 +53,8 @@ getAttachmentPosition :: Bool -> OwlPFState -> Attachment -> XY
 getAttachmentPosition offsetBorder pfs a = r where
   target = hasOwlTree_mustFindSuperOwl pfs (_attachment_target a)
   r = case hasOwlItem_owlItem target of
-    OwlItemSElt _ selt -> case selt of
-      SEltBox sbox -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
-      _ -> error "expected SEltBox"
-    _ -> error "expecteed OwlItemSelt"
+    OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
+    _ -> error "expecteed OwlSubItemBox"
 
 maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
 maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
@@ -148,7 +146,7 @@ instance PotatoHandler AutoLineHandler where
         -- TODO
         clickonline = False
         r = case mistart of
-          
+
           -- if clicked on line but not on a handler, track the position
           Nothing | clickonline -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
@@ -255,7 +253,7 @@ instance PotatoHandler AutoLineEndPointHandler where
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
-        lineToAdd = SEltLine $ def {
+        lineToAdd = def {
             _sAutoLine_start = _mouseDrag_from
             , _sAutoLine_end = _mouseDrag_to
             , _sAutoLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
@@ -265,7 +263,7 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
 
         op = if _autoLineEndPointHandler_isCreation
-          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItemSElt (OwlInfo "<line>") $ lineToAdd)
+          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd Nothing)
           else WSEApplyLlama (_autoLineEndPointHandler_undoFirst, llama)
 
         r = def {

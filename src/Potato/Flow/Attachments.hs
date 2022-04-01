@@ -36,12 +36,10 @@ attachLocationsFromLBox :: Bool -> LBox -> [(AttachmentLocation, XY)]
 attachLocationsFromLBox offsetBorder lbx = fmap (\a -> (a,attachLocationFromLBox offsetBorder lbx a)) [AL_Top, AL_Bot, AL_Left, AL_Right]
 
 owlItem_availableAttachments :: Bool -> OwlItem -> [(AttachmentLocation, XY)]
-owlItem_availableAttachments offsetBorder = \case
-  OwlItemFolder _ _ -> []
-  OwlItemSElt _ selt -> case selt of
-    SEltBox sbox -> attachLocationsFromLBox offsetBorder (_sBox_box sbox)
-    _ -> []
-
+owlItem_availableAttachments offsetBorder o = case _owlItem_subItem o of
+  OwlSubItemBox sbox -> attachLocationsFromLBox offsetBorder (_sBox_box sbox)
+  _ -> []
+  
 isOverAttachment :: XY -> [(Attachment, XY)] -> Maybe (Attachment, XY)
 isOverAttachment pos attachments = find (\(a,x) -> x == pos) attachments
 
