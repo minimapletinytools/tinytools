@@ -152,9 +152,9 @@ firstSelectedSuperOwlWithOwlTreePredicate mlabel f = FunctionPredicate fn where
     owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
     mfirst = case mlabel of
       Nothing    -> Seq.lookup 0 s
-      Just label -> find (\sowl -> hasOwlElt_name sowl == label) s
+      Just label -> find (\sowl -> hasOwlItem_name sowl == label) s
     r = case mfirst of
-      Nothing    -> ("No elt with label " <> show mlabel <> show (fmap hasOwlElt_name s), False)
+      Nothing    -> ("No elt with label " <> show mlabel <> show (fmap hasOwlItem_name s), False)
       Just first -> ("First selected: " <> show first, f owltree first)
 
 firstSelectedSuperOwlPredicate :: Maybe Text -> (SuperOwl -> Bool) -> EverythingPredicate
@@ -169,7 +169,7 @@ firstSuperOwlPredicate mlabel f = FunctionPredicate $
         Nothing -> case sowls of
           []  -> Nothing
           x:_ -> Just x
-        Just label -> case find (\sowl -> hasOwlElt_name sowl == label) sowls of
+        Just label -> case find (\sowl -> hasOwlItem_name sowl == label) sowls of
           Nothing     -> Nothing
           Just sowl -> Just sowl
     in case mfirst of
@@ -218,7 +218,7 @@ constructTest label pfs bs expected = constructTestWithControllerMeta label pfs 
 
 
 -- partial function to get SAutoLine
-hasOwlElt_test_toSAutoLine :: (HasOwlElt a) => a -> SAutoLine
-hasOwlElt_test_toSAutoLine o = case hasOwlElt_toSElt_hack o of
+hasOwlItem_test_toSAutoLine :: (HasOwlItem a) => a -> SAutoLine
+hasOwlItem_test_toSAutoLine o = case hasOwlItem_toSElt_hack o of
   SEltLine ssline  -> ssline
   selt -> error $ "expected SAutoLine, got " <> show selt

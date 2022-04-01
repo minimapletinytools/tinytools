@@ -172,7 +172,7 @@ spec = do
 
           deleteme = owlTree_mustFindSuperOwl (_owlPFState_owlTree state_0) 4
           rid = _superOwl_id deleteme
-          spot = owlTree_owlEltMeta_toOwlSpot (_owlPFState_owlTree state_0) (_superOwl_meta deleteme)
+          spot = owlTree_owlItemMeta_toOwlSpot (_owlPFState_owlTree state_0) (_superOwl_meta deleteme)
           oelt = _superOwl_elt deleteme
 
           (state_1, changes) = do_deleteElts [(rid,spot,oelt)] state_0

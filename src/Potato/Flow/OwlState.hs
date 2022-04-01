@@ -87,16 +87,16 @@ owlPFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
 owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
-do_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_newElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newElts seltls pfs@OwlPFState {..} = r where
 
   -- parents are allowed, but seltls must be sortefd from left -> right such that leftmost sibling/parent of OwlSpot exists (assuming elts are added to the tree from left to right)
-  (newot, changes') = owlTree_addOwlEltList seltls _owlPFState_owlTree
+  (newot, changes') = owlTree_addOwlItemList seltls _owlPFState_owlTree
 
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
-undo_newElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+undo_newElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newElts seltls pfs@OwlPFState {..} = r where
   foldfn (rid,_,_) od = owlTree_removeREltId rid od
   -- assumes seltls sorted from left to right so that no parent is deleted before its child
@@ -104,10 +104,10 @@ undo_newElts seltls pfs@OwlPFState {..} = r where
   changes = IM.fromList $ fmap (\(rid,_,_) -> (rid, Nothing)) seltls
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
-do_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_deleteElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_deleteElts = undo_newElts
 
-undo_deleteElts :: [(REltId, OwlSpot, OwlElt)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+undo_deleteElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_deleteElts = do_newElts
 
 do_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
@@ -133,8 +133,8 @@ undo_deleteMiniOwlTree = do_newMiniOwlTree
 
 isSuperOwlParliamentUndoFriendly :: SuperOwlParliament -> Bool
 isSuperOwlParliamentUndoFriendly sop = r where
-  rp = _owlEltMeta_position . _superOwl_meta
-  sameparent sowl1 sowl2 = _owlEltMeta_parent ( _superOwl_meta sowl1) == _owlEltMeta_parent ( _superOwl_meta sowl2)
+  rp = _owlItemMeta_position . _superOwl_meta
+  sameparent sowl1 sowl2 = _owlItemMeta_parent ( _superOwl_meta sowl1) == _owlItemMeta_parent ( _superOwl_meta sowl2)
   -- this is a hack use of isSortedBy and assumes parliament is ordered correctly
   r = isSortedBy (\sowl1 sowl2 -> if sameparent sowl1 sowl2 then (rp sowl1) < (rp sowl2) else True) . toList . unSuperOwlParliament $ sop
 
@@ -162,26 +162,26 @@ undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   removedTree = foldl' removefoldfn _owlPFState_owlTree (unSuperOwlParliament sop)
 
   -- then add them back in in order
-  addmapaccumlfn tree' so = owlTree_addOwlElt ospot (_superOwl_id so) (_superOwl_elt so) tree' where
+  addmapaccumlfn tree' so = owlTree_addOwlItem ospot (_superOwl_id so) (_superOwl_elt so) tree' where
     -- NOTE that because we are ordered from left to right, _superOwl_meta so is valid in tree'
-    ospot = owlTree_owlEltMeta_toOwlSpot tree' $ _superOwl_meta so
+    ospot = owlTree_owlItemMeta_toOwlSpot tree' $ _superOwl_meta so
   (addedTree, changes') = mapAccumL addmapaccumlfn removedTree (unSuperOwlParliament sop)
 
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (toList changes')
   r = (pfs { _owlPFState_owlTree = addedTree}, changes)
 
 
--- OwlElt compatible variant of updateFnFromController
-updateFnFromControllerOwl :: Bool -> Controller -> ((OwlEltMeta, OwlElt)->(OwlEltMeta, OwlElt))
+-- OwlItem compatible variant of updateFnFromController
+updateFnFromControllerOwl :: Bool -> Controller -> ((OwlItemMeta, OwlItem)->(OwlItemMeta, OwlItem))
 updateFnFromControllerOwl isDo controller = r where
   f = updateFnFromController isDo controller
   -- 😱😱😱
   rewrap oem mkiddos (SEltLabel name elt) = case elt of
-    SEltFolderStart -> (oem, OwlEltFolder (OwlInfo name) (fromJust mkiddos))
-    s -> (oem, OwlEltSElt (OwlInfo name) s)
+    SEltFolderStart -> (oem, OwlItemFolder (OwlInfo name) (fromJust mkiddos))
+    s -> (oem, OwlItemSElt (OwlInfo name) s)
   r (oem, oe) = case oe of
-    OwlEltFolder oi kiddos -> rewrap oem (Just kiddos) $ f (SEltLabel (_owlInfo_name oi) SEltFolderStart)
-    OwlEltSElt oi selt -> rewrap oem Nothing $ f (SEltLabel (_owlInfo_name oi) selt)
+    OwlItemFolder oi kiddos -> rewrap oem (Just kiddos) $ f (SEltLabel (_owlInfo_name oi) SEltFolderStart)
+    OwlItemSElt oi selt -> rewrap oem Nothing $ f (SEltLabel (_owlInfo_name oi) selt)
 
 manipulate :: Bool -> ControllersWithId -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 manipulate isDo cs pfs = (r, fmap Just changes) where

@@ -69,4 +69,4 @@ lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where
   r = case Seq.lookup (Seq.length selection - 1) selection of
     Nothing -> topSpot
-    Just x -> owlTree_owlEltMeta_toOwlSpot ot (_superOwl_meta x)
+    Just x -> owlTree_owlItemMeta_toOwlSpot ot (_superOwl_meta x)

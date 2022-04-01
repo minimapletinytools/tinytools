@@ -173,7 +173,7 @@ potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRender = potatoRenderWithOwlTree emptyOwlTree
 
 potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion
-potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap owlElt_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
+potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap owlItem_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
 
 
 

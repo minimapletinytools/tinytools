@@ -322,7 +322,7 @@ test_LayersHandler_folders = constructTestWithControllerMeta "folders" owlpfstat
       , LabelCheck "drag b1"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 0
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlItemMeta_parent (_superOwl_meta sowl) == 0
 
       , AlwaysPass
       , AlwaysPass
@@ -388,19 +388,19 @@ test_LayersHandler_folders2 = constructTestWithControllerMeta "folders2" owlpfst
       , LabelCheck "drag b1"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == 7
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlItemMeta_parent (_superOwl_meta sowl) == 7
 
       , LabelCheck "drag b1 2"
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "b1") $ \_ sowl -> _owlItemMeta_parent (_superOwl_meta sowl) == noOwl
 
       , LabelCheck "drag fstart2"
       , AlwaysPass
       , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \_ _ -> True
       , AlwaysPass
       , AlwaysPass
-      , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \_ sowl -> _owlEltMeta_parent (_superOwl_meta sowl) == noOwl
+      , firstSelectedSuperOwlWithOwlTreePredicate (Just "fstart2") $ \_ sowl -> _owlItemMeta_parent (_superOwl_meta sowl) == noOwl
     ]
 
 -- TODO DELETE this test becaues you're deleting built in scroll prob...

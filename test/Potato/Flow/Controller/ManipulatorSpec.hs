@@ -63,35 +63,35 @@ test_BoxHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , LabelCheck "resize tl corner b2"
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 11) (V2 4 4)
         _                           -> False
 
       , LabelCheck "resize tr corner b2"
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 9) (V2 4 6)
         _                           -> False
 
       , LabelCheck "resize bl corner b2"
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 8 9) (V2 7 6)
         _                           -> False
 
       , LabelCheck "resize br corner b2"
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 8 9) (V2 12 11)
         _                           -> False
 
       , LabelCheck "area move b2"
       , AlwaysPass
       , AlwaysPass
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 13 14) (V2 12 11)
         _                           -> False
     ]
@@ -114,7 +114,7 @@ test_BoxHandler_select_and_drag = constructTest "select and drag" owlpfstate_bas
       , LabelCheck "select + drag b2"
       , checkHandlerNameAndState handlerName_box True
       , numSelectedEltsEqualPredicate 1
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 11 11) (V2 5 5)
         _                           -> False
 
@@ -148,7 +148,7 @@ test_BoxHandler_restrict8 = constructTest "restrict8" owlpfstate_basic1 bs expec
       , LabelCheck "resize tl corner b2 while holding shift"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 10 && y == 1
         _                                        -> False
     ]
@@ -184,7 +184,7 @@ test_BoxHandler_clickOnSelectionDragging = constructTest "drags only when click 
       , LabelCheck "click on something and drag"
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , firstSuperOwlPredicate (Just "b1") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "b1") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox (LBox (V2 x y) _) _ _ _ _) -> x == 1 && y == 1
         _                                        -> False
 
@@ -230,7 +230,7 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , LabelCheck "move end of line"
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
-      , firstSuperOwlPredicate (Just "sl1") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "sl1") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltLine sline -> (_sAutoLine_start sline) == (V2 0 100) && (_sAutoLine_end sline) == (V2 0 120)
         _                                  -> False
 
@@ -244,7 +244,7 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , LabelCheck "move start of line"
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
-      , firstSuperOwlPredicate (Just "sl2") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+      , firstSuperOwlPredicate (Just "sl2") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltLine sline -> (_sAutoLine_start sline) == (V2 0 90) && (_sAutoLine_end sline) == (V2 10 100)
         _                                  -> False
     ]
@@ -280,7 +280,7 @@ test_Common_create = constructTest "create" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<box>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1
@@ -291,7 +291,7 @@ test_Common_create = constructTest "create" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , checkHandlerNameAndState handlerName_simpleLine_endPoint True
       , Combine [
-          firstSuperOwlPredicate (Just "<line>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<line>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
             SEltLine sline -> (_sAutoLine_start sline) == (V2 10 10) && (_sAutoLine_end sline) == (V2 20 20)
             _                    -> False
           , numSelectedEltsEqualPredicate 1
@@ -302,7 +302,7 @@ test_Common_create = constructTest "create" owlpfstate_basic1 bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 100 100) (V2 20 20)
             _                         -> False
           , numSelectedEltsEqualPredicate 1

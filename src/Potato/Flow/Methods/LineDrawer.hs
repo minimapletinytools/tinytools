@@ -426,7 +426,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     maybeGetBox mattachment = do
       Attachment rid al <- mattachment
       sowl <- hasOwlTree_findSuperOwl ot rid
-      sbox <- getSEltBox $ hasOwlElt_toSElt_hack sowl
+      sbox <- getSEltBox $ hasOwlItem_toSElt_hack sowl
       return (sbox, al)
 
     lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart

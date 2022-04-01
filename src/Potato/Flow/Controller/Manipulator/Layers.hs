@@ -207,7 +207,7 @@ instance PotatoHandler LayersHandler where
         targetspot = case mJustAboveDropSowl of
           -- we are dropping at the top of our LayerEntries
           Nothing -> OwlSpot noOwl Nothing
-          Just asowl -> if nparentoffset > 0 && hasOwlElt_isFolder asowl
+          Just asowl -> if nparentoffset > 0 && hasOwlItem_isFolder asowl
             -- drop inside at the top
             then OwlSpot (_superOwl_id asowl) Nothing
             else case owlTree_findSuperOwl owltree newsiblingid of
@@ -257,7 +257,7 @@ instance PotatoHandler LayersHandler where
           LDT_Normal | offset >= titleOffset -> r where
 
             -- TODO great place for TZ.selectAll when you add selection capability into TZ
-            zipper = TZ.fromText $ hasOwlElt_name downsowl
+            zipper = TZ.fromText $ hasOwlItem_name downsowl
 
             r = Just $ setHandlerOnly LayersRenameHandler {
                 _layersRenameHandler_original = resetLayersHandler lh
@@ -432,7 +432,7 @@ renameTextZipperTransform = \case
 renameToAndReturn :: LayersRenameHandler -> Text -> PotatoHandlerOutput
 renameToAndReturn LayersRenameHandler {..} newName = r where
   controller = CTagRename :=> (Identity $ CRename {
-      _cRename_deltaLabel = (hasOwlElt_name _layersRenameHandler_renaming, newName)
+      _cRename_deltaLabel = (hasOwlItem_name _layersRenameHandler_renaming, newName)
     })
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original

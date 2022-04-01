@@ -45,18 +45,18 @@ getAvailableAttachments offsetBorder pfs bps screenRegion = r where
   -- you could silently fail here by ignoring maybes but that would definitely be an indication of a bug so we fail here instead (you could do a better job about dumping debug info though)
   sowls = fmap (hasOwlTree_mustFindSuperOwl pfs) culled
   -- TODO sort sowls
-  fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlElt_availableAttachments offsetBorder (_superOwl_elt sowl)
+  fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments offsetBorder (_superOwl_elt sowl)
   r = join $ fmap fmapfn sowls
 
 -- TODO move me elsewhere
 getAttachmentPosition :: Bool -> OwlPFState -> Attachment -> XY
 getAttachmentPosition offsetBorder pfs a = r where
   target = hasOwlTree_mustFindSuperOwl pfs (_attachment_target a)
-  r = case hasOwlElt_owlElt target of
-    OwlEltSElt _ selt -> case selt of
+  r = case hasOwlItem_owlItem target of
+    OwlItemSElt _ selt -> case selt of
       SEltBox sbox -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
       _ -> error "expected SEltBox"
-    _ -> error "expecteed OwlEltSelt"
+    _ -> error "expecteed OwlItemSelt"
 
 maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
 maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
@@ -265,7 +265,7 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
 
         op = if _autoLineEndPointHandler_isCreation
-          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo "<line>") $ lineToAdd)
+          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItemSElt (OwlInfo "<line>") $ lineToAdd)
           else WSEApplyLlama (_autoLineEndPointHandler_undoFirst, llama)
 
         r = def {

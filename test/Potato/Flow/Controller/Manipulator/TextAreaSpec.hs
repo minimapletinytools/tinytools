@@ -21,7 +21,7 @@ import           Potato.Flow.Common
 import qualified Data.Map                                as Map
 
 checkSTextAreaTextAt :: Text -> XY -> PChar -> EverythingPredicate
-checkSTextAreaTextAt label k c = firstSuperOwlPredicate (Just label) $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+checkSTextAreaTextAt label k c = firstSuperOwlPredicate (Just label) $ \sowl -> case hasOwlItem_toSElt_hack sowl of
   SEltTextArea (STextArea _ tm _) -> Map.lookup k tm == Just c
   _                                         -> False
 
@@ -48,7 +48,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
-          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlElt_toSElt_hack sowl of
+          firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
             SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 10 10)
             _                           -> False
           , numSelectedEltsEqualPredicate 1

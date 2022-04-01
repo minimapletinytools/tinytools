@@ -28,7 +28,7 @@ verifyOwlAt ws ospot f = fromMaybe False $ do
   Just $ f sowl
 
 pred_nameIs :: Text -> SuperOwl -> Bool
-pred_nameIs n sowl = hasOwlElt_name sowl == n
+pred_nameIs n sowl = hasOwlItem_name sowl == n
 
 undoAndVerify :: OwlPFWorkspace -> OwlPFState -> Bool
 undoAndVerify ws prev = r where
@@ -51,33 +51,33 @@ spec = do
       spot1 = OwlSpot (-1) Nothing
       spot2 = OwlSpot 7 (Just 9)
 
-      owlElt1 = OwlEltSElt (OwlInfo "💩") SEltNone
-      owlElt2 = OwlEltSElt (OwlInfo "🍅") SEltNone
-      owlElt3 = OwlEltFolder (OwlInfo "🧀") Seq.empty
+      owlItem1 = OwlItemSElt (OwlInfo "💩") SEltNone
+      owlItem2 = OwlItemSElt (OwlInfo "🍅") SEltNone
+      owlItem3 = OwlItemFolder (OwlInfo "🧀") Seq.empty
 
-      owlElts = Seq.fromList [owlElt1, owlElt2, owlElt3]
+      owlItems = Seq.fromList [owlItem1, owlItem2, owlItem3]
 
     describe "updateOwlPFWorkspace" $ do
       it "WSEAddElt" $ do
         let
-          wse1 = WSEAddElt (False, spot1, owlElt1)
+          wse1 = WSEAddElt (False, spot1, owlItem1)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
-        verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlElt_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         let
-          wse2 = WSEAddElt (False, spot2, owlElt1)
+          wse2 = WSEAddElt (False, spot2, owlItem1)
           newws2 = updateOwlPFWorkspace wse2 someWorkspace0
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws2)
-        verifyOwlAt newws2 spot2 (pred_nameIs (hasOwlElt_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws2 spot2 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
       it "WSEAddRelative" $ do
         let
-          wse1 = WSEAddRelative (spot1, owlElts)
+          wse1 = WSEAddRelative (spot1, owlItems)
           newws1 = updateOwlPFWorkspace wse1 someWorkspace0
           ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
-        verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlElt_name owlElt1)) `shouldBe` True
-        verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (hasOwlElt_name owlElt2)) `shouldBe` True
+        verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
+        verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (hasOwlItem_name owlItem2)) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
       it "WSEAddFolder" $ do
         let
@@ -92,9 +92,9 @@ spec = do
         let
           sowl = fromJust $ owlTree_findSuperOwlAtOwlSpot ot1 spot2
           childSpot = OwlSpot (_superOwl_id sowl) Nothing
-          wse2 = WSEAddElt (False, childSpot, owlElt1)
+          wse2 = WSEAddElt (False, childSpot, owlItem1)
           newws2 = updateOwlPFWorkspace wse2 newws1
-        verifyOwlAt newws2 childSpot (pred_nameIs (hasOwlElt_name owlElt1)) `shouldBe` True
+        verifyOwlAt newws2 childSpot (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_pFState newws1) `shouldBe` True
       it "WSERemoveElt" $ do
         let

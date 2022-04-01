@@ -61,20 +61,20 @@ spec = do
         owlTree_owlCount ot2 `shouldBe` 4
         fst (owlTree_validate ot1) `shouldBe` True
         fst (owlTree_validate ot2) `shouldBe` True
-      it "owlTree_addOwlElt" $ do
+      it "owlTree_addOwlItem" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
-          owlElt1 = OwlEltSElt (OwlInfo "💩") SEltNone
+          owlItem1 = OwlItemSElt (OwlInfo "💩") SEltNone
           rid = owlTree_maxId owlTree0 + 1
           owlSpot2 = OwlSpot 7 (Just 9)
-          (ot1, _) = owlTree_addOwlElt owlSpot1 rid owlElt1 owlTree0
-          (ot2, _) = owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree0
+          (ot1, _) = owlTree_addOwlItem owlSpot1 rid owlItem1 owlTree0
+          (ot2, _) = owlTree_addOwlItem owlSpot2 rid owlItem1 owlTree0
         owlTree_owlCount ot1 `shouldBe` 10
         owlTree_owlCount ot2 `shouldBe` 10
         fst (owlTree_validate ot1) `shouldBe` True
         fst (owlTree_validate ot2) `shouldBe` True
         -- too lazy to write proper test, just print and verify manually
-        --putTextLn (potatoShow $ owlTree_addOwlElt owlSpot2 rid owlElt1 owlTree0)
+        --putTextLn (potatoShow $ owlTree_addOwlItem owlSpot2 rid owlItem1 owlTree0)
       it "owlTree_moveOwlParliament" $ do
         let
           owlSpot1 = OwlSpot (-1) Nothing
@@ -100,7 +100,7 @@ spec = do
       it "owlTree_findSuperOwlAtOwlSpot" $ do
         let
           b2sowl = owlTree_mustFindSuperOwl owlTree0 2
-        owlTree_findSuperOwlAtOwlSpot owlTree0 (owlTree_owlEltMeta_toOwlSpot owlTree0 (_superOwl_meta $ b2sowl)) `shouldBe` Just b2sowl
+        owlTree_findSuperOwlAtOwlSpot owlTree0 (owlTree_owlItemMeta_toOwlSpot owlTree0 (_superOwl_meta $ b2sowl)) `shouldBe` Just b2sowl
 
       let
         owlTreeWithAttachments0 = owlTree_fromOldState (_pFState_directory pfstate_attachments1) (_pFState_layers pfstate_attachments1)

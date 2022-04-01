@@ -259,8 +259,8 @@ instance PotatoHandler BoxHandler where
         _ -> error "invalid BoxCreationType"
 
       op = case _boxHandler_creation of
-        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
-        BoxCreationType_TextArea -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlEltSElt (OwlInfo nameToAdd) $ SEltTextArea $ textAreaToAdd)
+        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItemSElt (OwlInfo nameToAdd) $ SEltBox $ boxToAdd)
+        BoxCreationType_TextArea -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItemSElt (OwlInfo nameToAdd) $ SEltTextArea $ textAreaToAdd)
         _ -> makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh {

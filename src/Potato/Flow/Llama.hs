@@ -23,8 +23,8 @@ import           Control.Exception  (assert)
 -- TODO rename
 -- TODO this is a carryover from a refactor, it would be good to combine this with SLlama but I won't bother.
 data OwlPFCmd =
-  OwlPFCNewElts [(REltId, OwlSpot, OwlElt)]
-  | OwlPFCDeleteElts [(REltId, OwlSpot, OwlElt)]
+  OwlPFCNewElts [(REltId, OwlSpot, OwlItem)]
+  | OwlPFCDeleteElts [(REltId, OwlSpot, OwlItem)]
 
   | OwlPFCNewTree (MiniOwlTree, OwlSpot)
   | OwlPFCDeleteTree (MiniOwlTree, OwlSpot)
@@ -117,8 +117,8 @@ makeRenameLlama (rid, newname) = r where
         Nothing -> Left $ ApplyLlamaError_Generic $ "Element to rename does not exist " <> show rid
         Just (oldoem, oldoe) -> let
             (newoe, oldname) = case oldoe of
-              OwlEltFolder oi kiddos -> (OwlEltFolder (oi { _owlInfo_name = newname}) kiddos, _owlInfo_name oi)
-              OwlEltSElt oi selt -> (OwlEltSElt (oi { _owlInfo_name = newname}) selt, _owlInfo_name oi)
+              OwlItemFolder oi kiddos -> (OwlItemFolder (oi { _owlInfo_name = newname}) kiddos, _owlInfo_name oi)
+              OwlItemSElt oi selt -> (OwlItemSElt (oi { _owlInfo_name = newname}) selt, _owlInfo_name oi)
             newsowl = SuperOwl rid oldoem newoe
             newMapping = IM.insert rid (oldoem, newoe) mapping
             changes = IM.singleton rid (Just newsowl)
@@ -140,9 +140,9 @@ makeSetLlama (rid, selt) = r where
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
         Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid
-        Just (_, OwlEltFolder _ _) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
-        Just (oldoem, OwlEltSElt oi oldselt) -> let
-            newoe = OwlEltSElt oi selt
+        Just (_, OwlItemFolder _ _) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
+        Just (oldoem, OwlItemSElt oi oldselt) -> let
+            newoe = OwlItemSElt oi selt
             newsowl = SuperOwl rid oldoem newoe
             newMapping = IM.insert rid (oldoem, newoe) mapping
             changes = IM.singleton rid (Just newsowl)

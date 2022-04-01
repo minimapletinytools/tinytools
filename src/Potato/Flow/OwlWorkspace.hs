@@ -138,14 +138,14 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 
 ------ update functions via commands
 data WSEvent =
-  WSEAddElt (Bool, OwlSpot, OwlElt)
+  WSEAddElt (Bool, OwlSpot, OwlItem)
 
   -- TODO CAN DELETE has been replaced by WSEAddTree
-  -- TODO won't work, needs to support OwlElts with kiddos, need MiniOwlTree
+  -- TODO won't work, needs to support OwlItems with kiddos, need MiniOwlTree
   -- it's a little weird that MiniOwlTree is already reindexed though...
   -- maybe just take a selttree D:
   -- I can't remember why I called this WSEAddRelative D:
-  | WSEAddRelative (OwlSpot, Seq OwlElt)
+  | WSEAddRelative (OwlSpot, Seq OwlItem)
 
   | WSEAddTree (OwlSpot, MiniOwlTree)
 
@@ -172,11 +172,11 @@ debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> d
 
 ------ helpers for converting events to cmds
 -- TODO assert elts are valid
-pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlElt -> OwlPFCmd
+pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlItem -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
 
 -- TODO assert elts are valid
-pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlElt) -> OwlPFCmd
+pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlItem) -> OwlPFCmd
 pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
   startid = owlPFState_nextId pfs
   mapAccumLFn (i,ospotacc) oelt = ((i+1, nextacc), (rid, ospotacc, oelt)) where
@@ -197,10 +197,10 @@ pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
   valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od owlp
   sop = owlParliament_toSuperOwlParliament od owlp
   sowlswithchildren = superOwlParliament_convertToSeqWithChildren od sop
-  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlEltMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
+  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlItemMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
-pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlEltFolder (OwlInfo name) Seq.empty)]
+pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItemFolder (OwlInfo name) Seq.empty)]
 
 -- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
 -- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical

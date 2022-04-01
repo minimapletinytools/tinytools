@@ -51,7 +51,7 @@ emptyBPTree = BPTree IM.empty
 
 bPTreeFromOwlPFState :: OwlPFState -> BPTree
 bPTreeFromOwlPFState OwlPFState {..} = r where
-  potato_tree = IM.mapMaybe (\(_,oelt) -> getSEltBox . owlElt_toSElt_hack $ oelt) (_owlTree_mapping _owlPFState_owlTree)
+  potato_tree = IM.mapMaybe (\(_,oelt) -> getSEltBox . owlItem_toSElt_hack $ oelt) (_owlTree_mapping _owlPFState_owlTree)
   r = BPTree potato_tree
 
 data BroadPhaseState = BroadPhaseState {

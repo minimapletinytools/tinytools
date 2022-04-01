@@ -2,7 +2,7 @@
 module Potato.Flow.Attachments (
   attachLocationFromLBox
   , attachLocationsFromLBox
-  , owlElt_availableAttachments
+  , owlItem_availableAttachments
   , isOverAttachment
   , attachmentRenderChar
 
@@ -35,10 +35,10 @@ attachLocationFromLBox False (LBox (V2 x y) (V2 w h)) = \case
 attachLocationsFromLBox :: Bool -> LBox -> [(AttachmentLocation, XY)]
 attachLocationsFromLBox offsetBorder lbx = fmap (\a -> (a,attachLocationFromLBox offsetBorder lbx a)) [AL_Top, AL_Bot, AL_Left, AL_Right]
 
-owlElt_availableAttachments :: Bool -> OwlElt -> [(AttachmentLocation, XY)]
-owlElt_availableAttachments offsetBorder = \case
-  OwlEltFolder _ _ -> []
-  OwlEltSElt _ selt -> case selt of
+owlItem_availableAttachments :: Bool -> OwlItem -> [(AttachmentLocation, XY)]
+owlItem_availableAttachments offsetBorder = \case
+  OwlItemFolder _ _ -> []
+  OwlItemSElt _ selt -> case selt of
     SEltBox sbox -> attachLocationsFromLBox offsetBorder (_sBox_box sbox)
     _ -> []
 

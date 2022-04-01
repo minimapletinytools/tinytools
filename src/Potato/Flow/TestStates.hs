@@ -6,7 +6,7 @@ module Potato.Flow.TestStates (
   , someSEltLabel
   , someSCanvas
   , defaultCanvasLBox
-  , someOwlElt
+  , someOwlItem
   , pFState_to_owlPFState
   , owlPFState_fromSElts
   , owlpfstate_someValidState1
@@ -30,8 +30,8 @@ import           Potato.Flow.Deprecated.State
 
 import qualified Data.IntMap as IM
 
-someOwlElt :: OwlElt
-someOwlElt = OwlEltSElt (OwlInfo "some elt") SEltNone
+someOwlItem :: OwlItem
+someOwlItem = OwlItemSElt (OwlInfo "some elt") SEltNone
 
 
 makeLayerMeta :: Bool -> Bool -> Bool -> LayerMeta

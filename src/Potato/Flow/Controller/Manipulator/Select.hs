@@ -36,14 +36,14 @@ layerMetaMap_isInheritHiddenOrLocked ot rid lmm = case IM.lookup rid lmm of
   Just lm | _layerMeta_isLocked lm || _layerMeta_isHidden lm -> True
   _ -> case IM.lookup rid (_owlTree_mapping ot) of
     Nothing -> False
-    Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlEltMeta_parent oem) lmm
+    Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlItemMeta_parent oem) lmm
 
 layerMetaMap_isInheritHidden :: OwlTree -> REltId -> LayerMetaMap -> Bool
 layerMetaMap_isInheritHidden ot rid lmm = case IM.lookup rid lmm of
   Just lm | _layerMeta_isHidden lm -> True
   _ -> case IM.lookup rid (_owlTree_mapping ot) of
     Nothing -> False
-    Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlEltMeta_parent oem) lmm
+    Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlItemMeta_parent oem) lmm
 
 
 -- TODO ignore locked and hidden elements here
@@ -57,8 +57,8 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   singleClick = boxSize == 1
 
   isboxshaped sowl = case _superOwl_elt sowl of
-    OwlEltSElt _ (SEltBox _)  -> True
-    OwlEltSElt _ (SEltTextArea _) -> True
+    OwlItemSElt _ (SEltBox _)  -> True
+    OwlItemSElt _ (SEltTextArea _) -> True
     _ -> False
 
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
@@ -69,7 +69,7 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
 
     -- TODO you need to pass / return render cache here
     -- TODO rewrite doesSEltIntersectBox so it works with attachments
-    sowl -> doesSEltIntersectBox selectBox (hasOwlElt_toSElt_hack sowl)
+    sowl -> doesSEltIntersectBox selectBox (hasOwlItem_toSElt_hack sowl)
 
   -- remove lock and hidden stuff
   selectedsowls' = flip filter selectedsowls'' $ \sowl -> not (layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) lmm)
