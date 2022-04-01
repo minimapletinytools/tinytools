@@ -146,6 +146,7 @@ makeSetLlama (rid, selt) = r where
         Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid
         Just (_, OwlItem _ (OwlSubItemFolder _)) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
         Just (oldoem, OwlItem oinfo oldsubitem) -> let
+            -- this will clear the cache in OwlItem
             newoitem = OwlItem oinfo $ sElt_to_owlSubItem selt
             newsowl = SuperOwl rid oldoem newoitem
             newMapping = IM.insert rid (oldoem, newoitem) mapping
