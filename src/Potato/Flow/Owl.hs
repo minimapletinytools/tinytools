@@ -724,6 +724,15 @@ owliteratechildrenat od rid = owlTree_foldChildrenAt (|>) Seq.empty od rid where
 owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
 
+owlTree_clearCacheAtKeys :: OwlTree -> [REltId] -> OwlTree
+owlTree_clearCacheAtKeys ot keys = r where
+  adjustfn (oem, oitem) = (oem, owlItem_clearCache oitem)
+  foldrfn rid acc = IM.adjust adjustfn rid acc
+  newmapping = foldr foldrfn (_owlTree_mapping ot) keys
+  r = ot {
+      _owlTree_mapping = newmapping
+    }
+
 class HasOwlTree o where
   hasOwlTree_owlTree :: o -> OwlTree
   hasOwlTree_findSuperOwl :: o -> REltId -> Maybe SuperOwl

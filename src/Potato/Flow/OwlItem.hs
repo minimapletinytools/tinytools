@@ -12,6 +12,11 @@ import Potato.Flow.Types
 data SAutoLineCache = SAutoLineCache deriving (Generic, Show, Eq)
 instance NFData SAutoLineCache
 
+data OwlInfo = OwlInfo {
+    _owlInfo_name :: Text
+  } deriving (Show, Eq, Generic)
+
+instance NFData OwlInfo
 
 data OwlSubItem =
   OwlSubItemFolder (Seq REltId)
@@ -27,6 +32,11 @@ owlSubItem_equivalent :: OwlSubItem -> OwlSubItem -> Bool
 owlSubItem_equivalent (OwlSubItemLine slinea _) (OwlSubItemLine slineb _) = slinea == slineb
 owlSubItem_equivalent a b = a == b
 
+owlSubItem_clearCache :: OwlSubItem -> OwlSubItem
+owlSubItem_clearCache = \case
+  OwlSubItemLine x _ -> OwlSubItemLine x Nothing
+  x -> x
+
 data OwlItem = OwlItem {
   _owlItem_info :: OwlInfo
   , _owlItem_subItem :: OwlSubItem
@@ -34,12 +44,8 @@ data OwlItem = OwlItem {
 
 instance NFData OwlItem
 
-
-data OwlInfo = OwlInfo {
-    _owlInfo_name :: Text
-  } deriving (Show, Eq, Generic)
-
-instance NFData OwlInfo
+owlItem_clearCache :: OwlItem -> OwlItem
+owlItem_clearCache (OwlItem oinfo osubitem) = OwlItem oinfo (owlSubItem_clearCache osubitem)
 
 
 class MommyOwl o where
