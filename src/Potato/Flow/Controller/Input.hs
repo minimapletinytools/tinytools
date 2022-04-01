@@ -20,7 +20,8 @@ module Potato.Flow.Controller.Input (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
 
 import           Control.Exception (assert)
 import           Data.Default

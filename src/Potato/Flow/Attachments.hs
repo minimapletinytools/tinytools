@@ -11,7 +11,8 @@ module Potato.Flow.Attachments (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 import Potato.Flow.SElts
 
 

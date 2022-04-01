@@ -10,6 +10,7 @@ module Potato.Flow (
   , module Potato.Flow.OwlWorkspace
   , module Potato.Flow.OwlState
   , module Potato.Flow.Owl
+  , module Potato.Flow.OwlItem
   , module Potato.Flow.Reflex
   , module Potato.Flow.TutorialState
 ) where
@@ -25,5 +26,6 @@ import           Potato.Flow.Types
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.OwlState
 import Potato.Flow.Owl
+import Potato.Flow.OwlItem
 import Potato.Flow.Reflex
 import Potato.Flow.TutorialState

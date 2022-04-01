@@ -5,7 +5,8 @@ module Potato.Flow.TutorialState (
 
 import           Relude
 
-import           Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
 import           Potato.Flow.Types
 import Potato.Flow.Controller.Types
 

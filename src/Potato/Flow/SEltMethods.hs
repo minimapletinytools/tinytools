@@ -23,7 +23,8 @@ import           Potato.Flow.Math
 import Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 import Potato.Flow.Methods.Types
 
 import qualified Data.Map as Map

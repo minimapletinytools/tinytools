@@ -22,9 +22,12 @@ import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.Render
-import           Potato.Flow.OwlState
-import           Potato.Flow.Owl
-import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
 
 import           Control.Exception                         (assert)

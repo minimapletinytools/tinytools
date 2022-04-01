@@ -18,8 +18,10 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.OwlState
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 
 import           Data.Default
 import Data.Foldable (maximumBy)

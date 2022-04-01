@@ -21,9 +21,12 @@ import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Owl
-import           Potato.Flow.OwlState
-import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
 
 import           Data.Default

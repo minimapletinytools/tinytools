@@ -15,10 +15,10 @@ import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
 import qualified Data.IntSet as IS
 import qualified Data.Text as T
+import Potato.Flow.OwlItem
 import Potato.Flow.SElts
 import Potato.Flow.Types
 import Potato.Flow.DebugHelpers
-
 
 errorMsg_owlTree_lookupFail :: OwlTree -> REltId -> Text
 errorMsg_owlTree_lookupFail OwlTree {..} rid = errorMsg_owlMapping_lookupFail _owlTree_mapping rid
@@ -26,63 +26,7 @@ errorMsg_owlTree_lookupFail OwlTree {..} rid = errorMsg_owlMapping_lookupFail _o
 errorMsg_owlMapping_lookupFail :: OwlMapping -> REltId -> Text
 errorMsg_owlMapping_lookupFail _ rid = "expected to find REltId " <> show rid <> " in OwlMapping"
 
-class MommyOwl o where
-  mommyOwl_kiddos :: o -> Maybe (Seq REltId)
-  mommyOwl_hasKiddos :: o -> Bool
-  mommyOwl_hasKiddos = isJust . mommyOwl_kiddos
-
-class HasOwlElt o where
-  hasOwlElt_owlElt :: o -> OwlElt
-  hasOwlElt_name :: o -> Text
-  hasOwlElt_name = hasOwlElt_name . hasOwlElt_owlElt
-  hasOwlElt_isFolder :: o -> Bool
-  hasOwlElt_isFolder = hasOwlElt_isFolder . hasOwlElt_owlElt
-  hasOwlElt_attachments :: o -> [Attachment]
-  hasOwlElt_attachments = hasOwlElt_attachments . hasOwlElt_owlElt
-  hasOwlElt_toSElt_hack :: o -> SElt
-  hasOwlElt_toSElt_hack = hasOwlElt_toSElt_hack . hasOwlElt_owlElt
-  hasOwlElt_toSEltLabel_hack :: o -> SEltLabel
-  hasOwlElt_toSEltLabel_hack = hasOwlElt_toSEltLabel_hack . hasOwlElt_owlElt
-
-data OwlInfo = OwlInfo {
-    _owlInfo_name :: Text
-  } deriving (Show, Eq, Generic)
-
-instance NFData OwlInfo
-
--- TODO rename to just Owl
--- TODO add OwlEltFolder settings (or make it part of owlinfo?)
-data OwlElt = OwlEltFolder OwlInfo (Seq REltId) | OwlEltSElt OwlInfo SElt deriving (Show, Eq, Generic)
-
-instance NFData OwlElt
-
-instance MommyOwl OwlElt where
-  mommyOwl_kiddos (OwlEltFolder _ kiddos) = Just kiddos
-  mommyOwl_kiddos _ = Nothing
-
-instance HasOwlElt OwlElt where
-  hasOwlElt_owlElt = id
-  hasOwlElt_name (OwlEltFolder (OwlInfo name) _) = name
-  hasOwlElt_name (OwlEltSElt (OwlInfo name) _) = name
-  hasOwlElt_isFolder (OwlEltFolder _ _) = True
-  hasOwlElt_isFolder _ = False
-  hasOwlElt_attachments = \case
-    OwlEltFolder _ _ -> []
-    OwlEltSElt _ selt -> case selt of
-      SEltLine sline -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
-      _ -> []
-  hasOwlElt_toSElt_hack = \case
-    OwlEltSElt _ selt -> selt
-    _ -> SEltFolderStart
-  hasOwlElt_toSEltLabel_hack o = case o of
-    OwlEltSElt _ selt -> SEltLabel (hasOwlElt_name o) selt
-    _ -> SEltLabel (hasOwlElt_name o) SEltFolderStart
-
 type OwlMapping = REltIdMap (OwlEltMeta, OwlElt)
-
-owlElt_name :: OwlElt -> Text
-owlElt_name (OwlEltFolder (OwlInfo name) _) = name
-owlElt_name (OwlEltSElt (OwlInfo name) _) = name
 
 -- | update attachments based on remap
 owlElt_updateAttachments :: Bool -> REltIdMap REltId -> OwlElt -> OwlElt
@@ -128,9 +72,9 @@ isDescendentOf om parent child
       x -> isDescendentOf om parent x
 
 data OwlEltMeta = OwlEltMeta
-  { _owlEltMeta_parent :: REltId, -- or should we do Maybe REltId?
-    _owlEltMeta_depth :: Int,
-    _owlEltMeta_position :: SiblingPosition
+  { _owlEltMeta_parent :: REltId
+    , _owlEltMeta_depth :: Int
+    , _owlEltMeta_position :: SiblingPosition
   }
   deriving (Eq, Show, Generic)
 
@@ -1149,17 +1093,9 @@ owlTree_fromOldState oldDir oldLayers = r
 owlTree_toSEltTree :: OwlTree -> SEltTree
 owlTree_toSEltTree od@OwlTree {..} = superOwlParliament_toSEltTree od (owlTree_toSuperOwlParliament od)
 
--- temp conversions
-owlElt_toSElt_hack :: OwlElt -> SElt
-owlElt_toSElt_hack = \case
-  OwlEltSElt _ selt -> selt
-  _ -> SEltFolderStart
-
--- this should really be of type SuperOwl -> Maybe SElt
 superOwl_toSElt_hack :: SuperOwl -> SElt
 superOwl_toSElt_hack = owlElt_toSElt_hack . _superOwl_elt
 
--- this should really be of type SuperOwl -> Maybe SEltLabel
 superOwl_toSEltLabel_hack :: SuperOwl -> SEltLabel
 superOwl_toSEltLabel_hack sowl = case _superOwl_elt sowl of
   OwlEltSElt (OwlInfo name) selt -> SEltLabel name selt

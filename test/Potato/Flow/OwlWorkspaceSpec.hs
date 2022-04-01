@@ -9,9 +9,12 @@ import           Test.Hspec
 
 import qualified Data.Sequence            as Seq
 import Data.Maybe (fromJust)
-import           Potato.Flow.Owl
-import           Potato.Flow.OwlState
-import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlWorkspace
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
 import Potato.Flow.SElts

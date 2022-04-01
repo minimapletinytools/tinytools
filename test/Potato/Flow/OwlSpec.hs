@@ -10,7 +10,8 @@ import           Test.Hspec
 import qualified Data.Sequence            as Seq
 import qualified Data.IntSet as IS
 import qualified Data.IntMap as IM
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
 import Potato.Flow.Types

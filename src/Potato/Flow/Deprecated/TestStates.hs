@@ -28,8 +28,10 @@ import qualified Data.IntMap   as IM
 import qualified Data.Sequence as Seq
 import           Potato.Flow
 import           Potato.Flow.Deprecated.State
---import           Potato.Flow.OwlState
---import           Potato.Flow.Owl
+--import           Potato.Flow.OwlItem
+import Potato.Flow.OwlState
+--import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 
 folderStart :: SEltLabel
 folderStart = SEltLabel "folder" SEltFolderStart

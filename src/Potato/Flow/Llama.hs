@@ -7,7 +7,9 @@ module Potato.Flow.Llama where
 
 import           Relude
 
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import Potato.Flow.OwlItem
 import           Potato.Flow.SElts
 import Potato.Flow.OwlState
 import           Potato.Flow.Types

@@ -13,8 +13,10 @@ import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.Owl
-import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.OwlWorkspace
 
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import Data.Default

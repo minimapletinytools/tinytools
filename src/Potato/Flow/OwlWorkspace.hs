@@ -16,7 +16,10 @@ module Potato.Flow.OwlWorkspace (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
 import Potato.Flow.Llama

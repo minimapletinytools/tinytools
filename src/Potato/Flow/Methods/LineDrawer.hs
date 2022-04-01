@@ -22,6 +22,7 @@ import           Potato.Flow.Types
 import Potato.Flow.Methods.Types
 import Potato.Flow.Attachments
 import Potato.Flow.Owl
+import Potato.Flow.OwlItem
 
 import qualified Data.Map as Map
 import           Data.Dependent.Sum (DSum ((:=>)), (==>))
