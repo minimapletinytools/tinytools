@@ -147,19 +147,15 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   newam_3 = attachmentMap_addSuperOwls justChanges newam_2
 
 
--- TODO test
 -- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
-addChangesFromAttachmentMapToSuperOwlChanges :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
-addChangesFromAttachmentMapToSuperOwlChanges owltreeafterchanges@OwlTree {..} am changes = r where
+getChangesFromAttachmentMap :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
+getChangesFromAttachmentMap owltreeafterchanges@OwlTree {..} am changes = r where
   -- collect all stuff attaching to changed stuff
   changeset = IS.unions . catMaybes $ foldr (\k acc -> IM.lookup k am : acc) [] (IM.keys changes)
 
-  -- add it to changes
+  -- create SuperOwlChanges from changeset
   -- currently nothing can be attached to something that is attaching to thing sso you don't need to make this operation recursive
-  newchanges = IM.fromList . filter (\(_,x) -> isJust x) . fmap (\rid -> (rid, owlTree_findSuperOwl owltreeafterchanges rid)) .  IS.toList $ changeset
-
-  -- return the combined changes
-  r = IM.union changes newchanges
+  r = IM.fromList . filter (\(_,x) -> isJust x) . fmap (\rid -> (rid, owlTree_findSuperOwl owltreeafterchanges rid)) .  IS.toList $ changeset
 
 instance PotatoShow SuperOwl where
   potatoShow SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt

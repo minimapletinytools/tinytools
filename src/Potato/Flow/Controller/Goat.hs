@@ -578,8 +578,12 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- | update AttachmentMap based on new state  |
   next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
 
+  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
+
+  -- TODO need to clear cache on things that got changed by attachments
+
   -- | compute SuperOwlChanges for rendering |
-  cslmap_withAttachments = addChangesFromAttachmentMapToSuperOwlChanges (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
+  cslmap_withAttachments = IM.union cslmap_afterEvent attachmentChanges
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
 
