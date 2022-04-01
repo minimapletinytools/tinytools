@@ -34,7 +34,11 @@ import qualified Data.Sequence      as Seq
 data OwlPFWorkspace = OwlPFWorkspace {
   -- TODO rename owlPFState
   _owlPFWorkspace_pFState       :: OwlPFState
+
+  -- this is updated after each call to updateOwlPFWorkspace and is only guaranteed to be valid at that point
+  -- TODO better to have methods return (OwlPFWorkspace, SuperOwlChanges) instead of embedding in OwlPFWorkspace
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges
+
   , _owlPFWorkspace_llamaStack :: LlamaStack
 } deriving (Show, Generic)
 

@@ -477,13 +477,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                 _ -> makeGoatCmdTempOutputFromNothing goatState
 
   -- | update OwlPFWorkspace from GoatCmdTempOutput |
-  (next_workspace, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+  (workspace_afterEvent, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_workspace, IM.empty)
     Just (_, wsev) -> (r1,r2) where
       r1 = updateOwlPFWorkspace wsev _goatState_workspace
       r2 = _owlPFWorkspace_lastChanges r1
-  next_pFState = _owlPFWorkspace_pFState next_workspace
+  pFState_afterEvent = _owlPFWorkspace_pFState workspace_afterEvent
 
   -- | update pan from GoatCmdTempOutput |
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
@@ -501,7 +501,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Nothing -> Nothing
     --Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
     Just (add, sel) -> assert (superOwlParliament_isValid nextot r) (Just r)where
-      nextot = _owlPFState_owlTree next_pFState
+      nextot = _owlPFState_owlTree pFState_afterEvent
       r' = if add
         then superOwlParliament_disjointUnionAndCorrect nextot _goatState_selection sel
         else sel
@@ -543,20 +543,20 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     Nothing -> (isNewSelection', selectionAfterChanges)
 
   -- | update LayersState based from SuperOwlChanges after applying events |
-  next_layersState' = updateLayers next_pFState cslmap_afterEvent next_layersState''
+  next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent next_layersState''
 
   -- | auto-expand folders and compute LayersState |
   -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
   -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
   -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
-  next_layersState = expandAllCollapsedParents next_selection next_pFState next_layersState'
+  next_layersState = expandAllCollapsedParents next_selection pFState_afterEvent next_layersState'
   --next_layersState = next_layersState'
 
 
   -- | update the next handler |
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
-  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree next_pFState) (_superOwl_id sowl) (_layersState_meta next_layersState)
-  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree next_pFState) filterHiddenOrLocked next_selection
+  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pFState_afterEvent) (_superOwl_id sowl) (_layersState_meta next_layersState)
+  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pFState_afterEvent) filterHiddenOrLocked next_selection
   nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
   next_handler' = if isNewSelection
     -- if there is a new selection, update the handler with new selection if handler wasn't active
@@ -576,21 +576,17 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
   --_goatState_layersHandler
 
-  -- | update AttachmentMap based on new state  |
+  -- | update AttachmentMap based on new state and clear the cache on these changes |
   next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
-
-  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree next_pFState) next_attachmentMap cslmap_afterEvent
-
-  --owlTree_withCacheResetOnAttachemnts = owlTree_clearCacheAtKeys (_owlPFState_owlTree next_pFState) (IM.keys attachmentChanges)
-  --pFState_withCacheResetOnAttachemnts = next_pFState { _owlPFState_owlTree = owlTree_withCacheResetOnAttachemnts }
-  -- TODO use pFState_withCacheResetOnAttachemnts instead of next_pFState from here on (also just rename next_pFState)
+  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) next_attachmentMap cslmap_afterEvent
+  owlTree_withCacheResetOnAttachments = owlTree_clearCacheAtKeys (_owlPFState_owlTree pFState_afterEvent) (IM.keys attachmentChanges)
 
   -- | compute SuperOwlChanges for rendering |
   cslmap_withAttachments = IM.union cslmap_afterEvent attachmentChanges
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
 
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree next_pFState) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (owlTree_withCacheResetOnAttachments) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- TODO this step can update OwlState built-in cache (via rendering)
   -- | update the rendered region if we moved the screen |
@@ -599,7 +595,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
   -- TODO rename these rendercontext variables so it's not ''...
   rendercontext_forMove = RenderContext {
-      _renderContext_owlTree = hasOwlTree_owlTree next_pFState
+      _renderContext_owlTree = owlTree_withCacheResetOnAttachments
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_cache = RenderCache
@@ -632,9 +628,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then _goatState_renderedSelection
     else _renderContext_renderedCanvasRegion $ render newBox selectionselts rendercontext_forSelection
 
+  -- TODO just DELETE this...
   {- TODO render only parts of selection that have changed TODO broken
   next_renderedSelection' = if didScreenRegionMove
-    then moveRenderedCanvasRegion next_broadPhaseState (_owlPFState_owlTree next_pFState) newBox _goatState_renderedSelection
+    then moveRenderedCanvasRegion next_broadPhaseState (owlTree_withCacheResetOnAttachments) newBox _goatState_renderedSelection
     else _goatState_renderedSelection
   prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
   curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
@@ -645,9 +642,11 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   needsupdateaabbsforrenderselection = needsupdateaabbs
   next_renderedSelection = if IM.null cslmapForSelectionRendering
     then next_renderedSelection'
-    else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState next_pFState next_renderedSelection'
+    else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
   -}
 
+  next_pFState = pFState_afterEvent { _owlPFState_owlTree = owlTree_withCacheResetOnAttachments }
+  next_workspace = workspace_afterEvent { _owlPFWorkspace_pFState = next_pFState}
 
 
   finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
