@@ -36,6 +36,24 @@ import Linear.Matrix (M22, (!*))
 
 import Control.Exception (assert)
 
+instance TransformMe AttachmentLocation where
+  transformMe_rotateLeft = \case
+    AL_Top -> AL_Left
+    AL_Bot -> AL_Right
+    AL_Left -> AL_Bot
+    AL_Right -> AL_Top
+    AL_Any -> AL_Any
+  transformMe_rotateRight = \case
+    AL_Top -> AL_Right
+    AL_Bot -> AL_Left
+    AL_Left -> AL_Top
+    AL_Right -> AL_Bot
+    AL_Any -> AL_Any
+  transformMe_reflectHorizontally = \case
+    AL_Left -> AL_Right
+    AL_Right -> AL_Left
+    x -> x
+
 
 -- TODO I think you need notion of half separation?
 determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)

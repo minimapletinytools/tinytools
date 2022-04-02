@@ -312,7 +312,7 @@ getDrawer = \case
   OwlSubItemFolder _ -> nilDrawer
   OwlSubItemBox sbox    -> sBox_drawer sbox
   --OwlSubItemLine sline _ -> sSimpleLine_drawer sline
-  OwlSubItemLine sline mcache  -> sSimpleLineNewRenderFn sline Nothing -- TODO pass in mcache
+  OwlSubItemLine sline mcache  -> sSimpleLineNewRenderFn sline mcache
   OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where

@@ -6,11 +6,7 @@ import Relude
 
 import Potato.Flow.SElts
 import Potato.Flow.Types
-
-
--- TODO move me somewhere
-data SAutoLineCache = SAutoLineCache deriving (Generic, Show, Eq)
-instance NFData SAutoLineCache
+import Potato.Flow.Methods.LineTypes
 
 data OwlInfo = OwlInfo {
     _owlInfo_name :: Text
@@ -22,7 +18,7 @@ data OwlSubItem =
   OwlSubItemNone
   | OwlSubItemFolder (Seq REltId)
   | OwlSubItemBox SBox
-  | OwlSubItemLine SAutoLine (Maybe SAutoLineCache)
+  | OwlSubItemLine SAutoLine (Maybe LineAnchorsForRender)
   | OwlSubItemTextArea STextArea
   deriving (Generic, Show, Eq)
 

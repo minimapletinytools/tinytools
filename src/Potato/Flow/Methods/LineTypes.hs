@@ -6,7 +6,6 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import Potato.Flow.Attachments
 
 import qualified Data.Map as Map
 import           Data.Maybe         (fromJust)
@@ -18,7 +17,8 @@ import Linear.Matrix (M22, (!*))
 import Control.Exception (assert)
 
 
-data CartDir = CD_Up | CD_Down | CD_Left | CD_Right deriving (Eq, Show)
+data CartDir = CD_Up | CD_Down | CD_Left | CD_Right deriving (Eq, Generic, Show)
+instance NFData CartDir
 
 
 data AnchorType = AT_End_Up | AT_End_Down | AT_End_Left | AT_End_Right | AT_Elbow_TL | AT_Elbow_TR | AT_Elbow_BR | AT_Elbow_BL | AT_Elbow_Invalid deriving (Eq, Show)
@@ -69,7 +69,9 @@ cartDirWithDistanceToV2 (cd, d) = cartDirToUnit cd ^* d
 data LineAnchorsForRender = LineAnchorsForRender {
   _lineAnchorsForRender_start :: XY
   , _lineAnchorsForRender_rest :: [(CartDir, Int)]
-} deriving (Show)
+} deriving (Show, Generic, Eq)
+
+instance NFData LineAnchorsForRender
 
 emptyLineAnchorsForRender :: LineAnchorsForRender
 emptyLineAnchorsForRender = LineAnchorsForRender {
@@ -165,21 +167,3 @@ instance TransformMe LBox where
     r = LBox (V2 (trx-h) try) (V2 h w)
   transformMe_reflectHorizontally lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     r = LBox (V2 (-(x+w)) y) (V2 w h)
-
-instance TransformMe AttachmentLocation where
-  transformMe_rotateLeft = \case
-    AL_Top -> AL_Left
-    AL_Bot -> AL_Right
-    AL_Left -> AL_Bot
-    AL_Right -> AL_Top
-    AL_Any -> AL_Any
-  transformMe_rotateRight = \case
-    AL_Top -> AL_Right
-    AL_Bot -> AL_Left
-    AL_Left -> AL_Top
-    AL_Right -> AL_Bot
-    AL_Any -> AL_Any
-  transformMe_reflectHorizontally = \case
-    AL_Left -> AL_Right
-    AL_Right -> AL_Left
-    x -> x
