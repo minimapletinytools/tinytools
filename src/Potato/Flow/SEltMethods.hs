@@ -306,9 +306,7 @@ sTextArea_drawer stextarea@STextArea {..} = r where
 
 
 
-
-
--- TODO split up so it's not one big case statement...
+-- TODO take OwlItem so it can use cache
 getDrawer :: SElt -> SEltDrawer
 getDrawer selt = case selt of
   SEltNone        -> nilDrawer
@@ -325,6 +323,9 @@ getDrawer selt = case selt of
         , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
       }
   -}
+
+
+-- TODO move modify methods to another file
 
 modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
 modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of

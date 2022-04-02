@@ -593,12 +593,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
-  -- TODO rename these rendercontext variables so it's not ''...
   rendercontext_forMove = RenderContext {
       _renderContext_owlTree = owlTree_withCacheResetOnAttachments
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
-      , _renderContext_cache = RenderCache
       , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas
     }
   rendercontext_forUpdate = if didScreenRegionMove

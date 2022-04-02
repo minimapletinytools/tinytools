@@ -14,7 +14,7 @@ import Potato.Flow.Owl
 import qualified Data.Text          as T
 
 
--- TODO probably add HasRenderCache constraint or something to this in the future?
+-- TODO return (Maybe OwlItem) for updated cache?
 type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
 type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
 

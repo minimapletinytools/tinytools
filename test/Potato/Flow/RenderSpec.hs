@@ -23,7 +23,6 @@ makeRenderContextForTest a bps rc = RenderContext {
     _renderContext_owlTree = hasOwlTree_owlTree a
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = bps
-    , _renderContext_cache = RenderCache
     , _renderContext_renderedCanvasRegion = rc
   }
 

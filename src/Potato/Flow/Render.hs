@@ -75,16 +75,12 @@ data RenderCache = RenderCache
 emptyRenderCache :: RenderCache
 emptyRenderCache = RenderCache
 
--- includes helper methods needed for render but not what to render
+-- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {
-  _renderContext_owlTree :: OwlTree
-  , _renderContext_layerMetaMap :: LayerMetaMap
-  , _renderContext_broadPhase :: BroadPhaseState
-
-  -- TODO use me
-  , _renderContext_cache :: RenderCache
-
-  , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion
+  _renderContext_owlTree :: OwlTree -- r/w
+  , _renderContext_layerMetaMap :: LayerMetaMap -- r
+  , _renderContext_broadPhase :: BroadPhaseState -- r
+  , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion -- r/w
 }
 
 emptyRenderContext :: LBox -> RenderContext
@@ -92,7 +88,6 @@ emptyRenderContext lbox = RenderContext {
     _renderContext_owlTree = emptyOwlTree
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = emptyBroadPhaseState
-    , _renderContext_cache = emptyRenderCache
     , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion lbox
   }
 
@@ -176,8 +171,6 @@ potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion
 potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap owlItem_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
 
 
-
--- TODO rewrite this so it can be chained and then take advantage of fusion
 -- | renders just a portion of the RenderedCanvasRegion
 -- caller is expected to provide all SElts that intersect the rendered LBox (broadphase is ignored)
 render :: LBox -> [SElt] -> RenderContext -> RenderContext
@@ -188,8 +181,11 @@ render llbx seltls rctx@RenderContext {..} = r where
     -- construct parent point and index
     pt = toPoint llbx i
     pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
+
+    -- TODO  pass in + cache render stuff here
     -- go through drawers in reverse order until you find a match
     mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+
     -- render what we found or empty otherwise
     newc' = case mdrawn of
       Just c  -> (pindex, c)
@@ -249,6 +245,7 @@ renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
   {-sowls' = flip fmap rids $ \rid -> case findSuperOwlForRendering ot rid of
       Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
       Just sowl -> sowl-}
+
   sowls' = catMaybes $ fmap (\rid -> findSuperOwlForRendering _renderContext_owlTree rid) rids
 
   sowls = sortForRendering _renderContext_owlTree $ Seq.fromList sowls'
@@ -288,7 +285,7 @@ moveRenderedCanvasRegion lbx rctx@RenderContext {..} = r where
 updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderContext
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
   [] -> rctx
-  -- TODO incremental rendering
+  -- TODO create disjoint union of all boxes and render than one at a time instead union_lBoxing them all
   (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_renderedCanvasRegion) (foldl' union_lBox b bs) of
     Nothing -> rctx
     Just aabb -> r where
