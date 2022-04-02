@@ -12,7 +12,7 @@ module Potato.Flow.Render (
   , renderedCanvasRegion_nonEmptyCount
   , emptyRenderedCanvasRegion
   , printRenderedCanvasRegion
-  , potatoRender
+  , potatoRenderWithOwlTree
   , potatoRenderPFState
   , render
   , renderedCanvasToText
@@ -145,11 +145,10 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
   then Just $ toIndex lbx xy
   else Nothing
 
--- TODO rename to just potatoRender
 -- | brute force renders a RenderedCanvasRegion (ignores broadphase)
-potatoRenderWithOwlTree :: OwlTree -> [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
-potatoRenderWithOwlTree ot seltls RenderedCanvasRegion {..} = r where
-  drawers = map getDrawer seltls
+potatoRenderWithOwlTree :: OwlTree -> [OwlSubItem] -> RenderedCanvasRegion -> RenderedCanvasRegion
+potatoRenderWithOwlTree ot osubitems RenderedCanvasRegion {..} = r where
+  drawers = map getDrawer osubitems
   genfn i = newc' where
     pt = toPoint _renderedCanvasRegion_box i
     -- go through drawers in reverse order until you find a match
@@ -163,20 +162,16 @@ potatoRenderWithOwlTree ot seltls RenderedCanvasRegion {..} = r where
       , _renderedCanvasRegion_contents = newc
     }
 
--- TODO rename to potatoRenderWithEmptyOwlTree
-potatoRender :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
-potatoRender = potatoRenderWithOwlTree emptyOwlTree
-
 potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion
-potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap owlItem_toSElt_hack . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
+potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap _owlItem_subItem . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
 
 
 -- | renders just a portion of the RenderedCanvasRegion
 -- caller is expected to provide all SElts that intersect the rendered LBox (broadphase is ignored)
-render :: LBox -> [SElt] -> RenderContext -> RenderContext
-render llbx seltls rctx@RenderContext {..} = r where
+render :: LBox -> [OwlSubItem] -> RenderContext -> RenderContext
+render llbx osubitems rctx@RenderContext {..} = r where
   prevrcr = _renderContext_renderedCanvasRegion
-  drawers = map getDrawer seltls
+  drawers = map getDrawer osubitems
   genfn i = newc' where
     -- construct parent point and index
     pt = toPoint llbx i
@@ -249,9 +244,9 @@ renderWithBroadPhase  lbx rctx@RenderContext {..} = r where
   sowls' = catMaybes $ fmap (\rid -> findSuperOwlForRendering _renderContext_owlTree rid) rids
 
   sowls = sortForRendering _renderContext_owlTree $ Seq.fromList sowls'
-  selts = fmap superOwl_toSElt_hack $ toList sowls
+  osubitems = fmap (_owlItem_subItem . _superOwl_elt) $ toList sowls
 
-  r = render lbx selts rctx
+  r = render lbx osubitems rctx
 
 moveRenderedCanvasRegionNoReRender :: LBox -> RenderedCanvasRegion -> RenderedCanvasRegion
 moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area >= 0) outrcr where
@@ -300,5 +295,5 @@ updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdatea
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
           Just sowl -> Just sowl
       sowls = sortForRendering _renderContext_owlTree $ Seq.fromList (catMaybes msowls)
-      selts = fmap superOwl_toSElt_hack $ toList sowls
-      r = render aabb selts rctx
+      osubitems = fmap (_owlItem_subItem . _superOwl_elt) $ toList sowls
+      r = render aabb osubitems rctx

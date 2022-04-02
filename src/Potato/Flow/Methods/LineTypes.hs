@@ -7,7 +7,6 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import Potato.Flow.Attachments
-import Potato.Flow.Owl
 
 import qualified Data.Map as Map
 import           Data.Maybe         (fromJust)

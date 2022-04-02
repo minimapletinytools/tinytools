@@ -26,6 +26,9 @@ makeRenderContextForTest a bps rc = RenderContext {
     , _renderContext_renderedCanvasRegion = rc
   }
 
+potatoRenderWithSEltAndEmptyOwlTreeForTest :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
+potatoRenderWithSEltAndEmptyOwlTreeForTest selts rcr = potatoRenderWithOwlTree emptyOwlTree (fmap sElt_to_owlSubItem selts) rcr
+
 spec :: Spec
 spec = do
   describe "Canvas" $ do
@@ -42,7 +45,7 @@ spec = do
           SEltBox $ def {
               _sBox_box    = LBox (V2 (i*2) 0) (V2 2 2)
             }
-        canvas2 = potatoRender selts canvas1
+        canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest selts canvas1
         canvas2Text = renderedCanvasToText canvas2
       --putTextLn $ canvas2Text
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` n*4
@@ -52,7 +55,7 @@ spec = do
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 10 10) (V2 (-10) (-10))
           }
-        canvas2 = potatoRender [selt] canvas1
+        canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         canvas2Text = renderedCanvasToText canvas2
       T.length (T.filter (\x -> x /= ' ' && x /= '\n') canvas2Text) `shouldBe` 100
     it "renders to a region" $ do
@@ -66,7 +69,7 @@ spec = do
         selt = SEltBox $ def {
             _sBox_box    = fillBox
           }
-        canvas2 = _renderContext_renderedCanvasRegion $ render renderBox [selt] rendercontext1
+        canvas2 = _renderContext_renderedCanvasRegion $ render renderBox [sElt_to_owlSubItem selt] rendercontext1
         canvas2Text = renderedCanvasToText canvas2
         canvas2TextRegion = renderedCanvasRegionToText renderBox canvas2
       --putTextLn $ canvas2Text
@@ -79,7 +82,7 @@ spec = do
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
           }
-        canvas2 = potatoRender [selt] canvas1
+        canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         target = LBox (V2 (-50) (-50)) (V2 100 100)
         canvas3 = moveRenderedCanvasRegionNoReRender target canvas2
         canvas3Text = renderedCanvasToText canvas3
@@ -91,7 +94,7 @@ spec = do
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
           }
-        canvas2 = potatoRender [selt] canvas1
+        canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         target = LBox (V2 0 0) (V2 100 50)
         canvas3 = moveRenderedCanvasRegionNoReRender target canvas2
         canvas3Text = renderedCanvasToText canvas3

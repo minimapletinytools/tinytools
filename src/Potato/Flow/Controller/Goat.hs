@@ -620,7 +620,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       -- we just re-render everything for now (in the future you can try and do partial rendering though)
       , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
     }
-  selectionselts = toList . fmap superOwl_toSElt_hack $ unSuperOwlParliament next_selection
+  selectionselts = toList . fmap (_owlItem_subItem . _superOwl_elt) $ unSuperOwlParliament next_selection
   next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then _goatState_renderedSelection

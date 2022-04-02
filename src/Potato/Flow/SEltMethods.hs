@@ -13,6 +13,7 @@ module Potato.Flow.SEltMethods (
   , doesSEltIntersectPoint
   , updateFnFromController
   , getDrawer
+  , getDrawerFromSEltForTest
   , offsetSEltTree
 ) where
 
@@ -305,17 +306,14 @@ sTextArea_drawer stextarea@STextArea {..} = r where
     }
 
 
-
--- TODO take OwlItem so it can use cache
-getDrawer :: SElt -> SEltDrawer
-getDrawer selt = case selt of
-  SEltNone        -> nilDrawer
-  SEltFolderStart -> nilDrawer
-  SEltFolderEnd   -> nilDrawer
-  SEltBox sbox    -> sBox_drawer sbox
-  --SEltLine sline  -> sSimpleLine_drawer sline
-  SEltLine sline  -> sSimpleLineNewRenderFn sline Nothing
-  SEltTextArea stextarea  -> sTextArea_drawer stextarea
+getDrawer :: OwlSubItem -> SEltDrawer
+getDrawer = \case
+  OwlSubItemNone        -> nilDrawer
+  OwlSubItemFolder _ -> nilDrawer
+  OwlSubItemBox sbox    -> sBox_drawer sbox
+  --OwlSubItemLine sline _ -> sSimpleLine_drawer sline
+  OwlSubItemLine sline mcache  -> sSimpleLineNewRenderFn sline Nothing -- TODO pass in mcache
+  OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where
     potatoDrawer = SEltDrawer {
@@ -324,6 +322,9 @@ getDrawer selt = case selt of
       }
   -}
 
+
+getDrawerFromSEltForTest :: SElt -> SEltDrawer
+getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 
 -- TODO move modify methods to another file
 

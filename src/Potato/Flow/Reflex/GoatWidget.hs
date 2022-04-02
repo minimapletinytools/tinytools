@@ -140,7 +140,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     -- TODO wrap this in a helper function in Render
     -- TODO we want to render the whole screen, not just the canvas
     initialCanvasBox = _sCanvas_box . _owlPFState_canvas $ initialowlpfstate
-    initialselts = fmap (\(_, oelt) -> owlItem_toSElt_hack oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ initialowlpfstate
+    initialselts = fmap (\(_, oelt) -> _owlItem_subItem oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ initialowlpfstate
     initialemptyrcr = emptyRenderedCanvasRegion initialCanvasBox
     initialrendercontext = RenderContext {
       _renderContext_owlTree = hasOwlTree_owlTree initialowlpfstate

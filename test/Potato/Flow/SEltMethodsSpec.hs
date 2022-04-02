@@ -20,7 +20,7 @@ spec = do
   let
     renderfn sd = _sEltDrawer_renderFn sd emptyOwlTree
   describe "SEltMethod" $ do
-    describe "getDrawer" $ do
+    describe "getDrawerFromSEltForTest" $ do
       describe "SBox" $ do
         let
           somesbox1 style = def {
@@ -63,7 +63,7 @@ spec = do
           }
         it "SBoxType_NoBoxText" $ do
           let
-            sd = getDrawer (SEltBox (somesbox1 SBoxType_NoBoxText))
+            sd = getDrawerFromSEltForTest (SEltBox (somesbox1 SBoxType_NoBoxText))
           renderfn sd (V2 100 0) `shouldBe` Nothing
           renderfn sd (V2 (-1) 0) `shouldBe` Nothing
           renderfn sd (V2 0 0) `shouldBe` Just 'm'
@@ -75,17 +75,17 @@ spec = do
           renderfn sd (V2 4 4) `shouldBe` Just '@'
         it "SBoxType_Box" $ do
           let
-            sd = getDrawer (SEltBox (somesbox2 SBoxType_Box))
+            sd = getDrawerFromSEltForTest (SEltBox (somesbox2 SBoxType_Box))
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` _superStyle_point def
         it "SBoxType_NoBoxText_alignRight" $ do
           let
-            sd = getDrawer (SEltBox (somesbox3 SBoxType_NoBoxText))
+            sd = getDrawerFromSEltForTest (SEltBox (somesbox3 SBoxType_NoBoxText))
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just '@'
         it "SBoxType_NoBoxText_widechar" $ do
           let
-            sd = getDrawer (SEltBox (somesbox4 SBoxType_NoBoxText))
+            sd = getDrawerFromSEltForTest (SEltBox (somesbox4 SBoxType_NoBoxText))
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just 'ｔ'
           renderfn sd (V2 1 0) `shouldBe` Nothing
@@ -93,7 +93,7 @@ spec = do
           renderfn sd (V2 3 0) `shouldBe` Nothing
         it "box label" $ do
           let
-            sd = getDrawer (SEltBox (somesbox5 SBoxType_BoxText))
+            sd = getDrawerFromSEltForTest (SEltBox (somesbox5 SBoxType_BoxText))
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 0 0) `shouldBe` Just '╔'
           renderfn sd (V2 8 0) `shouldBe` Just 'p'
@@ -129,7 +129,7 @@ spec = do
             }
         it "LineAutoStyle_AutoStraight - 1" $ do
           let
-            sd = getDrawer (SEltLine $ someline1 LineAutoStyle_AutoStraight)
+            sd = getDrawerFromSEltForTest (SEltLine $ someline1 LineAutoStyle_AutoStraight)
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '<'
           renderfn sd (V2 11 10) `shouldBe` Just '='
@@ -140,7 +140,7 @@ spec = do
           renderfn sd (V2 20 20) `shouldBe` Just '>'
         it "LineAutoStyle_AutoStraight - 2" $ do
           let
-            sd = getDrawer (SEltLine $ someline2 LineAutoStyle_AutoStraight)
+            sd = getDrawerFromSEltForTest (SEltLine $ someline2 LineAutoStyle_AutoStraight)
           --forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '^'
           renderfn sd (V2 10 12) `shouldBe` Just '*'
@@ -149,7 +149,7 @@ spec = do
           renderfn sd (V2 10 15) `shouldBe` _superStyle_vertical def
         it "LineAutoStyle_AutoStraight - 3" $ do
           let
-            sd = getDrawer (SEltLine $ someline3 LineAutoStyle_AutoStraight)
+            sd = getDrawerFromSEltForTest (SEltLine $ someline3 LineAutoStyle_AutoStraight)
           forM_ (sEltDrawer_renderToLines sd emptyOwlTree) putTextLn
           renderfn sd (V2 10 10) `shouldBe` Just '^'
           renderfn sd (V2 9 10) `shouldBe` Nothing
@@ -165,7 +165,7 @@ spec = do
             }
         it "basic" $ do
           let
-            sd = getDrawer (SEltTextArea $ sometextarea)
+            sd = getDrawerFromSEltForTest (SEltTextArea $ sometextarea)
           --forM_ ((sEltDrawer_renderToLines sd) emptyOwlTree sd) putTextLn
           renderfn sd (V2 1 1) `shouldBe` Just 'a'
           renderfn sd (V2 10 10) `shouldBe` Just 'c'

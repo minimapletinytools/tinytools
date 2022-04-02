@@ -19,11 +19,11 @@ data OwlInfo = OwlInfo {
 instance NFData OwlInfo
 
 data OwlSubItem =
-  OwlSubItemFolder (Seq REltId)
+  OwlSubItemNone
+  | OwlSubItemFolder (Seq REltId)
   | OwlSubItemBox SBox
   | OwlSubItemLine SAutoLine (Maybe SAutoLineCache)
   | OwlSubItemTextArea STextArea
-  | OwlSubItemNone
   deriving (Generic, Show, Eq)
 
 instance NFData OwlSubItem
