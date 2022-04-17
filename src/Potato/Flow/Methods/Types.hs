@@ -1,3 +1,6 @@
+
+-- TODO DEPRECATE this file
+
 {-# LANGUAGE RecordWildCards #-}
 
 -- TODO rename to common
@@ -14,7 +17,8 @@ import Potato.Flow.Owl
 import qualified Data.Text          as T
 
 
--- TODO return (Maybe OwlItem) for updated cache?
+
+-- TODO get rid of (HasOwlTree a) arg, this can be passed in at the getDrawer level instead!
 type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
 type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
 

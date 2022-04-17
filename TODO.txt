@@ -47,6 +47,7 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+-add test to make sure cache is actually being used
 -BUG
            ╔══════════╗
            ║@@@@@@@@@@║

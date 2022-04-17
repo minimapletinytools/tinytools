@@ -14,6 +14,7 @@ module Potato.Flow.SEltMethods (
   , updateFnFromController
   , getDrawer
   , getDrawerFromSEltForTest
+  , updateOwlSubItemCache
   , offsetSEltTree
 ) where
 
@@ -305,7 +306,6 @@ sTextArea_drawer stextarea@STextArea {..} = r where
       , _sEltDrawer_renderFn = \_ -> renderfn
     }
 
-
 getDrawer :: OwlSubItem -> SEltDrawer
 getDrawer = \case
   OwlSubItemNone        -> nilDrawer
@@ -322,9 +322,23 @@ getDrawer = \case
       }
   -}
 
-
 getDrawerFromSEltForTest :: SElt -> SEltDrawer
 getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
+
+
+updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> OwlSubItem
+updateOwlSubItemCache ot x = case x of
+  x@(OwlSubItemLine sline mcache) -> case mcache of
+    -- if there's already a cache, it is up to date by assumption
+    Just cache -> x
+    Nothing -> OwlSubItemLine sline (Just $ sSimpleLineNewRenderFnComputeCache ot sline)
+  _ -> x
+
+
+
+
+
+
 
 -- TODO move modify methods to another file
 

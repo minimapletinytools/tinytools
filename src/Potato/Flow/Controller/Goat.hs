@@ -588,7 +588,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree (owlTree_withCacheResetOnAttachments) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
-  -- TODO this step can update OwlState built-in cache (via rendering)
   -- | update the rendered region if we moved the screen |
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
@@ -603,7 +602,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then moveRenderedCanvasRegion newBox rendercontext_forMove
     else rendercontext_forMove
 
-  -- TODO this step can update OwlState built-in cache (via rendering)
   -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
   rendercontext_afterUpdate = if IM.null cslmap_forRendering
     then rendercontext_forUpdate
@@ -611,7 +609,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext_afterUpdate
 
-  -- TODO this step can update OwlState built-in cache (via rendering)
   -- | render the selection |
   rendercontext_forSelection = rendercontext_afterUpdate {
       -- NOTE this will render hidden stuff that's selected via layers!!
@@ -643,7 +640,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
   -}
 
-  next_pFState = pFState_afterEvent { _owlPFState_owlTree = owlTree_withCacheResetOnAttachments }
+  next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_forSelection }
   next_workspace = workspace_afterEvent { _owlPFWorkspace_pFState = next_pFState}
 
 

@@ -2,7 +2,9 @@
 
 module Potato.Flow.Methods.LineDrawer (
   LineAnchorsForRender(..)
+
   , sSimpleLineNewRenderFn
+  , sSimpleLineNewRenderFnComputeCache
 
 
 
@@ -428,6 +430,7 @@ lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
+
 sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer
 sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
   params = SimpleLineSolverParameters {
@@ -436,33 +439,14 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
       , _simpleLineSolverParameters_attachOffset = 1
     }
 
-  -- inefficient since this gets evaled both for renderfn and boxfn
-  -- TODO figure out a way to do this smarter (either generate render/boxfn at the same time and/or use RenderCache)
   getAnchors :: (HasOwlTree a) => a -> LineAnchorsForRender
-  --getAnchors ot = traceShowId $ anchors where
-  getAnchors ot = anchors where
-    maybeGetBox mattachment = do
-      Attachment rid al <- mattachment
-      sowl <- hasOwlTree_findSuperOwl ot rid
-      sbox <- getSEltBox $ hasOwlItem_toSElt_hack sowl
-      return (sbox, al)
-
-    lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart
-    lbal2 = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
-
-    -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
-    regenanchors = sSimpleLineSolver ("",0) params lbal1 lbal2
-
-    anchors = case mcache of
-      Just x -> x
-      Nothing -> regenanchors
+  getAnchors ot = case mcache of
+    Just x -> x
+    Nothing -> sSimpleLineNewRenderFnComputeCache ot ssline
 
   renderfn :: SEltDrawerRenderFn
   renderfn ot xy = r where
-    -- SUPER INEFFICIENT, gets evaled once for each point :(, you really need to implement the cache
     anchors = getAnchors ot
-
-    -- TODO RETURN ANCHORS HERE
     r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
@@ -477,3 +461,23 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
       _sEltDrawer_box = boxfn
       , _sEltDrawer_renderFn = renderfn
     }
+
+sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
+sSimpleLineNewRenderFnComputeCache ot ssline@SAutoLine {..} = anchors where
+  params = SimpleLineSolverParameters {
+      _simpleLineSolverParameters_offsetBorder = True
+      -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
+      , _simpleLineSolverParameters_attachOffset = 1
+    }
+
+  maybeGetBox mattachment = do
+    Attachment rid al <- mattachment
+    sowl <- hasOwlTree_findSuperOwl ot rid
+    sbox <- getSEltBox $ hasOwlItem_toSElt_hack sowl
+    return (sbox, al)
+
+  lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart
+  lbal2 = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
+
+  -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
+  anchors = sSimpleLineSolver ("",0) params lbal1 lbal2
