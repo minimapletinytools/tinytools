@@ -2,6 +2,8 @@
 
 module Potato.Flow.Methods.LineDrawer (
   LineAnchorsForRender(..)
+  , lineAnchorsForRender_doesIntersectPoint
+  , lineAnchorsForRender_doesIntersectBox
 
   , sSimpleLineNewRenderFn
   , sSimpleLineNewRenderFnComputeCache
@@ -376,7 +378,6 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     then error errormsg
     else lineAnchorsForRender_simplify anchors
 
-
 doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
 doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
   CD_Left | py == sy -> if px <= sx && px >= sx-tl then Just (sx-px) else Nothing
@@ -384,6 +385,17 @@ doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
   CD_Up | px == sx -> if py <= sy && py >= sy-tl then Just (sy-py) else Nothing
   CD_Down | px == sx -> if py >= sy && py <= sy+tl then Just (py-sy) else Nothing
   _ -> Nothing
+
+-- TODO test
+doesLineContainBox :: LBox -> XY -> (CartDir, Int) -> Bool
+doesLineContainBox lbox (V2 sx sy) (tcd, tl) = r where
+  (x,y, w,h) = case tcd of
+    CD_Left -> (sx-tl, sy, tl+1, 1)
+    CD_Right -> (sx, sy, tl+1, 1)
+    CD_Up -> (sx, sy-tl, 1, tl+1)
+    CD_Down -> (sx, sy, 1, tl+1)
+  lbox2 = LBox (V2 x y) (V2 w h)
+  r = does_lBox_intersect lbox lbox2
 
 walkToRender :: SuperStyle -> LineStyle -> Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
 walkToRender ss@SuperStyle {..} ls@LineStyle {..} isstart begin (tcd, tl) mnext d = r where
@@ -429,6 +441,25 @@ lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
   r = case manswer of
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
+
+lineAnchorsForRender_doesIntersectPoint :: LineAnchorsForRender -> XY -> Bool
+lineAnchorsForRender_doesIntersectPoint LineAnchorsForRender {..} pos = r where
+  walk curbegin a = case a of
+    [] -> False
+    x:xs -> case doesLineContain pos curbegin x of
+      Nothing ->  walk (curbegin + cartDirWithDistanceToV2 x) xs
+      Just _ -> True
+  r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
+
+
+lineAnchorsForRender_doesIntersectBox :: LineAnchorsForRender -> LBox -> Bool
+lineAnchorsForRender_doesIntersectBox LineAnchorsForRender {..} lbox = r where
+  walk curbegin a = case a of
+    [] -> False
+    x:xs -> if doesLineContainBox lbox curbegin x
+      then True
+      else walk (curbegin + cartDirWithDistanceToV2 x) xs
+  r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
 
 sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer

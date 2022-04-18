@@ -200,8 +200,10 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       EWCTool Tool_Select
 
       , EWCLabel "select sl1"
-      , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 0 100) True MouseButton_Left [] False)
+      -- this is weird due to AutoLine shenanigans incorrectly converting AL_ANY to AL_RIGHT
+      -- TODO change to (V2 0 100) when fixed
+      , EWCMouse (LMouseData (V2 2 102) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 2 102) True MouseButton_Left [] False)
 
       , EWCLabel "move end of line"
       , EWCMouse (LMouseData (V2 0 110) False MouseButton_Left [] False)
@@ -209,8 +211,8 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       , EWCMouse (LMouseData (V2 0 120) True MouseButton_Left [] False)
 
       , EWCLabel "select sl2"
-      , EWCMouse (LMouseData (V2 2 100) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 2 100) True MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 4 100) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 4 100) True MouseButton_Left [] False)
 
       , EWCLabel "move start of line"
       , EWCMouse (LMouseData (V2 0 100) False MouseButton_Left [] False)

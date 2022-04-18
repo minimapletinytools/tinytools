@@ -249,7 +249,7 @@ instance PotatoHandler AutoLineEndPointHandler where
               _sAutoLine_end       = _mouseDrag_to
               , _sAutoLine_attachEnd = mattachendnontrivial
             }
-        llama = makeSetLlama (rid, SEltLine modifiedline)
+        llama = makeSetLlama $ traceShowId $ (rid, SEltLine modifiedline)
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection

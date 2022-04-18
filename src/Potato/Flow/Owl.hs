@@ -186,6 +186,10 @@ superOwl_parentId SuperOwl {..} = _owlItemMeta_parent _superOwl_meta
 superOwl_depth :: SuperOwl -> Int
 superOwl_depth SuperOwl {..} = _owlItemMeta_depth _superOwl_meta
 
+superOwl_owlSubItem :: SuperOwl -> OwlSubItem
+superOwl_owlSubItem sowl = case _superOwl_elt sowl of
+  OwlItem _ x -> x
+
 
 owlTree_superOwlNthParentId :: OwlTree -> SuperOwl -> Int -> REltId
 owlTree_superOwlNthParentId _ sowl 0 = _superOwl_id sowl

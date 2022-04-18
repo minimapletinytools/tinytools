@@ -378,9 +378,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                 }
               r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
 
-
-
-            -- TODO pass input on to SelectHandler instead
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of

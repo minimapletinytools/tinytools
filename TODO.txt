@@ -47,6 +47,8 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+-when drag selecting, box should auto resize to +1 so you don't have invisible drag box
+-BUG doing a box select just to the left/top of a box will select it when it shouldn't
 -add test to make sure cache is actually being used
 -BUG
            ╔══════════╗
@@ -61,6 +63,7 @@ WIDE
           ╚═════╝
 -AL_ANY needs to be a single point and not a box with 4 sides...
   -i think this is fixed if you set attachOffset to 0...
+  -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
 -I think you need some kind of cache monad
 -LINE LABELS :O
 -attachment stuff

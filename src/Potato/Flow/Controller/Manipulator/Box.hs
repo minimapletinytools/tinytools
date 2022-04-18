@@ -36,6 +36,8 @@ import qualified Data.Map as Map
 import qualified Data.List                                  as L
 import qualified Data.Sequence as Seq
 
+import Control.Exception (assert)
+
 -- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
 data MouseManipulator = MouseManipulator {
@@ -64,6 +66,8 @@ findFirstMouseManipulator :: RelMouseDrag -> CanvasSelection -> Maybe Manipulato
 findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
   mms = toMouseManipulators selection
   smt = computeSelectionType selection
+
+  -- TODO use select magic here
   normalSel = L.findIndex (\mm -> does_lBox_contains_XY (_mouseManipulator_box mm) _mouseDrag_from) mms
   r = case smt of
     SMTTextArea -> normalSel -- TODO figure out how to differentiate between area / text manipulator
@@ -206,6 +210,14 @@ instance PotatoHandler BoxHandler where
     -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
     -- TODO consider moving this into GoatWidget since it's needed by many manipulators
     MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
+    -- in DragSelect case we already have a selection
+    MouseDragState_Down | _boxHandler_creation == BoxCreationType_DragSelect  -> assert (not . isParliament_null $ _potatoHandlerInput_selection) r where
+        newbh = bh {
+            -- drag select case is always BH_A 
+            _boxHandler_handle = BH_A
+            , _boxHandler_active = True
+          }
+        r = Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh }
     MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
       Nothing -> Nothing
 

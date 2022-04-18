@@ -64,12 +64,12 @@ selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
   unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid) unculledrids
   selectedsowls'' = flip filter unculledsowls $ \case
-    -- if it's box shaped, there's no need to test doesSEltIntersectBox as we already know it intersects
+    -- if it's box shaped, there's no need to test for intersection as we already know it intersects based on broadphase
     sowl | isboxshaped sowl -> True
 
     -- TODO you need to pass / return render cache here
-    -- TODO rewrite doesSEltIntersectBox so it works with attachments
-    sowl -> doesSEltIntersectBox selectBox (hasOwlItem_toSElt_hack sowl)
+    sowl -> doesOwlSubItemIntersectBox (_owlPFState_owlTree pfs) selectBox (superOwl_owlSubItem sowl)
+
 
   -- remove lock and hidden stuff
   selectedsowls' = flip filter selectedsowls'' $ \sowl -> not (layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) lmm)

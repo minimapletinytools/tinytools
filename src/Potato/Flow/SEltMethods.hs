@@ -9,8 +9,9 @@ module Potato.Flow.SEltMethods (
   , getSEltLabelBoxTextStyle
   , getSEltBoxType
   , getSEltLabelBoxType
-  , doesSEltIntersectBox
+  , doesSEltIntersectBox_DEPRECATED
   , doesSEltIntersectPoint
+  , doesOwlSubItemIntersectBox
   , updateFnFromController
   , getDrawer
   , getDrawerFromSEltForTest
@@ -71,8 +72,9 @@ subWidth t = join . fmap fn . T.unpack $ t where
     2 -> [Just c, Nothing]
     n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
 
-doesSEltIntersectBox :: LBox -> SElt -> Bool
-doesSEltIntersectBox lbox selt = case selt of
+-- TODO DELETE use doesOwlSubItemIntersectBox instead
+doesSEltIntersectBox_DEPRECATED :: LBox -> SElt -> Bool
+doesSEltIntersectBox_DEPRECATED lbox selt = case selt of
   SEltNone                     -> False
   SEltFolderStart              -> False
   SEltFolderEnd                -> False
@@ -83,7 +85,19 @@ doesSEltIntersectBox lbox selt = case selt of
   SEltLine sline@SAutoLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool
-doesSEltIntersectPoint pos selt = doesSEltIntersectBox (LBox pos (V2 1 1)) selt
+doesSEltIntersectPoint pos selt = doesSEltIntersectBox_DEPRECATED (LBox pos (V2 1 1)) selt
+
+doesOwlSubItemIntersectBox :: OwlTree -> LBox -> OwlSubItem -> Bool
+doesOwlSubItemIntersectBox ot lbox osubitem = case osubitem of
+  OwlSubItemBox x -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
+  OwlSubItemTextArea x -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
+  OwlSubItemLine sline@SAutoLine {..} manchors -> r where
+    anchors = case manchors of
+      Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
+      Just x -> x
+    r = lineAnchorsForRender_doesIntersectBox anchors lbox
+  _ -> False
+
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
