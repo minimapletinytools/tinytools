@@ -2,7 +2,6 @@
 
 module Potato.Flow.Controller.Manipulator.Select (
   SelectHandler(..)
-  , selectMagic
   , layerMetaMap_isInheritHiddenOrLocked
   , layerMetaMap_isInheritHidden
 ) where
@@ -45,14 +44,17 @@ layerMetaMap_isInheritHidden ot rid lmm = case IM.lookup rid lmm of
     Nothing -> False
     Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlItemMeta_parent oem) lmm
 
+selectBoxFromRelMouseDrag :: RelMouseDrag -> LBox
+selectBoxFromRelMouseDrag (RelMouseDrag MouseDrag {..}) = r where
+  LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
+  -- always expand selection by 1
+  r = LBox pos' (sz' + V2 1 1)
 
 -- TODO ignore locked and hidden elements here
 -- for now hidden + locked elements ARE inctluded in BroadPhaseState
 selectMagic :: OwlPFState -> LayerMetaMap -> BroadPhaseState -> RelMouseDrag -> Selection
-selectMagic pfs lmm bps (RelMouseDrag MouseDrag {..}) = r where
-  LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
-  -- always expand selection by 1
-  selectBox = LBox pos' (sz' + V2 1 1)
+selectMagic pfs lmm bps rmd = r where
+  selectBox = selectBoxFromRelMouseDrag rmd
   boxSize = lBox_area selectBox
   singleClick = boxSize == 1
 
@@ -118,7 +120,7 @@ instance PotatoHandler SelectHandler where
 
 
     MouseDragState_Dragging -> setHandlerOnly sh {
-        _selectHandler_selectArea = make_lBox_from_XYs _mouseDrag_from _mouseDrag_to
+        _selectHandler_selectArea = selectBoxFromRelMouseDrag rmd
       }
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)

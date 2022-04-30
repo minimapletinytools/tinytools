@@ -47,8 +47,8 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
--when drag selecting, box should auto resize to +1 so you don't have invisible drag box
--BUG doing a box select just to the left/top of a box will select it when it shouldn't
+FIXED?-BUG doing a box select just to the left/top of a box will select it when it shouldn't
+-BUG attach lines sometimes don't render (this is a broadphase box-to-rerender issue probbably)
 -add test to make sure cache is actually being used
 -BUG
            ╔══════════╗
@@ -64,7 +64,6 @@ WIDE
 -AL_ANY needs to be a single point and not a box with 4 sides...
   -i think this is fixed if you set attachOffset to 0...
   -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
--I think you need some kind of cache monad
 -LINE LABELS :O
 -attachment stuff
   -need to support ANY attach style for unattached ends etc
@@ -82,7 +81,6 @@ WIDE
   DONE-lines can't be attached on first drag
   DONE?-BUG drag off attachment logic is wrong for Line handler
     DONE-just do the controller refactor!! D:
-DONE-need another area for tool options
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of PotatoDefaultParameters
 -preset interface for choosing line ends
@@ -169,6 +167,9 @@ DONE-need another area for tool options
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-when drag selecting, box should auto resize to +1 so you don't have invisible drag box
+IGNORE-I think you need some kind of cache monad
+DONE-need another area for tool options
 DONE-BUG
        ╔══╔═╗╗
        v  ║@║║
