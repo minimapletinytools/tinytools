@@ -49,15 +49,15 @@ getAvailableAttachments offsetBorder pfs bps screenRegion = r where
   r = join $ fmap fmapfn sowls
 
 -- TODO move me elsewhere
-getAttachmentPosition :: Bool -> OwlPFState -> Attachment -> XY
-getAttachmentPosition offsetBorder pfs a = r where
-  target = hasOwlTree_mustFindSuperOwl pfs (_attachment_target a)
-  r = case hasOwlItem_owlItem target of
+maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
+maybeGetAttachmentPosition offsetBorder pfs a = do
+  target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
+  return $ case hasOwlItem_owlItem target of
     OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
     _ -> error "expecteed OwlSubItemBox"
 
 maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
-maybeLookupAttachment matt offsetBorder pfs = getAttachmentPosition offsetBorder pfs <$> matt
+maybeLookupAttachment matt offsetBorder pfs = maybeGetAttachmentPosition offsetBorder pfs =<< matt
 
 renderAttachments :: PotatoHandlerInput -> (Maybe Attachment, Maybe Attachment) -> [RenderHandle]
 renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
@@ -233,8 +233,8 @@ instance PotatoHandler AutoLineEndPointHandler where
 
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineEndPointHandler_isStart
-          then Just _mouseDrag_to /= (getAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState <$> sslineend)
-          else Just _mouseDrag_from /= (getAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState <$> sslinestart)
+          then Just _mouseDrag_to /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslineend)
+          else Just _mouseDrag_from /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslinestart)
         mattachendnontrivial = if nontrivialline
           then mattachend
           else Nothing
