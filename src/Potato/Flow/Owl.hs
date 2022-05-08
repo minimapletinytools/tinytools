@@ -118,7 +118,7 @@ instance HasOwlItem SuperOwl where
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
--- internal helper function
+-- updates AttachmeentMap with a list of SuperOwls (that may be attached to stuff)
 attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls sowls am = r where
   foldrfn sowl m = newmap where
@@ -138,11 +138,11 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   -- remove deleted stuff from keys
   newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
 
-  -- remove changed keys from all value sets (this could be done more efficiently if we know the previous things they were attached to, but oh well)
+  -- remove changed elems from all value sets (this could be done more efficiently if we know the previous things they were attached to, but oh well)
   setToRemove = IM.keysSet changes
   newam_2 = fmap (\s -> IS.difference s setToRemove) newam_1
 
-  -- add targets of changes to value sets
+  -- add attachment targets of changed elems to value sets of those targets
   justChanges = catMaybes . IM.elems $ changes
   newam_3 = attachmentMap_addSuperOwls justChanges newam_2
 
