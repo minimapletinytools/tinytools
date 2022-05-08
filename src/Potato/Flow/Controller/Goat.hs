@@ -39,6 +39,7 @@ import Potato.Flow.Llama
 import           Control.Exception                         (assert)
 import           Data.Default
 import qualified Data.IntMap                               as IM
+import qualified Data.IntSet as IS
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
 
@@ -575,7 +576,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
   -- | update AttachmentMap based on new state and clear the cache on these changes |
   next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
-  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) next_attachmentMap cslmap_afterEvent
+  -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
+  attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap _goatState_attachmentMap
+  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   owlTree_withCacheResetOnAttachments = owlTree_clearCacheAtKeys (_owlPFState_owlTree pFState_afterEvent) (IM.keys attachmentChanges)
 
   -- | compute SuperOwlChanges for rendering |
