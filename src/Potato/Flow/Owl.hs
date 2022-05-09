@@ -132,8 +132,8 @@ attachmentMap_addSuperOwls sowls am = r where
 
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
-updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
-updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
+updateAttachmentMapFromSuperOwlChanges :: OwlTree -> IS.IntSet -> SuperOwlChanges -> AttachmentMap -> AttachmentMap
+updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = newam_4 where
 
   -- remove deleted stuff from keys
   newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
@@ -146,6 +146,16 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_3 where
   justChanges = catMaybes . IM.elems $ changes
   newam_3 = attachmentMap_addSuperOwls justChanges newam_2
 
+  -- needing to iterate through everything when there are newly created elts is kind of unfortunate :(. Especially when this is only meeaningful in undo cases. probably not worth trying to optimize away. I guess we could keep deleted elts around in AttachmentMap for some time?
+  sowls = owliterateall ot
+  foldrfn sowl m = newmap where
+    attachedstuff = filter (\x -> IS.member (_attachment_target x) newstuff) (hasOwlItem_attachments sowl)
+    alterfn stuff ms = Just $ case ms of
+      Nothing -> (IS.singleton stuff)
+      Just s -> IS.insert stuff s
+    innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
+    newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
+  newam_4 = if IS.null newstuff then newam_3 else foldr foldrfn newam_3 sowls
 
 -- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
 getChangesFromAttachmentMap :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges

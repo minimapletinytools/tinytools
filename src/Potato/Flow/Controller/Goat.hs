@@ -515,6 +515,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       newEltFoldMapFn rid v = case v of
         Nothing     -> []
         Just sowl -> if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
+
+      -- NOTE, undoing a deleted element counts as a newly created element (and will be auto-selected)
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap_afterEvent
 
       wasLoad = case cmd of
@@ -532,6 +534,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             -- it was changed, update selection to newest version
             Just (Just x) -> Just x
         else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
+
+  -- for now, newly created stuff is the same as anything that got auto selected
+  newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
 
   -- | update the new selection based on previous computations|
   (isNewSelection, next_selection) = case mSelectionFromPho of
@@ -575,9 +580,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   --_goatState_layersHandler
 
   -- | update AttachmentMap based on new state and clear the cache on these changes |
-  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
+  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges (_owlPFState_owlTree pFState_afterEvent) newlyCreatedRids cslmap_afterEvent _goatState_attachmentMap
   -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
   attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap _goatState_attachmentMap
+  --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   owlTree_withCacheResetOnAttachments = owlTree_clearCacheAtKeys (_owlPFState_owlTree pFState_afterEvent) (IM.keys attachmentChanges)
 
