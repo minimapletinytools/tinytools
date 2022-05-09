@@ -119,16 +119,20 @@ instance HasOwlItem SuperOwl where
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
 -- updates AttachmeentMap with a list of SuperOwls (that may be attached to stuff)
-attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
-attachmentMap_addSuperOwls sowls am = r where
+attachmentMap_addSuperOwls' :: (Foldable f) => (Attachment -> Bool) -> f SuperOwl -> AttachmentMap -> AttachmentMap
+attachmentMap_addSuperOwls' filterfn sowls am = r where
   foldrfn sowl m = newmap where
-    attachedstuff = hasOwlItem_attachments sowl
+    --find all targets we are attached to
+    attachedstuff = filter filterfn (hasOwlItem_attachments sowl)
     alterfn stuff ms = Just $ case ms of
       Nothing -> (IS.singleton stuff)
       Just s -> IS.insert stuff s
     innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
     newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
   r = foldr foldrfn am sowls
+
+attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
+attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
@@ -148,14 +152,7 @@ updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = newam_4 where
 
   -- needing to iterate through everything when there are newly created elts is kind of unfortunate :(. Especially when this is only meeaningful in undo cases. probably not worth trying to optimize away. I guess we could keep deleted elts around in AttachmentMap for some time?
   sowls = owliterateall ot
-  foldrfn sowl m = newmap where
-    attachedstuff = filter (\x -> IS.member (_attachment_target x) newstuff) (hasOwlItem_attachments sowl)
-    alterfn stuff ms = Just $ case ms of
-      Nothing -> (IS.singleton stuff)
-      Just s -> IS.insert stuff s
-    innerfoldrfn target m' = IM.alter (alterfn (_superOwl_id sowl)) target m'
-    newmap = foldr innerfoldrfn m (fmap _attachment_target attachedstuff)
-  newam_4 = if IS.null newstuff then newam_3 else foldr foldrfn newam_3 sowls
+  newam_4 = if IS.null newstuff then newam_3 else attachmentMap_addSuperOwls' (\x -> IS.member (_attachment_target x) newstuff) sowls newam_3
 
 -- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
 getChangesFromAttachmentMap :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
