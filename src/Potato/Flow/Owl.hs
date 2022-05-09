@@ -137,22 +137,26 @@ attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: OwlTree -> IS.IntSet -> SuperOwlChanges -> AttachmentMap -> AttachmentMap
-updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = newam_4 where
+updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = traceShow changes $ newam_4 where
 
   -- remove deleted stuff from keys
-  newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
+  --newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
+  -- actually don't bother
+  newam_1 = am
 
   -- remove changed elems from all value sets (this could be done more efficiently if we know the previous things they were attached to, but oh well)
   setToRemove = IM.keysSet changes
-  newam_2 = fmap (\s -> IS.difference s setToRemove) newam_1
+  newam_2 = IM.filter (not . IS.null) $ fmap (\s -> IS.difference s setToRemove) newam_1
 
   -- add attachment targets of changed elems to value sets of those targets
   justChanges = catMaybes . IM.elems $ changes
   newam_3 = attachmentMap_addSuperOwls justChanges newam_2
 
   -- needing to iterate through everything when there are newly created elts is kind of unfortunate :(. Especially when this is only meeaningful in undo cases. probably not worth trying to optimize away. I guess we could keep deleted elts around in AttachmentMap for some time?
-  sowls = owliterateall ot
-  newam_4 = if IS.null newstuff then newam_3 else attachmentMap_addSuperOwls' (\x -> IS.member (_attachment_target x) newstuff) sowls newam_3
+  --sowls = owliterateall ot
+  --newam_4 = if IS.null newstuff then newam_3 else attachmentMap_addSuperOwls' (\x -> IS.member (_attachment_target x) newstuff) sowls newam_3
+  -- similarly, since we skip computing newam_1, we can skip computing newam_4
+  newam_4 = newam_3
 
 -- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
 getChangesFromAttachmentMap :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
@@ -685,6 +689,7 @@ owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
     r = fromMaybe (-1) $ Seq.findIndexL (\sowl -> _superOwl_id sowl == rid) sowls
 
 -- |
+-- NOTE this will return an AttachmentMap containing targets that have since been deleted
 owlTree_makeAttachmentMap :: OwlTree -> AttachmentMap
 owlTree_makeAttachmentMap od = attachmentMap_addSuperOwls (owliterateall od) IM.empty
 
@@ -984,7 +989,7 @@ internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = assert nochild
           Just leftsibrid -> case Seq.elemIndexL leftsibrid kiddos of
             Nothing -> error $ "expected to find leftmost sibling " <> show leftsibrid <> " in " <> show kiddos
             Just x -> x + 1
-    adjustfn (oem, oitem) = case oitem of
+    adjustfn (oem, oitem') = case oitem' of
       OwlItem oinfo (OwlSubItemFolder kiddos) -> (oem, OwlItem oinfo (OwlSubItemFolder (modifyKiddos kiddos)))
       _ -> error $ "expected OwlItemFolder"
     newMapping = case _owlSpot_parent of

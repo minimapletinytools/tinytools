@@ -52,6 +52,9 @@ DONE-after DELETING object line is attached to, line does not get rerendered
   -prob makes most sense to scan for all objects
     -this might have some weird edge cases in multi user mode but whatever?
   -prob better scan for all attached stuff in PFWorkspace then
+  -was I suppose to put the attachment map inside of the workspace D:
+DONE-add a regenerateAttachmentMap and verifyAttachmentMap UT
+  FIXED-it's crashing :(
 FIXED?-BUG doing a box select just to the left/top of a box will select it when it shouldn't
 -BUG attach lines sometimes don't render (this is a broadphase box-to-rerender issue probbably)
 -tests to write

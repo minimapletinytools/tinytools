@@ -63,7 +63,7 @@ data GoatState = GoatState {
     , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
     , _goatState_handler         :: SomePotatoHandler
     , _goatState_layersHandler   :: SomePotatoHandler
-    , _goatState_attachmentMap   :: AttachmentMap
+    , _goatState_attachmentMap   :: AttachmentMap -- map of targets to things attached to it. This is a cache that gets updated over time and can be regenerated from the current OwlTree
 
     -- shared across documents
     -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
@@ -649,16 +649,21 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_forSelection }
   next_workspace = workspace_afterEvent { _owlPFWorkspace_pFState = next_pFState}
 
+  checkAttachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState) == next_attachmentMap
 
-  finalGoatState = (_goatCmdTempOutput_goatState goatCmdTempOutput) {
-      _goatState_workspace      = next_workspace
-      , _goatState_pan             = next_pan
-      , _goatState_handler         = next_handler
-      , _goatState_selection       = next_selection
-      , _goatState_canvasSelection = next_canvasSelection
-      , _goatState_broadPhaseState = next_broadPhaseState
-      , _goatState_renderedCanvas = next_renderedCanvas
-      , _goatState_renderedSelection = next_renderedSelection
-      , _goatState_layersState     = next_layersState
-      , _goatState_attachmentMap = next_attachmentMap
-    }
+  -- TODO remove assert in production builds
+  finalGoatState = if not checkAttachmentMap
+    then error $ (show (owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState))) <> "\n\n\n" <> show next_attachmentMap
+    else
+      (_goatCmdTempOutput_goatState goatCmdTempOutput) {
+        _goatState_workspace      = next_workspace
+        , _goatState_pan             = next_pan
+        , _goatState_handler         = next_handler
+        , _goatState_selection       = next_selection
+        , _goatState_canvasSelection = next_canvasSelection
+        , _goatState_broadPhaseState = next_broadPhaseState
+        , _goatState_renderedCanvas = next_renderedCanvas
+        , _goatState_renderedSelection = next_renderedSelection
+        , _goatState_layersState     = next_layersState
+        , _goatState_attachmentMap = next_attachmentMap
+      }
