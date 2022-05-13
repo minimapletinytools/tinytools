@@ -232,6 +232,17 @@ forceResetBothHandlersAndMakeGoatCmdTempOutput goatState = r where
       , _goatCmdTempOutput_nextHandler = msph_h
     }
 
+makeHandlerFromNewTool :: Tool -> SomePotatoHandler
+makeHandlerFromNewTool = \case
+  Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
+  Tool_Line   -> SomePotatoHandler $ def { _autoLineHandler_isCreation = True }
+  Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
+  Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
+  Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
+  Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }
+  Tool_Pan           -> SomePotatoHandler $ (def :: PanHandler)
+
+
 -- TODO rename to makeHandlerFromCanvasSelection
 makeHandlerFromSelection :: CanvasSelection -> SomePotatoHandler
 makeHandlerFromSelection selection = case computeSelectionType selection of
@@ -316,15 +327,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
 
       GoatCmdTool x -> r where
-        someNewHandler = case x of
-          Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
-          Tool_Line   -> SomePotatoHandler $ def { _autoLineHandler_isCreation = True }
-          Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
-          Tool_Select -> SomePotatoHandler $ (def :: SelectHandler)
-          Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
-          Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }
-          Tool_Pan           -> SomePotatoHandler $ (def :: PanHandler)
-
+        someNewHandler = makeHandlerFromNewTool x
         -- TODO do we need to cancel the old handler?
         r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_selectedTool = x, _goatState_handler = someNewHandler })
 
@@ -431,6 +434,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
                 KeyboardData (KeyboardKey_Delete) [] -> r where
                   r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
+                KeyboardData (KeyboardKey_Backspace) [] -> r where
+                  r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
+
                 KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
                   copied = makeClipboard goatState
                   r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
@@ -468,8 +474,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                     't'  -> Tool_Text
                     'n'  -> Tool_TextArea
                     _    -> _goatState_selectedTool
-                  -- TODO consider clearing/resetting the handler?
-                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool }
+                  newHandler = makeHandlerFromNewTool newTool
+                  -- TODO need to create handler for the tool
+                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool, _goatState_handler = newHandler }
 
                 -- unhandled input
                 _ -> makeGoatCmdTempOutputFromNothing goatState

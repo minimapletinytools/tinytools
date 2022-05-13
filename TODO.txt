@@ -47,6 +47,8 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+DONE-BUG keyboard hotkey to change tools visually changes tool-s but you are still in select mode...
+DONE-backspace should delete too
 DONE-after DELETING object line is attached to, line does not get rerendered
 -after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
   -prob makes most sense to scan for all objects
