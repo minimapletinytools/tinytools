@@ -49,22 +49,20 @@ data MouseManipulator = MouseManipulator {
 type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
-toMouseManipulators :: CanvasSelection -> MouseManipulatorSet
-toMouseManipulators (CanvasSelection selection) = bb where
+toMouseManipulators :: OwlPFState -> CanvasSelection -> MouseManipulatorSet
+toMouseManipulators pfs (CanvasSelection selection) = bb where
   union_lBoxes :: NonEmpty LBox -> LBox
   union_lBoxes (x:|xs) = foldl' union_lBox x xs
-  fmapfn sowl = do
-    box <- getSEltBox_naive . _sEltLabel_sElt $ superOwl_toSEltLabel_hack sowl
-    return box
-  msboxes = fmap fmapfn selection
-  sboxes = catMaybes (toList msboxes)
+  fmapfn sowl = _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs
+  -- consider filtering out boxes with 0 area, but really _sEltDrawer_box should have return type Maybe LBox
+  sboxes = toList $ fmap fmapfn selection
   bb = case sboxes of
     []   -> []
     x:xs -> fmap (flip makeHandleBox (union_lBoxes (x:|xs))) [BH_TL .. BH_A]
 
-findFirstMouseManipulator :: RelMouseDrag -> CanvasSelection -> Maybe ManipulatorIndex
-findFirstMouseManipulator (RelMouseDrag MouseDrag {..}) selection = r where
-  mms = toMouseManipulators selection
+findFirstMouseManipulator :: OwlPFState -> RelMouseDrag -> CanvasSelection -> Maybe ManipulatorIndex
+findFirstMouseManipulator pfs (RelMouseDrag MouseDrag {..}) selection = r where
+  mms = toMouseManipulators pfs selection
   smt = computeSelectionType selection
 
   -- TODO use select magic here
@@ -218,7 +216,7 @@ instance PotatoHandler BoxHandler where
             , _boxHandler_active = True
           }
         r = Just def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh }
-    MouseDragState_Down -> case findFirstMouseManipulator rmd _potatoHandlerInput_canvasSelection of
+    MouseDragState_Down -> case findFirstMouseManipulator _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection of
       Nothing -> Nothing
 
 
@@ -351,7 +349,7 @@ instance PotatoHandler BoxHandler where
             }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
-    handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_canvasSelection
+    handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_pFState _potatoHandlerInput_canvasSelection
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
     r = HandlerRenderOutput (fmap defaultRenderHandle handlePoints)

@@ -49,7 +49,7 @@ WIDE
 ::NEWEST TODO::
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
-  -select box boundary uses origin line endpoints rather than attached points
+  DONE-select box boundary uses origin line endpoints rather than attached points
 -when overflowing in boxlabel it will go to next line when it should keep going to the right (and still be invisible)
   -need to set box width to infinite
 -BUG attached lines don't render when you drag in some directions

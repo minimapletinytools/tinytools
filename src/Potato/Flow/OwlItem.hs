@@ -61,7 +61,8 @@ class HasOwlItem o where
   hasOwlItem_toSElt_hack = hasOwlItem_toSElt_hack . hasOwlItem_owlItem
   hasOwlItem_toSEltLabel_hack :: o -> SEltLabel
   hasOwlItem_toSEltLabel_hack = hasOwlItem_toSEltLabel_hack . hasOwlItem_owlItem
-
+  hasOwlItem_toOwlSubItem :: o -> OwlSubItem
+  hasOwlItem_toOwlSubItem = _owlItem_subItem . hasOwlItem_owlItem
 
 
 owlItem_name :: OwlItem -> Text

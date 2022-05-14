@@ -39,6 +39,7 @@ data SEltDrawer = SEltDrawer {
 
 nilDrawer :: SEltDrawer
 nilDrawer = SEltDrawer {
+    -- maybe retun type of _sEltDrawer_box should be Maybe LBox?
     _sEltDrawer_box = const nilLBox
     , _sEltDrawer_renderFn = \_ _ -> Nothing
   }
