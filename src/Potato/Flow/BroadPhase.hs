@@ -46,12 +46,12 @@ emptyBPTree = BPTree IM.empty
 -- TODO
 --bPTreeFromPFState :: PFState -> BPTree
 --bPTreeFromPFState PFState {..} = r where
---  potato_tree = IM.mapMaybe (getSEltBox . _sEltLabel_sElt) _pFState_directory
+--  potato_tree = IM.mapMaybe (getSEltBox_naive . _sEltLabel_sElt) _pFState_directory
 --  r = BPTree potato_tree
 
 bPTreeFromOwlPFState :: OwlPFState -> BPTree
 bPTreeFromOwlPFState OwlPFState {..} = r where
-  potato_tree = IM.mapMaybe (\(_,oelt) -> getSEltBox . owlItem_toSElt_hack $ oelt) (_owlTree_mapping _owlPFState_owlTree)
+  potato_tree = IM.mapMaybe (\(_,oelt) -> getSEltBox_naive . owlItem_toSElt_hack $ oelt) (_owlTree_mapping _owlPFState_owlTree)
   r = BPTree potato_tree
 
 data BroadPhaseState = BroadPhaseState {
@@ -83,8 +83,8 @@ update_bPTree ot changes BPTree {..} = r where
     (\(insmods',deletes') (rid, msowl) -> case msowl of
       Nothing    -> (insmods', rid:deletes')
 
-      -- TODO don't use getSEltBox like this come on -__-
-      Just sowl -> case getSEltBox (superOwl_toSElt_hack sowl) of
+      -- TODO don't use getSEltBox_naive like this come on -__-
+      Just sowl -> case getSEltBox_naive (superOwl_toSElt_hack sowl) of
         Nothing   -> (insmods', rid:deletes')
         Just _ -> ((rid,_sEltDrawer_box (getDrawer (_owlItem_subItem $ _superOwl_elt sowl)) ot):insmods', deletes'))
 
@@ -96,7 +96,7 @@ update_bPTree ot changes BPTree {..} = r where
 
 -- TODO prob don't need this, DELETE
 --update_bPTree' ::  (REltId, Maybe SEltLabel) -> BPTree -> BPTree
---update_bPTree' (rid, ms) BPTree {..} = BPTree $ IM.alter (const (ms >>= getSEltBox . _sEltLabel_sElt)) rid _bPTree_potato_tree
+--update_bPTree' (rid, ms) BPTree {..} = BPTree $ IM.alter (const (ms >>= getSEltBox_naive . _sEltLabel_sElt)) rid _bPTree_potato_tree
 
 -- | returns list of REltIds that intersect with given AABB
 broadPhase_cull :: AABB -> BPTree -> [REltId]

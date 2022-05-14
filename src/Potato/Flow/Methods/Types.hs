@@ -60,10 +60,11 @@ data CachedAreaDrawer = CachedAreaDrawer {
 
 
 
+-- TODO DEPRECATE doesn't account for attached stuff
 -- TODO rename to getSEltBoundingBox or something
 -- | gets an 'LBox' that contains the entire RElt
-getSEltBox :: SElt -> Maybe LBox
-getSEltBox selt = case selt of
+getSEltBox_naive :: SElt -> Maybe LBox
+getSEltBox_naive selt = case selt of
   SEltNone        -> Nothing
   SEltFolderStart -> Nothing
   SEltFolderEnd   -> Nothing
@@ -75,4 +76,4 @@ getSEltBox selt = case selt of
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
 getSEltLabelBox :: SEltLabel -> Maybe LBox
-getSEltLabelBox (SEltLabel _ x) = getSEltBox x
+getSEltLabelBox (SEltLabel _ x) = getSEltBox_naive x

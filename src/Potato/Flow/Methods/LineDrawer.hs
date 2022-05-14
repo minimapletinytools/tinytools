@@ -504,7 +504,7 @@ sSimpleLineNewRenderFnComputeCache ot ssline@SAutoLine {..} = anchors where
   maybeGetBox mattachment = do
     Attachment rid al <- mattachment
     sowl <- hasOwlTree_findSuperOwl ot rid
-    sbox <- getSEltBox $ hasOwlItem_toSElt_hack sowl
+    sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
     return (sbox, al)
 
   lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart

@@ -249,7 +249,7 @@ pfc_manipulate_to_manipulate pfs cwid = r where
     (CTagBoundingBox :=> Identity x) -> newbb where
       db' = _cBoundingBox_deltaBox x
       sowl = owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid
-      msbox = getSEltBox $ superOwl_toSElt_hack sowl
+      msbox = getSEltBox_naive $ superOwl_toSElt_hack sowl
       db = case msbox of
         Nothing -> db'
         Just sbox -> clampNoNegDeltaLBoxTransformation sbox db'

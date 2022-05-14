@@ -54,7 +54,7 @@ toMouseManipulators (CanvasSelection selection) = bb where
   union_lBoxes :: NonEmpty LBox -> LBox
   union_lBoxes (x:|xs) = foldl' union_lBox x xs
   fmapfn sowl = do
-    box <- getSEltBox . _sEltLabel_sElt $ superOwl_toSEltLabel_hack sowl
+    box <- getSEltBox_naive . _sEltLabel_sElt $ superOwl_toSEltLabel_hack sowl
     return box
   msboxes = fmap fmapfn selection
   sboxes = catMaybes (toList msboxes)
@@ -213,7 +213,7 @@ instance PotatoHandler BoxHandler where
     -- in DragSelect case we already have a selection
     MouseDragState_Down | _boxHandler_creation == BoxCreationType_DragSelect  -> assert (not . isParliament_null $ _potatoHandlerInput_selection) r where
         newbh = bh {
-            -- drag select case is always BH_A 
+            -- drag select case is always BH_A
             _boxHandler_handle = BH_A
             , _boxHandler_active = True
           }

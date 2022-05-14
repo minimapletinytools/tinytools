@@ -699,7 +699,7 @@ badTestVisibility name cansee = FunctionPredicate f where
     msowl = hasOwlTree_test_findFirstSuperOwlByName pfs name
     wasrendered = case msowl of
       Nothing -> False
-      Just sowl -> case getSEltBox (hasOwlItem_toSElt_hack sowl) of
+      Just sowl -> case getSEltBox_naive (hasOwlItem_toSElt_hack sowl) of
         Nothing -> False
         Just box -> wasrendered' where
           wasrendered' = testForChar_internal rc (_lBox_tl box)

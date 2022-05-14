@@ -82,7 +82,7 @@ doesSEltIntersectBox_DEPRECATED lbox selt = case selt of
   SEltTextArea x                   -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
   -- we use does_lBox_intersect since it's impossible for a SAutoLine to have zero sized box
-  SEltLine sline@SAutoLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox (SEltLine sline))
+  SEltLine sline@SAutoLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox_naive (SEltLine sline))
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool
 doesSEltIntersectPoint pos selt = doesSEltIntersectBox_DEPRECATED (LBox pos (V2 1 1)) selt
@@ -219,7 +219,7 @@ sBox_drawer sbox@SBox {..} = r where
 sSimpleLine_drawer :: SAutoLine -> SEltDrawer
 sSimpleLine_drawer sline@SAutoLine {..} = r where
 
-  lbox@(LBox (V2 x y) (V2 w h)) = fromJust $ getSEltBox (SEltLine sline)
+  lbox@(LBox (V2 x y) (V2 w h)) = fromJust $ getSEltBox_naive (SEltLine sline)
   xsplit = x + w `div` 2
   ysplit = y + h `div` 2
   V2 startx starty = _sAutoLine_start
@@ -331,8 +331,8 @@ getDrawer = \case
   {-
   where
     potatoDrawer = SEltDrawer {
-        _sEltDrawer_box = const $ fromJust (getSEltBox selt)
-        , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox selt)
+        _sEltDrawer_box = const $ fromJust (getSEltBox_naive selt)
+        , _sEltDrawer_renderFn =  makePotatoRenderer $ fromJust (getSEltBox_naive selt)
       }
   -}
 
