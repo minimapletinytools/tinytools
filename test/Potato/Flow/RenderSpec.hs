@@ -29,6 +29,9 @@ makeRenderContextForTest a bps rc = RenderContext {
 potatoRenderWithSEltAndEmptyOwlTreeForTest :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRenderWithSEltAndEmptyOwlTreeForTest selts rcr = potatoRenderWithOwlTree emptyOwlTree (fmap sElt_to_owlSubItem selts) rcr
 
+testsstyle :: SuperStyle
+testsstyle = def { _superStyle_fill = FillStyle_Simple '@' }
+
 spec :: Spec
 spec = do
   describe "Canvas" $ do
@@ -44,6 +47,7 @@ spec = do
         selts = flip map [1..n] $ \i ->
           SEltBox $ def {
               _sBox_box    = LBox (V2 (i*2) 0) (V2 2 2)
+              , _sBox_style = testsstyle
             }
         canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest selts canvas1
         canvas2Text = renderedCanvasToText canvas2
@@ -54,6 +58,7 @@ spec = do
         canvas1 = testCanvas 0 0 20 20
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 10 10) (V2 (-10) (-10))
+            , _sBox_style = testsstyle
           }
         canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         canvas2Text = renderedCanvasToText canvas2
@@ -68,6 +73,7 @@ spec = do
           }
         selt = SEltBox $ def {
             _sBox_box    = fillBox
+            , _sBox_style = testsstyle
           }
         canvas2 = _renderContext_renderedCanvasRegion $ render renderBox [sElt_to_owlSubItem selt] rendercontext1
         canvas2Text = renderedCanvasToText canvas2
@@ -81,6 +87,7 @@ spec = do
         canvas1 = testCanvas 0 0 100 100
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
+            , _sBox_style = testsstyle
           }
         canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         target = LBox (V2 (-50) (-50)) (V2 100 100)
@@ -93,6 +100,7 @@ spec = do
         -- fill the whole canvas and then some
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
+            , _sBox_style = testsstyle
           }
         canvas2 = potatoRenderWithSEltAndEmptyOwlTreeForTest [selt] canvas1
         target = LBox (V2 0 0) (V2 100 50)
@@ -105,6 +113,7 @@ spec = do
         target = LBox (V2 0 0) (V2 100 50)
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
+            , _sBox_style = testsstyle
           }
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0
@@ -125,6 +134,7 @@ spec = do
         target = LBox (V2 0 0) (V2 50 50)
         selt = SEltBox $ def {
             _sBox_box    = LBox (V2 0 0) (V2 100 100)
+            , _sBox_style = testsstyle
           }
         state0 = owlPFState_fromSElts [selt] initial
         bps0 = BroadPhaseState $ bPTreeFromOwlPFState state0

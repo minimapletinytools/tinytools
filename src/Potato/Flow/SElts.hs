@@ -54,8 +54,7 @@ instance Binary FillStyle
 instance NFData FillStyle
 
 instance Default FillStyle where
-  -- TODO change to ' ' prob
-  def = FillStyle_Simple '@'
+  def = FillStyle_Simple ' '
 
 -- TODO add line ends?
 -- TODO add line thickness?

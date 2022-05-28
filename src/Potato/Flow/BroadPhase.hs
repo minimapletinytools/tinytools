@@ -86,7 +86,7 @@ update_bPTree ot changes BPTree {..} = r where
       -- TODO don't use getSEltBox_naive like this come on -__-
       Just sowl -> case getSEltBox_naive (superOwl_toSElt_hack sowl) of
         Nothing   -> (insmods', rid:deletes')
-        Just _ -> ((rid,_sEltDrawer_box (getDrawer (_owlItem_subItem $ _superOwl_elt sowl)) ot):insmods', deletes'))
+        Just _ -> ((rid, _sEltDrawer_box (getDrawer (_owlItem_subItem $ _superOwl_elt sowl)) ot):insmods', deletes'))
 
 
     ([],[])
