@@ -293,11 +293,14 @@ instance PotatoHandler BoxHandler where
       then pHandleMouse (makeBoxLabelHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
       else Nothing
     MouseDragState_Up -> r where
+
+      -- TODO do selectMagic here so we can enter text edit modes from multi-selections (you will also need to modify the selection)
+      nselected = Seq.length (unCanvasSelection _potatoHandlerInput_canvasSelection)
       selt = superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection
-      isText = case selt of
+      isText = nselected == 1 && case selt of
         Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType
         _                                    -> False
-      isTextArea = case selt of
+      isTextArea = nselected == 1 && case selt of
         Just (SEltTextArea _) -> True
         _ -> False
 
