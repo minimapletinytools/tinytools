@@ -49,8 +49,6 @@ WIDE
 ::NEWEST TODO::
 -BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
   -I guess you also need handler -> set tool?
-DONE-BUG multiselect with text box in selection and then clicking on text box will cause it to try and go into text edit mode and crash becaues it expects only one text box to be there
-  -you can either disable this or do a second collision to determine which text box you clicked on
 -BUG can't enter multiple new lines into text box
   -seems to be a bug in TextZipper
 -BUG click on eol in text box is kind of broken in general
@@ -60,7 +58,6 @@ DONE-BUG multiselect with text box in selection and then clicking on text box wi
   -repro is pan and then select via layers and the selection will use the old pan setting
   -this does not happen if you pan and select via canvases and fixes the pan setting
 -BUG line ends attach at wrong places (off by one)
--BUG box styles are "contagious" if you multi drag a box, it's style will apply to everything in that selection group...
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
   DONE-select box boundary uses origin line endpoints rather than attached points
@@ -68,6 +65,10 @@ DONE-BUG multiselect with text box in selection and then clicking on text box wi
   -need to set box width to infinite
 -BUG attached lines don't render when you drag in some directions
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
+DONE-BUG multiselect with text box in selection and then clicking on text box will cause it to try and go into text edit mode and crash becaues it expects only one text box to be there
+  -you can either disable this or do a second collision to determine which text box you clicked on
+DONE-BUG box styles are "contagious" if you multi drag a box, it's style will apply to everything in that selection group...
+  -this happens because params is triggering (for both ssytle and linestyle) when you click and drag on canvas side
 DONE-BUG keyboard hotkey to change tools visually changes tool-s but you are still in select mode...
 DONE-backspace should delete too
 DONE-after DELETING object line is attached to, line does not get rerendered
