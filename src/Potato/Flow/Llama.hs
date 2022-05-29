@@ -15,6 +15,7 @@ import Potato.Flow.OwlState
 import           Potato.Flow.Types
 import Potato.Flow.Math
 
+import qualified Data.Text as T
 import qualified Data.IntMap as IM
 import qualified Text.Show
 import           Control.Exception  (assert)
@@ -89,6 +90,7 @@ data ApplyLlamaError = ApplyLlamaError_Generic Text deriving (Show)
 data Llama = Llama {
   _llama_apply :: OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges, Llama)
   , _llama_serialize :: SLlama
+  , _llama_describe :: Text
 } deriving (Generic)
 
 instance NFData Llama
@@ -136,6 +138,7 @@ makeRenameLlama (rid, newname) = r where
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
+      , _llama_describe = "rename " <> show rid <> " to " <> newname
     }
 
 makeSetLlama :: (REltId, SElt) -> Llama
@@ -161,6 +164,7 @@ makeSetLlama (rid, selt) = r where
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
+      , _llama_describe = "set " <> show rid <> " to " <> show selt
     }
 
 
@@ -175,6 +179,7 @@ makePFCLlama' isDo cmd = r where
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
+      , _llama_describe = "PFC " <> show cmd
     }
 
 makePFCLlama :: OwlPFCmd -> Llama
@@ -191,6 +196,7 @@ makeCompositionLlama llamas = r where
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
+      , _llama_describe = undefined (T.concat $ fmap _llama_describe llamas)
     }
 
 

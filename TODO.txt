@@ -55,7 +55,7 @@ DONE-BUG multiselect with text box in selection and then clicking on text box wi
   -seems to be a bug in TextZipper
 -BUG click on eol in text box is kind of broken in general
   -doesn't laways take you to the end
-  -sometimes takes you to begining of next line (it happnede to me when you click the same place past EOL twice in a row)
+  -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -BUG manipulators sometimes don't respect screen pan
   -repro is pan and then select via layers and the selection will use the old pan setting
   -this does not happen if you pan and select via canvases and fixes the pan setting
