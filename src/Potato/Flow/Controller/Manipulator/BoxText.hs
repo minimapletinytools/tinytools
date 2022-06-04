@@ -290,7 +290,8 @@ lBox_to_boxLabelBox lbx = r where
 updateBoxLabelInputStateWithSBox :: SBox -> TextInputState -> TextInputState
 updateBoxLabelInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
-  newBox@(LBox _ (V2 width _)) =  lBox_to_boxLabelBox $ _sBox_box sbox
+  newBox =  lBox_to_boxLabelBox $ _sBox_box sbox
+  width = 99999 -- box label text always overflows
   r = btis {
       _textInputState_box = newBox
       , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)

@@ -49,37 +49,26 @@ WIDE
 ::NEWEST TODO::
 -BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
   -I guess you also need handler -> set tool?
--BUG can't enter multiple new lines into text box
-  -seems to be a bug in TextZipper
--BUG click on eol in text box is kind of broken in general
-  -doesn't laways take you to the end
-  -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--BUG manipulators sometimes don't respect screen pan
-  -repro is pan and then select via layers and the selection will use the old pan setting
-  -this does not happen if you pan and select via canvases and fixes the pan setting
+-text zipper stuff
+  -BUG can't enter multiple new lines into text box
+    -seems to be a bug in TextZipper
+  -BUG click on eol in text box is kind of broken in general
+    -doesn't laways take you to the end
+    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -BUG line ends attach at wrong places (off by one)
+  -this happens in even width one cases
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
   DONE-select box boundary uses origin line endpoints rather than attached points
--when overflowing in boxlabel it will go to next line when it should keep going to the right (and still be invisible)
+
   -need to set box width to infinite
 -BUG attached lines don't render when you drag in some directions
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
-DONE-BUG multiselect with text box in selection and then clicking on text box will cause it to try and go into text edit mode and crash becaues it expects only one text box to be there
-  -you can either disable this or do a second collision to determine which text box you clicked on
-DONE-BUG box styles are "contagious" if you multi drag a box, it's style will apply to everything in that selection group...
-  -this happens because params is triggering (for both ssytle and linestyle) when you click and drag on canvas side
-DONE-BUG keyboard hotkey to change tools visually changes tool-s but you are still in select mode...
-DONE-backspace should delete too
-DONE-after DELETING object line is attached to, line does not get rerendered
 -after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
   -prob makes most sense to scan for all objects
     -this might have some weird edge cases in multi user mode but whatever?
   -prob better scan for all attached stuff in PFWorkspace then
   -was I suppose to put the attachment map inside of the workspace D:
-DONE-add a regenerateAttachmentMap and verifyAttachmentMap UT
-  FIXED-it's crashing :(
-FIXED?-BUG doing a box select just to the left/top of a box will select it when it shouldn't
 -BUG attach lines sometimes don't render (this is a broadphase box-to-rerender issue probbably)
 -tests to write
   -add test to make sure cache is actually being used
@@ -201,6 +190,21 @@ FIXED?-BUG doing a box select just to the left/top of a box will select it when 
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+
+DONE-when overflowing in boxlabel it will go to next line when it should keep going to the right (and still be invisible)
+DONE??-BUG manipulators sometimes don't respect screen pan
+  -repro is pan and then select via layers and the selection will use the old pan setting
+  -this does not happen if you pan and select via canvases and fixes the pan setting
+DONE-BUG multiselect with text box in selection and then clicking on text box will cause it to try and go into text edit mode and crash becaues it expects only one text box to be there
+  -you can either disable this or do a second collision to determine which text box you clicked on
+DONE-BUG box styles are "contagious" if you multi drag a box, it's style will apply to everything in that selection group...
+  -this happens because params is triggering (for both ssytle and linestyle) when you click and drag on canvas side
+DONE-BUG keyboard hotkey to change tools visually changes tool-s but you are still in select mode...
+DONE-backspace should delete too
+DONE-after DELETING object line is attached to, line does not get rerendered
+DONE-add a regenerateAttachmentMap and verifyAttachmentMap UT
+  FIXED-it's crashing :(
+FIXED?-BUG doing a box select just to the left/top of a box will select it when it shouldn't
 DONE-when drag selecting, box should auto resize to +1 so you don't have invisible drag box
 IGNORE-I think you need some kind of cache monad
 DONE-need another area for tool options
