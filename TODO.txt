@@ -55,13 +55,9 @@ WIDE
   -BUG click on eol in text box is kind of broken in general
     -doesn't laways take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--BUG line ends attach at wrong places (off by one)
-  -this happens in even width one cases
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
-  DONE-select box boundary uses origin line endpoints rather than attached points
 
-  -need to set box width to infinite
 -BUG attached lines don't render when you drag in some directions
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
 -after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
@@ -69,7 +65,6 @@ WIDE
     -this might have some weird edge cases in multi user mode but whatever?
   -prob better scan for all attached stuff in PFWorkspace then
   -was I suppose to put the attachment map inside of the workspace D:
--BUG attach lines sometimes don't render (this is a broadphase box-to-rerender issue probbably)
 -tests to write
   -add test to make sure cache is actually being used
   -attach line to object, delete that object, modify line again
@@ -116,6 +111,7 @@ WIDE
     -auto add extension on save
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
+-allow changing between text and no text box
 -click release on lock/hide/collapse on selected element should not deselect
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -no MDI file stuff
@@ -190,7 +186,11 @@ WIDE
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
-
+DONE?-BUG line ends attach at wrong places (off by one)
+  -this happens in even width one cases
+DONE-select box boundary uses origin line endpoints rather than attached points
+  -need to set box width to infinite
+DONE-BUG attach lines sometimes don't render (this is a broadphase box-to-rerender issue probbably)
 DONE-when overflowing in boxlabel it will go to next line when it should keep going to the right (and still be invisible)
 DONE??-BUG manipulators sometimes don't respect screen pan
   -repro is pan and then select via layers and the selection will use the old pan setting

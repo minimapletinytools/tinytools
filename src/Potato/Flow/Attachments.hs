@@ -16,18 +16,19 @@ import Potato.Flow.Owl
 import Potato.Flow.SElts
 
 
+-- the (_+1) `div` 2 on AL_Bot/AL_Left is such that this function is invariant under conjugation with rotations
 attachLocationFromLBox :: Bool -> LBox -> AttachmentLocation -> XY
 attachLocationFromLBox True (LBox (V2 x y) (V2 w h)) = \case
   AL_Top -> V2 (x+w `div` 2) (y-1)
-  AL_Bot -> V2 (x+w `div` 2) (y+h)
-  AL_Left -> V2 (x-1) (y+h `div` 2)
+  AL_Bot -> V2 (x+(w-1) `div` 2) (y+h)
+  AL_Left -> V2 (x-1) (y+(h-1) `div` 2)
   AL_Right -> V2 (x+w) (y+h `div` 2)
   -- or maybe in the middle is better?
   AL_Any -> V2 x y
 attachLocationFromLBox False (LBox (V2 x y) (V2 w h)) = \case
   AL_Top -> V2 (x+w `div` 2) y
-  AL_Bot -> V2 (x+w `div` 2) (y+h-1)
-  AL_Left -> V2 x (y+h `div` 2 )
+  AL_Bot -> V2 (x+(w-1) `div` 2) (y+h-1)
+  AL_Left -> V2 x (y+(h-1) `div` 2 )
   AL_Right -> V2 (x+w-1) (y+h `div` 2 )
   -- or maybe in the middle is better?
   AL_Any -> V2 x y
@@ -39,7 +40,7 @@ owlItem_availableAttachments :: Bool -> OwlItem -> [(AttachmentLocation, XY)]
 owlItem_availableAttachments offsetBorder o = case _owlItem_subItem o of
   OwlSubItemBox sbox -> attachLocationsFromLBox offsetBorder (_sBox_box sbox)
   _ -> []
-  
+
 isOverAttachment :: XY -> [(Attachment, XY)] -> Maybe (Attachment, XY)
 isOverAttachment pos attachments = find (\(a,x) -> x == pos) attachments
 
