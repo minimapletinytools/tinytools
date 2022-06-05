@@ -37,8 +37,6 @@ WIDE
   -click + release to create new text label
     -erase all text to destroy text label
 
-
-
 :: MDI
 -Flow needs some kind of switcher on all input events/dynamics
   -GoatSwitcher?
@@ -57,7 +55,6 @@ WIDE
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
-
 -BUG attached lines don't render when you drag in some directions
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
 -after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
