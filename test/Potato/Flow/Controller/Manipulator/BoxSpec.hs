@@ -39,7 +39,7 @@ test_basic = constructTest "keyboard movement" emptyOwlPFState bs expected where
     _                           -> False
   expected = [
       LabelCheck "Create A"
-      , EqPredicate _goatState_selectedTool Tool_Box
+      , EqPredicate goatState_selectedTool Tool_Box
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [

@@ -4,6 +4,7 @@
 module Potato.Flow.Controller.Goat (
   goatState_hasUnsavedChanges
   , goatState_pFState
+  , goatState_selectedTool
   , GoatState(..)
   , GoatCmd(..)
   , foldGoatFn
@@ -68,7 +69,6 @@ data GoatState = GoatState {
     -- shared across documents
     -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
     , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
-    , _goatState_selectedTool    :: Tool
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_screenRegion    :: XY
     , _goatState_clipboard       :: Maybe SEltTree
@@ -88,6 +88,9 @@ goatState_owlTree = _owlPFState_owlTree . goatState_pFState
 
 goatState_hasUnsavedChanges :: GoatState -> Bool
 goatState_hasUnsavedChanges = llamaStack_hasUnsavedChanges . _owlPFWorkspace_llamaStack . _goatState_workspace
+
+goatState_selectedTool :: GoatState -> Tool
+goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handler
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
@@ -278,7 +281,6 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
-    , _potatoHandlerInput_tool = _goatState_selectedTool
     , _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
 
     , _potatoHandlerInput_layersState     = _goatState_layersState
@@ -327,9 +329,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
 
       GoatCmdTool x -> r where
-        someNewHandler = makeHandlerFromNewTool x
         -- TODO do we need to cancel the old handler?
-        r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_selectedTool = x, _goatState_handler = someNewHandler })
+        r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_handler = makeHandlerFromNewTool x })
 
 
 
@@ -371,17 +372,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
           -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-            Just pho -> r where
-              -- reset the tool back to Select after creating a new elt
-              goatState'' = goatState' {
-                  _goatState_selectedTool =
-                    -- NOTE we only want to reset back to Tool_Select if a SElt was actually created. This condition might be too weak in the future.
-                    if _mouseDrag_state mouseDrag == MouseDragState_Up && tool_isCreate _goatState_selectedTool
-                      then Tool_Select
-                      else _goatState_selectedTool
-                }
-              r = makeGoatCmdTempOutputFromPotatoHandlerOutput goatState'' pho
-
+            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
             -- input not captured by handler, do select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
@@ -466,17 +457,16 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
                   r = makeGoatCmdTempOutputFromEvent goatState WSERedo
                 -- tool hotkeys
                 KeyboardData (KeyboardKey_Char key) _ -> r where
-                  newTool = case key of
-                    'v'  -> Tool_Select
-                    'p' -> Tool_Pan
-                    'b'  -> Tool_Box
-                    'l' -> Tool_Line
-                    't'  -> Tool_Text
-                    'n'  -> Tool_TextArea
-                    _    -> _goatState_selectedTool
-                  newHandler = makeHandlerFromNewTool newTool
-                  -- TODO need to create handler for the tool
-                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_selectedTool = newTool, _goatState_handler = newHandler }
+                  mtool = case key of
+                    'v'  -> Just Tool_Select
+                    'p' -> Just Tool_Pan
+                    'b'  -> Just Tool_Box
+                    'l' -> Just Tool_Line
+                    't'  -> Just Tool_Text
+                    'n'  -> Just Tool_TextArea
+                    _    -> Nothing
+                  newHandler = maybe _goatState_handler makeHandlerFromNewTool mtool
+                  r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_handler = newHandler }
 
                 -- unhandled input
                 _ -> makeGoatCmdTempOutputFromNothing goatState

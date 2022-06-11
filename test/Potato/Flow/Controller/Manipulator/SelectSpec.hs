@@ -37,7 +37,7 @@ test_Select_zero = constructTest "zero" owlpfstate_zero bs expected where
     ]
   expected = [
       LabelCheck "select b1"
-      , EqPredicate _goatState_selectedTool Tool_Select
+      , EqPredicate goatState_selectedTool Tool_Select
       , numSelectedEltsEqualPredicate 0
       , numSelectedEltsEqualPredicate 1
 

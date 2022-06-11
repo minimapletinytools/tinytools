@@ -104,7 +104,7 @@ everything_layers_test = constructTest "layers" owlpfstate_basic1 bs expected wh
       ]
 
       , LabelCheck "Create A"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , AlwaysPass
       , AlwaysPass
       , AlwaysPass
@@ -144,7 +144,7 @@ everything_inputfocusing_test = constructTest "inputfocusing" owlpfstate_basic1 
     ]
   expected = [
       LabelCheck "Create A"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , AlwaysPass
       , AlwaysPass
       , AlwaysPass
@@ -233,7 +233,7 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
 
       , LabelCheck "Create A with random keyboard inputs in between"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)  )
       , checkLayerEntriesNum ((owlPFState_numElts owlpfstate_basic1)   + 1)
@@ -266,7 +266,7 @@ everything_keyboard_test = constructTest "keyboard" owlpfstate_basic1 bs expecte
         ]
 
       , LabelCheck "Select everything"
-      , (EqPredicate _goatState_selectedTool Tool_Select)
+      , (EqPredicate goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , checkHandlerNameAndState handlerName_select True
       , numSelectedEltsEqualPredicate ((owlPFState_numElts owlpfstate_basic1)   + 2)
@@ -482,7 +482,7 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
 
   expected = [
       LabelCheck "Pan"
-      , (EqPredicate _goatState_selectedTool Tool_Pan)
+      , (EqPredicate goatState_selectedTool Tool_Pan)
       , (EqPredicate _goatState_pan (V2 0 0))
       , (EqPredicate _goatState_pan (V2 1 1))
       , (EqPredicate _goatState_pan (V2 1 1))
@@ -493,7 +493,7 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , (EqPredicate _goatState_pan (V2 1 1))
 
       , LabelCheck "Create A"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box False
@@ -503,7 +503,7 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
         ]
 
       , LabelCheck "create another elt, but cancel it"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -528,12 +528,12 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , AlwaysPass
 
       , LabelCheck "select elt A"
-      , EqPredicate _goatState_selectedTool Tool_Select
+      , EqPredicate goatState_selectedTool Tool_Select
       , numSelectedEltsEqualPredicate 1
       , numSelectedEltsEqualPredicate 1
 
       , LabelCheck "create elt B"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_boxText False
@@ -544,7 +544,7 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
         ]
 
       -- unselect
-      , (EqPredicate _goatState_selectedTool Tool_Select)
+      , (EqPredicate goatState_selectedTool Tool_Select)
       , checkHandlerNameAndState handlerName_select True
       , Combine [
           numSelectedEltsEqualPredicate 0
@@ -653,7 +653,7 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
       , hasUnsavedChanges False
 
       , LabelCheck "Create A"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , AlwaysPass
       , AlwaysPass
       , hasUnsavedChanges True
@@ -669,7 +669,7 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
       , hasUnsavedChanges True
 
       , LabelCheck "Create B"
-      , (EqPredicate _goatState_selectedTool Tool_Box)
+      , (EqPredicate goatState_selectedTool Tool_Box)
       , AlwaysPass
       , AlwaysPass
       , hasUnsavedChanges True

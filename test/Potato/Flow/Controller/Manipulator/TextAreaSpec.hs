@@ -44,7 +44,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [

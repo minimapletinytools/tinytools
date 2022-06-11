@@ -34,7 +34,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <cartline>"
-      , EqPredicate _goatState_selectedTool Tool_CartLine
+      , EqPredicate goatState_selectedTool Tool_CartLine
       , checkHandlerNameAndState handlerName_cartesianLine True
       , checkHandlerNameAndState handlerName_cartesianLine True
       , checkHandlerNameAndState handlerName_cartesianLine True

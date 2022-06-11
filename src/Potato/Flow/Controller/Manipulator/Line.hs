@@ -197,6 +197,9 @@ instance PotatoHandler AutoLineHandler where
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
 
   pIsHandlerActive _ = False
+  pHandlerTool AutoLineHandler {..} = if _autoLineHandler_isCreation
+    then Just Tool_Line
+    else Nothing
 
 
 -- handles dragging endpoints (which can be attached) and creating new lines
@@ -283,6 +286,9 @@ instance PotatoHandler AutoLineEndPointHandler where
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
   pIsHandlerActive _ = True
+  pHandlerTool AutoLineEndPointHandler {..} = if _autoLineEndPointHandler_isCreation 
+    then Just Tool_Line
+    else Nothing
 
 
 --- WORK IN PROGRESS BELOW HERE

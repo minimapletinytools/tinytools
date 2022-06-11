@@ -45,7 +45,7 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
--BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
+DONE-BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
   -I guess you also need handler -> set tool?
 -text zipper stuff
   -BUG can't enter multiple new lines into text box

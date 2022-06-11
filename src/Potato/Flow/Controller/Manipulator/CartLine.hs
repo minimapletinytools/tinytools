@@ -10,6 +10,7 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 
 import           Control.Exception
@@ -279,3 +280,7 @@ instance PotatoHandler CartLineHandler where
       x:xs -> toBoxHandle True x : fmap (toBoxHandle False) fronts'
     r = HandlerRenderOutput (fronts <> backs)
   pIsHandlerActive = _cartLineHandler_active
+
+  pHandlerTool CartLineHandler {..} = if _cartLineHandler_isCreation
+    then Just Tool_CartLine
+    else Nothing

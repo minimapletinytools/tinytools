@@ -97,7 +97,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -169,7 +169,7 @@ test_handler_state = constructTest "handler state" emptyOwlPFState bs expected w
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -184,7 +184,7 @@ test_handler_state = constructTest "handler state" emptyOwlPFState bs expected w
       , checkHandlerNameAndState handlerName_box False
 
       , LabelCheck "deselect <text>"
-      , EqPredicate _goatState_selectedTool Tool_Select
+      , EqPredicate goatState_selectedTool Tool_Select
       , checkHandlerNameAndState handlerName_select True
       , Combine [
           checkHandlerNameAndState handlerName_empty False
@@ -227,7 +227,7 @@ test_negative = constructTest "negative" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -273,7 +273,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -363,7 +363,7 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <text>"
-      , EqPredicate _goatState_selectedTool Tool_Text
+      , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [
@@ -438,7 +438,7 @@ test_boxlabel_basic = constructTest "basic" emptyOwlPFState bs expected where
     ]
   expected = [
       LabelCheck "create <box>"
-      , EqPredicate _goatState_selectedTool Tool_Box
+      , EqPredicate goatState_selectedTool Tool_Box
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
       , Combine [

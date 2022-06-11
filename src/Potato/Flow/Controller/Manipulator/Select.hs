@@ -133,3 +133,4 @@ instance PotatoHandler SelectHandler where
       then LBox (V2 (x+1) (y+1)) (V2 (w-2) (h-2))
       else LBox 0 0
   pIsHandlerActive _ = True
+  pHandlerTool _ = Just Tool_Select

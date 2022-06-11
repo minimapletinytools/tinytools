@@ -53,7 +53,6 @@ data PotatoHandlerInput = PotatoHandlerInput {
     , _potatoHandlerInput_broadPhase  :: BroadPhaseState
 
     -- * from Frontend
-    , _potatoHandlerInput_tool        :: Tool
     , _potatoHandlerInput_layersState :: LayersState
     , _potatoHandlerInput_screenRegion :: LBox
 
@@ -227,6 +226,9 @@ class PotatoHandler h where
     MouseDragState_Down      -> not $ pIsHandlerActive h
     _                        -> True
 
+  -- determine which selected tool to show
+  pHandlerTool :: h -> Maybe Tool
+  pHandlerTool _ = Nothing
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 
@@ -240,6 +242,7 @@ instance PotatoHandler SomePotatoHandler where
   pRenderHandler (SomePotatoHandler h) = pRenderHandler h
   pRenderLayersHandler (SomePotatoHandler h) = pRenderLayersHandler h
   pValidateMouse (SomePotatoHandler h) = pValidateMouse h
+  pHandlerTool (SomePotatoHandler h) = pHandlerTool h
 
 captureWithNoChange :: (PotatoHandler h) => h -> PotatoHandlerOutput
 captureWithNoChange h = def {

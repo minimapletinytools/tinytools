@@ -152,7 +152,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
     initialgoat = GoatState {
         _goatState_workspace      = loadOwlPFStateIntoWorkspace (fst _goatWidgetConfig_initialState) emptyWorkspace
-        , _goatState_selectedTool    = Tool_Select
         , _goatState_pan             = _controllerMeta_pan (snd _goatWidgetConfig_initialState)
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
@@ -211,7 +210,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- TODO maybe you need to have special signals to control firing of each sub event instead
   -- I guess the good news is that you can still do this without changing the interface
   -- i.e. OwlPFStateChangeFlag and have each OwlPFState operation return a change flag as well
-  r_tool <- holdUniqDyn $ fmap _goatState_selectedTool goatDyn
+  r_tool <- holdUniqDyn $ fmap goatState_selectedTool goatDyn
   r_selection <- holdUniqDyn $ fmap _goatState_selection goatDyn
   r_potatoDefaultParams <- holdUniqDyn $ fmap _goatState_potatoDefaultParameters goatDyn
   r_broadphase <- holdUniqDyn $ fmap _goatState_broadPhaseState goatDyn
@@ -225,7 +224,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
   {- this causes 4 calls to foldGoatFn per tick :(
   let
-    r_tool = fmap _goatState_selectedTool goatDyn
     r_selection = fmap _goatState_selection goatDyn
     r_selection_converted = fmap (\gs -> superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState . _goatState_workspace $ gs) (const True) (_goatState_selection gs)) goatDyn
     r_broadphase = fmap _goatState_broadPhaseState goatDyn

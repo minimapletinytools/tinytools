@@ -357,3 +357,9 @@ instance PotatoHandler BoxHandler where
     --if (_boxHandler_active)
     r = HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
   pIsHandlerActive = _boxHandler_active
+
+  pHandlerTool BoxHandler {..} = case _boxHandler_creation of
+    BoxCreationType_Box -> Just Tool_Box
+    BoxCreationType_Text -> Just Tool_Text
+    BoxCreationType_TextArea -> Just Tool_TextArea
+    _ -> Nothing

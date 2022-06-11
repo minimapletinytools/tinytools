@@ -8,6 +8,7 @@ import           Relude
 
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 
 import           Data.Default
@@ -36,3 +37,4 @@ instance PotatoHandler PanHandler where
   pHandleKeyboard PanHandler {..} PotatoHandlerInput {..} _ = Nothing
   pRenderHandler _ PotatoHandlerInput {..} = def
   pIsHandlerActive _ = True
+  pHandlerTool _ = Just Tool_Pan
