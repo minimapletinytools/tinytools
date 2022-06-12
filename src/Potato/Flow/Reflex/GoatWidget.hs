@@ -29,6 +29,7 @@ import Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
+import Potato.Flow.Llama
 
 import           Control.Exception                         (assert)
 import           Control.Monad.Fix
@@ -185,7 +186,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
 
         -- these two need to be run before _goatWidgetConfig_mouse because sometimes we want to set params and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
-        , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEManipulate (False, cwid)))
+        , ffor _goatWidgetConfig_paramsEvent $ \cwid -> assert (controllerWithId_isParams cwid) (GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ cwid)))
         , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
       ]
 

@@ -19,6 +19,7 @@ import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
+import Potato.Flow.Llama
 
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import           Data.Default
@@ -436,7 +437,7 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
     })
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
-      , _potatoHandlerOutput_pFEvent = Just $ WSEManipulate (False, IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
+      , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 
 toDisplayLines :: LayersRenameHandler -> TZ.DisplayLines ()

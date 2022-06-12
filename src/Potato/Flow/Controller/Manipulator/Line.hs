@@ -252,7 +252,7 @@ instance PotatoHandler AutoLineEndPointHandler where
               _sAutoLine_end       = _mouseDrag_to
               , _sAutoLine_attachEnd = mattachendnontrivial
             }
-        llama = makeSetLlama $ traceShowId $ (rid, SEltLine modifiedline)
+        llama = makeSetLlama $ (rid, SEltLine modifiedline)
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
@@ -286,7 +286,7 @@ instance PotatoHandler AutoLineEndPointHandler where
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
   pIsHandlerActive _ = True
-  pHandlerTool AutoLineEndPointHandler {..} = if _autoLineEndPointHandler_isCreation 
+  pHandlerTool AutoLineEndPointHandler {..} = if _autoLineEndPointHandler_isCreation
     then Just Tool_Line
     else Nothing
 

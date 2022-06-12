@@ -45,18 +45,16 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
-DONE-BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
-  -I guess you also need handler -> set tool?
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
   -BUG click on eol in text box is kind of broken in general
     -doesn't laways take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--Select box + attached lines
-  -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
 -BUG attached lines don't render when you drag in some directions
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
+-Select box + attached lines
+  -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
 -after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
   -prob makes most sense to scan for all objects
     -this might have some weird edge cases in multi user mode but whatever?
@@ -183,6 +181,8 @@ DONE-BUG you can reset handler by pasting or selecting on layers and it doesn't 
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
+  -I guess you also need handler -> set tool?
 DONE?-BUG line ends attach at wrong places (off by one)
   -this happens in even width one cases
 DONE-select box boundary uses origin line endpoints rather than attached points

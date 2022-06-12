@@ -28,6 +28,7 @@ import Potato.Flow.OwlState
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
+import Potato.Flow.Llama
 
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
@@ -162,7 +163,7 @@ makeDragOperation undoFirst PotatoHandlerInput {..} dbox = op where
       _cBoundingBox_deltaBox = dbox
     })
 
-  op = WSEManipulate (undoFirst, IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
+  op = WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)

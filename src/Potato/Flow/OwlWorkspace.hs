@@ -161,7 +161,6 @@ data WSEvent =
   -- DEPRECATE
   | WSEManipulate (Bool, ControllersWithId)
 
-  -- TODO support
   | WSEApplyLlama (Bool, Llama)
 
   | WSEResizeCanvas DeltaLBox

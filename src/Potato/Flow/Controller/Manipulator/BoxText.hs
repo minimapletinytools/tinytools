@@ -29,6 +29,7 @@ import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
+import Potato.Flow.Llama
 
 import           Control.Exception
 import           Data.Default
@@ -123,7 +124,7 @@ inputBoxText tais undoFirst sowl kk = (newtais, mop) where
       _cBoxText_deltaText = (fromMaybe "" (_textInputState_original tais), TZ.value (_textInputState_zipper newtais))
     })
   mop = if changed
-    then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
+    then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
 makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
@@ -376,7 +377,7 @@ inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
   newtext = TZ.value (_textInputState_zipper newtais)
   controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
   mop = if changed
-    then Just $ WSEManipulate (undoFirst, IM.fromList [(_superOwl_id sowl,controller)])
+    then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
 

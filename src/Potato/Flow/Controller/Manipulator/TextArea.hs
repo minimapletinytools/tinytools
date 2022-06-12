@@ -14,6 +14,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.OwlItem
+import Potato.Flow.Llama
 import Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
@@ -91,7 +92,7 @@ instance PotatoHandler TextAreaHandler where
           , _potatoHandlerOutput_pFEvent = if null mc
             then Nothing
             -- TODO if you store mc in TextAreaHandler you can continue to build on it which would allow you to set "undoFirst" paremeter to True
-            else Just $ WSEManipulate (False, IM.singleton rid controller)
+            else Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.singleton rid controller)
         } where
           controller = CTagTextArea :=> (Identity $ CTextArea (DeltaTextArea mc))
       moveAndWrap dp (mc, h) = (mc, h {
@@ -120,7 +121,7 @@ instance PotatoHandler TextAreaHandler where
   pRenderHandler tah phi@PotatoHandlerInput {..} = r where
 
     -- TODO maybe version of this
-  
+
     -- TODO maybe store instead of pull from selection?
     (_, STextArea {..}) = getSTextArea _potatoHandlerInput_canvasSelection
     CanonicalLBox _ _ (LBox p (V2 _ _)) = canonicalLBox_from_lBox _sTextArea_box

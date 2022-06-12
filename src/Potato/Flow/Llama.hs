@@ -1,7 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
 
--- WIP
-
 
 module Potato.Flow.Llama where
 
