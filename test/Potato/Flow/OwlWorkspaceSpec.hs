@@ -114,8 +114,6 @@ spec = do
         verifyOwlAt newws1 b1spot (pred_nameIs "b2") `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
         {-
-      it "WSEManipulate" $ do
-        1 `shouldBe` 1
       it "WSEResizeCanvas" $ do
         1 `shouldBe` 1
       it "WSEUndo" $ do

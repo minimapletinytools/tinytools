@@ -158,9 +158,6 @@ data WSEvent =
   | WSEMoveElt (OwlSpot, OwlParliament)
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
 
-  -- DEPRECATE
-  | WSEManipulate (Bool, ControllersWithId)
-
   | WSEApplyLlama (Bool, Llama)
 
   | WSEResizeCanvas DeltaLBox
@@ -269,11 +266,6 @@ updateOwlPFWorkspace evt ws = let
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
-
-    -- DELETE
-    WSEManipulate (undo, x) -> if undo
-      then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_manipulate_to_manipulate pfs x) ws
-      else doCmdWorkspace (pfc_manipulate_to_manipulate lastState x) ws
 
     -- TODO
     WSEApplyLlama (undo, x) -> if undo
