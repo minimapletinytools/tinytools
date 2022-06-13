@@ -5,10 +5,11 @@ module Potato.Flow.OwlState where
 import           Relude
 
 import Potato.Flow.Owl
+import Potato.Flow.Attachments
 import Potato.Flow.OwlItem
 import           Potato.Flow.Math
-import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.Types
 import Potato.Flow.DebugHelpers
 
@@ -17,6 +18,20 @@ import qualified Data.IntMap.Strict      as IM
 import           Data.List.Ordered       (isSortedBy)
 import           Data.Maybe
 import qualified Data.Text as T
+
+
+-- prob not the best place for these...
+maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
+maybeGetAttachmentPosition offsetBorder pfs a = do
+  target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
+  return $ case hasOwlItem_owlItem target of
+    OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
+    _ -> error "expecteed OwlSubItemBox"
+
+maybeLookupAttachment :: Bool -> OwlPFState -> Maybe Attachment -> Maybe XY
+maybeLookupAttachment offsetBorder pfs matt = maybeGetAttachmentPosition offsetBorder pfs =<< matt
+
+
 
 -- TODO rename
 data OwlPFState = OwlPFState {

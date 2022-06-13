@@ -48,17 +48,6 @@ getAvailableAttachments offsetBorder pfs bps screenRegion = r where
   fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments offsetBorder (_superOwl_elt sowl)
   r = join $ fmap fmapfn sowls
 
--- TODO move me elsewhere
-maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
-maybeGetAttachmentPosition offsetBorder pfs a = do
-  target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
-  return $ case hasOwlItem_owlItem target of
-    OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
-    _ -> error "expecteed OwlSubItemBox"
-
-maybeLookupAttachment :: Maybe Attachment -> Bool -> OwlPFState -> Maybe XY
-maybeLookupAttachment matt offsetBorder pfs = maybeGetAttachmentPosition offsetBorder pfs =<< matt
-
 renderAttachments :: PotatoHandlerInput -> (Maybe Attachment, Maybe Attachment) -> [RenderHandle]
 renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
   attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
@@ -80,8 +69,8 @@ renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {
     -- TODO highlight
     Just (SEltLine SAutoLine {..}) -> [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
       where
-        startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment _sAutoLine_attachStart offsetAttach _potatoHandlerInput_pFState)
-        endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment _sAutoLine_attachEnd offsetAttach _potatoHandlerInput_pFState)
+        startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachStart)
+        endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachEnd)
     _ -> []
   r = fmap defaultRenderHandle boxes
 
@@ -109,8 +98,8 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
   r = case selt of
     SEltLine SAutoLine {..} ->
       let
-        start = fromMaybe _sAutoLine_start $ maybeLookupAttachment _sAutoLine_attachStart offsetBorder pfs
-        end = fromMaybe _sAutoLine_end $ maybeLookupAttachment _sAutoLine_attachEnd offsetBorder pfs
+        start = fromMaybe _sAutoLine_start $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachStart
+        end = fromMaybe _sAutoLine_end $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachEnd
       in
         if _mouseDrag_to == start then Just True
           else if _mouseDrag_to == end then Just False
