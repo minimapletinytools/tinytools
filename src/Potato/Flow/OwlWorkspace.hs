@@ -22,12 +22,14 @@ import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
+import Potato.Flow.SElts
 import Potato.Flow.Llama
 import Potato.Flow.Methods.Types
 
 import           Control.Exception  (assert)
 import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Data.IntMap.Strict as IM
+import qualified Data.IntSet as IS
 import qualified Data.Sequence      as Seq
 
 -- TODO rename
@@ -150,16 +152,19 @@ data WSEvent =
   -- maybe just take a selttree D:
   -- I can't remember why I called this WSEAddRelative D:
   | WSEAddRelative (OwlSpot, Seq OwlItem)
-
   | WSEAddTree (OwlSpot, MiniOwlTree)
-
   | WSEAddFolder (OwlSpot, Text)
+
+  -- DELETE
   | WSERemoveElt OwlParliament
+
+  -- WIP
+  | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
+
+
   | WSEMoveElt (OwlSpot, OwlParliament)
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
-
   | WSEApplyLlama (Bool, Llama)
-
   | WSEResizeCanvas DeltaLBox
   | WSEUndo
   | WSERedo
@@ -201,6 +206,47 @@ pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
 
 pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
 pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItem (OwlInfo name) (OwlSubItemFolder Seq.empty))]
+
+-- UNTESTED
+makeLlamaToSetAttachedLinesToCurrentPosition :: OwlPFState -> AttachmentMap -> REltId -> [Llama]
+makeLlamaToSetAttachedLinesToCurrentPosition pfs am target = case IM.lookup target am of
+    Nothing -> []
+    Just attached -> fmap (makeLlama pfs) . IS.toList $ attached
+  where
+    -- returns list of rid's Attachments to target
+    makeLlama :: OwlPFState -> REltId -> Llama
+    makeLlama pfs rid = case _superOwl_elt (hasOwlTree_mustFindSuperOwl pfs rid) of
+        OwlItem _ (OwlSubItemLine sline _) -> r where
+          startAttachment = _sAutoLine_attachStart sline
+          endAttachment = _sAutoLine_attachEnd sline
+          affectstart = fmap _attachment_target startAttachment == Just target
+          affectend = fmap _attachment_target endAttachment == Just target
+          newstartpos = case maybeLookupAttachment False pfs startAttachment of
+            Nothing -> error $ "expected to find attachment " <> show startAttachment
+            Just x -> x
+          newendpos = case maybeLookupAttachment False pfs endAttachment of
+            Nothing -> error $ "expected to find attachment " <> show endAttachment
+            Just x -> x
+          newsline = sline {
+              -- disconnect from target if it was deleted
+              -- NOTE strictly speaking necessary! Not sure which way is better in multi-user mode
+              _sAutoLine_attachStart = if affectstart then Nothing else _sAutoLine_attachStart sline
+              , _sAutoLine_attachEnd = if affectend  then Nothing else _sAutoLine_attachEnd sline
+
+              -- place endpoints in new place
+              , _sAutoLine_start = if affectstart then newstartpos else _sAutoLine_start sline
+              , _sAutoLine_end = if affectend then newendpos else _sAutoLine_end sline
+
+            }
+          r = makeSetLlama (rid, SEltLine newsline)
+
+removeEltAndUpdateAttachments_to_llama :: OwlPFState -> AttachmentMap -> OwlParliament -> Llama
+removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
+  removellama = makePFCLlama$  pfc_removeElt_to_deleteElts pfs op
+  resetattachllamas = join $ fmap (makeLlamaToSetAttachedLinesToCurrentPosition pfs am) (toList rids)
+  -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
+  r = makeCompositionLlama $ resetattachllamas <> [removellama]
+
 
 -- | takes a DeltaLBox transformation and clamps it such that it always produces a canonical box
 -- if starting box was non-canonical, this will create a DeltaLBox that forces it to be canonical
@@ -265,14 +311,15 @@ updateOwlPFWorkspace evt ws = let
     WSEAddRelative x -> doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
+
+    -- DELETE
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
 
-    -- TODO
+    WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
+
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
-
-
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
     WSEUndo -> undoWorkspace ws

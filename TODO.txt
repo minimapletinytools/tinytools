@@ -55,14 +55,9 @@ WIDE
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
--after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
-  -prob makes most sense to scan for all objects
-    -this might have some weird edge cases in multi user mode but whatever?
-  -prob better scan for all attached stuff in PFWorkspace then
-  -was I suppose to put the attachment map inside of the workspace D:
 -tests to write
   -add test to make sure cache is actually being used
-  -attach line to object, delete that object, modify line again
+  -attach line to object, move object delete that object, make sure line is in expected place, modify line again
 -BUG
            ╔══════════╗
            ║@@@@@@@@@@║
@@ -181,6 +176,11 @@ WIDE
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+DONE-after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
+  -prob makes most sense to scan for all objects
+    -this might have some weird edge cases in multi user mode but whatever?
+  -prob better scan for all attached stuff in PFWorkspace then
+  -was I suppose to put the attachment map inside of the workspace D:
 DONE-BUG you can reset handler by pasting or selecting on layers and it doesn't reset the tool back to select
   -I guess you also need handler -> set tool?
 DONE?-BUG line ends attach at wrong places (off by one)

@@ -272,7 +272,7 @@ makeClipboard goatState@GoatState {..} = r where
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
-  else Just $ WSERemoveElt (superOwlParliament_toOwlParliament _goatState_selection)
+  else Just $ WSERemoveEltAndUpdateAttachments (superOwlParliament_toOwlParliament _goatState_selection) (_goatState_attachmentMap)
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
