@@ -628,7 +628,9 @@ owlTree_findSuperOwl OwlTree {..} rid = do
   return $ SuperOwl rid meta elt
 
 owlTree_mustFindSuperOwl :: HasCallStack => OwlTree -> REltId -> SuperOwl
-owlTree_mustFindSuperOwl od rid = fromJust $ owlTree_findSuperOwl od rid
+owlTree_mustFindSuperOwl od rid = case owlTree_findSuperOwl od rid of
+  Nothing -> error $ errorMsg_owlTree_lookupFail od rid
+  Just x -> x
 
 owlTree_findKiddos :: OwlTree -> REltId -> Maybe (Seq REltId)
 owlTree_findKiddos OwlTree {..} rid = case rid of
