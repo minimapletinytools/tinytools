@@ -183,18 +183,22 @@ makePFCLlama' isDo cmd = r where
 makePFCLlama :: OwlPFCmd -> Llama
 makePFCLlama = makePFCLlama' True
 
--- TODO finish
+-- UNTESTED
 makeCompositionLlama :: [Llama] -> Llama
 makeCompositionLlama llamas = r where
 
-  -- TODO mapaccum whatever
-  apply pfs = undefined
+  apply pfs = go llamas (pfs, IM.empty, []) where
+    go [] (state, changes, undollamas) = Right (state, changes, makeCompositionLlama undollamas)
+    go (llama:rest) (state, changes, undollamas) = case _llama_apply llama state of
+      Right newoutput@(newstate, newchanges, newundollama) -> go rest (newstate, IM.union newchanges changes, newundollama:undollamas)
+      e -> e
+
 
   serialize = SLlama_Compose $ fmap _llama_serialize llamas
   r = Llama {
       _llama_apply = apply
       , _llama_serialize = serialize
-      , _llama_describe = undefined (T.concat $ fmap _llama_describe llamas)
+      , _llama_describe = T.concat $ fmap _llama_describe llamas
     }
 
 
