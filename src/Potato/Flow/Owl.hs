@@ -137,8 +137,8 @@ attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 -- TODO apparantely first 2 args aren't needed delete them
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
-updateAttachmentMapFromSuperOwlChanges :: OwlTree -> IS.IntSet -> SuperOwlChanges -> AttachmentMap -> AttachmentMap
-updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = newam_4 where
+updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
+updateAttachmentMapFromSuperOwlChanges changes am = newam_4 where
 
   -- remove deleted stuff from keys
   --newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)

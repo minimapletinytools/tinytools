@@ -529,7 +529,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
 
   -- for now, newly created stuff is the same as anything that got auto selected
-  newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
+  --newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
 
   -- | update the new selection based on previous computations|
   (isNewSelection, next_selection) = case mSelectionFromPho of
@@ -573,7 +573,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   --_goatState_layersHandler
 
   -- | update AttachmentMap based on new state and clear the cache on these changes |
-  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges (_owlPFState_owlTree pFState_afterEvent) newlyCreatedRids cslmap_afterEvent _goatState_attachmentMap
+  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
   -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
   attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap _goatState_attachmentMap
   --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
