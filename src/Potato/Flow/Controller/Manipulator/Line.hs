@@ -79,7 +79,7 @@ renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {
 
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isCreation :: Bool
-    , _autoLineHandler_mDownPos :: Maybe XY
+    , _autoLineHandler_mDownManipulator :: Maybe Int
     -- TODO who sets this?
     , _autoLineHandler_offsetAttach :: Bool
   } deriving (Show)
@@ -87,7 +87,7 @@ data AutoLineHandler = AutoLineHandler {
 instance Default AutoLineHandler where
   def = AutoLineHandler {
       _autoLineHandler_isCreation = False
-      , _autoLineHandler_mDownPos = Nothing
+      , _autoLineHandler_mDownManipulator = Nothing
       , _autoLineHandler_offsetAttach = False
     }
 
@@ -167,15 +167,20 @@ instance PotatoHandler AutoLineHandler where
           -- TODO track index we clicked on
           LMP_Nothing | isJust mclickonline -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                  _autoLineHandler_mDownPos = Just _mouseDrag_to
+                  -- TODO set line index
+                  _autoLineHandler_mDownManipulator = Just 0
                 }
             }
 
           -- did not click on manipulator, no capture
           LMP_Nothing -> Nothing
 
-          -- TODO click on midpoint, make midpoint handler
-          LMP_Midpoint i -> error "TODO"
+          LMP_Midpoint i -> rslt where
+            handler = AutoLineMidPointHandler {
+                _autoLineMidPointHandler_midPointIndex = i
+                , _autoLineMidPointHandler_isMidpointCreation = False
+              }
+            rslt = pHandleMouse handler phi rmd
 
           LMP_Endpoint isstart -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineEndPointHandler {
@@ -188,17 +193,18 @@ instance PotatoHandler AutoLineHandler where
                   , _autoLineEndPointHandler_attachEnd = Nothing
                 }
             }
-      MouseDragState_Dragging -> case _autoLineHandler_mDownPos of
+      MouseDragState_Dragging -> case _autoLineHandler_mDownManipulator of
         Nothing -> error "unexpected state"
-        Just p -> r where
+        Just i -> r where
           -- TODO setup properly
           handler = AutoLineMidPointHandler {
-              _autoLineMidPointHandler_dummy = ()
+              _autoLineMidPointHandler_midPointIndex = i
+              , _autoLineMidPointHandler_isMidpointCreation = True
             }
           r = pHandleMouse handler phi rmd
-      MouseDragState_Up -> case _autoLineHandler_mDownPos of
+      MouseDragState_Up -> case _autoLineHandler_mDownManipulator of
         Nothing -> Just def
-        Just p -> r where
+        Just _ -> r where
           -- TODO setup properly
           handler = AutoLineTextLabelHandler {
               _autoLineTextLabelHandler_dummy = ()
@@ -313,7 +319,8 @@ instance PotatoHandler AutoLineEndPointHandler where
 
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
-  _autoLineMidPointHandler_dummy :: ()
+  _autoLineMidPointHandler_midPointIndex :: Int
+  , _autoLineMidPointHandler_isMidpointCreation :: Bool
 }
 
 instance PotatoHandler AutoLineMidPointHandler where
