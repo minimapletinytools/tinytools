@@ -18,16 +18,12 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 import           Potato.Flow.OwlState
 import           Potato.Flow.Types
 import Potato.Flow.SElts
 import Potato.Flow.Llama
-import Potato.Flow.Methods.Types
 
 import           Control.Exception  (assert)
-import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Data.IntMap.Strict as IM
 import qualified Data.IntSet as IS
 import qualified Data.Sequence      as Seq
