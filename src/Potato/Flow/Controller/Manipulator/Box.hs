@@ -39,6 +39,24 @@ import qualified Data.Sequence as Seq
 
 import Control.Exception (assert)
 
+
+
+superOwl_isTransformable :: (HasOwlTree o) => SuperOwl -> o -> Bool
+superOwl_isTransformable sowl ot = case _owlItem_subItem (_superOwl_elt sowl) of
+  OwlSubItemNone -> False
+  OwlSubItemFolder _ -> False
+  OwlSubItemLine sline _ -> not $
+    (fromMaybe False $ _sAutoLine_attachStart sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
+    && (fromMaybe False $ _sAutoLine_attachEnd sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
+  _ -> True
+
+transformableSelection :: PotatoHandlerInput -> Seq SuperOwl
+transformableSelection PotatoHandlerInput {..} = transformableSelection' _potatoHandlerInput_pFState _potatoHandlerInput_canvasSelection
+
+transformableSelection' :: OwlPFState -> CanvasSelection -> Seq SuperOwl
+transformableSelection' pfs sel = Seq.filter (flip superOwl_isTransformable pfs) (unCanvasSelection sel)
+
+
 -- TODO rework this stuff, it was written with old assumptions that don't make sense anymore
 data MouseManipulatorType = MouseManipulatorType_Corner | MouseManipulatorType_Side | MouseManipulatorType_Point | MouseManipulatorType_Area | MouseManipulatorType_Text deriving (Show, Eq)
 data MouseManipulator = MouseManipulator {
@@ -51,9 +69,10 @@ type MouseManipulatorSet = [MouseManipulator]
 type ManipulatorIndex = Int
 
 toMouseManipulators :: OwlPFState -> CanvasSelection -> MouseManipulatorSet
-toMouseManipulators pfs (CanvasSelection selection) = bb where
+toMouseManipulators pfs selection' = bb where
   union_lBoxes :: NonEmpty LBox -> LBox
   union_lBoxes (x:|xs) = foldl' union_lBox x xs
+  selection = transformableSelection' pfs selection'
   fmapfn sowl = _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs
   -- consider filtering out boxes with 0 area, but really _sEltDrawer_box should have return type Maybe LBox
   sboxes = toList $ fmap fmapfn selection
@@ -150,19 +169,6 @@ makeDragDeltaBox bht rmd = r where
     else dragDelta
 
   r = makeDeltaBox bht boxRestrictedDelta
-
-
-superOwl_isTransformable :: (HasOwlTree o) => SuperOwl -> o -> Bool
-superOwl_isTransformable sowl ot = case _owlItem_subItem (_superOwl_elt sowl) of
-  OwlSubItemNone -> False
-  OwlSubItemFolder _ -> False
-  OwlSubItemLine sline _ -> not $
-    (fromMaybe False $ _sAutoLine_attachStart sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
-    && (fromMaybe False $ _sAutoLine_attachEnd sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
-  _ -> True
-
-transformableSelection :: PotatoHandlerInput -> Seq SuperOwl
-transformableSelection PotatoHandlerInput {..} = Seq.filter (flip superOwl_isTransformable _potatoHandlerInput_pFState) (unCanvasSelection _potatoHandlerInput_canvasSelection)
 
 makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> Maybe WSEvent
 makeDragOperation undoFirst phi dbox = op where

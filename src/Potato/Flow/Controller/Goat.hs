@@ -617,6 +617,14 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   rendercontext_forSelection = rendercontext_afterUpdate {
       -- NOTE this will render hidden stuff that's selected via layers!!
       _renderContext_layerMetaMap = IM.empty
+
+
+      -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS
+      -- IDK WHY BUT IF YOU SELECT AUTOLINE WITH BOX AND MOVE BOTH THE CACHE STAYS WITH ORIGINAL PLACE AND SELECTED LINE DOESN'T MOVE
+      -- so temp fix it by reseting the cache on those lines that moved
+      , _renderContext_owlTree = owlTree_withCacheResetOnAttachments
+
+
       -- empty canvas to render our selection in
       -- we just re-render everything for now (in the future you can try and do partial rendering though)
       , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox

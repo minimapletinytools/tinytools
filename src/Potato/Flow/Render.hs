@@ -351,7 +351,7 @@ updateCanvas :: SuperOwlChanges -> NeedsUpdateSet -> RenderContext -> RenderCont
 updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdateaabbs of
   [] -> rctx
   -- TODO create disjoint union of all boxes and render than one at a time instead union_lBoxing them all
-  (b:bs) -> case intersect_lBox (renderedCanvas_box _renderContext_renderedCanvasRegion) (foldl' union_lBox b bs) of
+  aoeu@(b:bs) -> trace "UPDATE CANVAS" $ traceShow aoeu $ case intersect_lBox (renderedCanvas_box _renderContext_renderedCanvasRegion) (foldl' union_lBox b bs) of
     Nothing -> rctx
     Just aabb -> r where
       rids = broadPhase_cull aabb (_broadPhaseState_bPTree _renderContext_broadPhase)
