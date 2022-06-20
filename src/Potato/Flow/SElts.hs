@@ -23,6 +23,7 @@ module Potato.Flow.SElts (
   , make_sBoxType
   , SBox(..)
   , sBox_hasLabel
+  , SAutoLineConstraint(..)
   , SAutoLine(..)
   , TextAreaMapping
   , STextArea(..)
@@ -296,6 +297,14 @@ instance Default LineStyle where
       , _lineStyle_autoStyle   = def
     }
 
+-- someday we might have more than one constraint...
+data SAutoLineConstraint = SAutoLineConstraintFixed XY deriving (Eq, Generic, Show)
+
+instance FromJSON SAutoLineConstraint
+instance ToJSON SAutoLineConstraint
+instance Binary SAutoLineConstraint
+instance NFData SAutoLineConstraint
+
 -- |
 data SAutoLine = SAutoLine {
   _sAutoLine_start       :: XY
@@ -309,7 +318,7 @@ data SAutoLine = SAutoLine {
   , _sAutoLine_attachStart :: Maybe Attachment
   , _sAutoLine_attachEnd :: Maybe Attachment
 
-  , _sAutoLine_midpoints :: [XY] --  WIP currently does nothing
+  , _sAutoLine_midpoints :: [SAutoLineConstraint] --  WIP currently does nothing
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SAutoLine

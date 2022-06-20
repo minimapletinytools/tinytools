@@ -356,8 +356,12 @@ updateOwlSubItemCache ot x = case x of
 
 -- TODO move modify methods to another file
 
+modify_sAutoLineConstraint_with_cBoundingBox :: Bool -> SAutoLineConstraint -> CBoundingBox -> SAutoLineConstraint
+modify_sAutoLineConstraint_with_cBoundingBox isDo constraint CBoundingBox {..} = case constraint of
+  SAutoLineConstraintFixed xy -> SAutoLineConstraintFixed $ modifyDelta isDo xy (_deltaLBox_translate _cBoundingBox_deltaBox)
+
 modify_sElt_with_cBoundingBox :: Bool -> SElt -> CBoundingBox -> SElt
-modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
+modify_sElt_with_cBoundingBox isDo selt cbb@CBoundingBox {..} = case selt of
   SEltBox sbox  -> SEltBox $ sbox {
       _sBox_box = modifyDelta isDo (_sBox_box sbox) _cBoundingBox_deltaBox
     }
@@ -367,8 +371,7 @@ modify_sElt_with_cBoundingBox isDo selt CBoundingBox {..} = case selt of
         (_deltaLBox_translate _cBoundingBox_deltaBox)
       , _sAutoLine_end = modifyDelta isDo _sAutoLine_end
         (_deltaLBox_translate _cBoundingBox_deltaBox)
-      , _sAutoLine_midpoints = fmap (\xy -> modifyDelta isDo xy
-        (_deltaLBox_translate _cBoundingBox_deltaBox)) _sAutoLine_midpoints
+      , _sAutoLine_midpoints = fmap (\slc -> modify_sAutoLineConstraint_with_cBoundingBox isDo slc cbb) _sAutoLine_midpoints
     }
   SEltTextArea stext -> SEltTextArea $ stext {
       _sTextArea_box     = modifyDelta isDo (_sTextArea_box stext) _cBoundingBox_deltaBox
