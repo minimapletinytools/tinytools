@@ -97,23 +97,14 @@ sAutoLineConstraint_handlerPosition slc = case slc of
   SAutoLineConstraintFixed xy -> xy
 
 -- TODO rewrite so it takes a SAutoLine
-findFirstLineManipulator_NEW :: Bool -> OwlPFState -> RelMouseDrag -> CanvasSelection -> LineManipulatorProxy
-findFirstLineManipulator_NEW offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
-  msowl = Seq.lookup 0 selection
-  selt = case msowl of
-    Nothing -> error "expected selection"
-    Just sowl -> superOwl_toSElt_hack sowl
-  r = case selt of
-    SEltLine SAutoLine {..} ->
-      let
-        start = fromMaybe _sAutoLine_start $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachStart
-        end = fromMaybe _sAutoLine_end $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachEnd
-        mmid = L.findIndex (\slc -> sAutoLineConstraint_handlerPosition slc == _mouseDrag_to) _sAutoLine_midpoints
-      in
-        if _mouseDrag_to == start then LMP_Endpoint True
-          else if _mouseDrag_to == end then LMP_Endpoint False
-            else maybe LMP_Nothing LMP_Midpoint mmid
-    x -> error $ "expected SAutoLine in selection but got " <> show x <> " instead"
+findFirstLineManipulator_NEW :: SAutoLine -> Bool -> OwlPFState -> RelMouseDrag-> LineManipulatorProxy
+findFirstLineManipulator_NEW SAutoLine {..} offsetBorder pfs (RelMouseDrag MouseDrag {..})= r where
+  start = fromMaybe _sAutoLine_start $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachStart
+  end = fromMaybe _sAutoLine_end $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachEnd
+  mmid = L.findIndex (\slc -> sAutoLineConstraint_handlerPosition slc == _mouseDrag_to) _sAutoLine_midpoints
+  r = if _mouseDrag_to == start then LMP_Endpoint True
+    else if _mouseDrag_to == end then LMP_Endpoint False
+      else maybe LMP_Nothing LMP_Midpoint mmid
 
 
 -- returns index into midpoints if we clicked on the line, if index is out of bounds then point is between last midpoint and endpoint
@@ -147,8 +138,8 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
-        firstlm = findFirstLineManipulator_NEW _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
         (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
+        firstlm = findFirstLineManipulator_NEW sline _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
 
         -- TODO update cache someday
