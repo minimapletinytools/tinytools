@@ -134,6 +134,7 @@ attachmentMap_addSuperOwls' filterfn sowls am = r where
 attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 
+-- TODO apparantely first 2 args aren't needed delete them
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: OwlTree -> IS.IntSet -> SuperOwlChanges -> AttachmentMap -> AttachmentMap
@@ -173,7 +174,7 @@ instance PotatoShow SuperOwl where
     where
       elt = case _superOwl_elt of
         OwlItem oinfo (OwlSubItemFolder kiddos) -> "folder: " <> (_owlInfo_name oinfo) <> ": " <> show kiddos
-        OwlItem oinfo x -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
+        OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl
@@ -422,7 +423,7 @@ superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toLis
         where
           kiddoS = (unSuperOwlParliament . owlParliament_toSuperOwlParliament od . OwlParliament $ kiddos)
           (newmaxid, childSElts) = mapAccumL makeSElt (maxid + 1) kiddoS
-      OwlItem oinfo osubitem -> (maxid, Seq.singleton $ (_superOwl_id sowl, hasOwlItem_toSEltLabel_hack (_superOwl_elt sowl)))
+      _ -> (maxid, Seq.singleton $ (_superOwl_id sowl, hasOwlItem_toSEltLabel_hack (_superOwl_elt sowl)))
     (_, r) = mapAccumL makeSElt (owlTree_maxId od) sowls
 
 
@@ -466,7 +467,7 @@ owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = ass
         , _owlItemMeta_position = pos -- relies on OwlParliament being correctly ordered
       }
     newoe = case _superOwl_elt sowl of
-      OwlItem oinfo (OwlSubItemFolder kiddos) -> OwlItem oinfo (OwlSubItemFolder newchildrids)
+      OwlItem oinfo (OwlSubItemFolder _) -> OwlItem oinfo (OwlSubItemFolder newchildrids)
       x -> x
     newom = IM.insert nrid (newoem, newoe) om
     newridremap = IM.insert rid nrid ridremap
@@ -711,7 +712,7 @@ owlTree_topSuperOwls od = r
 
 owlTree_foldAt' :: (a -> SuperOwl -> a) -> a -> OwlTree -> SuperOwl -> a
 owlTree_foldAt' f acc od sowl = case _superOwl_elt sowl of
-  OwlItem oinfo (OwlSubItemFolder kiddos) -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) (f acc sowl) kiddos
+  OwlItem _ (OwlSubItemFolder kiddos) -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) (f acc sowl) kiddos
   _ -> f acc sowl
 
 -- | fold over an element in the tree and all its children
@@ -720,7 +721,7 @@ owlTree_foldAt f acc od rid = owlTree_foldAt' f acc od (owlTree_mustFindSuperOwl
 
 owlTree_foldChildrenAt' :: (a -> SuperOwl -> a) -> a -> OwlTree -> SuperOwl -> a
 owlTree_foldChildrenAt' f acc od sowl = case _superOwl_elt sowl of
-  OwlItem oinfo (OwlSubItemFolder kiddos) -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) acc kiddos
+  OwlItem _ (OwlSubItemFolder kiddos) -> foldl (\acc' rid' -> owlTree_foldAt' f acc' od (owlTree_mustFindSuperOwl od rid')) acc kiddos
   _ -> acc
 
 -- | same as owlTree_foldAt but excludes parent
@@ -794,7 +795,7 @@ owlTree_removeSuperOwl sowl OwlTree {..} = r
     -- remove all children recursively
     removeEltWithoutAdjustMommyFn rid mapping = case IM.lookup rid mapping of
       Nothing -> error $ errorMsg_owlMapping_lookupFail mapping rid
-      Just (_, OwlItem oinfo (OwlSubItemFolder kiddos)) -> foldr removeEltWithoutAdjustMommyFn (IM.delete rid mapping) kiddos
+      Just (_, OwlItem _ (OwlSubItemFolder kiddos)) -> foldr removeEltWithoutAdjustMommyFn (IM.delete rid mapping) kiddos
       Just _ -> IM.delete rid mapping
     newMapping' = case _superOwl_elt sowl of
       OwlItem _ (OwlSubItemFolder kiddos) -> foldr removeEltWithoutAdjustMommyFn newMapping'' kiddos
@@ -958,7 +959,7 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
 
     oeltmodded = case _superOwl_elt sowl of
       -- temp remove kiddos from parent as needed by internal_owlTree_addOwlItem
-      OwlItem oinfo (OwlSubItemFolder kiddos) -> OwlItem oinfo (OwlSubItemFolder Seq.empty)
+      OwlItem oinfo (OwlSubItemFolder _) -> OwlItem oinfo (OwlSubItemFolder Seq.empty)
       x -> x
 
   -- go from left to right such that parents/left siblings are added first
@@ -970,7 +971,7 @@ internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = assert nochild
   where
     -- if we're adding a folder (in the normal case), ensure it has no children
     nochildrenifaddingfolder = case oitem of
-      OwlItem oinfo (OwlSubItemFolder kiddos) -> Seq.null kiddos
+      OwlItem _ (OwlSubItemFolder kiddos) -> Seq.null kiddos
       _ -> True
 
     -- first add the OwlItem to the mapping
