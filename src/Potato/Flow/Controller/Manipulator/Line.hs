@@ -122,10 +122,7 @@ whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
   anchors = case manchors of
     Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
     Just x -> x
-  -- TODO this is hard because we need to track which anchors are midponits in LineAnchorsForRender are
-  r = undefined
-
-
+  r = lineAnchorsForRender_findIntersectingSubsegment anchors xy
 
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
@@ -150,14 +147,12 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
-        --(_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
         firstlm = findFirstLineManipulator_NEW _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+        (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
 
 
         -- TODO update cache someday
-        -- TODO finish whereOnLineDidClick
-        --mclickonline = whereOnLineDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline Nothing _mouseDrag_to
-        mclickonline = Nothing
+        mclickonline = whereOnLineDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline Nothing _mouseDrag_to
 
         r = case firstlm of
 

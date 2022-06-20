@@ -4,6 +4,7 @@ module Potato.Flow.Methods.LineDrawer (
   LineAnchorsForRender(..)
   , lineAnchorsForRender_doesIntersectPoint
   , lineAnchorsForRender_doesIntersectBox
+  , lineAnchorsForRender_findIntersectingSubsegment
 
   , sSimpleLineNewRenderFn
   , sSimpleLineNewRenderFnComputeCache
