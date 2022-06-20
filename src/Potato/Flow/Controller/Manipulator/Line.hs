@@ -25,6 +25,7 @@ import Potato.Flow.Llama
 import           Control.Exception
 import           Data.Default
 import qualified Data.Sequence                             as Seq
+import qualified Data.List as L
 
 maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
 maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
@@ -88,9 +89,15 @@ instance Default AutoLineHandler where
       , _autoLineHandler_offsetAttach = False
     }
 
+-- TODO instead of `LMP_Midpoint Int` consider using zipper
+data LineManipulatorProxy = LMP_Endpoint Bool | LMP_Midpoint Int | LMP_Nothing
 
-findFirstLineManipulator :: Bool -> OwlPFState -> RelMouseDrag -> CanvasSelection -> Maybe Bool
-findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
+sAutoLineConstraint_handlerPosition :: SAutoLineConstraint -> XY
+sAutoLineConstraint_handlerPosition slc = case slc of
+  SAutoLineConstraintFixed xy -> xy
+
+findFirstLineManipulator_NEW :: Bool -> OwlPFState -> RelMouseDrag -> CanvasSelection -> LineManipulatorProxy
+findFirstLineManipulator_NEW offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
   msowl = Seq.lookup 0 selection
   selt = case msowl of
     Nothing -> error "expected selection"
@@ -100,12 +107,12 @@ findFirstLineManipulator offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasS
       let
         start = fromMaybe _sAutoLine_start $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachStart
         end = fromMaybe _sAutoLine_end $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachEnd
+        mmid = L.findIndex (\slc -> sAutoLineConstraint_handlerPosition slc == _mouseDrag_to) _sAutoLine_midpoints
       in
-        if _mouseDrag_to == start then Just True
-          else if _mouseDrag_to == end then Just False
-            else Nothing
+        if _mouseDrag_to == start then LMP_Endpoint True
+          else if _mouseDrag_to == end then LMP_Endpoint False
+            else maybe LMP_Nothing LMP_Midpoint mmid
     x -> error $ "expected SAutoLine in selection but got " <> show x <> " instead"
-
 
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
@@ -130,25 +137,26 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
-        -- TODO replace this with a function that also finds midpoints
-        mistart = findFirstLineManipulator _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+        firstlm = findFirstLineManipulator_NEW _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
+
         -- TODO
         clickonline = False
-        r = case mistart of
+        r = case firstlm of
 
           -- if clicked on line but not on a handler, track the position
-          Nothing | clickonline -> Just $ def {
+          LMP_Nothing | clickonline -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                   _autoLineHandler_mDownPos = Just _mouseDrag_to
                 }
             }
 
           -- did not click on manipulator, no capture
-          Nothing -> Nothing
+          LMP_Nothing -> Nothing
 
           -- TODO click on midpoint, make midpoint handler
+          LMP_Midpoint i -> error "TODO"
 
-          Just isstart -> Just $ def {
+          LMP_Endpoint isstart -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineEndPointHandler {
                   _autoLineEndPointHandler_isStart      = isstart
                   , _autoLineEndPointHandler_undoFirst  = False
