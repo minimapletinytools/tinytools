@@ -302,8 +302,13 @@ data SAutoLine = SAutoLine {
   , _sAutoLine_end       :: XY
   , _sAutoLine_superStyle     :: SuperStyle
   , _sAutoLine_lineStyle :: LineStyle
+
+  -- NOTE attachments currently are not guaranteed to exist
+  -- in particular, if you copy a line, delete its target and paste, it will be attached to something that doesn't exist
+  -- tinytools will attempt to correct attachment in some cases but don't get too cozy about it!
   , _sAutoLine_attachStart :: Maybe Attachment
   , _sAutoLine_attachEnd :: Maybe Attachment
+
   , _sAutoLine_midpoints :: [XY] --  WIP currently does nothing
 } deriving (Eq, Generic, Show)
 

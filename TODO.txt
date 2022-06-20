@@ -55,9 +55,12 @@ WIDE
   -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
 -Select box + attached lines
   -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
+  -selecting multiple fully attached lines should not allow moving?
+  -selecting fully attached line and something that can be moved.. I guess the box should draw around just the stuff that can be moved
 -tests to write
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
+  -create 2 fully attached lines, select them both, ensure not possible to move
 -BUG
            ╔══════════╗
            ║@@@@@@@@@@║

@@ -152,18 +152,30 @@ makeDragDeltaBox bht rmd = r where
   r = makeDeltaBox bht boxRestrictedDelta
 
 
+superOwl_isTransformable :: (HasOwlTree o) => SuperOwl -> o -> Bool
+superOwl_isTransformable sowl ot = case _owlItem_subItem (_superOwl_elt sowl) of
+  OwlSubItemNone -> False
+  OwlSubItemFolder _ -> False
+  OwlSubItemLine sline _ -> not $
+    (fromMaybe False $ _sAutoLine_attachStart sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
+    && (fromMaybe False $ _sAutoLine_attachEnd sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
+  _ -> True
 
+transformableSelection :: PotatoHandlerInput -> Seq SuperOwl
+transformableSelection PotatoHandlerInput {..} = Seq.filter (flip superOwl_isTransformable _potatoHandlerInput_pFState) (unCanvasSelection _potatoHandlerInput_canvasSelection)
 
-makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> WSEvent
-makeDragOperation undoFirst PotatoHandlerInput {..} dbox = op where
-  CanvasSelection selection = _potatoHandlerInput_canvasSelection
+makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> Maybe WSEvent
+makeDragOperation undoFirst phi dbox = op where
+  selection = transformableSelection phi
 
   makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
       _cBoundingBox_deltaBox = dbox
     })
 
-  op = WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
+  op = if Seq.null selection
+    then Nothing
+    else Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)
@@ -269,9 +281,9 @@ instance PotatoHandler BoxHandler where
         BoxCreationType_TextArea -> "<textarea>"
         _ -> error "invalid BoxCreationType"
 
-      op = case _boxHandler_creation of
-        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd))
-        BoxCreationType_TextArea -> WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd))
+      mop = case _boxHandler_creation of
+        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd))
+        BoxCreationType_TextArea -> Just $ WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd))
         _ -> makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh {
@@ -284,7 +296,7 @@ instance PotatoHandler BoxHandler where
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
-          , _potatoHandlerOutput_pFEvent = Just op
+          , _potatoHandlerOutput_pFEvent = mop
         }
 
     MouseDragState_Up | _boxHandler_downOnLabel -> if isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
@@ -346,10 +358,10 @@ instance PotatoHandler BoxHandler where
       else case mmove of
         Nothing -> Nothing
         Just move -> Just r2 where
-          op = makeDragOperation False phi move
+          mop = makeDragOperation False phi move
           r2 = def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
-              , _potatoHandlerOutput_pFEvent = Just op
+              , _potatoHandlerOutput_pFEvent = mop
             }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where

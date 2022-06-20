@@ -622,6 +622,9 @@ emptyOwlTree =
       _owlTree_topOwls = Seq.empty
     }
 
+owlTree_exists :: OwlTree -> REltId -> Bool
+owlTree_exists OwlTree {..} rid = IM.member rid _owlTree_mapping
+
 owlTree_findSuperOwl :: OwlTree -> REltId -> Maybe SuperOwl
 owlTree_findSuperOwl OwlTree {..} rid = do
   (meta, elt) <- IM.lookup rid _owlTree_mapping
@@ -753,6 +756,8 @@ owlTree_clearCacheAtKeys ot keys = r where
 
 class HasOwlTree o where
   hasOwlTree_owlTree :: o -> OwlTree
+  hasOwlTree_exists :: o -> REltId -> Bool
+  hasOwlTree_exists o rid = hasOwlTree_exists (hasOwlTree_owlTree o) rid
   hasOwlTree_findSuperOwl :: o -> REltId -> Maybe SuperOwl
   hasOwlTree_findSuperOwl o rid = hasOwlTree_findSuperOwl (hasOwlTree_owlTree o) rid
   hasOwlTree_mustFindSuperOwl :: HasCallStack => o -> REltId -> SuperOwl
@@ -766,6 +771,7 @@ class HasOwlTree o where
 
 instance HasOwlTree OwlTree where
   hasOwlTree_owlTree = id
+  hasOwlTree_exists = owlTree_exists
   hasOwlTree_findSuperOwl = owlTree_findSuperOwl
   hasOwlTree_mustFindSuperOwl = owlTree_mustFindSuperOwl
   hasOwlTree_test_findFirstSuperOwlByName ot label = find (\sowl -> hasOwlItem_name sowl == label) . toList $ owliterateall ot
