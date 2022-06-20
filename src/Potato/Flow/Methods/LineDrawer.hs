@@ -22,22 +22,15 @@ import           Relude
 import Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
 import Potato.Flow.Methods.Types
 import Potato.Flow.Attachments
 import Potato.Flow.Owl
 import Potato.Flow.OwlItem
 
-import qualified Data.Map as Map
-import           Data.Dependent.Sum (DSum ((:=>)), (==>))
-import           Data.Maybe         (fromJust)
 import qualified Data.Text          as T
-import qualified Potato.Data.Text.Zipper   as TZ
-import Data.Default
 import Data.Tuple.Extra
 
 import Linear.Vector ((^*))
-import Linear.Matrix (M22, (!*))
 
 import Control.Exception (assert)
 
@@ -96,7 +89,7 @@ renderLine SuperStyle {..} cd = case cd of
   CD_Right -> _superStyle_horizontal
 
 renderLineEnd :: SuperStyle -> LineStyle -> CartDir -> Int -> MPChar
-renderLineEnd SuperStyle {..} ls@LineStyle {..} cd distancefromend = r where
+renderLineEnd SuperStyle {..} LineStyle {..} cd distancefromend = r where
   r = case cd of
     CD_Up -> fromMaybe _superStyle_vertical $ maybeIndex _lineStyle_upArrows distancefromend
     CD_Down -> fromMaybe _superStyle_vertical $ maybeIndex (T.reverse _lineStyle_downArrows) distancefromend
@@ -119,7 +112,7 @@ renderAnchorType ss@SuperStyle {..} ls@LineStyle {..} at = r where
 
 
 lineAnchorsForRender_simplify :: LineAnchorsForRender -> LineAnchorsForRender
-lineAnchorsForRender_simplify lafr@LineAnchorsForRender {..} = r where
+lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
   -- remove 0 distance lines except at front and back
   withoutzeros = case _lineAnchorsForRender_rest of
     [] -> []
@@ -148,7 +141,7 @@ lineAnchorsForRender_reverse LineAnchorsForRender {..} = r where
   end = foldl' (\p cdd -> p + cartDirWithDistanceToV2 cdd) _lineAnchorsForRender_start _lineAnchorsForRender_rest
   revgo acc [] = acc
   revgo acc ((cd,d,False):[]) = (cd,d,True):acc
-  revgo acc ((cd,d,True):[]) = error "unexpected subsegment starting anchor at end"
+  revgo _ ((_,_,True):[]) = error "unexpected subsegment starting anchor at end"
   revgo acc (x:xs) = revgo (x:acc) xs
   revgostart [] = []
   revgostart ((cd,d,True):xs) = revgo [(cd,d,False)] xs
@@ -208,7 +201,6 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
   lbx1isstrictlyleft = ax1 < ax2
   lbx1isleft = ax1 <= ax2
   lbx1isstrictlyabove = ay1 < ay2
-  lbx1isabove = ay1 <= ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
   --traceStep = trace
@@ -432,15 +424,6 @@ walkToRender ss@SuperStyle {..} ls@LineStyle {..} isstart begin (tcd, tl, _) mne
     then (currentpos, endorelbow)
     else (currentpos, startorregular)
 
-
--- DELETE not what you need
-mapAccumFind :: (a -> b -> (a, Maybe c)) -> a -> [b] -> Maybe c
-mapAccumFind f acc l = case l of
-  [] -> Nothing
-  x:xs -> case f acc x of
-    (nacc, Nothing) -> mapAccumFind f nacc xs
-    (_, manswer) -> manswer
-
 lineAnchorsForRender_renderAt :: SuperStyle -> LineStyle -> LineAnchorsForRender -> XY -> MPChar
 lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
   walk (isstart, curbegin) a = case a of
@@ -449,7 +432,7 @@ lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
       Nothing ->  walk (False, nextbegin) xs
       Just d -> Just $ case xs of
         [] -> walkToRender ss ls isstart curbegin x Nothing d
-        y:ys -> walkToRender ss ls isstart curbegin x (Just y) d
+        y:_ -> walkToRender ss ls isstart curbegin x (Just y) d
       where
         nextbegin = curbegin + cartDirWithDistanceToV2 x
 
@@ -491,11 +474,6 @@ lineAnchorsForRender_doesIntersectBox LineAnchorsForRender {..} lbox = r where
 
 sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer
 sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
-  params = SimpleLineSolverParameters {
-      _simpleLineSolverParameters_offsetBorder = True
-      -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
-      , _simpleLineSolverParameters_attachOffset = 1
-    }
 
   getAnchors :: (HasOwlTree a) => a -> LineAnchorsForRender
   getAnchors ot = case mcache of
@@ -521,7 +499,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     }
 
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
-sSimpleLineNewRenderFnComputeCache ot ssline@SAutoLine {..} = anchors where
+sSimpleLineNewRenderFnComputeCache ot SAutoLine {..} = anchors where
   params = SimpleLineSolverParameters {
       _simpleLineSolverParameters_offsetBorder = True
       -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
