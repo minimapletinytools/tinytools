@@ -458,6 +458,18 @@ lineAnchorsForRender_renderAt ss ls LineAnchorsForRender {..} pos = r where
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
+-- UNTESTED
+-- returns index of subsegment that intersects with pos
+lineAnchorsForRender_findIntersectingSubsegment :: LineAnchorsForRender -> XY -> Maybe Int
+lineAnchorsForRender_findIntersectingSubsegment  LineAnchorsForRender {..} pos = r where
+  walk i curbegin a = case a of
+    [] -> Nothing
+    x@(_,_,s):xs -> case doesLineContain pos curbegin x of
+      Nothing ->  walk new_i (curbegin + cartDirWithDistanceToV2 x) xs
+      Just _ -> Just new_i
+      where new_i = if s then i+1 else i
+  r = walk (-1) _lineAnchorsForRender_start _lineAnchorsForRender_rest
+
 lineAnchorsForRender_doesIntersectPoint :: LineAnchorsForRender -> XY -> Bool
 lineAnchorsForRender_doesIntersectPoint LineAnchorsForRender {..} pos = r where
   walk curbegin a = case a of
@@ -476,7 +488,6 @@ lineAnchorsForRender_doesIntersectBox LineAnchorsForRender {..} lbox = r where
       then True
       else walk (curbegin + cartDirWithDistanceToV2 x) xs
   r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
-
 
 sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer
 sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
