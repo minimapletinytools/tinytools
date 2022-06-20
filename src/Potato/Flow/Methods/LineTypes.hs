@@ -5,10 +5,7 @@ module Potato.Flow.Methods.LineTypes where
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
 
-import qualified Data.Map as Map
-import           Data.Maybe         (fromJust)
 import Data.Default
 
 import Linear.Vector ((^*))

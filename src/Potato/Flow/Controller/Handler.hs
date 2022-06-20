@@ -13,9 +13,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
-import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 
 import qualified Potato.Data.Text.Zipper                          as TZ

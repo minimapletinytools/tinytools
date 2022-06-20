@@ -16,7 +16,6 @@ import           Potato.Flow.Types
 import           Potato.Flow.OwlItem
 import Potato.Flow.Llama
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 
 import           Data.Dependent.Sum                        (DSum ((:=>)))

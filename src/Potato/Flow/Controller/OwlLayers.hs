@@ -10,7 +10,6 @@ import           Potato.Flow.Types
 import Potato.Flow.SElts
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
 import Potato.Flow.DebugHelpers
 

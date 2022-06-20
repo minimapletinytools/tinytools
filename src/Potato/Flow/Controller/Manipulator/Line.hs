@@ -16,9 +16,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.BroadPhase
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.Attachments
 import Potato.Flow.Llama
@@ -152,7 +150,7 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
-        (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
+        --(_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
         firstlm = findFirstLineManipulator_NEW _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
 
 
@@ -305,6 +303,7 @@ instance PotatoHandler AutoLineEndPointHandler where
       MouseDragState_Up -> Just def
       MouseDragState_Cancelled -> Just def
 
+  pHandleKeyboard _ PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = renderEndPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach phi
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
