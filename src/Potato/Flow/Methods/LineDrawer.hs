@@ -162,8 +162,8 @@ instance TransformMe LineAnchorsForRender where
       ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_reflectHorizontally cd, d)) _lineAnchorsForRender_rest
     }
 
-lineAnchorsForRenderToPointList :: LineAnchorsForRender -> [XY]
-lineAnchorsForRenderToPointList LineAnchorsForRender {..} = r where
+lineAnchorsForRender_toPointList :: LineAnchorsForRender -> [XY]
+lineAnchorsForRender_toPointList LineAnchorsForRender {..} = r where
   scanlfn pos (cd,d) = pos + (cartDirToUnit cd) ^* d
   r = scanl scanlfn _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
@@ -481,7 +481,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn
-  boxfn ot = case nonEmpty (lineAnchorsForRenderToPointList (getAnchors ot)) of
+  boxfn ot = case nonEmpty (lineAnchorsForRender_toPointList (getAnchors ot)) of
     Nothing -> LBox 0 0
     -- add_XY_to_lBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
     Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_lBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
