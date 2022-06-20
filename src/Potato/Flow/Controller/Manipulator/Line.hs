@@ -148,11 +148,9 @@ instance PotatoHandler AutoLineHandler where
         r = case firstlm of
 
           -- if clicked on line but not on a handler, track the position
-          -- TODO track index we clicked on
           LMP_Nothing | isJust mclickonline -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                  -- TODO set line index
-                  _autoLineHandler_mDownManipulator = Just 0
+                  _autoLineHandler_mDownManipulator = mclickonline
                 }
             }
 
@@ -163,6 +161,7 @@ instance PotatoHandler AutoLineHandler where
             handler = AutoLineMidPointHandler {
                 _autoLineMidPointHandler_midPointIndex = i
                 , _autoLineMidPointHandler_isMidpointCreation = False
+                , _autoLineMidPointHandler_undoFirst  = False
               }
             rslt = pHandleMouse handler phi rmd
 
@@ -178,12 +177,14 @@ instance PotatoHandler AutoLineHandler where
                 }
             }
       MouseDragState_Dragging -> case _autoLineHandler_mDownManipulator of
-        Nothing -> error "unexpected state"
+        -- this can happen if we cancel in the middle of a drag operation (say), it will recreate an AutoLineHandler from the selection
+        Nothing -> Nothing
         Just i -> r where
           -- TODO setup properly
           handler = AutoLineMidPointHandler {
               _autoLineMidPointHandler_midPointIndex = i
               , _autoLineMidPointHandler_isMidpointCreation = True
+              , _autoLineMidPointHandler_undoFirst  = False
             }
           r = pHandleMouse handler phi rmd
       MouseDragState_Up -> case _autoLineHandler_mDownManipulator of
@@ -306,13 +307,34 @@ instance PotatoHandler AutoLineEndPointHandler where
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
   _autoLineMidPointHandler_midPointIndex :: Int
   , _autoLineMidPointHandler_isMidpointCreation :: Bool
+  , _autoLineMidPointHandler_undoFirst :: Bool
 }
+
 
 instance PotatoHandler AutoLineMidPointHandler where
   pHandlerName _ = handlerName_simpleLine_midPoint
-  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
-  pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = undefined
-  pIsHandlerActive _ = undefined
+  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+      aoeu = undefined
+    in case _mouseDrag_state of
+      MouseDragState_Down -> error "this should be handleed by AutoLineHandler"
+      MouseDragState_Dragging -> r where
+        op = if _autoLineMidPointHandler_isMidpointCreation
+          then undefined
+          else undefined
+
+        -- TODO
+        r = Just $ def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _autoLineMidPointHandler_undoFirst  = True
+              }
+            --, _potatoHandlerOutput_pFEvent = Just op
+          }
+      -- no need to return AutoLineHandler, it will be recreated from selection by goat
+      MouseDragState_Up -> Just def
+      MouseDragState_Cancelled -> Just def
+
+  pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} =  HandlerRenderOutput []
+  pIsHandlerActive _ = True
 
 -- handles creating and modifying text labels
 data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
