@@ -51,12 +51,7 @@ WIDE
   -BUG click on eol in text box is kind of broken in general
     -doesn't laways take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--BUG attached lines don't render when you drag in some directions
-  -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
--Select box + attached lines
-  -kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
-  -selecting multiple fully attached lines should not allow moving?
-  -selecting fully attached line and something that can be moved.. I guess the box should draw around just the stuff that can be moved
+-figure out what's going on with cache updated bugs...
 -tests to write
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
@@ -179,6 +174,14 @@ WIDE
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+IGNORE-BUG attached lines don't render when you drag in some directions
+  -I think this is due to an update order, i.e. the AABB is computed from the old line's AABB rather than the new line's AABB (it needs to be both!)
+  -NO this was also probbaly due to out of date cache or something idk wtf???
+  -well it's magically fixed now W/E
+DONE-Select box + attached lines
+  DONE-kind of weird that fully attached lines don't move with select box... I guess partially attached lines do?
+  DONE-selecting multiple fully attached lines should not allow moving?
+  DONE-selecting fully attached line and something that can be moved.. I guess the box should draw around just the stuff that can be moved
 DONE-after DELETING object line is attached to, line should prob reset its endpoint position to where it was attached
   -prob makes most sense to scan for all objects
     -this might have some weird edge cases in multi user mode but whatever?

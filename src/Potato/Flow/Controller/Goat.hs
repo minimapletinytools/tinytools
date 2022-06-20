@@ -621,7 +621,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
       -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS
       -- IDK WHY BUT IF YOU SELECT AUTOLINE WITH BOX AND MOVE BOTH THE CACHE STAYS WITH ORIGINAL PLACE AND SELECTED LINE DOESN'T MOVE
-      -- so temp fix it by reseting the cache on those lines that moved
+      -- so temp fix it by reseting the cache on attached lines whos target moved
       , _renderContext_owlTree = owlTree_withCacheResetOnAttachments
 
 
