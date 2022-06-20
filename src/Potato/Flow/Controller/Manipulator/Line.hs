@@ -10,6 +10,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Types
+import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.OwlItem
@@ -26,6 +27,7 @@ import           Control.Exception
 import           Data.Default
 import qualified Data.Sequence                             as Seq
 import qualified Data.List as L
+import Data.Maybe (fromJust)
 
 maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
 maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
@@ -96,6 +98,7 @@ sAutoLineConstraint_handlerPosition :: SAutoLineConstraint -> XY
 sAutoLineConstraint_handlerPosition slc = case slc of
   SAutoLineConstraintFixed xy -> xy
 
+-- TODO rewrite so it takes a SAutoLine
 findFirstLineManipulator_NEW :: Bool -> OwlPFState -> RelMouseDrag -> CanvasSelection -> LineManipulatorProxy
 findFirstLineManipulator_NEW offsetBorder pfs (RelMouseDrag MouseDrag {..}) (CanvasSelection selection) = assert (Seq.length selection == 1) $ r where
   msowl = Seq.lookup 0 selection
@@ -113,6 +116,18 @@ findFirstLineManipulator_NEW offsetBorder pfs (RelMouseDrag MouseDrag {..}) (Can
           else if _mouseDrag_to == end then LMP_Endpoint False
             else maybe LMP_Nothing LMP_Midpoint mmid
     x -> error $ "expected SAutoLine in selection but got " <> show x <> " instead"
+
+
+-- returns index into midpoints if we clicked on the line, if index is out of bounds then point is between last midpoint and endpoint
+whereOnLineDidClick :: OwlTree -> SAutoLine -> Maybe LineAnchorsForRender -> XY -> Maybe Int
+whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
+  anchors = case manchors of
+    Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
+    Just x -> x
+  -- TODO
+  r = undefined
+
+
 
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
@@ -137,14 +152,20 @@ instance PotatoHandler AutoLineHandler where
       -- TODO consider moving this into GoatWidget since it's needed by many manipulators
       MouseDragState_Down | elem KeyModifier_Shift _mouseDrag_modifiers -> Nothing
       MouseDragState_Down -> r where
+        (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
         firstlm = findFirstLineManipulator_NEW _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd _potatoHandlerInput_canvasSelection
 
-        -- TODO
-        clickonline = False
+
+        -- TODO update cache someday
+        -- TODO finish whereOnLineDidClick
+        --mclickonline = whereOnLineDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline Nothing _mouseDrag_to
+        mclickonline = Nothing
+
         r = case firstlm of
 
           -- if clicked on line but not on a handler, track the position
-          LMP_Nothing | clickonline -> Just $ def {
+          -- TODO track index we clicked on
+          LMP_Nothing | isJust mclickonline -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                   _autoLineHandler_mDownPos = Just _mouseDrag_to
                 }
