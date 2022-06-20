@@ -34,6 +34,7 @@ import           Data.Maybe         (fromJust)
 import qualified Data.Text          as T
 import qualified Potato.Data.Text.Zipper   as TZ
 import Data.Default
+import Data.Tuple.Extra
 
 import Linear.Vector ((^*))
 import Linear.Matrix (M22, (!*))
@@ -127,13 +128,15 @@ lineAnchorsForRender_simplify lafr@LineAnchorsForRender {..} = r where
       withoutzerosback = \case
         [] -> []
         x:[] -> [x]
-        (cd, 0):xs -> xs
+        (_, 0, False):xs -> xs
+        (_, 0, True):_ -> error "unexpected 0 length subsegment starting anchor"
         x:xs -> x:withoutzerosback xs
 
-  foldrfn (cd, d) [] = [(cd, d)]
-  foldrfn (cd, d) ((cd',d'):xs) = if cd == cd'
-    then (cd, d+d'):xs
-    else (cd,d):(cd',d'):xs
+  foldrfn (cd, d, s) [] = [(cd, d, s)]
+  -- don't double up if next anchor is a subsegment starting anchor (pretty sure this should never happen)
+  foldrfn (cd, d, firstisstart) ((cd',d', nextisstart):xs) = if cd == cd' && not nextisstart
+    then (cd, d+d', firstisstart):xs
+    else (cd,d,firstisstart):(cd',d',nextisstart):xs
   withoutdoubles = foldr foldrfn [] withoutzeros
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = _lineAnchorsForRender_start
@@ -143,28 +146,35 @@ lineAnchorsForRender_simplify lafr@LineAnchorsForRender {..} = r where
 lineAnchorsForRender_reverse :: LineAnchorsForRender -> LineAnchorsForRender
 lineAnchorsForRender_reverse LineAnchorsForRender {..} = r where
   end = foldl' (\p cdd -> p + cartDirWithDistanceToV2 cdd) _lineAnchorsForRender_start _lineAnchorsForRender_rest
+  revgo acc [] = acc
+  revgo acc ((cd,d,False):[]) = (cd,d,True):acc
+  revgo acc ((cd,d,True):[]) = error "unexpected subsegment starting anchor at end"
+  revgo acc (x:xs) = revgo (x:acc) xs
+  revgostart [] = []
+  revgostart ((cd,d,True):xs) = revgo [(cd,d,False)] xs
+  revgostart _ = error "unexpected non-subsegment starting anchor at start"
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = end
-      , _lineAnchorsForRender_rest = reverse . fmap (\(cd,d) -> (flipCartDir cd, d)) $ _lineAnchorsForRender_rest
+      , _lineAnchorsForRender_rest = revgostart _lineAnchorsForRender_rest
     }
 
 instance TransformMe LineAnchorsForRender where
   transformMe_rotateLeft LineAnchorsForRender {..} = LineAnchorsForRender {
       _lineAnchorsForRender_start = transformMe_rotateLeft _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_rotateLeft cd, d)) _lineAnchorsForRender_rest
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateLeft cd, d, s)) _lineAnchorsForRender_rest
     }
   transformMe_rotateRight LineAnchorsForRender {..} = LineAnchorsForRender {
       _lineAnchorsForRender_start = transformMe_rotateRight _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_rotateRight cd, d)) _lineAnchorsForRender_rest
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateRight cd, d, s)) _lineAnchorsForRender_rest
     }
   transformMe_reflectHorizontally LineAnchorsForRender {..} = LineAnchorsForRender {
       _lineAnchorsForRender_start = transformMe_reflectHorizontally _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d) -> (transformMe_reflectHorizontally cd, d)) _lineAnchorsForRender_rest
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_reflectHorizontally cd, d, s)) _lineAnchorsForRender_rest
     }
 
 lineAnchorsForRender_toPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRender_toPointList LineAnchorsForRender {..} = r where
-  scanlfn pos (cd,d) = pos + (cartDirToUnit cd) ^* d
+  scanlfn pos (cd,d,_) = pos + (cartDirToUnit cd) ^* d
   r = scanl scanlfn _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
 data SimpleLineSolverParameters = SimpleLineSolverParameters {
@@ -176,6 +186,12 @@ instance TransformMe SimpleLineSolverParameters where
   transformMe_rotateLeft = id
   transformMe_rotateRight = id
   transformMe_reflectHorizontally = id
+
+
+
+restify :: [(CartDir, Int)] -> [(CartDir, Int, Bool)]
+restify [] = []
+restify ((cd,d):xs) = (cd,d,True):fmap (\(a,b) -> (a,b,False)) xs
 
 sSimpleLineSolver :: (Text, Int) -> SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
 sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) =  finaloutput where
@@ -228,7 +244,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       center_to_lb2 = (CD_Right, (ax2-halfway))
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_center, centerverticalline, center_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_center, centerverticalline, center_to_lb2]
         }
 
     -- WORKING
@@ -254,7 +270,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_right, right_to_torb, torb, torb_to_left, left_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_right, right_to_torb, torb, torb_to_left, left_to_lb2]
         }
 
     -- WORKING
@@ -273,7 +289,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       left_to_lb2 = (CD_Right, _simpleLineSolverParameters_attachOffset)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_right, right_to_center, center, center_to_left, left_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_right, right_to_center, center, center_to_left, left_to_lb2]
         }
 
     -- WORKING
@@ -289,7 +305,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       right2_to_lb2 = (CD_Left, rightedge-r2)
       answer = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_right2, right2_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_right1, right1_to_right2, right2_to_lb2]
         }
 
     -- WORKING
@@ -312,7 +328,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       right2_to_lb2 = (CD_Left, _simpleLineSolverParameters_attachOffset)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
     AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver (nextmsg "case 6") sls lbal2 lbal1
@@ -338,7 +354,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       right2_to_lb2 = (CD_Left, right-ax2)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
         }
     --     <-2
     -- ^
@@ -358,7 +374,7 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
       down_to_lb2 = (CD_Right, ax2-up_to_over_xpos)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
-          , _lineAnchorsForRender_rest = [lb1_to_up, up_to_over,over_to_down,down_to_lb2]
+          , _lineAnchorsForRender_rest = restify [lb1_to_up, up_to_over,over_to_down,down_to_lb2]
         }
 
     --        ^
@@ -378,8 +394,8 @@ sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(l
     then error errormsg
     else lineAnchorsForRender_simplify anchors
 
-doesLineContain :: XY -> XY -> (CartDir, Int) -> Maybe Int
-doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
+doesLineContain :: XY -> XY -> (CartDir, Int, Bool) -> Maybe Int
+doesLineContain (V2 px py) (V2 sx sy) (tcd, tl, _) = case tcd of
   CD_Left | py == sy -> if px <= sx && px >= sx-tl then Just (sx-px) else Nothing
   CD_Right | py == sy -> if px >= sx && px <= sx+tl then Just (px-sx) else Nothing
   CD_Up | px == sx -> if py <= sy && py >= sy-tl then Just (sy-py) else Nothing
@@ -387,8 +403,8 @@ doesLineContain (V2 px py) (V2 sx sy) (tcd, tl) = case tcd of
   _ -> Nothing
 
 -- TODO test
-doesLineContainBox :: LBox -> XY -> (CartDir, Int) -> Bool
-doesLineContainBox lbox (V2 sx sy) (tcd, tl) = r where
+doesLineContainBox :: LBox -> XY -> (CartDir, Int, Bool) -> Bool
+doesLineContainBox lbox (V2 sx sy) (tcd, tl, _) = r where
   (x,y, w,h) = case tcd of
     CD_Left -> (sx-tl, sy, tl+1, 1)
     CD_Right -> (sx, sy, tl+1, 1)
@@ -397,11 +413,11 @@ doesLineContainBox lbox (V2 sx sy) (tcd, tl) = r where
   lbox2 = LBox (V2 x y) (V2 w h)
   r = does_lBox_intersect lbox lbox2
 
-walkToRender :: SuperStyle -> LineStyle -> Bool -> XY -> (CartDir, Int) -> Maybe (CartDir, Int) -> Int -> (XY, MPChar)
-walkToRender ss@SuperStyle {..} ls@LineStyle {..} isstart begin (tcd, tl) mnext d = r where
+walkToRender :: SuperStyle -> LineStyle -> Bool -> XY -> (CartDir, Int, Bool) -> Maybe (CartDir, Int, Bool) -> Int -> (XY, MPChar)
+walkToRender ss@SuperStyle {..} ls@LineStyle {..} isstart begin (tcd, tl, _) mnext d = r where
   currentpos = begin + (cartDirToUnit tcd) ^* d
 
-  endorelbow = renderAnchorType ss ls $ cartDirToAnchor tcd (fmap fst mnext)
+  endorelbow = renderAnchorType ss ls $ cartDirToAnchor tcd (fmap fst3 mnext)
   startorregular = if isstart
     then if d <= tl `div` 2
       -- if we are at the start and near the beginning then render start of line

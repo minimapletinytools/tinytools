@@ -73,9 +73,9 @@ spec = do
       let
         lineanchors = LineAnchorsForRender {
             _lineAnchorsForRender_start = 0
-            , _lineAnchorsForRender_rest = [(CD_Up, 10),(CD_Up, 15),(CD_Up, 1),(CD_Right, 10)]
+            , _lineAnchorsForRender_rest = [(CD_Up, 10, True),(CD_Up, 15, False),(CD_Up, 1, False),(CD_Right, 10, False)]
           }
-      _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26),(CD_Right, 10)]
+      _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26, True),(CD_Right, 10, False)]
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
     --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True

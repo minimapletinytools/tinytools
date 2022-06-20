@@ -62,13 +62,14 @@ cartDirToAnchor start mnext = case mnext of
       CD_Down -> AT_Elbow_TR
       _ -> AT_Elbow_Invalid
 
-cartDirWithDistanceToV2 :: (CartDir, Int) -> V2 Int
-cartDirWithDistanceToV2 (cd, d) = cartDirToUnit cd ^* d
+cartDirWithDistanceToV2 :: (CartDir, Int, Bool) -> V2 Int
+cartDirWithDistanceToV2 (cd, d, _) = cartDirToUnit cd ^* d
 
 
 data LineAnchorsForRender = LineAnchorsForRender {
   _lineAnchorsForRender_start :: XY
-  , _lineAnchorsForRender_rest :: [(CartDir, Int)]
+  -- `Bool` parameter is whether we are at the start of a subsegment (i.e. a midpoint or endpoint)
+  , _lineAnchorsForRender_rest :: [(CartDir, Int, Bool)]
 } deriving (Show, Generic, Eq)
 
 instance NFData LineAnchorsForRender

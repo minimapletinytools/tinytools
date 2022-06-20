@@ -124,7 +124,7 @@ whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
   anchors = case manchors of
     Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
     Just x -> x
-  -- TODO
+  -- TODO this is hard because we need to track which anchors are midponits in LineAnchorsForRender are
   r = undefined
 
 
