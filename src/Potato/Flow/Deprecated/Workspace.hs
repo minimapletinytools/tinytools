@@ -65,7 +65,6 @@ undoWorkspace :: PFWorkspace -> PFWorkspace
 undoWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_pFState) (ActionStack cs (c:undoStack))
     c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_pFState pfw)) (ActionStack cs (c:undoStack))
     _ -> pfw
 
@@ -73,7 +72,6 @@ redoWorkspace :: PFWorkspace -> PFWorkspace
 redoWorkspace pfw = r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case undoStack of
-    --c : cs -> trace "REDO: " . traceShow c $ PFWorkspace (doCmdState c _pFWorkspace_pFState) (ActionStack (c:doStack) cs)
     c : cs -> uncurry PFWorkspace (doCmdState c (_pFWorkspace_pFState pfw)) (ActionStack (c:doStack) cs)
     _ -> pfw
 
@@ -81,12 +79,10 @@ undoPermanentWorkspace :: PFWorkspace -> PFWorkspace
 undoPermanentWorkspace pfw =  r where
   ActionStack {..} = _pFWorkspace_actionStack pfw
   r = case doStack of
-    --c : cs -> trace "UNDO: " .traceShow c $ PFWorkspace (undoCmdState c _pFWorkspace_pFState) (ActionStack cs (c:undoStack))
     c : cs -> uncurry PFWorkspace (undoCmdState c (_pFWorkspace_pFState pfw)) (ActionStack cs undoStack)
     _ -> pfw
 
 doCmdWorkspace :: PFCmd -> PFWorkspace -> PFWorkspace
---doCmdWorkspace cmd PFWorkspace {..} = trace "DO: " . traceShow cmd $ r wherem
 -- deepseq here to force evaluation of workspace and prevent leaks
 doCmdWorkspace cmd pfw = force r where
   newState = doCmdState cmd (_pFWorkspace_pFState pfw)

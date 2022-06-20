@@ -42,7 +42,6 @@ boxTextInputState_basic_test = let
     tais2 = mouseText tais1 (_sBox_box testSBoxWithText1) (testClick 6 5) (getBoxTextOffset testSBoxWithText1)
   in
     it "makeTextInputState_basic" $ do
-      --traceShow tais1 $ traceShow tais2 $ 1 `shouldBe` 1
       _textInputState_original tais1 `shouldBe` Just testText1
       _textInputState_original tais2 `shouldBe` Just testText1
       -- TZ has no Eq instance but show works fine, whatever

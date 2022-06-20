@@ -312,7 +312,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
   -- | Process commands |
   goatCmdTempOutput = case _goatState_handler of
     SomePotatoHandler handler -> case cmd of
-      --GoatCmdSetDebugLabel x -> traceShow x $ makeGoatCmdTempOutputFromNothing (goatState { _goatState_debugLabel = x })
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
@@ -333,10 +332,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         -- TODO do we need to cancel the old handler?
         r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_handler = makeHandlerFromNewTool x })
 
-
-
-
-      --GoatCmdMouse mouseData -> traceShow _goatState_handler $ do
       GoatCmdMouse mouseData ->
         let
           sameSource = _mouseDrag_isLayerMouse _goatState_mouseDrag == _lMouseData_isLayerMouse mouseData

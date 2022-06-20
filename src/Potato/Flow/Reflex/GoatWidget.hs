@@ -11,7 +11,6 @@ module Potato.Flow.Reflex.GoatWidget (
 import           Relude
 
 import           Reflex
-import           Reflex.Potato.Helpers
 
 import Potato.Flow.Controller.Goat
 import           Potato.Flow.BroadPhase
@@ -24,9 +23,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
 import Potato.Flow.Llama

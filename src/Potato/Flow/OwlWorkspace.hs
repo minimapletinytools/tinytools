@@ -328,6 +328,5 @@ updateOwlPFWorkspace evt ws = let
   afterState = _owlPFWorkspace_pFState r
   isValidAfter = owlPFState_isValid afterState
   in if isValidAfter
-    --then trace "WORKSPACE UPDATE" $ traceShow evt $ trace (T.unpack $ potatoShow (_owlPFState_owlTree afterState)) $ r
     then r
     else error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)

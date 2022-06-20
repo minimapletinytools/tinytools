@@ -137,7 +137,7 @@ attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: OwlTree -> IS.IntSet -> SuperOwlChanges -> AttachmentMap -> AttachmentMap
-updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = traceShow changes $ newam_4 where
+updateAttachmentMapFromSuperOwlChanges ot newstuff changes am = newam_4 where
 
   -- remove deleted stuff from keys
   --newam_1 = foldr (\k acc -> IM.delete k acc) am $ IM.keys (IM.filter isNothing changes)
@@ -900,7 +900,6 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     newLeftSibling = case _owlSpot_leftSibling of
       Nothing -> Nothing
       Just target -> findPos target (reverse $ toList removed) (reverse $ toList origSiblings) False
-    --correctedSpot = trace ("old spot: " <> show spot <> "\nnew spot: " <> show (spot { _owlSpot_leftSibling = newLeftSibling})) $ spot { _owlSpot_leftSibling = newLeftSibling}
     correctedSpot = spot { _owlSpot_leftSibling = newLeftSibling}
 
     selttree = superOwlParliament_toSEltTree od sop

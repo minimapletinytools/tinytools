@@ -24,7 +24,6 @@ verifyOwlAt ws ospot f = fromMaybe False $ do
   let
     ot = _owlPFState_owlTree . _owlPFWorkspace_pFState $ ws
   sowl <- owlTree_findSuperOwlAtOwlSpot ot ospot
-  --traceShow sowl $  Just $ f sowl
   Just $ f sowl
 
 pred_nameIs :: Text -> SuperOwl -> Bool
@@ -34,7 +33,6 @@ undoAndVerify :: OwlPFWorkspace -> OwlPFState -> Bool
 undoAndVerify ws prev = r where
   undows = updateOwlPFWorkspace WSEUndo ws
   newstate = _owlPFWorkspace_pFState undows
-  -- trace (T.unpack $ potatoShow $ _owlPFState_owlTree prev) $ trace (T.unpack  $ potatoShow $_owlPFState_owlTree newstate) $
   r =
     owlTree_equivalent (_owlPFState_owlTree prev) (_owlPFState_owlTree newstate)
     && (_owlPFState_canvas prev) == (_owlPFState_canvas newstate)
