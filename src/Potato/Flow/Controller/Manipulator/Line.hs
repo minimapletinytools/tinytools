@@ -318,6 +318,18 @@ instance PotatoHandler AutoLineMidPointHandler where
     in case _mouseDrag_state of
       MouseDragState_Down -> error "this should be handleed by AutoLineHandler"
       MouseDragState_Dragging -> r where
+
+        -- TODO
+        -- determine if overlapping existing ADJACENT endpoint 
+        -- if overlapping adjacent endpoint, do nothing
+        -- if creation, create the new midpoint (NOTE that if undoFirst is True then the point already exists, we can use update logic)
+          -- if overlapping, do nothing
+        -- if update, move the endpoint
+          -- if overlapping midpoint, delete current endpoint, set creation flag to true
+        -- if do nothing, reset the undoFirst flage
+
+
+
         op = if _autoLineMidPointHandler_isMidpointCreation
           then undefined
           else undefined
