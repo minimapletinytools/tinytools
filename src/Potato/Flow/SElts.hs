@@ -305,6 +305,32 @@ instance ToJSON SAutoLineConstraint
 instance Binary SAutoLineConstraint
 instance NFData SAutoLineConstraint
 
+data SAutoLineLabelPosition = SAutoLineLabelPosition deriving (Eq, Generic, Show)
+
+instance FromJSON SAutoLineLabelPosition
+instance ToJSON SAutoLineLabelPosition
+instance Binary SAutoLineLabelPosition
+instance NFData SAutoLineLabelPosition
+
+data SAutoLineLabel = SAutoLineLabel {
+  _sAutoLineLabel_index :: Int -- index relative to _sAutoLine_midpoints for where the midpoint lives
+  , _sAutoLineLabel_position :: SAutoLineLabelPosition
+  , _sAutoLineLabel_vertical :: Bool -- true if vertically oriented
+} deriving (Eq, Generic, Show)
+
+instance FromJSON SAutoLineLabel
+instance ToJSON SAutoLineLabel
+instance Binary SAutoLineLabel
+instance NFData SAutoLineLabel
+
+instance Default SAutoLineLabel where
+  def = SAutoLineLabel {
+      _sAutoLineLabel_index = 0
+      , _sAutoLineLabel_position = SAutoLineLabelPosition
+      , _sAutoLineLabel_vertical = False
+    }
+
+
 -- |
 data SAutoLine = SAutoLine {
   _sAutoLine_start       :: XY
@@ -319,6 +345,7 @@ data SAutoLine = SAutoLine {
   , _sAutoLine_attachEnd :: Maybe Attachment
 
   , _sAutoLine_midpoints :: [SAutoLineConstraint] --  WIP currently does nothing
+  , _sAutoLine_labels :: [SAutoLineLabel] -- WIP currently does nothing
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SAutoLine
@@ -336,6 +363,7 @@ instance Default SAutoLine where
       , _sAutoLine_attachStart = Nothing
       , _sAutoLine_attachEnd = Nothing
       , _sAutoLine_midpoints = []
+      , _sAutoLine_labels = []
     }
 
 -- TODO DELETE
