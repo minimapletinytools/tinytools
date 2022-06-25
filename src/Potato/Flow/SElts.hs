@@ -305,6 +305,7 @@ instance ToJSON SAutoLineConstraint
 instance Binary SAutoLineConstraint
 instance NFData SAutoLineConstraint
 
+-- TODO provide absolute and relative positioning args
 data SAutoLineLabelPosition = SAutoLineLabelPosition deriving (Eq, Generic, Show)
 
 instance FromJSON SAutoLineLabelPosition
