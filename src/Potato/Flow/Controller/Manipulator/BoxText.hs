@@ -348,32 +348,10 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
       else _boxLabelHandler_undoFirst
   }
 
--- TODO support shift selecting text someday meh
--- | returns zipper in TextInputState after keyboard input has been applied for BoxLabel (does not allow line breaks)
--- Bool indicates if there was any real input
-inputBoxLabelZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
-inputBoxLabelZipper tais kk = (changed, tais { _textInputState_zipper = newZip }) where
-
-  oldZip = _textInputState_zipper tais
-  (changed, newZip) = case kk of
-    KeyboardKey_Left    -> (False, TZ.left oldZip)
-    KeyboardKey_Right   -> (False, TZ.right oldZip)
-    KeyboardKey_Home    -> (False, TZ.home oldZip)
-    KeyboardKey_End -> (False, TZ.end oldZip)
-
-    KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
-    KeyboardKey_Delete  -> (True, TZ.deleteRight oldZip)
-    KeyboardKey_Backspace -> (True, TZ.deleteLeft oldZip)
-    KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
-
-    -- TODO remove new line characters
-    KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
-
-    _ -> (False, oldZip)
 
 inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
 inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
-  (changed, newtais) = inputBoxLabelZipper tais kk
+  (changed, newtais) = inputSingleLineZipper tais kk
   newtext = TZ.value (_textInputState_zipper newtais)
   controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
   mop = if changed

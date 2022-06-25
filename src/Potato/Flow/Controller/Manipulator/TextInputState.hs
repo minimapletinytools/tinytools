@@ -29,3 +29,28 @@ mouseText tais lbox rmd (V2 xoffset yoffset)= r where
   V2 mousex mousey = _mouseDrag_to
   newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_textInputState_displayLines tais) ogtz
   r = tais { _textInputState_zipper = newtz }
+
+
+
+-- TODO support shift selecting text someday meh
+-- | returns zipper in TextInputState after keyboard input has been applied for single line entry (does not allow line breaks)
+-- Bool indicates if there was any real input
+inputSingleLineZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
+inputSingleLineZipper tais kk = (changed, tais { _textInputState_zipper = newZip }) where
+
+  oldZip = _textInputState_zipper tais
+  (changed, newZip) = case kk of
+    KeyboardKey_Left    -> (False, TZ.left oldZip)
+    KeyboardKey_Right   -> (False, TZ.right oldZip)
+    KeyboardKey_Home    -> (False, TZ.home oldZip)
+    KeyboardKey_End -> (False, TZ.end oldZip)
+
+    KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
+    KeyboardKey_Delete  -> (True, TZ.deleteRight oldZip)
+    KeyboardKey_Backspace -> (True, TZ.deleteLeft oldZip)
+    KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
+
+    -- TODO remove new line characters
+    KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
+
+    _ -> (False, oldZip)

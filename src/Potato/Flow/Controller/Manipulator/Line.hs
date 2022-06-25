@@ -320,7 +320,7 @@ instance PotatoHandler AutoLineMidPointHandler where
       MouseDragState_Dragging -> r where
 
         -- TODO
-        -- determine if overlapping existing ADJACENT endpoint 
+        -- determine if overlapping existing ADJACENT endpoint
         -- if overlapping adjacent endpoint, do nothing
         -- if creation, create the new midpoint (NOTE that if undoFirst is True then the point already exists, we can use update logic)
           -- if overlapping, do nothing
@@ -348,6 +348,7 @@ instance PotatoHandler AutoLineMidPointHandler where
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} =  HandlerRenderOutput []
   pIsHandlerActive _ = True
 
+
 -- handles creating and modifying text labels
 data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
   _autoLineTextLabelHandler_dummy :: ()
@@ -356,5 +357,6 @@ data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
 instance PotatoHandler AutoLineTextLabelHandler where
   pHandlerName _ = handlerName_simpleLine_textLabel
   pHandleMouse slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
+  pHandleKeyboard slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} (KeyboardData k _) = undefined
   pRenderHandler AutoLineTextLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
   pIsHandlerActive _ = undefined
