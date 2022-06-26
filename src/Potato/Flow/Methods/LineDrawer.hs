@@ -187,13 +187,42 @@ restify :: [(CartDir, Int)] -> [(CartDir, Int, Bool)]
 restify [] = []
 restify ((cd,d):xs) = (cd,d,True):fmap (\(a,b) -> (a,b,False)) xs
 
+-- used to convert AL_ANY at (ax, ay) to an AttachmentLocation based on target position (tx, ty)
+-- TODO test that this function is rotationally/reflectively symmetric (although it doesn't really matter if it isn't, however due to recursive implementation of sSimpleLineSolver it's kind of awkward if it's not)
+makeAL :: XY -> XY -> AttachmentLocation
+makeAL (V2 ax ay) (V2 tx ty) = r where
+  dx = tx - ax
+  dy = ty - ay
+  r = if abs dx > abs dy
+    then if dx > 0
+      then AL_Right
+      else AL_Left
+    else if dy > 0
+      then AL_Bot
+      else AL_Top
+
+
 sSimpleLineSolver :: (Text, Int) -> SimpleLineSolverParameters -> (LBox, AttachmentLocation) -> (LBox, AttachmentLocation) -> LineAnchorsForRender
-sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} lbal1@(lbx1, al1) lbal2@(lbx2, al2) =  finaloutput where
+sSimpleLineSolver (errormsg, depth) sls@SimpleLineSolverParameters {..} (lbx1, al1_) (lbx2, al2_) =  finaloutput where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 _ y2) (V2 _ h2) = lbx2
 
+  al1 = case al1_ of
+    AL_Any -> makeAL (_lBox_tl lbx1) $ case al2_ of
+      AL_Any -> _lBox_tl lbx2
+      _ -> end
+    x -> x
+  al2 = case al2_ of
+    AL_Any -> makeAL (_lBox_tl lbx2) $ case al1_ of
+      AL_Any -> _lBox_tl lbx1
+      _ -> start
+    x -> x
+
+  lbal1 = (lbx1, al1)
+  lbal2 = (lbx2, al2)
+
   start@(V2 ax1 ay1) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx1 al1
-  (V2 ax2 ay2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
+  end@(V2 ax2 ay2) = attachLocationFromLBox _simpleLineSolverParameters_offsetBorder lbx2 al2
 
 
   -- TODO set _simpleLineSolverParameters_attachOffset here
@@ -460,6 +489,7 @@ lineAnchorsForRender_doesIntersectPoint LineAnchorsForRender {..} pos = r where
     [] -> False
     x:xs -> case doesLineContain pos curbegin x of
       Nothing ->  walk (curbegin + cartDirWithDistanceToV2 x) xs
+
       Just _ -> True
   r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
@@ -513,6 +543,7 @@ sSimpleLineNewRenderFnComputeCache ot SAutoLine {..} = anchors where
     sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
     return (sbox, al)
 
+  -- TODO don't use AL_ANY
   lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart
   lbal2 = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
 

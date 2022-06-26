@@ -200,10 +200,9 @@ test_LineHandler_drag = constructTest "drag" owlpfstate_basic1 bs expected where
       EWCTool Tool_Select
 
       , EWCLabel "select sl1"
-      -- this is weird due to AutoLine shenanigans incorrectly converting AL_ANY to AL_RIGHT
-      -- TODO change to (V2 0 100) when fixed
-      , EWCMouse (LMouseData (V2 2 102) False MouseButton_Left [] False)
-      , EWCMouse (LMouseData (V2 2 102) True MouseButton_Left [] False)
+      -- TODO switch to V2 0 100 once AL_Any cases render in the location they start from (as oppose to 1 box away due to offsetting)
+      , EWCMouse (LMouseData (V2 0 101) False MouseButton_Left [] False)
+      , EWCMouse (LMouseData (V2 0 101) True MouseButton_Left [] False)
 
       , EWCLabel "move end of line"
       , EWCMouse (LMouseData (V2 0 110) False MouseButton_Left [] False)
