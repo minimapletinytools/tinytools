@@ -514,6 +514,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
   renderfn :: SEltDrawerRenderFn
   renderfn ot xy = r where
     anchors = getAnchors ot
+    -- TODO pass in end style
     r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle anchors xy
 
   boxfn :: SEltDrawerBoxFn

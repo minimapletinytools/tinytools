@@ -270,6 +270,11 @@ instance PotatoHandler AutoLineEndPointHandler where
             , _sAutoLine_end = _mouseDrag_to
             , _sAutoLine_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
             , _sAutoLine_lineStyle = _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
+
+            -- TODO default end style
+            , _sAutoLine_lineStyleEnd =
+            _potatoDefaultParameters_lineStyle _potatoHandlerInput_potatoDefaultParameters
+
             , _sAutoLine_attachStart = _autoLineEndPointHandler_attachStart
             , _sAutoLine_attachEnd = mattachendnontrivial
           }

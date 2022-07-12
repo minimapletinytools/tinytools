@@ -113,6 +113,11 @@ getSEltLineStyle selt = case selt of
   SEltLine SAutoLine {..} -> Just _sAutoLine_lineStyle
   _                         -> Nothing
 
+getSEltLineStyleEnd :: SElt -> Maybe LineStyle
+getSEltLineStyleEnd selt = case selt of
+  SEltLine SAutoLine {..} -> Just _sAutoLine_lineStyleEnd
+  _                         -> Nothing
+
 getSEltLabelLineStyle :: SEltLabel -> Maybe LineStyle
 getSEltLabelLineStyle (SEltLabel _ x) = getSEltLineStyle x
 
@@ -392,6 +397,7 @@ modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
   -- maybe we want silent failure case in the future, so you can easily restyle a big selection in bulk
   --x -> x
 
+-- TODO DELETE use llama instead
 modify_sElt_with_cLineStyle :: Bool -> SElt -> CLineStyle -> SElt
 modify_sElt_with_cLineStyle isDo selt (CLineStyle style) = case selt of
   SEltLine sline -> SEltLine $ sline {

@@ -359,6 +359,7 @@ data SAutoLine = SAutoLine {
 
   -- TODO you need one for start/end of line (LineStyle, LineStyle)
   , _sAutoLine_lineStyle :: LineStyle
+  , _sAutoLine_lineStyleEnd :: LineStyle
 
   -- NOTE attachments currently are not guaranteed to exist
   -- in particular, if you copy a line, delete its target and paste, it will be attached to something that doesn't exist
@@ -382,6 +383,7 @@ instance Default SAutoLine where
       , _sAutoLine_end       = 0
       , _sAutoLine_superStyle     = def
       , _sAutoLine_lineStyle = def
+      , _sAutoLine_lineStyleEnd = def
       , _sAutoLine_attachStart = Nothing
       , _sAutoLine_attachEnd = Nothing
       , _sAutoLine_midpoints = []

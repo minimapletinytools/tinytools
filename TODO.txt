@@ -23,18 +23,13 @@ WIDE
 🙈
 
 
-:: linepicker
-[x] start | [x] end    (the one being modified is highlighted)
-custom | preset
-....
-
 
 :: MULTI POINT LINE AND LABEL SPEC
 -midpoints
   -rendered in segments
   -midpoints treated as ANY attachments
 -ANY attachment style
-  -pass in neighbors, and direction determined by position of neigbor
+  -pass in neighbors, and direction determined by position of neighbor
     -process from left to right, disallow double backing in same direction
 -click once to select line
   -click + drag end/midpoint to manipulate
@@ -51,6 +46,12 @@ custom | preset
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
+-line picker start/end
+  -finish implement
+  -UI (complete start / end)
+    [x] start | [x] end    (the one being modified is highlighted)
+    custom | preset
+    ....
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
@@ -86,8 +87,6 @@ DONE-best guess for ANY attach ends on which attach type to convert to
 -fix ANY attach locatino offset bug issues whatever they are
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of PotatoDefaultParameters
--preset interface for choosing line ends
-  -easy way to turn on/off line ends for both sides
 -file stuff
   -file explorer
     -add highlight on click
@@ -171,6 +170,9 @@ DONE-best guess for ANY attach ends on which attach type to convert to
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
+
+DONE-preset interface for choosing line ends
+  DONE-easy way to turn on/off line ends for both sides
 DONE-attachment stuff
   DONE-use better function to determine if you clicked on lines (you can do this now)
     -this should have access to the RenderCache/OwlTree
