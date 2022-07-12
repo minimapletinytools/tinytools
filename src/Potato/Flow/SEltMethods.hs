@@ -216,6 +216,7 @@ sBox_drawer sbox@SBox {..} = r where
         _                  -> rfnborder
     }
 
+-- TODO DELETE no longer used with SAutoLine
 sSimpleLine_drawer :: SAutoLine -> SEltDrawer
 sSimpleLine_drawer sline@SAutoLine {..} = r where
 

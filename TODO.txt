@@ -23,6 +23,12 @@ WIDE
 🙈
 
 
+:: linepicker
+[x] start | [x] end    (the one being modified is highlighted)
+custom | preset
+....
+
+
 :: MULTI POINT LINE AND LABEL SPEC
 -midpoints
   -rendered in segments
@@ -76,7 +82,7 @@ WIDE
 
 -LINE LABELS :O
 -finish midponit stuff
--best guess for ANY attach ends on which attach type to convert to
+DONE-best guess for ANY attach ends on which attach type to convert to
 -fix ANY attach locatino offset bug issues whatever they are
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of PotatoDefaultParameters

@@ -12,6 +12,8 @@ module Potato.Flow.SElts (
   , convertTextAlignToTextZipperTextAlignment
   , TextStyle(..)
   , LineStyle(..)
+  , lineStyle_fromListFormat
+  , lineStyle_toListFormat
   , LineAutoStyle(..)
   , AttachmentLocation(..)
   , Attachment(..)
@@ -39,6 +41,7 @@ import           Control.Exception (assert)
 import           Data.Aeson
 import           Data.Binary
 import           Data.Default
+import qualified Data.Text as T
 import qualified Data.List         as L
 import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper                          as TZ
@@ -260,6 +263,7 @@ instance Default SBox where
 sBox_hasLabel :: SBox -> Bool
 sBox_hasLabel sbox = sBoxType_hasBorder (_sBox_boxType sbox) && (isJust . _sBoxTitle_title ._sBox_title $ sbox)
 
+-- TODO DELETE no longer used with SAutoLine
 data LineAutoStyle =
   LineAutoStyle_Auto
   | LineAutoStyle_AutoStraight
@@ -275,11 +279,13 @@ instance NFData LineAutoStyle
 instance Default LineAutoStyle where
   def = LineAutoStyle_AutoStraight
 
+
 data LineStyle = LineStyle {
   _lineStyle_leftArrows    :: Text
   , _lineStyle_rightArrows :: Text
   , _lineStyle_upArrows    :: Text
   , _lineStyle_downArrows  :: Text
+  -- TODO DELETE no longer used with SAutoLine
   , _lineStyle_autoStyle   :: LineAutoStyle
 } deriving (Eq, Generic, Show)
 
@@ -296,6 +302,19 @@ instance Default LineStyle where
       , _lineStyle_downArrows  = "v"
       , _lineStyle_autoStyle   = def
     }
+
+lineStyle_fromListFormat :: ([PChar], [PChar], [PChar], [PChar]) -> LineStyle
+lineStyle_fromListFormat (l,r,u,d) = LineStyle {
+    _lineStyle_leftArrows    = T.pack l
+    , _lineStyle_rightArrows = T.pack r
+    , _lineStyle_upArrows    = T.pack u
+    , _lineStyle_downArrows  = T.pack d
+    , _lineStyle_autoStyle   = def
+  }
+
+lineStyle_toListFormat :: LineStyle -> ([PChar], [PChar], [PChar], [PChar])
+lineStyle_toListFormat LineStyle {..} = (T.unpack _lineStyle_leftArrows, T.unpack _lineStyle_rightArrows, T.unpack _lineStyle_upArrows, T.unpack _lineStyle_downArrows)
+
 
 -- someday we might have more than one constraint...
 data SAutoLineConstraint = SAutoLineConstraintFixed XY deriving (Eq, Generic, Show)
@@ -337,6 +356,8 @@ data SAutoLine = SAutoLine {
   _sAutoLine_start       :: XY
   , _sAutoLine_end       :: XY
   , _sAutoLine_superStyle     :: SuperStyle
+
+  -- TODO you need one for start/end of line (LineStyle, LineStyle)
   , _sAutoLine_lineStyle :: LineStyle
 
   -- NOTE attachments currently are not guaranteed to exist
