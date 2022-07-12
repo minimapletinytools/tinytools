@@ -50,6 +50,7 @@ data PotatoDefaultParameters = PotatoDefaultParameters {
   _potatoDefaultParameters_sBoxType :: SBoxType -- currently not used as we have Tool_TextArea, consider using this instead
   , _potatoDefaultParameters_superStyle :: SuperStyle
   , _potatoDefaultParameters_lineStyle :: LineStyle
+  , _potatoDefaultParameters_lineStyleEnd :: LineStyle
   , _potatoDefaultParameters_box_label_textAlign :: TextAlign
   , _potatoDefaultParameters_box_text_textAlign :: TextAlign
 } deriving (Eq, Show)
@@ -59,6 +60,7 @@ instance Default PotatoDefaultParameters where
   def = PotatoDefaultParameters {
       _potatoDefaultParameters_sBoxType = def
       , _potatoDefaultParameters_lineStyle = def
+      , _potatoDefaultParameters_lineStyleEnd = def
       , _potatoDefaultParameters_superStyle = def
       , _potatoDefaultParameters_box_label_textAlign = def
       , _potatoDefaultParameters_box_text_textAlign = def
