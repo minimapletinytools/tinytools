@@ -10,6 +10,7 @@ module Potato.Flow (
   , module Potato.Flow.OwlWorkspace
   , module Potato.Flow.OwlState
   , module Potato.Flow.Owl
+  , module Potato.Flow.OwlHelpers
   , module Potato.Flow.OwlItem
   , module Potato.Flow.Reflex
   , module Potato.Flow.TutorialState
@@ -23,6 +24,7 @@ import           Potato.Flow.SEltMethods
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.OwlHelpers
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.OwlState
 import Potato.Flow.Owl
