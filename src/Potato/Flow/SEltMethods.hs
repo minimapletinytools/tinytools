@@ -221,91 +221,6 @@ sBox_drawer sbox@SBox {..} = r where
         _                  -> rfnborder
     }
 
--- TODO DELETE no longer used with SAutoLine
-sSimpleLine_drawer :: SAutoLine -> SEltDrawer
-sSimpleLine_drawer sline@SAutoLine {..} = r where
-
-  lbox@(LBox (V2 x y) (V2 w h)) = fromJust $ getSEltBox_naive (SEltLine sline)
-  xsplit = x + w `div` 2
-  ysplit = y + h `div` 2
-  V2 startx starty = _sAutoLine_start
-  V2 endx endy = _sAutoLine_end
-
-  larr = _lineStyle_leftArrows _sAutoLine_lineStyle
-  rarr = T.reverse $ _lineStyle_rightArrows _sAutoLine_lineStyle
-  tarr = _lineStyle_upArrows _sAutoLine_lineStyle
-  barr = T.reverse $ _lineStyle_downArrows _sAutoLine_lineStyle
-
-  horizrenderfn pt@(V2 x' y')
-    | not (does_lBox_contains_XY lbox pt) = Nothing
-    | w <= 1 = vertrenderfn pt
-    -- render as much of the left arrow as you can and then render the rest
-    | isLeft && isLeftHoriz && x'-x < (T.length larr) = Just $ T.index larr (x'-x)
-    | isLeft && isLeftHoriz = _superStyle_horizontal _sAutoLine_superStyle
-    -- render as much of the right arrow as you can and then render the rest
-    | isRight && isRightHoriz && farend-x' < (T.length rarr) = Just $ T.index rarr (farend-x')
-    | isRight && isRightHoriz = _superStyle_horizontal _sAutoLine_superStyle
-    -- render the corners
-    | isCenter && isTop && isLeftHoriz = _superStyle_tr _sAutoLine_superStyle
-    | isCenter && isBot && isLeftHoriz = _superStyle_br _sAutoLine_superStyle
-    | isCenter && isTop && isRightHoriz = _superStyle_tl _sAutoLine_superStyle
-    | isCenter && isBot && isRightHoriz = _superStyle_bl _sAutoLine_superStyle
-    -- special case
-    | h == 1 = _superStyle_horizontal _sAutoLine_superStyle
-    -- render the vertical line
-    | isCenter = _superStyle_vertical _sAutoLine_superStyle
-    | otherwise = Nothing
-    where
-      isLeft = x' < xsplit
-      isRight = x' > xsplit
-      isLeftHoriz = (y' == starty &&  startx < endx) || (y' == endy && startx > endx)
-      isRightHoriz = (y' == starty &&  startx > endx) || (y' == endy && startx < endx)
-      isCenter = x' == xsplit
-      isTop = (y' == starty && starty < endy) || (y' == endy && starty > endy)
-      isBot = (y' == endy && starty < endy) || (y' == starty && starty > endy)
-      farend = max startx endx
-
-  vertrenderfn pt@(V2 x' y')
-    | not (does_lBox_contains_XY lbox pt) = Nothing
-    | w <= 1 && h <= 1 = _superStyle_point _sAutoLine_superStyle
-    | h <= 1 = horizrenderfn pt
-    -- render as much of the top arrow as you can and then render the rest
-    | isTop && isTopVert && y'-y < (T.length tarr) = Just $ T.index tarr (y'-y)
-    | isTop && isTopVert = _superStyle_vertical _sAutoLine_superStyle
-    -- render as much of the right arrow as you can and then render the rest
-    | isBot && isBotVert && farend-y' < (T.length barr) = Just $ T.index barr (farend-y')
-    | isBot && isBotVert = _superStyle_vertical _sAutoLine_superStyle
-    -- render the corners
-    | isCenter && isLeft && isTopVert = _superStyle_bl _sAutoLine_superStyle
-    | isCenter && isRight && isTopVert = _superStyle_br _sAutoLine_superStyle
-    | isCenter && isLeft && isBotVert = _superStyle_tl _sAutoLine_superStyle
-    | isCenter && isRight && isBotVert = _superStyle_tr _sAutoLine_superStyle
-    -- special case
-    | w == 1 = _superStyle_vertical _sAutoLine_superStyle
-    -- render the horizontal line
-    | isCenter = _superStyle_horizontal _sAutoLine_superStyle
-    | otherwise = Nothing
-    where
-      isLeft = (x' == startx && startx < endx) || (x' == endx && startx > endx)
-      isRight = (x' == endx && startx < endx) || (x' == startx && startx > endx)
-      isTopVert = (x' == startx &&  starty < endy) || (x' == endx && starty > endy)
-      isBotVert = (x' == startx &&  starty > endy) || (x' == endx && starty < endy)
-      isCenter = y' == ysplit
-      isTop = y' < ysplit
-      isBot = y' > ysplit
-      farend = (max starty endy)
-
-  autorenderfn = if w >= h then horizrenderfn else vertrenderfn
-
-  r = SEltDrawer {
-      _sEltDrawer_box = const lbox
-      , _sEltDrawer_renderFn = \_ -> case _lineStyle_autoStyle _sAutoLine_lineStyle of
-        LineAutoStyle_Auto                     -> autorenderfn
-        LineAutoStyle_AutoStraight             -> autorenderfn
-        LineAutoStyle_StraightAlwaysHorizontal -> horizrenderfn
-        LineAutoStyle_StraightAlwaysHorizontal -> vertrenderfn
-    }
-
 sTextArea_drawer :: STextArea -> SEltDrawer
 sTextArea_drawer stextarea@STextArea {..} = r where
 
@@ -331,7 +246,6 @@ getDrawer = \case
   OwlSubItemNone        -> nilDrawer
   OwlSubItemFolder _ -> nilDrawer
   OwlSubItemBox sbox    -> sBox_drawer sbox
-  --OwlSubItemLine sline _ -> sSimpleLine_drawer sline
   OwlSubItemLine sline mcache  -> sSimpleLineNewRenderFn sline mcache
   OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
   {-

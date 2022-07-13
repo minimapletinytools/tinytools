@@ -285,8 +285,6 @@ data LineStyle = LineStyle {
   , _lineStyle_rightArrows :: Text
   , _lineStyle_upArrows    :: Text
   , _lineStyle_downArrows  :: Text
-  -- TODO DELETE no longer used with SAutoLine
-  , _lineStyle_autoStyle   :: LineAutoStyle
 } deriving (Eq, Generic, Show)
 
 instance FromJSON LineStyle
@@ -300,7 +298,6 @@ instance Default LineStyle where
       , _lineStyle_rightArrows = ">"
       , _lineStyle_upArrows    = "^"
       , _lineStyle_downArrows  = "v"
-      , _lineStyle_autoStyle   = def
     }
 
 lineStyle_fromListFormat :: ([PChar], [PChar], [PChar], [PChar]) -> LineStyle
@@ -309,7 +306,6 @@ lineStyle_fromListFormat (l,r,u,d) = LineStyle {
     , _lineStyle_rightArrows = T.pack r
     , _lineStyle_upArrows    = T.pack u
     , _lineStyle_downArrows  = T.pack d
-    , _lineStyle_autoStyle   = def
   }
 
 lineStyle_toListFormat :: LineStyle -> ([PChar], [PChar], [PChar], [PChar])
