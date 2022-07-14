@@ -33,4 +33,4 @@ makeLlamaForLineStyle sowl end newstyle = r where
       _sAutoLine_lineStyle = if setLineStyleEnd_setStart end then newstyle else _sAutoLine_lineStyle sline
       , _sAutoLine_lineStyleEnd = if setLineStyleEnd_setEnd end then _sAutoLine_lineStyleEnd sline else newstyle
     }
-  r = makeSetLlama (rid, SEltLine sline)
+  r = makeSetLlama (rid, SEltLine newsline)

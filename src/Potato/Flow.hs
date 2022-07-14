@@ -7,6 +7,7 @@ module Potato.Flow (
   , module Potato.Flow.Render
   , module Potato.Flow.BroadPhase
   , module Potato.Flow.Controller
+  , module Potato.Flow.Llama
   , module Potato.Flow.OwlWorkspace
   , module Potato.Flow.OwlState
   , module Potato.Flow.Owl
@@ -31,3 +32,4 @@ import Potato.Flow.Owl
 import Potato.Flow.OwlItem
 import Potato.Flow.Reflex
 import Potato.Flow.TutorialState
+import Potato.Flow.Llama
