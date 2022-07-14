@@ -57,7 +57,7 @@ everything_network_app pfs cm (AppIn _ ev) = do
         EWCTool x -> Just x
         _ -> Nothing
       , _goatWidgetConfig_paramsEvent = fforMaybe ev $ \case
-        EWCSetParams x -> Just x
+        EWCSetParams x -> Just (makePFCLlama $ OwlPFCManipulate x)
         _ -> Nothing
       , _goatWidgetConfig_canvasSize = fforMaybe ev $ \case
         EWCCanvasResize x -> Just x
