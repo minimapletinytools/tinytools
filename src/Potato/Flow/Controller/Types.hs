@@ -69,6 +69,7 @@ instance Default PotatoDefaultParameters where
 data SetPotatoDefaultParameters = SetPotatoDefaultParameters {
   _setPotatoDefaultParameters_sBoxType :: Maybe SBoxType
   , _setPotatoDefaultParameters_lineStyle :: Maybe LineStyle
+  , _setPotatoDefaultParameters_lineStyleEnd :: Maybe LineStyle
   , _setPotatoDefaultParameters_superStyle :: Maybe SuperStyle
   , _setPotatoDefaultParameters_box_label_textAlign :: Maybe TextAlign
   , _setPotatoDefaultParameters_box_text_textAlign :: Maybe TextAlign
@@ -78,6 +79,7 @@ instance Default SetPotatoDefaultParameters where
   def = SetPotatoDefaultParameters {
       _setPotatoDefaultParameters_sBoxType = Nothing
       , _setPotatoDefaultParameters_lineStyle = Nothing
+      , _setPotatoDefaultParameters_lineStyleEnd = Nothing
       , _setPotatoDefaultParameters_superStyle = Nothing
       , _setPotatoDefaultParameters_box_label_textAlign = Nothing
       , _setPotatoDefaultParameters_box_text_textAlign = Nothing
@@ -87,6 +89,7 @@ potatoDefaultParameters_set :: PotatoDefaultParameters -> SetPotatoDefaultParame
 potatoDefaultParameters_set PotatoDefaultParameters {..} SetPotatoDefaultParameters {..} = PotatoDefaultParameters {
     _potatoDefaultParameters_sBoxType = fromMaybe _potatoDefaultParameters_sBoxType _setPotatoDefaultParameters_sBoxType
     , _potatoDefaultParameters_lineStyle = fromMaybe _potatoDefaultParameters_lineStyle _setPotatoDefaultParameters_lineStyle
+    , _potatoDefaultParameters_lineStyleEnd = fromMaybe _potatoDefaultParameters_lineStyleEnd _setPotatoDefaultParameters_lineStyleEnd
     , _potatoDefaultParameters_superStyle = fromMaybe _potatoDefaultParameters_superStyle _setPotatoDefaultParameters_superStyle
     , _potatoDefaultParameters_box_label_textAlign = fromMaybe _potatoDefaultParameters_box_label_textAlign _setPotatoDefaultParameters_box_label_textAlign
     , _potatoDefaultParameters_box_text_textAlign = fromMaybe _potatoDefaultParameters_box_text_textAlign _setPotatoDefaultParameters_box_text_textAlign
