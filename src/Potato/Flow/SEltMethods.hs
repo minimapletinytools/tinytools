@@ -4,6 +4,7 @@ module Potato.Flow.SEltMethods (
   getSEltSuperStyle
   , getSEltLabelSuperStyle
   , getSEltLineStyle
+  , getSEltLineStyleEnd
   , getSEltLabelLineStyle
   , getSEltBoxTextStyle
   , getSEltLabelBoxTextStyle

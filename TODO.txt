@@ -46,12 +46,11 @@ WIDE
   -or maybe it just always creates a new empty file in these cases?
 
 ::NEWEST TODO::
--line picker start/end
-  -finish implement
-  -UI (complete start / end)
+-line style
+  -use different handler color for line start/end so you can tell the diff between the 2
+  -implement line start/end style rendering
+  -do easy disabling of start/end (stretch)
     [x] start | [x] end    (the one being modified is highlighted)
-    custom | preset
-    ....
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
@@ -170,7 +169,12 @@ DONE-best guess for ANY attach ends on which attach type to convert to
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
 
-
+DONE-line picker start/end
+  DONE-finish implement
+  DONE-UI (complete start / end)
+    [x] start | [x] end    (the one being modified is highlighted)
+    custom | preset
+    ....
 DONE-preset interface for choosing line ends
   DONE-easy way to turn on/off line ends for both sides
 DONE-attachment stuff
