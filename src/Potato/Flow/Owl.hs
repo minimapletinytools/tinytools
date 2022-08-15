@@ -134,7 +134,6 @@ attachmentMap_addSuperOwls' filterfn sowls am = r where
 attachmentMap_addSuperOwls :: (Foldable f) => f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls = attachmentMap_addSuperOwls' (const True)
 
--- TODO apparantely first 2 args aren't needed delete them
 -- TODO test I have no idea if I did this right...
 -- | update AttachmentMap from SuperOwlChanges (call on SuperOwlChanges produced by updateOwlPFWorkspace)
 updateAttachmentMapFromSuperOwlChanges :: SuperOwlChanges -> AttachmentMap -> AttachmentMap
@@ -846,7 +845,7 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
 
     -- WIP start
-    -- ??? I can't remember what this is anymore, did I aready fix this or no?
+    -- ??? I can't remember what this is anymore, did I aready fix this or no? Pretty sure I can just delet all of this
     -- TODO now that we've removed owls, this might invalidate our target position, so we need to reconstruct it
 {-
     -- first find the first position to the left (inclusive) of where we our original drop position is that isn't a removed element
