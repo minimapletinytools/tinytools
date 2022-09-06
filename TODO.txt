@@ -1,4 +1,32 @@
+stuff for Dad to do
 
+-address the following TODO in substract_lBox
+  -- TODO crop away mleft/mright from mtop'/mbot'
+
+-address the following TODOs in Goat.hs
+  1. -- TODO move into its own file
+  data GoatState = GoatState {
+
+  2. -- TODO instance GoatState HasOwlTree
+
+  3. -- TODO rename to makeHandlerFromCanvasSelection
+
+  4. (hard)
+  -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
+  -- TODO extract this method into another file
+  -- TODO make State monad for this
+  foldGoatFn :: GoatCmd -> GoatState -> GoatState
+    - `Endo GoatState = GoatState -> GoatState`
+    - this part of the code was written incorrectly, someday I want to split it up into several functions of type `Endo GoatState`, one for each GoatCmd
+    - the unit tests are also written overly complicated. They rely on going through GoatWidget which is very unecessary and makes everything very complicated
+    - so the most important part is to create a set of helper functions for unit testing this function directly
+
+-address the following TODOs in OWl.hs
+  1. -- TODO remove OwlMapping arg not needed
+  locateLeftSiblingIdFromSiblingPosition :: OwlMapping -> Seq REltId -> SiblingPosition -> Maybe REltId
+
+  2. OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
+    for this one, print more info about OwlItem
 
 
 ----------
@@ -21,6 +49,9 @@ WIDE
 📂
 👁️
 🙈
+
+
+:: TABLE / DIVIDEABLE BOXES SPEC
 
 
 
