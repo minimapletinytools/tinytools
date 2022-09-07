@@ -6,6 +6,7 @@ module Potato.Flow.SEltMethods (
   , getSEltLineStyle
   , getSEltLineStyleEnd
   , getSEltLabelLineStyle
+  , getSEltLabelLineStyleEnd
   , getSEltBoxTextStyle
   , getSEltLabelBoxTextStyle
   , getSEltBoxType
@@ -121,6 +122,10 @@ getSEltLineStyleEnd selt = case selt of
 
 getSEltLabelLineStyle :: SEltLabel -> Maybe LineStyle
 getSEltLabelLineStyle (SEltLabel _ x) = getSEltLineStyle x
+
+getSEltLabelLineStyleEnd :: SEltLabel -> Maybe LineStyle
+getSEltLabelLineStyleEnd (SEltLabel _ x) = getSEltLineStyleEnd x
+
 
 getSEltBoxTextStyle :: SElt -> Maybe TextStyle
 getSEltBoxTextStyle = \case
