@@ -1,3 +1,24 @@
+ghc core notes
+
+ghc options
+
+-ddump-to-file
+  - dump to file
+-ddump-simpl 
+  - dump core, you have to find the .dump-simpl file  
+
+-dsuppress-coercions
+-dsuppress-module-prefixes
+-dsuppress-type-applications
+  -above 3 removes stuff we don't care about
+-ddump-ds
+  -dumps desugar
+-dverbose-core2core
+  -dumps everything (includng all optimization stages)
+-drule-check = <rule name> 
+
+-----
+
 stuff for Dad to do
 
 -address the following TODO in substract_lBox

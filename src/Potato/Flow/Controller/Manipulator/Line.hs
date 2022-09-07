@@ -66,14 +66,17 @@ renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
 renderEndPoints :: (Bool,Bool) -> Bool -> PotatoHandlerInput -> [RenderHandle]
 renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {..} = r where
   mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
-  boxes = case mselt of
-    -- TODO highlight
-    Just (SEltLine SAutoLine {..}) -> [make_1area_lBox_from_XY startHandle, make_1area_lBox_from_XY endHandle]
+  r = case mselt of
+    Just (SEltLine SAutoLine {..}) -> [makeRenderHandle (make_1area_lBox_from_XY startHandle) True, makeRenderHandle (make_1area_lBox_from_XY endHandle) False]
       where
         startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachStart)
         endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachEnd)
+        makeRenderHandle b start = RenderHandle {
+            _renderHandle_box     = b
+            , _renderHandle_char  = if start then Just 'S' else Just 'E'
+            , _renderHandle_color = RHC_Default
+          }
     _ -> []
-  r = fmap defaultRenderHandle boxes
 
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isCreation :: Bool
