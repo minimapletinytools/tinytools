@@ -97,11 +97,22 @@ WIDE
 -must support empty doc state
   -or maybe it just always creates a new empty file in these cases?
 
+:: RELEASE prep
+-update ChangeLog.md
+-update README.md with usage instructions
+-move over to minimaple account
+-empty canvas should have default size of 100x100 not 1x1
+-proper command line parsing with --help option
+
+:: MUST FIX ::
+-line anchors handles should render on top of attachment points and not on the edge of the box
+-BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
+
 ::NEWEST TODO::
--line style
-  -use different handler color for line start/end so you can tell the diff between the 2
-  -implement line start/end style rendering
-  -do easy disabling of start/end (stretch)
+-test monad for goat directly
+DONE-fix mouse cancel stuff for autline
+-finish midpoint stuf
+-(line style) do easy disabling of start/end (stretch)
     [x] start | [x] end    (the one being modified is highlighted)
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
@@ -115,6 +126,7 @@ WIDE
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
 -NEW LINE TODO
+  -BUG some bot to bot casesa re broken
   -BUG
            ╔══════════╗
            ║@@@@@@@@@@║
@@ -131,10 +143,7 @@ WIDE
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
   -BUG attach offset seems to be not used correctly in some configurations :(
   -attach offset of 0 for AL ANY still needs to render the arrow head
-
 -LINE LABELS :O
--finish midponit stuff
-DONE-best guess for ANY attach ends on which attach type to convert to
 -fix ANY attach locatino offset bug issues whatever they are
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of PotatoDefaultParameters
@@ -169,19 +178,6 @@ DONE-best guess for ANY attach ends on which attach type to convert to
 -test for leaks again
 -figure out if paste is done via repeated inputs or actually via paste event
 -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
--multi node lines
-  -research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
-  -you really need to design+determine all line types first
-  -cartline needs a SElt type
-  -decide how to combine Line and CartLine
-    -click + drag produces reuglar line
-    -click release in same spot takes you to CartLine
-  -may as well do attachments while you're at it
-    -same as regular line except last points auto track to their attaching points, may create some un-editable joints
-    -how to detach?
-    -how to attach during creation?
-      -click on attachment point... attaches
-      -ctrl click does not attach
 -folder stuff
   DONE-BUG you can stil drag folder into itself which causes crash wtf I thought I fixed this
   -add invalid folder drag test
@@ -201,13 +197,20 @@ DONE-best guess for ANY attach ends on which attach type to convert to
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
--disable selection highlight in some modes
+-disable selection highlight in some modes????
 -file explorer
   -apply styling
   -display filename somewhere with * if not saved
     -on start, it should pop stack, on exit it should pop stack
   -ctrl-o to open
   -ctrl-n for new file
+-figure out how to change folders into groups for auto-pathing group support
+  -is it just a folder setting?
+-add mouse hover support (for when you do web port)
+
+
+DONE-best guess for ANY attach ends on which attach type to convert to
+DONE-file explorer
   DONE-getting filename and last folder confused
   DONE-add quit button somewhere?
   DONE-initialize app with correct folder
@@ -217,10 +220,22 @@ DONE-best guess for ANY attach ends on which attach type to convert to
   DONE-double focus between filename and folder
   DONE-fix h scrolling in filename input
   DONE-ctrl-s to save
--figure out how to change folders into groups for auto-pathing group support
-  -is it just a folder setting?
--add mouse hover support (for when you do web port)
-
+IGNORE-multi node lines
+  DONE-research how lucidchart does it? (they use edge draggers instead of corners (avoids doubling back issue) but this won't look good in vty)
+  DONE/IGNORE-you really need to design+determine all line types first
+  IGNORE-cartline needs a SElt type
+  DONE-decide how to combine Line and CartLine
+    -click + drag produces reuglar line
+    -click release in same spot takes you to CartLine
+  DONE-may as well do attachments while you're at it
+    -same as regular line except last points auto track to their attaching points, may create some un-editable joints
+    -how to detach?
+    -how to attach during creation?
+      -click on attachment point... attaches
+      -ctrl click does not attach
+DONE-line style
+  DONE-use different handler color for line start/end so you can tell the diff between the 2
+  DONE-implement line start/end style rendering
 DONE-line picker start/end
   DONE-finish implement
   DONE-UI (complete start / end)

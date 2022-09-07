@@ -99,7 +99,6 @@ sAutoLineConstraint_handlerPosition :: SAutoLineConstraint -> XY
 sAutoLineConstraint_handlerPosition slc = case slc of
   SAutoLineConstraintFixed xy -> xy
 
--- TODO rewrite so it takes a SAutoLine
 findFirstLineManipulator_NEW :: SAutoLine -> Bool -> OwlPFState -> RelMouseDrag-> LineManipulatorProxy
 findFirstLineManipulator_NEW SAutoLine {..} offsetBorder pfs (RelMouseDrag MouseDrag {..})= r where
   start = fromMaybe _sAutoLine_start $ maybeLookupAttachment offsetBorder pfs _sAutoLine_attachStart
@@ -180,6 +179,7 @@ instance PotatoHandler AutoLineHandler where
                 }
             }
       MouseDragState_Dragging -> case _autoLineHandler_mDownManipulator of
+        -- TODO BUG how does this happen? This shouldn't happen as we must capture all dragging operations (I'm pretty sure you already fixed this by implementing the undo on cancel)
         -- this can happen if we cancel in the middle of a drag operation (say), it will recreate an AutoLineHandler from the selection
         Nothing -> Nothing
         Just i -> r where
@@ -198,6 +198,7 @@ instance PotatoHandler AutoLineHandler where
               _autoLineTextLabelHandler_dummy = ()
             }
           r = pHandleMouse handler phi rmd
+      -- TODO is this correct??
       MouseDragState_Cancelled -> Just def
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
     -- TODO keyboard movement
@@ -293,7 +294,7 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def
-      MouseDragState_Cancelled -> Just def
+      MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
 
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
@@ -348,7 +349,7 @@ instance PotatoHandler AutoLineMidPointHandler where
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def
-      MouseDragState_Cancelled -> Just def
+      MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
 
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} =  HandlerRenderOutput []
   pIsHandlerActive _ = True
