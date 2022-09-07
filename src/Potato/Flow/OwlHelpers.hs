@@ -31,6 +31,6 @@ makeLlamaForLineStyle sowl end newstyle = r where
   sline = superOwl_mustGetSLine sowl
   newsline = sline {
       _sAutoLine_lineStyle = if setLineStyleEnd_setStart end then newstyle else _sAutoLine_lineStyle sline
-      , _sAutoLine_lineStyleEnd = if setLineStyleEnd_setEnd end then _sAutoLine_lineStyleEnd sline else newstyle
+      , _sAutoLine_lineStyleEnd = if setLineStyleEnd_setEnd end then newstyle else _sAutoLine_lineStyleEnd sline 
     }
   r = makeSetLlama (rid, SEltLine newsline)
