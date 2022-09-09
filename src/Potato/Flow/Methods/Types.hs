@@ -69,11 +69,13 @@ getSEltBox_naive selt = case selt of
   SEltNone        -> Nothing
   SEltFolderStart -> Nothing
   SEltFolderEnd   -> Nothing
-  -- TODO return canonical
   SEltBox x       -> Just $ canonicalLBox_from_lBox_ $ _sBox_box x
-  SEltLine x      -> Just $ union_lBox
-    (make_lBox_from_XYs (_sAutoLine_start x) (_sAutoLine_end x))
-    (make_lBox_from_XYs (_sAutoLine_start x + 1) (_sAutoLine_end x + 1))
+
+  -- UNTESTED
+  SEltLine x      -> Just r where
+    midpoints = fmap (\(SAutoLineConstraintFixed x) -> x) (_sAutoLine_midpoints x)
+    r = make_lBox_from_XYlist $ (_sAutoLine_start x) : (_sAutoLine_end x) : (_sAutoLine_start x + 1) : (_sAutoLine_end x + 1) : midpoints 
+
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 
 getSEltLabelBox :: SEltLabel -> Maybe LBox

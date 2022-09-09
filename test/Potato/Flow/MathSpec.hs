@@ -21,6 +21,9 @@ spec = do
       add_XY_to_lBox 3 (LBox 1 1) `shouldBe` LBox 1 2
     it "lBox_expand" $ do
       lBox_expand (LBox (V2 0 0) (V2 10 10)) (1,1,1,1) `shouldBe` (LBox (V2 (-1) (-1)) (V2 12 12))
+    it "make_lBox_from_XYlist" $ do
+      make_lBox_from_XYlist [V2 0 0, V2 2 2, V2 1 1] `shouldBe` (LBox 0 2)
+      make_lBox_from_XYlist [V2 0 0] `shouldBe` (LBox 0 0)
     it "substract_lBox" $ do
       let
         lb1 = LBox (V2 0 0) (V2 10 10)

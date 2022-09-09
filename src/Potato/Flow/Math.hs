@@ -10,6 +10,7 @@ module Potato.Flow.Math (
   , make_0area_lBox_from_XY
   , make_1area_lBox_from_XY
   , make_lBox_from_XYs
+  , make_lBox_from_XYlist
   , does_lBox_contains_XY
   , lBox_tl
   , lBox_area
@@ -102,6 +103,7 @@ make_0area_lBox_from_XY p = LBox p 0
 make_1area_lBox_from_XY :: XY -> LBox
 make_1area_lBox_from_XY p = LBox p 1
 
+-- TODO rename to make_lBox_from_XY_XY
 -- | always returns a canonical LBox
 make_lBox_from_XYs :: XY -> XY -> LBox
 make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
@@ -109,6 +111,13 @@ make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
     _lBox_tl= V2 (min x1 x2) (min y1 y2)
     , _lBox_size  = V2 (abs (x1 - x2)) (abs (y1 - y2))
   }
+
+-- TODO rename to make_lBox_from_XYs
+-- | always returns a canonical LBox
+make_lBox_from_XYlist :: [XY] -> LBox
+make_lBox_from_XYlist [] = nilLBox
+make_lBox_from_XYlist (x:xs) = foldr add_XY_to_lBox (make_0area_lBox_from_XY x) xs 
+
 
 -- | always returns a canonical LBox
 -- bottom/right XYs cells are not included in
