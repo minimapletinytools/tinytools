@@ -61,7 +61,8 @@ renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
       , _renderHandle_color = RHC_Attachment
     } where
       rid = _attachment_target a
-      matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
+      al = _attachment_location a
+      matches ma = fmap (\a' -> _attachment_target a' == rid && _attachment_location a' == al) ma == Just True
   r = catMaybes $ fmap fmapattachmentfn attachments
 
 -- set midpointhighlightindex index to -1 for no highlight
@@ -224,7 +225,7 @@ instance PotatoHandler AutoLineHandler where
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineHandler_offsetAttach (-1) phi
-    -- TODO set attach endpoints from currently selected line
+    -- TODO P3 set attach endpoints from currently selected line (it's really not necessary though since the line handler attachments cover these)
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
 
