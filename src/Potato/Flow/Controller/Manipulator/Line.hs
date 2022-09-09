@@ -202,7 +202,6 @@ instance PotatoHandler AutoLineHandler where
         -- this can happen if we cancel in the middle of a drag operation (say), it will recreate an AutoLineHandler from the selection
         Nothing -> Nothing
         Just i -> r where
-          -- TODO setup properly
           handler = AutoLineMidPointHandler {
               _autoLineMidPointHandler_midPointIndex = i
               , _autoLineMidPointHandler_isMidpointCreation = True
@@ -270,7 +269,7 @@ instance PotatoHandler AutoLineEndPointHandler where
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineEndPointHandler_isStart
           then Just _mouseDrag_to /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslineend)
-          else Just _mouseDrag_from /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslinestart)
+          else Just _mouseDrag_to /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslinestart)
         mattachendnontrivial = if nontrivialline
           then mattachend
           else Nothing
