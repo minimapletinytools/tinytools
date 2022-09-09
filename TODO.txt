@@ -104,16 +104,16 @@ WIDE
 -empty canvas should have default size of 100x100 not 1x1
 -proper command line parsing with --help option
 
-:: MUST FIX ::
--line anchors handles should render on top of attachment points and not on the edge of the box
--BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
 
 ::NEWEST TODO::
--test monad for goat directly
+
+
 DONE-fix mouse cancel stuff for autline
--finish midpoint stuf
--(line style) do easy disabling of start/end (stretch)
+-ttvty
+  -add box border toggle
+  -(line style) do easy disabling of start/end (stretch)
     [x] start | [x] end    (the one being modified is highlighted)
+-finish midpoint stuf
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
@@ -121,12 +121,17 @@ DONE-fix mouse cancel stuff for autline
     -doesn't laways take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -figure out what's going on with cache updated bugs...
--tests to write
+-testing
+  -test monad for goat directly
+  -add cancel with no movement test for box and line handler
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
 -NEW LINE TODO
-  -BUG some bot to bot casesa re broken
+  DONE-line anchors handles should render on top of attachment points and not on the edge of the box 
+  -line anchors kinda effed in general actually....
+  -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
+  -BUG some bot to bot cases are broken
   -BUG
            ╔══════════╗
            ║@@@@@@@@@@║

@@ -472,6 +472,8 @@ lineAnchorsForRender_renderAt ss ls lse LineAnchorsForRender {..} pos = r where
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
+
+-- TODO this needs to favor end side
 -- UNTESTED
 -- returns index of subsegment that intersects with pos
 lineAnchorsForRender_findIntersectingSubsegment :: LineAnchorsForRender -> XY -> Maybe Int
