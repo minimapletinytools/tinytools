@@ -22,9 +22,12 @@ import           Potato.Flow.Attachments
 import Potato.Flow.Llama
 
 import           Control.Exception
+import Data.Maybe (catMaybes)
 import           Data.Default
 import qualified Data.Sequence                             as Seq
 import qualified Data.List as L
+import qualified Data.List.Index as L
+
 import Data.Maybe (fromJust)
 
 maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
@@ -40,43 +43,54 @@ maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
 
 -- TODO TEST
 -- TODO move me elsewhere
-getAvailableAttachments :: Bool -> OwlPFState -> BroadPhaseState -> LBox -> [(Attachment, XY)]
-getAvailableAttachments offsetBorder pfs bps screenRegion = r where
+getAvailableAttachments :: Bool -> Bool -> OwlPFState -> BroadPhaseState -> LBox -> [(Attachment, XY)]
+getAvailableAttachments includeNoBorder offsetBorder pfs bps screenRegion = r where
   culled = broadPhase_cull screenRegion (_broadPhaseState_bPTree bps)
   -- you could silently fail here by ignoring maybes but that would definitely be an indication of a bug so we fail here instead (you could do a better job about dumping debug info though)
   sowls = fmap (hasOwlTree_mustFindSuperOwl pfs) culled
   -- TODO sort sowls
-  fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments offsetBorder (_superOwl_elt sowl)
+  fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments includeNoBorder offsetBorder (_superOwl_elt sowl)
   r = join $ fmap fmapfn sowls
 
 renderAttachments :: PotatoHandlerInput -> (Maybe Attachment, Maybe Attachment) -> [RenderHandle]
 renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
-  attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-  fmapattachmentfn (a,p) = RenderHandle {
+  attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+  fmapattachmentfn (a,p) = if matches mstart || matches mend then Nothing else Just $ RenderHandle {
       _renderHandle_box = (LBox p 1)
       , _renderHandle_char = Just (attachmentRenderChar a)
-      , _renderHandle_color = if matches mstart || matches mend
-        then RHC_AttachmentHighlight
-        else RHC_Attachment
+      , _renderHandle_color = RHC_Attachment
     } where
       rid = _attachment_target a
       matches ma = fmap (\a' -> _attachment_target a' == rid) ma == Just True
-  r = fmap fmapattachmentfn attachments
+  r = catMaybes $ fmap fmapattachmentfn attachments
 
-renderEndPoints :: (Bool,Bool) -> Bool -> PotatoHandlerInput -> [RenderHandle]
-renderEndPoints (highlightstart, highlightend) offsetAttach PotatoHandlerInput {..} = r where
+-- set midpointhighlightindex index to -1 for no highlight
+maybeRenderPoints :: (Bool,Bool) -> Bool -> Int -> PotatoHandlerInput -> [RenderHandle]
+maybeRenderPoints (highlightstart, highlightend) offsetAttach midpointhighlightindex PotatoHandlerInput {..} = r where
   mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
-  r = case mselt of
+  r1 = case mselt of
     Just (SEltLine SAutoLine {..}) -> [makeRenderHandle (make_1area_lBox_from_XY startHandle) True, makeRenderHandle (make_1area_lBox_from_XY endHandle) False]
       where
         startHandle = fromMaybe _sAutoLine_start (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachStart)
         endHandle = fromMaybe _sAutoLine_end (maybeLookupAttachment offsetAttach _potatoHandlerInput_pFState _sAutoLine_attachEnd)
-        makeRenderHandle b start = RenderHandle {
+        makeRenderHandle b isstart = RenderHandle {
             _renderHandle_box     = b
-            , _renderHandle_char  = if start then Just 'S' else Just 'E'
-            , _renderHandle_color = RHC_Default
+            , _renderHandle_char  = if isstart then Just 'S' else Just 'E'
+            , _renderHandle_color = if (isstart && highlightstart) || (not isstart && highlightend) then RHC_AttachmentHighlight else RHC_Default
           }
     _ -> []
+  r2 = case mselt of
+    Just (SEltLine SAutoLine {..}) -> L.imap imapfn _sAutoLine_midpoints 
+      where
+        imapfn i mp = case mp of
+          SAutoLineConstraintFixed pos -> RenderHandle {
+              _renderHandle_box     = make_1area_lBox_from_XY pos
+              , _renderHandle_char  = Just 'X'
+              , _renderHandle_color = if midpointhighlightindex == i then RHC_AttachmentHighlight else RHC_Default
+            }
+    _ -> []
+  r = r1 <> r2
+
 
 data AutoLineHandler = AutoLineHandler {
     _autoLineHandler_isCreation :: Bool
@@ -89,7 +103,7 @@ instance Default AutoLineHandler where
   def = AutoLineHandler {
       _autoLineHandler_isCreation = False
       , _autoLineHandler_mDownManipulator = Nothing
-      , _autoLineHandler_offsetAttach = False
+      , _autoLineHandler_offsetAttach = True
     }
 
 -- TODO instead of `LMP_Midpoint Int` consider using zipper
@@ -109,7 +123,10 @@ findFirstLineManipulator_NEW SAutoLine {..} offsetBorder pfs (RelMouseDrag Mouse
       else maybe LMP_Nothing LMP_Midpoint mmid
 
 
--- returns index into midpoints if we clicked on the line, if index is out of bounds then point is between last midpoint and endpoint
+-- returns index into midpoints if we clicked on the line
+-- i.e. an index of 0 means we clicked somewhere between endpoints 0 and 1 (not including 1)
+  -- TODO ☝🏽 is not true, need to fix
+-- if `index == length midpoints` then point is between last midpoint and endpoint
 whereOnLineDidClick :: OwlTree -> SAutoLine -> Maybe LineAnchorsForRender -> XY -> Maybe Int
 whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
   anchors = case manchors of
@@ -121,7 +138,7 @@ instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
   pHandleMouse slh@AutoLineHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
     mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
-    attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+    attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
     mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
 
     in case _mouseDrag_state of
@@ -164,6 +181,7 @@ instance PotatoHandler AutoLineHandler where
                 _autoLineMidPointHandler_midPointIndex = i
                 , _autoLineMidPointHandler_isMidpointCreation = False
                 , _autoLineMidPointHandler_undoFirst  = False
+                , _autoLineMidPointHandler_offsetAttach = _autoLineHandler_offsetAttach
               }
             rslt = pHandleMouse handler phi rmd
 
@@ -188,6 +206,7 @@ instance PotatoHandler AutoLineHandler where
               _autoLineMidPointHandler_midPointIndex = i
               , _autoLineMidPointHandler_isMidpointCreation = True
               , _autoLineMidPointHandler_undoFirst  = False
+              , _autoLineMidPointHandler_offsetAttach = _autoLineHandler_offsetAttach
             }
           r = pHandleMouse handler phi rmd
       MouseDragState_Up -> case _autoLineHandler_mDownManipulator of
@@ -204,7 +223,7 @@ instance PotatoHandler AutoLineHandler where
     -- TODO keyboard movement
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
-    boxes = renderEndPoints (False, False) _autoLineHandler_offsetAttach phi
+    boxes = maybeRenderPoints (False, False) _autoLineHandler_offsetAttach (-1) phi
     -- TODO set attach endpoints from currently selected line
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
@@ -233,7 +252,7 @@ instance PotatoHandler AutoLineEndPointHandler where
   pHandlerName _ = handlerName_simpleLine_endPoint
   pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
-      attachments = getAvailableAttachments True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
+      attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
       mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
     in case _mouseDrag_state of
       MouseDragState_Down -> error "this should be handleed by AutoLineHandler"
@@ -298,7 +317,7 @@ instance PotatoHandler AutoLineEndPointHandler where
 
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
-    boxes = renderEndPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach phi
+    boxes = maybeRenderPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach (-1) phi
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
   pIsHandlerActive _ = True
@@ -314,6 +333,7 @@ data AutoLineMidPointHandler = AutoLineMidPointHandler{
   _autoLineMidPointHandler_midPointIndex :: Int
   , _autoLineMidPointHandler_isMidpointCreation :: Bool
   , _autoLineMidPointHandler_undoFirst :: Bool
+  , _autoLineMidPointHandler_offsetAttach :: Bool
 }
 
 
@@ -322,18 +342,20 @@ instance PotatoHandler AutoLineMidPointHandler where
   pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       aoeu = undefined
     in case _mouseDrag_state of
-      MouseDragState_Down -> error "this should be handleed by AutoLineHandler"
+      -- this only happens in the click on existing midpoint case (creation case is handled by dragging)
+      -- nothing to do here
+      MouseDragState_Down -> assert (not _autoLineMidPointHandler_isMidpointCreation) $ Just $ captureWithNoChange slh
       MouseDragState_Dragging -> r where
 
         -- TODO
-        -- determine if overlapping existing ADJACENT endpoint
-        -- if overlapping adjacent endpoint, do nothing
+        -- if overlapping existing ADJACENT endpoint OR on current line do nothing (or undo if undo first)
         -- if creation, create the new midpoint (NOTE that if undoFirst is True then the point already exists, we can use update logic)
-          -- if overlapping, do nothing
         -- if update, move the endpoint
           -- if overlapping midpoint, delete current endpoint, set creation flag to true
-        -- if do nothing, reset the undoFirst flage
+        -- if do nothing, undoFirst = false otherwise undoFirst = true
 
+        --event = if 
+        --  Just WSEUndo
 
 
         op = if _autoLineMidPointHandler_isMidpointCreation
@@ -351,7 +373,9 @@ instance PotatoHandler AutoLineMidPointHandler where
       MouseDragState_Up -> Just def
       MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
 
-  pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} =  HandlerRenderOutput []
+  pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
+    boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach (-1) phi
+    r = HandlerRenderOutput boxes
   pIsHandlerActive _ = True
 
 
