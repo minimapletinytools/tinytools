@@ -71,12 +71,6 @@ data LineAnchorsForRender = LineAnchorsForRender {
 
 instance NFData LineAnchorsForRender
 
-emptyLineAnchorsForRender :: LineAnchorsForRender
-emptyLineAnchorsForRender = LineAnchorsForRender {
-  _lineAnchorsForRender_start = 0
-  , _lineAnchorsForRender_rest = []
-}
-
 -- NOTE our coordinate system is LEFT HANDED
 --  --> +x
 -- |

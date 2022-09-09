@@ -6,6 +6,7 @@ module Potato.Flow.Methods.LineDrawer (
   , lineAnchorsForRender_doesIntersectBox
   , lineAnchorsForRender_findIntersectingSubsegment
 
+  , sAutoLine_to_lineAnchorsForRenders
   , sSimpleLineNewRenderFn
   , sSimpleLineNewRenderFnComputeCache
 
@@ -18,7 +19,8 @@ module Potato.Flow.Methods.LineDrawer (
   , lineAnchorsForRender_simplify
 ) where
 
-import           Relude
+import           Relude hiding (tail)
+import Relude.Unsafe (tail)
 
 import Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Math
@@ -137,9 +139,12 @@ lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
       , _lineAnchorsForRender_rest = withoutdoubles
     }
 
+lineAnchorsForRender_end :: LineAnchorsForRender -> XY
+lineAnchorsForRender_end LineAnchorsForRender {..} = foldl' (\p cdd -> p + cartDirWithDistanceToV2 cdd) _lineAnchorsForRender_start _lineAnchorsForRender_rest
+
 lineAnchorsForRender_reverse :: LineAnchorsForRender -> LineAnchorsForRender
-lineAnchorsForRender_reverse LineAnchorsForRender {..} = r where
-  end = foldl' (\p cdd -> p + cartDirWithDistanceToV2 cdd) _lineAnchorsForRender_start _lineAnchorsForRender_rest
+lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
+  end = lineAnchorsForRender_end lafr
   revgo acc [] = acc
   revgo acc ((cd,d,False):[]) = (cd,d,True):acc
   revgo _ ((_,_,True):[]) = error "unexpected subsegment starting anchor at end"
@@ -472,10 +477,11 @@ lineAnchorsForRender_renderAt ss ls lse LineAnchorsForRender {..} pos = r where
     Nothing -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
-
--- TODO this needs to favor end side
 -- UNTESTED
 -- returns index of subsegment that intersects with pos
+-- e.g.
+--      0 ---(x)-- 1 ------ 2
+-- returns Just 0
 lineAnchorsForRender_findIntersectingSubsegment :: LineAnchorsForRender -> XY -> Maybe Int
 lineAnchorsForRender_findIntersectingSubsegment  LineAnchorsForRender {..} pos = r where
   walk i curbegin a = case a of
@@ -532,23 +538,48 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
       , _sEltDrawer_renderFn = renderfn
     }
 
-sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
-sSimpleLineNewRenderFnComputeCache ot SAutoLine {..} = anchors where
+lineAnchorsForRender_concat :: [LineAnchorsForRender] -> LineAnchorsForRender
+lineAnchorsForRender_concat [] = error "expected at least one LineAnchorsForRender"
+lineAnchorsForRender_concat (x:xs) = foldl' foldfn x xs where
+  foldfn h c = assert (lineAnchorsForRender_end h == _lineAnchorsForRender_start c) 
+    $ h { _lineAnchorsForRender_rest = _lineAnchorsForRender_rest h <> _lineAnchorsForRender_rest c }
+
+
+pairs :: [a] -> [(a, a)]
+pairs [] = []
+pairs xs = zip xs (tail xs)
+
+maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
+maybeGetAttachBox ot mattachment = do
+  Attachment rid al <- mattachment
+  sowl <- hasOwlTree_findSuperOwl ot rid
+  sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
+  return (sbox, al)
+
+sAutoLine_to_lineAnchorsForRenders :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
+sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
+
+  -- TODO set properly
   params = SimpleLineSolverParameters {
       _simpleLineSolverParameters_offsetBorder = True
       -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
       , _simpleLineSolverParameters_attachOffset = 1
     }
 
-  maybeGetBox mattachment = do
-    Attachment rid al <- mattachment
-    sowl <- hasOwlTree_findSuperOwl ot rid
-    sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
-    return (sbox, al)
-
-  -- TODO don't use AL_ANY
-  lbal1 = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetBox _sAutoLine_attachStart
-  lbal2 = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetBox _sAutoLine_attachEnd
+  startlbal = fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetAttachBox ot _sAutoLine_attachStart
+  endlbal = fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetAttachBox ot _sAutoLine_attachEnd
+  midlbals = fmap (\(SAutoLineConstraintFixed xy) -> (LBox xy 1, AL_Any)) _sAutoLine_midpoints
 
   -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
-  anchors = sSimpleLineSolver ("",0) params lbal1 lbal2
+  anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver ("",0) params lbal1 lbal2) $ pairs ((startlbal : midlbals) <> [endlbal])
+
+
+sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
+sSimpleLineNewRenderFnComputeCache ot sline = anchors where
+  -- TODO set properly
+  params = SimpleLineSolverParameters {
+      _simpleLineSolverParameters_offsetBorder = True
+      -- TODO maybe set this based on arrow head size (will differ for each end so you need 4x)
+      , _simpleLineSolverParameters_attachOffset = 1
+    }
+  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenders ot sline 
