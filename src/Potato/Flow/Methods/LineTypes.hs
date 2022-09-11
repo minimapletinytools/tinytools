@@ -149,6 +149,12 @@ instance (TransformMe a, TransformMe b) => TransformMe (a,b) where
   transformMe_rotateRight (a,b) = (transformMe_rotateRight a, transformMe_rotateRight b)
   transformMe_reflectHorizontally (a,b) = (transformMe_reflectHorizontally a, transformMe_reflectHorizontally b)
 
+instance (TransformMe a, TransformMe b, TransformMe c) => TransformMe (a,b,c) where
+  transformMe_rotateLeft (a,b,c) = (transformMe_rotateLeft a, transformMe_rotateLeft b, transformMe_rotateLeft c)
+  transformMe_rotateRight (a,b,c) = (transformMe_rotateRight a, transformMe_rotateRight b, transformMe_rotateRight c)
+  transformMe_reflectHorizontally (a,b,c) = (transformMe_reflectHorizontally a, transformMe_reflectHorizontally b, transformMe_reflectHorizontally c)
+
+
 -- assumes LBox is Canonical)
 instance TransformMe LBox where
   transformMe_rotateLeft lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
