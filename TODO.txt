@@ -129,6 +129,7 @@ DONE-fix mouse cancel stuff for autline
   -create 2 fully attached lines, select them both, ensure not possible to move
 -NEW LINE TODO
   DONE-line anchors handles should render on top of attachment points and not on the edge of the box 
+  -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
   -BUG some bot to bot cases are broken

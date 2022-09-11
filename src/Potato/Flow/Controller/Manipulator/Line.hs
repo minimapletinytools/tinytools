@@ -39,8 +39,6 @@ maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
     where
       sowl = selectionToSuperOwl selection
       rid = _superOwl_id sowl
-
-
 -- TODO TEST
 -- TODO move me elsewhere
 getAvailableAttachments :: Bool -> Bool -> OwlPFState -> BroadPhaseState -> LBox -> [(Attachment, XY)]
@@ -135,6 +133,55 @@ whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
     Just x -> x
   r = lineAnchorsForRender_findIntersectingSubsegment anchors xy
 
+
+-- TODO use cache
+-- |
+-- IMPORTANT MIDPOINT INDEXING DETAILS
+-- midpoint indexing for N midpoints looks like
+-- S ... 0 ... 1 ... N ... E
+-- a midpoint index of (-1) is the segment between S and 0
+--
+-- e.g. 
+-- S ...(x)... 0 ... 1 ... 
+-- returns -1
+-- favors right side 
+--
+-- e.g. 
+-- S ... (x) ... 1
+-- returns 0
+--
+-- to convert to _autoLineMidPointHandler_midPointIndex index you need to MINUS 1
+whichSubSegmentDidClick :: OwlTree -> SAutoLine -> XY -> Maybe Int
+whichSubSegmentDidClick ot sline@SAutoLine {..} pos = r where
+  lars = sAutoLine_to_lineAnchorsForRenders ot sline
+  r = fmap fst $ L.ifind (\_ lar -> isJust $ lineAnchorsForRender_findIntersectingSubsegment lar pos) lars
+
+
+
+getEndpointPosition ::  Bool -> OwlPFState -> SAutoLine -> Bool -> XY
+getEndpointPosition offsetAttach pfs SAutoLine {..} isstart = if isstart
+  then fromMaybe _sAutoLine_start $ maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachStart
+  else trace (show (maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachEnd) <> " " <> show _sAutoLine_end) $ fromMaybe _sAutoLine_end $ maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachEnd
+
+
+
+-- |
+-- see indexing information in 'whichSubSegmentDidClick'
+getAnchorPosition :: Bool -> OwlPFState -> SAutoLine -> Int -> XY
+getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = trace ("POS" <> show anchorindex <> show endindex) $ r where
+  mps = _sAutoLine_midpoints
+  endindex = length mps + 1
+  r = if anchorindex == 0
+    then getEndpointPosition offsetAttach pfs sline True
+    else if anchorindex == endindex
+      then getEndpointPosition offsetAttach pfs sline False
+      else if anchorindex > 0 && anchorindex < endindex
+        then case mps L.!! (anchorindex-1) of
+          SAutoLineConstraintFixed xy -> xy
+        else error $ "out of bounds anchor index " <> show anchorindex
+
+
+
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
   pHandleMouse slh@AutoLineHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
@@ -163,7 +210,7 @@ instance PotatoHandler AutoLineHandler where
 
 
         -- TODO update cache someday
-        mclickonline = whereOnLineDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline Nothing _mouseDrag_to
+        mclickonline = whichSubSegmentDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline _mouseDrag_to 
 
         r = case firstlm of
 
@@ -336,7 +383,6 @@ data AutoLineMidPointHandler = AutoLineMidPointHandler{
   , _autoLineMidPointHandler_offsetAttach :: Bool
 }
 
-
 instance PotatoHandler AutoLineMidPointHandler where
   pHandlerName _ = handlerName_simpleLine_midPoint
   pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
@@ -346,35 +392,69 @@ instance PotatoHandler AutoLineMidPointHandler where
       -- nothing to do here
       MouseDragState_Down -> assert (not _autoLineMidPointHandler_isMidpointCreation) $ Just $ captureWithNoChange slh
       MouseDragState_Dragging -> r where
+        (rid, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
 
-        -- TODO
-        -- if overlapping existing ADJACENT endpoint OR on current line do nothing (or undo if undo first)
-        -- if creation, create the new midpoint (NOTE that if undoFirst is True then the point already exists, we can use update logic)
-        -- if update, move the endpoint
-          -- if overlapping midpoint, delete current endpoint, set creation flag to true
-        -- if do nothing, undoFirst = false otherwise undoFirst = true
+        -- TODO overlap adjacent issue, findFirstLineManipulator_NEW will midpoint instead of endpoint
+        firstlm = findFirstLineManipulator_NEW sline _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
-        --event = if 
-        --  Just WSEUndo
+        mps = _sAutoLine_midpoints sline
+        nmps = length mps
 
+        -- index into _sAutoLine_midpoints
+        -- in the '_autoLineMidPointHandler_isMidpointCreation' case, the midpoint index is AFTER the midpoint gets created
+        -- `_autoLineMidPointHandler_midPointIndex == N` means we have `N-1 ... (x) ... N`
+        -- so the new indexing is `N-1 ... N (x) ... N+1`
+        mpindex = _autoLineMidPointHandler_midPointIndex
 
-        op = if _autoLineMidPointHandler_isMidpointCreation
-          then undefined
-          else undefined
+        -- TODO not working
+        -- NOTE indexing of getAnchorPosition is offset from index into _autoLineMidPointHandler_midPointIndex
+        ladjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline mpindex
+        -- NOTE that this is out of bounds in creation cases, but it won't get evaluated
+        radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
+        isoveradjacent = traceShowId $ trace (show ladjacentpos <> " : " <> show _mouseDrag_to <> " : " <> show radjacentpos <> " - " <> show mpindex <> " " <> show sline) $ _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos 
 
-        -- TODO
+        newsline = sline { 
+            _sAutoLine_midpoints = if _autoLineMidPointHandler_isMidpointCreation 
+              then L.insertAt mpindex (SAutoLineConstraintFixed _mouseDrag_to) mps 
+              else L.modifyAt mpindex (const $ SAutoLineConstraintFixed _mouseDrag_to) mps 
+          }
+
+        newslinedelete = sline { 
+            _sAutoLine_midpoints = L.deleteAt mpindex mps 
+          }
+
+        mevent = case firstlm of 
+          -- create the new midpoint if none existed
+          _ | _autoLineMidPointHandler_isMidpointCreation -> assert (not _autoLineMidPointHandler_undoFirst) $  Just $ 
+            WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+          
+          -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
+          _ | isoveradjacent -> Just $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
+
+          -- normal case, update the midpoint position
+          _ -> Just $
+            WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+        
+        newundostate = case mevent of
+          Nothing -> False
+          Just WSEUndo -> False
+          _ -> True
+
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                _autoLineMidPointHandler_undoFirst  = True
+                -- NOTE that upon creation of AutoLineMidPointHandler `_autoLineMidPointHandler_isMidpointCreation` may not be equal to `not _autoLineMidPointHandler_undoFirst`
+                _autoLineMidPointHandler_isMidpointCreation = not newundostate
+                , _autoLineMidPointHandler_undoFirst  = newundostate
               }
-            --, _potatoHandlerOutput_pFEvent = Just op
+            , _potatoHandlerOutput_pFEvent = mevent
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def
       MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
 
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
-    boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach (-1) phi
+    boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
+    -- TODO render mouse position as there may not actually be a midpoint there
     r = HandlerRenderOutput boxes
   pIsHandlerActive _ = True
 
