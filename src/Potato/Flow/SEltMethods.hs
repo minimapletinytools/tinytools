@@ -224,6 +224,7 @@ sBox_drawer sbox@SBox {..} = r where
       _sEltDrawer_box = const lbox
       , _sEltDrawer_renderFn = \_ -> case _sBox_boxType of
         SBoxType_NoBoxText -> rfnnoborder
+        SBoxType_NoBox     -> rfnnoborder
         _                  -> rfnborder
     }
 

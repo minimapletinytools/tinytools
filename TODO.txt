@@ -110,10 +110,10 @@ WIDE
 
 DONE-fix mouse cancel stuff for autline
 -ttvty
-  -add box border toggle
+  DONE/IGNORE-add box border toggle
   -(line style) do easy disabling of start/end (stretch)
     [x] start | [x] end    (the one being modified is highlighted)
--finish midpoint stuf
+DONE-finish midpoint stuf
 -text zipper stuff
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
@@ -144,7 +144,7 @@ DONE-fix mouse cancel stuff for autline
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
           ╚═════╝
-  -AL_ANY needs to be a single point and not a box with 4 sides...
+  DONE-AL_ANY needs to be a single point and not a box with 4 sides...
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
   -BUG attach offset seems to be not used correctly in some configurations :(
@@ -213,6 +213,7 @@ DONE-fix mouse cancel stuff for autline
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
+-maybe make styles references instead of stored per elt
 
 
 DONE-best guess for ANY attach ends on which attach type to convert to
