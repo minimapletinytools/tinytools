@@ -35,8 +35,7 @@ data OwlPFCmd =
   | OwlPFCMove (OwlSpot, SuperOwlParliament)
 
   | OwlPFCResizeCanvas DeltaLBox
-
-  -- | OwlPFCSnap (OwlPFState, OwlPFState) --(before, after)
+  --  | OwlPFCSnap (OwlPFState, OwlPFState) --(before, after)
   deriving (Show, Generic)
 
 instance NFData OwlPFCmd
