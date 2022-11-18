@@ -382,9 +382,9 @@ sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, off
     AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver_NEW (nextmsg "case 6") sls lbal2 lbal1
 
     --     2->
-    -- ^
-    -- |
-    -- 1
+    --  ^
+    --  |
+    --  1
     --     2->
     AL_Top | al2 == AL_Right && lbx1isleft -> traceStep "case 7" $ r where
       upd = if vsep
@@ -405,9 +405,9 @@ sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, off
           , _lineAnchorsForRender_rest = restify [lb1_to_up,up_to_right1,right1_to_right2,right2_to_lb2]
         }
     --     <-2
-    -- ^
-    -- |
-    -- 1   <-2 (this one handles both vsep cases)
+    --  ^
+    --  |
+    --  1   <-2 (this one handles both vsep cases)
     AL_Top | al2 == AL_Left && lbx1isleft -> traceStep "case 9" $ r where
       topedge = min (ay1 - attachoffset) ay2
       leftedge = l
