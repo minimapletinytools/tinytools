@@ -142,7 +142,6 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   --    -isNothing _potatoHandlerOutput_nextHandler => event not related to canvas handler
   --    -so we set _goatCmdTempOutput_nextHandler = Just _goatState_handler
   , _goatCmdTempOutput_nextHandler :: Maybe SomePotatoHandler
-
   , _goatCmdTempOutput_select      :: Maybe (Bool, Selection)
   , _goatCmdTempOutput_pFEvent     :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
   , _goatCmdTempOutput_pan         :: Maybe XY
@@ -153,6 +152,9 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
 -- helpers to extract stuff out of goatState because we use record wildcards and can't access otherwise
 goatCmdTempOutput_screenRegion :: GoatCmdTempOutput -> XY
 goatCmdTempOutput_screenRegion = _goatState_screenRegion . _goatCmdTempOutput_goatState
+
+goatCmdTempOutput_layersHandler :: GoatCmdTempOutput -> SomePotatoHandler
+goatCmdTempOutput_layersHandler = _goatState_layersHandler . _goatCmdTempOutput_goatState
 
 
 instance Default GoatCmdTempOutput where
@@ -559,16 +561,18 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_canvasSelection
     -- otherwise, use the returned handler or make a new one from selection
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
-  next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+  next_layersHandler' = goatCmdTempOutput_layersHandler goatCmdTempOutput
+  (next_handler, next_layersHandler) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- TODO you only need to do this if handler is one that came from mHandlerFromPho
     -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
-    -- TODO you also want to reset layers handler here too
-    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput) where
+    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
       -- CAREFUL INFINITE LOOP DANGER WITH USE OF `finalGoatState`
-      -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler finalGoatState` which is set to `next_handler`
+      -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
       next_potatoHandlerInput = potatoHandlerInputFromGoatState finalGoatState
-    _ -> next_handler'
+      refreshedHandler = fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput)
+      refreshedLayersHandler = fromJust (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
+    _ -> (next_handler', next_layersHandler')
 
   -- | TODO enter rename mode for newly created folders |
   -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
@@ -662,6 +666,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       (_goatCmdTempOutput_goatState goatCmdTempOutput) {
         _goatState_workspace      = next_workspace
         , _goatState_pan             = next_pan
+        , _goatState_layersHandler  = next_layersHandler
         , _goatState_handler         = next_handler
         , _goatState_selection       = next_selection
         , _goatState_canvasSelection = next_canvasSelection

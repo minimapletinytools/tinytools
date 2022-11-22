@@ -108,7 +108,7 @@ DONE-midpoints
 ::NEWEST TODO::
 
 
-
+-BUG create two boxes, copy, paste, delete, observer crash 😱
 -FEATURE add line labels
 -FEATURE options menu
   -could you do style defaults in this menu too?
@@ -170,7 +170,7 @@ DONE-midpoints
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
 DONE-BUG changing from text box to no text box crashes
--reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of`
+DONE-reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of`
 -click release on lock/hide/collapse on selected element should not deselect
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -no MDI file stuff
