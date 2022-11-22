@@ -64,9 +64,10 @@ renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
   r = catMaybes $ fmap fmapattachmentfn attachments
 
 -- set midpointhighlightindex index to -1 for no highlight
-maybeRenderPoints :: (Bool,Bool) -> Bool -> Int -> PotatoHandlerInput -> [RenderHandle]
+maybeRenderPoints :: (HasCallStack) => (Bool,Bool) -> Bool -> Int -> PotatoHandlerInput -> [RenderHandle]
 maybeRenderPoints (highlightstart, highlightend) offsetAttach midpointhighlightindex PotatoHandlerInput {..} = r where
-  mselt = selectionToMaybeSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
+  -- in creation cases, _potatoHandlerInput_canvasSelection might not be a line so we need maybes throughout this function (you probably should have written using do notation)
+  mselt = selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
   r1 = case mselt of
     Just (SEltLine SAutoLine {..}) -> [makeRenderHandle (make_1area_lBox_from_XY startHandle) True, makeRenderHandle (make_1area_lBox_from_XY endHandle) False]
       where
@@ -273,7 +274,10 @@ instance PotatoHandler AutoLineHandler where
     boxes = maybeRenderPoints (False, False) _autoLineHandler_offsetAttach (-1) phi
     -- TODO P3 set attach endpoints from currently selected line (it's really not necessary though since the line handler attachments cover these)
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
-    r = HandlerRenderOutput (attachmentBoxes <> boxes)
+    r = if _autoLineHandler_isCreation
+      -- creation handlers are rendered by AutoLineEndPointHandler once dragging starts
+      then emptyHandlerRenderOutput
+      else HandlerRenderOutput (attachmentBoxes <> boxes)
 
   pIsHandlerActive _ = False
   pHandlerTool AutoLineHandler {..} = if _autoLineHandler_isCreation
@@ -371,9 +375,6 @@ instance PotatoHandler AutoLineEndPointHandler where
   pHandlerTool AutoLineEndPointHandler {..} = if _autoLineEndPointHandler_isCreation
     then Just Tool_Line
     else Nothing
-
-
---- WORK IN PROGRESS BELOW HERE
 
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{

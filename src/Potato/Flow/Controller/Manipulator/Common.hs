@@ -56,14 +56,14 @@ restrict8 (V2 x y) = r where
 selectionToSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection == 1) $ Seq.index selection 0
 
+selectionToMaybeFirstSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
+selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
+
 selectionToMaybeSuperOwl :: (HasCallStack) => CanvasSelection -> Maybe SuperOwl
 selectionToMaybeSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection <= 1) $ Seq.lookup 0 selection
 
 selectionToFirstSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToFirstSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection > 0) $ Seq.index selection 0
-
-selectionToMaybeFirstSuperOwl :: CanvasSelection -> Maybe SuperOwl
-selectionToMaybeFirstSuperOwl (CanvasSelection selection) = Seq.lookup 0 selection
 
 lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where

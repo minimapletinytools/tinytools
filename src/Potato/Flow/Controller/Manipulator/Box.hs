@@ -375,7 +375,10 @@ instance PotatoHandler BoxHandler where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_pFState _potatoHandlerInput_canvasSelection
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
-    r = HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
+    r = if not _boxHandler_active && boxCreationType_isCreation _boxHandler_creation 
+      -- don't render anything if we are about to create a box
+      then emptyHandlerRenderOutput
+      else HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
   pIsHandlerActive = _boxHandler_active
 
   pHandlerTool BoxHandler {..} = case _boxHandler_creation of

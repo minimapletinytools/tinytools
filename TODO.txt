@@ -107,8 +107,8 @@ DONE-midpoints
 
 ::NEWEST TODO::
 
--BUG selecting two box and going "command-v" causes crash
--BUG selecting something and pressing v removes the handler???
+DONE-BUG selecting two box and gonig line tool causes crash
+DONE-BUG selecting something and pressing v removes the handler???
 DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
 -FEATURE add line labels
 -FEATURE options menu
