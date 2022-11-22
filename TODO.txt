@@ -4,8 +4,8 @@ ghc options
 
 -ddump-to-file
   - dump to file
--ddump-simpl 
-  - dump core, you have to find the .dump-simpl file  
+-ddump-simpl
+  - dump core, you have to find the .dump-simpl file
 
 -dsuppress-coercions
 -dsuppress-module-prefixes
@@ -15,7 +15,7 @@ ghc options
   -dumps desugar
 -dverbose-core2core
   -dumps everything (includng all optimization stages)
--drule-check = <rule name> 
+-drule-check = <rule name>
 
 -----
 
@@ -107,8 +107,9 @@ DONE-midpoints
 
 ::NEWEST TODO::
 
-
--BUG create two boxes, copy, paste, delete, observer crash 😱
+-BUG selecting two box and going "command-v" causes crash
+-BUG selecting something and pressing v removes the handler???
+DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
 -FEATURE add line labels
 -FEATURE options menu
   -could you do style defaults in this menu too?
@@ -116,7 +117,7 @@ DONE-midpoints
 -FEATURE add anchor repositioning dragging
   -add anchor positioning var first
   -create interface for dragging anchors in line handler
-  -maybe design way to directly attach at offset position? 
+  -maybe design way to directly attach at offset position?
     -line anchors for render could highlight the entire box and flash the center point?
       -you probably want options to disable this stuff
 -ttvty
@@ -138,7 +139,7 @@ DONE-midpoints
   -create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
 -BUG fix line bugs
-  DONE-line anchors handles should render on top of attachment points and not on the edge of the box 
+  DONE-line anchors handles should render on top of attachment points and not on the edge of the box
   -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points

@@ -208,14 +208,11 @@ owlTree_superOwlNthParentId od sowl n
   | superOwl_parentId sowl == noOwl = noOwl
   | otherwise = owlTree_superOwlNthParentId od (owlTree_mustFindSuperOwl od (superOwl_parentId sowl)) (n-1)
 
-
--- you can prob delete this?
 -- if parent is selected, then kiddos must not be directly included in the parliament
 newtype OwlParliament = OwlParliament {unOwlParliament :: Seq REltId} deriving (Show, Generic)
 
 instance NFData OwlParliament
 
--- if parent is selected, then kiddos must not be directly included in the parliament
 -- same as OwlParialment but contains more information
 -- TODO consider adding OwlTree reference to this type and rename to SuperDuperOwlParliament or something like that
 newtype SuperOwlParliament = SuperOwlParliament {unSuperOwlParliament :: Seq SuperOwl} deriving (Eq, Show, Generic)
@@ -266,6 +263,8 @@ partitionN f as = r where
   foldfn a acc = IM.alter (alterfn a) (f a) acc
   r = foldr foldfn IM.empty as
 
+-- TODO how is this different than `\od sowls -> Seq.sortBy (owlTree_superOwl_comparePosition od) sowls`
+  -- if it's not, than you can use them to UT against each other
 -- TODO rename, SuperOwlParliament is always sorted so the name is redundant!
 -- input type is not SuperOwlParliament type because it is not ordered
 makeSortedSuperOwlParliament :: OwlTree -> Seq SuperOwl -> SuperOwlParliament
@@ -939,7 +938,7 @@ owlTree_reindex start ot = assert valid r where
 -- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step, use owlTree_hasDanglingAttachments
 -- ^ actually this might be OK... or at least we want to check against tree we are attaching to such that if we copy paste something that was attached it keeps those attachments (or maybe we don't!)
 owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
+owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ assert validOutput $ r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od0)
   od2indices = Set.fromList $ IM.keys (_owlTree_mapping miniot)
   collisions = Set.size $ Set.intersection od1indices od2indices
@@ -962,7 +961,8 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) r where
       x -> x
 
   -- go from left to right such that parents/left siblings are added first
-  r = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
+  r@(rod, rp) = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
+  validOutput = superOwlParliament_isValid rod (SuperOwlParliament (Seq.fromList rp))
 
 -- parents NOT allowed :O
 internal_owlTree_addOwlItem :: OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)

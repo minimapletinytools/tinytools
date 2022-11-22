@@ -505,7 +505,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     then (False, _goatState_selection)
     else r where
 
-      -- TODO need to sort
       -- extract elements that got created
       newEltFoldMapFn rid v = case v of
         Nothing     -> []
@@ -513,6 +512,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
 
       -- NOTE, undoing a deleted element counts as a newly created element (and will be auto-selected)
       newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap_afterEvent
+
+      sortedNewlyCreatedSEltls = SuperOwlParliament $ Seq.sortBy (owlTree_superOwl_comparePosition $ _owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
+      -- pretty sure this does the same thing..
+      --sortedNewlyCreatedSEltls = makeSortedSuperOwlParliament (_owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
 
       wasLoad = case cmd of
         GoatCmdLoad _ -> True
@@ -528,7 +531,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             Just Nothing             -> Nothing
             -- it was changed, update selection to newest version
             Just (Just x) -> Just x
-        else (True, SuperOwlParliament $ Seq.fromList newlyCreatedSEltls)
+        else (True, sortedNewlyCreatedSEltls)
 
   -- for now, newly created stuff is the same as anything that got auto selected
   --newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
