@@ -564,7 +564,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
     -- TODO you also want to reset layers handler here too
-    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' potatoHandlerInput)
+    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput) where
+      -- CAREFUL INFINITE LOOP DANGER WITH USE OF `finalGoatState`
+      -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler finalGoatState` which is set to `next_handler`
+      next_potatoHandlerInput = potatoHandlerInputFromGoatState finalGoatState
     _ -> next_handler'
 
   -- | TODO enter rename mode for newly created folders |
@@ -668,3 +671,4 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         , _goatState_layersState     = next_layersState
         , _goatState_attachmentMap = next_attachmentMap
       }
+

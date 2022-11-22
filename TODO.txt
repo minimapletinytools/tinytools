@@ -77,14 +77,14 @@ WIDE
 
 
 :: MULTI POINT LINE AND LABEL SPEC
--midpoints
-  -rendered in segments
-  -midpoints treated as ANY attachments
+DONE-midpoints
+  DONE-rendered in segments
+  DONE-midpoints treated as ANY attachments
 -ANY attachment style
   -pass in neighbors, and direction determined by position of neighbor
-    -process from left to right, disallow double backing in same direction
+  -process from left to right, disallow double backing in same direction
 -click once to select line
-  -click + drag end/midpoint to manipulate
+  DONE-click + drag end/midpoint to manipulate
   -click + drag text label to enter modify mode
     -refactor modify stuff out of BoxText and BoxLabel (why didn't you do this correctly the first time...)
   -click + release to create new text label
@@ -108,26 +108,36 @@ WIDE
 ::NEWEST TODO::
 
 
-DONE-fix mouse cancel stuff for autline
+
+-FEATURE add line labels
+-FEATURE options menu
+  -could you do style defaults in this menu too?
+  -like ideally following the same model you did in Params.hs....
+-FEATURE add anchor repositioning dragging
+  -add anchor positioning var first
+  -create interface for dragging anchors in line handler
+  -maybe design way to directly attach at offset position? 
+    -line anchors for render could highlight the entire box and flash the center point?
+      -you probably want options to disable this stuff
 -ttvty
   DONE/IGNORE-add box border toggle
   -(line style) do easy disabling of start/end (stretch)
     [x] start | [x] end    (the one being modified is highlighted)
-DONE-finish midpoint stuf
--text zipper stuff
+-BUG fix text zipper bugs
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
-  -BUG click on eol in text box is kind of broken in general
-    -doesn't laways take you to the end
+  -BUG click on eol in text box is kind of broken in general[]
+    -doesn't always take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--figure out what's going on with cache updated bugs...
--testing
+-BUG figure out what's going on with cache updated bugs...
+-TESTING
   -test monad for goat directly
   -add cancel with no movement test for box and line handler
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
--NEW LINE TODO
+  -create box, turn to text box, add some text, turn to regular box
+-BUG fix line bugs
   DONE-line anchors handles should render on top of attachment points and not on the edge of the box 
   -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
@@ -149,8 +159,6 @@ DONE-finish midpoint stuf
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
   -BUG attach offset seems to be not used correctly in some configurations :(
   -attach offset of 0 for AL ANY still needs to render the arrow head
--LINE LABELS :O
--fix ANY attach locatino offset bug issues whatever they are
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of PotatoDefaultParameters
 -file stuff
@@ -161,7 +169,8 @@ DONE-finish midpoint stuf
     -auto add extension on save
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
--allow changing between text and no text box
+DONE-BUG changing from text box to no text box crashes
+-reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of`
 -click release on lock/hide/collapse on selected element should not deselect
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -no MDI file stuff
@@ -215,7 +224,8 @@ DONE-finish midpoint stuf
 -add mouse hover support (for when you do web port)
 -maybe make styles references instead of stored per elt
 
-
+DONE-fix mouse cancel stuff for autline
+DONE-finish midpoint stuf
 DONE-best guess for ANY attach ends on which attach type to convert to
 DONE-file explorer
   DONE-getting filename and last folder confused
