@@ -20,6 +20,8 @@ import Potato.Flow.OwlState
 import Potato.Flow.Owl
 import           Potato.Flow.Attachments
 import Potato.Flow.Llama
+import Potato.Flow.Controller.Manipulator.TextInputState
+import qualified Potato.Data.Text.Zipper                          as TZ
 
 import           Control.Exception
 import Data.Maybe (catMaybes)
@@ -39,6 +41,10 @@ maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
     where
       sowl = selectionToSuperOwl selection
       rid = _superOwl_id sowl
+
+mustGetSLine :: CanvasSelection -> (REltId, SAutoLine)
+mustGetSLine = fromJust . maybeGetSLine
+
 -- TODO TEST
 -- TODO move me elsewhere
 getAvailableAttachments :: Bool -> Bool -> OwlPFState -> BroadPhaseState -> LBox -> [(Attachment, XY)]
@@ -80,7 +86,7 @@ maybeRenderPoints (highlightstart, highlightend) offsetAttach midpointhighlighti
           }
     _ -> []
   r2 = case mselt of
-    Just (SEltLine SAutoLine {..}) -> L.imap imapfn _sAutoLine_midpoints 
+    Just (SEltLine SAutoLine {..}) -> L.imap imapfn _sAutoLine_midpoints
       where
         imapfn i mp = case mp of
           SAutoLineConstraintFixed pos -> RenderHandle {
@@ -142,12 +148,12 @@ whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
 -- S ... 0 ... 1 ... N ... E
 -- a midpoint index of (-1) is the segment between S and 0
 --
--- e.g. 
--- S ...(x)... 0 ... 1 ... 
+-- e.g.
+-- S ...(x)... 0 ... 1 ...
 -- returns -1
--- favors right side 
+-- favors right side
 --
--- e.g. 
+-- e.g.
 -- S ... (x) ... 1
 -- returns 0
 --
@@ -211,7 +217,7 @@ instance PotatoHandler AutoLineHandler where
 
 
         -- TODO update cache someday
-        mclickonline = whichSubSegmentDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline _mouseDrag_to 
+        mclickonline = whichSubSegmentDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline _mouseDrag_to
 
         r = case firstlm of
 
@@ -261,9 +267,7 @@ instance PotatoHandler AutoLineHandler where
         Nothing -> Just def
         Just _ -> r where
           -- TODO setup properly
-          handler = AutoLineTextLabelHandler {
-              _autoLineTextLabelHandler_dummy = ()
-            }
+          handler = makeAutoLineLabelHandler (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
           r = pHandleMouse handler phi rmd
       -- TODO is this correct??
       MouseDragState_Cancelled -> Just def
@@ -412,30 +416,30 @@ instance PotatoHandler AutoLineMidPointHandler where
         ladjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline mpindex
         -- NOTE that this is out of bounds in creation cases, but it won't get evaluated
         radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
-        isoveradjacent = traceShowId $ trace (show ladjacentpos <> " : " <> show _mouseDrag_to <> " : " <> show radjacentpos <> " - " <> show mpindex <> " " <> show sline) $ _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos 
+        isoveradjacent = traceShowId $ trace (show ladjacentpos <> " : " <> show _mouseDrag_to <> " : " <> show radjacentpos <> " - " <> show mpindex <> " " <> show sline) $ _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
 
-        newsline = sline { 
-            _sAutoLine_midpoints = if _autoLineMidPointHandler_isMidpointCreation 
-              then L.insertAt mpindex (SAutoLineConstraintFixed _mouseDrag_to) mps 
-              else L.modifyAt mpindex (const $ SAutoLineConstraintFixed _mouseDrag_to) mps 
+        newsline = sline {
+            _sAutoLine_midpoints = if _autoLineMidPointHandler_isMidpointCreation
+              then L.insertAt mpindex (SAutoLineConstraintFixed _mouseDrag_to) mps
+              else L.modifyAt mpindex (const $ SAutoLineConstraintFixed _mouseDrag_to) mps
           }
 
-        newslinedelete = sline { 
-            _sAutoLine_midpoints = L.deleteAt mpindex mps 
+        newslinedelete = sline {
+            _sAutoLine_midpoints = L.deleteAt mpindex mps
           }
 
-        mevent = case firstlm of 
+        mevent = case firstlm of
           -- create the new midpoint if none existed
-          _ | _autoLineMidPointHandler_isMidpointCreation -> assert (not _autoLineMidPointHandler_undoFirst) $  Just $ 
+          _ | _autoLineMidPointHandler_isMidpointCreation -> assert (not _autoLineMidPointHandler_undoFirst) $  Just $
             WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
-          
+
           -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
           _ | isoveradjacent -> Just $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
 
           -- normal case, update the midpoint position
           _ -> Just $
             WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
-        
+
         newundostate = case mevent of
           Nothing -> False
           Just WSEUndo -> False
@@ -460,14 +464,62 @@ instance PotatoHandler AutoLineMidPointHandler where
   pIsHandlerActive _ = True
 
 
--- handles creating and modifying text labels
-data AutoLineTextLabelHandler = AutoLineTextLabelHandler {
-  _autoLineTextLabelHandler_dummy :: ()
-}
+-- WIP BELOW THIS LINE
 
-instance PotatoHandler AutoLineTextLabelHandler where
+-- handles creating and modifying text labels
+data AutoLineLabelHandler = AutoLineLabelHandler {
+    _autoLineLabelHandler_isActive :: Bool
+    , _autoLineLabelHandler_state :: TextInputState
+    -- probably not necessary?
+    , _autoLineLabelHandler_prevHandler :: SomePotatoHandler
+    , _autoLineLabelHandler_undoFirst :: Bool
+
+    , _autoLineLabelHandler_isCreation :: Bool
+    , _autoLineLabelHandler_labelIndex :: Int
+  }
+
+-- TODO pass in existing line label or location of new line label
+makeAutoLineLabelInputState :: REltId -> SAutoLine -> RelMouseDrag -> TextInputState
+makeAutoLineLabelInputState rid sline rmd = r where
+
+  -- TODO figure out which line label we are editing or create a new one
+  mogtext = undefined
+
+  -- TODO figure out box of line label we are editing
+  box = undefined
+
+  ogtz = TZ.fromText (fromMaybe "" mogtext)
+  tis = TextInputState {
+      _textInputState_rid = rid
+      , _textInputState_original   = mogtext
+      , _textInputState_zipper   = ogtz
+
+      -- these fields get updated in next pass
+      , _textInputState_box = error "expected to be filled"
+      , _textInputState_displayLines = error "expected to be filled"
+    }
+  r = mouseText tis box rmd (V2 1 0)
+
+makeAutoLineLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler prev selection rmd = AutoLineLabelHandler {
+    _autoLineLabelHandler_isActive = False
+    , _autoLineLabelHandler_state = uncurry makeAutoLineLabelInputState (mustGetSLine selection) rmd
+    , _autoLineLabelHandler_prevHandler = prev
+    , _autoLineLabelHandler_undoFirst = False
+  }
+
+data BoxTextHandler = BoxTextHandler {
+    -- TODO rename to active
+    _boxTextHandler_isActive      :: Bool
+    , _boxTextHandler_state       :: TextInputState
+    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
+    , _boxTextHandler_prevHandler :: SomePotatoHandler
+    , _boxTextHandler_undoFirst   :: Bool
+  }
+
+instance PotatoHandler AutoLineLabelHandler where
   pHandlerName _ = handlerName_simpleLine_textLabel
-  pHandleMouse slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
-  pHandleKeyboard slh@AutoLineTextLabelHandler {..} PotatoHandlerInput {..} (KeyboardData k _) = undefined
-  pRenderHandler AutoLineTextLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pHandleMouse slh@AutoLineLabelHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just def
+  pHandleKeyboard slh@AutoLineLabelHandler {..} PotatoHandlerInput {..} (KeyboardData k _) = undefined
+  pRenderHandler AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
   pIsHandlerActive _ = undefined

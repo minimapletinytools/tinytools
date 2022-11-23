@@ -150,7 +150,7 @@ handlerName_simpleLine_endPoint = "AutoLineEndPointHandler"
 handlerName_simpleLine_midPoint :: Text
 handlerName_simpleLine_midPoint = "AutoLineMidPointHandler"
 handlerName_simpleLine_textLabel :: Text
-handlerName_simpleLine_textLabel = "AutoLineTextLabelHandler"
+handlerName_simpleLine_textLabel = "AutoLineLabelHandler"
 handlerName_layers :: Text
 handlerName_layers = "LayersHandler"
 handlerName_layersRename :: Text
