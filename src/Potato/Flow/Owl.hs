@@ -219,6 +219,9 @@ newtype SuperOwlParliament = SuperOwlParliament {unSuperOwlParliament :: Seq Sup
 
 instance NFData SuperOwlParliament
 
+instance PotatoShow SuperOwlParliament where
+  potatoShow (SuperOwlParliament sowls) = T.intercalate "\n" . toList $ fmap potatoShow sowls
+
 class IsParliament a where
   isParliament_disjointUnion :: a -> a -> a
   isParliament_null :: a -> Bool
@@ -938,7 +941,7 @@ owlTree_reindex start ot = assert valid r where
 -- TODO check that there are no dangling attachments in MiniOwlTree (attach to non existant element), this is expected to be cleaned up in a previous step, use owlTree_hasDanglingAttachments
 -- ^ actually this might be OK... or at least we want to check against tree we are attaching to such that if we copy paste something that was attached it keeps those attachments (or maybe we don't!)
 owlTree_addMiniOwlTree :: OwlSpot -> MiniOwlTree -> OwlTree -> (OwlTree, [SuperOwl])
-owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ assert validOutput $ r where
+owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ r where
   od1indices = Set.fromList $ IM.keys (_owlTree_mapping od0)
   od2indices = Set.fromList $ IM.keys (_owlTree_mapping miniot)
   collisions = Set.size $ Set.intersection od1indices od2indices
@@ -961,8 +964,7 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ assert
       x -> x
 
   -- go from left to right such that parents/left siblings are added first
-  r@(rod, rp) = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
-  validOutput = superOwlParliament_isValid rod (SuperOwlParliament (Seq.fromList rp))
+  r = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
 
 -- parents NOT allowed :O
 internal_owlTree_addOwlItem :: OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)

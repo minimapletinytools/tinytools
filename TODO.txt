@@ -106,11 +106,8 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
-
-DONE-BUG selecting two box and gonig line tool causes crash
-DONE-BUG selecting something and pressing v removes the handler???
-DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
 -FEATURE add line labels
+  -remember to adjust _sAutoLineLabel_index when deleting midpoints
 -FEATURE options menu
   -could you do style defaults in this menu too?
   -like ideally following the same model you did in Params.hs....
@@ -170,8 +167,6 @@ DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
     -auto add extension on save
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
-DONE-BUG changing from text box to no text box crashes
-DONE-reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of`
 -click release on lock/hide/collapse on selected element should not deselect
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -no MDI file stuff
@@ -225,6 +220,11 @@ DONE-reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent g
 -add mouse hover support (for when you do web port)
 -maybe make styles references instead of stored per elt
 
+DONE-BUG selecting two box and gonig line tool causes crash
+DONE-BUG selecting something and pressing v removes the handler???
+DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
+DONE-BUG changing from text box to no text box crashes
+DONE-reset layer handler after `next_handler = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of`
 DONE-fix mouse cancel stuff for autline
 DONE-finish midpoint stuf
 DONE-best guess for ANY attach ends on which attach type to convert to

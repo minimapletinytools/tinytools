@@ -4,7 +4,7 @@ import           Relude
 import Control.Monad.Writer
 
 -- prob just replace with show? Why do you ever want to not potato show?
--- the reason is becaues potatoshow doesn't show all information, but whatever it's fine
+-- the reason is becaues potatoShow doesn't show all information, but whatever it's fine
 class PotatoShow a where
   potatoShow :: a -> Text
 

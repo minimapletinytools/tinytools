@@ -20,6 +20,7 @@ data TextInputState = TextInputState {
   --, _textInputState_selected :: Int -- WIP
 } deriving (Show)
 
+-- TODO support shift selecting someday
 -- TODO define behavior for when you click outside box or assert
 mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
 mouseText tais lbox rmd (V2 xoffset yoffset)= r where

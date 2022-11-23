@@ -341,6 +341,7 @@ instance NFData SAutoLineLabel
 
 instance Default SAutoLineLabel where
   def = SAutoLineLabel {
+      -- anchor index, text shows AFTER index
       _sAutoLineLabel_index = 0
       , _sAutoLineLabel_position = SAutoLineLabelPosition
       , _sAutoLineLabel_vertical = False
