@@ -488,16 +488,18 @@ makeAutoLineLabelInputState rid sline rmd = r where
   -- TODO figure out box of line label we are editing
   box = undefined
 
+  width = 99999 -- line label text always overflows
+
   ogtz = TZ.fromText (fromMaybe "" mogtext)
+
   tis = TextInputState {
       _textInputState_rid = rid
       , _textInputState_original   = mogtext
       , _textInputState_zipper   = ogtz
-
-      -- these fields get updated in next pass
-      , _textInputState_box = error "expected to be filled"
-      , _textInputState_displayLines = error "expected to be filled"
+      , _textInputState_box = box
+      , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () ogtz
     }
+
   r = mouseText tis box rmd (V2 1 0)
 
 makeAutoLineLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
@@ -506,15 +508,6 @@ makeAutoLineLabelHandler prev selection rmd = AutoLineLabelHandler {
     , _autoLineLabelHandler_state = uncurry makeAutoLineLabelInputState (mustGetSLine selection) rmd
     , _autoLineLabelHandler_prevHandler = prev
     , _autoLineLabelHandler_undoFirst = False
-  }
-
-data BoxTextHandler = BoxTextHandler {
-    -- TODO rename to active
-    _boxTextHandler_isActive      :: Bool
-    , _boxTextHandler_state       :: TextInputState
-    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
-    , _boxTextHandler_prevHandler :: SomePotatoHandler
-    , _boxTextHandler_undoFirst   :: Bool
   }
 
 instance PotatoHandler AutoLineLabelHandler where

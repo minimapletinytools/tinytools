@@ -107,20 +107,8 @@ DONE-midpoints
 
 ::NEWEST TODO::
 -FEATURE add line labels
-  -remember to adjust _sAutoLineLabel_index when deleting midpoints
--FEATURE options menu
-  -could you do style defaults in this menu too?
-  -like ideally following the same model you did in Params.hs....
--FEATURE add anchor repositioning dragging
-  -add anchor positioning var first
-  -create interface for dragging anchors in line handler
-  -maybe design way to directly attach at offset position?
-    -line anchors for render could highlight the entire box and flash the center point?
-      -you probably want options to disable this stuff
--ttvty
-  DONE/IGNORE-add box border toggle
-  -(line style) do easy disabling of start/end (stretch)
-    [x] start | [x] end    (the one being modified is highlighted)
+  -remember to adjust _sAutoLine_labels when deleting midpoints
+  -SAutoLine -> SAutoLineLabel -> XY
 -BUG fix text zipper bugs
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
@@ -128,15 +116,9 @@ DONE-midpoints
     -doesn't always take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -BUG figure out what's going on with cache updated bugs...
--TESTING
-  -test monad for goat directly
-  -add cancel with no movement test for box and line handler
-  -add test to make sure cache is actually being used
-  -attach line to object, move object delete that object, make sure line is in expected place, modify line again
-  -create 2 fully attached lines, select them both, ensure not possible to move
-  -create box, turn to text box, add some text, turn to regular box
+-TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
+-TESTING check for leaks again
 -BUG fix line bugs
-  DONE-line anchors handles should render on top of attachment points and not on the edge of the box
   -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
@@ -152,30 +134,91 @@ DONE-midpoints
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
           ╚═════╝
+  DONE-line anchors handles should render on top of attachment points and not on the edge of the box
   DONE-AL_ANY needs to be a single point and not a box with 4 sides...
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
   -BUG attach offset seems to be not used correctly in some configurations :(
   -attach offset of 0 for AL ANY still needs to render the arrow head
--insert vs overwrite option for freeform text
-  -you need some kind of options object to go along side of PotatoDefaultParameters
+-folder stuff
+  -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  -make new elts get created inside selected folder rather than above it?
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
 -file stuff
   -file explorer
+    -apply styling
+    -ctrl-o to open
+    -ctrl-n for new file
     -add highlight on click
     -grey out invalid files extensions
     -add double clikc support to file explorer
     -auto add extension on save
+    -clicking on file with valid extension populates the filename bar
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
--click release on lock/hide/collapse on selected element should not deselect
+-open tutorial file by default
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
--no MDI file stuff
+-make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
+  -it's definitely possible to do that but nothing seemed to break???
+  DONE-auto expand folder after dragging into it
+  DONE-do proper folder position
+-figure out why scrolling in file explorer is hecka broken
+  -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
+-BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
+  -you should fix cuz it makes debugging hard...
+  -you got it down to 2 :O
+
+
+-TESTS TO ADD
+  -add cancel with no movement test for box and line handler
+  -add test to make sure cache is actually being used
+  -attach line to object, move object delete that object, make sure line is in expected place, modify line again
+  -create 2 fully attached lines, select them both, ensure not possible to move
+  -create box, turn to text box, add some text, turn to regular box
+  -drag parent folder into a child folder and ensure it does not work
+  -create folder with children, select folder, attempt to drag via children (does'nt work right now)
+
+  
+-figure out how to change folders into groups for auto-pathing group support
+  -is it just a folder setting?
+-add mouse hover support (for when you do web port)
+-maybe make styles references instead of stored per elt
+-FEATURE options menu
+  -could you do style defaults in this menu too?
+  -like ideally following the same model you did in Params.hs....
+-FEATURE add anchor repositioning dragging
+  -add anchor positioning var first
+  -create interface for dragging anchors in line handler
+  -maybe design way to directly attach at offset position?
+    -line anchors for render could highlight the entire box and flash the center point?
+      -you probably want options to disable this stuff
+-ttvty
+  DONE/IGNORE-add box border toggle
+  -(line style) do easy disabling of start/end (stretch)
+    [x] start | [x] end    (the one being modified is highlighted)
+-insert vs overwrite option for freeform text
+  -you need some kind of options object to go along side of PotatoDefaultParameters
+
+
+
+DONE-display filename somewhere with * if not saved
+  -on start, it should pop stack, on exit it should pop stack
+DONE-delete layer scrolling support from GoatWidget. I can't remember why I did this anymore
+IGNORE-disable selection highlight in some modes????
+DONE-no MDI file stuff
   DONE-CLI open file
     DONE-opens file, sets directory to file's root dir
-  -no open file
+  DONE-no open file
     DONE-sets directory to home dir
-    -opens tutorial
--refactor
+DONE-figure out if paste is done via repeated inputs or actually via paste event
+  -repeated inputs lol
+DONE-BUG you can stil drag folder into itself which causes crash wtf I thought I fixed thi
+IGNORE/DONE-refactor
   -refactor SEltMethods/getDrawer stuff
     -factor in RenderCache into refactor somehow?? RenderCache is good not just for rendering....
   -switch OwlPFCManipulate over to Llama
@@ -185,41 +228,6 @@ DONE-midpoints
       -wrap handler in some sort of monad so you can just doUpdateCache
   -consider adding available Attachments to PotatoHandlerInput
     -why?
--you might want to consider disallowing selection of locked stuff (directly NOT ok, via parents OK)
--test for leaks again
--figure out if paste is done via repeated inputs or actually via paste event
--make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
--folder stuff
-  DONE-BUG you can stil drag folder into itself which causes crash wtf I thought I fixed this
-  -add invalid folder drag test
-  -when you select a folder and it auto selects children, you can't click and drag the children
--create new folder stuff
-  DONE-auto expand folder after dragging into it
-  -after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
-    -you need some kind of click off pane reset type action to handler
-      -can you tie this into graceful handling of bad mouse states?
-  DONE-do proper folder position
-  -consider making new elts get created inside selected folder rather than above it?
-  -empty folders should not be expandable? (set to expanded by default)
-  -add UTs
--figure out why scrolling in file explorer is hecka broken
-  -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
--delete layer scrolling support from GoatWidget. I can't remember why I did this anymore
--BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
-  -you should fix cuz it makes debugging hard...
-  -you got it down to 2 :O
--disable selection highlight in some modes????
--file explorer
-  -apply styling
-  -display filename somewhere with * if not saved
-    -on start, it should pop stack, on exit it should pop stack
-  -ctrl-o to open
-  -ctrl-n for new file
--figure out how to change folders into groups for auto-pathing group support
-  -is it just a folder setting?
--add mouse hover support (for when you do web port)
--maybe make styles references instead of stored per elt
-
 DONE-BUG selecting two box and gonig line tool causes crash
 DONE-BUG selecting something and pressing v removes the handler???
 DONE-BUG create two boxes, copy, paste, delete, observer crash 😱
