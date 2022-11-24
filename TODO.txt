@@ -150,17 +150,20 @@ DONE-midpoints
   -BUG click release on lock/hide/collapse on selected element should not deselect
   -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
 -file stuff
-  -file explorer
-    -apply styling
-    -ctrl-o to open
-    -ctrl-n for new file
-    -add highlight on click
-    -grey out invalid files extensions
-    -add double clikc support to file explorer
-    -auto add extension on save
-    -clicking on file with valid extension populates the filename bar
+  -ctrl-o to open
+  -ctrl-n for new file
+  -add double clikc support to file explorer
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
+  DONE-auto focus on filename area?
+  DONE-up/down arrow works regardless of focus in explorer window
+  DONE-apply styling
+  DONE-add highlight on click
+  DONE-auto add file extension on saving?? (maybe have check box to disable? or maybe disables if user sets their own extension)
+  DONE/IGNORE-grey out invalid files extensions
+  DONE-sort files in explorer
+  DONE-auto add extension on save
+  DONE-clicking on file with valid extension populates the filename bar
 -open tutorial file by default
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
@@ -172,6 +175,7 @@ DONE-midpoints
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
+-FEATURE info/statusbar/output area (right side?)
 
 
 -TESTS TO ADD
@@ -183,7 +187,7 @@ DONE-midpoints
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (does'nt work right now)
 
-  
+
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
