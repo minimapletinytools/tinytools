@@ -11,6 +11,9 @@ import           Test.Hspec
 
 import Potato.Flow
 import           Potato.Flow.Methods.LineDrawer
+import           Potato.Flow.TestStates
+
+
 
 import Data.Default
 
@@ -53,6 +56,26 @@ validateTransformMe a =
   && (transformMe_rotateRight . transformMe_rotateLeft $ a) == a
   && (transformMe_reflectHorizontally . transformMe_reflectHorizontally $ a) == a
 
+
+emptyLineAnchorsForRender :: LineAnchorsForRender
+emptyLineAnchorsForRender = LineAnchorsForRender {
+    _lineAnchorsForRender_start = V2 (-123) 45
+    , _lineAnchorsForRender_rest = []
+  }
+
+unsimplifiedLineAnchorsForRender :: LineAnchorsForRender
+unsimplifiedLineAnchorsForRender = LineAnchorsForRender {
+    _lineAnchorsForRender_start = 0
+    , _lineAnchorsForRender_rest = [(CD_Up, 10, True),(CD_Up, 15, False),(CD_Up, 1, False),(CD_Right, 10, False)]
+  }
+
+someLineAnchorsForRender :: LineAnchorsForRender
+someLineAnchorsForRender = LineAnchorsForRender {
+    _lineAnchorsForRender_start = 0
+    , _lineAnchorsForRender_rest = [(CD_Up, 10, True),(CD_Right, 15, False),(CD_Down, 1, False),(CD_Left, 10, False)]
+  }
+
+
 spec :: Spec
 spec = do
   describe "Lines - internal" $ do
@@ -70,12 +93,18 @@ spec = do
       determineSeparation (lb1, (2,2,0,0)) (lb2, (0,0,0,0)) `shouldBe` (False, True)
       determineSeparation (lb1, (1,1,1,1)) (lb2, (1,1,1,1)) `shouldBe` (False, False)
     it "lineAnchorsForRender_simplify" $ do
-      let
-        lineanchors = LineAnchorsForRender {
-            _lineAnchorsForRender_start = 0
-            , _lineAnchorsForRender_rest = [(CD_Up, 10, True),(CD_Up, 15, False),(CD_Up, 1, False),(CD_Right, 10, False)]
-          }
-      _lineAnchorsForRender_rest (lineAnchorsForRender_simplify lineanchors) `shouldBe` [(CD_Up, 26, True),(CD_Right, 10, False)]
+      _lineAnchorsForRender_rest (lineAnchorsForRender_simplify unsimplifiedLineAnchorsForRender) `shouldBe` [(CD_Up, 26, True),(CD_Right, 10, False)]
+      lineAnchorsForRender_simplify someLineAnchorsForRender `shouldBe` someLineAnchorsForRender
+    it "lineAnchorsForRender_length" $ do
+      lineAnchorsForRender_length unsimplifiedLineAnchorsForRender `shouldBe` 36 + 1
+      lineAnchorsForRender_length someLineAnchorsForRender `shouldBe` 36 + 1
+      lineAnchorsForRender_length emptyLineAnchorsForRender `shouldBe` 1
+    it "internal_getSAutoLineLabelPosition_walk" $ do
+      let totall = lineAnchorsForRender_length someLineAnchorsForRender
+      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender 0 totall `shouldBe` 0
+      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender totall totall `shouldBe` V2 5 (-9)
+
+      
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
     --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True

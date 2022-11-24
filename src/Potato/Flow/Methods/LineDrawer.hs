@@ -5,10 +5,13 @@ module Potato.Flow.Methods.LineDrawer (
   , lineAnchorsForRender_doesIntersectPoint
   , lineAnchorsForRender_doesIntersectBox
   , lineAnchorsForRender_findIntersectingSubsegment
+  , lineAnchorsForRender_length
 
   , sAutoLine_to_lineAnchorsForRenders
   , sSimpleLineNewRenderFn
   , sSimpleLineNewRenderFnComputeCache
+
+  , getSAutoLineLabelPosition
 
 
 
@@ -17,7 +20,9 @@ module Potato.Flow.Methods.LineDrawer (
   , TransformMe(..)
   , determineSeparation
   , lineAnchorsForRender_simplify
+  , internal_getSAutoLineLabelPosition_walk
 ) where
+
 
 import           Relude hiding (tail)
 import Relude.Unsafe (tail)
@@ -31,6 +36,7 @@ import Potato.Flow.Owl
 import Potato.Flow.OwlItem
 
 import qualified Data.Text          as T
+import qualified Data.List as L
 import Data.Tuple.Extra
 
 import Linear.Vector ((^*))
@@ -206,7 +212,7 @@ makeAL (V2 ax ay) (V2 tx ty) = r where
 
 newtype OffsetBorder = OffsetBorder { unOffsetBorder :: Bool } deriving (Show)
 
-instance TransformMe OffsetBorder where 
+instance TransformMe OffsetBorder where
   transformMe_rotateLeft = id
   transformMe_rotateRight = id
   transformMe_reflectHorizontally = id
@@ -466,6 +472,11 @@ walkToRender ss@SuperStyle {..} ls lse isstart begin (tcd, tl, _) mnext d = r wh
     then (currentpos, endorelbow)
     else (currentpos, startorregular)
 
+lineAnchorsForRender_length :: LineAnchorsForRender -> Int
+lineAnchorsForRender_length LineAnchorsForRender {..} = r where
+  foldfn (_,d,_) acc = acc + d
+  r = foldr foldfn 1 _lineAnchorsForRender_rest
+
 lineAnchorsForRender_renderAt :: SuperStyle -> LineStyle -> LineStyle -> LineAnchorsForRender -> XY -> MPChar
 lineAnchorsForRender_renderAt ss ls lse LineAnchorsForRender {..} pos = r where
   walk (isstart, curbegin) a = case a of
@@ -584,4 +595,24 @@ sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
 
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
-  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenders ot sline 
+  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenders ot sline
+
+
+internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> Int -> XY
+internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
+  walk [] curbegin _ = curbegin
+  walk (x@(cd,d,_):rest) curbegin traveld = r2 where
+    nextbegin = curbegin + cartDirWithDistanceToV2 x
+    r2 = if traveld + d >= targetd
+      then curbegin + cartDirWithDistanceToV2 (cd, targetd - traveld, undefined)
+      else walk rest nextbegin (traveld + d)
+  r = walk (_lineAnchorsForRender_rest lar) (_lineAnchorsForRender_start lar) 0
+  
+
+getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
+getSAutoLineLabelPosition ot sal@SAutoLine {..} sall@SAutoLineLabel {..} = r where
+  lar = sAutoLine_to_lineAnchorsForRenders ot sal L.!! _sAutoLineLabel_index
+  totall = lineAnchorsForRender_length lar
+  targetd = case _sAutoLineLabel_position of
+    SAutoLineLabelPositionRelative r -> max 0 . floor $ (fromIntegral totall * r)
+  r = internal_getSAutoLineLabelPosition_walk lar targetd totall

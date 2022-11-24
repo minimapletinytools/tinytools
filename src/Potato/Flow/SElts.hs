@@ -1,37 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.SElts (
-  REltId
-  , PChar
-  , MPChar
-  , FillStyle(..)
-  , SuperStyle(..)
-  , superStyle_fromListFormat
-  , superStyle_toListFormat
-  , TextAlign(..)
-  , convertTextAlignToTextZipperTextAlignment
-  , TextStyle(..)
-  , LineStyle(..)
-  , lineStyle_fromListFormat
-  , lineStyle_toListFormat
-  , LineAutoStyle(..)
-  , AttachmentLocation(..)
-  , Attachment(..)
-  , SBoxTitle(..)
-  , SBoxText(..)
-  , SBoxType(..)
-  , sBoxType_isText
-  , sBoxType_hasBorder
-  , make_sBoxType
-  , SBox(..)
-  , sBox_hasLabel
-  , SAutoLineConstraint(..)
-  , SAutoLine(..)
-  , TextAreaMapping
-  , STextArea(..)
-  , SElt(..)
-  , SEltLabel(..)
-) where
+module Potato.Flow.SElts where
 
 import           Relude
 
@@ -321,7 +290,9 @@ instance Binary SAutoLineConstraint
 instance NFData SAutoLineConstraint
 
 -- TODO provide absolute and relative positioning args
-data SAutoLineLabelPosition = SAutoLineLabelPosition deriving (Eq, Generic, Show)
+data SAutoLineLabelPosition =
+  SAutoLineLabelPositionRelative Float -- 0 is at "left" anchor point and 1 is at "right" anchor point
+  deriving (Eq, Generic, Show)
 
 instance FromJSON SAutoLineLabelPosition
 instance ToJSON SAutoLineLabelPosition
@@ -331,7 +302,7 @@ instance NFData SAutoLineLabelPosition
 data SAutoLineLabel = SAutoLineLabel {
   _sAutoLineLabel_index :: Int -- index relative to _sAutoLine_midpoints for where the midpoint lives
   , _sAutoLineLabel_position :: SAutoLineLabelPosition
-  , _sAutoLineLabel_vertical :: Bool -- true if vertically oriented
+  --, _sAutoLineLabel_vertical :: Bool -- WIP true if vertically oriented
 } deriving (Eq, Generic, Show)
 
 instance FromJSON SAutoLineLabel
@@ -343,8 +314,8 @@ instance Default SAutoLineLabel where
   def = SAutoLineLabel {
       -- anchor index, text shows AFTER index
       _sAutoLineLabel_index = 0
-      , _sAutoLineLabel_position = SAutoLineLabelPosition
-      , _sAutoLineLabel_vertical = False
+      , _sAutoLineLabel_position = SAutoLineLabelPositionRelative 0
+      --, _sAutoLineLabel_vertical = False
     }
 
 
@@ -364,7 +335,7 @@ data SAutoLine = SAutoLine {
   , _sAutoLine_attachStart :: Maybe Attachment
   , _sAutoLine_attachEnd :: Maybe Attachment
 
-  , _sAutoLine_midpoints :: [SAutoLineConstraint] --  WIP currently does nothing
+  , _sAutoLine_midpoints :: [SAutoLineConstraint]
   , _sAutoLine_labels :: [SAutoLineLabel] -- WIP currently does nothing
 } deriving (Eq, Generic, Show)
 
