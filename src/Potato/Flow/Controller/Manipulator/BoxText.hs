@@ -381,7 +381,6 @@ instance PotatoHandler BoxLabelHandler where
 
   -- UNTESTED
   pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      -- TODO we need a different updated function here that does just the label
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
       (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of

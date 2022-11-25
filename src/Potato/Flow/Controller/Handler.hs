@@ -151,6 +151,8 @@ handlerName_simpleLine_midPoint :: Text
 handlerName_simpleLine_midPoint = "AutoLineMidPointHandler"
 handlerName_simpleLine_textLabel :: Text
 handlerName_simpleLine_textLabel = "AutoLineLabelHandler"
+handlerName_simpleLine_textLabelMover :: Text
+handlerName_simpleLine_textLabelMover = "AutoLineLabelMoverHandler"
 handlerName_layers :: Text
 handlerName_layers = "LayersHandler"
 handlerName_layersRename :: Text
@@ -189,9 +191,11 @@ class PotatoHandler h where
   -- NOTE, MouseDragState_Cancelled will never be passed into this
   -- return type of Nothing means input is not captured
   pHandleMouse :: h -> PotatoHandlerInput -> RelMouseDrag -> Maybe PotatoHandlerOutput
+  pHandleMouse _ _ _ = Nothing
 
   -- return type of Nothing means input is not captured
   pHandleKeyboard :: h -> PotatoHandlerInput -> KeyboardData -> Maybe PotatoHandlerOutput
+  pHandleKeyboard _ _ _ = Nothing
 
   -- reset handler if an event came in in between (e.g. due to undo, redo)
   --
