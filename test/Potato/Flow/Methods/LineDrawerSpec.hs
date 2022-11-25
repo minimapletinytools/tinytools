@@ -16,6 +16,7 @@ import           Potato.Flow.TestStates
 
 
 import Data.Default
+import Data.Tuple.Extra
 
 generateTestCases :: [OwlPFState]
 generateTestCases = r where
@@ -76,6 +77,22 @@ someLineAnchorsForRender = LineAnchorsForRender {
   }
 
 
+someSAutoLine_withLabels_label3 :: SAutoLineLabel
+someSAutoLine_withLabels_label3 = SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0)
+
+someSAutoLine_withLabels :: SAutoLine
+someSAutoLine_withLabels = def {
+      _sAutoLine_start = 0
+      , _sAutoLine_end = V2 100 0
+      , _sAutoLine_midpoints = [SAutoLineConstraintFixed (V2 50 0)]
+      , _sAutoLine_labels = [
+          SAutoLineLabel 1 (SAutoLineLabelPositionRelative 0)
+          , SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0.5)
+          , someSAutoLine_withLabels_label3
+        ]
+  }
+
+
 spec :: Spec
 spec = do
   describe "Lines - internal" $ do
@@ -103,8 +120,14 @@ spec = do
       let totall = lineAnchorsForRender_length someLineAnchorsForRender
       internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender 0 totall `shouldBe` 0
       internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender totall totall `shouldBe` V2 5 (-9)
+    it "getSAutoLineLabelPosition" $ do
+      -- use owlpfstate_zero OK because there are no attachments so state is never read
+      getSAutoLineLabelPosition owlpfstate_zero someSAutoLine_withLabels someSAutoLine_withLabels_label3 `shouldBe` V2 0 0
+    it "getSortedSAutoLineLabelPositions" $ do
+      -- use owlpfstate_zero OK because there are no attachments so state is never read
+      fmap fst3 (getSortedSAutoLineLabelPositions owlpfstate_zero someSAutoLine_withLabels) `shouldBe` [V2 0 0, V2 25 0, V2 50 0]
 
-      
+
   describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
     --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True

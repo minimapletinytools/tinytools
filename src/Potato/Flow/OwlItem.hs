@@ -18,6 +18,7 @@ data OwlSubItem =
   OwlSubItemNone
   | OwlSubItemFolder (Seq REltId)
   | OwlSubItemBox SBox
+  -- TODO maybe cache should also include line labels?
   | OwlSubItemLine SAutoLine (Maybe LineAnchorsForRender)
   | OwlSubItemTextArea STextArea
   deriving (Generic, Show, Eq)

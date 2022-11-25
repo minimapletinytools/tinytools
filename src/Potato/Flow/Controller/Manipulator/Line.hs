@@ -129,6 +129,8 @@ findFirstLineManipulator_NEW SAutoLine {..} offsetBorder pfs (RelMouseDrag Mouse
       else maybe LMP_Nothing LMP_Midpoint mmid
 
 
+
+-- TODO DELETE doesn't seem to be used anymore
 -- returns index into midpoints if we clicked on the line
 -- i.e. an index of 0 means we clicked somewhere between endpoints 0 and 1 (not including 1)
   -- TODO ☝🏽 is not true, need to fix
@@ -276,11 +278,12 @@ instance PotatoHandler AutoLineHandler where
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineHandler_offsetAttach (-1) phi
-    -- TODO P3 set attach endpoints from currently selected line (it's really not necessary though since the line handler attachments cover these)
+    -- TODO render attach endpoints from currently selected line (useful in the future when attach points aren't always in the middle)
+      -- TODO don't render attachmentBoxes while dragging
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
     r = if _autoLineHandler_isCreation
       -- creation handlers are rendered by AutoLineEndPointHandler once dragging starts
-      then emptyHandlerRenderOutput
+      then HandlerRenderOutput attachmentBoxes
       else HandlerRenderOutput (attachmentBoxes <> boxes)
 
   pIsHandlerActive _ = False
@@ -477,6 +480,10 @@ data AutoLineLabelHandler = AutoLineLabelHandler {
     , _autoLineLabelHandler_isCreation :: Bool
     , _autoLineLabelHandler_labelIndex :: Int
   }
+
+
+--getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
+
 
 -- TODO pass in existing line label or location of new line label
 makeAutoLineLabelInputState :: REltId -> SAutoLine -> RelMouseDrag -> TextInputState

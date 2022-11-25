@@ -123,6 +123,9 @@ DONE-midpoints
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
   -BUG some bot to bot cases are broken
+  -BUG attach offset seems to be not used correctly in some configurations :(
+  -attach offset of 0 for AL ANY still needs to render the arrow head
+  -midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
   -BUG
            ╔══════════╗
            ║@@@@@@@@@@║
@@ -138,8 +141,7 @@ DONE-midpoints
   DONE-AL_ANY needs to be a single point and not a box with 4 sides...
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
-  -BUG attach offset seems to be not used correctly in some configurations :(
-  -attach offset of 0 for AL ANY still needs to render the arrow head
+
 -folder stuff
   -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
@@ -179,6 +181,7 @@ DONE-midpoints
 
 
 -TESTS TO ADD
+  -very basic midpoint test
   -add cancel with no movement test for box and line handler
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again

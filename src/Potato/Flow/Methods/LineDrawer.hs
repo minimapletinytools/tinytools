@@ -12,6 +12,7 @@ module Potato.Flow.Methods.LineDrawer (
   , sSimpleLineNewRenderFnComputeCache
 
   , getSAutoLineLabelPosition
+  , getSortedSAutoLineLabelPositions
 
 
 
@@ -37,6 +38,7 @@ import Potato.Flow.OwlItem
 
 import qualified Data.Text          as T
 import qualified Data.List as L
+import qualified Data.List.Index as L
 import Data.Tuple.Extra
 
 import Linear.Vector ((^*))
@@ -574,6 +576,7 @@ maybeGetAttachBox ot mattachment = do
   sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
   return (sbox, al)
 
+-- returns a list of LineAnchorsForRender, one for each segment separated by midpoints
 sAutoLine_to_lineAnchorsForRenders :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
 sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
 
@@ -584,8 +587,12 @@ sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
     }
 
   offsetBorder x (a,b) = (a,b, OffsetBorder x)
-  startlbal = offsetBorder True $ fromMaybe (LBox _sAutoLine_start 1, AL_Any) $ maybeGetAttachBox ot _sAutoLine_attachStart
-  endlbal = offsetBorder True $ fromMaybe (LBox _sAutoLine_end 1, AL_Any) $ maybeGetAttachBox ot _sAutoLine_attachEnd
+  startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
+    Nothing -> (LBox _sAutoLine_start 1, AL_Any, OffsetBorder False)
+    Just (x,y) -> (x, y, OffsetBorder True) 
+  endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
+    Nothing -> (LBox _sAutoLine_end 1, AL_Any, OffsetBorder False)
+    Just (x,y) -> (x, y, OffsetBorder True) 
   midlbals = fmap (\(SAutoLineConstraintFixed xy) -> offsetBorder False (LBox xy 1, AL_Any)) _sAutoLine_midpoints
 
   -- TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
@@ -597,7 +604,6 @@ sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAn
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
   anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenders ot sline
 
-
 internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> Int -> XY
 internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
   walk [] curbegin _ = curbegin
@@ -607,12 +613,31 @@ internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
       then curbegin + cartDirWithDistanceToV2 (cd, targetd - traveld, undefined)
       else walk rest nextbegin (traveld + d)
   r = walk (_lineAnchorsForRender_rest lar) (_lineAnchorsForRender_start lar) 0
-  
 
-getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
-getSAutoLineLabelPosition ot sal@SAutoLine {..} sall@SAutoLineLabel {..} = r where
-  lar = sAutoLine_to_lineAnchorsForRenders ot sal L.!! _sAutoLineLabel_index
+
+internal_getSAutoLineLabelPosition :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
+internal_getSAutoLineLabelPosition lar sal@SAutoLine {..} sall@SAutoLineLabel {..} = r where
   totall = lineAnchorsForRender_length lar
   targetd = case _sAutoLineLabel_position of
     SAutoLineLabelPositionRelative r -> max 0 . floor $ (fromIntegral totall * r)
   r = internal_getSAutoLineLabelPosition_walk lar targetd totall
+
+-- the SAutoLineLabel is expected to be one of labels contained in the SAutoLine _sAutoLine_labels
+getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
+getSAutoLineLabelPosition ot sal sall = traceShow lar $ internal_getSAutoLineLabelPosition lar sal sall where
+  lar = sAutoLine_to_lineAnchorsForRenders ot sal L.!! (_sAutoLineLabel_index sall)
+
+-- get SAutoLineLabel positions in visual order (which may not be the same as logical order)
+-- return includes SAutoLineLabel and its logical index for convenience
+getSortedSAutoLineLabelPositions :: (HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
+getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
+  sortfn (_,a) (_,b) = case compare (_sAutoLineLabel_index a) (_sAutoLineLabel_index b) of
+    EQ -> case _sAutoLineLabel_position a of
+      SAutoLineLabelPositionRelative x -> case _sAutoLineLabel_position b of
+        SAutoLineLabelPositionRelative y -> compare x y
+    x -> x
+  sortedlls = sortBy sortfn $ L.indexed _sAutoLine_labels
+
+  lars = sAutoLine_to_lineAnchorsForRenders ot sal
+
+  r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (lars L.!! _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
