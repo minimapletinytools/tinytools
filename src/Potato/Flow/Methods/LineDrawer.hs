@@ -7,12 +7,14 @@ module Potato.Flow.Methods.LineDrawer (
   , lineAnchorsForRender_findIntersectingSubsegment
   , lineAnchorsForRender_length
 
-  , sAutoLine_to_lineAnchorsForRenders
+  , sAutoLine_to_lineAnchorsForRenderList
   , sSimpleLineNewRenderFn
   , sSimpleLineNewRenderFnComputeCache
 
   , getSAutoLineLabelPosition
+  , getSAutoLineLabelPositionFromLineAnchorsForRender
   , getSortedSAutoLineLabelPositions
+  , getClosestPointOnLineFromLineAnchorsForRenderList
 
 
 
@@ -42,6 +44,7 @@ import qualified Data.List.Index as L
 import Data.Tuple.Extra
 
 import Linear.Vector ((^*))
+import Linear.Metric (norm)
 
 import Control.Exception (assert)
 
@@ -577,8 +580,8 @@ maybeGetAttachBox ot mattachment = do
   return (sbox, al)
 
 -- returns a list of LineAnchorsForRender, one for each segment separated by midpoints
-sAutoLine_to_lineAnchorsForRenders :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
-sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
+sAutoLine_to_lineAnchorsForRenderList :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
+sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
 
   -- TODO set properly
   params = SimpleLineSolverParameters_NEW {
@@ -589,10 +592,10 @@ sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
   offsetBorder x (a,b) = (a,b, OffsetBorder x)
   startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
     Nothing -> (LBox _sAutoLine_start 1, AL_Any, OffsetBorder False)
-    Just (x,y) -> (x, y, OffsetBorder True) 
+    Just (x,y) -> (x, y, OffsetBorder True)
   endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
     Nothing -> (LBox _sAutoLine_end 1, AL_Any, OffsetBorder False)
-    Just (x,y) -> (x, y, OffsetBorder True) 
+    Just (x,y) -> (x, y, OffsetBorder True)
   midlbals = fmap (\(SAutoLineConstraintFixed xy) -> offsetBorder False (LBox xy 1, AL_Any)) _sAutoLine_midpoints
 
   -- TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
@@ -602,7 +605,7 @@ sAutoLine_to_lineAnchorsForRenders ot SAutoLine {..} = anchorss where
 
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
-  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenders ot sline
+  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenderList ot sline
 
 internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> Int -> XY
 internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
@@ -622,10 +625,13 @@ internal_getSAutoLineLabelPosition lar sal@SAutoLine {..} sall@SAutoLineLabel {.
     SAutoLineLabelPositionRelative r -> max 0 . floor $ (fromIntegral totall * r)
   r = internal_getSAutoLineLabelPosition_walk lar targetd totall
 
+getSAutoLineLabelPositionFromLineAnchorsForRender :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
+getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall = internal_getSAutoLineLabelPosition lar sal sall
+
 -- the SAutoLineLabel is expected to be one of labels contained in the SAutoLine _sAutoLine_labels
 getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
-getSAutoLineLabelPosition ot sal sall = traceShow lar $ internal_getSAutoLineLabelPosition lar sal sall where
-  lar = sAutoLine_to_lineAnchorsForRenders ot sal L.!! (_sAutoLineLabel_index sall)
+getSAutoLineLabelPosition ot sal sall = getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall where
+  lar = sAutoLine_to_lineAnchorsForRenderList ot sal L.!! (_sAutoLineLabel_index sall)
 
 -- get SAutoLineLabel positions in visual order (which may not be the same as logical order)
 -- return includes SAutoLineLabel and its logical index for convenience
@@ -638,6 +644,66 @@ getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
     x -> x
   sortedlls = sortBy sortfn $ L.indexed _sAutoLine_labels
 
-  lars = sAutoLine_to_lineAnchorsForRenders ot sal
+  larlist = sAutoLine_to_lineAnchorsForRenderList ot sal
 
-  r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (lars L.!! _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
+  r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist L.!! _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
+
+
+
+-- UNTESTED
+-- takes a list of line anchors as returned by sAutoLine_to_lineAnchorsForRenderList and a position and returns closest orthognally projected point on the line as a tuple (projected position, index, relative distance along LineAnchorsForRender)
+getClosestPointOnLineFromLineAnchorsForRenderList :: [LineAnchorsForRender] -> XY -> (XY, Int, Float)
+getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r where
+
+  foldlfn :: (Int, (XY, Int, Float), Int) -> LineAnchorsForRender -> (Int, (XY, Int, Float), Int)
+  foldlfn (closestd, closestp, curindex) lar = r2 where
+
+
+    foldlfn2 :: (Int, XY, Int, Maybe (Int, XY)) -> (CartDir, Int, Bool) -> (Int, XY, Int, Maybe (Int, XY))
+    foldlfn2 (traveld, curp@(V2 curx cury), closestd2, mnewclosestpos) cdwd@(cd,d,_) = r3 where
+
+      between :: Int -> Int -> Int -> Bool
+      between p a b = (p >= a && p <= b) || (p <= a && p >= b)
+
+      xydistance :: XY -> XY -> Float
+      xydistance (V2 ax ay) (V2 bx by) = norm (V2 (fromIntegral ax - fromIntegral bx) (fromIntegral ay - fromIntegral by))
+
+
+      endp@(V2 endx endy) = curp + cartDirWithDistanceToV2  cdwd
+
+      dtoend = (xydistance pos endp)
+      dtocur = (xydistance pos curp)
+
+      dandpostostartorend = if dtocur < dtoend
+        then (dtocur, curp)
+        else (dtoend, endp)
+
+      -- project pos onto each segment
+      (projd, projp) = if cd == CD_Up || cd == CD_Down
+        -- project horizontally
+        then if between posy cury endy
+          -- if projection in bounds
+          then (fromIntegral $ abs (curx - posx), V2 curx posy)
+          else  dandpostostartorend
+        -- project vertically
+        else if between posx curx endx
+          -- if projection in bounds
+          then (fromIntegral $ abs (cury - posy), V2 cury posx)
+          else dandpostostartorend
+
+      -- if we are closer than previous closest point
+      r3 = if projd < fromIntegral closestd2
+        -- update the new closest point
+        then (traveld + d, endp, ceiling projd, Just (traveld + floor (xydistance curp projp), projp))
+        -- same as before, keep going
+        else (traveld + d, endp, closestd2, mnewclosestpos)
+
+    -- walk through each segment in lar
+    (totald, _, newclosestd, mnewclosestpos) = L.foldl foldlfn2 (0, _lineAnchorsForRender_start lar, closestd, Nothing) (_lineAnchorsForRender_rest lar)
+
+    r2 = case mnewclosestpos of
+      -- did not find a closer point on lar
+      Nothing -> (closestd, closestp, curindex+1)
+      Just (newclosesttraveld, newclosestp) -> (newclosestd, (newclosestp, curindex, fromIntegral newclosesttraveld / fromIntegral totald), curindex+1)
+
+  (_,r,_) = L.foldl foldlfn (maxBound :: Int, (0,0,0), 0) larlist
