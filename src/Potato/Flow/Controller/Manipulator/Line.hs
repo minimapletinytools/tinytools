@@ -495,7 +495,7 @@ makeAutoLineLabelInputState rid sline rmd = r where
   -- TODO figure out box of line label we are editing
   box = undefined
 
-  width = 99999 -- line label text always overflows
+  width = maxBound :: Int -- line label text always overflows
 
   ogtz = TZ.fromText (fromMaybe "" mogtext)
 

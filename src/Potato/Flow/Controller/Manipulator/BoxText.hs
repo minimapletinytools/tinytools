@@ -292,7 +292,7 @@ updateBoxLabelInputStateWithSBox :: SBox -> TextInputState -> TextInputState
 updateBoxLabelInputStateWithSBox sbox btis = r where
   alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
   newBox =  lBox_to_boxLabelBox $ _sBox_box sbox
-  width = 99999 -- box label text always overflows
+  width = maxBound :: Int -- box label text always overflows
   r = btis {
       _textInputState_box = newBox
       , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)
@@ -411,7 +411,6 @@ instance PotatoHandler BoxLabelHandler where
 
       -- TODO decide what to do with mods
 
-      -- TODO inputBoxText is wrong, you need a label specific version
       (nexttais, mev) = inputBoxLabel _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {

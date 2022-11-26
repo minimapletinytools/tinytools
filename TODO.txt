@@ -109,15 +109,15 @@ DONE-midpoints
 -FEATURE add line labels
   -remember to adjust _sAutoLine_labels when deleting midpoints
   -SAutoLine -> SAutoLineLabel -> XY
--BUG fix text zipper bugs
-  -BUG can't enter multiple new lines into text box
-    -seems to be a bug in TextZipper
-  -BUG click on eol in text box is kind of broken in general[]
-    -doesn't always take you to the end
-    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--BUG figure out what's going on with cache updated bugs...
--TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
--TESTING check for leaks again
+-folder stuff
+  -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  -make new elts get created inside selected folder rather than above it?
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
 -BUG fix line bugs
   -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
@@ -141,16 +141,6 @@ DONE-midpoints
   DONE-AL_ANY needs to be a single point and not a box with 4 sides...
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
-
--folder stuff
-  -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
-    -you need some kind of click off pane reset type action to handler
-      -can you tie this into graceful handling of bad mouse states?
-  -make new elts get created inside selected folder rather than above it?
-  -empty folders should not be expandable? (set to expanded by default)
-  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
-  -BUG click release on lock/hide/collapse on selected element should not deselect
-  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
 -file stuff
   -ctrl-o to open
   -ctrl-n for new file
@@ -177,6 +167,16 @@ DONE-midpoints
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
+-BUG fix text zipper bugs
+  -BUG can't enter multiple new lines into text box
+    -seems to be a bug in TextZipper
+  -BUG click on eol in text box is kind of broken in general[]
+    -doesn't always take you to the end
+    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
+-FEATURE attach point repositioning
+-BUG figure out what's going on with cache updated bugs...
+-TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
+-TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
 
 
