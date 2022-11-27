@@ -72,9 +72,10 @@ renderAttachments PotatoHandlerInput {..} (mstart, mend) = r where
   r = catMaybes $ fmap fmapattachmentfn attachments
 
 -- set midpointhighlightindex index to -1 for no highlight
-maybeRenderPoints :: (HasCallStack) => (Bool,Bool) -> Bool -> Int -> PotatoHandlerInput -> [RenderHandle]
+maybeRenderPoints :: (Bool,Bool) -> Bool -> Int -> PotatoHandlerInput -> [RenderHandle]
 maybeRenderPoints (highlightstart, highlightend) offsetAttach midpointhighlightindex PotatoHandlerInput {..} = r where
-  -- in creation cases, _potatoHandlerInput_canvasSelection might not be a line so we need maybes throughout this function (you probably should have written using do notation)
+  -- in creation cases, _potatoHandlerInput_canvasSelection might not be a line
+  -- however we only render points in non creation cases (I think) so this maybe should plainly not be necessary
   mselt = selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection >>= return . superOwl_toSElt_hack
   r1 = case mselt of
     Just (SEltLine SAutoLine {..}) -> [makeRenderHandle (make_1area_lBox_from_XY startHandle) True, makeRenderHandle (make_1area_lBox_from_XY endHandle) False]
@@ -98,6 +99,19 @@ maybeRenderPoints (highlightstart, highlightend) offsetAttach midpointhighlighti
             }
     _ -> []
   r = r1 <> r2
+
+renderLabels :: PotatoHandlerInput -> Bool -> [RenderHandle]
+renderLabels PotatoHandlerInput {..} offsetByLabelHeight = r where
+  (_, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+  labels = getSortedSAutoLineLabelPositions _potatoHandlerInput_pFState sal
+  fmapfn (pos,_,_) = RenderHandle {
+      _renderHandle_box     = if offsetByLabelHeight
+        then make_1area_lBox_from_XY (pos - (V2 0 1))
+        else make_1area_lBox_from_XY pos
+      , _renderHandle_char  = Just 'T'
+      , _renderHandle_color = RHC_Default
+    }
+  r = fmap fmapfn labels
 
 
 data AutoLineHandler = AutoLineHandler {
@@ -223,7 +237,8 @@ instance PotatoHandler AutoLineHandler where
         (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
 
 
-        -- TODO look for if we clicked on text label (endpoints take priority over labels)
+        -- TODO look for if we clicked on text label (however endpoints should take priority over labels)
+        --getSortedSAutoLineLabelPositions :: (HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
         mfirstlabel = undefined
 
 
@@ -280,7 +295,7 @@ instance PotatoHandler AutoLineHandler where
         Nothing -> Just def
         Just _ -> r where
           -- TODO setup properly
-          handler = makeAutoLineLabelHandler (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
+          handler = makeAutoLineLabelHandler True (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
           r = pHandleMouse handler phi rmd
       -- TODO is this correct??
       MouseDragState_Cancelled -> Just def
@@ -292,10 +307,13 @@ instance PotatoHandler AutoLineHandler where
     -- TODO render attach endpoints from currently selected line (useful in the future when attach points aren't always in the middle)
       -- TODO don't render attachmentBoxes while dragging
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
+
+    labels = renderLabels phi False
+
     r = if _autoLineHandler_isCreation
       -- creation handlers are rendered by AutoLineEndPointHandler once dragging starts
       then HandlerRenderOutput attachmentBoxes
-      else HandlerRenderOutput (attachmentBoxes <> boxes)
+      else HandlerRenderOutput (attachmentBoxes <> boxes <> labels)
 
   pIsHandlerActive _ = False
   pHandlerTool AutoLineHandler {..} = if _autoLineHandler_isCreation
@@ -484,32 +502,38 @@ data AutoLineLabelMoverHandler = AutoLineLabelMoverHandler {
     _autoLineLabelMoverHandler_anchorOffset :: XY
     , _autoLineLabelMoverHandler_prevHandler :: SomePotatoHandler
     , _autoLineLabelMoverHandler_undoFirst   :: Bool
-    , _autoLineLabelMoverHandler_isCreation  :: Bool
-    , _autoLineLabelMoverHandler_labelIndex  :: Maybe Int
+    , _autoLineLabelMoverHandler_labelIndex  :: Int
   }
 
 instance PotatoHandler AutoLineLabelMoverHandler where
   pHandlerName _ = handlerName_simpleLine_textLabelMover
-  pHandleMouse AutoLineLabelMoverHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse slh@AutoLineLabelMoverHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+
+      -- TODO move to helper
       (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
       -- PERF cache someday...
       larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
       (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
+      newl = SAutoLineLabel {
+          _sAutoLineLabel_index = index
+          , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
+        }
+
     in case _mouseDrag_state of
+      
+      MouseDragState_Down -> error "AutoLineLabelMoverHandler not expected to handle MouseDragState_Down"  --Just def
 
-      -- we only enter AutoLineLabelMoverHandler if we are already dragging
-      MouseDragState_Down -> case _autoLineLabelMoverHandler_labelIndex of
-        Nothing -> assert _autoLineLabelMoverHandler_isCreation $ r where
-          -- TODO create
-          r = undefined
-        _ -> error "AutoLineLabelMoverHandler not expected to handle MouseDragState_Down unless in creation case"  --Just def
-
-      -- TODO
-      MouseDragState_Dragging -> r where
-
-
-        -- TODO move
-        r = Just def
+      MouseDragState_Dragging -> trace "hi2" r where
+        newsal = sal {
+            _sAutoLine_labels = L.setAt _autoLineLabelMoverHandler_labelIndex newl (_sAutoLine_labels sal)
+          }
+        op = WSEApplyLlama (_autoLineLabelMoverHandler_undoFirst, makeSetLlama (rid, SEltLine newsal))
+        r = Just def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _autoLineLabelMoverHandler_undoFirst = True
+              }
+            , _potatoHandlerOutput_pFEvent = Just op
+          }
 
 
       MouseDragState_Up -> Just def {
@@ -524,8 +548,9 @@ instance PotatoHandler AutoLineLabelMoverHandler where
         }
 
 
-  -- TODO render mover anchor
-  pRenderHandler AutoLineLabelMoverHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pRenderHandler AutoLineLabelMoverHandler {..} phi@PotatoHandlerInput {..} =  r where
+    labels = renderLabels phi False
+    r = HandlerRenderOutput labels
 
   pIsHandlerActive _ = True
 
@@ -548,13 +573,13 @@ data AutoLineLabelHandler = AutoLineLabelHandler {
 
 -- TODO pass in existing line label or location of new line label
 makeAutoLineLabelInputState :: REltId -> SAutoLine -> RelMouseDrag -> TextInputState
-makeAutoLineLabelInputState rid sline rmd = r where
+makeAutoLineLabelInputState rid sline rmd = trace "hi3" r where
 
   -- TODO figure out which line label we are editing or create a new one
   mogtext = undefined
 
   -- TODO figure out box of line label we are editing
-  box = undefined
+  box = LBox 0 0
 
   width = maxBound :: Int -- line label text always overflows
 
@@ -570,12 +595,13 @@ makeAutoLineLabelInputState rid sline rmd = r where
 
   r = mouseText tis box rmd (V2 1 0)
 
-makeAutoLineLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler prev selection rmd = AutoLineLabelHandler {
+makeAutoLineLabelHandler :: Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler iscreation prev selection rmd = AutoLineLabelHandler {
     _autoLineLabelHandler_active = False
     , _autoLineLabelHandler_state = uncurry makeAutoLineLabelInputState (mustGetSLine selection) rmd
     , _autoLineLabelHandler_prevHandler = prev
     , _autoLineLabelHandler_undoFirst = False
+    , _autoLineLabelHandler_isCreation = iscreation
   }
 
 -- | just a helper for pHandleMouse
@@ -622,11 +648,45 @@ instance PotatoHandler AutoLineLabelHandler where
 
     in case _mouseDrag_state of
 
+
       -- TODO if click on drag modifier thingy
       MouseDragState_Down -> handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box True
 
+
+            -- TODO if click on handler, go into mover handler
+            {- Just $ SomePotatoHandler AutoLineLabelMoverHandler {
+                _autoLineLabelMoverHandler_prevHandler = SomePotatoHandler slh
+                , _autoLineLabelMoverHandler_anchorOffset = 0
+                , _autoLineLabelMoverHandler_undoFirst = True
+                , _autoLineLabelMoverHandler_labelIndex = 0
+              } -}
+              
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange slh
+
+      MouseDragState_Up | _autoLineLabelHandler_isCreation slh -> r where
+
+        -- TODO move to helper
+        (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+        -- PERF cache someday...
+        larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
+        (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
+        newl = SAutoLineLabel {
+            _sAutoLineLabel_index = index
+            , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
+          }
+          
+        newsal = sal {
+            _sAutoLine_labels = newl : _sAutoLine_labels sal
+          }
+        op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
+        r = Just def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _autoLineLabelHandler_isCreation = False
+                , _autoLineLabelHandler_labelIndex = 0
+              }
+            , _potatoHandlerOutput_pFEvent = Just op
+          }
 
       MouseDragState_Up -> if not (_autoLineLabelHandler_active slh)
         then handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box False
@@ -666,6 +726,7 @@ instance PotatoHandler AutoLineLabelHandler where
 
   -- TODO render cursor
   -- TODO render label mover anchor
-  pRenderHandler AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} = undefined
+  pRenderHandler AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} = r where
+    r = HandlerRenderOutput []
 
   pIsHandlerActive = _autoLineLabelHandler_active
