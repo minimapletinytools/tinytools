@@ -669,17 +669,21 @@ handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} ph
     else pHandleMouse _autoLineLabelHandler_prevHandler phi rmd
 
 
--- TODO finish
-inputLineLabel :: TextInputState -> Bool -> SuperOwl -> Int -> KeyboardKey -> (TextInputState, Maybe WSEvent)
-inputLineLabel tais undoFirst sowl labelIndex kk = (newtais, mop) where
+inputLineLabel :: TextInputState -> Bool -> REltId -> SAutoLine -> Int -> KeyboardKey -> (TextInputState, Maybe WSEvent)
+inputLineLabel tais undoFirst rid sal labelindex kk = (newtais, mop) where
   (changed, newtais) = inputSingleLineZipper tais kk
   newtext = TZ.value (_textInputState_zipper newtais)
-
-  --controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
-  controller = undefined
+  oldl = _sAutoLine_labels sal `debugBangBang` labelindex
+  newl = oldl { 
+      _sAutoLineLabel_text = newtext
+    }
+  newsal = sal {
+      _sAutoLine_labels = L.setAt labelindex newl (_sAutoLine_labels sal)
+    }
+  op = WSEApplyLlama (undoFirst, makeSetLlama (rid, SEltLine newsal))
 
   mop = if changed
-    then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
+    then Just $ op
     else Nothing
 
 instance PotatoHandler AutoLineLabelHandler where
@@ -727,11 +731,12 @@ instance PotatoHandler AutoLineLabelHandler where
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       slh = updateAutoLineLabelHandlerState False _potatoHandlerInput_canvasSelection slh'
-      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
+      (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+
 
       -- TODO decide what to do with mods
 
-      (nexttais, mev) = inputLineLabel (_autoLineLabelHandler_state slh) (_autoLineLabelHandler_undoFirst slh) sowl (_autoLineLabelHandler_labelIndex slh) k
+      (nexttais, mev) = inputLineLabel (_autoLineLabelHandler_state slh) (_autoLineLabelHandler_undoFirst slh) rid sal (_autoLineLabelHandler_labelIndex slh) k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
               _autoLineLabelHandler_state  = nexttais
