@@ -237,38 +237,18 @@ instance PotatoHandler AutoLineHandler where
         (_, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
 
 
-        -- TODO look for if we clicked on text label (however endpoints should take priority over labels)
-        --getSortedSAutoLineLabelPositions :: (HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
-        mfirstlabel = undefined
-
+        labels = getSortedSAutoLineLabelPositions _potatoHandlerInput_pFState sline
+        mfirstlabel = L.find (\(pos,_,_) -> pos == _mouseDrag_to) labels
 
         firstlm = findFirstLineManipulator_NEW sline _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
         -- TODO update cache someday
         mclickonline = whichSubSegmentDidClick (_owlPFState_owlTree _potatoHandlerInput_pFState) sline _mouseDrag_to
 
-        r = case firstlm of
+        r = case (firstlm, mfirstlabel) of
 
-          -- if clicked on line but not on a handler, track the position
-          LMP_Nothing | isJust mclickonline -> Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                  _autoLineHandler_mDownManipulator = mclickonline
-                }
-            }
-
-          -- did not click on manipulator, no capture
-          LMP_Nothing -> Nothing
-
-          LMP_Midpoint i -> rslt where
-            handler = AutoLineMidPointHandler {
-                _autoLineMidPointHandler_midPointIndex = i
-                , _autoLineMidPointHandler_isMidpointCreation = False
-                , _autoLineMidPointHandler_undoFirst  = False
-                , _autoLineMidPointHandler_offsetAttach = _autoLineHandler_offsetAttach
-              }
-            rslt = pHandleMouse handler phi rmd
-
-          LMP_Endpoint isstart -> Just $ def {
+          -- if clicked on endpoint
+          (LMP_Endpoint isstart, _) -> Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineEndPointHandler {
                   _autoLineEndPointHandler_isStart      = isstart
                   , _autoLineEndPointHandler_undoFirst  = False
@@ -279,6 +259,36 @@ instance PotatoHandler AutoLineHandler where
                   , _autoLineEndPointHandler_attachEnd = Nothing
                 }
             }
+
+          -- if clicked on label
+          (_, Just (_,index,_)) -> rslt where
+            handler = AutoLineLabelMoverHandler {
+                _autoLineLabelMoverHandler_anchorOffset  = 0
+                , _autoLineLabelMoverHandler_prevHandler = SomePotatoHandler slh
+                , _autoLineLabelMoverHandler_undoFirst   = False
+                , _autoLineLabelMoverHandler_labelIndex  = index
+              }
+            rslt = pHandleMouse handler phi rmd
+
+          -- if clicked on line but not on a handler, track the position
+          (LMP_Nothing, _) | isJust mclickonline -> Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                  _autoLineHandler_mDownManipulator = mclickonline
+                }
+            }
+
+          -- did not click on manipulator, no capture
+          (LMP_Nothing, _) -> Nothing
+
+          (LMP_Midpoint i, _) -> rslt where
+            handler = AutoLineMidPointHandler {
+                _autoLineMidPointHandler_midPointIndex = i
+                , _autoLineMidPointHandler_isMidpointCreation = False
+                , _autoLineMidPointHandler_undoFirst  = False
+                , _autoLineMidPointHandler_offsetAttach = _autoLineHandler_offsetAttach
+              }
+            rslt = pHandleMouse handler phi rmd
+
       MouseDragState_Dragging -> case _autoLineHandler_mDownManipulator of
         -- TODO BUG how does this happen? This shouldn't happen as we must capture all dragging operations (I'm pretty sure you already fixed this by implementing the undo on cancel)
         -- this can happen if we cancel in the middle of a drag operation (say), it will recreate an AutoLineHandler from the selection
@@ -521,7 +531,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
 
     in case _mouseDrag_state of
       
-      MouseDragState_Down -> error "AutoLineLabelMoverHandler not expected to handle MouseDragState_Down"  --Just def
+      MouseDragState_Down -> Just $ captureWithNoChange slh
 
       MouseDragState_Dragging -> trace "hi2" r where
         newsal = sal {
@@ -543,7 +553,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
 
       MouseDragState_Cancelled -> Just def {
           _potatoHandlerOutput_pFEvent = if _autoLineLabelMoverHandler_undoFirst then Just WSEUndo else Nothing
-          -- go back to AutoLineLabelHandler on cancel
+          -- go back to previous handler on cancel (could be AutoLineHandler or AutoLineLabelHandler)
           , _potatoHandlerOutput_nextHandler = Just (_autoLineLabelMoverHandler_prevHandler)
         }
 
