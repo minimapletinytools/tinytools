@@ -7,8 +7,11 @@ import Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Controller.Input
+import           Potato.Flow.Controller.Handler
 
+import qualified Data.Text as T
 import qualified Potato.Data.Text.Zipper                          as TZ
+import qualified Data.Map as Map
 
 
 data TextInputState = TextInputState {
@@ -55,3 +58,29 @@ inputSingleLineZipper tais kk = (changed, tais { _textInputState_zipper = newZip
     KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
 
     _ -> (False, oldZip)
+
+
+makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
+makeTextHandlerRenderOutput btis offset = r where
+  dls = _textInputState_displayLines btis
+  origBox = _textInputState_box $ btis
+  (x, y) = TZ._displayLines_cursorPos dls
+  offsetMap = TZ._displayLines_offsetMap dls
+
+  mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _textInputState_zipper $ btis
+
+  mlbox = do
+    guard $ lBox_area origBox > 0
+
+    -- TODO would be nice to assert that this exists...
+    (alignxoff,_) <- Map.lookup y offsetMap
+    let
+      LBox p _ = _textInputState_box $ btis
+      cursorh = RenderHandle {
+          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
+          , _renderHandle_char = mCursorChar
+          , _renderHandle_color = RHC_Default
+        }
+    return [cursorh]
+
+  r = HandlerRenderOutput $ fromMaybe [] mlbox

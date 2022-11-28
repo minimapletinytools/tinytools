@@ -127,31 +127,6 @@ inputBoxText tais undoFirst sowl kk = (newtais, mop) where
     then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
     else Nothing
 
-makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
-makeTextHandlerRenderOutput btis offset = r where
-  dls = _textInputState_displayLines btis
-  origBox = _textInputState_box $ btis
-  (x, y) = TZ._displayLines_cursorPos dls
-  offsetMap = TZ._displayLines_offsetMap dls
-
-  mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _textInputState_zipper $ btis
-
-  mlbox = do
-    guard $ lBox_area origBox > 0
-
-    -- TODO would be nice to assert that this exists...
-    (alignxoff,_) <- Map.lookup y offsetMap
-    let
-      LBox p _ = _textInputState_box $ btis
-      cursorh = RenderHandle {
-          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
-          , _renderHandle_char = mCursorChar
-          , _renderHandle_color = RHC_Default
-        }
-    return [cursorh]
-
-  r = HandlerRenderOutput $ fromMaybe [] mlbox
-
 data BoxTextHandler = BoxTextHandler {
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
@@ -427,6 +402,7 @@ instance PotatoHandler BoxLabelHandler where
   -- TODO do you need to reset _boxLabelHandler_prevHandler as well?
   pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
+
     else if rid /= (_textInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
