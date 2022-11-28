@@ -78,7 +78,7 @@ someLineAnchorsForRender = LineAnchorsForRender {
 
 
 someSAutoLine_withLabels_label3 :: SAutoLineLabel
-someSAutoLine_withLabels_label3 = SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0)
+someSAutoLine_withLabels_label3 = SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0) ""
 
 someSAutoLine_withLabels :: SAutoLine
 someSAutoLine_withLabels = def {
@@ -86,8 +86,8 @@ someSAutoLine_withLabels = def {
       , _sAutoLine_end = V2 100 0
       , _sAutoLine_midpoints = [SAutoLineConstraintFixed (V2 50 0)]
       , _sAutoLine_labels = [
-          SAutoLineLabel 1 (SAutoLineLabelPositionRelative 0)
-          , SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0.5)
+          SAutoLineLabel 1 (SAutoLineLabelPositionRelative 0) ""
+          , SAutoLineLabel 0 (SAutoLineLabelPositionRelative 0.5) ""
           , someSAutoLine_withLabels_label3
         ]
   }
