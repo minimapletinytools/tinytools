@@ -302,12 +302,32 @@ instance PotatoHandler AutoLineHandler where
               , _autoLineMidPointHandler_offsetAttach = _autoLineHandler_offsetAttach
             }
           r = pHandleMouse handler phi rmd
+
+      -- TODO if down and up on line manipulator
+
+
+      -- if we click down and directly up in the same spot on the line, create a line label there and pass on input to AutoLineLabelHandler
       MouseDragState_Up -> case _autoLineHandler_mDownManipulator of
         Nothing -> Just def
         Just _ -> r where
-          -- TODO create the line label here, and then got to the handler
-          handler = makeAutoLineLabelHandler True (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
-          r = pHandleMouse handler phi rmd
+
+          -- TODO move to helper
+          (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+          -- PERF cache someday...
+          larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
+          (pos, mpindex, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
+          newl = def {
+              _sAutoLineLabel_index = mpindex
+              , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
+            }
+          newsal = sal {
+              _sAutoLine_labels = newl : _sAutoLine_labels sal
+            }
+          op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
+          r = Just def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler 0 True (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
+              , _potatoHandlerOutput_pFEvent = Just op
+            }
       -- TODO is this correct??
       MouseDragState_Cancelled -> Just def
   pHandleKeyboard _ PotatoHandlerInput {..} kbd = case kbd of
@@ -525,7 +545,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
       -- PERF cache someday...
       larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
       (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
-      newl = SAutoLineLabel {
+      newl = def {
           _sAutoLineLabel_index = index
           , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
         }
@@ -534,7 +554,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
 
       MouseDragState_Down -> Just $ captureWithNoChange slh
 
-      MouseDragState_Dragging -> trace "hi2" r where
+      MouseDragState_Dragging -> r where
         newsal = sal {
             _sAutoLine_labels = L.setAt _autoLineLabelMoverHandler_labelIndex newl (_sAutoLine_labels sal)
           }
@@ -573,8 +593,6 @@ data AutoLineLabelHandler = AutoLineLabelHandler {
     , _autoLineLabelHandler_state :: TextInputState
     , _autoLineLabelHandler_prevHandler :: SomePotatoHandler
     , _autoLineLabelHandler_undoFirst :: Bool
-
-    , _autoLineLabelHandler_isCreation :: Bool
     , _autoLineLabelHandler_labelIndex :: Int
   }
 
@@ -634,13 +652,13 @@ makeAutoLineLabelInputState rid sline rmd = trace "hi3" r where
 
   r = mouseText tis box rmd (V2 1 0)
 
-makeAutoLineLabelHandler :: Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler iscreation prev selection rmd = AutoLineLabelHandler {
+makeAutoLineLabelHandler :: Int -> Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler labelindex iscreation prev selection rmd = AutoLineLabelHandler {
     _autoLineLabelHandler_active = False
     , _autoLineLabelHandler_state = uncurry makeAutoLineLabelInputState (mustGetSLine selection) rmd
     , _autoLineLabelHandler_prevHandler = prev
     , _autoLineLabelHandler_undoFirst = False
-    , _autoLineLabelHandler_isCreation = iscreation
+    , _autoLineLabelHandler_labelIndex = labelindex
   }
 
 -- | just a helper for pHandleMouse
@@ -701,30 +719,6 @@ instance PotatoHandler AutoLineLabelHandler where
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange slh
 
-      MouseDragState_Up | _autoLineLabelHandler_isCreation slh -> r where
-
-        -- TODO move to helper
-        (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
-        -- PERF cache someday...
-        larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
-        (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
-        newl = SAutoLineLabel {
-            _sAutoLineLabel_index = index
-            , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
-          }
-
-        newsal = sal {
-            _sAutoLine_labels = newl : _sAutoLine_labels sal
-          }
-        op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
-        r = Just def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                _autoLineLabelHandler_isCreation = False
-                , _autoLineLabelHandler_labelIndex = 0
-              }
-            , _potatoHandlerOutput_pFEvent = Just op
-          }
-
       MouseDragState_Up -> if not (_autoLineLabelHandler_active slh)
         then handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box False
         else Just $ def {
@@ -760,10 +754,13 @@ instance PotatoHandler AutoLineLabelHandler where
           , _potatoHandlerOutput_pFEvent = mev
         }
 
-  -- TODO render cursor
-  -- TODO render label mover anchor
+  
   pRenderHandler slh' phi@PotatoHandlerInput {..} = r where
     slh = slh'
+
+    -- TODO render label mover anchor with offset 1 
+
+    -- render the text cursor
     btis = _autoLineLabelHandler_state slh
     offset = V2 0 0
     -- consider rendering endpoints?

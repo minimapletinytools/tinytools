@@ -302,6 +302,7 @@ instance NFData SAutoLineLabelPosition
 data SAutoLineLabel = SAutoLineLabel {
   _sAutoLineLabel_index :: Int -- index relative to _sAutoLine_midpoints for where the midpoint lives
   , _sAutoLineLabel_position :: SAutoLineLabelPosition
+  , _sAutoLineLabel_text :: Text
   --, _sAutoLineLabel_vertical :: Bool -- WIP true if vertically oriented
 } deriving (Eq, Generic, Show)
 
@@ -315,6 +316,7 @@ instance Default SAutoLineLabel where
       -- anchor index, text shows AFTER index
       _sAutoLineLabel_index = 0
       , _sAutoLineLabel_position = SAutoLineLabelPositionRelative 0
+      , _sAutoLineLabel_text = ""
       --, _sAutoLineLabel_vertical = False
     }
 
