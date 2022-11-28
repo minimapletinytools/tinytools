@@ -628,7 +628,9 @@ internal_getSAutoLineLabelPosition lar sal@SAutoLine {..} sall@SAutoLineLabel {.
 getSAutoLineLabelPositionFromLineAnchorsForRender :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall = internal_getSAutoLineLabelPosition lar sal sall
 
--- the SAutoLineLabel is expected to be one of labels contained in the SAutoLine _sAutoLine_labels
+-- the SAutoLineLabel does not have to be one of labels contained in the SAutoLine _sAutoLine_labels 
+-- which is useful for positioning SAutoLineLabel before adding them to SAutoLine
+-- however the midpoint index in SAutoLineLabel is expected to map correctly to the SAutoLine 
 getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPosition ot sal sall = getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall where
   lar = sAutoLine_to_lineAnchorsForRenderList ot sal L.!! (_sAutoLineLabel_index sall)

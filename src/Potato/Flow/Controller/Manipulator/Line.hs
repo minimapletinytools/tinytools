@@ -6,6 +6,7 @@ module Potato.Flow.Controller.Manipulator.Line (
 
 import           Relude
 
+import           Potato.Flow.DebugHelpers
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
@@ -33,6 +34,7 @@ import qualified Data.List as L
 import qualified Data.List.Index as L
 
 import Data.Maybe (fromJust)
+
 
 maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
 maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
@@ -325,7 +327,7 @@ instance PotatoHandler AutoLineHandler where
             }
           op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
           r = Just def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler 0 True (SomePotatoHandler slh) _potatoHandlerInput_canvasSelection rmd
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler rid newsal 0 True (SomePotatoHandler slh) phi rmd
               , _potatoHandlerOutput_pFEvent = Just op
             }
       -- TODO is this correct??
@@ -597,69 +599,59 @@ data AutoLineLabelHandler = AutoLineLabelHandler {
   }
 
 
---getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
-
-
--- TODO
-{-
 updateAutoLineLabelHandlerState :: Bool -> CanvasSelection -> AutoLineLabelHandler -> AutoLineLabelHandler
-updateAutoLineLabelHandlerState reset selection slh@AutoLineLabelHandler {..} = assert tzIsCorrect r where
-  (_, sbox) = getSBox selection
+updateAutoLineLabelHandlerState reset selection slh@AutoLineLabelHandler {..} = r where
 
-  mNewText = _sBoxTitle_title . _sBox_title $ sbox
+  tis = _autoLineLabelHandler_state
 
-  recomputetz = TZ.fromText (fromMaybe "" mNewText)
-  oldtz = _textInputState_zipper _boxLabelHandler_state
-  -- NOTE that recomputetz won't have the same cursor position
-  -- TODO delete this check, not very meaningful, but good for development purposes I guess
-  tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
-  nextstate = updateBoxLabelInputStateWithSBox sbox _boxLabelHandler_state
+  -- TODO move to helper
+  (_, sal) = mustGetSLine selection
+  llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelHandler_labelIndex
+  newtext = _sAutoLineLabel_text llabel
+
+
+  width = maxBound :: Int -- label text always overflows
 
   r = slh {
-    _boxLabelHandler_state = if reset
-      then nextstate {
-          _textInputState_original = mNewText
-        }
-      else nextstate
-    , _boxLabelHandler_undoFirst = if reset
+    _autoLineLabelHandler_state = _autoLineLabelHandler_state {
+          _textInputState_original = if reset then Just newtext else _textInputState_original tis
+          , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () (_textInputState_zipper tis)
+      }
+    , _autoLineLabelHandler_undoFirst = if reset
       then False
-      else _boxLabelHandler_undoFirst
+      else _autoLineLabelHandler_undoFirst
   }
--}
 
+makeAutoLineLabelInputState :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
+makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
 
--- TODO pass in existing line label
-makeAutoLineLabelInputState :: REltId -> SAutoLine -> RelMouseDrag -> TextInputState
-makeAutoLineLabelInputState rid sline rmd = trace "hi3" r where
+  llabel = _sAutoLine_labels sal `debugBangBang` labelindex
 
-  -- TODO figure out which line label we are editing or create a new one
-  mogtext = undefined
-
-  -- TODO figure out box of line label we are editing
-  box = LBox 0 0
+  ogtext = _sAutoLineLabel_text llabel
+  pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
+  box = LBox pos 1
 
   width = maxBound :: Int -- line label text always overflows
-
-  ogtz = TZ.fromText (fromMaybe "" mogtext)
-
+  ogtz = TZ.fromText ogtext
   tis = TextInputState {
       _textInputState_rid = rid
-      , _textInputState_original   = mogtext
+      , _textInputState_original   = Just ogtext
       , _textInputState_zipper   = ogtz
       , _textInputState_box = box
       , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () ogtz
     }
-
   r = mouseText tis box rmd (V2 1 0)
 
-makeAutoLineLabelHandler :: Int -> Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler labelindex iscreation prev selection rmd = AutoLineLabelHandler {
+makeAutoLineLabelHandler :: REltId -> SAutoLine -> Int ->  Bool -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler rid sal labelindex iscreation prev phi@PotatoHandlerInput {..} rmd = AutoLineLabelHandler {
     _autoLineLabelHandler_active = False
-    , _autoLineLabelHandler_state = uncurry makeAutoLineLabelInputState (mustGetSLine selection) rmd
+    , _autoLineLabelHandler_state = makeAutoLineLabelInputState rid sal labelindex phi rmd
     , _autoLineLabelHandler_prevHandler = prev
     , _autoLineLabelHandler_undoFirst = False
+    -- label does not exist yet in creation cases, but will at the 0th index in the next tick
     , _autoLineLabelHandler_labelIndex = labelindex
   }
+
 
 -- | just a helper for pHandleMouse
 handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> LBox -> Bool -> Maybe PotatoHandlerOutput
@@ -694,12 +686,13 @@ instance PotatoHandler AutoLineLabelHandler where
   pHandlerName _ = handlerName_simpleLine_textLabel
   pHandleMouse slh' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
 
-      --tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
-      --(_, sbox) = getSBox _potatoHandlerInput_canvasSelection
+      slh = updateAutoLineLabelHandlerState False _potatoHandlerInput_canvasSelection slh'
 
-      -- TODO
-      slh = slh'
-      box = undefined
+      -- TODO move to helper
+      (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+      llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelHandler_labelIndex slh
+      pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
+      box = LBox pos 1
 
     in case _mouseDrag_state of
 
@@ -732,13 +725,9 @@ instance PotatoHandler AutoLineLabelHandler where
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh') }
 
     _ -> Just r where
-      -- TODO
       -- this regenerates displayLines unecessarily but who cares
-      ---tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
-      --sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
-      -- TODO
-      slh = slh'
-      sowl = undefined
+      slh = updateAutoLineLabelHandlerState False _potatoHandlerInput_canvasSelection slh'
+      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
 
       -- TODO decide what to do with mods
 
@@ -756,7 +745,7 @@ instance PotatoHandler AutoLineLabelHandler where
 
   
   pRenderHandler slh' phi@PotatoHandlerInput {..} = r where
-    slh = slh'
+    slh = updateAutoLineLabelHandlerState False _potatoHandlerInput_canvasSelection slh'
 
     -- TODO render label mover anchor with offset 1 
 

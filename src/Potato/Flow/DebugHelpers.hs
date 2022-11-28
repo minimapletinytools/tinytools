@@ -3,6 +3,9 @@ module Potato.Flow.DebugHelpers where
 import           Relude
 import Control.Monad.Writer
 
+import qualified Data.List as L
+import Control.Exception (assert)
+
 -- prob just replace with show? Why do you ever want to not potato show?
 -- the reason is becaues potatoShow doesn't show all information, but whatever it's fine
 class PotatoShow a where
@@ -38,3 +41,7 @@ type PotatoLogger = Writer [PotatoLoggerObject]
 
 instance MonadPotatoLogger PotatoLogger where
   potatoLog l c t = tell $ [PotatoLoggerObject l c t]
+
+
+debugBangBang :: (HasCallStack) => [a] -> Int -> a
+debugBangBang l i = assert (i >=0 && i < length l) (l L.!! i)
