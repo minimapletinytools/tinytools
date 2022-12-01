@@ -544,10 +544,11 @@ instance PotatoHandler AutoLineLabelMoverHandler where
 
       -- TODO move to helper
       (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+      llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelMoverHandler_labelIndex
       -- PERF cache someday...
       larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
       (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
-      newl = def {
+      newl = llabel {
           _sAutoLineLabel_index = index
           , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
         }
