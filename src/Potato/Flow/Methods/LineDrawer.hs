@@ -34,6 +34,7 @@ import Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import Potato.Flow.Methods.Types
+import           Potato.Flow.Methods.TextCommon
 import Potato.Flow.Attachments
 import Potato.Flow.Owl
 import Potato.Flow.OwlItem
@@ -42,6 +43,8 @@ import qualified Data.Text          as T
 import qualified Data.List as L
 import qualified Data.List.Index as L
 import Data.Tuple.Extra
+import qualified Potato.Data.Text.Zipper as TZ
+
 
 import Linear.Vector ((^*))
 import Linear.Metric (norm)
@@ -534,6 +537,19 @@ lineAnchorsForRender_doesIntersectBox LineAnchorsForRender {..} lbox = r where
       else walk (curbegin + cartDirWithDistanceToV2 x) xs
   r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
+
+
+renderLabelFn :: (XY, SAutoLineLabel) -> XY -> MPChar
+renderLabelFn (V2 llx lly, llabel) (V2 x y) = r where
+  text = _sAutoLineLabel_text llabel
+  tz = TZ.top (TZ.fromText text)
+  dl = TZ.displayLinesWithAlignment TZ.TextAlignment_Left maxBound 0 1 tz
+  offset = (- (T.length text) `div` 2, 0)
+  r = join $ displayLinesToChar (llx, lly) dl (x,y) offset
+
+
+
+-- TODO also render labels
 sSimpleLineNewRenderFn :: SAutoLine -> Maybe LineAnchorsForRender -> SEltDrawer
 sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
 
@@ -545,13 +561,39 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
   renderfn :: SEltDrawerRenderFn
   renderfn ot xy = r where
     anchors = getAnchors ot
-    r = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle _sAutoLine_lineStyleEnd anchors xy
+
+
+    -- m1 takes priority over m2
+    mergeMaybe :: MPChar -> MPChar -> MPChar
+    mergeMaybe m1 m2 = maybe m2 Just m1
+
+    -- TODO someday cache this too
+    llabels = getSortedSAutoLineLabelPositions ot ssline
+    llabelsrendered = fmap (\(pos,_,llabel) -> renderLabelFn (pos, llabel) xy) llabels
+    mlabelchar = foldr mergeMaybe Nothing llabelsrendered
+    mlinechar = lineAnchorsForRender_renderAt _sAutoLine_superStyle _sAutoLine_lineStyle _sAutoLine_lineStyleEnd anchors xy
+
+    -- render label over lines
+    r = mergeMaybe mlabelchar mlinechar
 
   boxfn :: SEltDrawerBoxFn
-  boxfn ot = case nonEmpty (lineAnchorsForRender_toPointList (getAnchors ot)) of
-    Nothing -> LBox 0 0
-    -- add_XY_to_lBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
-    Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_lBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
+  boxfn ot = r where
+    anchorbox = case nonEmpty (lineAnchorsForRender_toPointList (getAnchors ot)) of
+      Nothing -> LBox 0 0
+      -- add_XY_to_lBox is non-inclusive with bottom/right so we expand by 1 to make it inclusive
+      Just (x :| xs) -> lBox_expand (foldl' (flip add_XY_to_lBox) (make_0area_lBox_from_XY x) xs) (0,1,0,1)
+
+    -- UNTESTED
+    -- TODO someday cache this too
+    llabels = getSortedSAutoLineLabelPositions ot ssline
+    llabelbox (V2 x y) llabel = LBox (V2 (x - wover2) y) (V2 w 1) where
+      w = T.length $ _sAutoLineLabel_text llabel
+      wover2 = (w+1) `div` 2
+    mlabelbox = foldr (\(pos, _, llabel) mbox -> maybe (Just $ llabelbox pos llabel) (\box -> Just $ box `union_lBox` llabelbox pos llabel) mbox) Nothing llabels
+
+    r = case mlabelbox of
+      Nothing -> anchorbox
+      Just labelbox -> union_lBox anchorbox labelbox
 
 
 
@@ -628,9 +670,9 @@ internal_getSAutoLineLabelPosition lar sal@SAutoLine {..} sall@SAutoLineLabel {.
 getSAutoLineLabelPositionFromLineAnchorsForRender :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall = internal_getSAutoLineLabelPosition lar sal sall
 
--- the SAutoLineLabel does not have to be one of labels contained in the SAutoLine _sAutoLine_labels 
+-- the SAutoLineLabel does not have to be one of labels contained in the SAutoLine _sAutoLine_labels
 -- which is useful for positioning SAutoLineLabel before adding them to SAutoLine
--- however the midpoint index in SAutoLineLabel is expected to map correctly to the SAutoLine 
+-- however the midpoint index in SAutoLineLabel is expected to map correctly to the SAutoLine
 getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPosition ot sal sall = getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall where
   lar = sAutoLine_to_lineAnchorsForRenderList ot sal L.!! (_sAutoLineLabel_index sall)
