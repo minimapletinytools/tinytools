@@ -26,6 +26,7 @@ import  qualified         Relude.Unsafe
 
 import           Potato.Flow.Math
 import Potato.Flow.Methods.LineDrawer
+import           Potato.Flow.Methods.TextCommon
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.OwlItem
@@ -38,7 +39,7 @@ import           Data.Maybe         (fromJust)
 import qualified Data.Text          as T
 import qualified Potato.Data.Text.Zipper   as TZ
 
-
+-- DisplayLines tag is Int, 0 for no cursor 1 for cursor
 noTrailngCursorDisplayLines :: Int -> TextAlign -> T.Text -> TZ.DisplayLines Int
 noTrailngCursorDisplayLines width alignment text = r where
   -- force TZ to top so that displayLinesWithAlignment doesn't create trailing space for cursor
@@ -64,15 +65,7 @@ makeDisplayLinesFromSBox sbox = r where
     _                  -> error "wrong type"
   r = noTrailngCursorDisplayLines width alignment text
 
-concatSpans :: [TZ.Span a] -> Text
-concatSpans spans = mconcat $ fmap (\(TZ.Span _ t) -> t) spans
 
-subWidth :: Text -> [Maybe Char]
-subWidth t = join . fmap fn . T.unpack $ t where
-  fn c = case TZ.charWidth c of
-    1 -> [Just c]
-    2 -> [Just c, Nothing]
-    n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
 
 -- TODO DELETE use doesOwlSubItemIntersectBox instead
 doesSEltIntersectBox_DEPRECATED :: LBox -> SElt -> Bool
@@ -143,9 +136,6 @@ getSEltBoxType = \case
 getSEltLabelBoxType :: SEltLabel -> Maybe SBoxType
 getSEltLabelBoxType (SEltLabel _ x) = getSEltBoxType x
 
-
-
-
 sBox_drawer :: SBox -> SEltDrawer
 sBox_drawer sbox@SBox {..} = r where
   CanonicalLBox _ _ lbox@(LBox (V2 x y) (V2 w h)) = canonicalLBox_from_lBox _sBox_box
@@ -155,22 +145,6 @@ sBox_drawer sbox@SBox {..} = r where
   fillfn _ = case _superStyle_fill _sBox_style of
     FillStyle_Simple c -> Just c
     FillStyle_Blank    -> Nothing
-
-  displayLinesToChar dl (x',y') (xoff, yoff) = outputChar where
-    spans = TZ._displayLines_spans dl
-    offsetMap = TZ._displayLines_offsetMap dl
-    yidx = y' - y - yoff
-    xalignoffset = case Map.lookup yidx offsetMap of
-      Nothing -> error $ "should not happen. got " <> show yidx <> " in\n" <> show dl <> "\n" <> show spans <> "\n" <> show (_sBox_text) <> show _sBox_box
-      Just (offset,_) -> offset
-    outputChar = case spans !!? yidx of
-      Nothing -> Nothing
-      Just row -> outputChar' where
-        rowText = subWidth $ concatSpans row
-        xidx = x' - x - xoff - xalignoffset
-        outputChar' = case rowText !!? xidx of
-          Nothing -> Nothing
-          Just x -> Just x
 
   rfntext pt@(V2 x' y') = case _sBox_boxType of
     SBoxType_Box -> Nothing
@@ -184,7 +158,7 @@ sBox_drawer sbox@SBox {..} = r where
         SBoxType_NoBoxText -> (0,0)
         _                  -> (1,1)
 
-      outputChar = displayLinesToChar dl (x', y') offs
+      outputChar = displayLinesToChar (x, y) dl (x', y') offs
 
   -- TODO test
   rfnlabel pt@(V2 x' y') = case _sBoxTitle_title _sBox_title of
@@ -194,7 +168,7 @@ sBox_drawer sbox@SBox {..} = r where
       -- however using infinite width trick will break AlignRight :(
       dl = noTrailngCursorDisplayLines titlewidth (_sBoxTitle_align _sBox_title) title
       -- note that y' will ultimately resolve to a yindex of 0 inside of displayLinesToChar
-      outputChar = displayLinesToChar dl (x', y') (1,0)
+      outputChar = displayLinesToChar (x, y) dl (x', y') (1,0)
 
   rfnnoborder pt
     | not (does_lBox_contains_XY lbox pt) = Nothing
