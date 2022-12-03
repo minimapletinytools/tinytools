@@ -678,7 +678,7 @@ getSAutoLineLabelPosition ot sal sall = getSAutoLineLabelPositionFromLineAnchors
   lar = sAutoLine_to_lineAnchorsForRenderList ot sal L.!! (_sAutoLineLabel_index sall)
 
 -- get SAutoLineLabel positions in visual order (which may not be the same as logical order)
--- return includes SAutoLineLabel and its logical index for convenience
+-- return includes SAutoLineLabel and its original logical index for convenience
 getSortedSAutoLineLabelPositions :: (HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
 getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
   sortfn (_,a) (_,b) = case compare (_sAutoLineLabel_index a) (_sAutoLineLabel_index b) of
