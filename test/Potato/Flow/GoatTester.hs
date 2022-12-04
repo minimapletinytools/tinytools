@@ -14,6 +14,7 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.DebugHelpers
 
+import qualified Data.IntMap as IM
 import qualified Data.Text                         as T
 import           Data.These
 import Data.Default
@@ -21,10 +22,11 @@ import Data.Default
 
 type GoatTesterTrackingState = (Text, Int, Int)
 
+-- TODO add a test name field 
 data GoatTesterRecord = GoatTesterRecord {
   _goatTesterFailureRecord_trackingState :: GoatTesterTrackingState
   , _goatTesterFailureRecord_failureMessage :: Maybe Text
-}
+} deriving (Show)
 
 data GoatTesterState = GoatTesterState {
     _goatTesterState_goatState :: GoatState
@@ -32,7 +34,7 @@ data GoatTesterState = GoatTesterState {
     , _goatTesterState_marker :: Text
     , _goatTesterState_rawOperationCountSinceLastMarker :: Int
     , _goatTesterState_records :: [GoatTesterRecord]
-  }
+  } deriving (Show)
 
 instance Default GoatTesterState where
   def = GoatTesterState {
@@ -80,8 +82,9 @@ verifyState' fn = GoatTesterT $ do
   put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
   return $ isJust mf
 
+-- TODO take a test name
 verifyState :: (Monad m) => (GoatState -> Maybe Text) -> GoatTesterT m ()
-verifyState f = verifyState f >> return ()
+verifyState f = verifyState' f >> return ()
 
 --verifyStateFatal :: (GoatState -> Maybe Text) -> GoatTesterT m ()
 --verifyStateFatal = undefined
@@ -93,3 +96,20 @@ runGoatTesterT gs m = do
 
 runGoatTester :: GoatState -> GoatTester a -> [GoatTesterRecord]
 runGoatTester gs m = runIdentity $ runGoatTesterT gs m
+
+assertGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
+assertGoatTesterWithOwlPFState pfs m = do
+  let
+    rslt = runGoatTester (makeGoatState (pfs, emptyControllerMeta)) m
+  TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> TestCase $ assertString (maybe "" T.unpack _goatTesterFailureRecord_failureMessage)
+
+
+-- verification helpers
+
+-- | verifies that the number of owls (elts) in the state is what is expected, includes folders in the count
+verifyOwlCount :: (Monad m) => Int -> GoatTesterT m ()
+verifyOwlCount expected = verifyState f where
+  f gs = if count == expected
+    then Nothing
+    else Just $ "verifyOwlCount failed: got " <> show count <> " owls, expected " <> show expected
+    where count = IM.size . _owlTree_mapping . hasOwlTree_owlTree . _owlPFWorkspace_pFState . _goatState_workspace $ gs
