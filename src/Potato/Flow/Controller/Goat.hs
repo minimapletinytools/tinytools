@@ -3,6 +3,7 @@
 
 module Potato.Flow.Controller.Goat (
   goatState_hasUnsavedChanges
+  , makeGoatState
   , goatState_pFState
   , goatState_selectedTool
   , GoatState(..)
@@ -79,6 +80,49 @@ data GoatState = GoatState {
     , _goatState_debugCommands   :: [GoatCmd]
 
   } deriving (Show)
+
+makeGoatState :: (OwlPFState, ControllerMeta) -> GoatState
+makeGoatState (initialstate, controllermeta) = goat where
+    initialowlpfstate = initialstate
+    -- initialize broadphase with initial state
+    initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ initialstate
+    (_, initialbp) = update_bPTree initialowlpfstate initialAsSuperOwlChanges emptyBPTree
+    initiallayersstate = makeLayersStateFromOwlPFState initialowlpfstate (_controllerMeta_layers controllermeta)
+
+    -- TODO DELETE
+    -- TODO wrap this in a helper function in Render
+    -- TODO we want to render the whole screen, not just the canvas
+    initialCanvasBox = _sCanvas_box . _owlPFState_canvas $ initialowlpfstate
+    initialselts = fmap (\(_, oelt) -> _owlItem_subItem oelt) . toList . _owlTree_mapping . _owlPFState_owlTree $ initialowlpfstate
+    initialemptyrcr = emptyRenderedCanvasRegion initialCanvasBox
+    initialrendercontext = RenderContext {
+      _renderContext_owlTree = hasOwlTree_owlTree initialowlpfstate
+      , _renderContext_layerMetaMap = _layersState_meta initiallayersstate
+      , _renderContext_broadPhase = initialbp -- this is ignored but we may as well set in correctly
+      , _renderContext_renderedCanvasRegion = initialemptyrcr
+    }
+    initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
+
+    goat = GoatState {
+        _goatState_workspace      = loadOwlPFStateIntoWorkspace (initialstate) emptyWorkspace
+        , _goatState_pan             = _controllerMeta_pan controllermeta
+        , _goatState_mouseDrag       = def
+        , _goatState_handler         = SomePotatoHandler EmptyHandler
+        , _goatState_layersHandler   = SomePotatoHandler (def :: LayersHandler)
+        , _goatState_potatoDefaultParameters = def
+        , _goatState_attachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree initialstate)
+        , _goatState_debugLabel      = ""
+        , _goatState_selection       = isParliament_empty
+        , _goatState_canvasSelection = CanvasSelection Seq.empty
+        , _goatState_broadPhaseState = initialbp
+        , _goatState_renderedCanvas = initialrc
+        , _goatState_renderedSelection = initialemptyrcr
+        , _goatState_layersState     = initiallayersstate
+        , _goatState_clipboard = Nothing
+        , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
+        , _goatState_debugCommands = []
+      }
+
 
 goatState_pFState :: GoatState -> OwlPFState
 goatState_pFState = _owlPFWorkspace_pFState . _goatState_workspace
