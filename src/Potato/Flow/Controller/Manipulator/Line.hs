@@ -193,14 +193,14 @@ whichSubSegmentDidClick ot sline@SAutoLine {..} pos = r where
 getEndpointPosition ::  Bool -> OwlPFState -> SAutoLine -> Bool -> XY
 getEndpointPosition offsetAttach pfs SAutoLine {..} isstart = if isstart
   then fromMaybe _sAutoLine_start $ maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachStart
-  else trace (show (maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachEnd) <> " " <> show _sAutoLine_end) $ fromMaybe _sAutoLine_end $ maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachEnd
+  else fromMaybe _sAutoLine_end $ maybeGetAttachmentPosition offsetAttach pfs =<< _sAutoLine_attachEnd
 
 
 
 -- |
 -- see indexing information in 'whichSubSegmentDidClick'
 getAnchorPosition :: Bool -> OwlPFState -> SAutoLine -> Int -> XY
-getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = trace ("POS" <> show anchorindex <> show endindex) $ r where
+getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = r where
   mps = _sAutoLine_midpoints
   endindex = length mps + 1
   r = if anchorindex == 0
@@ -480,9 +480,9 @@ instance PotatoHandler AutoLineMidPointHandler where
         -- TODO not working
         -- NOTE indexing of getAnchorPosition is offset from index into _autoLineMidPointHandler_midPointIndex
         ladjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline mpindex
-        -- NOTE that this is out of bounds in creation cases, but it won't get evaluated
+        -- NOTE that this might be out of bounds in creation cases, but it won't get evaluated
         radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
-        isoveradjacent = traceShowId $ trace (show ladjacentpos <> " : " <> show _mouseDrag_to <> " : " <> show radjacentpos <> " - " <> show mpindex <> " " <> show sline) $ _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
+        isoveradjacent = _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
 
         newsline = sline {
             _sAutoLine_midpoints = if _autoLineMidPointHandler_isMidpointCreation
@@ -494,30 +494,23 @@ instance PotatoHandler AutoLineMidPointHandler where
             _sAutoLine_midpoints = L.deleteAt mpindex mps
           }
 
-        mevent = case firstlm of
+        (diddelete, event) = case firstlm of
           -- create the new midpoint if none existed
-          _ | _autoLineMidPointHandler_isMidpointCreation -> assert (not _autoLineMidPointHandler_undoFirst) $  Just $
-            WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+          _ | _autoLineMidPointHandler_isMidpointCreation -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
 
           -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
-          _ | isoveradjacent -> Just $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
+          _ | isoveradjacent -> (True,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
 
           -- normal case, update the midpoint position
-          _ -> Just $
-            WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
-
-        newundostate = case mevent of
-          Nothing -> False
-          Just WSEUndo -> False
-          _ -> True
+          _ -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                -- NOTE that upon creation of AutoLineMidPointHandler `_autoLineMidPointHandler_isMidpointCreation` may not be equal to `not _autoLineMidPointHandler_undoFirst`
-                _autoLineMidPointHandler_isMidpointCreation = not newundostate
-                , _autoLineMidPointHandler_undoFirst  = newundostate
+                -- go back to creation case IF we deleted a midpoint AND we weren't already in creation case (this can happen if you have two mid/endpoints right next to each other and you drag from one to the other)
+                _autoLineMidPointHandler_isMidpointCreation = diddelete && not _autoLineMidPointHandler_isMidpointCreation
+                , _autoLineMidPointHandler_undoFirst  = True
               }
-            , _potatoHandlerOutput_pFEvent = mevent
+            , _potatoHandlerOutput_pFEvent = Just event
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def

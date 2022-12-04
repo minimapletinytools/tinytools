@@ -207,6 +207,7 @@ DONE-midpoints
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (does'nt work right now)
+  -test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
 
 
 -figure out how to change folders into groups for auto-pathing group support
