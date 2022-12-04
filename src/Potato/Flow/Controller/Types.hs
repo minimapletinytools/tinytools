@@ -154,4 +154,7 @@ instance ToJSON ControllerMeta
 emptyControllerMeta :: ControllerMeta
 emptyControllerMeta = ControllerMeta 0 IM.empty
 
+instance Default ControllerMeta where
+  def = emptyControllerMeta
+
 type EverythingLoadState = (SPotatoFlow, ControllerMeta)

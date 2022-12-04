@@ -109,6 +109,13 @@ DONE-midpoints
 -empty canvas should have default size of 100x100 not 1x1
 -proper command line parsing with --help option
 
+:: Goat Tester Monad::
+- runCommand :: GoatCmd -> GoatTester ()
+- setMarker :: Text -> GoatTester ()
+- getTrackingState :: GoatTester (Text, Int, Int)
+- verifyState :: (GoatState -> Maybe Text) -> GoatTester ()
+- verifyStateFatal :: (GoatState -> Maybe Text) -> GoatTester ()
+
 
 ::NEWEST TODO::
 -FEATURE add line labels
@@ -126,7 +133,6 @@ DONE-midpoints
     -offset anchor by 1 in line label handler
   DONE-rendering
     -must adjust bounding box to include line labels UGGG
-  
 -folder stuff
   -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
