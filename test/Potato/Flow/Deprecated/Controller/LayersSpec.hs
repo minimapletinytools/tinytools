@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.LayersSpec
+module Potato.Flow.Deprecated.Controller.LayersSpec
   ( spec
   )
 where

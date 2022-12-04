@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.Manipulator.CartLineSpec (
+module Potato.Flow.Deprecated.Controller.Manipulator.CartLineSpec (
   spec
 ) where
 

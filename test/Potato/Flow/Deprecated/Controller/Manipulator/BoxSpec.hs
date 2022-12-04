@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.Manipulator.BoxSpec (
+module Potato.Flow.Deprecated.Controller.Manipulator.BoxSpec (
   spec
 ) where
 

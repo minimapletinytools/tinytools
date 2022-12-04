@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.Manipulator.SelectSpec
+module Potato.Flow.Deprecated.Controller.Manipulator.SelectSpec
   ( spec
   )
 where

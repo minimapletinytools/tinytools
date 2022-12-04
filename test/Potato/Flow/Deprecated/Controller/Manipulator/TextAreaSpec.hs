@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 
-module Potato.Flow.Controller.Manipulator.TextAreaSpec (
+module Potato.Flow.Deprecated.Controller.Manipulator.TextAreaSpec (
   spec
 ) where
 

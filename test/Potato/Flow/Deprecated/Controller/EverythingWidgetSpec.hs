@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 
-module Potato.Flow.Controller.EverythingWidgetSpec
+module Potato.Flow.Deprecated.Controller.EverythingWidgetSpec
   ( spec
   )
 where
