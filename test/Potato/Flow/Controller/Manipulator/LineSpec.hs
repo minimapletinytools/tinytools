@@ -34,12 +34,19 @@ basic_line_test = assertGoatTesterWithOwlPFState emptyOwlPFState basic_line_test
     verifyOwlCount 1
     -- TODO verify line is selected
 
+    setMarker "add a text label"
+    canvasMouseDown (40, 0)
+    canvasMouseUp (40, 0)
+    pressKeys "meow meow meow meow"
+    verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_labels sline) /= 1) ("expected 1 label, got: " <> show (_sAutoLine_labels sline))
+
     setMarker "add a midpoint"
     canvasMouseDown (50, 0)
     canvasMouseDown (50, 50)
     canvasMouseUp (50, 50)
-
     verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_midpoints sline) /= 1) ("expected 1 midpoint, got: " <> show (_sAutoLine_midpoints sline))
+
+
 
 
 spec :: Spec
