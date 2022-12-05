@@ -105,7 +105,10 @@ assertGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
 assertGoatTesterWithOwlPFState pfs m = do
   let
     rslt = runGoatTester (makeGoatState (pfs, emptyControllerMeta)) m
-  TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> TestCase $ assertString (maybe "" T.unpack _goatTesterFailureRecord_failureMessage)
+  TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> let
+      f = T.unpack . (\t ->  show _goatTesterFailureRecord_trackingState <> " " <> t)
+    in TestCase $ assertString (maybe "" f _goatTesterFailureRecord_failureMessage) where
+
 
 
 -- operation helpers
@@ -138,6 +141,12 @@ pressKey k = runCommand (GoatCmdKeyboard (KeyboardData k []))
 
 pressKeys :: (Monad m) => String -> GoatTesterT m ()
 pressKeys text = forM_ text $ \c -> pressKey (KeyboardKey_Char c)
+
+pressUndo :: (Monad m) => GoatTesterT m ()
+pressUndo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl]))
+
+pressRedo :: (Monad m) => GoatTesterT m ()
+pressRedo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl]))
 
 -- verification helpers
 

@@ -118,6 +118,10 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
+-TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
+  -add proper potatoShow for SuperOwl/OwlItem
+  -add way to label individual tests
+  -improve labeling of each verify step
 -FEATURE add line labels
   -remember to adjust _sAutoLine_labels when deleting midpoints
   -if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
@@ -199,8 +203,6 @@ DONE-midpoints
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -FEATURE attach point repositioning
 -BUG figure out what's going on with cache updated bugs...
--TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
-  -add proper potatoShow for SuperOwl/OwlItem
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
 
