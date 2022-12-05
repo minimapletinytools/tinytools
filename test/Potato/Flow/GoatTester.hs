@@ -176,3 +176,14 @@ verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl f' where
 toMaybe :: Bool -> a -> Maybe a
 toMaybe False _ = Nothing
 toMaybe True  x = Just x
+
+alwaysFail :: (Monad m) => Text -> GoatTesterT m ()
+alwaysFail msg = GoatTesterT $ do
+  gts <- get
+  ts <- unGoatTester getTrackingState
+  let
+    record = GoatTesterRecord {
+        _goatTesterFailureRecord_trackingState = ts
+        , _goatTesterFailureRecord_failureMessage = Just msg
+      }
+  put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
