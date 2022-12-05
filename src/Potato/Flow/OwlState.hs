@@ -99,6 +99,10 @@ owlPFState_toCanvasCoordinates :: OwlPFState -> XY -> XY
 owlPFState_toCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x-sx) (y-sy) where
   LBox (V2 sx sy) _ = _sCanvas_box _owlPFState_canvas
 
+owlPFState_fromCanvasCoordinates :: OwlPFState -> XY -> XY
+owlPFState_fromCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x+sx) (y+sy) where
+  LBox (V2 sx sy) _ = _sCanvas_box _owlPFState_canvas
+
 owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 

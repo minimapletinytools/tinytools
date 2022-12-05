@@ -125,6 +125,7 @@ cancelDrag md = md { _mouseDrag_state = case _mouseDrag_state md of
 mouseDragDelta :: MouseDrag -> MouseDrag -> XY
 mouseDragDelta md prev = (_mouseDrag_to md) - (_mouseDrag_to prev)
 
+-- TODO rename to CanvasMouseDrag
 -- represents MouseDrag in local coordinates (e.g. canvas coordinates)
 newtype RelMouseDrag = RelMouseDrag MouseDrag deriving (Show)
 

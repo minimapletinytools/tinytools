@@ -200,6 +200,7 @@ DONE-midpoints
 -FEATURE attach point repositioning
 -BUG figure out what's going on with cache updated bugs...
 -TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
+  -add proper potatoShow for SuperOwl/OwlItem
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
 

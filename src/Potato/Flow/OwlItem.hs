@@ -7,6 +7,7 @@ import Relude
 import Potato.Flow.SElts
 import Potato.Flow.Types
 import Potato.Flow.Methods.LineTypes
+import Potato.Flow.DebugHelpers
 
 data OwlInfo = OwlInfo {
     _owlInfo_name :: Text
@@ -40,6 +41,15 @@ data OwlItem = OwlItem {
 } deriving (Show, Eq, Generic)
 
 instance NFData OwlItem
+
+instance PotatoShow OwlItem where
+  potatoShow = \case
+    OwlItem oinfo (OwlSubItemFolder kiddos) -> "folder: " <> (_owlInfo_name oinfo) <> ": " <> show kiddos
+    OwlItem oinfo subitem -> "elt: " <> (_owlInfo_name oinfo) <> ": " <> case subitem of
+        OwlSubItemNone -> "none"
+        OwlSubItemBox sbox -> show sbox
+        OwlSubItemLine sline _ -> show sline
+        OwlSubItemTextArea stextarea -> show stextarea
 
 owlItem_clearCache :: OwlItem -> OwlItem
 owlItem_clearCache (OwlItem oinfo osubitem) = OwlItem oinfo (owlSubItem_clearCache osubitem)
