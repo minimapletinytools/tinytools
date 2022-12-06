@@ -142,6 +142,9 @@ pressKey k = runCommand (GoatCmdKeyboard (KeyboardData k []))
 pressKeys :: (Monad m) => String -> GoatTesterT m ()
 pressKeys text = forM_ text $ \c -> pressKey (KeyboardKey_Char c)
 
+pressEscape :: (Monad m) => GoatTesterT m ()
+pressEscape = pressKey KeyboardKey_Esc
+
 pressUndo :: (Monad m) => GoatTesterT m ()
 pressUndo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl]))
 

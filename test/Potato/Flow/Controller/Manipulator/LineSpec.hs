@@ -53,6 +53,40 @@ basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
   canvasMouseUp (50, 50)
   expectMidpointCount 1
 
+basic_cancel_test :: Test
+basic_cancel_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "draw a line and cancel"
+  setTool Tool_Line
+  canvasMouseDown (0, 0)
+  canvasMouseDown (100, 0)
+  verifyOwlCount 1
+  pressEscape
+  verifyOwlCount 0
+  canvasMouseDown (110, 0)
+  canvasMouseUp (110, 0)
+  verifyOwlCount 0
+
+  initSimpleLine
+
+  setMarker "create a midpoint and cancel"
+  canvasMouseDown (50, 0)
+  canvasMouseDown (50, 1)
+  expectMidpointCount 1
+  pressEscape
+  expectMidpointCount 0
+  canvasMouseDown (50, 2)
+  canvasMouseUp (50, 2)
+  expectMidpointCount 0
+
+  setMarker "add a midpoint"
+  canvasMouseDown (50, 0)
+  canvasMouseDown (50, 50)
+  canvasMouseUp (50, 50)
+  expectMidpointCount 1
+
+
+
 midpoint_modify_basic_test :: Test
 midpoint_modify_basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
 
@@ -124,5 +158,6 @@ spec :: Spec
 spec = do
   describe "Line" $ do
     fromHUnitTest $ basic_test
+    fromHUnitTest $ basic_cancel_test
     fromHUnitTest $ midpoint_modify_basic_test
     fromHUnitTest $ midpoint_double_adjacent_delete_test
