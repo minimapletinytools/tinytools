@@ -25,8 +25,9 @@ type GoatTesterTrackingState = (Text, Int, Int)
 
 -- TODO add a test name field
 data GoatTesterRecord = GoatTesterRecord {
-  _goatTesterFailureRecord_trackingState :: GoatTesterTrackingState
-  , _goatTesterFailureRecord_failureMessage :: Maybe Text
+  _goatTesterRecord_trackingState :: GoatTesterTrackingState
+  , _goatTesterRecord_failureMessage :: Maybe Text
+  , _goatTesterRecord_description :: Text
 } deriving (Show)
 
 data GoatTesterState = GoatTesterState {
@@ -73,22 +74,23 @@ getTrackingState = GoatTesterT $ do
   GoatTesterState {..} <- get
   return $ (_goatTesterState_marker, _goatTesterState_rawOperationCountSinceLastMarker, _goatTesterState_rawOperationCount)
 
-verifyState' :: (Monad m) => (GoatState -> Maybe Text) -> GoatTesterT m Bool
-verifyState' fn = GoatTesterT $ do
+verifyState' :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m Bool
+verifyState' desc fn = GoatTesterT $ do
   gts <- get
   ts <- unGoatTester getTrackingState
   let mf = fn (_goatTesterState_goatState gts)
   let
     record = GoatTesterRecord {
-        _goatTesterFailureRecord_trackingState = ts
-        , _goatTesterFailureRecord_failureMessage = mf
+        _goatTesterRecord_trackingState = ts
+        , _goatTesterRecord_failureMessage = mf
+        , _goatTesterRecord_description = desc
       }
   put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
   return $ isJust mf
 
 -- TODO take a test name
-verifyState :: (Monad m) => (GoatState -> Maybe Text) -> GoatTesterT m ()
-verifyState f = verifyState' f >> return ()
+verifyState :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m ()
+verifyState desc f = verifyState' desc f >> return ()
 
 --verifyStateFatal :: (GoatState -> Maybe Text) -> GoatTesterT m ()
 --verifyStateFatal = undefined
@@ -106,8 +108,8 @@ assertGoatTesterWithOwlPFState pfs m = do
   let
     rslt = runGoatTester (makeGoatState (pfs, emptyControllerMeta)) m
   TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> let
-      f = T.unpack . (\t ->  show _goatTesterFailureRecord_trackingState <> " " <> t)
-    in TestCase $ assertString (maybe "" f _goatTesterFailureRecord_failureMessage) where
+      f = T.unpack . (\t ->  show _goatTesterRecord_description <> " " <> show _goatTesterRecord_trackingState <> " " <> t)
+    in TestCase $ assertString (maybe "" f _goatTesterRecord_failureMessage) where
 
 
 
@@ -155,10 +157,10 @@ pressRedo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'y') [Ke
 
 -- | verifies that the number of owls (elts) in the state is what is expected, includes folders in the count
 verifyOwlCount :: (Monad m) => Int -> GoatTesterT m ()
-verifyOwlCount expected = verifyState f where
+verifyOwlCount expected = verifyState "verifyOwlCount" f where
   f gs = if count == expected
     then Nothing
-    else Just $ "verifyOwlCount failed: got " <> show count <> " owls, expected " <> show expected
+    else Just $ "got " <> show count <> " owls, expected " <> show expected
     where count = IM.size . _owlTree_mapping . hasOwlTree_owlTree . goatState_pFState $ gs
 
 maximumBy' :: Foldable t => (a -> a -> Ordering) -> t a -> Maybe a
@@ -166,19 +168,22 @@ maximumBy' f l = if length l == 0
   then Nothing
   else Just $ L.maximumBy f l
 
-verifyMostRecentlyCreatedOwl :: (Monad m) => (SuperOwl -> Maybe Text) -> GoatTesterT m ()
-verifyMostRecentlyCreatedOwl f = verifyState f' where
+verifyMostRecentlyCreatedOwl' :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()
+verifyMostRecentlyCreatedOwl' desc f = verifyState desc f' where
   f' gs = r where
     msowl = maximumBy' (\s1 s2 -> compare (_superOwl_id s1) (_superOwl_id s2)) $ owliterateall (hasOwlTree_owlTree $ goatState_pFState gs)
     r = case msowl of
-      Nothing -> Just "verifyMostRecentlyCreatedOwl failed, no 🦉s"
-      Just sowl -> (\m -> "verifyMostRecentlyCreatedOwl failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
+      Nothing -> Just "failed, no 🦉s"
+      Just sowl -> (\m -> "failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
+
+verifyMostRecentlyCreatedOwl :: (Monad m) => (SuperOwl -> Maybe Text) -> GoatTesterT m ()
+verifyMostRecentlyCreatedOwl = verifyMostRecentlyCreatedOwl' "verifyMostRecentlyCreatedOwl"
 
 verifyMostRecentlyCreatedLine :: (Monad m) => (SAutoLine -> Maybe Text) -> GoatTesterT m ()
-verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl f' where
+verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl' "verifyMostRecentlyCreatedLine" f' where
   f' sowl = case _owlItem_subItem (_superOwl_elt sowl) of
-    OwlSubItemLine sline _ -> fmap ("verifyMostRecentlyCreatedLine failed, " <>) $ f sline
-    x -> Just $ "verifyMostRecentlyCreatedLine failed, expected SAutoLine got: " <> show x
+    OwlSubItemLine sline _ -> f sline
+    x -> Just $ "expected SAutoLine got: " <> show x
 
 -- otheruseful stuff
 
@@ -195,7 +200,7 @@ alwaysFail msg = GoatTesterT $ do
   ts <- unGoatTester getTrackingState
   let
     record = GoatTesterRecord {
-        _goatTesterFailureRecord_trackingState = ts
-        , _goatTesterFailureRecord_failureMessage = Just msg
+        _goatTesterRecord_trackingState = ts
+        , _goatTesterRecord_failureMessage = Just msg
       }
   put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
