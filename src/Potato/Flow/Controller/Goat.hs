@@ -724,4 +724,3 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         , _goatState_layersState     = next_layersState
         , _goatState_attachmentMap = next_attachmentMap
       }
-

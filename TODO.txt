@@ -118,6 +118,7 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
+-BUG cache isn't being set
 -TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
   -add proper potatoShow for SuperOwl/OwlItem
   -add way to label individual tests
@@ -210,13 +211,15 @@ DONE-midpoints
 -TESTS TO ADD
   DONE-very basic midpoint test
   DONE-add cancel with no movement test for box and line handler
-  -add test to make sure cache is actually being used
+  DONE-add test to make sure cache is actually being used
+  DONE-test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
+  -setMarker should be analogous to "it" in documenting test cases
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (does'nt work right now)
-  -test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
+
 
 
 -figure out how to change folders into groups for auto-pathing group support

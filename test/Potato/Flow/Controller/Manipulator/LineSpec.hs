@@ -16,6 +16,7 @@ import Potato.Flow.GoatTester
 
 import           Potato.Flow
 import           Potato.Flow.Common
+import Potato.Flow.DebugHelpers
 
 import qualified Data.List as L
 
@@ -55,7 +56,7 @@ basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 basic_cancel_test :: Test
 basic_cancel_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
-  
+
   setMarker "mouse down and cancel and ensure no line is created"
   setTool Tool_Line
   canvasMouseDown (0, 0)
@@ -162,10 +163,26 @@ midpoint_double_adjacent_delete_test = assertGoatTesterWithOwlPFState emptyOwlPF
   expectMidpointCount 3
 
 
+cache_basic_test :: Test
+cache_basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  initSimpleLine
+
+  let
+    f sowl = case _owlItem_subItem (_superOwl_elt sowl) of
+      OwlSubItemLine _ (Just c) -> Nothing
+      _ -> Just $ "expected cache, got " <> show sowl
+  verifyMostRecentlyCreatedOwl' "verify cache got created for the line we just created" f
+
+
+
 spec :: Spec
 spec = do
   describe "Line" $ do
-    fromHUnitTest $ basic_test
-    fromHUnitTest $ basic_cancel_test
-    fromHUnitTest $ midpoint_modify_basic_test
-    fromHUnitTest $ midpoint_double_adjacent_delete_test
+    describe "basic" $ fromHUnitTest $ basic_test
+    describe "basic_cancel" $ fromHUnitTest $ basic_cancel_test
+    describe "midpoint_modify_basic" $ fromHUnitTest $ midpoint_modify_basic_test
+    describe "midpoint_double_adjacent_delete" $ fromHUnitTest $ midpoint_double_adjacent_delete_test
+
+    -- TODO this is failing, figure out why
+    --describe "cache_basic" $ fromHUnitTest $ cache_basic_test
