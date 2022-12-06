@@ -55,8 +55,16 @@ basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 basic_cancel_test :: Test
 basic_cancel_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
+  
+  setMarker "mouse down and cancel and ensure no line is created"
+  setTool Tool_Line
+  canvasMouseDown (0, 0)
+  pressEscape
+  canvasMouseDown (100, 0)
+  canvasMouseUp (110, 0)
+  verifyOwlCount 0
 
-  setMarker "draw a line and cancel"
+  setMarker "draw a line and cancel after moving it"
   setTool Tool_Line
   canvasMouseDown (0, 0)
   canvasMouseDown (100, 0)

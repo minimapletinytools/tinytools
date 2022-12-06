@@ -209,7 +209,7 @@ DONE-midpoints
 
 -TESTS TO ADD
   DONE-very basic midpoint test
-  -add cancel with no movement test for box and line handler
+  DONE-add cancel with no movement test for box and line handler
   -add test to make sure cache is actually being used
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
