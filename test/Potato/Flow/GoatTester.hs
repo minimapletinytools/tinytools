@@ -43,7 +43,7 @@ data GoatTesterState = GoatTesterState {
 
 instance Default GoatTesterState where
   def = GoatTesterState {
-      _goatTesterState_goatState = makeGoatState (emptyOwlPFState, emptyControllerMeta)
+      _goatTesterState_goatState = makeGoatState (V2 100 100) (emptyOwlPFState, emptyControllerMeta)
       , _goatTesterState_rawOperationCount = 0
       , _goatTesterState_marker = "__START__"
       , _goatTesterState_rawOperationCountSinceLastMarker = 0
@@ -106,7 +106,7 @@ runGoatTester gs m = runIdentity $ runGoatTesterT gs m
 assertGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
 assertGoatTesterWithOwlPFState pfs m = do
   let
-    rslt = runGoatTester (makeGoatState (pfs, emptyControllerMeta)) m
+    rslt = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
   TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> let
       f = T.unpack . (\t ->  show _goatTesterRecord_description <> " " <> show _goatTesterRecord_trackingState <> " " <> t)
     in TestCase $ assertString (maybe "" f _goatTesterRecord_failureMessage) where

@@ -37,6 +37,7 @@ import Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
 import Potato.Flow.Llama
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception                         (assert)
 import           Data.Default
@@ -44,6 +45,7 @@ import qualified Data.IntMap                               as IM
 import qualified Data.IntSet as IS
 import           Data.Maybe
 import qualified Data.Sequence                             as Seq
+import qualified Data.Text as T
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
@@ -81,8 +83,8 @@ data GoatState = GoatState {
 
   } deriving (Show)
 
-makeGoatState :: (OwlPFState, ControllerMeta) -> GoatState
-makeGoatState (initialstate, controllermeta) = goat where
+makeGoatState :: XY -> (OwlPFState, ControllerMeta) -> GoatState
+makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
     initialowlpfstate = initialstate
     -- initialize broadphase with initial state
     initialAsSuperOwlChanges = IM.mapWithKey (\rid (oem, oe) -> Just $ SuperOwl rid oem oe) . _owlTree_mapping . _owlPFState_owlTree $ initialstate
@@ -119,7 +121,7 @@ makeGoatState (initialstate, controllermeta) = goat where
         , _goatState_renderedSelection = initialemptyrcr
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
-        , _goatState_screenRegion = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
+        , _goatState_screenRegion = V2 screenx screeny
         , _goatState_debugCommands = []
       }
 
@@ -668,8 +670,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       -- NOTE this will render hidden stuff that's selected via layers!!
       _renderContext_layerMetaMap = IM.empty
 
-
-      -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS
+      -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching (you can fix by commenting it out)
       -- IDK WHY BUT IF YOU SELECT AUTOLINE WITH BOX AND MOVE BOTH THE CACHE STAYS WITH ORIGINAL PLACE AND SELECTED LINE DOESN'T MOVE
       -- so temp fix it by reseting the cache on attached lines whos target moved
       , _renderContext_owlTree = owlTree_withCacheResetOnAttachments

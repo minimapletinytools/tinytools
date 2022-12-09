@@ -27,6 +27,9 @@ assertPotatoShowAndDump a v b = if v
 traceWith :: (a -> String) -> a -> a
 traceWith f x = trace (f x) x
 
+traceShowIdWithLabel :: (Show a) => String -> a -> a
+traceShowIdWithLabel label x = trace (label <> ": " <> show x) x
+
 
 -- TODO decide if we want to use this??? Too much???
 data PotatoLoggerLevel = PLL_Debug | PLL_Info | PLL_Warn | PLL_Error

@@ -128,7 +128,8 @@ holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
 holdGoatWidget GoatWidgetConfig {..} = mdo
 
   let
-    initialgoat = makeGoatState _goatWidgetConfig_initialState
+    initialscreensize = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
+    initialgoat = makeGoatState initialscreensize _goatWidgetConfig_initialState
 
     -- old command style
     goatEvent = [
