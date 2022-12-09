@@ -171,9 +171,11 @@ getChangesFromAttachmentMap owltreeafterchanges@OwlTree {..} am changes = r wher
 instance PotatoShow SuperOwl where
   potatoShow SuperOwl {..} = show _superOwl_id <> " " <> potatoShow _superOwl_meta <> " " <> elt
     where
-      elt = case _superOwl_elt of
-        OwlItem oinfo (OwlSubItemFolder kiddos) -> "folder: " <> (_owlInfo_name oinfo) <> ": " <> show kiddos
-        OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
+      elt = potatoShow _superOwl_elt
+
+        --case _superOwl_elt of
+          --OwlItem oinfo (OwlSubItemFolder kiddos) -> "folder: " <> (_owlInfo_name oinfo) <> ": " <> show kiddos
+          --OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
 
 --superOwl_id :: Lens' SuperOwl REltId
 superOwl_id :: Functor f => (REltId -> f REltId) -> SuperOwl -> f SuperOwl

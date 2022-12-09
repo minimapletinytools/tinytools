@@ -48,7 +48,7 @@ instance PotatoShow OwlItem where
     OwlItem oinfo subitem -> "elt: " <> (_owlInfo_name oinfo) <> ": " <> case subitem of
         OwlSubItemNone -> "none"
         OwlSubItemBox sbox -> show sbox
-        OwlSubItemLine sline _ -> show sline
+        OwlSubItemLine sline cache -> show sline <> " " <> show cache
         OwlSubItemTextArea stextarea -> show stextarea
 
 owlItem_clearCache :: OwlItem -> OwlItem

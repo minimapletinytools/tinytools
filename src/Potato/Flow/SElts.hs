@@ -10,6 +10,7 @@ import           Control.Exception (assert)
 import           Data.Aeson
 import           Data.Binary
 import           Data.Default
+import qualified Text.Show
 import qualified Data.Text as T
 import qualified Data.List         as L
 import qualified Data.Map as Map
@@ -254,7 +255,7 @@ data LineStyle = LineStyle {
   , _lineStyle_rightArrows :: Text
   , _lineStyle_upArrows    :: Text
   , _lineStyle_downArrows  :: Text
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON LineStyle
 instance ToJSON LineStyle
@@ -281,6 +282,11 @@ lineStyle_toListFormat :: LineStyle -> ([PChar], [PChar], [PChar], [PChar])
 lineStyle_toListFormat LineStyle {..} = (T.unpack _lineStyle_leftArrows, T.unpack _lineStyle_rightArrows, T.unpack _lineStyle_upArrows, T.unpack _lineStyle_downArrows)
 
 
+instance Show LineStyle where
+  show ls = r where
+    (a, b, c, d) = lineStyle_toListFormat ls
+    r = "LineStyle: " <> a <> " " <> b <> " " <> c <> " " <> d
+
 -- someday we might have more than one constraint...
 data SAutoLineConstraint = SAutoLineConstraintFixed XY deriving (Eq, Generic, Show)
 
@@ -304,7 +310,10 @@ data SAutoLineLabel = SAutoLineLabel {
   , _sAutoLineLabel_position :: SAutoLineLabelPosition
   , _sAutoLineLabel_text :: Text
   --, _sAutoLineLabel_vertical :: Bool -- WIP true if vertically oriented
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
+
+instance Show SAutoLineLabel where
+  show SAutoLineLabel {..} = "SAutoLineLabel: " <> show _sAutoLineLabel_index <> " " <> show _sAutoLineLabel_position <> " " <> T.unpack _sAutoLineLabel_text
 
 instance FromJSON SAutoLineLabel
 instance ToJSON SAutoLineLabel
@@ -339,12 +348,18 @@ data SAutoLine = SAutoLine {
 
   , _sAutoLine_midpoints :: [SAutoLineConstraint]
   , _sAutoLine_labels :: [SAutoLineLabel] -- WIP currently does nothing
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON SAutoLine
 instance ToJSON SAutoLine
 instance Binary SAutoLine
 instance NFData SAutoLine
+
+instance Show SAutoLine where
+  show SAutoLine {..} = r where
+    start = maybe (show _sAutoLine_start) show _sAutoLine_attachStart
+    end = maybe (show _sAutoLine_end) show _sAutoLine_attachEnd
+    r = "SAutoLine: " <> start <> " " <> end <> " " <> show _sAutoLine_midpoints <> " " <> show _sAutoLine_labels
 
 -- makes writing tests easier...
 instance Default SAutoLine where
