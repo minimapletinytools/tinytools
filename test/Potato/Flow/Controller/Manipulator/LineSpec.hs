@@ -165,22 +165,19 @@ midpoint_double_adjacent_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFS
   expectMidpointCount 3
 
 
-initUnitBox :: GoatTester ()
-initUnitBox = do
-  verifyOwlCount 0
-
+initUnitBox :: (Int, Int) -> GoatTester ()
+initUnitBox (x, y) = do
   setMarker "draw a 1x1 box"
   setTool Tool_Box
-  canvasMouseDown (0, 0)
-  canvasMouseDown (1, 1)
-  verifyOwlCount 1
-  canvasMouseUp (1, 1)
-  verifyOwlCount 1
+  canvasMouseDown (x, y)
+  canvasMouseDown (x+1, y+1)
+  canvasMouseUp (x+1, y+1)
   -- TODO verify box is selected
 
 attaching_delete_test :: Spec
 attaching_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
-  initUnitBox
+  initUnitBox (0,0)
+  verifyOwlCount 1
 
   setMarker "draw line attached to box"
   setTool Tool_Line
@@ -188,6 +185,8 @@ attaching_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseDown (-10, 1)
   canvasMouseUp (-10, 1)
   verifyOwlCount 2
+
+  -- TODO verify line is attached to box
 
   setMarker "delete the box"
   canvasMouseDown (0, 0)
@@ -200,6 +199,60 @@ attaching_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressUndo
   verifyOwlCount 2
   -- TODO verify again that the line is in the expected place
+
+attaching_fully_attached_wont_move_test :: Spec
+attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+  initUnitBox (0,0)
+  initUnitBox (10,0)
+  verifyOwlCount 2
+
+  setMarker "draw line attached to box"
+  setTool Tool_Line
+  canvasMouseDown (1, 0)
+  canvasMouseDown (9, 0)
+  canvasMouseUp (9, 0)
+  verifyOwlCount 3
+
+  -- TODO verify line is attached to box
+  -- TODO verify line is selected
+
+  --
+  setMarker "draw another line so that we can select both lines and move them together (otherwise you create a midpoint)"
+  setTool Tool_Line
+  canvasMouseDown (0, -1)
+  canvasMouseDown (10, -1)
+  canvasMouseUp (10, -1)
+  verifyOwlCount 4
+
+  s1 <- getOwlPFState
+
+  setMarker "select both lines"
+  canvasMouseDown (5, -5)
+  canvasMouseDown (5, 5)
+  canvasMouseUp (5, -5)
+  verifySelectionCount 2
+
+  setMarker "try and move the lines"
+  canvasMouseDown (5, 0)
+  canvasMouseDown (5, 10)
+  canvasMouseUp (5, 10)
+
+  s2 <- getOwlPFState
+  verify "state did not change after attempting to move line" $ if s1 == s2 then Nothing else Just "it changed!!"
+
+  setMarker "select everything"
+  canvasMouseDown (-10, -10)
+  canvasMouseDown (20, 20)
+  canvasMouseUp (20, 20)
+  verifySelectionCount 4
+
+  setMarker "move everything"
+  canvasMouseDown (5, 0)
+  canvasMouseDown (5, 10)
+  canvasMouseUp (5, 10)
+
+  s3 <- getOwlPFState
+  verify "state did not change after attempting to move line" $ if s2 == s3 then Just "it didn't change!" else Nothing
 
 
 cache_basic_test :: Spec
@@ -223,6 +276,7 @@ spec = do
     describe "midpoint_modify_basic" $  midpoint_modify_basic_test
     describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
     describe "attaching_delete_test" $ attaching_delete_test
+    describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test

@@ -24,6 +24,7 @@ import Data.Tuple.Extra
 
 type GoatTesterTrackingState = (Text, Int, Int) -- (marker, operations since start of test, operations since last marker)
 
+-- TODO include ref to rendered canvas and then you can render it on failure cases!!
 data GoatTesterRecord = GoatTesterRecord {
   _goatTesterRecord_trackingState :: GoatTesterTrackingState
   , _goatTesterRecord_failureMessage :: Maybe Text
@@ -62,16 +63,25 @@ runCommand cmd = GoatTesterT $ modify $
       , _goatTesterState_rawOperationCountSinceLastMarker = _goatTesterState_rawOperationCountSinceLastMarker + 1
     }
 
-
+getOwlPFState :: (Monad m) => GoatTesterT m OwlPFState
+getOwlPFState = GoatTesterT $ do
+  GoatTesterState {..} <- get
+  return $ goatState_pFState _goatTesterState_goatState
 
 getTrackingState :: (Monad m) => GoatTesterT m GoatTesterTrackingState
 getTrackingState = GoatTesterT $ do
   GoatTesterState {..} <- get
   return $ (_goatTesterState_marker, _goatTesterState_rawOperationCountSinceLastMarker, _goatTesterState_rawOperationCount)
 
-putRecord :: (Monad m) => GoatTesterRecord -> GoatTesterT m ()
-putRecord record = GoatTesterT $ do
+putRecord :: (Monad m) => Text -> Maybe Text -> GoatTesterT m ()
+putRecord desc mf = GoatTesterT $ do
   gts <- get
+  ts <- unGoatTesterT getTrackingState
+  let record = GoatTesterRecord {
+      _goatTesterRecord_trackingState = ts
+      , _goatTesterRecord_failureMessage = mf
+      , _goatTesterRecord_description = desc
+    }
   put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
 
 setMarker :: (Monad m) => Text -> GoatTesterT m ()
@@ -81,16 +91,15 @@ setMarker marker = GoatTesterT $ do
       , _goatTesterState_rawOperationCountSinceLastMarker = 0
     }
 
+verify :: (Monad m) => Text -> Maybe Text -> GoatTesterT m ()
+verify desc mf = GoatTesterT $ do
+  unGoatTesterT $ putRecord desc mf
+
 verifyState' :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m Bool
 verifyState' desc fn = GoatTesterT $ do
   gts <- get
-  ts <- unGoatTesterT getTrackingState
   let mf = fn (_goatTesterState_goatState gts)
-  unGoatTesterT $ putRecord $ GoatTesterRecord {
-      _goatTesterRecord_trackingState = ts
-      , _goatTesterRecord_failureMessage = mf
-      , _goatTesterRecord_description = desc
-    }
+  unGoatTesterT $ putRecord desc mf
   return $ isJust mf
 
 -- TODO take a test name
@@ -175,6 +184,14 @@ verifyOwlCount expected = verifyState "verifyOwlCount" f where
     else Just $ "got " <> show count <> " owls, expected " <> show expected
     where count = IM.size . _owlTree_mapping . hasOwlTree_owlTree . goatState_pFState $ gs
 
+-- | verifies that the number of selected owls (elts) is what's expected (uses regular selection, NOT canvas selection)
+verifySelectionCount :: (Monad m) => Int -> GoatTesterT m ()
+verifySelectionCount expected = verifyState "verifySelectionCount" f where
+  f gs = if count == expected
+    then Nothing
+    else Just $ "got " <> show count <> " selected owls, expected " <> show expected
+    where count = isParliament_length . _goatState_selection $ gs
+
 maximumBy' :: Foldable t => (a -> a -> Ordering) -> t a -> Maybe a
 maximumBy' f l = if length l == 0
   then Nothing
@@ -208,10 +225,4 @@ toMaybe True  x = Just x
 
 alwaysFail :: (Monad m) => Text -> GoatTesterT m ()
 alwaysFail msg = GoatTesterT $ do
-  gts <- get
-  ts <- unGoatTesterT getTrackingState
-  unGoatTesterT $ putRecord $ GoatTesterRecord {
-      _goatTesterRecord_trackingState = ts
-      , _goatTesterRecord_failureMessage = Just msg
-      , _goatTesterRecord_description = "this test always fails"
-    }
+  unGoatTesterT $ putRecord "this test always fails" (Just msg)

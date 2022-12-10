@@ -228,6 +228,7 @@ class IsParliament a where
   isParliament_disjointUnion :: a -> a -> a
   isParliament_null :: a -> Bool
   isParliament_empty :: a
+  -- TODO rename to size
   isParliament_length :: a -> Int
 
 --  isParliament_isValid :: OwlMapping -> a -> Bool
