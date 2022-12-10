@@ -6,7 +6,6 @@ module Potato.Flow.GoatTester where
 
 import           Relude                            hiding (empty, fromList, first)
 
-import           Test.HUnit
 import           Test.Hspec
 
 import           Reflex
@@ -109,21 +108,12 @@ runGoatTesterT gs m = do
 runGoatTester :: GoatState -> GoatTester a -> [GoatTesterRecord]
 runGoatTester gs m = runIdentity $ runGoatTesterT gs m
 
--- TODO DELETE, this one doesn't have cute formatting
-hUnitGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
-hUnitGoatTesterWithOwlPFState pfs m = do
-  let
-    rslt = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
-  TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> let
-      f = T.unpack . (\t ->  show _goatTesterRecord_description <> " " <> show _goatTesterRecord_trackingState <> " " <> t)
-    in TestCase $ assertString (maybe "" f _goatTesterRecord_failureMessage) where
-
 hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
 hSpecGoatTesterWithOwlPFState pfs m = do
   let
     rslt' = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
     rslt = L.groupBy (\a b -> fst3 (_goatTesterRecord_trackingState a) == fst3 (_goatTesterRecord_trackingState b)) rslt'
-  forM_ rslt $ \gtss -> case gtss of 
+  forM_ rslt $ \gtss -> case gtss of
     [] -> return ()
     (x:xs) -> do
       describe (T.unpack (fst3 (_goatTesterRecord_trackingState x))) $ forM_ (x:xs) $ \GoatTesterRecord {..} -> do
