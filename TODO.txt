@@ -111,7 +111,7 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
--BUG cache isn't being set
+DONE-BUG cache isn't being set
 -TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
   -add proper potatoShow for SuperOwl/OwlItem
   -add way to label individual tests

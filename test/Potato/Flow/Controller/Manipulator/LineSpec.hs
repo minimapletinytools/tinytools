@@ -165,6 +165,43 @@ midpoint_double_adjacent_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFS
   expectMidpointCount 3
 
 
+initUnitBox :: GoatTester ()
+initUnitBox = do
+  verifyOwlCount 0
+
+  setMarker "draw a 1x1 box"
+  setTool Tool_Box
+  canvasMouseDown (0, 0)
+  canvasMouseDown (1, 1)
+  verifyOwlCount 1
+  canvasMouseUp (1, 1)
+  verifyOwlCount 1
+  -- TODO verify box is selected
+
+attaching_delete_test :: Spec
+attaching_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+  initUnitBox
+
+  setMarker "draw line attached to box"
+  setTool Tool_Line
+  canvasMouseDown (-1, 0)
+  canvasMouseDown (-10, 1)
+  canvasMouseUp (-10, 1)
+  verifyOwlCount 2
+
+  setMarker "delete the box"
+  canvasMouseDown (0, 0)
+  canvasMouseUp (0, 0)
+  pressDelete
+  verifyOwlCount 1
+
+  -- TODO verify the line that's left is in a sensible place
+
+  pressUndo
+  verifyOwlCount 2
+  -- TODO verify again that the line is in the expected place
+
+
 cache_basic_test :: Spec
 cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -185,6 +222,7 @@ spec = do
     describe "basic_cancel" $ basic_cancel_test
     describe "midpoint_modify_basic" $  midpoint_modify_basic_test
     describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
+    describe "attaching_delete_test" $ attaching_delete_test
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test

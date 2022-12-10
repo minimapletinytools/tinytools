@@ -156,6 +156,9 @@ pressKeys text = forM_ text $ \c -> pressKey (KeyboardKey_Char c)
 pressEscape :: (Monad m) => GoatTesterT m ()
 pressEscape = pressKey KeyboardKey_Esc
 
+pressDelete :: (Monad m) => GoatTesterT m ()
+pressDelete = pressKey KeyboardKey_Delete
+
 pressUndo :: (Monad m) => GoatTesterT m ()
 pressUndo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl]))
 
