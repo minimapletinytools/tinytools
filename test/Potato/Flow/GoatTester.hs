@@ -7,6 +7,7 @@ module Potato.Flow.GoatTester where
 import           Relude                            hiding (empty, fromList, first)
 
 import           Test.HUnit
+import           Test.Hspec
 
 import           Reflex
 import           Reflex.Test.Host
@@ -19,11 +20,11 @@ import qualified Data.IntMap as IM
 import qualified Data.Text                         as T
 import           Data.These
 import Data.Default
+import Data.Tuple.Extra
 
 
-type GoatTesterTrackingState = (Text, Int, Int)
+type GoatTesterTrackingState = (Text, Int, Int) -- (marker, operations since start of test, operations since last marker)
 
--- TODO add a test name field
 data GoatTesterRecord = GoatTesterRecord {
   _goatTesterRecord_trackingState :: GoatTesterTrackingState
   , _goatTesterRecord_failureMessage :: Maybe Text
@@ -50,7 +51,7 @@ instance Default GoatTesterState where
       , _goatTesterState_records = []
     }
 
-newtype GoatTesterT m a = GoatTesterT { unGoatTester :: StateT GoatTesterState m a } deriving (Functor, Applicative, Monad, MonadState GoatTesterState)
+newtype GoatTesterT m a = GoatTesterT { unGoatTesterT :: StateT GoatTesterState m a } deriving (Functor, Applicative, Monad, MonadState GoatTesterState)
 type GoatTester a = GoatTesterT Identity a
 
 
@@ -62,30 +63,35 @@ runCommand cmd = GoatTesterT $ modify $
       , _goatTesterState_rawOperationCountSinceLastMarker = _goatTesterState_rawOperationCountSinceLastMarker + 1
     }
 
-setMarker :: (Monad m) => Text -> GoatTesterT m ()
-setMarker marker = GoatTesterT $ modify $
-  \gts -> gts {
-      _goatTesterState_marker = marker
-      , _goatTesterState_rawOperationCountSinceLastMarker = 0
-    }
+
 
 getTrackingState :: (Monad m) => GoatTesterT m GoatTesterTrackingState
 getTrackingState = GoatTesterT $ do
   GoatTesterState {..} <- get
   return $ (_goatTesterState_marker, _goatTesterState_rawOperationCountSinceLastMarker, _goatTesterState_rawOperationCount)
 
+putRecord :: (Monad m) => GoatTesterRecord -> GoatTesterT m ()
+putRecord record = GoatTesterT $ do
+  gts <- get
+  put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
+
+setMarker :: (Monad m) => Text -> GoatTesterT m ()
+setMarker marker = GoatTesterT $ do
+  modify $ \gts -> gts {
+      _goatTesterState_marker = marker
+      , _goatTesterState_rawOperationCountSinceLastMarker = 0
+    }
+
 verifyState' :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m Bool
 verifyState' desc fn = GoatTesterT $ do
   gts <- get
-  ts <- unGoatTester getTrackingState
+  ts <- unGoatTesterT getTrackingState
   let mf = fn (_goatTesterState_goatState gts)
-  let
-    record = GoatTesterRecord {
-        _goatTesterRecord_trackingState = ts
-        , _goatTesterRecord_failureMessage = mf
-        , _goatTesterRecord_description = desc
-      }
-  put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
+  unGoatTesterT $ putRecord $ GoatTesterRecord {
+      _goatTesterRecord_trackingState = ts
+      , _goatTesterRecord_failureMessage = mf
+      , _goatTesterRecord_description = desc
+    }
   return $ isJust mf
 
 -- TODO take a test name
@@ -97,20 +103,33 @@ verifyState desc f = verifyState' desc f >> return ()
 
 runGoatTesterT :: (Monad m) => GoatState -> GoatTesterT m a -> m [GoatTesterRecord]
 runGoatTesterT gs m = do
-  gts <- execStateT (unGoatTester m) $ def { _goatTesterState_goatState = gs }
+  gts <- execStateT (unGoatTesterT m) $ def { _goatTesterState_goatState = gs }
   return $ reverse $ _goatTesterState_records gts
 
 runGoatTester :: GoatState -> GoatTester a -> [GoatTesterRecord]
 runGoatTester gs m = runIdentity $ runGoatTesterT gs m
 
-assertGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
-assertGoatTesterWithOwlPFState pfs m = do
+-- TODO DELETE, this one doesn't have cute formatting
+hUnitGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> Test
+hUnitGoatTesterWithOwlPFState pfs m = do
   let
     rslt = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
   TestList $ (flip fmap) rslt $ \GoatTesterRecord {..} -> let
       f = T.unpack . (\t ->  show _goatTesterRecord_description <> " " <> show _goatTesterRecord_trackingState <> " " <> t)
     in TestCase $ assertString (maybe "" f _goatTesterRecord_failureMessage) where
 
+hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
+hSpecGoatTesterWithOwlPFState pfs m = do
+  let
+    rslt' = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
+    rslt = L.groupBy (\a b -> fst3 (_goatTesterRecord_trackingState a) == fst3 (_goatTesterRecord_trackingState b)) rslt'
+  forM_ rslt $ \gtss -> case gtss of 
+    [] -> return ()
+    (x:xs) -> do
+      describe (T.unpack (fst3 (_goatTesterRecord_trackingState x))) $ forM_ (x:xs) $ \GoatTesterRecord {..} -> do
+        it (T.unpack _goatTesterRecord_description) $ case _goatTesterRecord_failureMessage of
+          Nothing -> return ()
+          Just x -> expectationFailure (T.unpack x)
 
 
 -- operation helpers
@@ -197,10 +216,9 @@ toMaybe True  x = Just x
 alwaysFail :: (Monad m) => Text -> GoatTesterT m ()
 alwaysFail msg = GoatTesterT $ do
   gts <- get
-  ts <- unGoatTester getTrackingState
-  let
-    record = GoatTesterRecord {
-        _goatTesterRecord_trackingState = ts
-        , _goatTesterRecord_failureMessage = Just msg
-      }
-  put $ gts { _goatTesterState_records = record : _goatTesterState_records gts }
+  ts <- unGoatTesterT getTrackingState
+  unGoatTesterT $ putRecord $ GoatTesterRecord {
+      _goatTesterRecord_trackingState = ts
+      , _goatTesterRecord_failureMessage = Just msg
+      , _goatTesterRecord_description = "this test always fails"
+    }

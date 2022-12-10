@@ -9,8 +9,6 @@ import           Relude                                     hiding (empty,
                                                              fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit                   (fromHUnitTest)
-import           Test.HUnit
 
 import Potato.Flow.GoatTester
 
@@ -41,8 +39,8 @@ initSimpleLine = do
   verifyOwlCount 1
   -- TODO verify line is selected
 
-basic_test :: Test
-basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
+basic_test :: Spec
+basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
 
@@ -58,8 +56,8 @@ basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (50, 50)
   expectMidpointCount 1
 
-basic_cancel_test :: Test
-basic_cancel_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
+basic_cancel_test :: Spec
+basic_cancel_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   setMarker "mouse down and cancel and ensure no line is created"
   setTool Tool_Line
@@ -100,8 +98,8 @@ basic_cancel_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
 
 
 
-midpoint_modify_basic_test :: Test
-midpoint_modify_basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
+midpoint_modify_basic_test :: Spec
+midpoint_modify_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
 
@@ -136,8 +134,8 @@ midpoint_modify_basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
 
 
 
-midpoint_double_adjacent_delete_test :: Test
-midpoint_double_adjacent_delete_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
+midpoint_double_adjacent_delete_test :: Spec
+midpoint_double_adjacent_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
 
@@ -167,8 +165,8 @@ midpoint_double_adjacent_delete_test = assertGoatTesterWithOwlPFState blankOwlPF
   expectMidpointCount 3
 
 
-cache_basic_test :: Test
-cache_basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
+cache_basic_test :: Spec
+cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
 
@@ -183,10 +181,10 @@ cache_basic_test = assertGoatTesterWithOwlPFState blankOwlPFState $ do
 spec :: Spec
 spec = do
   describe "Line" $ do
-    describe "basic" $ fromHUnitTest $ basic_test
-    describe "basic_cancel" $ fromHUnitTest $ basic_cancel_test
-    describe "midpoint_modify_basic" $ fromHUnitTest $ midpoint_modify_basic_test
-    describe "midpoint_double_adjacent_delete" $ fromHUnitTest $ midpoint_double_adjacent_delete_test
+    describe "basic" $ basic_test
+    describe "basic_cancel" $ basic_cancel_test
+    describe "midpoint_modify_basic" $  midpoint_modify_basic_test
+    describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test

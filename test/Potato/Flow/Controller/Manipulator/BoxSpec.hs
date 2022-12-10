@@ -9,8 +9,6 @@ import           Relude                                     hiding (empty,
                                                              fromList)
 
 import           Test.Hspec
-import           Test.Hspec.Contrib.HUnit                   (fromHUnitTest)
-import           Test.HUnit
 
 import Potato.Flow.GoatTester
 
@@ -32,16 +30,16 @@ initSimpleBox = do
   verifyOwlCount 1
   -- TODO verify box is selected
 
-basic_test :: Test
-basic_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
+basic_test :: Spec
+basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   initSimpleBox
 
   -- TODO 
 
 
-basic_cancel_test :: Test
-basic_cancel_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
+basic_cancel_test :: Spec
+basic_cancel_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   
   setMarker "mouse down and cancel and ensure no box is created"
   setTool Tool_Box
@@ -67,6 +65,6 @@ basic_cancel_test = assertGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 spec :: Spec
 spec = do
-  describe "Line" $ do
-    fromHUnitTest $ basic_test
-    fromHUnitTest $ basic_cancel_test
+  describe "Box" $ do
+    describe "basic" $ basic_test
+    describe "basic_cancel" $ basic_cancel_test

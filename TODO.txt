@@ -57,7 +57,7 @@ stuff for Dad to do
 
 ----------
 stack exec -- potato-flow-vty-exe mycommandlineargs
-stack test --test-arguments='--match "Parliament"' --file-watch
+stack test --test-arguments=' --match "/Potato.Flow.Controller.Manipulator.Line/Line/cache_basic/<unlabeled>/"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 normal
@@ -108,13 +108,6 @@ DONE-midpoints
 -move over to minimaple account
 -empty canvas should have default size of 100x100 not 1x1
 -proper command line parsing with --help option
-
-:: Goat Tester Monad::
-- runCommand :: GoatCmd -> GoatTester ()
-- setMarker :: Text -> GoatTester ()
-- getTrackingState :: GoatTester (Text, Int, Int)
-- verifyState :: (GoatState -> Maybe Text) -> GoatTester ()
-- verifyStateFatal :: (GoatState -> Maybe Text) -> GoatTester ()
 
 
 ::NEWEST TODO::
@@ -213,7 +206,7 @@ DONE-midpoints
   DONE-add cancel with no movement test for box and line handler
   DONE-add test to make sure cache is actually being used
   DONE-test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
-  -setMarker should be analogous to "it" in documenting test cases
+  DONE-setMarker should be analogous to "it" in documenting test cases
   -attach line to object, move object delete that object, make sure line is in expected place, modify line again
   -create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
