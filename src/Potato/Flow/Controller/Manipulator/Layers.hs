@@ -305,7 +305,7 @@ instance PotatoHandler LayersHandler where
 
   pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
 
-  -- TODO this is incorrect, we may be in the middle of dragging or renaming elements that got deleted
+  -- TODO this is incorrect, we may be in the middle of dragging elements that got deleted
   pRefreshHandler h _ = Just $ SomePotatoHandler h
 
   -- TODO generate LHRESS_ChildSelected
@@ -435,7 +435,7 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
       _cRename_deltaLabel = (hasOwlItem_name _layersRenameHandler_renaming, newName)
     })
   r = def {
-      _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
+      _potatoHandlerOutput_nextHandler = trace "resetting layers handel" $ Just $ SomePotatoHandler _layersRenameHandler_original
       , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 
@@ -501,10 +501,14 @@ instance PotatoHandler LayersRenameHandler where
           }
     _ -> Nothing
 
+  -- TODO this is incorrect, we may be in the middle of renaming elements that got deleted
+  pRefreshHandler h _ = Just $ SomePotatoHandler h
+
+
   -- TODO render renaming stuff (or do we do this in pRenderLayersHandler?)
   --pRenderHandler lh@LayersRenameHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
-  pIsHandlerActive LayersRenameHandler {..} = False
+  pIsHandlerActive LayersRenameHandler {..} = True
 
   pRenderLayersHandler LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
     r' = pRenderLayersHandler _layersRenameHandler_original phi

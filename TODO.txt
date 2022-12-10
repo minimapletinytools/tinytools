@@ -111,20 +111,16 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
-DONE-BUG cache isn't being set
--TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
-  -add proper potatoShow for SuperOwl/OwlItem
-  -add way to label individual tests
-  -improve labeling of each verify step
 -FEATURE add line labels
-  -remember to adjust _sAutoLine_labels when deleting midpoints
   -if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
   -BUG click to edit text inside SAutoLIneLabelHandler not working
+  -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
     -how do distinguish between backspace to delete vs remove character for line label handler?
       -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
   -bonus, cache line labels
+  DONE-remember to adjust _sAutoLine_labels when deleting midpoints
   DONE-SAutoLine -> SAutoLineLabel -> XY
   DONE-mouse down up on line label takes you to line label handler
   DONE-generate text box for line label handler (don't wrap for now)
@@ -140,8 +136,14 @@ DONE-BUG cache isn't being set
   -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
   -BUG click release on lock/hide/collapse on selected element should not deselect
   -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
+-params
+  -default for line in params should be both instead of start
+  -line stuff should have aligned spacing to make it easier to click on where the change is
+  -highlight squares that can be modified
+  -BUG rename layers, click off, then click back on, then modify params, click off to finalize, it will crash
 -BUG fix line bugs
-  -BUG starting dragging from box anchor, attachemnt stuff for box you are dragging goes away
+  -BUG midpoints rendered as ?
+  -BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
   -BUG some bot to bot cases are broken
@@ -164,11 +166,13 @@ DONE-BUG cache isn't being set
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
 -file stuff
-  -ctrl-o to open
-  -ctrl-n for new file
-  -add double clikc support to file explorer
+  -ctrl-o to open (should prompt for save first)
+  -ctrl-n for new file (should prompt for save first)
+  -add double click support to file explorer
+    -need to hook into IO time stuff
   -open file dialog
   -make alert on unsaved changes generic and save popupmanager
+    -????
   DONE-auto focus on filename area?
   DONE-up/down arrow works regardless of focus in explorer window
   DONE-apply styling
@@ -179,6 +183,13 @@ DONE-BUG cache isn't being set
   DONE-auto add extension on save
   DONE-clicking on file with valid extension populates the filename bar
 -open tutorial file by default
+-BUG fix text zipper bugs
+  -BUG can't enter multiple new lines into text box
+    -seems to be a bug in TextZipper
+  -BUG click on eol in text box is kind of broken in general[]
+    -doesn't always take you to the end
+    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
+-BUG figure out what's going on with cache updated render bugs...
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
   -it's definitely possible to do that but nothing seemed to break???
@@ -189,18 +200,9 @@ DONE-BUG cache isn't being set
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
--BUG fix text zipper bugs
-  -BUG can't enter multiple new lines into text box
-    -seems to be a bug in TextZipper
-  -BUG click on eol in text box is kind of broken in general[]
-    -doesn't always take you to the end
-    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -FEATURE attach point repositioning
--BUG figure out what's going on with cache updated bugs...
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
-
-
 -TESTS TO ADD
   DONE-very basic midpoint test
   DONE-add cancel with no movement test for box and line handler
@@ -211,10 +213,8 @@ DONE-BUG cache isn't being set
   DONE-create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
-  -create folder with children, select folder, attempt to drag via children (does'nt work right now)
-
-
-
+  -create folder with children, select folder, attempt to drag via children (doesn't work right now)
+  -rename in layers, change focus to canvas, ensure layers rename took effect
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
@@ -236,7 +236,11 @@ DONE-BUG cache isn't being set
   -you need some kind of options object to go along side of PotatoDefaultParameters
 
 
-
+DONE-BUG cache isn't being set
+DONE-TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
+  -add proper potatoShow for SuperOwl/OwlItem
+  -add way to label individual tests
+  -improve labeling of each verify step
 DONE-display filename somewhere with * if not saved
   -on start, it should pop stack, on exit it should pop stack
 DONE-delete layer scrolling support from GoatWidget. I can't remember why I did this anymore

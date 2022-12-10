@@ -241,7 +241,10 @@ instance PotatoHandler AutoLineHandler where
 
 
         labels = getSortedSAutoLineLabelPositions _potatoHandlerInput_pFState sline
+
+        -- TODO this should also account for text position
         mfirstlabel = L.find (\(pos,_,_) -> pos == _mouseDrag_to) labels
+
 
         firstlm = findFirstLineManipulator_NEW sline _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
@@ -263,8 +266,9 @@ instance PotatoHandler AutoLineHandler where
                 }
             }
 
+          -- TODO pass on input such that you can go directly to where you clicked on the line label
           -- if clicked on label
-          (_, Just (_,index,_)) -> Just $ 
+          (_, Just (_,index,_)) -> Just $
             def {
                 _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineLabelMoverHandler {
                   _autoLineLabelMoverHandler_anchorOffset  = 0
@@ -566,8 +570,8 @@ instance PotatoHandler AutoLineLabelMoverHandler where
       MouseDragState_Up -> Just def {
           -- go back to AutoLineLabelHandler on completion
           _potatoHandlerOutput_nextHandler = if not _autoLineLabelMoverHandler_undoFirst
-            -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler 
-            then Just $ SomePotatoHandler $ 
+            -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler
+            then Just $ SomePotatoHandler $
               makeAutoLineLabelHandlerFromSelection _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
             -- TODO consider also going into edit handler after dragging an endpoint, but for now, just go back to the previous handler (which will be AutoLineHandler)
             else Just (_autoLineLabelMoverHandler_prevHandler)
@@ -635,7 +639,7 @@ makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd =
 
   ogtext = _sAutoLineLabel_text llabel
   pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
-  box = getSAutoLineLabelBox pos llabel 
+  box = getSAutoLineLabelBox pos llabel
 
   width = maxBound :: Int -- line label text always overflows
   ogtz = TZ.fromText ogtext
@@ -688,7 +692,7 @@ inputLineLabel tais undoFirst rid sal labelindex kk = (newtais, mop) where
   (changed, newtais) = inputSingleLineZipper tais kk
   newtext = TZ.value (_textInputState_zipper newtais)
   oldl = _sAutoLine_labels sal `debugBangBang` labelindex
-  newl = oldl { 
+  newl = oldl {
       _sAutoLineLabel_text = newtext
     }
   newsal = sal {
@@ -715,7 +719,7 @@ instance PotatoHandler AutoLineLabelHandler where
     in case _mouseDrag_state of
 
 
-      -- TODO if click on drag modifier thingy
+      -- TODO if click on drag anchor modifier thingy 
       MouseDragState_Down -> handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box True
 
 
@@ -762,11 +766,11 @@ instance PotatoHandler AutoLineLabelHandler where
           , _potatoHandlerOutput_pFEvent = mev
         }
 
-  
+
   pRenderHandler slh' phi@PotatoHandlerInput {..} = r where
     slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
 
-    -- TODO render label mover anchor with offset 1 
+    -- TODO render label mover anchor with offset 1
 
     -- render the text cursor
     btis = _autoLineLabelHandler_state slh
