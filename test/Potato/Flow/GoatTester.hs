@@ -14,6 +14,7 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.DebugHelpers
 
+import qualified Data.Sequence as Seq
 import qualified Data.List as L
 import qualified Data.IntMap as IM
 import qualified Data.Text                         as T
@@ -213,6 +214,16 @@ verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl' "verifyMostRecen
   f' sowl = case _owlItem_subItem (_superOwl_elt sowl) of
     OwlSubItemLine sline _ -> f sline
     x -> Just $ "expected SAutoLine got: " <> show x
+
+verifySelectionIsAndOnlyIs :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()
+verifySelectionIsAndOnlyIs desc f = verifyState desc f' where
+  f' gs = r where
+    SuperOwlParliament selection = _goatState_selection gs
+    sowl = Seq.index selection 0
+    nselection = Seq.length selection
+    r = if nselection /= 1
+      then Just $ "failed, expected 1 selected 🦉, got " <> show nselection
+      else (\m -> "failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
 
 -- otheruseful stuff
 

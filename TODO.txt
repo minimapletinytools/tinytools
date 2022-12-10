@@ -208,7 +208,7 @@ DONE-BUG cache isn't being set
   DONE-test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
   DONE-setMarker should be analogous to "it" in documenting test cases
   DONE-attach line to object, move object delete that object, make sure line is in expected place, modify line again
-  -create 2 fully attached lines, select them both, ensure not possible to move
+  DONE-create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (does'nt work right now)

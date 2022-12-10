@@ -37,7 +37,11 @@ initSimpleLine = do
   verifyOwlCount 1
   canvasMouseUp (100, 0)
   verifyOwlCount 1
-  -- TODO verify line is selected
+  let
+    f sowl = case _superOwl_elt sowl of
+      OwlItem _ (OwlSubItemLine _ _) -> Nothing
+      x -> Just ("expected line, got " <> show x)
+  verifySelectionIsAndOnlyIs "line is selected" f
 
 basic_test :: Spec
 basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -229,7 +233,7 @@ attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwl
   setMarker "select both lines"
   canvasMouseDown (5, -5)
   canvasMouseDown (5, 5)
-  canvasMouseUp (5, -5)
+  canvasMouseUp (5, 5)
   verifySelectionCount 2
 
   setMarker "try and move the lines"
