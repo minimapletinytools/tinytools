@@ -131,6 +131,11 @@ hSpecGoatTesterWithOwlPFState pfs m = do
           Nothing -> return ()
           Just x -> expectationFailure (T.unpack x)
 
+-- state getter helpers
+getOwlCount :: (Monad m) => GoatTesterT m Int
+getOwlCount = do
+  pfs <- getOwlPFState
+  return . IM.size . _owlTree_mapping . hasOwlTree_owlTree $ pfs
 
 -- operation helpers
 

@@ -5,18 +5,19 @@ module Potato.Flow.Controller.Manipulator.LineSpec (
   spec
 ) where
 
-import           Relude                                     hiding (empty,
-                                                             fromList)
+import           Relude                                         hiding (empty,
+                                                                 fromList)
 
 import           Test.Hspec
 
-import Potato.Flow.GoatTester
+import           Potato.Flow.GoatTester
 
 import           Potato.Flow
 import           Potato.Flow.Common
-import Potato.Flow.DebugHelpers
+import           Potato.Flow.Controller.Manipulator.TestHelpers
+import           Potato.Flow.DebugHelpers
 
-import qualified Data.List as L
+import qualified Data.List                                      as L
 
 
 
@@ -27,21 +28,7 @@ expectMidpointCount :: Int -> GoatTester ()
 expectMidpointCount n = verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_midpoints sline) /= n) ("expected " <> show n <> " midpoint, got: " <> show (_sAutoLine_midpoints sline))
 
 initSimpleLine :: GoatTester ()
-initSimpleLine = do
-  verifyOwlCount 0
-
-  setMarker "draw a line"
-  setTool Tool_Line
-  canvasMouseDown (0, 0)
-  canvasMouseDown (100, 0)
-  verifyOwlCount 1
-  canvasMouseUp (100, 0)
-  verifyOwlCount 1
-  let
-    f sowl = case _superOwl_elt sowl of
-      OwlItem _ (OwlSubItemLine _ _) -> Nothing
-      x -> Just ("expected line, got " <> show x)
-  verifySelectionIsAndOnlyIs "line is selected" f
+initSimpleLine = drawCanvasLine (0, 0) (100, 0)
 
 basic_test :: Spec
 basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -267,7 +254,7 @@ cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   let
     f sowl = case _owlItem_subItem (_superOwl_elt sowl) of
       OwlSubItemLine _ (Just c) -> Nothing
-      _ -> Just $ "expected cache, got " <> show sowl
+      _                         -> Just $ "expected cache, got " <> show sowl
   verifyMostRecentlyCreatedOwl' "verify cache got created for the line we just created" f
 
 

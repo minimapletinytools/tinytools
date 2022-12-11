@@ -14,33 +14,24 @@ import Potato.Flow.GoatTester
 
 import           Potato.Flow
 import           Potato.Flow.Common
+import Potato.Flow.Controller.Manipulator.TestHelpers
 
 import qualified Data.List as L
 
 initSimpleBox :: GoatTester ()
-initSimpleBox = do
-  verifyOwlCount 0
-
-  setMarker "draw a box"
-  setTool Tool_Box
-  canvasMouseDown (0, 0)
-  canvasMouseDown (100, 100)
-  verifyOwlCount 1
-  canvasMouseUp (100, 100)
-  verifyOwlCount 1
-  -- TODO verify box is selected
+initSimpleBox = drawCanvasBox (0, 0, 100, 100)
 
 basic_test :: Spec
 basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   initSimpleBox
 
-  -- TODO 
+  -- TODO
 
 
 basic_cancel_test :: Spec
 basic_cancel_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
-  
+
   setMarker "mouse down and cancel and ensure no box is created"
   setTool Tool_Box
   canvasMouseDown (0, 0)
