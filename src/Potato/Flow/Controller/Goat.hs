@@ -157,7 +157,7 @@ data GoatCmd =
   -- command based input for widgets not owned by tiny tools
   | GoatCmdWSEvent WSEvent
   | GoatCmdSetCanvasRegionDim XY
-  | GoatCmdNewFolder
+  | GoatCmdNewFolder Text
 
   -- direct input for widgets owned by tiny tools
   | GoatCmdMouse LMouseData
@@ -390,9 +390,9 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
-      GoatCmdNewFolder -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
+      GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState $  _goatState_workspace) _goatState_selection
-        newFolderEv = WSEAddFolder (folderPos, "folder")
+        newFolderEv = WSEAddFolder (folderPos, x)
       GoatCmdLoad (spf, cm) -> r where
         -- HACK this won't get generated until later but we need this to generate layersState...
         -- someday we'll split up foldGoatFn by `GoatCmd` (or switch to Endo `GoatState`) and clean this up

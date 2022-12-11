@@ -140,6 +140,9 @@ setTool tool = runCommand $ GoatCmdTool tool
 setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
 setFocusArea fa = runCommand $ GoatCmdSetFocusedArea fa
 
+addFolder :: (Monad m) => Text -> GoatTesterT m ()
+addFolder name = runCommand $ GoatCmdNewFolder name
+
 canvasMouseToScreenMouse :: GoatState -> XY -> XY
 canvasMouseToScreenMouse gs pos = owlPFState_fromCanvasCoordinates (goatState_pFState gs) pos + _goatState_pan gs
 

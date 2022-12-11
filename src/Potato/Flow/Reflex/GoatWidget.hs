@@ -141,7 +141,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , GoatCmdMouse <$> _goatWidgetConfig_mouse
         , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
         , GoatCmdSetDebugLabel <$> _goatWidgetConfig_setDebugLabel
-        , GoatCmdNewFolder <$ _goatWidgetConfig_newFolder
+        , GoatCmdNewFolder "folder" <$ _goatWidgetConfig_newFolder
         , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
         , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
 
