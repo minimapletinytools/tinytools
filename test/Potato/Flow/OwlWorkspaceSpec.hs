@@ -68,15 +68,6 @@ spec = do
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws2)
         verifyOwlAt newws2 spot2 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
-      it "WSEAddRelative" $ do
-        let
-          wse1 = WSEAddRelative (spot1, owlItems)
-          newws1 = updateOwlPFWorkspace wse1 someWorkspace0
-          ot1 = _owlPFState_owlTree $ _owlPFWorkspace_pFState newws1
-        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_pFState newws1)
-        verifyOwlAt newws1 spot1 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
-        verifyOwlAt newws1 (fromJust $ owlTree_goRightFromOwlSpot ot1 spot1) (pred_nameIs (hasOwlItem_name owlItem2)) `shouldBe` True
-        undoAndVerify newws1 (_owlPFWorkspace_pFState someWorkspace0) `shouldBe` True
       it "WSEAddFolder" $ do
         let
           folderName = "🥕🥕🥕"

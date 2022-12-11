@@ -141,13 +141,6 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 ------ update functions via commands
 data WSEvent =
   WSEAddElt (Bool, OwlSpot, OwlItem)
-
-  -- TODO CAN DELETE has been replaced by WSEAddTree
-  -- TODO won't work, needs to support OwlItems with kiddos, need MiniOwlTree
-  -- it's a little weird that MiniOwlTree is already reindexed though...
-  -- maybe just take a selttree D:
-  -- I can't remember why I called this WSEAddRelative D:
-  | WSEAddRelative (OwlSpot, Seq OwlItem)
   | WSEAddTree (OwlSpot, MiniOwlTree)
   | WSEAddFolder (OwlSpot, Text)
 
@@ -175,17 +168,6 @@ debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> d
 -- TODO assert elts are valid
 pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlItem -> OwlPFCmd
 pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
-
--- TODO assert elts are valid
-pfc_addRelative_to_newElts :: OwlPFState -> (OwlSpot, Seq OwlItem) -> OwlPFCmd
-pfc_addRelative_to_newElts pfs (ospot, oelts) = r where
-  startid = owlPFState_nextId pfs
-  mapAccumLFn (i,ospotacc) oelt = ((i+1, nextacc), (rid, ospotacc, oelt)) where
-    -- order from left to right so there is valid leftSibling
-    nextacc = ospotacc { _owlSpot_leftSibling = Just rid}
-    rid = startid + i
-  (_, r') = mapAccumL mapAccumLFn (0,ospot) oelts
-  r = OwlPFCNewElts $ toList r'
 
 --TODO need to reorder so it becomes undo friendly here I think? (uhh, pretty sure it's ok to delete this TODO? should be ordered by assumption)
 -- TODO assert elts are valid
@@ -250,7 +232,6 @@ updateOwlPFWorkspace evt ws = let
     WSEAddElt (undo, spot, oelt) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
-    WSEAddRelative x -> doCmdWorkspace (pfc_addRelative_to_newElts lastState x) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
     WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
 
