@@ -1,10 +1,10 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 
 module Potato.Flow.GoatTester where
 
-import           Relude                            hiding (empty, fromList, first)
+import           Relude                   hiding (empty, first, fromList)
 
 import           Test.Hspec
 
@@ -14,33 +14,34 @@ import           Reflex.Test.Host
 import           Potato.Flow
 import           Potato.Flow.DebugHelpers
 
-import qualified Data.Sequence as Seq
-import qualified Data.List as L
-import qualified Data.IntMap as IM
-import qualified Data.Text                         as T
+import           Data.Default
+import qualified Data.IntMap              as IM
+import qualified Data.List                as L
+import           Data.Maybe               (fromJust)
+import qualified Data.Sequence            as Seq
+import qualified Data.Text                as T
 import           Data.These
-import Data.Default
-import Data.Tuple.Extra
+import           Data.Tuple.Extra
 
 
 type GoatTesterTrackingState = (Text, Int, Int) -- (marker, operations since start of test, operations since last marker)
 
 -- TODO include ref to rendered canvas and then you can render it on failure cases!!
 data GoatTesterRecord = GoatTesterRecord {
-  _goatTesterRecord_trackingState :: GoatTesterTrackingState
+  _goatTesterRecord_trackingState    :: GoatTesterTrackingState
   , _goatTesterRecord_failureMessage :: Maybe Text
-  , _goatTesterRecord_description :: Text
+  , _goatTesterRecord_description    :: Text
 } deriving (Show)
 
 data GoatTesterState = GoatTesterState {
-    _goatTesterState_goatState :: GoatState
-    , _goatTesterState_rawOperationCount :: Int
+    _goatTesterState_goatState                          :: GoatState
+    , _goatTesterState_rawOperationCount                :: Int
 
     -- TODO consider making marker more complex
-    , _goatTesterState_marker :: Text
+    , _goatTesterState_marker                           :: Text
 
     , _goatTesterState_rawOperationCountSinceLastMarker :: Int
-    , _goatTesterState_records :: [GoatTesterRecord]
+    , _goatTesterState_records                          :: [GoatTesterRecord]
   } deriving (Show)
 
 instance Default GoatTesterState where
@@ -129,13 +130,22 @@ hSpecGoatTesterWithOwlPFState pfs m = do
       describe (T.unpack (fst3 (_goatTesterRecord_trackingState x))) $ forM_ (x:xs) $ \GoatTesterRecord {..} -> do
         it (T.unpack _goatTesterRecord_description) $ case _goatTesterRecord_failureMessage of
           Nothing -> return ()
-          Just x -> expectationFailure (T.unpack x)
+          Just x  -> expectationFailure (T.unpack x)
 
 -- state getter helpers
 getOwlCount :: (Monad m) => GoatTesterT m Int
 getOwlCount = do
   pfs <- getOwlPFState
   return . IM.size . _owlTree_mapping . hasOwlTree_owlTree $ pfs
+
+maybeGetMostRecentlyCreatedOwl' :: OwlPFState -> Maybe SuperOwl
+maybeGetMostRecentlyCreatedOwl' pfs = maximumBy' (\s1 s2 -> compare (_superOwl_id s1) (_superOwl_id s2)) $ owliterateall (hasOwlTree_owlTree pfs)
+
+mustGetMostRecentlyCreatedOwl :: (Monad m) => GoatTesterT m SuperOwl
+mustGetMostRecentlyCreatedOwl = do
+  pfs <- getOwlPFState
+  return $ fromJust $ maybeGetMostRecentlyCreatedOwl' pfs
+
 
 -- operation helpers
 
@@ -218,7 +228,7 @@ maximumBy' f l = if length l == 0
 verifyMostRecentlyCreatedOwl' :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()
 verifyMostRecentlyCreatedOwl' desc f = verifyState desc f' where
   f' gs = r where
-    msowl = maximumBy' (\s1 s2 -> compare (_superOwl_id s1) (_superOwl_id s2)) $ owliterateall (hasOwlTree_owlTree $ goatState_pFState gs)
+    msowl = maybeGetMostRecentlyCreatedOwl' (goatState_pFState gs)
     r = case msowl of
       Nothing -> Just "failed, no 🦉s"
       Just sowl -> (\m -> "failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
@@ -230,7 +240,7 @@ verifyMostRecentlyCreatedLine :: (Monad m) => (SAutoLine -> Maybe Text) -> GoatT
 verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl' "verifyMostRecentlyCreatedLine" f' where
   f' sowl = case _owlItem_subItem (_superOwl_elt sowl) of
     OwlSubItemLine sline _ -> f sline
-    x -> Just $ "expected SAutoLine got: " <> show x
+    x                      -> Just $ "expected SAutoLine got: " <> show x
 
 verifySelectionIsAndOnlyIs :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()
 verifySelectionIsAndOnlyIs desc f = verifyState desc f' where

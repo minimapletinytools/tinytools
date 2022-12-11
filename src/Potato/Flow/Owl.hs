@@ -57,6 +57,10 @@ locateLeftSiblingIdFromSiblingPosition _ s sp = case sp of
     Nothing -> error $ "expected to find index " <> show (x - 1) <> " in seq"
     Just r -> Just r
 
+ 
+-- TODO
+--isAncestorOf
+
 isDescendentOf :: (HasCallStack) => OwlMapping -> REltId -> REltId -> Bool
 isDescendentOf om parent child
   | child == noOwl = False
