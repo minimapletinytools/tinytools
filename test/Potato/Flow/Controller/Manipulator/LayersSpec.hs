@@ -16,16 +16,36 @@ import           Potato.Flow
 import           Potato.Flow.Common
 
 import qualified Data.List as L
+import Control.Monad
 
+
+someFolderName :: Text
+someFolderName = "testfolder"
+
+verifyFolderSelected :: (Monad m) => Text -> GoatTesterT m ()
+verifyFolderSelected name = verifySelectionIsAndOnlyIs ("selected " <> name) $
+  \sowl -> if hasOwlItem_name sowl == name && hasOwlItem_isFolder sowl
+    then Nothing
+    else Just $ "expected folder named \"" <> name <> "\", got: " <> show sowl
 
 basic_test :: Spec
 basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
-  verifyOwlCount 0
-  addFolder "testfolder"
-  verifyOwlCount 1
 
-  -- TODO
-  return ()
+  setMarker "create a folder"
+  verifyOwlCount 0
+  addFolder someFolderName
+  verifyOwlCount 1
+  verifyFolderSelected someFolderName
+
+  setMarker "press escape to unselect the folder"
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "select the folder"
+  layerMouseDown (5,0)
+  layerMouseUp (5,0)
+  verifyFolderSelected someFolderName
+
 
 
 rename_focus_test :: Spec
@@ -50,6 +70,16 @@ rename_focus_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 create_in_folder_test :: Spec
 create_in_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "create a folder"
+  addFolder someFolderName
+  verifyFolderSelected someFolderName
+
+  setMarker "create a new element"
+  -- TODO create element
+  -- TODO verify it's in the right folder
+
+
 
   -- TODO
   return ()

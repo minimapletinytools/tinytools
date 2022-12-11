@@ -163,6 +163,12 @@ canvasMouseDown (x,y) = mouse True False [] MouseButton_Left (V2 x y)
 canvasMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 canvasMouseUp (x,y) = mouse True True [] MouseButton_Left (V2 x y)
 
+layerMouseDown :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
+layerMouseDown (x,y) = mouse False False [] MouseButton_Left (V2 x y)
+
+layerMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
+layerMouseUp (x,y) = mouse False True [] MouseButton_Left (V2 x y)
+
 pressKey :: (Monad m) => KeyboardKey -> GoatTesterT m ()
 pressKey k = runCommand (GoatCmdKeyboard (KeyboardData k []))
 
