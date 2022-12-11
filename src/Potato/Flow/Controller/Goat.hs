@@ -2,7 +2,8 @@
 {-# LANGUAGE RecursiveDo     #-}
 
 module Potato.Flow.Controller.Goat (
-  goatState_hasUnsavedChanges
+  GoatFocusedArea(..)
+  , goatState_hasUnsavedChanges
   , makeGoatState
   , goatState_pFState
   , goatState_selectedTool
@@ -51,6 +52,12 @@ import qualified Data.Text as T
 catMaybesSeq :: Seq (Maybe a) -> Seq a
 catMaybesSeq = fmap fromJust . Seq.filter isJust
 
+data GoatFocusedArea =
+  GoatFocusedArea_Layers
+  | GoatFocusedArea_Canvas
+  | GoatFocusedArea_Other -- focus is some area that is not owned by tinytools (e.g. the params widgets)
+  | GoatFocusedArea_None
+  deriving (Eq, Show)
 
 -- TODO move into its own file
 data GoatState = GoatState {
@@ -76,6 +83,7 @@ data GoatState = GoatState {
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
     , _goatState_screenRegion    :: XY
     , _goatState_clipboard       :: Maybe SEltTree
+    , _goatState_focusedArea     :: GoatFocusedArea
 
     -- debug stuff (shared across documents)
     , _goatState_debugLabel      :: Text
@@ -121,6 +129,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
         , _goatState_renderedSelection = initialemptyrcr
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
+        , _goatState_focusedArea = GoatFocusedArea_None
         , _goatState_screenRegion = V2 screenx screeny
         , _goatState_debugCommands = []
       }
@@ -142,14 +151,15 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
   GoatCmdTool Tool
+  | GoatCmdSetFocusedArea GoatFocusedArea
   | GoatCmdLoad EverythingLoadState
 
-  -- command based input
+  -- command based input for widgets not owned by tiny tools
   | GoatCmdWSEvent WSEvent
   | GoatCmdSetCanvasRegionDim XY
   | GoatCmdNewFolder
 
-  -- canvas direct input
+  -- direct input for widgets owned by tiny tools
   | GoatCmdMouse LMouseData
   | GoatCmdKeyboard KeyboardData
 
@@ -182,12 +192,8 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   --, _goatCmdTempOutput_wasCanvasInput :: Bool
   --, _goatCmdTempOutput_wasLayerInput :: Bool
 
-  -- NOTE the value of _potatoHandlerOutput_nextHandler is not directly translated here
-  -- PotatoHandlerOutput interpretation: isNothing _potatoHandlerOutput_nextHandler => handler does not capture input
-  -- GoatCmdTempOutput interpretation (when non-canvas input):
-  --    -isNothing _potatoHandlerOutput_nextHandler => event not related to canvas handler
-  --    -so we set _goatCmdTempOutput_nextHandler = Just _goatState_handler
   , _goatCmdTempOutput_nextHandler :: Maybe SomePotatoHandler
+
   , _goatCmdTempOutput_select      :: Maybe (Bool, Selection)
   , _goatCmdTempOutput_pFEvent     :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
   , _goatCmdTempOutput_pan         :: Maybe XY
@@ -220,6 +226,12 @@ instance Default GoatCmdTempOutput where
 makeGoatCmdTempOutputFromNothing :: GoatState -> GoatCmdTempOutput
 makeGoatCmdTempOutputFromNothing goatState = def {
     _goatCmdTempOutput_goatState = goatState
+
+    -- NOTE the value of _potatoHandlerOutput_nextHandler is not directly translated here
+    -- PotatoHandlerOutput interpretation: isNothing _potatoHandlerOutput_nextHandler => handler does not capture input
+    -- GoatCmdTempOutput interpretation (when non-canvas input):
+    --    -isNothing _potatoHandlerOutput_nextHandler => the particular event we just processed is not related to the canvas handler
+    --    -so in this case we default _goatCmdTempOutput_nextHandler = Just _goatState_handler
     , _goatCmdTempOutput_nextHandler = Just (_goatState_handler goatState)
   }
 
@@ -265,6 +277,19 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
     , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide
   }
+
+makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea :: GoatState -> GoatFocusedArea -> GoatCmdTempOutput
+makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea goatState gfa = r where
+  didchange = gfa /= _goatState_focusedArea goatState
+  goatstatewithnewfocus = goatState { _goatState_focusedArea = gfa }
+  noactionneeded = makeGoatCmdTempOutputFromNothing goatstatewithnewfocus
+  potatoHandlerInput = potatoHandlerInputFromGoatState goatState
+  -- if we were renaming, finalize the rename operation by sending a fake return key event, I can't think of a less ad-hoc way to do this
+  r = if didchange && pHandlerName (_goatState_layersHandler goatState) == handlerName_layersRename
+    then assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
+      Nothing -> noactionneeded
+      Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatstatewithnewfocus pho
+    else noactionneeded
 
 -- | hack function for resetting both handlers
 -- It would be nice if we actually cancel/reset the handlers (such that in progress operations are undone), but I don't think it really matters
@@ -341,15 +366,17 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
 -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
 -- TODO extract this method into another file
 -- TODO make State monad for this
+
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
 --foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
-foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
+foldGoatFn cmd goatStateIgnore = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
   -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
   --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
 
-  goatState = goatStateIgnore
+  -- TODO don't used record syntax for GoatState {..}
+  goatState@GoatState {..} = goatStateIgnore
 
   last_workspace = _goatState_workspace
   last_pFState = _owlPFWorkspace_pFState last_workspace
@@ -380,6 +407,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
         -- TODO do we need to cancel the old handler?
         r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_handler = makeHandlerFromNewTool goatState x })
 
+      GoatCmdSetFocusedArea gfa -> makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea goatState gfa
+
       GoatCmdMouse mouseData ->
         let
           sameSource = _mouseDrag_isLayerMouse _goatState_mouseDrag == _lMouseData_isLayerMouse mouseData
@@ -387,10 +416,17 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
           mouseDrag = case _mouseDrag_state _goatState_mouseDrag of
             MouseDragState_Up        -> newDrag mouseData
             MouseDragState_Cancelled -> (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
+
             _                        ->  continueDrag mouseData _goatState_mouseDrag
 
           canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
-          goatState' = goatState { _goatState_mouseDrag = mouseDrag }
+
+          goatState' = goatState {
+              _goatState_mouseDrag = mouseDrag
+              , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
+            }
+          -- TODO call makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea and merge outputs instead UG, or is there a trick for us to be renentrant into foldGoatFn?
+
           noChangeOutput = makeGoatCmdTempOutputFromNothing goatState'
 
           isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
@@ -412,9 +448,6 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
             Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
             Nothing  -> noChangeOutput
 
-          -- TODO for non-layers mouse input case, you want to send some event to layers such that we can exit "renaming" mode 🤔
-
-          -- _ -> trace "handler mouse case:\nmouse: " $ traceShow mouseDrag $ trace "prev goatState:" $ traceShow goatState $ trace "handler" $ traceShow _goatState_handler $ case pHandleMouse handler potatoHandlerInput canvasDrag of
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
             Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
             -- input not captured by handler, do select or select+drag
@@ -431,7 +464,14 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
           canceledMouse = cancelDrag _goatState_mouseDrag
           goatState' = goatState {
               _goatState_mouseDrag = canceledMouse
+
+              -- escape will cancel mouse focus
+              -- TODO this isn't correct, you have some handlers that cancel into each other, you should only reset to GoatFocusedArea_None if they canceled to Nothing
+              , _goatState_focusedArea = GoatFocusedArea_None
+
             }
+
+          -- TODO use _goatState_focusedArea instead
           r = if _mouseDrag_isLayerMouse _goatState_mouseDrag
             then case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag canceledMouse) of
               Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
@@ -613,6 +653,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
   next_layersHandler' = goatCmdTempOutput_layersHandler goatCmdTempOutput
   (next_handler, next_layersHandler) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
+
+
     -- TODO you only need to do this if handler is one that came from mHandlerFromPho
     -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
@@ -621,7 +663,10 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = finalGoatState where
       -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
       next_potatoHandlerInput = potatoHandlerInputFromGoatState finalGoatState
       refreshedHandler = fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput)
-      refreshedLayersHandler = fromJust (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
+      refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
+
+
+
     _ -> (next_handler', next_layersHandler')
 
   -- | TODO enter rename mode for newly created folders |

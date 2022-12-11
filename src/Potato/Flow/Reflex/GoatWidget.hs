@@ -63,6 +63,7 @@ data GoatWidgetConfig t = GoatWidgetConfig {
   -- command based (via new endo style)
   , _goatWidgetConfig_setPotatoDefaultParameters :: Event t SetPotatoDefaultParameters
   , _goatWidgetConfig_markSaved :: Event t ()
+  , _goatWidgetConfig_setFocusedArea :: Event t GoatFocusedArea
 
 
   -- debugging
@@ -84,6 +85,7 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
     , _goatWidgetConfig_newFolder = never
     , _goatWidgetConfig_setPotatoDefaultParameters = never
     , _goatWidgetConfig_markSaved = never
+    , _goatWidgetConfig_setFocusedArea = never
     , _goatWidgetConfig_setDebugLabel = never
     , _goatWidgetConfig_bypassEvent = never
   }
@@ -122,6 +124,7 @@ foldGoatCmdMarkSaved _ gs = gs {
     _goatState_workspace = markWorkspaceSaved (_goatState_workspace gs)
   }
 
+
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => GoatWidgetConfig t
   -> m (GoatWidget t)
@@ -142,9 +145,10 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
         , ffor _goatWidgetConfig_canvasRegionDim GoatCmdSetCanvasRegionDim
 
-        -- these two need to be run before _goatWidgetConfig_mouse because sometimes we want to set params and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
+        -- these two need to be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
         , ffor _goatWidgetConfig_paramsEvent $ \llama -> (GoatCmdWSEvent (WSEApplyLlama (False, llama)))
         , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
+        , ffor _goatWidgetConfig_setFocusedArea $ \fa -> GoatCmdSetFocusedArea fa
       ]
 
     -- TODO split up foldGoatFn to be endo style

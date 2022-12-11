@@ -74,6 +74,7 @@ everything_network_app pfs cm (AppIn _ ev) = do
         EWCScreenRegion x -> Just x
         _ -> Nothing
       , _goatWidgetConfig_unicodeWidthFn = Nothing
+      , _goatWidgetConfig_setFocusedArea = never
 
     }
   everythingWidget <- holdGoatWidget ewc

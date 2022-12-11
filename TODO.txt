@@ -128,7 +128,7 @@ DONE-midpoints
   DONE-rendering
     -must adjust bounding box to include line labels UGGG
 -folder stuff
-  -BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
       -can you tie this into graceful handling of bad mouse states?
   -make new elts get created inside selected folder rather than above it?
@@ -184,6 +184,7 @@ DONE-midpoints
   DONE-clicking on file with valid extension populates the filename bar
 -open tutorial file by default
 -BUG fix text zipper bugs
+  -you should just rewrite text zipper and add select support..
   -BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
   -BUG click on eol in text box is kind of broken in general[]

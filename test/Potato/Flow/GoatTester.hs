@@ -137,6 +137,9 @@ hSpecGoatTesterWithOwlPFState pfs m = do
 setTool :: (Monad m) => Tool -> GoatTesterT m ()
 setTool tool = runCommand $ GoatCmdTool tool
 
+setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
+setFocusArea fa = runCommand $ GoatCmdSetFocusedArea fa
+
 canvasMouseToScreenMouse :: GoatState -> XY -> XY
 canvasMouseToScreenMouse gs pos = owlPFState_fromCanvasCoordinates (goatState_pFState gs) pos + _goatState_pan gs
 
