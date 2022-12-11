@@ -131,7 +131,7 @@ DONE-midpoints
   DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
       -can you tie this into graceful handling of bad mouse states?
-  -make new elts get created inside selected folder rather than above it?
+  DONE-make new elts get created inside selected folder rather than above it?
   -empty folders should not be expandable? (set to expanded by default)
   -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
   -BUG click release on lock/hide/collapse on selected element should not deselect

@@ -65,8 +65,16 @@ selectionToMaybeSuperOwl (CanvasSelection selection) = assertShowAndDump selecti
 selectionToFirstSuperOwl :: (HasCallStack) => CanvasSelection -> SuperOwl
 selectionToFirstSuperOwl (CanvasSelection selection) = assertShowAndDump selection (Seq.length selection > 0) $ Seq.index selection 0
 
+-- NOTE if the only thing in selection is a folder, then this will put the item INSIDE the folder
 lastPositionInSelection :: OwlTree -> Selection -> OwlSpot
 lastPositionInSelection ot (SuperOwlParliament selection) = r where
   r = case Seq.lookup (Seq.length selection - 1) selection of
     Nothing -> topSpot
-    Just x -> owlTree_owlItemMeta_toOwlSpot ot (_superOwl_meta x)
+    Just x -> if hasOwlItem_isFolder x 
+      then OwlSpot {
+          _owlSpot_parent = _superOwl_id x
+          -- put it at the top of the folder, on top of everything
+          , _owlSpot_leftSibling = Nothing
+        }
+      else owlTree_owlItemMeta_toOwlSpot ot (_superOwl_meta x)
+
