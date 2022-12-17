@@ -20,6 +20,15 @@ import qualified Data.Text as T
 
 import Graphics.Text.Width (wcwidth)
 
+-- | Get the display width of a 'Char'. "Full width" and "wide" characters
+-- take two columns and everything else takes a single column. See
+-- <https://www.unicode.org/reports/tr11/> for more information
+-- This is implemented using wcwidth from Vty such that it matches what will
+-- be displayed on the terminal. Note that this method can change depending
+-- on how vty is configed. Please see vty documentation for details.
+charWidth :: Char -> Int
+charWidth = wcwidth
+
 -- TERMINOLOGY
 -- selection: the portion of the TextZipper that is selected
 -- cursor: the cursor is defined as the begining and end of the selection

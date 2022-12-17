@@ -20,6 +20,14 @@ import           Potato.Flow.DebugHelpers
 import qualified Data.List                                      as L
 
 
+verifyMostRecentlyCreatedLinesLatestLineLabelHasText :: Text -> GoatTester ()
+verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyMostRecentlyCreatedLine  checkfn where
+  checkfn sline = case _sAutoLine_labels sline of
+    [] -> Just "most recently created line has no line labels"
+    (x:_) -> if _sAutoLineLabel_text x == text
+      then Nothing
+      else Just $ "found line label with text: " <> _sAutoLineLabel_text x <> " expected: " <> text
+
 
 blankOwlPFState :: OwlPFState
 blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))
@@ -38,8 +46,11 @@ basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   setMarker "add a text label"
   canvasMouseDown (40, 0)
   canvasMouseUp (40, 0)
-  pressKeys "meow meow meow meow"
   verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_labels sline) /= 1) ("expected 1 label, got: " <> show (_sAutoLine_labels sline))
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+  pressKeys "meow meow meow meow"
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow meow meow meow"
+
 
   setMarker "add a midpoint"
   canvasMouseDown (50, 0)
@@ -246,6 +257,31 @@ attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwl
   verify "state did not change after attempting to move line" $ if s2 == s3 then Just "it didn't change!" else Nothing
 
 
+label_cursor_test :: Spec
+label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  initSimpleLine
+
+  setMarker "add a label"
+  canvasMouseDown (50, 0)
+  canvasMouseUp (50, 0)
+  pressKey '1'
+  pressKey '2'
+  pressKey '3'
+  pressKey '4'
+  pressKey '5'
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12345"
+
+  setMarker "move the cursor to 3"
+  canvasMouseDown (50, 0)
+  canvasMouseUp (50, 0)
+  pressKey 'A'
+  -- TODO FIX BROKEN
+  --verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12A345"
+
+
+
+
 cache_basic_test :: Spec
 cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -268,6 +304,7 @@ spec = do
     describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
     describe "attaching_delete_test" $ attaching_delete_test
     describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
+    describe "label_cursor_test" $ label_cursor_test
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test
