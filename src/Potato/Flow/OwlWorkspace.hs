@@ -244,7 +244,10 @@ updateOwlPFWorkspace evt ws = let
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
-    WSEResizeCanvas x -> doCmdWorkspace (OwlPFCResizeCanvas x) ws
+    -- ignore invalid canvas resize events
+    WSEResizeCanvas x -> if validateCanvasSizeOperation x ws 
+      then doCmdWorkspace (OwlPFCResizeCanvas x) ws
+      else ws
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
     WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
@@ -253,3 +256,12 @@ updateOwlPFWorkspace evt ws = let
   in if isValidAfter
     then r
     else error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
+
+
+-- | returns true if the applying `OwlPFCResizeCanvas lbox` results in a valid canvas size
+validateCanvasSizeOperation :: DeltaLBox -> OwlPFWorkspace -> Bool
+validateCanvasSizeOperation lbox ws = r where
+  pfs = _owlPFWorkspace_pFState ws
+  oldcanvas = _sCanvas_box $ _owlPFState_canvas pfs
+  newcanvas = plusDelta oldcanvas lbox
+  r = isValidCanvas (SCanvas newcanvas)
