@@ -1,0 +1,241 @@
+-- WIP
+module Potato.Data.Text.Zipper2 where
+
+import           Prelude
+
+import Control.Exception (assert)
+import Control.Monad.State (evalState, forM, get, put)
+import Data.Char (isSpace)
+import Data.Map (Map)
+import Data.Maybe (fromMaybe)
+import Data.String
+import Data.Text (Text)
+import Data.Text.Internal (Text(..), text)
+import Data.Text.Internal.Fusion (stream)
+import Data.Text.Internal.Fusion.Types (Stream(..), Step(..))
+import Data.Text.Unsafe
+import qualified Data.List as L
+import qualified Data.Map as Map
+import qualified Data.Text as T
+
+import Graphics.Text.Width (wcwidth)
+
+-- TERMINOLOGY
+-- selection: the portion of the TextZipper that is selected
+-- cursor: the cursor is defined as the begining and end of the selection
+-- word: a word is defined as a contiguous set of non-whitespace characters in the TextZipper
+--   the position one word to the left/right of the cursor is the position after all non-white space to the left/right of the cursor until it hits non-whitespace character followde by all contiguous non-whitespace characters in that direction
+-- logical lines: logical lines of the TextZipper are lines created by explicit new line characters
+-- display lines: display lines of a TextZipper ar the lines rendered to screen
+--   display lines are bound by some width
+--
+
+data TextZipper = TextZipper
+  { _textZipper_linesBefore :: [Text] -- reversed
+  , _textZipper_before :: Text
+  , _textZipper_selected :: [Text]
+  , _textZipper_after :: Text
+  , _textZipper_linesAfter :: [Text]
+  }
+  deriving (Show, Eq)
+
+
+-- example:
+--
+-- this is an example content of
+-- a text zipper
+-- the capital TEXT IS THE SELECTED
+-- PORTION of the
+-- text zipper
+--
+-- _textZipper_linesBefore = ["this is an example content of", "a text zipper"]
+-- _textZipper_before = "the capital "
+-- _textZipper_selected = ["TEXT IS THE SELECTED", "PORTION"]
+-- _textZipper_after = " of the"
+-- _textZipper_linesAfter = ["text zipper"]
+
+instance IsString TextZipper where
+  fromString = fromText . T.pack
+
+-- | Map a replacement function over the characters in a 'TextZipper'
+mapZipper :: (Char -> Char) -> TextZipper -> TextZipper
+mapZipper f (TextZipper lb b s a la) = TextZipper
+  { _textZipper_linesBefore = fmap (T.map f) lb
+  , _textZipper_before = T.map f b
+  , _textZipper_selected = fmap (T.map f) s
+  , _textZipper_after = T.map f a
+  , _textZipper_linesAfter = fmap (T.map f) la
+  }
+
+-- | Move the cursor left one character (clearing the selection)
+left :: TextZipper -> TextZipper
+left = leftN 1
+
+-- UNTESTED
+-- | Move the cursor left by the given number of characters (clearing the selection)
+leftN :: Int -> TextZipper -> TextZipper
+leftN n z@(TextZipper lb b [] a la) =
+  if T.length b >= n
+    then
+      let n' = T.length b - n
+      in  TextZipper lb (T.take n' b) [] (T.drop n' b <> a) la
+    else case lb of
+           [] -> home z
+           (l:ls) -> leftN (n - T.length b - 1) $ TextZipper ls l [] "" ((b <> a) : la)
+leftN n (TextZipper lb b s a la) = leftN n $ TextZipper lb b [] newa newla  where
+  appendEnd stuff addme = case stuff of
+    [] -> [addme]
+    (x:[]) -> [x <> addme]
+    (x:xs) -> x : appendEnd xs addme
+  (newa, newla') = case s of
+    [] -> (a, la)
+    (x:[]) -> (x <> a, la)
+    (x:xs) -> (x, appendEnd xs a)
+  newla = newla' <> la
+
+
+-- | expand the selection to the left the given number of characters
+shiftLeftN :: TextZipper -> TextZipper
+shiftLeftN = undefined
+
+-- | Move the cursor to the left one word (clearing the selection)
+leftWord :: TextZipper -> TextZipper
+leftWord = undefined
+
+-- | Expand the selection to the left by one word
+shiftLeftWord :: TextZipper -> TextZipper
+shiftLeftWord = undefined
+
+
+-- | Move the cursor right one character (clearing the selection)
+right :: TextZipper -> TextZipper
+right = rightN 1
+
+-- | Move the character right by the given number of characters (clearing the selection)
+rightN :: Int -> TextZipper -> TextZipper
+rightN n z@(TextZipper lb b s a la) = undefined
+
+-- | expand the selection to the right the given number of characters
+shiftRightN :: TextZipper -> TextZipper
+shiftRightN = undefined
+
+-- | Move the cursor to the right one word (clearing the selection)
+rightWord :: TextZipper -> TextZipper
+rightWord = undefined
+
+-- | Expand the selection to the right by one word
+rightLeftWord :: TextZipper -> TextZipper
+rightLeftWord = undefined
+
+-- | Move the cursor up one logical line (clearing the selection)
+up :: TextZipper -> TextZipper
+up z@(TextZipper lb b s a la) = undefined
+
+-- | Move the cursor down one logical line (clearing the selection)
+down :: TextZipper -> TextZipper
+down z@(TextZipper lb b s a la) = undefined
+
+-- | Move the cursor up by the given number of lines (clearing the selection)
+pageUp :: Int -> TextZipper -> TextZipper
+pageUp pageSize z = undefined
+
+-- | Move the cursor down by the given number of lines (clearing the selection)
+pageDown :: Int -> TextZipper -> TextZipper
+pageDown pageSize z = undefined
+
+-- | Move the cursor to the beginning of the current logical line (clearing the selection)
+home :: TextZipper -> TextZipper
+home (TextZipper lb b s a la) = undefined
+
+-- | Move the cursor to the end of the current logical line (clearing the selection)
+end :: TextZipper -> TextZipper
+end (TextZipper lb b s a la) = undefined
+
+-- | Move the cursor to the top of the document (clearing the selection)
+top :: TextZipper -> TextZipper
+top (TextZipper lb b s a la) = undefined
+
+-- | Insert a character at the current cursor position (overwriting the selection)
+insertChar :: Char -> TextZipper -> TextZipper
+insertChar i = insert (T.singleton i)
+
+-- | Insert text at the current cursor position (overwriting the selection)
+insert :: Text -> TextZipper -> TextZipper
+insert i z@(TextZipper lb b s a la) = case T.split (=='\n') i of
+  [] -> z
+  (x:xs) -> undefined
+
+-- | Delete the selection
+deleteSelection :: TextZipper -> TextZipper
+deleteSelection = undefined
+
+-- | Delete the selection or the character to the left of the cursor if there was no selection
+deleteLeft :: TextZipper-> TextZipper
+deleteLeft z@(TextZipper lb b s a la) = undefined
+
+-- | Delete the selection to the character to the right of the cursor if there was no selection
+deleteRight :: TextZipper -> TextZipper
+deleteRight z@(TextZipper lb b s a la) = undefined
+
+-- | Delete the selection and the word to the left of the cursor and the selection.
+-- When deleting the word to the left of the selection, deletes all whitespace until it finds a non-whitespace character, and then deletes contiguous non-whitespace characters.
+deleteLeftWord :: TextZipper -> TextZipper
+deleteLeftWord (TextZipper lb b s a la) = undefined
+
+-- | Insert up to n spaces to get to the next logical column that is a multiple of n
+tab :: Int -> TextZipper -> TextZipper
+tab n (TextZipper _ b s _ _) = undefined
+
+-- | The plain text contents of the zipper
+value :: TextZipper -> Text
+value (TextZipper lb b s a la) = undefined
+
+
+-- | The empty zipper
+empty :: TextZipper
+empty = TextZipper [] "" [] "" []
+
+-- | Constructs a zipper with the given contents. The cursor is placed after the contents.
+fromText :: Text -> TextZipper
+fromText = flip insert empty
+
+
+-- | Text alignment type
+data TextAlignment =
+  TextAlignment_Left
+  | TextAlignment_Right
+  | TextAlignment_Center
+  deriving (Eq, Show)
+
+
+
+-- A map from the row index of display line to a tuple (fst,snd) where
+--   fst: leading empty spaces from left (may be negative) to adjust for alignment
+--   snd: the text offset from the beginning of the document
+type OffsetMapWithAlignment = Map Int (Int, Int)
+
+
+-- | Information about the document as it is displayed (i.e., post-wrapping)
+data DisplayLines = DisplayLines
+  { _displayLines_text :: [[Text]] -- outer is logical lines, inner list is display lines created due to wrapping logical lines to display width
+  , _displayLines_offsetMap :: OffsetMapWithAlignment -- note that the row index (key) of OffsetMapWithAlignment counts display lines which includes logical lines
+  , _displayLines_cursorPos :: (Int, Int) -- cursor position relative to upper left hand corner
+  , _displayLines_selectionCount :: Int
+  }
+  deriving (Eq, Show)
+
+-- | Adjust the cursor and/or selection of the 'TextZipper' by the given display line coordinates
+-- If the x coordinate is beyond the start/end of a line, the cursor is moved to the start/end of that line respectively
+-- if `add` is true, the selection is expanded to the given position
+-- if `add` is false, the selection is cleared and the cursor is moved to the given position
+goToDisplayLinePosition :: Bool -> Int -> Int -> DisplayLines -> TextZipper -> TextZipper
+goToDisplayLinePosition add x y dl tz = undefined
+-- | Given a `TextAlignment`, a width and a 'TextZipper', produce a `DisplayLines`
+-- wrapping happens at word boundaries such that the most possible words fit into each display line
+-- if a line can not be wrapped (i.e. it contains a word longer than the display width) then the line is cropped in the middle of the word as necessary
+displayLinesWithAlignment
+  :: TextAlignment
+  -> Int -- ^ Width, used for wrapping
+  -> TextZipper -- ^ The text input contents and cursor state
+  -> DisplayLines
+displayLinesWithAlignment = undefined

@@ -1,4 +1,30 @@
-eZ9*^jc#3T&s
+zipper2 operations
+
+leftN rightN
+leftW rightW (word)
+bol, eol, start, end
+
+leftAddN, rightAddN
+leftAddW, rightAddW
+
+DisplayLines
+[Text] -- words
+(Int, Int) -- selection index and selection count
+
+DisplayLinesWithSelectionAsZipper (same representation as TextZipper except logical lines are converted to visual lines)
+[Text]
+Text
+[Text]
+Text
+[Text]
+
+DisplayLinesWithSelectionAsText (internal Text contains new line characters)
+Text -- before
+Text -- selection
+Text -- after
+
+
+-------
 
 pet childhood sportsteam
 
@@ -114,7 +140,7 @@ DONE-midpoints
 -FEATURE add line labels
   -if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-  -BUG click to edit text inside SAutoLIneLabelHandler not working
+  -BUG click to edit text inside SAutoLineLabelHandler not working
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
     -how do distinguish between backspace to delete vs remove character for line label handler?
@@ -128,19 +154,16 @@ DONE-midpoints
   DONE-rendering
     -must adjust bounding box to include line labels UGGG
 -folder stuff
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
+  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
+    -not sure what happens when you shift select past a folder
   DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
     -you need some kind of click off pane reset type action to handler
       -can you tie this into graceful handling of bad mouse states?
   DONE-make new elts get created inside selected folder rather than above it?
-  -empty folders should not be expandable? (set to expanded by default)
-  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
-  -BUG click release on lock/hide/collapse on selected element should not deselect
-  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
--params
-  -default for line in params should be both instead of start
-  -line stuff should have aligned spacing to make it easier to click on where the change is
-  -highlight squares that can be modified
-  -BUG rename layers, click off, then click back on, then modify params, click off to finalize, it will crash
 -BUG fix line bugs
   -BUG midpoints rendered as ?
   -BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
@@ -201,6 +224,8 @@ DONE-midpoints
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
+-proper configurable theme in Main.hs
+
 -FEATURE attach point repositioning
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
@@ -237,6 +262,14 @@ DONE-midpoints
   -you need some kind of options object to go along side of PotatoDefaultParameters
 
 
+
+
+
+DONE-params
+  DONE-default for line in params should be both instead of start
+  DONE/IGNORE-line stuff should have aligned spacing to make it easier to click on where the change is
+  DONE-highlight squares that can be modified
+  DONE-BUG rename layers, click off, then click back on, then modify params, click off to finalize, it will crash
 DONE-BUG cache isn't being set
 DONE-TESTING allow foldGoatFn to be tested directyl, get rid of the reflex indirected tests....
   -add proper potatoShow for SuperOwl/OwlItem

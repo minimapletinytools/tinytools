@@ -650,7 +650,7 @@ makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd =
       , _textInputState_box = box
       , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () ogtz
     }
-  r = mouseText tis box rmd (V2 1 0)
+  r = mouseText tis box rmd (V2 0 0)
 
 makeAutoLineLabelHandlerFromSelection :: Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
 makeAutoLineLabelHandlerFromSelection labelindex prev phi@PotatoHandlerInput {..} rmd = r where
@@ -675,7 +675,7 @@ makeAutoLineLabelHandler rid sal labelindex prev phi@PotatoHandlerInput {..} rmd
 handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> LBox -> Bool -> Maybe PotatoHandlerOutput
 handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) box isdown = r where
   clickInside = does_lBox_contains_XY (_textInputState_box _autoLineLabelHandler_state) _mouseDrag_to
-  newState = mouseText _autoLineLabelHandler_state box rmd (V2 1 0)
+  newState = mouseText _autoLineLabelHandler_state box rmd (V2 0 0)
   r = if clickInside
     then Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
@@ -770,12 +770,13 @@ instance PotatoHandler AutoLineLabelHandler where
   pRenderHandler slh' phi@PotatoHandlerInput {..} = r where
     slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
 
+    -- consider rendering endpoints?
+
     -- TODO render label mover anchor with offset 1
 
     -- render the text cursor
     btis = _autoLineLabelHandler_state slh
     offset = V2 0 0
-    -- consider rendering endpoints?
     r = makeTextHandlerRenderOutput btis offset
 
   pIsHandlerActive = _autoLineLabelHandler_active

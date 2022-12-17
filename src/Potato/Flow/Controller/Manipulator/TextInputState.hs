@@ -61,7 +61,7 @@ inputSingleLineZipper tais kk = (changed, tais { _textInputState_zipper = newZip
 
 
 makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
-makeTextHandlerRenderOutput btis offset = r where
+makeTextHandlerRenderOutput btis offset = traceShow (offsetMap, btis) r where
   dls = _textInputState_displayLines btis
   origBox = _textInputState_box $ btis
   (x, y) = TZ._displayLines_cursorPos dls
