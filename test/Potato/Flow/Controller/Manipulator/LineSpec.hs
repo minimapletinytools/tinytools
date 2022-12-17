@@ -261,6 +261,7 @@ label_cursor_test :: Spec
 label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
+  verifySelectionCount 1
 
   setMarker "add a label"
   canvasMouseDown (50, 0)
@@ -276,9 +277,12 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseDown (50, 0)
   canvasMouseUp (50, 0)
   pressKey 'A'
-  -- TODO FIX BROKEN
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12A345"
 
+  setMarker "attempt to move the cursor to beyond the line"
+  canvasMouseDown (150, 0)
+  canvasMouseUp (150, 0)
+  verifySelectionCount 0
 
 
 

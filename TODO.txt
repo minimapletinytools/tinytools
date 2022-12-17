@@ -137,7 +137,9 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
+-BUG need to do size validation on params canvas size stuff 
 -FEATURE add line labels
+  -adding midpoints when line labels exist need to be smarter about reposition line labels
   -if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
   -add line label anchor in text edit mode so that you can easily reposition it
