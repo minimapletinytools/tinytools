@@ -202,6 +202,8 @@ instance PotatoHandler BoxTextHandler where
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxTextHandler_prevHandler tah') }
+    -- TODO should only capture stuff caught by inputBoxTextZipper
+
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
@@ -378,7 +380,7 @@ instance PotatoHandler BoxLabelHandler where
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
     KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_boxLabelHandler_prevHandler tah') }
-
+    -- TODO should only capture stuff caught by inputSingleLineZipper
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'

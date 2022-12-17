@@ -257,6 +257,25 @@ attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwl
   verify "state did not change after attempting to move line" $ if s2 == s3 then Just "it didn't change!" else Nothing
 
 
+label_undo_test :: Spec
+label_undo_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  initSimpleLine
+  verifySelectionCount 1
+
+  setMarker "add a label"
+  canvasMouseDown (50, 0)
+  canvasMouseUp (50, 0)
+  pressKey '1'
+  pressKey '2'
+  pressKey '3'
+  pressKey '4'
+  pressKey '5'
+  pressReturn
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12345"
+  pressUndo
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+
 label_cursor_test :: Spec
 label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -284,6 +303,15 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (150, 0)
   verifySelectionCount 0
 
+  setMarker "select the line then select directly move the cursor to 1 on the label"
+  canvasMouseDown (1, 0)
+  canvasMouseUp (1, 0)
+  verifySelectionCount 1
+  canvasMouseDown (47, 0)
+  canvasMouseUp (47, 0)
+  pressKey 'B'
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "B12A345"
+
 
 
 cache_basic_test :: Spec
@@ -308,7 +336,9 @@ spec = do
     describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
     describe "attaching_delete_test" $ attaching_delete_test
     describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
+    describe "label_undo_test" $ label_undo_test
     describe "label_cursor_test" $ label_cursor_test
+    
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test

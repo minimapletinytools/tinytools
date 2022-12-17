@@ -242,10 +242,8 @@ instance PotatoHandler AutoLineHandler where
 
         labels = getSortedSAutoLineLabelPositions _potatoHandlerInput_pFState sline
 
-        -- TODO this should also account for text position
-        mfirstlabel = L.find (\(pos,_,_) -> pos == _mouseDrag_to) labels
-
-
+        findlabelfn (pos, _, llabel) = pos == _mouseDrag_to || does_lBox_contains_XY (getSAutoLineLabelBox pos llabel) _mouseDrag_to
+        mfirstlabel = L.find findlabelfn labels
         firstlm = findFirstLineManipulator_NEW sline _autoLineHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
         -- TODO update cache someday
@@ -266,8 +264,8 @@ instance PotatoHandler AutoLineHandler where
                 }
             }
 
-          -- TODO pass on input such that you can go directly to where you clicked on the line label
-          -- if clicked on label
+          -- click on line label or label anchor
+          -- TODO right now clicking on line itself also allows you to move it (as oppose to just the anchor) is this what we want?
           (_, Just (_,index,_)) -> Just $
             def {
                 _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler AutoLineLabelMoverHandler {
@@ -746,8 +744,9 @@ instance PotatoHandler AutoLineLabelHandler where
       MouseDragState_Cancelled -> Just $ captureWithNoChange slh
 
   pHandleKeyboard slh' PotatoHandlerInput {..} (KeyboardData k _) = case k of
-    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh') }
+    k | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh') }
 
+    -- TODO should only capture stuff caught by inputSingleLineZipper
     _ -> Just r where
       -- this regenerates displayLines unecessarily but who cares
       slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
