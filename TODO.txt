@@ -141,7 +141,6 @@ DONE-midpoints
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
 DONE-BUG need to do size validation on params canvas size stuff
 -FEATURE add line labels
-  -remember to adjust _sAutoLine_labels when deleting midpoints
   -adding midpoints when line labels exist need to be smarter about reposition line labels
   -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
   -add line label anchor in text edit mode so that you can easily reposition it
@@ -149,6 +148,7 @@ DONE-BUG need to do size validation on params canvas size stuff
     -how do distinguish between backspace to delete vs remove character for line label handler?
       -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
   -bonus, cache line labels
+  DONE-remember to adjust _sAutoLine_labels when deleting midpoints
   DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   DONE-BUG click to edit text inside SAutoLineLabelHandler not working
   DONE-SAutoLine -> SAutoLineLabel -> XY

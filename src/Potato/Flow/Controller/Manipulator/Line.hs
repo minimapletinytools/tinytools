@@ -448,6 +448,49 @@ instance PotatoHandler AutoLineEndPointHandler where
     then Just Tool_Line
     else Nothing
 
+
+sAutoLine_addMidpoint :: Int -> XY -> SAutoLine -> SAutoLine
+sAutoLine_addMidpoint mpindex pos sline = r where
+  newmidpoints =  L.insertAt mpindex (SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
+  -- TODO update line label position
+  fmapfn ll = if _sAutoLineLabel_index ll > mpindex
+    then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll + 1}
+    else ll
+  newlabels = fmap fmapfn (_sAutoLine_labels sline)
+
+  r = sline {
+      _sAutoLine_midpoints = newmidpoints
+      , _sAutoLine_labels = newlabels
+    }
+
+sAutoLine_modifyMidpoint :: Int -> XY -> SAutoLine -> SAutoLine
+sAutoLine_modifyMidpoint mpindex pos sline = r where
+  newmidpoints =  L.modifyAt mpindex (const $ SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
+  -- TODO update line label position
+  --fmapfn = undefined
+  --newlabels = fmap fmapfn (_sAutoLine_labels sline)
+  newlabels = _sAutoLine_labels sline
+
+  r = sline {
+      _sAutoLine_midpoints = newmidpoints
+      , _sAutoLine_labels = newlabels
+    }
+
+
+sAutoLine_deleteMidpoint :: Int -> SAutoLine -> SAutoLine
+sAutoLine_deleteMidpoint mpindex sline = r where
+  newmidpoints =  L.deleteAt mpindex (_sAutoLine_midpoints sline)
+  -- TODO update line label position
+  fmapfn ll = if _sAutoLineLabel_index ll >= mpindex
+    then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll - 1}
+    else ll
+  newlabels = fmap fmapfn (_sAutoLine_labels sline)
+
+  r = sline {
+      _sAutoLine_midpoints = newmidpoints
+      , _sAutoLine_labels = newlabels
+    }
+
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
   _autoLineMidPointHandler_midPointIndex :: Int
@@ -486,15 +529,12 @@ instance PotatoHandler AutoLineMidPointHandler where
         radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
         isoveradjacent = _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
 
-        newsline = sline {
-            _sAutoLine_midpoints = if _autoLineMidPointHandler_isMidpointCreation
-              then L.insertAt mpindex (SAutoLineConstraintFixed _mouseDrag_to) mps
-              else L.modifyAt mpindex (const $ SAutoLineConstraintFixed _mouseDrag_to) mps
-          }
+        newsline = if _autoLineMidPointHandler_isMidpointCreation
+          then sAutoLine_addMidpoint mpindex _mouseDrag_to sline
+          else sAutoLine_modifyMidpoint mpindex _mouseDrag_to sline
 
-        newslinedelete = sline {
-            _sAutoLine_midpoints = L.deleteAt mpindex mps
-          }
+        newslinedelete = sAutoLine_deleteMidpoint mpindex sline
+
 
         (diddelete, event) = case firstlm of
           -- create the new midpoint if none existed
