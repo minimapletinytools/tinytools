@@ -83,7 +83,7 @@ stuff for Dad to do
 
 ----------
 stack exec -- potato-flow-vty-exe mycommandlineargs
-stack test --test-arguments=' --match "/Potato.Flow.Controller.Manipulator.Line/Line/cache_basic/<unlabeled>/"' --file-watch
+stack test --test-arguments=' --match "/Potato.Flow.Controller.Manipulator.Line/"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 normal
@@ -140,12 +140,12 @@ DONE-midpoints
 -FEATURE add line labels
   -if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-  -BUG click to edit text inside SAutoLineLabelHandler not working
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
     -how do distinguish between backspace to delete vs remove character for line label handler?
       -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
   -bonus, cache line labels
+  DONE-BUG click to edit text inside SAutoLineLabelHandler not working
   DONE-remember to adjust _sAutoLine_labels when deleting midpoints
   DONE-SAutoLine -> SAutoLineLabel -> XY
   DONE-mouse down up on line label takes you to line label handler

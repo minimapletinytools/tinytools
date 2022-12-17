@@ -277,7 +277,7 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (50, 0)
   pressKey 'A'
   -- TODO FIX BROKEN
-  --verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12A345"
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12A345"
 
 
 

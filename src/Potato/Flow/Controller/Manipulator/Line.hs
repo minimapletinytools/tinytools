@@ -619,13 +619,15 @@ updateAutoLineLabelHandlerState ot reset selection slh@AutoLineLabelHandler {..}
   pos = getSAutoLineLabelPosition ot sal llabel
 
 
-  width = maxBound :: Int -- label text always overflows
+  width = maxBound :: Int -- line label text always overflows
+  box = getSAutoLineLabelBox pos llabel
+
 
   r = slh {
     _autoLineLabelHandler_state = _autoLineLabelHandler_state {
           _textInputState_original = if reset then Just newtext else _textInputState_original tis
-          , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () (_textInputState_zipper tis)
-          , _textInputState_box = getSAutoLineLabelBox pos llabel
+          , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Left width () () (_textInputState_zipper tis)
+          , _textInputState_box = box
       }
     , _autoLineLabelHandler_undoFirst = if reset
       then False
@@ -648,7 +650,7 @@ makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd =
       , _textInputState_original   = Just ogtext
       , _textInputState_zipper   = ogtz
       , _textInputState_box = box
-      , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Center width () () ogtz
+      , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Left width () () ogtz
     }
   r = mouseText tis box rmd (V2 0 0)
 
@@ -714,12 +716,12 @@ instance PotatoHandler AutoLineLabelHandler where
       (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
       llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelHandler_labelIndex slh
       pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
-      box = LBox pos 1
+      box = getSAutoLineLabelBox pos llabel
 
     in case _mouseDrag_state of
 
 
-      -- TODO if click on drag anchor modifier thingy 
+      -- TODO if click on drag anchor modifier thingy
       MouseDragState_Down -> handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box True
 
 
