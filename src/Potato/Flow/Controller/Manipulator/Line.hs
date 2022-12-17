@@ -743,29 +743,36 @@ instance PotatoHandler AutoLineLabelHandler where
           }
       MouseDragState_Cancelled -> Just $ captureWithNoChange slh
 
-  pHandleKeyboard slh' PotatoHandlerInput {..} (KeyboardData k _) = case k of
-    k | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh') }
-
-    -- TODO should only capture stuff caught by inputSingleLineZipper
-    _ -> Just r where
+  pHandleKeyboard slh' PotatoHandlerInput {..} (KeyboardData k _) = let
       -- this regenerates displayLines unecessarily but who cares
       slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
+      llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelHandler_labelIndex slh
       (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+    in case k of
+      -- Escape or Return
+      k | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh) }
+
+      -- TODO
+      -- Backspace or Delete on empty text field deletes it
+      k | (k == KeyboardKey_Backspace || k == KeyboardKey_Delete) && (T.null $ _sAutoLineLabel_text llabel) -> Nothing
 
 
-      -- TODO decide what to do with mods
+      -- TODO should only capture stuff caught by inputSingleLineZipper
+      _ -> Just r where
 
-      (nexttais, mev) = inputLineLabel (_autoLineLabelHandler_state slh) (_autoLineLabelHandler_undoFirst slh) rid sal (_autoLineLabelHandler_labelIndex slh) k
-      r = def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-              _autoLineLabelHandler_state  = nexttais
-              , _autoLineLabelHandler_undoFirst = case mev of
-                Nothing -> _autoLineLabelHandler_undoFirst slh
-                --Nothing -> False -- this variant adds new undo point each time cursoer is moved
-                Just _  -> True
-            }
-          , _potatoHandlerOutput_pFEvent = mev
-        }
+        -- TODO decide what to do with mods
+
+        (nexttais, mev) = inputLineLabel (_autoLineLabelHandler_state slh) (_autoLineLabelHandler_undoFirst slh) rid sal (_autoLineLabelHandler_labelIndex slh) k
+        r = def {
+            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+                _autoLineLabelHandler_state  = nexttais
+                , _autoLineLabelHandler_undoFirst = case mev of
+                  Nothing -> _autoLineLabelHandler_undoFirst slh
+                  --Nothing -> False -- this variant adds new undo point each time cursoer is moved
+                  Just _  -> True
+              }
+            , _potatoHandlerOutput_pFEvent = mev
+          }
 
 
   pRenderHandler slh' phi@PotatoHandlerInput {..} = r where

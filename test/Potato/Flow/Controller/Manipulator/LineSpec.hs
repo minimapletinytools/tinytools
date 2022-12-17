@@ -13,10 +13,12 @@ import           Test.Hspec
 import           Potato.Flow.GoatTester
 
 import           Potato.Flow
+import Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Common
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 import           Potato.Flow.DebugHelpers
 
+import qualified Data.Text as T
 import qualified Data.List                                      as L
 
 
@@ -28,6 +30,27 @@ verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyMostRecentlyCr
       then Nothing
       else Just $ "found line label with text: " <> _sAutoLineLabel_text x <> " expected: " <> text
 
+verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition :: (Int, Int) -> GoatTester ()
+verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (x, y) = verifyState "verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition" checkfn where
+  checkfn gs = r where
+    pfs = goatState_pFState gs
+    msowl = maybeGetMostRecentlyCreatedOwl' pfs
+    r' = do
+      sowl <- case maybeGetMostRecentlyCreatedOwl' (goatState_pFState gs) of
+        Nothing -> Left "failed, no 🦉s"
+        Just x -> Right x
+      sline <- case _owlItem_subItem (_superOwl_elt sowl) of
+        OwlSubItemLine x _ -> Right x
+        x                      -> Left $ "expected SAutoLine got: " <> show x
+      llabel <- case _sAutoLine_labels sline of
+        [] -> Left "most recently created line has no line labels"
+        (x:_) -> Right x
+      return $ getSAutoLineLabelPosition pfs sline llabel
+    r = case r' of
+      Left e -> Just e
+      Right (V2 x' y') -> if x == x' && y == y'
+        then Nothing
+        else Just $ "expected line label position: " <> show (x, y) <> " got " <> show (x', y')
 
 blankOwlPFState :: OwlPFState
 blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))
@@ -276,6 +299,41 @@ label_undo_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressUndo
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
 
+label_move_test :: Spec
+label_move_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  let screams = "😱😱😱"
+
+  initSimpleLine
+
+  setMarker "add a label"
+  canvasMouseDown (50, 0)
+  canvasMouseUp (50, 0)
+  pressKeys screams
+  pressEscape
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText (T.pack screams)
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (50,0)
+
+  setMarker "move the label "
+  canvasMouseDown (50, 0)
+  canvasMouseDown (40, 0)
+  canvasMouseUp (40, 0)
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (40,0)
+
+  setMarker "add a midpoint"
+  canvasMouseDown (75, 0)
+  canvasMouseDown (76, 0)
+  canvasMouseUp (76, 0)
+  expectMidpointCount 1
+
+  -- TODO fix bug here
+  setMarker "move the label over the midpoint"
+  canvasMouseDown (40, 0)
+  canvasMouseDown (90, 0)
+  canvasMouseUp (90, 0)
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (90,0)
+
+
 label_cursor_test :: Spec
 label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -313,6 +371,34 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "B12A345"
 
 
+label_delete_midpoint_test :: Spec
+label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  initSimpleLine
+  verifySelectionCount 1
+
+  setMarker "add a midpoint"
+  canvasMouseDown (50, 0)
+  canvasMouseDown (51, 0)
+  canvasMouseUp (51, 0)
+  expectMidpointCount 1
+
+  setMarker "add a label after last midpoint"
+  canvasMouseDown (90, 0)
+  canvasMouseUp (90, 0)
+  pressKey 'D'
+  pressReturn
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "D"
+
+  -- TODO fix bug here 
+  setMarker "delete the midpoint"
+  canvasMouseDown (51, 0)
+  canvasMouseDown (100, 0)
+  canvasMouseUp (100, 0)
+  expectMidpointCount 0
+  -- ensure the line label has not been affected
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "D"
+
 
 cache_basic_test :: Spec
 cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -337,8 +423,11 @@ spec = do
     describe "attaching_delete_test" $ attaching_delete_test
     describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
     describe "label_undo_test" $ label_undo_test
+    describe "label_move_test" $ label_move_test
     describe "label_cursor_test" $ label_cursor_test
-    
+    describe "label_delete_midpoint_test" $ label_delete_midpoint_test
+
+
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic" $ fromHUnitTest $ cache_basic_test
