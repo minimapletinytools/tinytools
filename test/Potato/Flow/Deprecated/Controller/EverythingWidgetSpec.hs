@@ -71,7 +71,7 @@ validateLayersOrderPredicate = FunctionPredicate fn where
     lentries = _layersState_entries _goatState_layersState
     -- TODO report position of superowls in tree
     msg = "expected LayerEntries in order " <> show (fmap _layerEntry_superOwl lentries)
-    owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
+    owltree = _owlPFState_owlTree $ _owlPFWorkspace_owlPFState _goatState_workspace
     sortingfn le1 le2 = owlTree_superOwl_comparePosition owltree (_layerEntry_superOwl le1) (_layerEntry_superOwl le2) == LT
     r = (msg, L.isSortedBy sortingfn (toList lentries))
 

@@ -150,7 +150,7 @@ firstSelectedSuperOwlWithOwlTreePredicate :: Maybe Text -> (OwlTree -> SuperOwl 
 firstSelectedSuperOwlWithOwlTreePredicate mlabel f = FunctionPredicate fn where
   fn GoatState {..} = r where
     s = unSuperOwlParliament _goatState_selection
-    owltree = _owlPFState_owlTree $ _owlPFWorkspace_pFState _goatState_workspace
+    owltree = _owlPFState_owlTree $ _owlPFWorkspace_owlPFState _goatState_workspace
     mfirst = case mlabel of
       Nothing    -> Seq.lookup 0 s
       Just label -> find (\sowl -> hasOwlItem_name sowl == label) s

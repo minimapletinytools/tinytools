@@ -43,7 +43,6 @@ emptyActionStack :: ActionStack
 emptyActionStack = ActionStack [] []
 
 data PFWorkspace = PFWorkspace {
-  -- TODO rename to pFState
   _pFWorkspace_pFState       :: PFState
   , _pFWorkspace_lastChanges :: SEltLabelChanges
   , _pFWorkspace_actionStack :: ActionStack

@@ -96,7 +96,7 @@ doesOwlSubItemIntersectBox ot lbox osubitem = case osubitem of
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
-  SEltBox SBox {..}         -> Just _sBox_style
+  SEltBox SBox {..}         -> Just _sBox_superStyle
   SEltLine SAutoLine {..} -> Just _sAutoLine_superStyle
   _                         -> Nothing
 
@@ -142,7 +142,7 @@ sBox_drawer sbox@SBox {..} = r where
 
   titlewidth = max 0 (w-2)
 
-  fillfn _ = case _superStyle_fill _sBox_style of
+  fillfn _ = case _superStyle_fill _sBox_superStyle of
     FillStyle_Simple c -> Just c
     FillStyle_Blank    -> Nothing
 
@@ -179,19 +179,19 @@ sBox_drawer sbox@SBox {..} = r where
 
   rfnborder pt@(V2 x' y')
     | not (does_lBox_contains_XY lbox pt) = Nothing
-    | w == 1 && h == 1 = _superStyle_point _sBox_style
-    | w == 1 = _superStyle_vertical _sBox_style
-    | h == 1 = _superStyle_horizontal _sBox_style
-    | x' == x && y' == y = _superStyle_tl _sBox_style
-    | x' == x && y' == y+h-1 = _superStyle_bl _sBox_style
-    | x' == x+w-1 && y' == y = _superStyle_tr _sBox_style
-    | x' == x+w-1 && y' == y+h-1 = _superStyle_br _sBox_style
-    | x' == x || x' == x+w-1 = _superStyle_vertical _sBox_style
+    | w == 1 && h == 1 = _superStyle_point _sBox_superStyle
+    | w == 1 = _superStyle_vertical _sBox_superStyle
+    | h == 1 = _superStyle_horizontal _sBox_superStyle
+    | x' == x && y' == y = _superStyle_tl _sBox_superStyle
+    | x' == x && y' == y+h-1 = _superStyle_bl _sBox_superStyle
+    | x' == x+w-1 && y' == y = _superStyle_tr _sBox_superStyle
+    | x' == x+w-1 && y' == y+h-1 = _superStyle_br _sBox_superStyle
+    | x' == x || x' == x+w-1 = _superStyle_vertical _sBox_superStyle
     -- label shows up at top horizontal portion
     | y' == y = case rfnlabel pt of
-      Nothing -> _superStyle_horizontal _sBox_style
+      Nothing -> _superStyle_horizontal _sBox_superStyle
       Just x -> x
-    | y' == y+h-1 = _superStyle_horizontal _sBox_style
+    | y' == y+h-1 = _superStyle_horizontal _sBox_superStyle
     | otherwise = rfnnoborder pt
 
   r = SEltDrawer {
@@ -282,7 +282,7 @@ modify_sElt_with_cBoundingBox isDo selt cbb@CBoundingBox {..} = case selt of
 modify_sElt_with_cSuperStyle :: Bool -> SElt -> CSuperStyle -> SElt
 modify_sElt_with_cSuperStyle isDo selt (CSuperStyle style) = case selt of
   SEltBox sbox -> SEltBox $ sbox {
-      _sBox_style = modifyDelta isDo (_sBox_style sbox) style
+      _sBox_superStyle = modifyDelta isDo (_sBox_superStyle sbox) style
     }
   -- TODO handle resize parameter
   SEltLine sline -> SEltLine $ sline {

@@ -30,12 +30,12 @@ spec = do
                   _sBoxText_text = "m ow meow meow"
                 }
               , _sBox_boxType = style
-              , _sBox_style = testsstyle
+              , _sBox_superStyle = testsstyle
             }
           somesbox2 style = def {
               _sBox_box       = LBox 0 (V2 1 1)
               , _sBox_boxType = style
-              , _sBox_style = testsstyle
+              , _sBox_superStyle = testsstyle
             }
           somesbox3 style = def {
               _sBox_box       = LBox 0 (V2 10 10)
@@ -44,7 +44,7 @@ spec = do
                   , _sBoxText_style = TextStyle TextAlign_Right
                 }
               , _sBox_boxType = style
-              , _sBox_style = testsstyle
+              , _sBox_superStyle = testsstyle
             }
           somesbox4 style = def {
               _sBox_box       = LBox 0 (V2 10 10)
@@ -53,7 +53,7 @@ spec = do
                   , _sBoxText_style = TextStyle TextAlign_Left
                 }
               , _sBox_boxType = style
-              , _sBox_style = testsstyle
+              , _sBox_superStyle = testsstyle
             }
           somesbox5 style = def {
             _sBox_box       = LBox 0 (V2 10 5)
@@ -65,7 +65,7 @@ spec = do
                 , _sBoxTitle_align = TextAlign_Right
               }
             , _sBox_boxType = style
-            , _sBox_style = testsstyle
+            , _sBox_superStyle = testsstyle
           }
         it "SBoxType_NoBoxText" $ do
           let

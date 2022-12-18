@@ -30,8 +30,7 @@ import qualified Data.Sequence      as Seq
 
 -- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
-  -- TODO rename owlPFState
-  _owlPFWorkspace_pFState       :: OwlPFState
+  _owlPFWorkspace_owlPFState       :: OwlPFState
 
   -- this is updated after each call to updateOwlPFWorkspace and is only guaranteed to be valid at that point
   -- TODO better to have methods return (OwlPFWorkspace, SuperOwlChanges) instead of embedding in OwlPFWorkspace
@@ -44,7 +43,7 @@ instance NFData OwlPFWorkspace
 
 loadOwlPFStateIntoWorkspace :: OwlPFState -> OwlPFWorkspace -> OwlPFWorkspace
 loadOwlPFStateIntoWorkspace pfs ws = r where
-  removeOld = fmap (const Nothing) (_owlTree_mapping . _owlPFState_owlTree . _owlPFWorkspace_pFState $ ws)
+  removeOld = fmap (const Nothing) (_owlTree_mapping . _owlPFState_owlTree . _owlPFWorkspace_owlPFState $ ws)
   addNew = IM.mapWithKey (\rid (oem,oe) -> Just (SuperOwl rid oem oe)) (_owlTree_mapping . _owlPFState_owlTree $ pfs)
   changes = IM.union addNew removeOld
   r = OwlPFWorkspace pfs changes emptyLlamaStack
@@ -64,7 +63,7 @@ undoWorkspace pfw =  r where
   LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
   r = case _llamaStack_done of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs (undollama:_llamaStack_undone) _llamaStack_lastSaved) where
-      (newpfs, changes, undollama) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+      (newpfs, changes, undollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e -> error $ show e
         Right x -> x
     _ -> pfw
@@ -74,7 +73,7 @@ redoWorkspace pfw = r where
   LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
   r = case _llamaStack_undone of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack (dollama:_llamaStack_done) cs _llamaStack_lastSaved) where
-      (newpfs, changes, dollama) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+      (newpfs, changes, dollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e -> error $ show e
         Right x -> x
     _ -> pfw
@@ -92,14 +91,14 @@ undoPermanentWorkspace pfw =  r where
       else Nothing
   r = case _llamaStack_done of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs _llamaStack_undone newLastSaved) where
-      (newpfs, changes, _) = case _llama_apply c (_owlPFWorkspace_pFState pfw) of
+      (newpfs, changes, _) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e -> error $ show e
         Right x -> x
     _ -> pfw
 
 doLlamaWorkspace :: Llama -> OwlPFWorkspace -> OwlPFWorkspace
 doLlamaWorkspace llama pfw = r where
-  (newpfs, changes, undollama) = case _llama_apply llama (_owlPFWorkspace_pFState pfw) of
+  (newpfs, changes, undollama) = case _llama_apply llama (_owlPFWorkspace_owlPFState pfw) of
     Left e -> error $ show e
     Right x -> x
   LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
@@ -111,7 +110,7 @@ doLlamaWorkspace llama pfw = r where
       -- we can still undo back to last save state
       else Just x
   r = OwlPFWorkspace {
-      _owlPFWorkspace_pFState       = newpfs
+      _owlPFWorkspace_owlPFState       = newpfs
       , _owlPFWorkspace_lastChanges = changes
       , _owlPFWorkspace_llamaStack  = LlamaStack {
           _llamaStack_done = undollama : _llamaStack_done
@@ -134,7 +133,7 @@ doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorksp
 doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
   undoedws = undoPermanentWorkspace ws
-  undoedpfs = _owlPFWorkspace_pFState undoedws
+  undoedpfs = _owlPFWorkspace_owlPFState undoedws
   cmd = cmdFn undoedpfs
   r = doLlamaWorkspace (makePFCLlama cmd) undoedws
 
@@ -227,7 +226,7 @@ removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
 
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let
-  lastState = _owlPFWorkspace_pFState ws
+  lastState = _owlPFWorkspace_owlPFState ws
   r = case evt of
     WSEAddElt (undo, spot, oelt) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
@@ -245,13 +244,13 @@ updateOwlPFWorkspace evt ws = let
       else doLlamaWorkspace x ws
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     -- ignore invalid canvas resize events
-    WSEResizeCanvas x -> if validateCanvasSizeOperation x ws 
+    WSEResizeCanvas x -> if validateCanvasSizeOperation x ws
       then doCmdWorkspace (OwlPFCResizeCanvas x) ws
       else ws
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
     WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
-  afterState = _owlPFWorkspace_pFState r
+  afterState = _owlPFWorkspace_owlPFState r
   isValidAfter = owlPFState_isValid afterState
   in if isValidAfter
     then r
@@ -261,7 +260,7 @@ updateOwlPFWorkspace evt ws = let
 -- | returns true if the applying `OwlPFCResizeCanvas lbox` results in a valid canvas size
 validateCanvasSizeOperation :: DeltaLBox -> OwlPFWorkspace -> Bool
 validateCanvasSizeOperation lbox ws = r where
-  pfs = _owlPFWorkspace_pFState ws
+  pfs = _owlPFWorkspace_owlPFState ws
   oldcanvas = _sCanvas_box $ _owlPFState_canvas pfs
   newcanvas = plusDelta oldcanvas lbox
   r = isValidCanvas (SCanvas newcanvas)

@@ -210,7 +210,7 @@ make_sBoxType border text = if border
 data SBox = SBox {
   _sBox_box       :: LBox
   -- TODO Rename to _superStyle
-  , _sBox_style   :: SuperStyle
+  , _sBox_superStyle   :: SuperStyle
   , _sBox_title   :: SBoxTitle
   , _sBox_text    :: SBoxText
   , _sBox_boxType :: SBoxType
@@ -224,7 +224,7 @@ instance NFData SBox
 instance Default SBox where
   def = SBox {
       _sBox_box     = LBox 0 0
-      , _sBox_style = def
+      , _sBox_superStyle = def
       , _sBox_title = def
       , _sBox_text  = def
       , _sBox_boxType = SBoxType_Box

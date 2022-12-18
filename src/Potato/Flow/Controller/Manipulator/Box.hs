@@ -270,7 +270,7 @@ instance PotatoHandler BoxHandler where
           , _sBox_boxType  = if _boxHandler_creation == BoxCreationType_Text
             then SBoxType_BoxText -- TODO pull from params
             else SBoxType_Box
-          , _sBox_style = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
+          , _sBox_superStyle = _potatoDefaultParameters_superStyle _potatoHandlerInput_potatoDefaultParameters
           , _sBox_title = def { _sBoxTitle_align = _potatoDefaultParameters_box_label_textAlign _potatoHandlerInput_potatoDefaultParameters }
           , _sBox_text = def { _sBoxText_style = def { _textStyle_alignment = _potatoDefaultParameters_box_text_textAlign _potatoHandlerInput_potatoDefaultParameters } }
         }

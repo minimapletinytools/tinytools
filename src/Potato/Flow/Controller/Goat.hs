@@ -136,7 +136,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
 
 
 goatState_pFState :: GoatState -> OwlPFState
-goatState_pFState = _owlPFWorkspace_pFState . _goatState_workspace
+goatState_pFState = _owlPFWorkspace_owlPFState . _goatState_workspace
 
 -- TODO instance GoatState HasOwlTree
 goatState_owlTree :: GoatState -> OwlTree
@@ -350,7 +350,7 @@ deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
   last_workspace = _goatState_workspace
-  last_pFState = _owlPFWorkspace_pFState last_workspace
+  last_pFState = _owlPFWorkspace_owlPFState last_workspace
   r = PotatoHandlerInput {
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
@@ -379,7 +379,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   goatState@GoatState {..} = goatStateIgnore
 
   last_workspace = _goatState_workspace
-  last_pFState = _owlPFWorkspace_pFState last_workspace
+  last_pFState = _owlPFWorkspace_owlPFState last_workspace
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
@@ -391,7 +391,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
-        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState $  _goatState_workspace) _goatState_selection
+        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  _goatState_workspace) _goatState_selection
         newFolderEv = WSEAddFolder (folderPos, x)
       GoatCmdLoad (spf, cm) -> r where
         -- HACK this won't get generated until later but we need this to generate layersState...
@@ -421,14 +421,13 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
 
           canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
 
-          -- TODO rename to goatState_withUpdatedMouse
-          goatState' = goatState {
+          goatState_withNewMouse = goatState {
               _goatState_mouseDrag = mouseDrag
               , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
             }
           -- TODO call makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea and merge outputs instead UG, or is there a trick for us to be renentrant into foldGoatFn?
 
-          noChangeOutput = makeGoatCmdTempOutputFromNothing goatState'
+          noChangeOutput = makeGoatCmdTempOutputFromNothing goatState_withNewMouse
 
           isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
 
@@ -437,33 +436,33 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
           -- hack to recover after sameSource issue
           -- TODO TEST
           _ | mouseSourceFailure -> assert False $
-            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState'
+            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState_withNewMouse
 
           -- if mouse was cancelled, update _goatState_mouseDrag accordingly
           MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-            then makeGoatCmdTempOutputFromNothing $ goatState' { _goatState_mouseDrag = def }
+            then makeGoatCmdTempOutputFromNothing $ goatState_withNewMouse { _goatState_mouseDrag = def }
             else noChangeOutput -- still cancelled
 
           -- if mouse is intended for layers
           _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
-            Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
+            Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
             Nothing  -> noChangeOutput
 
           -- if middle mouse button, create a temporary PanHandler
           MouseDragState_Down | _lMouseData_button mouseData == MouseButton_Middle -> r where
             panhandler = def { _panHandler_maybePrevHandler = Just (SomePotatoHandler handler) }
             r = case pHandleMouse panhandler potatoHandlerInput canvasDrag of
-              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
               Nothing -> error "PanHandler expected to capture mouse input"
 
           -- pass onto canvas handler
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
 
             -- input not captured by handler, pass onto select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
                 Nothing -> error "handler was expected to capture this mouse state"
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
@@ -472,7 +471,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
         -- special case, treat escape cancel mouse drag as a mouse input
         KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive _goatState_mouseDrag -> r where
           canceledMouse = cancelDrag _goatState_mouseDrag
-          goatState' = goatState {
+          goatState_withNewMouse = goatState {
               _goatState_mouseDrag = canceledMouse
 
               -- escape will cancel mouse focus
@@ -484,11 +483,11 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
           -- TODO use _goatState_focusedArea instead
           r = if _mouseDrag_isLayerMouse _goatState_mouseDrag
             then case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag canceledMouse) of
-              Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
-              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState'
+              Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
+              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
             else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState _goatState_pan canceledMouse) of
-              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
-              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState'
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
+              Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
 
         -- we are in the middle of mouse drag, ignore all keyboard inputs
         -- perhaps a better way to do this is to have handlers capture all inputs when active
@@ -537,7 +536,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                     offsetstree = offsetSEltTree (V2 1 1) stree
                     minitree' = owlTree_fromSEltTree offsetstree
                     maxid1 = owlTree_maxId minitree' + 1
-                    maxid2 = owlPFState_nextId (_owlPFWorkspace_pFState _goatState_workspace)
+                    maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState _goatState_workspace)
                     minitree = owlTree_reindex (max maxid1 maxid2) minitree'
                     spot = lastPositionInSelection (goatState_owlTree goatState) _goatState_selection
                     treePastaEv = WSEAddTree (spot, minitree)
@@ -573,7 +572,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
     Just (_, wsev) -> (r1,r2) where
       r1 = updateOwlPFWorkspace wsev _goatState_workspace
       r2 = _owlPFWorkspace_lastChanges r1
-  pFState_afterEvent = _owlPFWorkspace_pFState workspace_afterEvent
+  pFState_afterEvent = _owlPFWorkspace_owlPFState workspace_afterEvent
 
   -- | update pan from GoatCmdTempOutput |
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
@@ -759,7 +758,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   -}
 
   next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_forSelection }
-  next_workspace = workspace_afterEvent { _owlPFWorkspace_pFState = next_pFState}
+  next_workspace = workspace_afterEvent { _owlPFWorkspace_owlPFState = next_pFState}
 
   checkAttachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState) == next_attachmentMap
 

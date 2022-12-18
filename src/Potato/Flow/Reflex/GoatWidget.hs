@@ -181,20 +181,20 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   -- TODO flip order of render and holdUniqDyn
   r_handlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
   r_layersHandlerRenderOutput <- holdUniqDyn $ fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
-  r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
+  r_canvas <- holdUniqDyn $ fmap (_owlPFState_canvas . _owlPFWorkspace_owlPFState . _goatState_workspace) goatDyn
   r_unsavedChanges <- holdUniqDyn $ fmap (goatState_hasUnsavedChanges) goatDyn
 
   {- this causes 4 calls to foldGoatFn per tick :(
   let
     r_selection = fmap _goatState_selection goatDyn
-    r_selection_converted = fmap (\gs -> superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree . _owlPFWorkspace_pFState . _goatState_workspace $ gs) (const True) (_goatState_selection gs)) goatDyn
+    r_selection_converted = fmap (\gs -> superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState . _goatState_workspace $ gs) (const True) (_goatState_selection gs)) goatDyn
     r_broadphase = fmap _goatState_broadPhaseState goatDyn
     r_pan = fmap _goatState_pan goatDyn
     r_layers = fmap _goatState_layersState goatDyn
     -- TODO flip order of render and holdUniqDyn
     r_handlerRenderOutput = fmap (\gs -> pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
     r_layersHandlerRenderOutput = fmap (\gs -> pRenderLayersHandler (_goatState_layersHandler gs) (potatoHandlerInputFromGoatState gs)) goatDyn
-    r_canvas = fmap (_owlPFState_canvas . _owlPFWorkspace_pFState . _goatState_workspace) goatDyn
+    r_canvas = fmap (_owlPFState_canvas . _owlPFWorkspace_owlPFState . _goatState_workspace) goatDyn
   -}
 
   let
