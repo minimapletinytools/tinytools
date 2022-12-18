@@ -442,6 +442,11 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
 toDisplayLines :: LayersRenameHandler -> TZ.DisplayLines ()
 toDisplayLines LayersRenameHandler {..} = TZ.displayLinesWithAlignment TZ.TextAlignment_Left 1000 () () _layersRenameHandler_zipper
 
+-- TODO this should be configurable
+-- hardcoded offset to the <elt name> e.g. " ea 𐂂 <elt name>"
+layerJunkOffset :: Int
+layerJunkOffset = 7
+
 -- TODO confirm/cancel if click off the one we are renaming, cancle handler and pass input onto the replacement (see TODO in GoatWidget)
 instance PotatoHandler LayersRenameHandler where
   pHandlerName _ = handlerName_layersRename
@@ -460,7 +465,7 @@ instance PotatoHandler LayersRenameHandler where
       MouseDragState_Down | lepos == renaminglepos -> r where
         xpos = case clickLayerNew lentries leposxy of
           Nothing -> error "this should never happen"
-          Just (_, _, xoff) -> xoff - 6
+          Just (_, _, xoff) -> xoff - layerJunkOffset
 
         dl = toDisplayLines lh
         nexttz = TZ.goToDisplayLinePosition xpos 0 dl _layersRenameHandler_zipper

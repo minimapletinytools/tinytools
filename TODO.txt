@@ -140,8 +140,9 @@ DONE-midpoints
 -fix PanSpec...
 DONE-get rid of info box for now
 DONE-middle mouse cilck to pan
--don't show RID on layers
+DONE-don't show RID on layers
 -layers should show a little icon indicating what kind of element is there
+  -try emoji?
 -BUG boxes past a certain point don't show attachments
 -layers should allow punctuation characters
 
