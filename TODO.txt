@@ -137,37 +137,18 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
+-fix PanSpec...
+DONE-get rid of info box for now
+DONE-middle mouse cilck to pan
+-don't show RID on layers
+-layers should show a little icon indicating what kind of element is there
+-BUG boxes past a certain point don't show attachments
+-layers should allow punctuation characters
+
+-make tutorial file, I think you have everythingy ou need now!!!
 -BUG you sometimes hit this assert
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
 DONE-BUG need to do size validation on params canvas size stuff
--FEATURE add line labels
-  -adding midpoints when line labels exist need to be smarter about reposition line labels
-  -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-  -add line label anchor in text edit mode so that you can easily reposition it
-  -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
-    -how do distinguish between backspace to delete vs remove character for line label handler?
-      -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
-  -bonus, cache line labels
-  DONE-remember to adjust _sAutoLine_labels when deleting midpoints
-  DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
-  DONE-BUG click to edit text inside SAutoLineLabelHandler not working
-  DONE-SAutoLine -> SAutoLineLabel -> XY
-  DONE-mouse down up on line label takes you to line label handler
-  DONE-generate text box for line label handler (don't wrap for now)
-    -offset anchor by 1 in line label handler
-  DONE-rendering
-    -must adjust bounding box to include line labels UGGG
--folder stuff
-  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
-  -empty folders should not be expandable? (set to expanded by default)
-  -BUG click release on lock/hide/collapse on selected element should not deselect
-  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
-  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
-    -not sure what happens when you shift select past a folder
-  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
-    -you need some kind of click off pane reset type action to handler
-      -can you tie this into graceful handling of bad mouse states?
-  DONE-make new elts get created inside selected folder rather than above it?
 -BUG fix line bugs
   -BUG midpoints rendered as ?
   -BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
@@ -228,8 +209,39 @@ DONE-BUG need to do size validation on params canvas size stuff
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
--proper configurable theme in Main.hs
 
+
+:: CUT LINE
+-FEATURE add line labels
+  -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
+    -you have a test case to catch this already
+  -adding midpoints when line labels exist need to be smarter about reposition line labels
+  -add line label anchor in text edit mode so that you can easily reposition it
+  -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
+    -how do distinguish between backspace to delete vs remove character for line label handler?
+      -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
+  -bonus, cache line labels
+  DONE-remember to adjust _sAutoLine_labels when deleting midpoints
+  DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
+  DONE-BUG click to edit text inside SAutoLineLabelHandler not working
+  DONE-SAutoLine -> SAutoLineLabel -> XY
+  DONE-mouse down up on line label takes you to line label handler
+  DONE-generate text box for line label handler (don't wrap for now)
+    -offset anchor by 1 in line label handler
+  DONE-rendering
+    -must adjust bounding box to include line labels UGGG
+-folder stuff
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
+  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
+    -not sure what happens when you shift select past a folder
+  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  DONE-make new elts get created inside selected folder rather than above it?
+-proper configurable theme in Main.hs
 -FEATURE attach point repositioning
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
@@ -266,7 +278,7 @@ DONE-BUG need to do size validation on params canvas size stuff
   -you need some kind of options object to go along side of PotatoDefaultParameters
 
 
-
+:: DONE
 
 
 DONE-params

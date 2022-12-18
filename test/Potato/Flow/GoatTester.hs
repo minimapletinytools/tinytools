@@ -139,7 +139,7 @@ hSpecGoatTesterWithOwlPFState_quiet pfs m = do
     rslt' = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
     rslt = L.groupBy (\a b -> fst3 (_goatTesterRecord_trackingState a) == fst3 (_goatTesterRecord_trackingState b)) rslt'
   -- TODO better test case name  (pass it in)
-  -- TODO accumulate and output more information on failure
+  -- TODO accumulate and output more information on failure as single failure
   it "passes" $ forM_ rslt $ \gtss -> case gtss of
     [] -> return ()
     (x:xs) -> do
@@ -149,7 +149,7 @@ hSpecGoatTesterWithOwlPFState_quiet pfs m = do
           Just x  -> expectationFailure (T.unpack x)
 
 hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
-hSpecGoatTesterWithOwlPFState = hSpecGoatTesterWithOwlPFState_quiet
+hSpecGoatTesterWithOwlPFState = hSpecGoatTesterWithOwlPFState_verbose
 
 -- state getter helpers
 getOwlCount :: (Monad m) => GoatTesterT m Int

@@ -421,6 +421,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
 
           canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
 
+          -- TODO rename to goatState_withUpdatedMouse
           goatState' = goatState {
               _goatState_mouseDrag = mouseDrag
               , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
@@ -448,9 +449,18 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
             Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState' pho
             Nothing  -> noChangeOutput
 
+          -- if middle mouse button, create a temporary PanHandler
+          MouseDragState_Down | _lMouseData_button mouseData == MouseButton_Middle -> r where
+            panhandler = def { _panHandler_maybePrevHandler = Just (SomePotatoHandler handler) }
+            r = case pHandleMouse panhandler potatoHandlerInput canvasDrag of
+              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
+              Nothing -> error "PanHandler expected to capture mouse input"
+
+          -- pass onto canvas handler
           _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
             Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
-            -- input not captured by handler, do select or select+drag
+
+            -- input not captured by handler, pass onto select or select+drag
             Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
               r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
                 Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState' pho
