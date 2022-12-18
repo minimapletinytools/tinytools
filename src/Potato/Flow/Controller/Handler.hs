@@ -198,6 +198,7 @@ class PotatoHandler h where
   pHandleKeyboard _ _ _ = Nothing
 
   -- reset handler if an event came in in between (e.g. due to undo, redo)
+  -- returns Nothing if the handler no longer exists after refreshing
   --
   -- FOR NOW we expect this to only be called if handler is not active
   -- FOR NOW this is only allowed to return the existing handler
@@ -206,7 +207,7 @@ class PotatoHandler h where
   pRefreshHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   pRefreshHandler _ _ = Nothing
 
-  -- active manipulators will not be overwritten by new handlers via selection from backend
+  -- active manipulators will not be overwritten by new handlers via selection from changes
   pIsHandlerActive :: h -> Bool
   pIsHandlerActive _ = False
 

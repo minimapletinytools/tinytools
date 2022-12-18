@@ -119,8 +119,8 @@ runGoatTesterT gs m = do
 runGoatTester :: GoatState -> GoatTester a -> [GoatTesterRecord]
 runGoatTester gs m = runIdentity $ runGoatTesterT gs m
 
-hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
-hSpecGoatTesterWithOwlPFState pfs m = do
+hSpecGoatTesterWithOwlPFState_verbose :: OwlPFState -> GoatTester a -> SpecWith ()
+hSpecGoatTesterWithOwlPFState_verbose pfs m = do
   let
     rslt' = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
     rslt = L.groupBy (\a b -> fst3 (_goatTesterRecord_trackingState a) == fst3 (_goatTesterRecord_trackingState b)) rslt'
@@ -131,6 +131,25 @@ hSpecGoatTesterWithOwlPFState pfs m = do
         it (T.unpack _goatTesterRecord_description) $ case _goatTesterRecord_failureMessage of
           Nothing -> return ()
           Just x  -> expectationFailure (T.unpack x)
+
+
+hSpecGoatTesterWithOwlPFState_quiet :: OwlPFState -> GoatTester a -> SpecWith ()
+hSpecGoatTesterWithOwlPFState_quiet pfs m = do
+  let
+    rslt' = runGoatTester (makeGoatState (V2 100 100) (pfs, emptyControllerMeta)) m
+    rslt = L.groupBy (\a b -> fst3 (_goatTesterRecord_trackingState a) == fst3 (_goatTesterRecord_trackingState b)) rslt'
+  -- TODO better test case name  (pass it in)
+  -- TODO accumulate and output more information on failure
+  it "passes" $ forM_ rslt $ \gtss -> case gtss of
+    [] -> return ()
+    (x:xs) -> do
+      forM_ (x:xs) $ \GoatTesterRecord {..} -> do
+        case _goatTesterRecord_failureMessage of
+          Nothing -> return ()
+          Just x  -> expectationFailure (T.unpack x)
+
+hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
+hSpecGoatTesterWithOwlPFState = hSpecGoatTesterWithOwlPFState_quiet
 
 -- state getter helpers
 getOwlCount :: (Monad m) => GoatTesterT m Int
