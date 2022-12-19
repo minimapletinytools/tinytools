@@ -143,8 +143,7 @@ lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
         x:xs -> x:withoutzerosback xs
 
   foldrfn (cd, d, s) [] = [(cd, d, s)]
-  -- don't double up if next anchor is a subsegment starting anchor (pretty sure this should never happen)
-  foldrfn (cd, d, firstisstart) ((cd',d', nextisstart):xs) = if cd == cd' && not nextisstart
+  foldrfn (cd, d, firstisstart) ((cd',d', nextisstart):xs) = if cd == cd'
     then (cd, d+d', firstisstart):xs
     else (cd,d,firstisstart):(cd',d',nextisstart):xs
   withoutdoubles = foldr foldrfn [] withoutzeros
@@ -647,7 +646,7 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
 
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
-  anchors = lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenderList ot sline
+  anchors = lineAnchorsForRender_simplify . lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenderList ot sline
 
 internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> Int -> XY
 internal_getSAutoLineLabelPosition_walk lar targetd totall = r where

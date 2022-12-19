@@ -151,7 +151,6 @@ DONE-BUG need to do size validation on params canvas size stuff
 -BUG you sometimes hit this assert
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
 -BUG fix line bugs
-  -BUG midpoints rendered as ?
   
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
@@ -170,6 +169,7 @@ DONE-BUG need to do size validation on params canvas size stuff
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
           ╚═════╝
+  DONE-BUG midpoints rendered as ?
   DONE-BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
   DONE-line anchors handles should render on top of attachment points and not on the edge of the box
   DONE-AL_ANY needs to be a single point and not a box with 4 sides...
