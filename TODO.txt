@@ -137,19 +137,19 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
--fix PanSpec...
 DONE-get rid of info box for now
 DONE-middle mouse cilck to pan
 DONE-don't show RID on layers
--layers should show a little icon indicating what kind of element is there
+DONE-layers should show a little icon indicating what kind of element is there
   -try emoji?
--BUG boxes past a certain point don't show attachments
--layers should allow punctuation characters
-
+DONE-layers should allow punctuation characters
+DONE-BUG boxes past a certain point don't show attachments
+  -- TODO change this to be in canvas space _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
+DONE-BUG need to do size validation on params canvas size stuff
+-fix PanSpec...
 -make tutorial file, I think you have everythingy ou need now!!!
 -BUG you sometimes hit this assert
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
-DONE-BUG need to do size validation on params canvas size stuff
 -BUG fix line bugs
   -BUG midpoints rendered as ?
   -BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away

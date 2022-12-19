@@ -15,6 +15,7 @@ module Potato.Flow.Math (
   , lBox_tl
   , lBox_area
   , lBox_to_axis
+  , translate_lBox
   , add_XY_to_lBox
 
   , make_lBox_from_axis
@@ -95,6 +96,10 @@ lBox_area (LBox _ (V2 w h)) = w*h
 lBox_tl :: LBox -> XY
 lBox_tl (LBox p _) = p
 
+translate_lBox :: XY -> LBox -> LBox
+translate_lBox pan (LBox p s) = LBox (p+pan) s
+
+
 -- | returns a 0 area LBox
 make_0area_lBox_from_XY :: XY -> LBox
 make_0area_lBox_from_XY p = LBox p 0
@@ -116,7 +121,7 @@ make_lBox_from_XYs (V2 x1 y1) (V2 x2 y2) =
 -- | always returns a canonical LBox
 make_lBox_from_XYlist :: [XY] -> LBox
 make_lBox_from_XYlist [] = nilLBox
-make_lBox_from_XYlist (x:xs) = foldr add_XY_to_lBox (make_0area_lBox_from_XY x) xs 
+make_lBox_from_XYlist (x:xs) = foldr add_XY_to_lBox (make_0area_lBox_from_XY x) xs
 
 
 -- | always returns a canonical LBox

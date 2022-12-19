@@ -27,7 +27,7 @@ import qualified Data.Sequence                  as Seq
 import Data.Sequence ((<|))
 import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Data.Text as T
-import Data.Char (isAlphaNum)
+import Data.Char
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -409,12 +409,10 @@ data LayersRenameHandler = LayersRenameHandler {
 
 isValidLayerRenameChar :: Char -> Bool
 isValidLayerRenameChar c = case c of
-  '-' -> True
-  '_' -> True
-  '.' -> True
-  ' ' -> True
-  _ | isAlphaNum c -> True
-  _ -> False
+  _ | isControl c -> False
+  ' ' -> True -- only allow ' ' for whitespace character
+  _ | isSpace c -> False
+  _ -> True
 
 renameTextZipperTransform :: KeyboardKey -> Maybe (TZ.TextZipper -> TZ.TextZipper)
 renameTextZipperTransform = \case

@@ -81,7 +81,7 @@ data GoatState = GoatState {
     -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
     , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
     , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
-    , _goatState_screenRegion    :: XY
+    , _goatState_screenRegion    :: XY -- the screen region in canvas space
     , _goatState_clipboard       :: Maybe SEltTree
     , _goatState_focusedArea     :: GoatFocusedArea
 
@@ -130,7 +130,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
         , _goatState_layersState     = initiallayersstate
         , _goatState_clipboard = Nothing
         , _goatState_focusedArea = GoatFocusedArea_None
-        , _goatState_screenRegion = V2 screenx screeny
+        , _goatState_screenRegion = V2 screenx screeny - (_controllerMeta_pan controllermeta)
         , _goatState_debugCommands = []
       }
 
@@ -355,7 +355,9 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
-    , _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
+
+    -- the screen region in canvas space
+    , _potatoHandlerInput_screenRegion = translate_lBox (- _goatState_pan) (LBox 0 _goatState_screenRegion)
 
     , _potatoHandlerInput_layersState     = _goatState_layersState
     , _potatoHandlerInput_selection   = _goatState_selection
