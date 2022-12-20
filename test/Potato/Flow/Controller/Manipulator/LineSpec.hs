@@ -332,8 +332,8 @@ label_move_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (76, 0)
   expectMidpointCount 1
 
-  -- TODO fix bug here
-  setMarker "move the label over the midpoint"
+  setMarker "move the label past the midpoint"
+  -- TODO this is broken becaues label position got changed after a new midpoint was added
   canvasMouseDown (40, 0)
   canvasMouseDown (90, 0)
   canvasMouseUp (90, 0)
@@ -368,14 +368,20 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   verifySelectionCount 0
 
   -- BROKEN because line label being created in wrong spot
-  setMarker "select the line then select directly move the cursor to 1 on the label"
+  setMarker "select the line and type at eol"
   canvasMouseDown (1, 0)
   canvasMouseUp (1, 0)
   verifySelectionCount 1
   canvasMouseDown (47, 0)
   canvasMouseUp (47, 0)
   pressKey 'B'
-  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "B12A345"
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12A345B"
+
+  setMarker "then select directly move the cursor to 1 on the label"
+  canvasMouseDown (47, 0)
+  canvasMouseUp (47, 0)
+  pressKey 'C'
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "C12A345B"
 
 
 

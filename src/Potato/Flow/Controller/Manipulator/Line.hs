@@ -446,6 +446,9 @@ sAutoLine_addMidpoint :: Int -> XY -> SAutoLine -> SAutoLine
 sAutoLine_addMidpoint mpindex pos sline = r where
   newmidpoints =  L.insertAt mpindex (SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
   -- TODO update line label position
+  -- compute previous LAR distances
+  -- compute new LAR distances (after adjusting for midpoint index)
+  -- adjust distance by the change in ratio
   fmapfn ll = if _sAutoLineLabel_index ll > mpindex
     then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll + 1}
     else ll
@@ -819,7 +822,7 @@ instance PotatoHandler AutoLineLabelHandler where
             _sAutoLineLabel_text = newtext
           }
 
-  
+
         newsal_creation = sal {
             _sAutoLine_labels = newlabel : _sAutoLine_labels sal
           }
@@ -831,21 +834,21 @@ instance PotatoHandler AutoLineLabelHandler where
         -- if all text was removed, delete the line label, you shouldn't need to but double check that there was actually a label to delete
         doesdelete = T.null newtext && not oldtextnull
         newsal_delete = sAutoLine_deleteLabel (_autoLineLabelHandler_labelIndex slh) sal
-          
+
         newsal = if doesdelete
           then newsal_delete
-          else if doescreate 
-            then newsal_creation 
+          else if doescreate
+            then newsal_creation
             else newsal_update
 
         mev = if not changed
           then Nothing
           else if doesdelete && _autoLineLabelHandler_creation slh
-            -- if we deleted a newly created line just undo the last operation 
+            -- if we deleted a newly created line just undo the last operation
             then Just WSEUndo
             else Just $ WSEApplyLlama (_autoLineLabelHandler_undoFirst slh, makeSetLlama (rid, SEltLine newsal))
-          
-        
+
+
         r = def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelHandler_state  = newtais

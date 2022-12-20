@@ -699,11 +699,17 @@ getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
 getClosestPointOnLineFromLineAnchorsForRenderList :: [LineAnchorsForRender] -> XY -> (XY, Int, Float)
 getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r where
 
-  foldlfn :: (Int, (XY, Int, Float), Int) -> LineAnchorsForRender -> (Int, (XY, Int, Float), Int)
+  foldlfn :: 
+    (Int, (XY, Int, Float), Int) -- (previous closest distance to line, (prev closest position, index into larlist, rel distance on segment))
+    -> LineAnchorsForRender 
+    -> (Int, (XY, Int, Float), Int)
   foldlfn (closestd, closestp, curindex) lar = r2 where
 
 
-    foldlfn2 :: (Int, XY, Int, Maybe (Int, XY)) -> (CartDir, Int, Bool) -> (Int, XY, Int, Maybe (Int, XY))
+    foldlfn2 :: 
+      (Int, XY, Int, Maybe (Int, XY)) -- (total distance we traveled so far, current anchor position, prev closest distance to line (includes second fold results up until now), Maybe (how far we traveled to new closest point on line, new closest point))
+      -> (CartDir, Int, Bool) 
+      -> (Int, XY, Int, Maybe (Int, XY))
     foldlfn2 (traveld, curp@(V2 curx cury), closestd2, mnewclosestpos) cdwd@(cd,d,_) = r3 where
 
       between :: Int -> Int -> Int -> Bool
