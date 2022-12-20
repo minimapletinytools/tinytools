@@ -331,7 +331,7 @@ instance PotatoHandler AutoLineHandler where
             }
           op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
           r = Just def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler_for_newLabel rid newsal newllabel (SomePotatoHandler slh) phi rmd
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler_from_newLineLabel rid newsal newllabel (SomePotatoHandler slh) phi rmd
               , _potatoHandlerOutput_pFEvent = Just op
             }
       -- TODO is this correct??
@@ -612,7 +612,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
           _potatoHandlerOutput_nextHandler = if not _autoLineLabelMoverHandler_undoFirst
             -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler
             then Just $ SomePotatoHandler $
-              makeAutoLineLabelHandler_for_selection _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
+              makeAutoLineLabelHandler_from_labelIndex _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
             -- TODO consider also going into edit handler after dragging an endpoint, but for now, just go back to the previous handler (which will be AutoLineHandler)
             else Just (_autoLineLabelMoverHandler_prevHandler)
         }
@@ -683,7 +683,6 @@ updateAutoLineLabelHandlerState ot reset selection slh@AutoLineLabelHandler {..}
       else _autoLineLabelHandler_undoFirst
   }
 
--- TODO get rid of rid arg
 -- | make a TextInputState from a SAutoLineLabel on the SAutoLine
 -- the SAutoLineLabel does not need to exist in the SAutoLine
 makeAutoLineLabelInputState_from_lineLabel :: REltId -> SAutoLine -> SAutoLineLabel -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
@@ -703,15 +702,13 @@ makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi@PotatoHandlerInput
     }
   r = mouseText tis box rmd (V2 0 0)
 
-makeAutoLineLabelInputState_from_lineLabelIndex :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
-makeAutoLineLabelInputState_from_lineLabelIndex rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
+makeAutoLineLabelInputState_from_labelIndex :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
+makeAutoLineLabelInputState_from_labelIndex rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
   llabel = _sAutoLine_labels sal `debugBangBang` labelindex
   r = makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi rmd
 
-
--- TODO _for_newLabel
-makeAutoLineLabelHandler_for_newLabel :: REltId -> SAutoLine -> SAutoLineLabel -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler_for_newLabel rid sal llabel prev phi rmd = AutoLineLabelHandler {
+makeAutoLineLabelHandler_from_newLineLabel :: REltId -> SAutoLine -> SAutoLineLabel -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler_from_newLineLabel rid sal llabel prev phi rmd = AutoLineLabelHandler {
     _autoLineLabelHandler_active = False
     , _autoLineLabelHandler_state = (makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi rmd)
     , _autoLineLabelHandler_prevHandler = prev
@@ -721,14 +718,13 @@ makeAutoLineLabelHandler_for_newLabel rid sal llabel prev phi rmd = AutoLineLabe
   }
 
 
--- TODO rename to _for_index
-makeAutoLineLabelHandler_for_selection :: Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler_for_selection labelindex prev phi@PotatoHandlerInput {..} rmd = r where
+makeAutoLineLabelHandler_from_labelIndex :: Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler_from_labelIndex labelindex prev phi@PotatoHandlerInput {..} rmd = r where
   (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
   llabel = _sAutoLine_labels sal `debugBangBang` labelindex
   r = AutoLineLabelHandler {
       _autoLineLabelHandler_active = False
-      , _autoLineLabelHandler_state = (makeAutoLineLabelInputState_from_lineLabelIndex rid sal labelindex phi rmd)
+      , _autoLineLabelHandler_state = (makeAutoLineLabelInputState_from_labelIndex rid sal labelindex phi rmd)
       , _autoLineLabelHandler_prevHandler = prev
       , _autoLineLabelHandler_undoFirst = False
       , _autoLineLabelHandler_labelIndex = labelindex
