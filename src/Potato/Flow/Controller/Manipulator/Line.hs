@@ -316,21 +316,22 @@ instance PotatoHandler AutoLineHandler where
         Nothing -> Just def
         Just _ -> r where
 
+          -- TODO do not make line here
           -- TODO move to helper
           (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
           -- PERF cache someday...
           larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
           (pos, mpindex, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
-          newl = def {
+          newllabel = def {
               _sAutoLineLabel_index = mpindex
               , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
             }
           newsal = sal {
-              _sAutoLine_labels = newl : _sAutoLine_labels sal
+              _sAutoLine_labels = newllabel : _sAutoLine_labels sal
             }
           op = WSEApplyLlama (False, makeSetLlama (rid, SEltLine newsal))
           r = Just def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler rid newsal 0 (SomePotatoHandler slh) phi rmd
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler $ makeAutoLineLabelHandler_for_newLabel rid newsal newllabel (SomePotatoHandler slh) phi rmd
               , _potatoHandlerOutput_pFEvent = Just op
             }
       -- TODO is this correct??
@@ -574,6 +575,7 @@ data AutoLineLabelMoverHandler = AutoLineLabelMoverHandler {
     , _autoLineLabelMoverHandler_labelIndex  :: Int
   }
 
+-- TODO add support for moving line that does not exist yet
 instance PotatoHandler AutoLineLabelMoverHandler where
   pHandlerName _ = handlerName_simpleLine_textLabelMover
   pHandleMouse slh@AutoLineLabelMoverHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
@@ -610,7 +612,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
           _potatoHandlerOutput_nextHandler = if not _autoLineLabelMoverHandler_undoFirst
             -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler
             then Just $ SomePotatoHandler $
-              makeAutoLineLabelHandlerFromSelection _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
+              makeAutoLineLabelHandler_for_selection _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
             -- TODO consider also going into edit handler after dragging an endpoint, but for now, just go back to the previous handler (which will be AutoLineHandler)
             else Just (_autoLineLabelMoverHandler_prevHandler)
         }
@@ -630,12 +632,21 @@ instance PotatoHandler AutoLineLabelMoverHandler where
 
 
 
+sAutoLine_deleteLabel :: Int -> SAutoLine -> SAutoLine
+sAutoLine_deleteLabel labelindex sline = r where
+  newlabels =  L.deleteAt labelindex (_sAutoLine_labels sline)
+  r = sline {
+      _sAutoLine_labels = newlabels
+    }
+
 -- handles modifying text labels
 data AutoLineLabelHandler = AutoLineLabelHandler {
     _autoLineLabelHandler_active :: Bool
     , _autoLineLabelHandler_state :: TextInputState
     , _autoLineLabelHandler_prevHandler :: SomePotatoHandler
     , _autoLineLabelHandler_undoFirst :: Bool
+
+    -- TODO change to Maybe Int
     , _autoLineLabelHandler_labelIndex :: Int
   }
 
@@ -672,11 +683,11 @@ updateAutoLineLabelHandlerState ot reset selection slh@AutoLineLabelHandler {..}
       else _autoLineLabelHandler_undoFirst
   }
 
-makeAutoLineLabelInputState :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
-makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
-
-  llabel = _sAutoLine_labels sal `debugBangBang` labelindex
-
+-- TODO get rid of rid arg
+-- | make a TextInputState from a SAutoLineLabel on the SAutoLine
+-- the SAutoLineLabel does not need to exist in the SAutoLine
+makeAutoLineLabelInputState_from_lineLabel :: REltId -> SAutoLine -> SAutoLineLabel -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
+makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi@PotatoHandlerInput {..} rmd = r where
   ogtext = _sAutoLineLabel_text llabel
   pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
   box = getSAutoLineLabelBox pos llabel
@@ -692,23 +703,37 @@ makeAutoLineLabelInputState rid sal labelindex phi@PotatoHandlerInput {..} rmd =
     }
   r = mouseText tis box rmd (V2 0 0)
 
-makeAutoLineLabelHandlerFromSelection :: Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandlerFromSelection labelindex prev phi@PotatoHandlerInput {..} rmd = r where
-  (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+makeAutoLineLabelInputState_from_lineLabelIndex :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
+makeAutoLineLabelInputState_from_lineLabelIndex rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
   llabel = _sAutoLine_labels sal `debugBangBang` labelindex
-  pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
-  r = makeAutoLineLabelHandler rid sal labelindex prev phi rmd
+  r = makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi rmd
 
--- TODO get rid of iscreation bool
-makeAutoLineLabelHandler :: REltId -> SAutoLine -> Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
-makeAutoLineLabelHandler rid sal labelindex prev phi@PotatoHandlerInput {..} rmd = AutoLineLabelHandler {
+
+-- TODO _for_newLabel
+makeAutoLineLabelHandler_for_newLabel :: REltId -> SAutoLine -> SAutoLineLabel -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler_for_newLabel rid sal llabel prev phi rmd = AutoLineLabelHandler {
     _autoLineLabelHandler_active = False
-    , _autoLineLabelHandler_state = makeAutoLineLabelInputState rid sal labelindex phi rmd
+    , _autoLineLabelHandler_state = (makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi rmd)
     , _autoLineLabelHandler_prevHandler = prev
     , _autoLineLabelHandler_undoFirst = False
-    -- label does not exist yet in creation cases, but will at the 0th index in the next tick
-    , _autoLineLabelHandler_labelIndex = labelindex
+    -- NOTE this label index does not exist yet or points to the wrong line label, this is where the label will be after it is created
+    , _autoLineLabelHandler_labelIndex = 0
   }
+
+
+-- TODO rename to _for_index
+makeAutoLineLabelHandler_for_selection :: Int -> SomePotatoHandler -> PotatoHandlerInput -> RelMouseDrag -> AutoLineLabelHandler
+makeAutoLineLabelHandler_for_selection labelindex prev phi@PotatoHandlerInput {..} rmd = r where
+  (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+  llabel = _sAutoLine_labels sal `debugBangBang` labelindex
+  r = AutoLineLabelHandler {
+      _autoLineLabelHandler_active = False
+      , _autoLineLabelHandler_state = (makeAutoLineLabelInputState_from_lineLabelIndex rid sal labelindex phi rmd)
+      , _autoLineLabelHandler_prevHandler = prev
+      , _autoLineLabelHandler_undoFirst = False
+      , _autoLineLabelHandler_labelIndex = labelindex
+    }
+
 
 
 -- | just a helper for pHandleMouse
@@ -792,9 +817,16 @@ instance PotatoHandler AutoLineLabelHandler where
       -- Escape or Return
       k | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh) }
 
-      -- TODO
+      -- TODO remove this, we want to delete the line label if there is no text instead (tricky because you need to allow both label handlers to operate with no actual line label)
       -- Backspace or Delete on empty text field deletes it
-      k | (k == KeyboardKey_Backspace || k == KeyboardKey_Delete) && (T.null $ _sAutoLineLabel_text llabel) -> Nothing
+      k | (k == KeyboardKey_Backspace || k == KeyboardKey_Delete) && (T.null $ _sAutoLineLabel_text llabel) -> Just r where
+        newslinedelete = sAutoLine_deleteMidpoint (_autoLineLabelHandler_labelIndex slh) sal
+        mev = Just $ WSEApplyLlama (False, makeSetLlama $ (rid, SEltLine newslinedelete))
+        -- delete the label then clear the handler, (it should go back to line label handler via selection)
+        r = def {
+            _potatoHandlerOutput_pFEvent = mev
+          }
+
 
 
       -- TODO should only capture stuff caught by inputSingleLineZipper
