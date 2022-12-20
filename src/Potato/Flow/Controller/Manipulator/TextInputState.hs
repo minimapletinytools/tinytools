@@ -23,6 +23,10 @@ data TextInputState = TextInputState {
   --, _textInputState_selected :: Int -- WIP
 } deriving (Show)
 
+
+moveToEol :: TextInputState -> TextInputState
+moveToEol tais = tais { _textInputState_zipper = TZ.end (_textInputState_zipper tais) }
+
 -- TODO support shift selecting someday
 -- TODO define behavior for when you click outside box or assert
 mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
@@ -50,8 +54,8 @@ inputSingleLineZipper tais kk = (changed, tais { _textInputState_zipper = newZip
     KeyboardKey_End -> (False, TZ.end oldZip)
 
     KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
-    KeyboardKey_Delete  -> (True, TZ.deleteRight oldZip)
-    KeyboardKey_Backspace -> (True, TZ.deleteLeft oldZip)
+    KeyboardKey_Delete  -> (newtz /= oldZip, TZ.deleteRight oldZip) where newtz = TZ.deleteRight oldZip
+    KeyboardKey_Backspace -> (newtz /= oldZip, newtz) where newtz = TZ.deleteLeft oldZip
     KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
 
     -- TODO remove new line characters
@@ -70,7 +74,8 @@ makeTextHandlerRenderOutput btis offset = r where
   mCursorChar = (fmap fst) . T.uncons . TZ._textZipper_after . _textInputState_zipper $ btis
 
   mlbox = do
-    guard $ lBox_area origBox > 0
+    -- empty boxes are used with line labels
+    --guard $ lBox_area origBox > 0
 
     -- TODO would be nice to assert that this exists...
     (alignxoff,_) <- Map.lookup y offsetMap

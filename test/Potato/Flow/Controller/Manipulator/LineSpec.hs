@@ -58,6 +58,10 @@ blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))
 expectMidpointCount :: Int -> GoatTester ()
 expectMidpointCount n = verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_midpoints sline) /= n) ("expected " <> show n <> " midpoint, got: " <> show (_sAutoLine_midpoints sline))
 
+expectLabelCount :: Int -> GoatTester ()
+expectLabelCount n = verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_labels sline) /= n) ("expected 1 label, got: " <> show (_sAutoLine_labels sline))
+
+
 initSimpleLine :: GoatTester ()
 initSimpleLine = drawCanvasLine (0, 0) (100, 0)
 
@@ -69,9 +73,9 @@ basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   setMarker "add a text label"
   canvasMouseDown (40, 0)
   canvasMouseUp (40, 0)
-  verifyMostRecentlyCreatedLine $ \sline -> toMaybe (L.length (_sAutoLine_labels sline) /= 1) ("expected 1 label, got: " <> show (_sAutoLine_labels sline))
-  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+  expectLabelCount 0 -- no label is created yet beacues we haven't entered any text
   pressKeys "meow meow meow meow"
+  expectLabelCount 1
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow meow meow meow"
 
 
@@ -279,7 +283,6 @@ attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwl
   s3 <- getOwlPFState
   verify "state did not change after attempting to move line" $ if s2 == s3 then Just "it didn't change!" else Nothing
 
-
 label_undo_test :: Spec
 label_undo_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -297,7 +300,10 @@ label_undo_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressReturn
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "12345"
   pressUndo
-  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+  -- since this is a newly created label, undo deletes the label
+  expectLabelCount 0
+  pressRedo
+  expectLabelCount 1
 
 label_move_test :: Spec
 label_move_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -361,6 +367,7 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (150, 0)
   verifySelectionCount 0
 
+  -- BROKEN because line label being created in wrong spot
   setMarker "select the line then select directly move the cursor to 1 on the label"
   canvasMouseDown (1, 0)
   canvasMouseUp (1, 0)
@@ -370,6 +377,27 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressKey 'B'
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "B12A345"
 
+
+
+label_delete_test :: Spec
+label_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  initSimpleLine
+  verifySelectionCount 1
+
+  setMarker "add a label"
+  canvasMouseDown (50, 0)
+  canvasMouseUp (50, 0)
+  pressKey '1'
+  pressKey '2'
+  pressKey '3'
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "123"
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+  pressBackspace
+  -- TODO finish test, backspace to delete isn't the way to do it, you should delete if there is an empty label
 
 label_delete_midpoint_test :: Spec
 label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -383,6 +411,7 @@ label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (51, 0)
   expectMidpointCount 1
 
+  -- BROKEN why??
   setMarker "add a label after last midpoint"
   canvasMouseDown (90, 0)
   canvasMouseUp (90, 0)
@@ -390,7 +419,6 @@ label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressReturn
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "D"
 
-  -- TODO fix bug here 
   setMarker "delete the midpoint"
   canvasMouseDown (51, 0)
   canvasMouseDown (100, 0)
@@ -398,6 +426,43 @@ label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   expectMidpointCount 0
   -- ensure the line label has not been affected
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "D"
+
+
+label_delete_after_back_and_forth_test :: Spec
+label_delete_after_back_and_forth_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+  initSimpleLine
+  verifySelectionCount 1
+
+  setMarker "add a label"
+  canvasMouseDown (90, 0)
+  canvasMouseUp (90, 0)
+  pressKeys "chicken"
+  pressReturn
+  expectLabelCount 1
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "chicken"
+
+  setMarker "add another label"
+  canvasMouseDown (10, 0)
+  canvasMouseUp (10, 0)
+  pressKeys "cat"
+  pressReturn
+  expectLabelCount 2
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "cat"
+  
+
+  setMarker "go back to the other label and delete it"
+  canvasMouseDown (90, 0)
+  canvasMouseUp (90, 0)
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  pressBackspace
+  pressReturn
+  expectLabelCount 1
+
 
 
 cache_basic_test :: Spec
@@ -426,6 +491,7 @@ spec = do
     describe "label_move_test" $ label_move_test
     describe "label_cursor_test" $ label_cursor_test
     describe "label_delete_midpoint_test" $ label_delete_midpoint_test
+    describe "label_delete_after_back_and_forth_test" $ label_delete_after_back_and_forth_test
 
 
 
