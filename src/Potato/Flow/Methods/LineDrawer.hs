@@ -732,7 +732,7 @@ getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r
         -- project vertically
         else if between posx curx endx
           -- if projection in bounds
-          then (fromIntegral $ abs (cury - posy), V2 cury posx)
+          then (fromIntegral $ abs (cury - posy), V2 posx cury)
           else dandpostostartorend
 
       -- if we are closer than previous closest point
