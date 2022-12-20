@@ -42,7 +42,7 @@ data SuperStyle = SuperStyle {
   , _superStyle_horizontal :: MPChar
   , _superStyle_point      :: MPChar -- used for 1x1 boxes and 1x lines
   , _superStyle_fill       :: FillStyle
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON SuperStyle
 instance ToJSON SuperStyle
@@ -60,6 +60,9 @@ instance Default SuperStyle where
     , _superStyle_point = Just '█'
     , _superStyle_fill = def
   }
+
+instance Show SuperStyle where
+  show = superStyle_toListFormat
 
 superStyle_fromListFormat :: [PChar] -> SuperStyle
 superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
@@ -113,7 +116,7 @@ convertTextAlignToTextZipperTextAlignment = \case
 data TextStyle = TextStyle {
   -- margins
   _textStyle_alignment :: TextAlign
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON TextStyle
 instance ToJSON TextStyle
@@ -122,6 +125,9 @@ instance NFData TextStyle
 
 instance Default TextStyle where
   def = TextStyle { _textStyle_alignment = def }
+
+instance Show TextStyle where
+  show TextStyle {..} = show _textStyle_alignment
 
 
 -- TODO you need support for AL_Any and maybe AL_Center
@@ -151,7 +157,7 @@ instance NFData Attachment
 data SBoxTitle = SBoxTitle {
   _sBoxTitle_title   :: Maybe Text
   , _sBoxTitle_align :: TextAlign
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON SBoxTitle
 instance ToJSON SBoxTitle
@@ -163,12 +169,15 @@ instance Default SBoxTitle where
       _sBoxTitle_title = Nothing
       , _sBoxTitle_align = def
     }
+  
+instance Show SBoxTitle where
+  show SBoxTitle {..} = "SBoxTitle: " <> show _sBoxTitle_align <> " " <> show _sBoxTitle_title
 
 -- |
 data SBoxText = SBoxText {
   _sBoxText_text    :: Text
   , _sBoxText_style :: TextStyle
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON SBoxText
 instance ToJSON SBoxText
@@ -180,6 +189,10 @@ instance Default SBoxText where
       _sBoxText_text = ""
       , _sBoxText_style = def
     }
+
+instance Show SBoxText where
+  show SBoxText {..} = "SBoxText: " <> T.unpack _sBoxText_text <> " " <> show _sBoxText_style
+
 
 data SBoxType = SBoxType_Box | SBoxType_NoBox | SBoxType_BoxText | SBoxType_NoBoxText deriving (Eq, Generic, Show)
 
@@ -209,12 +222,11 @@ make_sBoxType border text = if border
 -- |
 data SBox = SBox {
   _sBox_box       :: LBox
-  -- TODO Rename to _superStyle
   , _sBox_superStyle   :: SuperStyle
   , _sBox_title   :: SBoxTitle
   , _sBox_text    :: SBoxText
   , _sBox_boxType :: SBoxType
-} deriving (Eq, Generic, Show)
+} deriving (Eq, Generic)
 
 instance FromJSON SBox
 instance ToJSON SBox
@@ -229,6 +241,9 @@ instance Default SBox where
       , _sBox_text  = def
       , _sBox_boxType = SBoxType_Box
     }
+
+instance Show SBox where
+  show SBox {..} = "SBox: " <> show _sBox_box <> " " <> show _sBox_title <> " " <> show _sBox_text <> " " <> show _sBox_boxType <> " " <> show _sBox_superStyle
 
 sBox_hasLabel :: SBox -> Bool
 sBox_hasLabel sbox = sBoxType_hasBorder (_sBox_boxType sbox) && (isJust . _sBoxTitle_title ._sBox_title $ sbox)
@@ -313,7 +328,7 @@ data SAutoLineLabel = SAutoLineLabel {
 } deriving (Eq, Generic)
 
 instance Show SAutoLineLabel where
-  show SAutoLineLabel {..} = "SAutoLineLabel: " <> show _sAutoLineLabel_index <> " " <> show _sAutoLineLabel_position <> " " <> T.unpack _sAutoLineLabel_text
+  show SAutoLineLabel {..} = "SAutoLineLabel: " <> show _sAutoLineLabel_index <> " " <> show _sAutoLineLabel_position <> " " <> show _sAutoLineLabel_text
 
 instance FromJSON SAutoLineLabel
 instance ToJSON SAutoLineLabel

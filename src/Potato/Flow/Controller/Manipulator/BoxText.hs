@@ -231,6 +231,7 @@ instance PotatoHandler BoxTextHandler where
       else case selt of
         SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
           then Nothing -- SEltBox type changed to non-text
+          -- TODO this needs to merge the TextZipper if change came due to remote event
           else Just $ SomePotatoHandler $ updateBoxTextHandlerState True _potatoHandlerInput_canvasSelection tah
         _ -> Nothing
       where
@@ -404,11 +405,11 @@ instance PotatoHandler BoxLabelHandler where
   -- TODO do you need to reset _boxLabelHandler_prevHandler as well?
   pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
     then Nothing -- selection was deleted or something
-
     else if rid /= (_textInputState_rid $ _boxLabelHandler_state tah)
       then Nothing -- selection was change to something else
       else case selt of
         SEltBox sbox -> if sBoxType_hasBorder (_sBox_boxType sbox)
+          -- TODO this needs to merge the TextZipper if change came due to remote event
           then Just $ SomePotatoHandler $ updateBoxLabelHandlerState True _potatoHandlerInput_canvasSelection tah
           -- SEltBox type changed to non-text
           else Nothing

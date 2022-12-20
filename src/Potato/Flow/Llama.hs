@@ -12,6 +12,8 @@ import           Potato.Flow.SElts
 import Potato.Flow.OwlState
 import           Potato.Flow.Types
 import Potato.Flow.Math
+import           Potato.Flow.DebugHelpers
+
 
 import qualified Data.Text as T
 import qualified Data.IntMap as IM
@@ -143,7 +145,7 @@ makeSetLlama (rid, selt) = r where
   apply pfs = let
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
-        Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid
+        Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid <> " " <> potatoShow (_owlPFState_owlTree $ pfs)
         Just (_, OwlItem _ (OwlSubItemFolder _)) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
         Just (oldoem, OwlItem oinfo oldsubitem) -> let
             -- this will clear the cache in OwlItem

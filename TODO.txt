@@ -167,8 +167,10 @@ WIDE
 
 
 ::NEWEST TODO::
--erase empty labels
-DONE/IGNORE-erase all text to delete line label
+
+-BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
+    -you have a test case to catch this already
+    -I think there's a maybe separate issue that is not related to midpoints after you adde creation stuff?
 DONE-get rid of info box for now
 DONE-middle mouse cilck to pan
 DONE-don't show RID on layers
@@ -246,13 +248,14 @@ DONE-BUG need to do size validation on params canvas size stuff
 
 :: CUT LINE
 -FEATURE add line labels
-  -BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-    -you have a test case to catch this already
   -adding midpoints when line labels exist need to be smarter about reposition line labels
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
-
   -bonus, cache line labels
+  DONE-after clicking on line label, cursor should go to end
+  DONE-erase empty labels
+  DONE-BUG rendering first character in line label is wrong
+  DONE/IGNORE-erase all text to delete line label
   DONE-remember to adjust _sAutoLine_labels when deleting midpoints
   DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
   DONE-BUG click to edit text inside SAutoLineLabelHandler not working

@@ -218,6 +218,9 @@ pressEscape = pressKeyboardKey KeyboardKey_Esc
 pressReturn :: (Monad m) => GoatTesterT m ()
 pressReturn = pressKeyboardKey KeyboardKey_Return
 
+pressBackspace :: (Monad m) => GoatTesterT m ()
+pressBackspace = pressKeyboardKey KeyboardKey_Backspace
+
 pressDelete :: (Monad m) => GoatTesterT m ()
 pressDelete = pressKeyboardKey KeyboardKey_Delete
 
