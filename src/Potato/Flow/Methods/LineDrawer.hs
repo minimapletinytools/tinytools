@@ -692,8 +692,6 @@ getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
   r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist L.!! _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
 
 
-
--- UNTESTED
 -- takes a list of line anchors as returned by sAutoLine_to_lineAnchorsForRenderList and a position
 -- returns closest orthognally projected point on the line as a tuple (projected position, index into larlist, relative distance along the LineAnchorsForRender that the point is on)
 getClosestPointOnLineFromLineAnchorsForRenderList :: [LineAnchorsForRender] -> XY -> (XY, Int, Float)

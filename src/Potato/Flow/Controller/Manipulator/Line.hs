@@ -442,13 +442,46 @@ instance PotatoHandler AutoLineEndPointHandler where
     else Nothing
 
 
-sAutoLine_addMidpoint :: Int -> XY -> SAutoLine -> SAutoLine
-sAutoLine_addMidpoint mpindex pos sline = r where
-  newmidpoints =  L.insertAt mpindex (SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
-  -- TODO update line label position
+-- TODO finish
+adjustLineLabelPositionsAfterModifyingOrAddingMidpoint :: 
+  (HasOwlTree a)
+  => a
+  -> SAutoLine --  ^ the previous line
+  -> SAutoLine -- ^ the new line
+  -> Maybe (Either Int Int) -- ^ Nothing is modify case, Just Left is creat, Just Right is delete
+  -> SAutoLine
+adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ot old new mempindex = r where
+
+  -- TODO need more than just this, need to copmute position too
+  indexAdjust i = case mempindex of
+    Nothing -> i
+    -- advance indices after addmpi since we are adding a midpoint
+    Just (Left addmpi) -> if i > addmpi then i+1 else i
+    -- go bacak indices before delmpi since we are deleting a midpoint
+    Just (Right delmpi) -> if i >= delmpi then i-1 else i
+
+
+  oldlars = sAutoLine_to_lineAnchorsForRenderList ot old 
+  newlars = sAutoLine_to_lineAnchorsForRenderList ot new
+
+  -- TODO
   -- compute previous LAR distances
   -- compute new LAR distances (after adjusting for midpoint index)
   -- adjust distance by the change in ratio
+
+  r = undefined
+  
+
+
+
+sAutoLine_addMidpoint :: Int -> XY -> SAutoLine -> SAutoLine
+sAutoLine_addMidpoint mpindex pos sline = r where
+  newmidpoints =  L.insertAt mpindex (SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
+
+
+  -- TODO update line label position
+  
+
   fmapfn ll = if _sAutoLineLabel_index ll > mpindex
     then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll + 1}
     else ll

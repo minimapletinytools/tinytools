@@ -367,7 +367,6 @@ label_cursor_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   canvasMouseUp (150, 0)
   verifySelectionCount 0
 
-  -- BROKEN because line label being created in wrong spot
   setMarker "select the line and type at eol"
   canvasMouseDown (1, 0)
   canvasMouseUp (1, 0)

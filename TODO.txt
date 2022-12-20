@@ -167,20 +167,7 @@ WIDE
 
 
 ::NEWEST TODO::
-
--BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-    -you have a test case to catch this already
-    -I think there's a maybe separate issue that is not related to midpoints after you adde creation stuff?
-DONE-get rid of info box for now
-DONE-middle mouse cilck to pan
-DONE-don't show RID on layers
-DONE-layers should show a little icon indicating what kind of element is there
-  -try emoji?
-DONE-layers should allow punctuation characters
-DONE-BUG boxes past a certain point don't show attachments
-  -- TODO change this to be in canvas space _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
-DONE-BUG need to do size validation on params canvas size stuff
--fix PanSpec...
+-do label position adjustment when adding midpoints
 -make tutorial file, I think you have everythingy ou need now!!!
 -BUG you sometimes hit this assert
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
@@ -244,14 +231,27 @@ DONE-BUG need to do size validation on params canvas size stuff
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
   -you should fix cuz it makes debugging hard...
   -you got it down to 2 :O
+DONE-get rid of info box for now
+DONE-middle mouse cilck to pan
+DONE-don't show RID on layers
+DONE-layers should show a little icon indicating what kind of element is there
+  -try emoji?
+DONE-layers should allow punctuation characters
+DONE-BUG boxes past a certain point don't show attachments
+  -- TODO change this to be in canvas space _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
+DONE-BUG need to do size validation on params canvas size stuff
 
 
 :: CUT LINE
+-fix PanSpec...
 -FEATURE add line labels
   -adding midpoints when line labels exist need to be smarter about reposition line labels
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
   -bonus, cache line labels
+  DONE-BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
+    -you have a test case to catch this already
+    -I think there's a maybe separate issue that is not related to midpoints after you adde creation stuff?
   DONE-after clicking on line label, cursor should go to end
   DONE-erase empty labels
   DONE-BUG rendering first character in line label is wrong
