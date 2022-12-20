@@ -48,6 +48,7 @@ ghc options
   -dumps everything (includng all optimization stages)
 -drule-check = <rule name>
 
+
 -----
 
 stuff for Dad to do
@@ -103,30 +104,59 @@ WIDE
 🙈
 
 
-:: TABLE / DIVIDEABLE BOXES SPEC
+:: FUTURE FEATURES
+-TABLE / DIVIDEABLE BOXES 
+-swatches
+-unicode character picker
+  -lives at params level
+  -must have a way to paste into text box
+-clipart  picker
+  -can choose to generate as text box or free art box
+  -create link with orignal until modify?
+  -format for user submitted clipart (prob just read from text file)
+-fancy type spec
+  -property of text box, allow you to enter fancy fonts
+  -other features
+    -per character width (already a property of TextZipper but you need to pass it in as a function and test it...)
+    -kerning in general (or just have user use manual spaces)
+    -height adjustment (some characters go over char box)
+    -overflow box or crop (some characters go over char box)
+      -need to expand render box
+    -font data type
+      -bonus, it seme some fonts have speical rules for renfdering where the font overlaps
+    -font picker...
+-segment style multipoint line spec
+-adjustable attachment spec
+-shape tool spec
+  -tool for creating non box shapes, must support resizing
+    -allow snapping to only valid sizes?
+      -however, should it remember what inbetween size it's at (when resizing multiple things) or no?
+    -design generic format for doing shapes so easy to add custom shapes?
+    -e.g. shapes
+      -triangle
+      -diamond
+      -hexagon
+      -octagon
+      -circle/ellipse
+      -3d cube
+-straight line tool spec
+  -same as autoline (with midpoints) but has fancy line rendering straight lines
+  -line style picker
+-scripting and extensions lol 
+-background pattern fills
+  -crop or stop at end of last repeating pattern
 
+:: refactors
+-MDI
+  -Flow needs some kind of switcher on all input events/dynamics
+    -GoatSwitcher?
+      -Prob better to do this in Goat rather than GoatWidget (i.e. don't use reflex)
+  -must support empty doc state
+    -r maybe it just always creates a new empty file in these cases?
+-multi user mode
+-no partial owls! 
+  -except when converting remote changes to llamas
 
-
-:: MULTI POINT LINE AND LABEL SPEC
-DONE-midpoints
-  DONE-rendered in segments
-  DONE-midpoints treated as ANY attachments
--ANY attachment style
-  -pass in neighbors, and direction determined by position of neighbor
-  -process from left to right, disallow double backing in same direction
--click once to select line
-  DONE-click + drag end/midpoint to manipulate
-  -click + drag text label to enter modify mode
-    -refactor modify stuff out of BoxText and BoxLabel (why didn't you do this correctly the first time...)
-  -click + release to create new text label
-    -erase all text to destroy text label
-
-:: MDI
--Flow needs some kind of switcher on all input events/dynamics
-  -GoatSwitcher?
-    -Prob better to do this in Goat rather than GoatWidget (i.e. don't use reflex)
--must support empty doc state
-  -or maybe it just always creates a new empty file in these cases?
 
 :: RELEASE prep
 -update ChangeLog.md
@@ -137,6 +167,8 @@ DONE-midpoints
 
 
 ::NEWEST TODO::
+-erase empty labels
+DONE/IGNORE-erase all text to delete line label
 DONE-get rid of info box for now
 DONE-middle mouse cilck to pan
 DONE-don't show RID on layers
@@ -151,7 +183,6 @@ DONE-BUG need to do size validation on params canvas size stuff
 -BUG you sometimes hit this assert
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
 -BUG fix line bugs
-  
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
   -BUG some bot to bot cases are broken
@@ -220,8 +251,7 @@ DONE-BUG need to do size validation on params canvas size stuff
   -adding midpoints when line labels exist need to be smarter about reposition line labels
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
-    -how do distinguish between backspace to delete vs remove character for line label handler?
-      -I guess if you select by clicking llabel anchor you are selected, typing text puts you into text mode where backspace removes text, just hitting backspace deletes it
+
   -bonus, cache line labels
   DONE-remember to adjust _sAutoLine_labels when deleting midpoints
   DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
@@ -280,7 +310,24 @@ DONE-BUG need to do size validation on params canvas size stuff
   -you need some kind of options object to go along side of PotatoDefaultParameters
 
 
-:: DONE
+
+
+:: MULTI POINT LINE AND LABEL SPEC
+DONE-midpoints
+  DONE-rendered in segments
+  DONE-midpoints treated as ANY attachments
+DONE-ANY attachment style
+  -pass in neighbors, and direction determined by position of neighbor
+  -process from left to right, disallow double backing in same direction
+DONE-click once to select line
+  DONE-click + drag end/midpoint to manipulate
+  DONE-click + drag text label to enter modify mode
+    -refactor modify stuff out of BoxText and BoxLabel (why didn't you do this correctly the first time...)
+  DONE-click + release to create new text label
+    -erase all text to destroy text label
+
+
+:: DONE 12/2022
 
 
 DONE-params
@@ -744,6 +791,11 @@ DONE/IGNORE-color config object
     -write now you just inefficientlly call generateLayers every time...
   -layer drag select
 
+
+
+
+
+:: TODO OLD ::
 DONE-TINY TODO
   DONE-layers
     DONE-scrollbar/border to layers panel
@@ -1899,6 +1951,8 @@ DONE-connect layer tree in entry
 DONE-fan out/in actions for actionstack in entry
 DONE-manipulators
   DONE-design
+
+
 
 
 ::RENDER NOTES::
