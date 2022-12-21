@@ -1,28 +1,6 @@
-zipper2 operations
+TAX CHECKLIST
 
-leftN rightN
-leftW rightW (word)
-bol, eol, start, end
-
-leftAddN, rightAddN
-leftAddW, rightAddW
-
-DisplayLines
-[Text] -- words
-(Int, Int) -- selection index and selection count
-
-DisplayLinesWithSelectionAsZipper (same representation as TextZipper except logical lines are converted to visual lines)
-[Text]
-Text
-[Text]
-Text
-[Text]
-
-DisplayLinesWithSelectionAsText (internal Text contains new line characters)
-Text -- before
-Text -- selection
-Text -- after
-
+-mortgate (via ServiceMac)
 
 -------
 
@@ -169,7 +147,7 @@ WIDE
 ::NEWEST TODO::
 -do label position adjustment when adding midpoints
 -make tutorial file, I think you have everythingy ou need now!!!
--BUG you sometimes hit this assert
+-BUG you sometimes hit this assert, need repro
   -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
 -BUG fix line bugs
   -line anchors kinda effed in general actually....
@@ -196,13 +174,27 @@ WIDE
     -i think this is fixed if you set attachOffset to 0...
     -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
 -file stuff
-  -ctrl-o to open (should prompt for save first)
-  -ctrl-n for new file (should prompt for save first)
+  -file explorer
+    -pageup/down support to filexplorer
+    -add scroll bar to fileexplorer
+    -maybe highlight relevant files instead of * in file explorer
+      -or just don't show anything that's not relevant...
   -add double click support to file explorer
     -need to hook into IO time stuff
-  -open file dialog
-  -make alert on unsaved changes generic and save popupmanager
+  -UTs 
+    -popupSaveBeforeExit
+    -popupOpenWindow
+    -waitForSecondAfterFirst (move to reflex-potatoes)
+  DONE-new file button
+  DONE-open file button
+  DONE-make alert on unsaved changes generic and save popupmanager
     -????
+  DONE-you must wait for finalSaveEv before actually doing something in case the save fails
+    -maybe redesign SaveBeforeACtion lesigh
+    -you can have something like waitForSecondAfterFirst :: Event t a -> Event t b -> m (Event t (a, b))
+  DONE-ctrl-o to open (should prompt for save first)
+  DONE-ctrl-n for new file (should prompt for save first)
+  DONE-open file dialog
   DONE-auto focus on filename area?
   DONE-up/down arrow works regardless of focus in explorer window
   DONE-apply styling

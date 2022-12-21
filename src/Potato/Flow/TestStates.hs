@@ -20,6 +20,7 @@ module Potato.Flow.TestStates (
   , owlpfstate_attachments1
   , owlpfstate_attachments2
   , owlpfstate_zero
+  , owlpfstate_newProject
 ) where
 
 import           Relude
@@ -98,3 +99,9 @@ owlpfstate_attachments2 = pFState_to_owlPFState pfstate_attachments2
 -- contains SElts of size 0
 owlpfstate_zero :: OwlPFState
 owlpfstate_zero = pFState_to_owlPFState pfstate_zero
+
+owlpfstate_newProject :: OwlPFState
+ =  OwlPFState {
+    _owlPFState_owlTree = emptyOwlTree
+    , _owlPFState_canvas    = SCanvas (LBox 0 (V2 50 20))
+  }
