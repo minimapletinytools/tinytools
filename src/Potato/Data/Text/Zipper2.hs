@@ -167,7 +167,13 @@ home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) ((NE.ini
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper
-end (TextZipper lb b s a la) = undefined
+--end (TextZipper lb b s a la) = undefined
+end (TextZipper lb b [] a la) = TextZipper lb (b <> a) [] "" la
+end (TextZipper lb b (x:[]) a la) = TextZipper lb (b <> x <> a) [] "" la
+end (TextZipper lb b s@(x:xs) a la) = case xs of
+    (x1:[])             -> TextZipper (lb <> [b <> x]) (x1 <> a) [] "" la
+    (x1:s2@(x2:xs2))    -> TextZipper (lb <> [b <> x] <> [x1] <> (init s2)) (last s2 <> a) [] "" la
+
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
