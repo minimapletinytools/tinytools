@@ -145,10 +145,11 @@ WIDE
 
 
 ::NEWEST TODO::
--do label position adjustment when adding midpoints
+DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
+-add an anchor for the box label so you know you can add one easily 
+  -but where to put it if there is already text?
 -make tutorial file, I think you have everythingy ou need now!!!
--BUG you sometimes hit this assert, need repro
-  -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
+-you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
 -BUG fix line bugs
   -line anchors kinda effed in general actually....
   -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
@@ -167,44 +168,36 @@ WIDE
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
           ╚═════╝
-  DONE-BUG midpoints rendered as ?
-  DONE-BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
-  DONE-line anchors handles should render on top of attachment points and not on the edge of the box
-  DONE-AL_ANY needs to be a single point and not a box with 4 sides...
-    -i think this is fixed if you set attachOffset to 0...
-    -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
+-do label position adjustment when adding midpoints
+-high level bugs
+  -BUG you sometimes hit this assert, need repro
+    -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
+  -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
+    -you should fix cuz it makes debugging hard...
+    -you got it down to 2 :O
+  -figure out why scrolling in file explorer is hecka broken
+    -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
+  -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
+    -it's definitely possible to do that but nothing seemed to break???
+    DONE-auto expand folder after dragging into it
+    DONE-do proper folder position
+
+
+
+:: CUT Line
+-BUG figure out what's going on with cache updated render bugs...
+-finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -file stuff
-  -file explorer
-    -pageup/down support to filexplorer
-    -add scroll bar to fileexplorer
-    -maybe highlight relevant files instead of * in file explorer
-      -or just don't show anything that's not relevant...
-  -add double click support to file explorer
-    -need to hook into IO time stuff
+  -maybe highlight relevant files instead of * in file explorer
+    -or just don't show anything that's not relevant...
   -UTs 
     -popupSaveBeforeExit
     -popupOpenWindow
-    -waitForSecondAfterFirst (move to reflex-potatoes)
-  DONE-new file button
-  DONE-open file button
-  DONE-make alert on unsaved changes generic and save popupmanager
-    -????
-  DONE-you must wait for finalSaveEv before actually doing something in case the save fails
-    -maybe redesign SaveBeforeACtion lesigh
-    -you can have something like waitForSecondAfterFirst :: Event t a -> Event t b -> m (Event t (a, b))
-  DONE-ctrl-o to open (should prompt for save first)
-  DONE-ctrl-n for new file (should prompt for save first)
-  DONE-open file dialog
-  DONE-auto focus on filename area?
-  DONE-up/down arrow works regardless of focus in explorer window
-  DONE-apply styling
-  DONE-add highlight on click
-  DONE-auto add file extension on saving?? (maybe have check box to disable? or maybe disables if user sets their own extension)
-  DONE/IGNORE-grey out invalid files extensions
-  DONE-sort files in explorer
-  DONE-auto add extension on save
-  DONE-clicking on file with valid extension populates the filename bar
--open tutorial file by default
+    -doubleClick
+    DONE-waitForSecondAfterFirst (move to reflex-potatoes)
+  DONE-add double click support to file explorer
+    -need to hook into IO time stuff
+-BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe 
 -BUG fix text zipper bugs
   -you should just rewrite text zipper and add select support..
   -BUG can't enter multiple new lines into text box
@@ -212,51 +205,12 @@ WIDE
   -BUG click on eol in text box is kind of broken in general[]
     -doesn't always take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
--BUG figure out what's going on with cache updated render bugs...
--finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
--make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
-  -it's definitely possible to do that but nothing seemed to break???
-  DONE-auto expand folder after dragging into it
-  DONE-do proper folder position
--figure out why scrolling in file explorer is hecka broken
-  -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
--BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
-  -you should fix cuz it makes debugging hard...
-  -you got it down to 2 :O
-DONE-get rid of info box for now
-DONE-middle mouse cilck to pan
-DONE-don't show RID on layers
-DONE-layers should show a little icon indicating what kind of element is there
-  -try emoji?
-DONE-layers should allow punctuation characters
-DONE-BUG boxes past a certain point don't show attachments
-  -- TODO change this to be in canvas space _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
-DONE-BUG need to do size validation on params canvas size stuff
-
-
-:: CUT LINE
 -fix PanSpec...
 -FEATURE add line labels
   -adding midpoints when line labels exist need to be smarter about reposition line labels
   -add line label anchor in text edit mode so that you can easily reposition it
   -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
   -bonus, cache line labels
-  DONE-BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
-    -you have a test case to catch this already
-    -I think there's a maybe separate issue that is not related to midpoints after you adde creation stuff?
-  DONE-after clicking on line label, cursor should go to end
-  DONE-erase empty labels
-  DONE-BUG rendering first character in line label is wrong
-  DONE/IGNORE-erase all text to delete line label
-  DONE-remember to adjust _sAutoLine_labels when deleting midpoints
-  DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
-  DONE-BUG click to edit text inside SAutoLineLabelHandler not working
-  DONE-SAutoLine -> SAutoLineLabel -> XY
-  DONE-mouse down up on line label takes you to line label handler
-  DONE-generate text box for line label handler (don't wrap for now)
-    -offset anchor by 1 in line label handler
-  DONE-rendering
-    -must adjust bounding box to include line labels UGGG
 -folder stuff
   -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
   -empty folders should not be expandable? (set to expanded by default)
@@ -273,13 +227,6 @@ DONE-BUG need to do size validation on params canvas size stuff
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
 -TESTS TO ADD
-  DONE-very basic midpoint test
-  DONE-add cancel with no movement test for box and line handler
-  DONE-add test to make sure cache is actually being used
-  DONE-test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
-  DONE-setMarker should be analogous to "it" in documenting test cases
-  DONE-attach line to object, move object delete that object, make sure line is in expected place, modify line again
-  DONE-create 2 fully attached lines, select them both, ensure not possible to move
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (doesn't work right now)
@@ -306,6 +253,65 @@ DONE-BUG need to do size validation on params canvas size stuff
 
 
 
+:: DONE
+DONE-BUG open double cilkc not work anymore :()
+DONE-open tutorial file by defaultcd
+DONE-get rid of info box for now
+DONE-middle mouse cilck to pan
+DONE-don't show RID on layers
+DONE-layers should show a little icon indicating what kind of element is there
+  -try emoji?
+DONE-layers should allow punctuation characters
+DONE-BUG boxes past a certain point don't show attachments
+  -- TODO change this to be in canvas space _potatoHandlerInput_screenRegion = LBox 0 _goatState_screenRegion
+DONE-BUG need to do size validation on params canvas size stuff
+DONE-BUG AutoLineLabelMoverHandler sometimes projects handle with an offset??? Only on Z shaped stuff??
+  -you have a test case to catch this already
+  -I think there's a maybe separate issue that is not related to midpoints after you adde creation stuff?
+DONE-after clicking on line label, cursor should go to end
+DONE-erase empty labels
+DONE-BUG rendering first character in line label is wrong
+DONE/IGNORE-erase all text to delete line label
+DONE-remember to adjust _sAutoLine_labels when deleting midpoints
+DONE-if down and up on line manipulator (text portion and not the anchor portion), should be able to edit
+DONE-BUG click to edit text inside SAutoLineLabelHandler not working
+DONE-SAutoLine -> SAutoLineLabel -> XY
+DONE-mouse down up on line label takes you to line label handler
+DONE-generate text box for line label handler (don't wrap for now)
+  -offset anchor by 1 in line label handler
+DONE-rendering
+  -must adjust bounding box to include line labels UGGG
+-file stuff
+  DONE-add scroll bar to fileexplorer
+  DONE-pageup/down support to filexplorer
+  DONE-new file button
+  DONE-open file button
+  DONE-make alert on unsaved changes generic and save popupmanager
+    -????
+  DONE-you must wait for finalSaveEv before actually doing something in case the save fails
+    -maybe redesign SaveBeforeACtion lesigh
+    -you can have something like waitForSecondAfterFirst :: Event t a -> Event t b -> m (Event t (a, b))
+  DONE-ctrl-o to open (should prompt for save first)
+  DONE-ctrl-n for new file (should prompt for save first)
+  DONE-open file dialog
+  DONE-auto focus on filename area?
+  DONE-up/down arrow works regardless of focus in explorer window
+  DONE-apply styling
+  DONE-add highlight on click
+  DONE-auto add file extension on saving?? (maybe have check box to disable? or maybe disables if user sets their own extension)
+  DONE/IGNORE-grey out invalid files extensions
+  DONE-sort files in explorer
+  DONE-auto add extension on save
+  DONE-clicking on file with valid extension populates the filename bar
+-tests
+  DONE-very basic midpoint test
+  DONE-add cancel with no movement test for box and line handler
+  DONE-add test to make sure cache is actually being used
+  DONE-test where you delete midpoint by dragging to adjacent midpoint that is adjacent to another mid/endpoint and then drag to tha adjacent point
+  DONE-setMarker should be analogous to "it" in documenting test cases
+  DONE-attach line to object, move object delete that object, make sure line is in expected place, modify line again
+  DONE-create 2 fully attached lines, select them both, ensure not possible to move
+
 
 :: MULTI POINT LINE AND LABEL SPEC
 DONE-midpoints
@@ -325,6 +331,12 @@ DONE-click once to select line
 :: DONE 12/2022
 
 
+DONE-BUG midpoints rendered as ?
+  DONE-BUG starting dragging from box anchor, attachment stuff for box you are dragging goes away
+  DONE-line anchors handles should render on top of attachment points and not on the edge of the box
+  DONE-AL_ANY needs to be a single point and not a box with 4 sides...
+    -i think this is fixed if you set attachOffset to 0...
+    -BUG I think this is causing unattached lines to be offset by 1 from where they should be...
 DONE-params
   DONE-default for line in params should be both instead of start
   DONE/IGNORE-line stuff should have aligned spacing to make it easier to click on where the change is

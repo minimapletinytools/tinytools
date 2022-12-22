@@ -39,7 +39,7 @@ testClick x y = RelMouseDrag $ def {
 boxTextInputState_basic_test :: Spec
 boxTextInputState_basic_test = let
     tais1 = makeTextInputState 0 testSBoxWithText1 (testClick 5 5)
-    tais2 = mouseText tais1 (_sBox_box testSBoxWithText1) (testClick 6 5) (getBoxTextOffset testSBoxWithText1)
+    tais2 = mouseText tais1 (testClick 6 5)
   in
     it "makeTextInputState_basic" $ do
       _textInputState_original tais1 `shouldBe` Just testText1

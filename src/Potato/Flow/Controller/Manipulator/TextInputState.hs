@@ -29,13 +29,14 @@ moveToEol tais = tais { _textInputState_zipper = TZ.end (_textInputState_zipper 
 
 -- TODO support shift selecting someday
 -- TODO define behavior for when you click outside box or assert
-mouseText :: TextInputState -> LBox -> RelMouseDrag -> XY -> TextInputState
-mouseText tais lbox rmd (V2 xoffset yoffset)= r where
+mouseText :: TextInputState -> RelMouseDrag -> TextInputState
+mouseText tais rmd = r where
+  lbox = _textInputState_box tais
   RelMouseDrag MouseDrag {..} = rmd
   ogtz = _textInputState_zipper tais
   CanonicalLBox _ _ (LBox (V2 x y) (V2 _ _)) = canonicalLBox_from_lBox lbox
   V2 mousex mousey = _mouseDrag_to
-  newtz = TZ.goToDisplayLinePosition (mousex-x-xoffset) (mousey-y-yoffset) (_textInputState_displayLines tais) ogtz
+  newtz = TZ.goToDisplayLinePosition (mousex-x) (mousey-y) (_textInputState_displayLines tais) ogtz
   r = tais { _textInputState_zipper = newtz }
 
 
@@ -64,8 +65,8 @@ inputSingleLineZipper tais kk = (changed, tais { _textInputState_zipper = newZip
     _ -> (False, oldZip)
 
 
-makeTextHandlerRenderOutput :: TextInputState -> XY -> HandlerRenderOutput
-makeTextHandlerRenderOutput btis offset = r where
+makeTextHandlerRenderOutput :: TextInputState -> HandlerRenderOutput
+makeTextHandlerRenderOutput btis = r where
   dls = _textInputState_displayLines btis
   origBox = _textInputState_box $ btis
   (x, y) = TZ._displayLines_cursorPos dls
@@ -82,7 +83,7 @@ makeTextHandlerRenderOutput btis offset = r where
     let
       LBox p _ = _textInputState_box $ btis
       cursorh = RenderHandle {
-          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y) + offset) (V2 1 1)
+          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y)) (V2 1 1)
           , _renderHandle_char = mCursorChar
           , _renderHandle_color = RHC_Default
         }

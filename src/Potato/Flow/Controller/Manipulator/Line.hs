@@ -735,7 +735,7 @@ makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi@PotatoHandlerInput
       , _textInputState_box = box
       , _textInputState_displayLines = TZ.displayLinesWithAlignment TZ.TextAlignment_Left width () () ogtz
     }
-  r = mouseText tis box rmd (V2 0 0)
+  r = mouseText tis rmd
 
 makeAutoLineLabelInputState_from_labelIndex :: REltId -> SAutoLine -> Int -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
 makeAutoLineLabelInputState_from_labelIndex rid sal labelindex phi@PotatoHandlerInput {..} rmd = r where
@@ -774,7 +774,7 @@ makeAutoLineLabelHandler_from_labelIndex labelindex prev phi@PotatoHandlerInput 
 handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> LBox -> Bool -> Maybe PotatoHandlerOutput
 handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) box isdown = r where
   clickInside = does_lBox_contains_XY (_textInputState_box _autoLineLabelHandler_state) _mouseDrag_to
-  newState = mouseText _autoLineLabelHandler_state box rmd (V2 0 0)
+  newState = mouseText _autoLineLabelHandler_state rmd
   r = if clickInside
     then Just $ def {
         _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
@@ -915,8 +915,6 @@ instance PotatoHandler AutoLineLabelHandler where
 
     -- render the text cursor
     btis = _autoLineLabelHandler_state slh
-    offset = V2 0 0
-    -- TODO you broke this in creation case
-    r = makeTextHandlerRenderOutput btis offset
+    r = makeTextHandlerRenderOutput btis
 
   pIsHandlerActive = _autoLineLabelHandler_active
