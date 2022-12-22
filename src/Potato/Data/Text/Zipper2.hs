@@ -20,6 +20,8 @@ import qualified Data.Text as T
 
 import Graphics.Text.Width (wcwidth)
 
+import qualified Data.List.NonEmpty as NE
+
 -- | Get the display width of a 'Char'. "Full width" and "wide" characters
 -- take two columns and everything else takes a single column. See
 -- <https://www.unicode.org/reports/tr11/> for more information
@@ -159,7 +161,9 @@ home :: TextZipper -> TextZipper
 home (TextZipper lb b [] a la) = TextZipper lb "" [] (b <> a) la
 home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x <> a) la
 --home (TextZipper lb b (x:xs) a la) = case xs of
-home (TextZipper lb b (x:xs) a la) = TextZipper lb "" [] (b <> x) ((init xs) <> [(last xs) <> a] <> la)
+--home (TextZipper lb b (x:xs) a la) = TextZipper lb "" [] (b <> x) ((init xs) <> [(last xs) <> a] <> la)
+home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) ((NE.init xs') <> [(NE.last xs') <> a] <> la) where
+   xs' = xs NE.:| xss
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper
