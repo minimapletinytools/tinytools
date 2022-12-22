@@ -160,17 +160,16 @@ pageDown pageSize z = undefined
 home :: TextZipper -> TextZipper
 home (TextZipper lb b [] a la) = TextZipper lb "" [] (b <> a) la
 home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x <> a) la
-home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) ((NE.init xs') <> [(NE.last xs') <> a] <> la) where
+home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) (NE.init xs' <> [NE.last xs' <> a] <> la) where
    xs' = xs NE.:| xss
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper
---end (TextZipper lb b s a la) = undefined
-end (TextZipper lb b [] a la) = TextZipper lb (b <> a) [] "" la
-end (TextZipper lb b (x:[]) a la) = TextZipper lb (b <> x <> a) [] "" la
-end (TextZipper lb b s@(x:xs) a la) = case xs of
-    (x1:[])             -> TextZipper (lb <> [b <> x]) (x1 <> a) [] "" la
-    (x1:s2@(x2:xs2))    -> TextZipper (lb <> [b <> x] <> [x1] <> (init s2)) (last s2 <> a) [] "" la
+end (TextZipper lb b s a la) = undefined
+--end (TextZipper lb b [] a la) = TextZipper lb (b <> a) [] "" la
+--end (TextZipper lb b (x:[]) a la) = TextZipper lb (b <> x <> a) [] "" la
+--end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper lb (b <> x <> a) (last xs' <> a) [] "" la where
+--   xs' = xs NE.:| xss
 
 
 -- | Move the cursor to the top of the document (clearing the selection)
