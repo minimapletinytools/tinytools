@@ -165,12 +165,10 @@ home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) (NE.init
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper
-end (TextZipper lb b s a la) = undefined
---end (TextZipper lb b [] a la) = TextZipper lb (b <> a) [] "" la
---end (TextZipper lb b (x:[]) a la) = TextZipper lb (b <> x <> a) [] "" la
---end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper lb (b <> x <> a) (last xs' <> a) [] "" la where
---   xs' = xs NE.:| xss
-
+end (TextZipper lb b [] a la) = TextZipper lb (b <> a) [] "" la
+end (TextZipper lb b (x:[]) a la) = TextZipper lb (b <> x <> a) [] "" la
+end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper (lb <> ([b <> x] <> NE.init xs')) (NE.last xs' <> a) [] "" la where
+   xs' = xs NE.:| xss
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
