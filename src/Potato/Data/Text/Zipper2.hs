@@ -20,6 +20,8 @@ import qualified Data.Text as T
 
 import Graphics.Text.Width (wcwidth)
 
+import qualified Data.List.NonEmpty as NE
+
 -- | Get the display width of a 'Char'. "Full width" and "wide" characters
 -- take two columns and everything else takes a single column. See
 -- <https://www.unicode.org/reports/tr11/> for more information
@@ -76,6 +78,12 @@ mapZipper f (TextZipper lb b s a la) = TextZipper
   , _textZipper_linesAfter = fmap (T.map f) la
   }
 
+appendEnd :: [Text] -> Text -> [Text]
+appendEnd stuff addme = case stuff of
+  [] -> [addme]
+  (x:[]) -> [x <> addme]
+  (x:xs) -> x : appendEnd xs addme
+
 -- | Move the cursor left one character (clearing the selection)
 left :: TextZipper -> TextZipper
 left = leftN 1
@@ -92,10 +100,6 @@ leftN n z@(TextZipper lb b [] a la) =
            [] -> home z
            (l:ls) -> leftN (n - T.length b - 1) $ TextZipper ls l [] "" ((b <> a) : la)
 leftN n (TextZipper lb b s a la) = leftN n $ TextZipper lb b [] newa newla  where
-  appendEnd stuff addme = case stuff of
-    [] -> [addme]
-    (x:[]) -> [x <> addme]
-    (x:xs) -> x : appendEnd xs addme
   (newa, newla') = case s of
     [] -> (a, la)
     (x:[]) -> (x <> a, la)
@@ -154,7 +158,10 @@ pageDown pageSize z = undefined
 
 -- | Move the cursor to the beginning of the current logical line (clearing the selection)
 home :: TextZipper -> TextZipper
-home (TextZipper lb b s a la) = undefined
+home (TextZipper lb b [] a la) = TextZipper lb "" [] (b <> a) la
+home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x <> a) la
+home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) ((NE.init xs') <> [(NE.last xs') <> a] <> la) where
+   xs' = xs NE.:| xss
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper

@@ -52,3 +52,42 @@ spec =
                             " zipper"
                             ["the capital TEXT IS THE SELECTED","PORTION of the","text zipper"]
     leftN 20 tz `shouldBe` tz_20
+
+  it "home example_1" $ do
+    let tz_0 = TextZipper  ["this is an example"]
+                            "this line is selected "
+                            []
+                            "lines after"
+                            ["blah blah blah"]
+        tz_1 = TextZipper  ["this is an example"]
+                            ""
+                            []
+                            "this line is selected lines after"
+                            ["blah blah blah"]
+    home tz_0 `shouldBe` tz_1
+
+  it "home example_2" $ do
+    let tz_0 = TextZipper  ["this is an example"]
+                    "this line is selected "
+                    ["pooh bear"]
+                    " lines after"
+                    ["blah blah blah"]
+        tz_1 = TextZipper  ["this is an example"]
+                    ""
+                    []
+                    "this line is selected pooh bear lines after"
+                    ["blah blah blah"]
+    home tz_0 `shouldBe` tz_1
+    
+  it "home example_3" $ do
+    let tz_0 = TextZipper  ["this is an example"]
+                    "this line is selected "
+                    ["pooh bear", "canned chicken cat"]
+                    " lines after"
+                    ["blah blah blah"]
+        tz_1 = TextZipper  ["this is an example"]
+                    ""
+                    []
+                    "this line is selected pooh bear"
+                    ["canned chicken cat lines after", "blah blah blah"]
+    home tz_0 `shouldBe` tz_1
