@@ -160,8 +160,6 @@ pageDown pageSize z = undefined
 home :: TextZipper -> TextZipper
 home (TextZipper lb b [] a la) = TextZipper lb "" [] (b <> a) la
 home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x <> a) la
---home (TextZipper lb b (x:xs) a la) = case xs of
---home (TextZipper lb b (x:xs) a la) = TextZipper lb "" [] (b <> x) ((init xs) <> [(last xs) <> a] <> la)
 home (TextZipper lb b (x:(xs:xss)) a la) = TextZipper lb "" [] (b <> x) ((NE.init xs') <> [(NE.last xs') <> a] <> la) where
    xs' = xs NE.:| xss
 
