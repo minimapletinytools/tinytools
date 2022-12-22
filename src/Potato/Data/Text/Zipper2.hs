@@ -157,10 +157,9 @@ pageDown pageSize z = undefined
 -- | Move the cursor to the beginning of the current logical line (clearing the selection)
 home :: TextZipper -> TextZipper
 home (TextZipper lb b [] a la) = TextZipper lb "" [] (b <> a) la
-home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x) (a:la)
-home (TextZipper lb b (x:xs) a la) = case xs of
-    (x1:[])     -> TextZipper lb "" [] (b <> x) (x1:a:la) 
-    (x1:xs1)    -> TextZipper lb "" [] (b <> x) (x1: (appendEnd xs1 a <> la))
+home (TextZipper lb b (x:[]) a la) = TextZipper lb "" [] (b <> x <> a) la
+--home (TextZipper lb b (x:xs) a la) = case xs of
+home (TextZipper lb b (x:xs) a la) = TextZipper lb "" [] (b <> x) ((init xs) <> [(last xs) <> a] <> la)
 
 -- | Move the cursor to the end of the current logical line (clearing the selection)
 end :: TextZipper -> TextZipper
