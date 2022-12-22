@@ -53,18 +53,24 @@ spec =
                             ["the capital TEXT IS THE SELECTED","PORTION of the","text zipper"]
     leftN 20 tz `shouldBe` tz_20
 
-  it "home example_1" $ do
+  it "home/end example_1" $ do
     let tz_0 = TextZipper  ["this is an example"]
                             "this line is selected "
                             []
                             "lines after"
                             ["blah blah blah"]
-        tz_1 = TextZipper  ["this is an example"]
+        tz_1h = TextZipper  ["this is an example"]
                             ""
                             []
                             "this line is selected lines after"
                             ["blah blah blah"]
-    home tz_0 `shouldBe` tz_1
+        tz_1e = TextZipper  ["this is an example"]
+                            "this line is selected lines after"
+                            []
+                            ""
+                            ["blah blah blah"]
+    home tz_0 `shouldBe` tz_1h
+    end tz_0 `shouldBe` tz_1e
 
   it "home example_2" $ do
     let tz_0 = TextZipper  ["this is an example"]
@@ -72,12 +78,18 @@ spec =
                     ["pooh bear"]
                     " lines after"
                     ["blah blah blah"]
-        tz_1 = TextZipper  ["this is an example"]
+        tz_1h = TextZipper  ["this is an example"]
                     ""
                     []
                     "this line is selected pooh bear lines after"
                     ["blah blah blah"]
-    home tz_0 `shouldBe` tz_1
+        tz_1e = TextZipper  ["this is an example"]
+                            "this line is selected pooh bear lines after"
+                            []
+                            ""
+                            ["blah blah blah"]
+    home tz_0 `shouldBe` tz_1h
+    end tz_0 `shouldBe` tz_1e
     
   it "home example_3" $ do
     let tz_0 = TextZipper  ["this is an example"]
@@ -85,9 +97,15 @@ spec =
                     ["pooh bear", "canned chicken cat"]
                     " lines after"
                     ["blah blah blah"]
-        tz_1 = TextZipper  ["this is an example"]
+        tz_1h = TextZipper  ["this is an example"]
                     ""
                     []
                     "this line is selected pooh bear"
                     ["canned chicken cat lines after", "blah blah blah"]
-    home tz_0 `shouldBe` tz_1
+        tz_1e = TextZipper  ["this is an example", "this line is selected pooh bear"]
+                    "canned chicken cat lines after"
+                    []
+                    ""
+                    ["blah blah blah"]
+    home tz_0 `shouldBe` tz_1h
+    end tz_0 `shouldBe` tz_1e
