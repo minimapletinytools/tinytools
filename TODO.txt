@@ -146,7 +146,6 @@ WIDE
 
 ::NEWEST TODO::
 -warning cleanup
-DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
 -add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
 -make tutorial file, I think you have everythingy ou need now!!!
@@ -181,6 +180,7 @@ DONE-should be allowed to click on label directly from BoxTextHandler (you need 
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
 
 
 
