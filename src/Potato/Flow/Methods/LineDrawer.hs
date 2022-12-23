@@ -51,25 +51,6 @@ import Linear.Metric (norm)
 
 import Control.Exception (assert)
 
-instance TransformMe AttachmentLocation where
-  transformMe_rotateLeft = \case
-    AL_Top -> AL_Left
-    AL_Bot -> AL_Right
-    AL_Left -> AL_Bot
-    AL_Right -> AL_Top
-    AL_Any -> AL_Any
-  transformMe_rotateRight = \case
-    AL_Top -> AL_Right
-    AL_Bot -> AL_Left
-    AL_Left -> AL_Top
-    AL_Right -> AL_Bot
-    AL_Any -> AL_Any
-  transformMe_reflectHorizontally = \case
-    AL_Left -> AL_Right
-    AL_Right -> AL_Left
-    x -> x
-
-
 -- TODO I think you need notion of half separation?
 determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
 determineSeparation (lbx1, p1) (lbx2, p2) = r where
@@ -217,6 +198,7 @@ makeAL (V2 ax ay) (V2 tx ty) = r where
       then AL_Bot
       else AL_Top
 
+-- | configuration to determine whether the attachment point is offest by the border of the box
 newtype OffsetBorder = OffsetBorder { unOffsetBorder :: Bool } deriving (Show)
 
 instance TransformMe OffsetBorder where
@@ -225,8 +207,8 @@ instance TransformMe OffsetBorder where
   transformMe_reflectHorizontally = id
 
 
-sSimpleLineSolver_NEW :: (Text, Int) -> SimpleLineSolverParameters_NEW -> (LBox, AttachmentLocation, OffsetBorder) -> (LBox, AttachmentLocation, OffsetBorder) -> LineAnchorsForRender
-sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, offb2) =  finaloutput where
+sSimpleLineSolver_NEW :: (Text, Int) -> CartRotationReflection -> SimpleLineSolverParameters_NEW -> (LBox, AttachmentLocation, OffsetBorder) -> (LBox, AttachmentLocation, OffsetBorder) -> LineAnchorsForRender
+sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_, offb2) =  finaloutput where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 _ y2) (V2 _ h2) = lbx2
 
@@ -246,8 +228,8 @@ sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, off
   lbal1 = (lbx1, al1, offb1)
   lbal2 = (lbx2, al2, offb2)
 
-  start@(V2 ax1 ay1) = attachLocationFromLBox (unOffsetBorder offb1) lbx1 al1
-  end@(V2 ax2 ay2) = attachLocationFromLBox (unOffsetBorder offb2) lbx2 al2
+  start@(V2 ax1 ay1) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb1) lbx1 al1
+  end@(V2 ax2 ay2) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb2) lbx2 al2
 
 
   -- TODO use attach offset here
@@ -378,7 +360,7 @@ sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, off
           , _lineAnchorsForRender_rest = restify [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
     -- ->2 ->1 (will not get covered by rotation)
-    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver_NEW (nextmsg "case 6") sls lbal2 lbal1
+    AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver_NEW (nextmsg "case 6") crr sls lbal2 lbal1
 
     --     2->
     --  ^
@@ -427,14 +409,14 @@ sSimpleLineSolver_NEW (errormsg, depth) sls (lbx1, al1_, offb1) (lbx2, al2_, off
     --        ^
     --        |
     -- <-2->  1 (will not get covered by rotation)
-    AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver_NEW (nextmsg "case 10") (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
+    AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver_NEW (nextmsg "case 10") (transformMe_reflectHorizontally crr) (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
     -- TODO DELETE these are handled earlier by substitution
-    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 11") sls lbal1 (lbx2, AL_Left, offb2)
-    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 12") sls (lbx1, AL_Right, offb1) lbal2
-    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 13") sls (lbx1, AL_Right, offb1) (lbx2, AL_Left, offb2 )
+    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 11") crr sls lbal1 (lbx2, AL_Left, offb2)
+    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 12") crr sls (lbx1, AL_Right, offb1) lbal2
+    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 13") crr sls (lbx1, AL_Right, offb1) (lbx2, AL_Left, offb2 )
 
-    _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver_NEW (nextmsg "case 14") (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
+    _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver_NEW (nextmsg "case 14") (transformMe_rotateLeft crr) (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
   finaloutput = if depth > 10
     then error errormsg
@@ -641,7 +623,7 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
 
   -- TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
   -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
-  anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver_NEW ("",0) params lbal1 lbal2) $ pairs ((startlbal : midlbals) <> [endlbal])
+  anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver_NEW ("",0) cartRotationReflection_identity params lbal1 lbal2) $ pairs ((startlbal : midlbals) <> [endlbal])
 
 
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender

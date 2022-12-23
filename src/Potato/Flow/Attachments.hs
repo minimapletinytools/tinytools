@@ -1,6 +1,7 @@
 
 module Potato.Flow.Attachments (
-  attachLocationFromLBox
+  attachLocationFromLBox_conjugateCartRotationReflection
+  , attachLocationFromLBox
   , attachLocationsFromLBox
   , owlItem_availableAttachments
   , isOverAttachment
@@ -14,11 +15,20 @@ import           Potato.Flow.Math
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import Potato.Flow.SElts
+import Potato.Flow.Methods.LineTypes
 
+-- uh not sure if this is actually conjugation...
+attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> LBox -> AttachmentLocation -> XY
+attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder box al = r where
+  box' = cartRotationReflection_invert_apply crr box
+  r' = attachLocationFromLBox offsetBorder box' (cartRotationReflection_invert_apply crr al)
+  r = cartRotationReflection_apply crr r'
 
--- the (_+1) `div` 2 on AL_Bot/AL_Left is such that this function is invariant under conjugation with rotations
 attachLocationFromLBox :: Bool -> LBox -> AttachmentLocation -> XY
 attachLocationFromLBox True (LBox (V2 x y) (V2 w h)) = \case
+  -- NOTE the (_+1) `div` 2 on AL_Bot/AL_Left is such that this function is invariant under conjugation with rotations
+  --   except I think I didn't do it right because I think it does what you don't want it to do right now...
+  --   oh, the issue is it's not invariant under reflection conjugation :(
   AL_Top -> V2 (x+w `div` 2) (y-1)
   AL_Bot -> V2 (x+(w-1) `div` 2) (y+h)
   AL_Left -> V2 (x-1) (y+(h-1) `div` 2)

@@ -5,6 +5,8 @@ module Potato.Flow.Methods.LineTypes where
 import           Relude
 
 import           Potato.Flow.Math
+import           Potato.Flow.SElts
+
 
 import Data.Default
 
@@ -92,6 +94,29 @@ class TransformMe a where
   transformMe_rotateRight = transformMe_rotateLeft . transformMe_rotateLeft . transformMe_rotateLeft
 
   transformMe_reflectHorizontally :: a -> a
+  transformMe_reflectHorizontally = transformMe_rotateLeft . transformMe_rotateLeft . transformMe_reflectVertically
+
+  transformMe_reflectVertically :: a -> a
+  transformMe_reflectVertically = transformMe_rotateLeft . transformMe_rotateLeft . transformMe_reflectHorizontally
+
+instance TransformMe AttachmentLocation where
+  transformMe_rotateLeft = \case
+    AL_Top -> AL_Left
+    AL_Bot -> AL_Right
+    AL_Left -> AL_Bot
+    AL_Right -> AL_Top
+    AL_Any -> AL_Any
+  transformMe_rotateRight = \case
+    AL_Top -> AL_Right
+    AL_Bot -> AL_Left
+    AL_Left -> AL_Top
+    AL_Right -> AL_Bot
+    AL_Any -> AL_Any
+  transformMe_reflectHorizontally = \case
+    AL_Left -> AL_Right
+    AL_Right -> AL_Left
+    x -> x
+
 
 instance TransformMe CartDir where
   transformMe_rotateLeft = \case
@@ -165,3 +190,42 @@ instance TransformMe LBox where
     r = LBox (V2 (trx-h) try) (V2 h w)
   transformMe_reflectHorizontally lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     r = LBox (V2 (-(x+w)) y) (V2 w h)
+
+
+-- TODO UTs for CartRotationReflection stuff
+-- apply rotation first, then apply reflections
+data CartRotationReflection = CartRotationReflection {
+  _cartRotationReflection_rotateLeftTimes :: Int -- number of times we rotated left
+  , _cartRotationReflection_reflectVertical :: Bool -- did we reflect accross vertical axis
+}
+
+instance TransformMe CartRotationReflection where
+  transformMe_rotateLeft x@CartRotationReflection {..} = if _cartRotationReflection_reflectVertical
+    then x { _cartRotationReflection_rotateLeftTimes = (_cartRotationReflection_rotateLeftTimes + 3) `mod` 4 }
+    else x { _cartRotationReflection_rotateLeftTimes = (_cartRotationReflection_rotateLeftTimes + 1) `mod` 4 }
+  transformMe_reflectHorizontally x@CartRotationReflection {..} = x { _cartRotationReflection_reflectVertical = not _cartRotationReflection_reflectVertical }
+
+cartRotationReflection_identity :: CartRotationReflection
+cartRotationReflection_identity = CartRotationReflection {
+    _cartRotationReflection_rotateLeftTimes = 0
+    , _cartRotationReflection_reflectVertical = False
+  }
+cartRotationReflection_invert :: CartRotationReflection -> CartRotationReflection
+cartRotationReflection_invert x@CartRotationReflection {..} = if _cartRotationReflection_reflectVertical
+  then x
+  else x { _cartRotationReflection_rotateLeftTimes = (_cartRotationReflection_rotateLeftTimes + 3) `mod` 4 }
+
+cartRotationReflection_invert_apply :: (TransformMe a) => CartRotationReflection -> a -> a
+cartRotationReflection_invert_apply crr a = cartRotationReflection_apply (cartRotationReflection_invert crr) a
+
+-- | Apply a function @n@ times to a given value.
+nTimes :: Int -> (a -> a) -> (a -> a)
+nTimes 0 _ = id
+nTimes 1 f = f
+nTimes n f = f . nTimes (n-1) f
+
+cartRotationReflection_apply :: (TransformMe a) => CartRotationReflection -> a -> a
+cartRotationReflection_apply CartRotationReflection {..} a = r where
+  nrl = _cartRotationReflection_rotateLeftTimes `mod` 4
+  r' = nTimes nrl transformMe_rotateLeft a
+  r = if _cartRotationReflection_reflectVertical then transformMe_reflectVertically a else a

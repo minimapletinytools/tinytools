@@ -83,7 +83,7 @@ WIDE
 
 
 :: FUTURE FEATURES
--TABLE / DIVIDEABLE BOXES 
+-TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
   -lives at params level
@@ -120,7 +120,7 @@ WIDE
 -straight line tool spec
   -same as autoline (with midpoints) but has fancy line rendering straight lines
   -line style picker
--scripting and extensions lol 
+-scripting and extensions lol
 -background pattern fills
   -crop or stop at end of last repeating pattern
 
@@ -132,7 +132,7 @@ WIDE
   -must support empty doc state
     -r maybe it just always creates a new empty file in these cases?
 -multi user mode
--no partial owls! 
+-no partial owls!
   -except when converting remote changes to llamas
 
 
@@ -145,18 +145,17 @@ WIDE
 
 
 ::NEWEST TODO::
+-warning cleanup
 DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
--add an anchor for the box label so you know you can add one easily 
+-add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
 -make tutorial file, I think you have everythingy ou need now!!!
 -you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
 -BUG fix line bugs
-  -line anchors kinda effed in general actually....
-  -BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
+  DONE-BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
+    -fix with cartRotationReflection_apply_lBox
   -BUG some bot to bot cases are broken
   -BUG attach offset seems to be not used correctly in some configurations :(
-  -attach offset of 0 for AL ANY still needs to render the arrow head
-  -midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
   -BUG
            ╔══════════╗
            ║@@@@@@@@@@║
@@ -168,6 +167,7 @@ DONE-should be allowed to click on label directly from BoxTextHandler (you need 
           ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
           ║     ║     ╚══════════════════════╝
           ╚═════╝
+  IGNORE/DONE?-attach offset of 0 for AL ANY still needs to render the arrow head
 -do label position adjustment when adding midpoints
 -high level bugs
   -BUG you sometimes hit this assert, need repro
@@ -177,7 +177,7 @@ DONE-should be allowed to click on label directly from BoxTextHandler (you need 
     -you got it down to 2 :O
   -figure out why scrolling in file explorer is hecka broken
     -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
-  -make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
+  IGNORE/DONE?-make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
@@ -185,19 +185,20 @@ DONE-should be allowed to click on label directly from BoxTextHandler (you need 
 
 
 :: CUT Line
+-LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
 -BUG figure out what's going on with cache updated render bugs...
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -file stuff
   -maybe highlight relevant files instead of * in file explorer
     -or just don't show anything that's not relevant...
-  -UTs 
+  -UTs
     -popupSaveBeforeExit
     -popupOpenWindow
     -doubleClick
     DONE-waitForSecondAfterFirst (move to reflex-potatoes)
   DONE-add double click support to file explorer
     -need to hook into IO time stuff
--BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe 
+-BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe
 -BUG fix text zipper bugs
   -you should just rewrite text zipper and add select support..
   -BUG can't enter multiple new lines into text box
