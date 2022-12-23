@@ -172,7 +172,12 @@ end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper (lb <> ([b <> x] <> NE.init 
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
-top (TextZipper lb b s a la) = undefined
+--top (TextZipper lb b s a la) = undefined
+top (TextZipper [] "" [] a la) = TextZipper [] "" [] a la
+top (TextZipper (x:[]) "" [] a la) = TextZipper [] "" [] x (a:la)
+top (TextZipper (x:(xs:xss)) "" [] a la) = TextZipper [] "" [] x (NE.tail xs' <> (a:la)) where
+    xs' = xs NE.:| xss
+top tz = top $ home tz
 
 -- | Insert a character at the current cursor position (overwriting the selection)
 insertChar :: Char -> TextZipper -> TextZipper
