@@ -27,29 +27,29 @@ module Potato.Flow.Methods.LineDrawer (
 ) where
 
 
-import           Relude hiding (tail)
-import Relude.Unsafe (tail)
+import           Relude                         hiding (tail)
+import           Relude.Unsafe                  (tail)
 
-import Potato.Flow.Methods.LineTypes
+import           Potato.Flow.Attachments
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
-import Potato.Flow.Methods.Types
+import           Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Methods.TextCommon
-import Potato.Flow.Attachments
-import Potato.Flow.Owl
-import Potato.Flow.OwlItem
+import           Potato.Flow.Methods.Types
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.SElts
 
-import qualified Data.Text          as T
-import qualified Data.List as L
-import qualified Data.List.Index as L
-import Data.Tuple.Extra
-import qualified Potato.Data.Text.Zipper as TZ
+import qualified Data.List                      as L
+import qualified Data.List.Index                as L
+import qualified Data.Text                      as T
+import           Data.Tuple.Extra
+import qualified Potato.Data.Text.Zipper        as TZ
 
 
-import Linear.Vector ((^*))
-import Linear.Metric (norm)
+import           Linear.Metric                  (norm)
+import           Linear.Vector                  ((^*))
 
-import Control.Exception (assert)
+import           Control.Exception              (assert)
 
 -- TODO I think you need notion of half separation?
 determineSeparation :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
@@ -81,9 +81,9 @@ maybeIndex t i = if i < T.length t
 
 renderLine :: SuperStyle -> CartDir -> MPChar
 renderLine SuperStyle {..} cd = case cd of
-  CD_Up -> _superStyle_vertical
-  CD_Down -> _superStyle_vertical
-  CD_Left -> _superStyle_horizontal
+  CD_Up    -> _superStyle_vertical
+  CD_Down  -> _superStyle_vertical
+  CD_Left  -> _superStyle_horizontal
   CD_Right -> _superStyle_horizontal
 
 renderLineEnd :: SuperStyle -> LineStyle -> CartDir -> Int -> MPChar
@@ -98,14 +98,14 @@ renderLineEnd SuperStyle {..} LineStyle {..} cd distancefromend = r where
 renderAnchorType :: SuperStyle -> LineStyle -> AnchorType -> MPChar
 renderAnchorType ss@SuperStyle {..} ls at = r where
   r = case at of
-    AT_End_Up -> renderLineEnd ss ls CD_Up 0
-    AT_End_Down -> renderLineEnd ss ls CD_Down 0
-    AT_End_Left -> renderLineEnd ss ls CD_Left 0
-    AT_End_Right -> renderLineEnd ss ls CD_Right 0
-    AT_Elbow_TL -> _superStyle_tl
-    AT_Elbow_TR -> _superStyle_tr
-    AT_Elbow_BR -> _superStyle_br
-    AT_Elbow_BL -> _superStyle_bl
+    AT_End_Up        -> renderLineEnd ss ls CD_Up 0
+    AT_End_Down      -> renderLineEnd ss ls CD_Down 0
+    AT_End_Left      -> renderLineEnd ss ls CD_Left 0
+    AT_End_Right     -> renderLineEnd ss ls CD_Right 0
+    AT_Elbow_TL      -> _superStyle_tl
+    AT_Elbow_TR      -> _superStyle_tr
+    AT_Elbow_BR      -> _superStyle_br
+    AT_Elbow_BL      -> _superStyle_bl
     AT_Elbow_Invalid -> Just '?'
 
 
@@ -113,7 +113,7 @@ lineAnchorsForRender_simplify :: LineAnchorsForRender -> LineAnchorsForRender
 lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
   -- remove 0 distance lines except at front and back
   withoutzeros = case _lineAnchorsForRender_rest of
-    [] -> []
+    []   -> []
     x:xs -> x:withoutzerosback xs
     where
       withoutzerosback = \case
@@ -150,7 +150,7 @@ lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
       _lineAnchorsForRender_start = end
       , _lineAnchorsForRender_rest = revgostart _lineAnchorsForRender_rest
     }
-    
+
 lineAnchorsForRender_toPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRender_toPointList LineAnchorsForRender {..} = r where
   scanlfn pos (cd,d,_) = pos + (cartDirToUnit cd) ^* d
@@ -167,7 +167,7 @@ instance TransformMe SimpleLineSolverParameters_NEW where
 
 
 restify :: [(CartDir, Int)] -> [(CartDir, Int, Bool)]
-restify [] = []
+restify []          = []
 restify ((cd,d):xs) = (cd,d,True):fmap (\(a,b) -> (a,b,False)) xs
 
 -- used to convert AL_ANY at (ax, ay) to an AttachmentLocation based on target position (tx, ty)
@@ -418,10 +418,10 @@ doesLineContain (V2 px py) (V2 sx sy) (tcd, tl, _) = case tcd of
 doesLineContainBox :: LBox -> XY -> (CartDir, Int, Bool) -> Bool
 doesLineContainBox lbox (V2 sx sy) (tcd, tl, _) = r where
   (x,y, w,h) = case tcd of
-    CD_Left -> (sx-tl, sy, tl+1, 1)
+    CD_Left  -> (sx-tl, sy, tl+1, 1)
     CD_Right -> (sx, sy, tl+1, 1)
-    CD_Up -> (sx, sy-tl, 1, tl+1)
-    CD_Down -> (sx, sy, 1, tl+1)
+    CD_Up    -> (sx, sy-tl, 1, tl+1)
+    CD_Down  -> (sx, sy, 1, tl+1)
   lbox2 = LBox (V2 x y) (V2 w h)
   r = does_lBox_intersect lbox lbox2
 
@@ -457,14 +457,14 @@ lineAnchorsForRender_renderAt ss ls lse LineAnchorsForRender {..} pos = r where
     x:xs -> case doesLineContain pos curbegin x of
       Nothing ->  walk (False, nextbegin) xs
       Just d -> Just $ case xs of
-        [] -> walkToRender ss ls lse isstart curbegin x Nothing d
+        []  -> walkToRender ss ls lse isstart curbegin x Nothing d
         y:_ -> walkToRender ss ls lse isstart curbegin x (Just y) d
       where
         nextbegin = curbegin + cartDirWithDistanceToV2 x
 
   manswer = walk (True, _lineAnchorsForRender_start) _lineAnchorsForRender_rest
   r = case manswer of
-    Nothing -> Nothing
+    Nothing             -> Nothing
     Just (pos', mpchar) -> assert (pos == pos') mpchar
 
 -- UNTESTED
@@ -478,7 +478,7 @@ lineAnchorsForRender_findIntersectingSubsegment  LineAnchorsForRender {..} pos =
     [] -> Nothing
     x@(_,_,s):xs -> case doesLineContain pos curbegin x of
       Nothing ->  walk new_i (curbegin + cartDirWithDistanceToV2 x) xs
-      Just _ -> Just new_i
+      Just _  -> Just new_i
       where new_i = if s then i+1 else i
   r = walk (-1) _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
@@ -489,7 +489,7 @@ lineAnchorsForRender_doesIntersectPoint LineAnchorsForRender {..} pos = r where
     x:xs -> case doesLineContain pos curbegin x of
       Nothing ->  walk (curbegin + cartDirWithDistanceToV2 x) xs
 
-      Just _ -> True
+      Just _  -> True
   r = walk _lineAnchorsForRender_start _lineAnchorsForRender_rest
 
 
@@ -520,7 +520,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
 
   getAnchors :: (HasOwlTree a) => a -> LineAnchorsForRender
   getAnchors ot = case mcache of
-    Just x -> x
+    Just x  -> x
     Nothing -> sSimpleLineNewRenderFnComputeCache ot ssline
 
   renderfn :: SEltDrawerRenderFn
@@ -557,7 +557,7 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
     mlabelbox = foldr (\(pos, _, llabel) mbox -> maybe (Just $ llabelbox pos llabel) (\box -> Just $ box `union_lBox` llabelbox pos llabel) mbox) Nothing llabels
 
     r = case mlabelbox of
-      Nothing -> anchorbox
+      Nothing       -> anchorbox
       Just labelbox -> union_lBox anchorbox labelbox
 
 
@@ -598,10 +598,10 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
 
   offsetBorder x (a,b) = (a,b, OffsetBorder x)
   startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
-    Nothing -> (LBox _sAutoLine_start 1, AL_Any, OffsetBorder False)
+    Nothing    -> (LBox _sAutoLine_start 1, AL_Any, OffsetBorder False)
     Just (x,y) -> (x, y, OffsetBorder True)
   endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
-    Nothing -> (LBox _sAutoLine_end 1, AL_Any, OffsetBorder False)
+    Nothing    -> (LBox _sAutoLine_end 1, AL_Any, OffsetBorder False)
     Just (x,y) -> (x, y, OffsetBorder True)
   midlbals = fmap (\(SAutoLineConstraintFixed xy) -> offsetBorder False (LBox xy 1, AL_Any)) _sAutoLine_midpoints
 
@@ -663,16 +663,16 @@ getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
 getClosestPointOnLineFromLineAnchorsForRenderList :: [LineAnchorsForRender] -> XY -> (XY, Int, Float)
 getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r where
 
-  foldlfn :: 
+  foldlfn ::
     (Int, (XY, Int, Float), Int) -- (previous closest distance to line, (prev closest position, index into larlist, rel distance on segment))
-    -> LineAnchorsForRender 
+    -> LineAnchorsForRender
     -> (Int, (XY, Int, Float), Int)
   foldlfn (closestd, closestp, curindex) lar = r2 where
 
 
-    foldlfn2 :: 
+    foldlfn2 ::
       (Int, XY, Int, Maybe (Int, XY)) -- (total distance we traveled so far, current anchor position, prev closest distance to line (includes second fold results up until now), Maybe (how far we traveled to new closest point on line, new closest point))
-      -> (CartDir, Int, Bool) 
+      -> (CartDir, Int, Bool)
       -> (Int, XY, Int, Maybe (Int, XY))
     foldlfn2 (traveld, curp@(V2 curx cury), closestd2, mnewclosestpos2) cdwd@(cd,d,_) = r3 where
 
