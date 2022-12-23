@@ -150,21 +150,7 @@ lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
       _lineAnchorsForRender_start = end
       , _lineAnchorsForRender_rest = revgostart _lineAnchorsForRender_rest
     }
-
-instance TransformMe LineAnchorsForRender where
-  transformMe_rotateLeft LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = transformMe_rotateLeft _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateLeft cd, d, s)) _lineAnchorsForRender_rest
-    }
-  transformMe_rotateRight LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = transformMe_rotateRight _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateRight cd, d, s)) _lineAnchorsForRender_rest
-    }
-  transformMe_reflectHorizontally LineAnchorsForRender {..} = LineAnchorsForRender {
-      _lineAnchorsForRender_start = transformMe_reflectHorizontally _lineAnchorsForRender_start
-      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_reflectHorizontally cd, d, s)) _lineAnchorsForRender_rest
-    }
-
+    
 lineAnchorsForRender_toPointList :: LineAnchorsForRender -> [XY]
 lineAnchorsForRender_toPointList LineAnchorsForRender {..} = r where
   scanlfn pos (cd,d,_) = pos + (cartDirToUnit cd) ^* d
@@ -340,8 +326,6 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
     -- WORKING
     -- ->1 ->2
     AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
-      t = min (t1_inc-1) (t2_inc-1)
-      b = max b1 b2
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
       -- TODO maybe it would be nice if this traveled a little further right
@@ -630,8 +614,8 @@ sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAn
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
   anchors = lineAnchorsForRender_simplify . lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenderList ot sline
 
-internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> Int -> XY
-internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
+internal_getSAutoLineLabelPosition_walk :: LineAnchorsForRender -> Int -> XY
+internal_getSAutoLineLabelPosition_walk lar targetd = r where
   walk [] curbegin _ = curbegin
   walk (x@(cd,d,_):rest) curbegin traveld = r2 where
     nextbegin = curbegin + cartDirWithDistanceToV2 x
@@ -642,11 +626,11 @@ internal_getSAutoLineLabelPosition_walk lar targetd totall = r where
 
 
 internal_getSAutoLineLabelPosition :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
-internal_getSAutoLineLabelPosition lar sal@SAutoLine {..} sall@SAutoLineLabel {..} = r where
+internal_getSAutoLineLabelPosition lar SAutoLine {..} SAutoLineLabel {..} = r where
   totall = lineAnchorsForRender_length lar
   targetd = case _sAutoLineLabel_position of
-    SAutoLineLabelPositionRelative r -> max 0 . floor $ (fromIntegral totall * r)
-  r = internal_getSAutoLineLabelPosition_walk lar targetd totall
+    SAutoLineLabelPositionRelative rp -> max 0 . floor $ (fromIntegral totall * rp)
+  r = internal_getSAutoLineLabelPosition_walk lar targetd
 
 getSAutoLineLabelPositionFromLineAnchorsForRender :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall = internal_getSAutoLineLabelPosition lar sal sall
@@ -690,7 +674,7 @@ getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r
       (Int, XY, Int, Maybe (Int, XY)) -- (total distance we traveled so far, current anchor position, prev closest distance to line (includes second fold results up until now), Maybe (how far we traveled to new closest point on line, new closest point))
       -> (CartDir, Int, Bool) 
       -> (Int, XY, Int, Maybe (Int, XY))
-    foldlfn2 (traveld, curp@(V2 curx cury), closestd2, mnewclosestpos) cdwd@(cd,d,_) = r3 where
+    foldlfn2 (traveld, curp@(V2 curx cury), closestd2, mnewclosestpos2) cdwd@(cd,d,_) = r3 where
 
       between :: Int -> Int -> Int -> Bool
       between p a b = (p >= a && p <= b) || (p <= a && p >= b)
@@ -726,7 +710,7 @@ getClosestPointOnLineFromLineAnchorsForRenderList larlist pos@(V2 posx posy) = r
         -- update the new closest point
         then (traveld + d, endp, ceiling projd, Just (traveld + floor (xydistance curp projp), projp))
         -- same as before, keep going
-        else (traveld + d, endp, closestd2, mnewclosestpos)
+        else (traveld + d, endp, closestd2, mnewclosestpos2)
 
     -- walk through each segment in lar
     (totald, _, newclosestd, mnewclosestpos) = L.foldl foldlfn2 (0, _lineAnchorsForRender_start lar, closestd, Nothing) (_lineAnchorsForRender_rest lar)

@@ -118,8 +118,8 @@ spec = do
       lineAnchorsForRender_length emptyLineAnchorsForRender `shouldBe` 1
     it "internal_getSAutoLineLabelPosition_walk" $ do
       let totall = lineAnchorsForRender_length someLineAnchorsForRender
-      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender 0 totall `shouldBe` 0
-      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender totall totall `shouldBe` V2 5 (-9)
+      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender 0 `shouldBe` 0
+      internal_getSAutoLineLabelPosition_walk someLineAnchorsForRender totall `shouldBe` V2 5 (-9)
     it "getSAutoLineLabelPosition" $ do
       -- use owlpfstate_zero OK because there are no attachments so state is never read
       getSAutoLineLabelPosition owlpfstate_zero someSAutoLine_withLabels someSAutoLine_withLabels_label3 `shouldBe` V2 0 0

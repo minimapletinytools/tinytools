@@ -73,6 +73,22 @@ data LineAnchorsForRender = LineAnchorsForRender {
 
 instance NFData LineAnchorsForRender
 
+
+instance TransformMe LineAnchorsForRender where
+  transformMe_rotateLeft LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_rotateLeft _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateLeft cd, d, s)) _lineAnchorsForRender_rest
+    }
+  transformMe_rotateRight LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_rotateRight _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_rotateRight cd, d, s)) _lineAnchorsForRender_rest
+    }
+  transformMe_reflectHorizontally LineAnchorsForRender {..} = LineAnchorsForRender {
+      _lineAnchorsForRender_start = transformMe_reflectHorizontally _lineAnchorsForRender_start
+      ,_lineAnchorsForRender_rest = fmap (\(cd,d,s) -> (transformMe_reflectHorizontally cd, d, s)) _lineAnchorsForRender_rest
+    }
+
+
 -- NOTE our coordinate system is LEFT HANDED
 --  --> +x
 -- |
