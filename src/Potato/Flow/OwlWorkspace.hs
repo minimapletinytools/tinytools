@@ -15,28 +15,28 @@ module Potato.Flow.OwlWorkspace (
 
 import           Relude
 
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 import           Potato.Flow.OwlState
+import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import Potato.Flow.SElts
-import Potato.Flow.Llama
 
-import           Control.Exception  (assert)
-import qualified Data.IntMap.Strict as IM
-import qualified Data.IntSet as IS
-import qualified Data.Sequence      as Seq
+import           Control.Exception    (assert)
+import qualified Data.IntMap.Strict   as IM
+import qualified Data.IntSet          as IS
+import qualified Data.Sequence        as Seq
 
 -- TODO rename
 data OwlPFWorkspace = OwlPFWorkspace {
-  _owlPFWorkspace_owlPFState       :: OwlPFState
+  _owlPFWorkspace_owlPFState    :: OwlPFState
 
   -- this is updated after each call to updateOwlPFWorkspace and is only guaranteed to be valid at that point
   -- TODO better to have methods return (OwlPFWorkspace, SuperOwlChanges) instead of embedding in OwlPFWorkspace
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges
 
-  , _owlPFWorkspace_llamaStack :: LlamaStack
+  , _owlPFWorkspace_llamaStack  :: LlamaStack
 } deriving (Show, Generic)
 
 instance NFData OwlPFWorkspace
@@ -64,7 +64,7 @@ undoWorkspace pfw =  r where
   r = case _llamaStack_done of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs (undollama:_llamaStack_undone) _llamaStack_lastSaved) where
       (newpfs, changes, undollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
-        Left e -> error $ show e
+        Left e  -> error $ show e
         Right x -> x
     _ -> pfw
 
@@ -74,7 +74,7 @@ redoWorkspace pfw = r where
   r = case _llamaStack_undone of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack (dollama:_llamaStack_done) cs _llamaStack_lastSaved) where
       (newpfs, changes, dollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
-        Left e -> error $ show e
+        Left e  -> error $ show e
         Right x -> x
     _ -> pfw
 
@@ -92,14 +92,14 @@ undoPermanentWorkspace pfw =  r where
   r = case _llamaStack_done of
     c : cs -> OwlPFWorkspace newpfs changes (LlamaStack cs _llamaStack_undone newLastSaved) where
       (newpfs, changes, _) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
-        Left e -> error $ show e
+        Left e  -> error $ show e
         Right x -> x
     _ -> pfw
 
 doLlamaWorkspace :: Llama -> OwlPFWorkspace -> OwlPFWorkspace
 doLlamaWorkspace llama pfw = r where
   (newpfs, changes, undollama) = case _llama_apply llama (_owlPFWorkspace_owlPFState pfw) of
-    Left e -> error $ show e
+    Left e  -> error $ show e
     Right x -> x
   LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
   newLastSaved = case _llamaStack_lastSaved of
@@ -187,12 +187,11 @@ pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pf
 -- UNTESTED
 makeLlamaToSetAttachedLinesToCurrentPosition :: OwlPFState -> AttachmentMap -> REltId -> [Llama]
 makeLlamaToSetAttachedLinesToCurrentPosition pfs am target = case IM.lookup target am of
-    Nothing -> []
-    Just attached -> fmap (makeLlama pfs) . IS.toList $ attached
+    Nothing       -> []
+    Just attached -> fmap makeLlama . IS.toList $ attached
   where
-    -- returns list of rid's Attachments to target
-    makeLlama :: OwlPFState -> REltId -> Llama
-    makeLlama pfs rid = case _superOwl_elt (hasOwlTree_mustFindSuperOwl pfs rid) of
+    makeLlama :: REltId -> Llama
+    makeLlama rid = case _superOwl_elt (hasOwlTree_mustFindSuperOwl pfs rid) of
         OwlItem _ (OwlSubItemLine sline _) -> r where
           startAttachment = _sAutoLine_attachStart sline
           endAttachment = _sAutoLine_attachEnd sline
@@ -216,7 +215,9 @@ makeLlamaToSetAttachedLinesToCurrentPosition pfs am target = case IM.lookup targ
 
             }
           r = makeSetLlama (rid, SEltLine newsline)
+        _ -> error $ "found non-line element in attachment list"
 
+-- TODO rename to removeElts
 removeEltAndUpdateAttachments_to_llama :: OwlPFState -> AttachmentMap -> OwlParliament -> Llama
 removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
   removellama = makePFCLlama$  pfc_removeElt_to_deleteElts pfs op

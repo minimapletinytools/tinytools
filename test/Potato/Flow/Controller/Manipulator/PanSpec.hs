@@ -10,7 +10,6 @@ import           Test.Hspec
 import           Potato.Flow.GoatTester
 
 import           Potato.Flow
-import           Potato.Flow.Common
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 
 
@@ -21,7 +20,7 @@ verifyPan expected = verifyState "verifyPan" f where
   f gs = if pan == expected
     then Nothing
     else Just $ "got " <> show pan <> " expected " <> show expected
-    where 
+    where
       V2 x y = _goatState_pan gs
       pan = (x,y)
 

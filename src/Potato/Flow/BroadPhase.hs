@@ -19,16 +19,15 @@ module Potato.Flow.BroadPhase (
 import           Relude
 
 import           Potato.Flow.Math
+import           Potato.Flow.Methods.Types
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.OwlState
+import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 import           Potato.Flow.Types
-import Potato.Flow.SEltMethods
-import Potato.Flow.Methods.Types
 
-import qualified Data.IntMap.Strict      as IM
+import qualified Data.IntMap.Strict        as IM
 
 type AABB = LBox
 

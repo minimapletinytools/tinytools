@@ -20,33 +20,31 @@ import           Relude
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Manipulator.Box
+import           Potato.Flow.Controller.Manipulator.CartLine
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
-import           Potato.Flow.Controller.Manipulator.CartLine
 import           Potato.Flow.Controller.Manipulator.Pan
 import           Potato.Flow.Controller.Manipulator.Select
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
-import Potato.Flow.OwlState
-import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
-import Potato.Flow.Llama
-import Potato.Flow.DebugHelpers
 
-import           Control.Exception                         (assert)
+import           Control.Exception                           (assert)
 import           Data.Default
-import qualified Data.IntMap                               as IM
-import qualified Data.IntSet as IS
+import qualified Data.IntMap                                 as IM
+import qualified Data.IntSet                                 as IS
 import           Data.Maybe
-import qualified Data.Sequence                             as Seq
-import qualified Data.Text as T
+import qualified Data.Sequence                               as Seq
 
 
 catMaybesSeq :: Seq (Maybe a) -> Seq a
@@ -64,30 +62,30 @@ data GoatState = GoatState {
 
     -- TODO make GoatTab
     -- unique to each document
-    _goatState_workspace       :: OwlPFWorkspace
-    , _goatState_pan             :: XY -- panPos is position of upper left corner of canvas relative to screen
-    , _goatState_selection       :: Selection
-    , _goatState_canvasSelection :: CanvasSelection
-    , _goatState_broadPhaseState :: BroadPhaseState
-    , _goatState_layersState     :: LayersState
-    , _goatState_renderedCanvas  :: RenderedCanvasRegion
-    , _goatState_renderedSelection  :: RenderedCanvasRegion -- TODO need sparse variant
-    , _goatState_handler         :: SomePotatoHandler
-    , _goatState_layersHandler   :: SomePotatoHandler
+    _goatState_workspace                 :: OwlPFWorkspace
+    , _goatState_pan                     :: XY -- panPos is position of upper left corner of canvas relative to screen
+    , _goatState_selection               :: Selection
+    , _goatState_canvasSelection         :: CanvasSelection
+    , _goatState_broadPhaseState         :: BroadPhaseState
+    , _goatState_layersState             :: LayersState
+    , _goatState_renderedCanvas          :: RenderedCanvasRegion
+    , _goatState_renderedSelection       :: RenderedCanvasRegion -- TODO need sparse variant
+    , _goatState_handler                 :: SomePotatoHandler
+    , _goatState_layersHandler           :: SomePotatoHandler
     -- TODO consider moving into _goatState_workspace
-    , _goatState_attachmentMap   :: AttachmentMap -- map of targets to things attached to it. This is a cache that gets updated over time and can be regenerated from the current OwlTree
+    , _goatState_attachmentMap           :: AttachmentMap -- map of targets to things attached to it. This is a cache that gets updated over time and can be regenerated from the current OwlTree
 
     -- shared across documents
     -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
     , _goatState_potatoDefaultParameters :: PotatoDefaultParameters
-    , _goatState_mouseDrag       :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
-    , _goatState_screenRegion    :: XY -- the screen dimensions
-    , _goatState_clipboard       :: Maybe SEltTree
-    , _goatState_focusedArea     :: GoatFocusedArea
+    , _goatState_mouseDrag               :: MouseDrag -- last mouse dragging state, this is a little questionable, arguably we should only store stuff needed, not the entire mouseDrag
+    , _goatState_screenRegion            :: XY -- the screen dimensions
+    , _goatState_clipboard               :: Maybe SEltTree
+    , _goatState_focusedArea             :: GoatFocusedArea
 
     -- debug stuff (shared across documents)
-    , _goatState_debugLabel      :: Text
-    , _goatState_debugCommands   :: [GoatCmd]
+    , _goatState_debugLabel              :: Text
+    , _goatState_debugCommands           :: [GoatCmd]
 
   } deriving (Show)
 
@@ -188,16 +186,16 @@ data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFla
 
 
 data GoatCmdTempOutput = GoatCmdTempOutput {
-  _goatCmdTempOutput_goatState     :: GoatState
+  _goatCmdTempOutput_goatState               :: GoatState
   --, _goatCmdTempOutput_wasCanvasInput :: Bool
   --, _goatCmdTempOutput_wasLayerInput :: Bool
 
-  , _goatCmdTempOutput_nextHandler :: Maybe SomePotatoHandler
+  , _goatCmdTempOutput_nextHandler           :: Maybe SomePotatoHandler
 
-  , _goatCmdTempOutput_select      :: Maybe (Bool, Selection)
-  , _goatCmdTempOutput_pFEvent     :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
-  , _goatCmdTempOutput_pan         :: Maybe XY
-  , _goatCmdTempOutput_layersState :: Maybe LayersState
+  , _goatCmdTempOutput_select                :: Maybe (Bool, Selection)
+  , _goatCmdTempOutput_pFEvent               :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
+  , _goatCmdTempOutput_pan                   :: Maybe XY
+  , _goatCmdTempOutput_layersState           :: Maybe LayersState
   , _goatCmdTempOutput_changesFromToggleHide :: SuperOwlChanges
 } deriving (Show)
 
@@ -553,13 +551,13 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                 -- tool hotkeys
                 KeyboardData (KeyboardKey_Char key) _ -> r where
                   mtool = case key of
-                    'v'  -> Just Tool_Select
+                    'v' -> Just Tool_Select
                     'p' -> Just Tool_Pan
-                    'b'  -> Just Tool_Box
+                    'b' -> Just Tool_Box
                     'l' -> Just Tool_Line
-                    't'  -> Just Tool_Text
-                    'n'  -> Just Tool_TextArea
-                    _    -> Nothing
+                    't' -> Just Tool_Text
+                    'n' -> Just Tool_TextArea
+                    _   -> Nothing
 
                   newHandler = maybe _goatState_handler (makeHandlerFromNewTool goatState) mtool
                   r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_handler = newHandler }
@@ -624,9 +622,9 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
         then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament _goatState_selection) $ \sowl ->
           case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
             -- no changes means not deleted
-            Nothing                  -> Just sowl
+            Nothing       -> Just sowl
             -- if deleted, remove it
-            Just Nothing             -> Nothing
+            Just Nothing  -> Nothing
             -- it was changed, update selection to newest version
             Just (Just x) -> Just x
         else (True, sortedNewlyCreatedSEltls)

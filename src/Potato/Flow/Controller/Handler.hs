@@ -10,26 +10,25 @@ import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
-import Potato.Flow.OwlWorkspace
-import Potato.Flow.Owl
 
-import qualified Potato.Data.Text.Zipper                          as TZ
+import qualified Potato.Data.Text.Zipper          as TZ
 
 import           Data.Default
-import qualified Data.IntMap                   as IM
-import qualified Data.Sequence                 as Seq
-import qualified Data.Text                     as T
+import qualified Data.IntMap                      as IM
+import qualified Data.Sequence                    as Seq
+import qualified Data.Text                        as T
 import qualified Text.Show
 
 data PotatoHandlerOutput = PotatoHandlerOutput {
-    _potatoHandlerOutput_nextHandler   :: Maybe SomePotatoHandler
-    , _potatoHandlerOutput_select      :: Maybe (Bool, Selection)
-    , _potatoHandlerOutput_pFEvent     :: Maybe WSEvent
-    , _potatoHandlerOutput_pan         :: Maybe XY
-    , _potatoHandlerOutput_layersState :: Maybe LayersState
+    _potatoHandlerOutput_nextHandler             :: Maybe SomePotatoHandler
+    , _potatoHandlerOutput_select                :: Maybe (Bool, Selection)
+    , _potatoHandlerOutput_pFEvent               :: Maybe WSEvent
+    , _potatoHandlerOutput_pan                   :: Maybe XY
+    , _potatoHandlerOutput_layersState           :: Maybe LayersState
     , _potatoHandlerOutput_changesFromToggleHide :: SuperOwlChanges
   } deriving (Show)
 
@@ -46,21 +45,21 @@ instance Default PotatoHandlerOutput where
 -- TODO replace this with just GoatState
 data PotatoHandlerInput = PotatoHandlerInput {
     -- from PFOutput
-    _potatoHandlerInput_pFState       :: OwlPFState
+    _potatoHandlerInput_pFState                   :: OwlPFState
     , _potatoHandlerInput_potatoDefaultParameters :: PotatoDefaultParameters
-    , _potatoHandlerInput_broadPhase  :: BroadPhaseState
+    , _potatoHandlerInput_broadPhase              :: BroadPhaseState
 
     -- from Frontend
-    , _potatoHandlerInput_layersState :: LayersState
-    , _potatoHandlerInput_screenRegion :: LBox
+    , _potatoHandlerInput_layersState             :: LayersState
+    , _potatoHandlerInput_screenRegion            :: LBox
 
 
     -- from Backend
     -- basically, handlers are created based on contents of selection, and handlers themselves are expected to use partial methods on selection to get relevant information in order to modify the selection
     -- note that selection is dynamically updated each type a change is made so it always has up to date information during a multi-step manipulate
     -- this is sort of just how it is right now, I wish it weren't so :_(
-    , _potatoHandlerInput_selection   :: Selection
-    , _potatoHandlerInput_canvasSelection :: CanvasSelection
+    , _potatoHandlerInput_selection               :: Selection
+    , _potatoHandlerInput_canvasSelection         :: CanvasSelection
 
     -- TODO
     --, _potatoHandlerInput_canvasSelection :: CanvasSelection
@@ -69,10 +68,10 @@ data PotatoHandlerInput = PotatoHandlerInput {
 
 type ColorType = ()
 data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
-    _simpleBoxHandlerRenderOutput_box :: LBox
-    , _simpleBoxHandlerRenderOutput_fillText :: Maybe PChar -- fills the entire box with the same char
+    _simpleBoxHandlerRenderOutput_box             :: LBox
+    , _simpleBoxHandlerRenderOutput_fillText      :: Maybe PChar -- fills the entire box with the same char
     , _simpleBoxHandlerRenderOutput_fillTextColor :: ColorType
-    , _simpleBoxHandlerRenderOutput_bgColor :: ColorType
+    , _simpleBoxHandlerRenderOutput_bgColor       :: ColorType
   }
 
 -- TODO remove renaming and move it into LayersHandlerRenderEntry
@@ -114,8 +113,8 @@ data RenderHandleColor = RHC_Default | RHC_Attachment | RHC_AttachmentHighlight 
 
 -- TODO come up with better name
 data RenderHandle = RenderHandle {
-    _renderHandle_box :: LBox
-    , _renderHandle_char :: Maybe PChar
+    _renderHandle_box     :: LBox
+    , _renderHandle_char  :: Maybe PChar
     , _renderHandle_color :: RenderHandleColor
   } deriving (Show, Eq)
 

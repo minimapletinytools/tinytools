@@ -101,7 +101,7 @@ owlpfstate_zero :: OwlPFState
 owlpfstate_zero = pFState_to_owlPFState pfstate_zero
 
 owlpfstate_newProject :: OwlPFState
- =  OwlPFState {
+owlpfstate_newProject =  OwlPFState {
     _owlPFState_owlTree = emptyOwlTree
     , _owlPFState_canvas    = SCanvas (LBox 0 (V2 50 20))
   }

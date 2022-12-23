@@ -3,22 +3,21 @@
 
 module Potato.Flow.Llama where
 
-import           Relude
+import           Relude                   hiding (state)
 
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
-import Potato.Flow.OwlItem
-import           Potato.Flow.SElts
-import Potato.Flow.OwlState
-import           Potato.Flow.Types
-import Potato.Flow.Math
 import           Potato.Flow.DebugHelpers
+import           Potato.Flow.Math
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.OwlState
+import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
 
-import qualified Data.Text as T
-import qualified Data.IntMap as IM
+import           Control.Exception        (assert)
+import qualified Data.IntMap              as IM
+import qualified Data.Text                as T
 import qualified Text.Show
-import           Control.Exception  (assert)
 
 
 -- TODO rename
@@ -49,8 +48,8 @@ doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wher
     OwlPFCNewElts x      ->  do_newElts x s
     OwlPFCDeleteElts x   ->  do_deleteElts x s
 
-    OwlPFCNewTree x -> do_newMiniOwlTree x s
-    OwlPFCDeleteTree x -> do_deleteMiniOwlTree x s
+    OwlPFCNewTree x      -> do_newMiniOwlTree x s
+    OwlPFCDeleteTree x   -> do_deleteMiniOwlTree x s
 
     OwlPFCManipulate x   ->  do_manipulate x s
 
@@ -64,8 +63,8 @@ undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) wh
     OwlPFCNewElts x      ->  undo_newElts x s
     OwlPFCDeleteElts x   ->  undo_deleteElts x s
 
-    OwlPFCNewTree x -> undo_newMiniOwlTree x s
-    OwlPFCDeleteTree x -> undo_deleteMiniOwlTree x s
+    OwlPFCNewTree x      -> undo_newMiniOwlTree x s
+    OwlPFCDeleteTree x   -> undo_deleteMiniOwlTree x s
 
     OwlPFCManipulate x   ->  undo_manipulate x s
 
@@ -98,8 +97,8 @@ instance Show Llama where
   show = show . _llama_serialize
 
 data LlamaStack = LlamaStack {
-  _llamaStack_done :: [Llama] -- stuff we've done, applying these Llamas will *undo* the operation that put them on the stack!
-  , _llamaStack_undone :: [Llama] -- stuff we've undone, applying these Llamas will *redo* the operation that put them on the stack!
+  _llamaStack_done        :: [Llama] -- stuff we've done, applying these Llamas will *undo* the operation that put them on the stack!
+  , _llamaStack_undone    :: [Llama] -- stuff we've undone, applying these Llamas will *redo* the operation that put them on the stack!
   , _llamaStack_lastSaved :: Maybe Int -- size of do stacks on last save
 } deriving (Show, Generic)
 
@@ -113,7 +112,7 @@ emptyLlamaStack = LlamaStack [] [] (Just 0)
 llamaStack_hasUnsavedChanges :: LlamaStack -> Bool
 llamaStack_hasUnsavedChanges LlamaStack {..} = case _llamaStack_lastSaved of
   Nothing -> True
-  Just x -> x /= length _llamaStack_done
+  Just x  -> x /= length _llamaStack_done
 
 makeRenameLlama :: (REltId, Text) -> Llama
 makeRenameLlama (rid, newname) = r where

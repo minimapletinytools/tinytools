@@ -2,14 +2,8 @@ module Potato.Flow.Controller.Manipulator.TestHelpers where
 
 import           Relude
 
-import           Test.Hspec
-
 import           Potato.Flow.GoatTester
-
-import           Potato.Flow
-import           Potato.Flow.Common
-
-import qualified Data.List              as L
+import           Potato.Flow            hiding (ex, ey)
 
 drawCanvasBox :: (Int, Int, Int, Int) -> GoatTester ()
 drawCanvasBox (x, y, sx, sy) = do
@@ -24,11 +18,6 @@ drawCanvasBox (x, y, sx, sy) = do
       OwlItem _ (OwlSubItemBox _) -> Nothing
       x                           -> Just ("expected box, got " <> show x)
   verifySelectionIsAndOnlyIs "box is selected" f
-
-
-
-
-
 
 
 drawCanvasLine :: (Int, Int) -> (Int, Int) -> GoatTester ()

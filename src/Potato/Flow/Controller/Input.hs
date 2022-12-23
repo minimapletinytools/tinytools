@@ -20,10 +20,9 @@ module Potato.Flow.Controller.Input (
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
+import           Potato.Flow.OwlState
 
-import           Control.Exception (assert)
+import           Control.Exception    (assert)
 import           Data.Default
 
 -- TODO consider adding space as a modifier so you can do space drag panning in web version

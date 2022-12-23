@@ -305,7 +305,6 @@ data CTag a where
   CTagBoundingBox :: CTag CBoundingBox
 
 
-
 deriveGEq      ''CTag
 deriveGCompare ''CTag
 deriveGShow ''CTag

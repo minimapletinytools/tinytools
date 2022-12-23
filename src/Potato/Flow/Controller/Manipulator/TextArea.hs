@@ -10,25 +10,24 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.OwlItem
-import Potato.Flow.Llama
-import Potato.Flow.Owl
-import Potato.Flow.OwlWorkspace
 
+import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
-import Data.Default
-import qualified Data.Map as Map
-import qualified Data.IntMap as IM
-import qualified Data.Text as T
+import qualified Data.IntMap                               as IM
+import qualified Data.Map                                  as Map
+import qualified Data.Text                                 as T
 
 
 getSTextArea :: CanvasSelection -> (REltId, STextArea)
 getSTextArea selection = case superOwl_toSElt_hack sowl of
   SEltTextArea stextarea -> (rid, stextarea)
-  selt -> error $ "expected SBox, got " <> show selt
+  selt                   -> error $ "expected SBox, got " <> show selt
   where
     sowl = selectionToSuperOwl selection
     rid = _superOwl_id sowl

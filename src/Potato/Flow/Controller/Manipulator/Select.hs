@@ -8,25 +8,24 @@ module Potato.Flow.Controller.Manipulator.Select (
 
 import           Relude
 
-import Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
-import Potato.Flow.Controller.OwlLayers
+import           Potato.Flow.Controller.Manipulator.Box
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.OwlState
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 
+import           Control.Exception                      (assert)
 import           Data.Default
-import Data.Foldable (maximumBy)
-import qualified Data.IntMap as IM
-import qualified Data.Sequence                  as Seq
-import           Control.Exception                         (assert)
+import           Data.Foldable                          (maximumBy)
+import qualified Data.IntMap                            as IM
+import qualified Data.Sequence                          as Seq
 
 
 layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
@@ -59,9 +58,9 @@ selectMagic pfs lmm bps rmd = r where
   singleClick = boxSize == 1
 
   isboxshaped sowl = case _superOwl_elt sowl of
-    OwlItem _ (OwlSubItemBox _) -> True
+    OwlItem _ (OwlSubItemBox _)      -> True
     OwlItem _ (OwlSubItemTextArea _) -> True
-    _ -> False
+    _                                -> False
 
   unculledrids = broadPhase_cull_includeZero selectBox (_broadPhaseState_bPTree bps)
   unculledsowls = fmap (\rid ->  owlTree_mustFindSuperOwl (_owlPFState_owlTree pfs) rid) unculledrids

@@ -62,7 +62,7 @@ stuff for Dad to do
 
 ----------
 stack exec -- potato-flow-vty-exe mycommandlineargs
-stack test --test-arguments=' --match "/Potato.Flow.Controller.Manipulator.Line/"' --file-watch
+stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 normal

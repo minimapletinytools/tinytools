@@ -12,27 +12,21 @@ import           Relude
 
 import           Reflex
 
-import Potato.Flow.Controller.Goat
 import           Potato.Flow.BroadPhase
+import           Potato.Flow.Controller.Goat
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.OwlLayers
-import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Types
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
-import Potato.Flow.Owl
-import Potato.Flow.OwlWorkspace
 import           Potato.Flow.Types
-import Potato.Flow.Llama
 
-import           Control.Exception                         (assert)
 import           Control.Monad.Fix
 import           Data.Default
-import qualified Data.IntMap                               as IM
-import qualified Data.Sequence                             as Seq
 
 
 

@@ -6,43 +6,40 @@ module Potato.Flow.Controller.Manipulator.Line (
 
 import           Relude
 
-import           Potato.Flow.DebugHelpers
+import qualified Potato.Data.Text.Zipper                           as TZ
+import           Potato.Flow.Attachments
+import           Potato.Flow.BroadPhase
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
+import           Potato.Flow.Controller.Manipulator.TextInputState
 import           Potato.Flow.Controller.Types
-import           Potato.Flow.Methods.LineDrawer
-import           Potato.Flow.Methods.LineTypes
+import           Potato.Flow.DebugHelpers
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
+import           Potato.Flow.Methods.LineDrawer
+import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
-import Potato.Flow.OwlWorkspace
-import Potato.Flow.BroadPhase
-import Potato.Flow.OwlState
-import Potato.Flow.Owl
-import           Potato.Flow.Attachments
-import Potato.Flow.Llama
-import Potato.Flow.Controller.Manipulator.TextInputState
-import qualified Potato.Data.Text.Zipper                          as TZ
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.SElts
 
 import           Control.Exception
-import Data.Maybe (catMaybes)
 import           Data.Default
-import qualified Data.IntMap as IM
-import qualified Data.Sequence                             as Seq
-import qualified Data.List as L
-import qualified Data.List.Index as L
-import qualified Data.Text as T
+import qualified Data.List                                         as L
+import qualified Data.List.Index                                   as L
+import qualified Data.Sequence                                     as Seq
+import qualified Data.Text                                         as T
 
-import Data.Maybe (fromJust)
+import           Data.Maybe                                        (fromJust)
 
 
 maybeGetSLine :: CanvasSelection -> Maybe (REltId, SAutoLine)
 maybeGetSLine selection = if Seq.length (unCanvasSelection selection) /= 1
   then Nothing
   else case superOwl_toSElt_hack sowl of
-    SEltLine sline  -> Just (rid, sline)
-    selt -> Nothing
+    SEltLine sline -> Just (rid, sline)
+    _              -> Nothing
     where
       sowl = selectionToSuperOwl selection
       rid = _superOwl_id sowl
@@ -118,10 +115,10 @@ renderLabels PotatoHandlerInput {..} offsetByLabelHeight = r where
 
 
 data AutoLineHandler = AutoLineHandler {
-    _autoLineHandler_isCreation :: Bool
+    _autoLineHandler_isCreation         :: Bool
     , _autoLineHandler_mDownManipulator :: Maybe Int
     -- TODO who sets this?
-    , _autoLineHandler_offsetAttach :: Bool
+    , _autoLineHandler_offsetAttach     :: Bool
   } deriving (Show)
 
 instance Default AutoLineHandler where
@@ -146,25 +143,6 @@ findFirstLineManipulator_NEW SAutoLine {..} offsetBorder pfs (RelMouseDrag Mouse
   r = if _mouseDrag_to == start then LMP_Endpoint True
     else if _mouseDrag_to == end then LMP_Endpoint False
       else maybe LMP_Nothing LMP_Midpoint mmid
-
--- TODO
-findFirstLineLabel :: SAutoLine -> Maybe LineAnchorsForRender -> XY -> Maybe SAutoLineLabel
-findFirstLineLabel sline manchors pos = r where
-  r = undefined
-
-
--- TODO DELETE doesn't seem to be used anymore
--- returns index into midpoints if we clicked on the line
--- i.e. an index of 0 means we clicked somewhere between endpoints 0 and 1 (not including 1)
-  -- TODO ☝🏽 is not true, need to fix
--- if `index == length midpoints` then point is between last midpoint and endpoint
-whereOnLineDidClick :: OwlTree -> SAutoLine -> Maybe LineAnchorsForRender -> XY -> Maybe Int
-whereOnLineDidClick ot sline@SAutoLine {..} manchors xy = r where
-  anchors = case manchors of
-    Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
-    Just x -> x
-  r = lineAnchorsForRender_findIntersectingSubsegment anchors xy
-
 
 -- TODO use cache
 -- |
@@ -217,7 +195,6 @@ getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = r where
 instance PotatoHandler AutoLineHandler where
   pHandlerName _ = handlerName_simpleLine
   pHandleMouse slh@AutoLineHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-    mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
     attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
     mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
 
@@ -318,7 +295,7 @@ instance PotatoHandler AutoLineHandler where
           (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
           -- PERF cache someday...
           larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
-          (pos, mpindex, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
+          (_, mpindex, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
           newllabel = def {
               _sAutoLineLabel_index = mpindex
               , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
@@ -352,21 +329,21 @@ instance PotatoHandler AutoLineHandler where
 
 -- handles dragging endpoints (which can be attached) and creating new lines
 data AutoLineEndPointHandler = AutoLineEndPointHandler {
-  _autoLineEndPointHandler_isStart      :: Bool -- either we are manipulating start, or we are manipulating end
+  _autoLineEndPointHandler_isStart        :: Bool -- either we are manipulating start, or we are manipulating end
 
-  , _autoLineEndPointHandler_undoFirst  :: Bool
-  , _autoLineEndPointHandler_isCreation :: Bool
+  , _autoLineEndPointHandler_undoFirst    :: Bool
+  , _autoLineEndPointHandler_isCreation   :: Bool
 
   , _autoLineEndPointHandler_offsetAttach :: Bool -- who sets this?
 
   -- where the current modified line is attached to (_autoLineEndPointHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
-  , _autoLineEndPointHandler_attachStart :: Maybe Attachment
-  , _autoLineEndPointHandler_attachEnd :: Maybe Attachment
+  , _autoLineEndPointHandler_attachStart  :: Maybe Attachment
+  , _autoLineEndPointHandler_attachEnd    :: Maybe Attachment
 }
 
 instance PotatoHandler AutoLineEndPointHandler where
   pHandlerName _ = handlerName_simpleLine_endPoint
-  pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+  pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
       mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
       attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
       mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
@@ -377,7 +354,7 @@ instance PotatoHandler AutoLineEndPointHandler where
 
         ssline = case mridssline of
           Just (_,x) -> x
-          Nothing -> def
+          Nothing    -> def
 
         sslinestart = _sAutoLine_attachStart ssline
         sslineend = _sAutoLine_attachEnd ssline
@@ -431,7 +408,7 @@ instance PotatoHandler AutoLineEndPointHandler where
       MouseDragState_Up -> Just def
       MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
 
-  pHandleKeyboard _ PotatoHandlerInput {..} kbd = Nothing
+  pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach (-1) phi
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
@@ -443,7 +420,7 @@ instance PotatoHandler AutoLineEndPointHandler where
 
 
 -- TODO finish
-adjustLineLabelPositionsAfterModifyingOrAddingMidpoint :: 
+adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ::
   (HasOwlTree a)
   => a
   -> SAutoLine --  ^ the previous line
@@ -454,14 +431,14 @@ adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ot old new mempindex = r 
 
   -- TODO need more than just this, need to copmute position too
   indexAdjust i = case mempindex of
-    Nothing -> i
+    Nothing             -> i
     -- advance indices after addmpi since we are adding a midpoint
-    Just (Left addmpi) -> if i > addmpi then i+1 else i
+    Just (Left addmpi)  -> if i > addmpi then i+1 else i
     -- go bacak indices before delmpi since we are deleting a midpoint
     Just (Right delmpi) -> if i >= delmpi then i-1 else i
 
 
-  oldlars = sAutoLine_to_lineAnchorsForRenderList ot old 
+  oldlars = sAutoLine_to_lineAnchorsForRenderList ot old
   newlars = sAutoLine_to_lineAnchorsForRenderList ot new
 
   -- TODO
@@ -470,7 +447,7 @@ adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ot old new mempindex = r 
   -- adjust distance by the change in ratio
 
   r = undefined
-  
+
 
 
 
@@ -480,7 +457,7 @@ sAutoLine_addMidpoint mpindex pos sline = r where
 
 
   -- TODO update line label position
-  
+
 
   fmapfn ll = if _sAutoLineLabel_index ll > mpindex
     then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll + 1}
@@ -522,70 +499,65 @@ sAutoLine_deleteMidpoint mpindex sline = r where
 
 -- handles dragging and creating new midpoints
 data AutoLineMidPointHandler = AutoLineMidPointHandler{
-  _autoLineMidPointHandler_midPointIndex :: Int
+  _autoLineMidPointHandler_midPointIndex        :: Int
   , _autoLineMidPointHandler_isMidpointCreation :: Bool
-  , _autoLineMidPointHandler_undoFirst :: Bool
-  , _autoLineMidPointHandler_offsetAttach :: Bool
+  , _autoLineMidPointHandler_undoFirst          :: Bool
+  , _autoLineMidPointHandler_offsetAttach       :: Bool
 }
 
 instance PotatoHandler AutoLineMidPointHandler where
   pHandlerName _ = handlerName_simpleLine_midPoint
-  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      aoeu = undefined
-    in case _mouseDrag_state of
-      -- this only happens in the click on existing midpoint case (creation case is handled by dragging)
-      -- nothing to do here
-      MouseDragState_Down -> assert (not _autoLineMidPointHandler_isMidpointCreation) $ Just $ captureWithNoChange slh
-      MouseDragState_Dragging -> r where
-        (rid, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
+  pHandleMouse slh@AutoLineMidPointHandler {..} PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
+    -- this only happens in the click on existing midpoint case (creation case is handled by dragging)
+    -- nothing to do here
+    MouseDragState_Down -> assert (not _autoLineMidPointHandler_isMidpointCreation) $ Just $ captureWithNoChange slh
+    MouseDragState_Dragging -> r where
+      (rid, sline) = fromJust $ maybeGetSLine _potatoHandlerInput_canvasSelection
 
-        -- TODO overlap adjacent issue, findFirstLineManipulator_NEW will midpoint instead of endpoint
-        firstlm = findFirstLineManipulator_NEW sline _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState rmd
+      -- TODO overlap adjacent issue, findFirstLineManipulator_NEW will midpoint instead of endpoint
+      firstlm = findFirstLineManipulator_NEW sline _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState rmd
 
-        mps = _sAutoLine_midpoints sline
-        nmps = length mps
+      -- index into _sAutoLine_midpoints
+      -- in the '_autoLineMidPointHandler_isMidpointCreation' case, the midpoint index is AFTER the midpoint gets created
+      -- `_autoLineMidPointHandler_midPointIndex == N` means we have `N-1 ... (x) ... N`
+      -- so the new indexing is `N-1 ... N (x) ... N+1`
+      mpindex = _autoLineMidPointHandler_midPointIndex
 
-        -- index into _sAutoLine_midpoints
-        -- in the '_autoLineMidPointHandler_isMidpointCreation' case, the midpoint index is AFTER the midpoint gets created
-        -- `_autoLineMidPointHandler_midPointIndex == N` means we have `N-1 ... (x) ... N`
-        -- so the new indexing is `N-1 ... N (x) ... N+1`
-        mpindex = _autoLineMidPointHandler_midPointIndex
+      -- TODO not working
+      -- NOTE indexing of getAnchorPosition is offset from index into _autoLineMidPointHandler_midPointIndex
+      ladjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline mpindex
+      -- NOTE that this might be out of bounds in creation cases, but it won't get evaluated
+      radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
+      isoveradjacent = _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
 
-        -- TODO not working
-        -- NOTE indexing of getAnchorPosition is offset from index into _autoLineMidPointHandler_midPointIndex
-        ladjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline mpindex
-        -- NOTE that this might be out of bounds in creation cases, but it won't get evaluated
-        radjacentpos = getAnchorPosition _autoLineMidPointHandler_offsetAttach _potatoHandlerInput_pFState sline (mpindex+2)
-        isoveradjacent = _mouseDrag_to == ladjacentpos || _mouseDrag_to == radjacentpos
+      newsline = if _autoLineMidPointHandler_isMidpointCreation
+        then sAutoLine_addMidpoint mpindex _mouseDrag_to sline
+        else sAutoLine_modifyMidpoint mpindex _mouseDrag_to sline
 
-        newsline = if _autoLineMidPointHandler_isMidpointCreation
-          then sAutoLine_addMidpoint mpindex _mouseDrag_to sline
-          else sAutoLine_modifyMidpoint mpindex _mouseDrag_to sline
-
-        newslinedelete = sAutoLine_deleteMidpoint mpindex sline
+      newslinedelete = sAutoLine_deleteMidpoint mpindex sline
 
 
-        (diddelete, event) = case firstlm of
-          -- create the new midpoint if none existed
-          _ | _autoLineMidPointHandler_isMidpointCreation -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+      (diddelete, event) = case firstlm of
+        -- create the new midpoint if none existed
+        _ | _autoLineMidPointHandler_isMidpointCreation -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
 
-          -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
-          _ | isoveradjacent -> (True,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
+        -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
+        _ | isoveradjacent -> (True,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
 
-          -- normal case, update the midpoint position
-          _ -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+        -- normal case, update the midpoint position
+        _ -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
 
-        r = Just $ def {
-            _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
-                -- go back to creation case IF we deleted a midpoint AND we weren't already in creation case (this can happen if you have two mid/endpoints right next to each other and you drag from one to the other)
-                _autoLineMidPointHandler_isMidpointCreation = diddelete && not _autoLineMidPointHandler_isMidpointCreation
-                , _autoLineMidPointHandler_undoFirst  = True
-              }
-            , _potatoHandlerOutput_pFEvent = Just event
-          }
-      -- no need to return AutoLineHandler, it will be recreated from selection by goat
-      MouseDragState_Up -> Just def
-      MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
+      r = Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
+              -- go back to creation case IF we deleted a midpoint AND we weren't already in creation case (this can happen if you have two mid/endpoints right next to each other and you drag from one to the other)
+              _autoLineMidPointHandler_isMidpointCreation = diddelete && not _autoLineMidPointHandler_isMidpointCreation
+              , _autoLineMidPointHandler_undoFirst  = True
+            }
+          , _potatoHandlerOutput_pFEvent = Just event
+        }
+    -- no need to return AutoLineHandler, it will be recreated from selection by goat
+    MouseDragState_Up -> Just def
+    MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
     -- TODO render mouse position as there may not actually be a midpoint there
@@ -597,7 +569,7 @@ instance PotatoHandler AutoLineMidPointHandler where
 
 -- handles creating and moving text labels
 data AutoLineLabelMoverHandler = AutoLineLabelMoverHandler {
-    _autoLineLabelMoverHandler_anchorOffset :: XY
+    _autoLineLabelMoverHandler_anchorOffset  :: XY
     , _autoLineLabelMoverHandler_prevHandler :: SomePotatoHandler
     , _autoLineLabelMoverHandler_undoFirst   :: Bool
     , _autoLineLabelMoverHandler_labelIndex  :: Int
@@ -613,7 +585,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
       llabel = _sAutoLine_labels sal `debugBangBang` _autoLineLabelMoverHandler_labelIndex
       -- PERF cache someday...
       larlist = sAutoLine_to_lineAnchorsForRenderList _potatoHandlerInput_pFState sal
-      (pos, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
+      (_, index, reld) = getClosestPointOnLineFromLineAnchorsForRenderList larlist _mouseDrag_to
       newl = llabel {
           _sAutoLineLabel_index = index
           , _sAutoLineLabel_position = SAutoLineLabelPositionRelative reld
@@ -669,16 +641,16 @@ sAutoLine_deleteLabel labelindex sline = r where
 
 -- handles modifying text labels
 data AutoLineLabelHandler = AutoLineLabelHandler {
-    _autoLineLabelHandler_active :: Bool
-    , _autoLineLabelHandler_state :: TextInputState
+    _autoLineLabelHandler_active        :: Bool
+    , _autoLineLabelHandler_state       :: TextInputState
     , _autoLineLabelHandler_prevHandler :: SomePotatoHandler
-    , _autoLineLabelHandler_undoFirst :: Bool
+    , _autoLineLabelHandler_undoFirst   :: Bool
 
-    , _autoLineLabelHandler_labelIndex :: Int
-    , _autoLineLabelHandler_lineLabel :: SAutoLineLabel
+    , _autoLineLabelHandler_labelIndex  :: Int
+    , _autoLineLabelHandler_lineLabel   :: SAutoLineLabel
 
     -- this is needed to determine if erasing the last character in the label deletes the line label or undos the last operation
-    , _autoLineLabelHandler_creation :: Bool
+    , _autoLineLabelHandler_creation    :: Bool
   }
 
 
@@ -721,7 +693,7 @@ updateAutoLineLabelHandlerState ot reset selection slh@AutoLineLabelHandler {..}
 -- | make a TextInputState from a SAutoLineLabel on the SAutoLine
 -- the SAutoLineLabel does not need to exist in the SAutoLine
 makeAutoLineLabelInputState_from_lineLabel :: REltId -> SAutoLine -> SAutoLineLabel -> PotatoHandlerInput -> RelMouseDrag -> TextInputState
-makeAutoLineLabelInputState_from_lineLabel rid sal llabel phi@PotatoHandlerInput {..} rmd = r where
+makeAutoLineLabelInputState_from_lineLabel rid sal llabel PotatoHandlerInput {..} rmd = r where
   ogtext = _sAutoLineLabel_text llabel
   pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
   box = getSAutoLineLabelBox pos llabel
@@ -770,6 +742,8 @@ makeAutoLineLabelHandler_from_labelIndex labelindex prev phi@PotatoHandlerInput 
 
 
 
+
+-- TODO get rid of LBox arg, not used anymore
 -- | just a helper for pHandleMouse
 handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> LBox -> Bool -> Maybe PotatoHandlerOutput
 handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) box isdown = r where
@@ -792,7 +766,7 @@ instance PotatoHandler AutoLineLabelHandler where
       slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
 
       -- TODO cache this in slh
-      (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
+      (_, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
 
       llabel = _autoLineLabelHandler_lineLabel slh
       pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
@@ -830,12 +804,11 @@ instance PotatoHandler AutoLineLabelHandler where
   pHandleKeyboard slh' PotatoHandlerInput {..} (KeyboardData k _) = let
       -- this regenerates displayLines unecessarily but who cares
       slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
-      llabel = _autoLineLabelHandler_lineLabel slh
       -- TODO cache this in slh
       (rid, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
     in case k of
       -- Escape or Return
-      k | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh) }
+      _ | k == KeyboardKey_Esc || k == KeyboardKey_Return -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_autoLineLabelHandler_prevHandler slh) }
 
       -- TODO should only capture stuff caught by inputSingleLineZipper
       --  make sure pRefreshHandler clears the handler or sets it back to creation case in the event that an undo operation clears the handler
@@ -886,9 +859,9 @@ instance PotatoHandler AutoLineLabelHandler where
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelHandler_state  = newtais
                 , _autoLineLabelHandler_undoFirst = case mev of
-                  Nothing -> _autoLineLabelHandler_undoFirst slh
+                  Nothing      -> _autoLineLabelHandler_undoFirst slh
                   Just WSEUndo -> False
-                  _  -> True
+                  _            -> True
               }
             , _potatoHandlerOutput_pFEvent = mev
           }
@@ -899,14 +872,14 @@ instance PotatoHandler AutoLineLabelHandler where
       then Nothing -- selection was change to something else
       else case selt of
         -- TODO proper regeneration of AutoLineLabelHandler (this is only needed when you support remote events)
-        SEltLine sal -> Nothing
-        _ -> Nothing
+        SEltLine _ -> Nothing
+        _          -> Nothing
       where
         sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
         rid = _superOwl_id sowl
         selt = superOwl_toSElt_hack sowl
 
-  pRenderHandler slh' phi@PotatoHandlerInput {..} = r where
+  pRenderHandler slh' PotatoHandlerInput {..} = r where
     slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
 
     -- consider rendering endpoints?

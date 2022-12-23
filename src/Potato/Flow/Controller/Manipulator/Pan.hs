@@ -15,7 +15,7 @@ import           Data.Default
 
 
 data PanHandler = PanHandler {
-    _panHandler_panDelta :: XY
+    _panHandler_panDelta           :: XY
     , _panHandler_maybePrevHandler :: Maybe SomePotatoHandler
   }
 
@@ -30,12 +30,12 @@ instance PotatoHandler PanHandler where
   pHandleMouse ph@PanHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Cancelled -> def { _potatoHandlerOutput_pan = Just $ - _panHandler_panDelta }
     MouseDragState_Down -> def { _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler ph }
-    x -> def {
+    _ -> def {
         _potatoHandlerOutput_nextHandler = case _mouseDrag_state of
           MouseDragState_Dragging -> Just $ SomePotatoHandler ph { _panHandler_panDelta = delta }
           MouseDragState_Up -> case _panHandler_maybePrevHandler of
             Nothing -> Just $ SomePotatoHandler (def :: PanHandler)
-            Just x -> Just x
+            Just x  -> Just x
           _ -> error "not posible"
         , _potatoHandlerOutput_pan = Just (delta - _panHandler_panDelta)
         --, _potatoHandlerOutput_pan = trace (show x <> " delta " <> show delta <> " pan " <> show _panHandler_panDelta <> " from " <> show _mouseDrag_from <> " to " <> show _mouseDrag_to) $ Just (delta - _panHandler_panDelta)
@@ -50,9 +50,9 @@ instance PotatoHandler PanHandler where
     }
 
   -- render the underlying handler if there is one
-  pRenderHandler ph@PanHandler {..} phi = case _panHandler_maybePrevHandler of
+  pRenderHandler PanHandler {..} phi = case _panHandler_maybePrevHandler of
     Nothing -> def
-    Just x -> pRenderHandler x phi
+    Just x  -> pRenderHandler x phi
 
   -- always active so we never replace pan handler with new selection from changes (which should never happen anyways)
   pIsHandlerActive _ = True

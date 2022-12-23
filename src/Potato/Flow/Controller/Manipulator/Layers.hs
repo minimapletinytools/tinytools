@@ -433,7 +433,7 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
       _cRename_deltaLabel = (hasOwlItem_name _layersRenameHandler_renaming, newName)
     })
   r = def {
-      _potatoHandlerOutput_nextHandler = trace "resetting layers handel" $ Just $ SomePotatoHandler _layersRenameHandler_original
+      _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
       , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 

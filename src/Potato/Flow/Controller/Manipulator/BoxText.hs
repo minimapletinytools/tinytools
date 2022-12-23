@@ -24,9 +24,7 @@ import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.Llama
 
@@ -34,12 +32,10 @@ import           Control.Exception
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
 import qualified Data.IntMap                               as IM
-import qualified Data.Map as Map
 import qualified Data.Sequence                             as Seq
 import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
-import qualified Data.Text as T
 
 getSBox :: CanvasSelection -> (REltId, SBox)
 getSBox selection = case superOwl_toSElt_hack sowl of
@@ -186,7 +182,6 @@ instance PotatoHandler BoxTextHandler where
   pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxTextHandler_state
   pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
-      (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
         clickInside = does_lBox_contains_XY (_textInputState_box _boxTextHandler_state) _mouseDrag_to

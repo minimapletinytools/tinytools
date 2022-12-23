@@ -8,9 +8,6 @@ import           Relude                   hiding (empty, first, fromList)
 
 import           Test.Hspec
 
-import           Reflex
-import           Reflex.Test.Host
-
 import           Potato.Flow
 import           Potato.Flow.DebugHelpers
 
@@ -20,7 +17,6 @@ import qualified Data.List                as L
 import           Data.Maybe               (fromJust)
 import qualified Data.Sequence            as Seq
 import qualified Data.Text                as T
-import           Data.These
 import           Data.Tuple.Extra
 
 
@@ -130,7 +126,7 @@ hSpecGoatTesterWithOwlPFState_verbose pfs m = do
       describe (T.unpack (fst3 (_goatTesterRecord_trackingState x))) $ forM_ (x:xs) $ \GoatTesterRecord {..} -> do
         it (T.unpack _goatTesterRecord_description) $ case _goatTesterRecord_failureMessage of
           Nothing -> return ()
-          Just x  -> expectationFailure (T.unpack x)
+          Just x' -> expectationFailure (T.unpack x')
 
 
 hSpecGoatTesterWithOwlPFState_quiet :: OwlPFState -> GoatTester a -> SpecWith ()
@@ -146,7 +142,7 @@ hSpecGoatTesterWithOwlPFState_quiet pfs m = do
       forM_ (x:xs) $ \GoatTesterRecord {..} -> do
         case _goatTesterRecord_failureMessage of
           Nothing -> return ()
-          Just x  -> expectationFailure (T.unpack x)
+          Just x' -> expectationFailure (T.unpack x')
 
 hSpecGoatTesterWithOwlPFState :: OwlPFState -> GoatTester a -> SpecWith ()
 hSpecGoatTesterWithOwlPFState = hSpecGoatTesterWithOwlPFState_verbose
@@ -235,18 +231,18 @@ pressRedo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'y') [Ke
 -- | verifies that the number of owls (elts) in the state is what is expected, includes folders in the count
 verifyOwlCount :: (Monad m) => Int -> GoatTesterT m ()
 verifyOwlCount expected = verifyState "verifyOwlCount" f where
-  f gs = if count == expected
+  f gs = if n == expected
     then Nothing
-    else Just $ "got " <> show count <> " owls, expected " <> show expected
-    where count = IM.size . _owlTree_mapping . hasOwlTree_owlTree . goatState_pFState $ gs
+    else Just $ "got " <> show n <> " owls, expected " <> show expected
+    where n = IM.size . _owlTree_mapping . hasOwlTree_owlTree . goatState_pFState $ gs
 
 -- | verifies that the number of selected owls (elts) is what's expected (uses regular selection, NOT canvas selection)
 verifySelectionCount :: (Monad m) => Int -> GoatTesterT m ()
 verifySelectionCount expected = verifyState "verifySelectionCount" f where
-  f gs = if count == expected
+  f gs = if n == expected
     then Nothing
-    else Just $ "got " <> show count <> " selected owls, expected " <> show expected
-    where count = isParliament_length . _goatState_selection $ gs
+    else Just $ "got " <> show n <> " selected owls, expected " <> show expected
+    where n = isParliament_length . _goatState_selection $ gs
 
 maximumBy' :: Foldable t => (a -> a -> Ordering) -> t a -> Maybe a
 maximumBy' f l = if length l == 0
