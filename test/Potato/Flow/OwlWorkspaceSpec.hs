@@ -7,17 +7,14 @@ import           Relude
 
 import           Test.Hspec
 
-import qualified Data.Sequence            as Seq
-import Data.Maybe (fromJust)
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
-import Potato.Flow.OwlWorkspace
-import           Potato.Flow.Deprecated.TestStates
+import           Data.Maybe                        (fromJust)
+import qualified Data.Sequence                     as Seq
 import           Potato.Flow.Deprecated.State
-import Potato.Flow.SElts
+import           Potato.Flow.Deprecated.TestStates
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
 
 verifyOwlAt :: OwlPFWorkspace -> OwlSpot -> (SuperOwl -> Bool) -> Bool
 verifyOwlAt ws ospot f = fromMaybe False $ do
@@ -50,10 +47,6 @@ spec = do
       spot2 = OwlSpot 7 (Just 9)
 
       owlItem1 = OwlItem (OwlInfo "💩") OwlSubItemNone
-      owlItem2 = OwlItem (OwlInfo "🍅") OwlSubItemNone
-      owlItem3 = OwlItem (OwlInfo "🧀") (OwlSubItemFolder Seq.empty)
-
-      owlItems = Seq.fromList [owlItem1, owlItem2, owlItem3]
 
     describe "updateOwlPFWorkspace" $ do
       it "WSEAddElt" $ do

@@ -5,18 +5,16 @@ module Potato.Flow.Controller.Manipulator.BoxSpec (
   spec
 ) where
 
-import           Relude                                     hiding (empty,
-                                                             fromList)
+import           Relude                                         hiding (empty,
+                                                                 fromList)
 
 import           Test.Hspec
 
-import Potato.Flow.GoatTester
+import           Potato.Flow.GoatTester
 
 import           Potato.Flow
 import           Potato.Flow.Common
-import Potato.Flow.Controller.Manipulator.TestHelpers
-
-import qualified Data.List as L
+import           Potato.Flow.Controller.Manipulator.TestHelpers
 
 initSimpleBox :: GoatTester ()
 initSimpleBox = drawCanvasBox (0, 0, 100, 100)

@@ -13,7 +13,6 @@ import           Test.Hspec
 import           Potato.Flow.GoatTester
 
 import           Potato.Flow
-import           Potato.Flow.Common
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 
 import qualified Data.List                                      as L
@@ -82,7 +81,7 @@ create_in_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   setMarker "ensure it has the correct parent"
   verifyMostRecentlyCreatedOwl $ \sowl -> if _owlItemMeta_parent (_superOwl_meta sowl) == _superOwl_id folder then Nothing else Just $ "expected parent " <> show (_superOwl_id folder) <> " got " <> show sowl
-    
+
 
 
 spec :: Spec
