@@ -745,8 +745,8 @@ makeAutoLineLabelHandler_from_labelIndex labelindex prev phi@PotatoHandlerInput 
 
 -- TODO get rid of LBox arg, not used anymore
 -- | just a helper for pHandleMouse
-handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> LBox -> Bool -> Maybe PotatoHandlerOutput
-handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) box isdown = r where
+handleMouseDownOrFirstUpForAutoLineLabelHandler :: AutoLineLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> Bool -> Maybe PotatoHandlerOutput
+handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) isdown = r where
   clickInside = does_lBox_contains_XY (_textInputState_box _autoLineLabelHandler_state) _mouseDrag_to
   newState = mouseText _autoLineLabelHandler_state rmd
   r = if clickInside
@@ -762,25 +762,11 @@ handleMouseDownOrFirstUpForAutoLineLabelHandler slh@AutoLineLabelHandler {..} ph
 instance PotatoHandler AutoLineLabelHandler where
   pHandlerName _ = handlerName_simpleLine_textLabel
   pHandleMouse slh' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-
       slh = updateAutoLineLabelHandlerState _potatoHandlerInput_pFState False _potatoHandlerInput_canvasSelection slh'
-
-      -- TODO cache this in slh
-      (_, sal) = mustGetSLine _potatoHandlerInput_canvasSelection
-
-      llabel = _autoLineLabelHandler_lineLabel slh
-      pos = getSAutoLineLabelPosition _potatoHandlerInput_pFState sal llabel
-      box = getSAutoLineLabelBox pos llabel
-
     in case _mouseDrag_state of
-
-
       -- TODO if click on drag anchor modifier thingy
       --    in this case, don't forget to reset creation and undofirst states
-
-      MouseDragState_Down -> handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box True
-
-
+      MouseDragState_Down -> handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd True
             -- TODO if click on handler, go into mover handler
             {- Just $ SomePotatoHandler AutoLineLabelMoverHandler {
                 _autoLineLabelMoverHandler_prevHandler = SomePotatoHandler slh
@@ -791,9 +777,8 @@ instance PotatoHandler AutoLineLabelHandler where
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange slh
-
       MouseDragState_Up -> if not (_autoLineLabelHandler_active slh)
-        then handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd box False
+        then handleMouseDownOrFirstUpForAutoLineLabelHandler slh phi rmd False
         else Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelHandler_active = False
