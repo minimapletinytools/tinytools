@@ -1,6 +1,8 @@
-TAX CHECKLIST
+              
+                                                                                                                                                                              
+                                            
 
--mortgate (via ServiceMac)
+
 
 -------
 
@@ -140,8 +142,9 @@ WIDE
 -update ChangeLog.md
 -update README.md with usage instructions
 -move over to minimaple account
--empty canvas should have default size of 100x100 not 1x1
+DONE-empty canvas should have default size of 100x100 not 1x1
 -proper command line parsing with --help option
+-switch to cabal?
 
 
 ::NEWEST TODO::
@@ -150,23 +153,6 @@ WIDE
   -but where to put it if there is already text?
 -make tutorial file, I think you have everythingy ou need now!!!
 -you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
--BUG fix line bugs
-  DONE-BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
-    -fix with cartRotationReflection_apply_lBox
-  -BUG some bot to bot cases are broken
-  -BUG attach offset seems to be not used correctly in some configurations :(
-  -BUG
-           ╔══════════╗
-           ║@@@@@@@@@@║
-          ╔║@@@@@@@@@@║══════════╗
-          ║║@@@@@@@@@@║          v
-          ║╚══════════╝══════════════════════╗
-          ║     ^     ║@@@@@@@@@@@@@@@@@@@@@@║
-          ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
-          ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
-          ║     ║     ╚══════════════════════╝
-          ╚═════╝
-  IGNORE/DONE?-attach offset of 0 for AL ANY still needs to render the arrow head
 -do label position adjustment when adding midpoints
 -high level bugs
   -BUG you sometimes hit this assert, need repro
@@ -181,7 +167,74 @@ WIDE
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
 DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
-
+DONE-BUG fix line bugs
+  DONE-       ^                                                                                                                                                               
+              ║                                                                                                                                                               
+              ║                                                                                                                                                               
+              ║                                                                                                                                                               
+              ║                                                                                                                                                               
+              ║             ^                                                                                                                                                 
+              ╚═════════════╝-----*                                                                                                                                           
+                      |cool       |                                                                                                                                           
+                      |features!  |                                                                                                                                           
+                      *-----------*                                                                                                                                           
+                                                                                                                                                                              
+                            ╔═══════════════════════════╗                                                                                                                     
+                            ║this is a placeholder for  ║                                                                                                                     
+                            ║the actualy tutorial       ║                                                                                                                     
+                            ║                           ║                                                                                                                     
+                            ║                           ║                                                                                                                     
+                            ║                           ║                                                                                                                     
+                            ║                           ║                                                                                                                     
+                            ╚═══════════════════════════╝           
+  DONE-                     ╔═══════════════════════════╗                                                                                                                                              
+                            ║this is a placeholder for  ║                                                                                                                                              
+                            ║the actualy tutorial       ║                                                                                                                                              
+                            ║                           ║                                                                                                                                              
+                            ║                           ║                                                                                                                                              
+                            ║                           ║                                                                                                                                              
+                            ║                           ║                                                                                                                                              
+                            ╚═══════════════════════════╝                                                                                                                                              
+              ╔═══════════════════════════╗                                                                                                                                                            
+              ║*-----------*                                                                                                                                                                           
+              ║|cool       |                                                                                                                                                                           
+              ║|features!  |                                                                                                                                                                           
+              ║*-----------*                                                                                                                                                                           
+              ║      ^                                                                                                                                                                                 
+              ╚══════╝                  
+  DONE-                       ╔═══════════╗                                                                                                                                                            
+                              ║           v                                                                                                                                                            
+                            ╔═║═════════════════════════╗                                                                                                                                              
+                            ║t║is is a placeholder for  ║                                                                                                                                              
+                            ║t║e actualy tutorial       ║                                                                                                                                              
+                            ║ ║                         ║                                                                                                                                              
+                            ║ ║                         ║                                                                                                                                              
+                            ║ ║                         ║                                                                                                                                              
+                            ║ ║                         ║                                                                                                                                              
+                            ╚═║═════════════════════════╝                                                                                                                                              
+                              ║                                                                                                                                                                        
+           *-----------*      ║                                                                                                                                                                        
+           |cool       |      ║                                                                                                                                                                        
+           |features!  |      ║                                                                                                                                                                        
+           *-----------*      ║                                                                                                                                                                        
+                 ^            ║                                                                                                                                                                        
+                 ╚════════════╝           
+  DONE-BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
+    -fix with cartRotationReflection_apply_lBox
+  IGNORE-BUG some bot to bot cases are broken
+  IGNORE-BUG attach offset seems to be not used correctly in some configurations :(
+  DONE-BUG
+           ╔══════════╗
+           ║@@@@@@@@@@║
+          ╔║@@@@@@@@@@║══════════╗
+          ║║@@@@@@@@@@║          v
+          ║╚══════════╝══════════════════════╗
+          ║     ^     ║@@@@@@@@@@@@@@@@@@@@@@║
+          ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
+          ║     ║     ║@@@@@@@@@@@@@@@@@@@@@@║
+          ║     ║     ╚══════════════════════╝
+          ╚═════╝
+  IGNORE/DONE?-attach offset of 0 for AL ANY still needs to render the arrow head
 
 
 :: CUT Line

@@ -140,11 +140,12 @@ lineAnchorsForRender_reverse :: LineAnchorsForRender -> LineAnchorsForRender
 lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
   end = lineAnchorsForRender_end lafr
   revgo acc [] = acc
-  revgo acc ((cd,d,False):[]) = (cd,d,True):acc
+  revgo acc ((cd,d,False):[]) = (flipCartDir cd,d,True):acc
   revgo _ ((_,_,True):[]) = error "unexpected subsegment starting anchor at end"
-  revgo acc (x:xs) = revgo (x:acc) xs
+  revgo acc ((cd,d,False):xs) = revgo ((flipCartDir cd, d, False):acc) xs
+  revgo acc ((_,_,True):[]) = error "TODO this does not handle midpoint subsegment starting anchors correctly (not that it needs to right now)"
   revgostart [] = []
-  revgostart ((cd,d,True):xs) = revgo [(cd,d,False)] xs
+  revgostart ((cd,d,True):xs) = revgo [(flipCartDir cd,d,False)] xs
   revgostart _ = error "unexpected non-subsegment starting anchor at start"
   r = LineAnchorsForRender {
       _lineAnchorsForRender_start = end
@@ -268,21 +269,25 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
 
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
-      -- TODO don't always need to go to max
-      rightedge = (max (r1+attachoffset) r2)
+      rightedge = if (not goup && b2 < ay1) || (goup && ay1 < t2_inc)
+        then r1 + attachoffset
+        else (max (r1+attachoffset) r2)
 
       lb1_to_right = (CD_Right, rightedge-ax1)
       right_to_torb = if goup
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
 
-      -- TODO sometimes need to go further
-      torb = (CD_Left, rightedge - ax2 + attachoffset)
+      leftedge = if (goup && t2_inc <= t1_inc) || (not goup && b2 > b1)
+        then ax2-attachoffset
+        else min (ax2-attachoffset) (l1_inc-attachoffset)
+
+      torb = (CD_Left, rightedge - leftedge)
 
       torb_to_left = if goup
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)
-      left_to_lb2 = (CD_Right, attachoffset)
+      left_to_lb2 = (CD_Right, ax2-leftedge)
       r = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = restify [lb1_to_right, right_to_torb, torb, torb_to_left, left_to_lb2]
@@ -292,7 +297,9 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
     -- <-2
     --      1->
     AL_Right | al2 == AL_Left && vsep -> traceStep "case 3" $ r where
-      halfway = (ay2+ay1) `div` 2
+      halfway = if b1 < t2_inc
+        then (b1+t2_inc) `div` 2
+        else (b2+t1_inc) `div` 2
       lb1_to_right = (CD_Right, attachoffset)
       right_to_center = if lbx1isstrictlyabove
         then (CD_Down, halfway-ay1)
@@ -325,7 +332,7 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
 
     -- WORKING
     -- ->1 ->2
-    AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  r where
+    AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  answer where
       goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
       -- TODO maybe it would be nice if this traveled a little further right
@@ -339,10 +346,11 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)
       right2_to_lb2 = (CD_Left, attachoffset)
-      r = LineAnchorsForRender {
+      answer = LineAnchorsForRender {
           _lineAnchorsForRender_start = start
           , _lineAnchorsForRender_rest = restify [lb1_to_right1, right1_to_torb, torb, torb_to_right2, right2_to_lb2]
         }
+
     -- ->2 ->1 (will not get covered by rotation)
     AL_Right | al2 == AL_Right && not ay1isvsepfromlbx2 -> traceStep "case 6 (reverse)" $ lineAnchorsForRender_reverse $ sSimpleLineSolver_NEW (nextmsg "case 6") crr sls lbal2 lbal1
 
