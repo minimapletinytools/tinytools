@@ -13,13 +13,11 @@ import           Test.Hspec
 import           Potato.Flow.GoatTester
 
 import           Potato.Flow
-import Potato.Flow.Methods.LineDrawer
-import           Potato.Flow.Common
 import           Potato.Flow.Controller.Manipulator.TestHelpers
-import           Potato.Flow.DebugHelpers
+import           Potato.Flow.Methods.LineDrawer
 
-import qualified Data.Text as T
 import qualified Data.List                                      as L
+import qualified Data.Text                                      as T
 
 
 verifyMostRecentlyCreatedLinesLatestLineLabelHasText :: Text -> GoatTester ()
@@ -31,26 +29,25 @@ verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyMostRecentlyCr
       else Just $ "found line label with text: " <> _sAutoLineLabel_text x <> " expected: " <> text
 
 verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition :: (Int, Int) -> GoatTester ()
-verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (x, y) = verifyState "verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition" checkfn where
+verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (px, py) = verifyState "verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition" checkfn where
   checkfn gs = r where
     pfs = goatState_pFState gs
-    msowl = maybeGetMostRecentlyCreatedOwl' pfs
     r' = do
       sowl <- case maybeGetMostRecentlyCreatedOwl' (goatState_pFState gs) of
         Nothing -> Left "failed, no 🦉s"
-        Just x -> Right x
+        Just x  -> Right x
       sline <- case _owlItem_subItem (_superOwl_elt sowl) of
         OwlSubItemLine x _ -> Right x
-        x                      -> Left $ "expected SAutoLine got: " <> show x
+        x                  -> Left $ "expected SAutoLine got: " <> show x
       llabel <- case _sAutoLine_labels sline of
-        [] -> Left "most recently created line has no line labels"
+        []    -> Left "most recently created line has no line labels"
         (x:_) -> Right x
       return $ getSAutoLineLabelPosition pfs sline llabel
     r = case r' of
       Left e -> Just e
-      Right (V2 x' y') -> if x == x' && y == y'
+      Right (V2 x y) -> if px == x && py == y
         then Nothing
-        else Just $ "expected line label position: " <> show (x, y) <> " got " <> show (x', y')
+        else Just $ "expected line label position: " <> show (px, py) <> " got " <> show (x, y)
 
 blankOwlPFState :: OwlPFState
 blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))
@@ -400,9 +397,9 @@ label_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   pressBackspace
   pressBackspace
   pressBackspace
-  verifyMostRecentlyCreatedLinesLatestLineLabelHasText ""
+  expectLabelCount 0
   pressBackspace
-  -- TODO finish test, backspace to delete isn't the way to do it, you should delete if there is an empty label
+  expectLabelCount 0
 
 label_delete_midpoint_test :: Spec
 label_delete_midpoint_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
@@ -453,7 +450,7 @@ label_delete_after_back_and_forth_test = hSpecGoatTesterWithOwlPFState blankOwlP
   pressReturn
   expectLabelCount 2
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "cat"
-  
+
 
   setMarker "go back to the other label and delete it"
   canvasMouseDown (90, 0)
@@ -477,7 +474,7 @@ cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   let
     f sowl = case _owlItem_subItem (_superOwl_elt sowl) of
-      OwlSubItemLine _ (Just c) -> Nothing
+      OwlSubItemLine _ (Just _) -> Nothing
       _                         -> Just $ "expected cache, got " <> show sowl
   verifyMostRecentlyCreatedOwl' "verify cache got created for the line we just created" f
 
@@ -497,6 +494,7 @@ spec = do
     describe "label_cursor_test" $ label_cursor_test
     describe "label_delete_midpoint_test" $ label_delete_midpoint_test
     describe "label_delete_after_back_and_forth_test" $ label_delete_after_back_and_forth_test
+    describe "label_delete_test" $ label_delete_test
 
 
 
