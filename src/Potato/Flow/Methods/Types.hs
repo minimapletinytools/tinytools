@@ -10,11 +10,10 @@ module Potato.Flow.Methods.Types where
 import           Relude
 
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
 import           Potato.Flow.SElts
-import           Potato.Flow.Types
-import Potato.Flow.Owl
 
-import qualified Data.Text          as T
+import qualified Data.Text         as T
 
 
 
@@ -73,8 +72,8 @@ getSEltBox_naive selt = case selt of
 
   -- UNTESTED
   SEltLine x      -> Just r where
-    midpoints = fmap (\(SAutoLineConstraintFixed x) -> x) (_sAutoLine_midpoints x)
-    r = make_lBox_from_XYlist $ (_sAutoLine_start x) : (_sAutoLine_end x) : (_sAutoLine_start x + 1) : (_sAutoLine_end x + 1) : midpoints 
+    midpoints = fmap (\(SAutoLineConstraintFixed c) -> c) (_sAutoLine_midpoints x)
+    r = make_lBox_from_XYlist $ (_sAutoLine_start x) : (_sAutoLine_end x) : (_sAutoLine_start x + 1) : (_sAutoLine_end x + 1) : midpoints
 
   SEltTextArea x      -> Just $ canonicalLBox_from_lBox_ $ _sTextArea_box x
 

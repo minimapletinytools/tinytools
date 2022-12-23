@@ -22,22 +22,21 @@ module Potato.Flow.SEltMethods (
 ) where
 
 import           Relude
-import  qualified         Relude.Unsafe
 
 import           Potato.Flow.Math
-import Potato.Flow.Methods.LineDrawer
+import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Methods.TextCommon
+import           Potato.Flow.Methods.Types
+import           Potato.Flow.Owl
+import           Potato.Flow.OwlItem
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
-import Potato.Flow.Methods.Types
 
-import qualified Data.Map as Map
-import           Data.Dependent.Sum (DSum ((:=>)), (==>))
-import           Data.Maybe         (fromJust)
-import qualified Data.Text          as T
-import qualified Potato.Data.Text.Zipper   as TZ
+import           Data.Dependent.Sum             (DSum ((:=>)))
+import qualified Data.Map                       as Map
+import           Data.Maybe                     (fromJust)
+import qualified Data.Text                      as T
+import qualified Potato.Data.Text.Zipper        as TZ
 
 -- DisplayLines tag is Int, 0 for no cursor 1 for cursor
 noTrailngCursorDisplayLines :: Int -> TextAlign -> T.Text -> TZ.DisplayLines Int
@@ -58,7 +57,7 @@ makeDisplayLinesFromSBox :: SBox -> TZ.DisplayLines Int
 makeDisplayLinesFromSBox sbox = r where
   alignment = _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
   text = _sBoxText_text . _sBox_text $ sbox
-  box@(LBox _ (V2 width' _)) = _sBox_box sbox
+  LBox _ (V2 width' _) = _sBox_box sbox
   width = case _sBox_boxType sbox of
     SBoxType_BoxText   -> max 0 (width'-2)
     SBoxType_NoBoxText -> width'
@@ -89,16 +88,16 @@ doesOwlSubItemIntersectBox ot lbox osubitem = case osubitem of
   OwlSubItemLine sline@SAutoLine {..} manchors -> r where
     anchors = case manchors of
       Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
-      Just x -> x
+      Just x  -> x
     r = lineAnchorsForRender_doesIntersectBox anchors lbox
   _ -> False
 
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
-  SEltBox SBox {..}         -> Just _sBox_superStyle
+  SEltBox SBox {..}       -> Just _sBox_superStyle
   SEltLine SAutoLine {..} -> Just _sAutoLine_superStyle
-  _                         -> Nothing
+  _                       -> Nothing
 
 getSEltLabelSuperStyle :: SEltLabel -> Maybe SuperStyle
 getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
@@ -106,12 +105,12 @@ getSEltLabelSuperStyle (SEltLabel _ x) = getSEltSuperStyle x
 getSEltLineStyle :: SElt -> Maybe LineStyle
 getSEltLineStyle selt = case selt of
   SEltLine SAutoLine {..} -> Just _sAutoLine_lineStyle
-  _                         -> Nothing
+  _                       -> Nothing
 
 getSEltLineStyleEnd :: SElt -> Maybe LineStyle
 getSEltLineStyleEnd selt = case selt of
   SEltLine SAutoLine {..} -> Just _sAutoLine_lineStyleEnd
-  _                         -> Nothing
+  _                       -> Nothing
 
 getSEltLabelLineStyle :: SEltLabel -> Maybe LineStyle
 getSEltLabelLineStyle (SEltLabel _ x) = getSEltLineStyle x
@@ -146,7 +145,7 @@ sBox_drawer sbox@SBox {..} = r where
     FillStyle_Simple c -> Just c
     FillStyle_Blank    -> Nothing
 
-  rfntext pt@(V2 x' y') = case _sBox_boxType of
+  rfntext (V2 x' y') = case _sBox_boxType of
     SBoxType_Box -> Nothing
     SBoxType_NoBox -> Nothing
     _ -> outputChar where
@@ -161,7 +160,7 @@ sBox_drawer sbox@SBox {..} = r where
       outputChar = displayLinesToChar (x, y) dl (x', y') offs
 
   -- TODO test
-  rfnlabel pt@(V2 x' y') = case _sBoxTitle_title _sBox_title of
+  rfnlabel (V2 x' y') = case _sBoxTitle_title _sBox_title of
     Nothing -> Nothing
     Just title -> outputChar where
       -- TODO we want to crop instead of wrap here
@@ -174,7 +173,7 @@ sBox_drawer sbox@SBox {..} = r where
     | not (does_lBox_contains_XY lbox pt) = Nothing
     | otherwise = case rfntext pt of
       -- 'Just Nothing' means don't use fill char (this happens when there are wide chars)
-      Just mx  -> mx
+      Just mx -> mx
       Nothing -> fillfn pt
 
   rfnborder pt@(V2 x' y')
@@ -189,8 +188,8 @@ sBox_drawer sbox@SBox {..} = r where
     | x' == x || x' == x+w-1 = _superStyle_vertical _sBox_superStyle
     -- label shows up at top horizontal portion
     | y' == y = case rfnlabel pt of
-      Nothing -> _superStyle_horizontal _sBox_superStyle
-      Just x -> x
+      Nothing    -> _superStyle_horizontal _sBox_superStyle
+      Just pchar -> pchar
     | y' == y+h-1 = _superStyle_horizontal _sBox_superStyle
     | otherwise = rfnnoborder pt
 
@@ -203,9 +202,9 @@ sBox_drawer sbox@SBox {..} = r where
     }
 
 sTextArea_drawer :: STextArea -> SEltDrawer
-sTextArea_drawer stextarea@STextArea {..} = r where
+sTextArea_drawer STextArea {..} = r where
 
-  lbox@(LBox p (V2 w h)) = _sTextArea_box
+  lbox@(LBox p _) = _sTextArea_box
 
   renderfn p' = outputChar where
     inbounds = does_lBox_contains_XY lbox p'
@@ -243,9 +242,9 @@ getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 
 updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> OwlSubItem
 updateOwlSubItemCache ot x = case x of
-  x@(OwlSubItemLine sline mcache) -> case mcache of
+  x'@(OwlSubItemLine sline mcache) -> case mcache of
     -- if there's already a cache, it is up to date by assumption
-    Just cache -> x
+    Just _ -> x'
     Nothing -> OwlSubItemLine sline (Just $ sSimpleLineNewRenderFnComputeCache ot sline)
   _ -> x
 
