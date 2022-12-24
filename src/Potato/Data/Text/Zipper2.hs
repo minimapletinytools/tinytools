@@ -142,11 +142,16 @@ rightLeftWord = undefined
 
 -- | Move the cursor up one logical line (clearing the selection)
 up :: TextZipper -> TextZipper
-up z@(TextZipper lb b s a la) = undefined
+up (TextZipper [] "" [] a la) = TextZipper [] "" [] a la
+up (TextZipper (x:xs) "" [] a la) = TextZipper (NE.init lb) "" [] (NE.last lb) (a:la) where
+    lb = x NE.:| xs
+up tz = top $ home tz
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
-down z@(TextZipper lb b s a la) = undefined
+down (TextZipper lb b [] "" []) = TextZipper lb b [] "" []
+down (TextZipper lb b [] "" (x:xs)) = TextZipper (lb <> [b]) x [] "" (NE.tail a) where
+    a = x NE.:| xs
 
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
@@ -172,7 +177,6 @@ end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper (lb <> ([b <> x] <> NE.init 
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
---top (TextZipper lb b s a la) = undefined
 top (TextZipper [] "" [] a la) = TextZipper [] "" [] a la
 top (TextZipper (x:[]) "" [] a la) = TextZipper [] "" [] x (a:la)
 top (TextZipper (x:(xs:xss)) "" [] a la) = TextZipper [] "" [] x (NE.tail xs' <> (a:la)) where
