@@ -50,9 +50,6 @@ data TextZipper = TextZipper
   }
   deriving (Show, Eq)
 
-reverse_lb :: TextZipper -> TextZipper
-reverse_lb (TextZipper lb b s a la) = TextZipper (reverse lb) b s a la
-
 -- example:
 --
 -- this is an example content of

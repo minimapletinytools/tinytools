@@ -14,13 +14,7 @@ import Control.Monad
 
 import           Potato.Data.Text.Zipper2
 
-tz_ = TextZipper ["this is an example content of", "a text zipper"]
-                "the capital "
-                ["TEXT IS THE SELECTED", "PORTION"]
-                " of the"
-                ["text zipper"]
-
-tz = TextZipper ["a text zipper", "this is an example content of"]
+tz = TextZipper (reverse ["this is an example content of", "a text zipper"])
                 "the capital "
                 ["TEXT IS THE SELECTED", "PORTION"]
                 " of the"
@@ -29,11 +23,9 @@ tz = TextZipper ["a text zipper", "this is an example content of"]
 spec :: Spec
 spec =
   describe "Zipper2" $ do
-  it "reverse_lb" $ do
-    reverse_lb tz_ `shouldBe` tz
 
   it "leftN 1" $ do
-    let tz_1 = TextZipper   ["a text zipper", "this is an example content of"]
+    let tz_1 = TextZipper (reverse ["this is an example content of", "a text zipper"])
                         "the capital"
                         []
                         " TEXT IS THE SELECTED"
@@ -41,7 +33,7 @@ spec =
     leftN 1 tz `shouldBe` tz_1
 
   it "leftN 5" $ do
-    let tz_5 = TextZipper   ["a text zipper", "this is an example content of"]
+    let tz_5 = TextZipper   (reverse ["this is an example content of", "a text zipper"])
                             "the cap"
                             []
                             "ital TEXT IS THE SELECTED"
