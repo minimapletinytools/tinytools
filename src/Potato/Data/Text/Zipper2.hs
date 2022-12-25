@@ -158,15 +158,15 @@ down :: TextZipper -> TextZipper
 down (TextZipper lb b [] a [])     = TextZipper lb (b <> a) [] "" []
 down (TextZipper lb b [] a (x:xs)) = TextZipper ((b <> a):lb) b' [] a' xs where
         (b', a') = T.splitAt (T.length b) x
-down (TextZipper lb b [y] a []) = TextZipper lb (b <> y <> a) [] "" []
+down (TextZipper lb b (x:xs) a []) = TextZipper (NE.init xs' <> lb) (NE.last xs' <> a) [] "" [] where
+        xs' = x NE.:| xs
 down (TextZipper lb b [y] a (x:xs)) = TextZipper ((by <> a):lb) b' [] a' xs where
         by = b <> y
         (b', a') = T.splitAt (T.length by) x
-down (TextZipper lb b (y:(ys:yss)) a la) = TextZipper (by:lb) b' [] a' ((NE.init ys') <> [NE.last ys' <> a] <> la) where
-        ys' = ys NE.:| yss
-        by = b <> y
-        (b', a') = T.splitAt (T.length by) ys
-
+down (TextZipper lb b (y:ys) a (x:xs)) = TextZipper (b:(NE.init ys') <> lb) b' [] a'  xs where
+        ys' = y NE.:| ys
+        (b', a') = T.splitAt (T.length $ NE.last ys') x
+        
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
 pageUp pageSize z = undefined
