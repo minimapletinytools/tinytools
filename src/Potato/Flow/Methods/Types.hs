@@ -16,17 +16,15 @@ import           Potato.Flow.SElts
 import qualified Data.Text         as T
 
 
-
--- TODO PreRender stuff here??
 -- TODO get rid of (HasOwlTree a) arg, this can be passed in at the getDrawer level instead!
 type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
-
 type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
 
 makePotatoRenderer :: LBox -> SEltDrawerRenderFn
 makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
   then Just '#'
   else Nothing
+
 
 data SEltDrawer = SEltDrawer {
 
@@ -51,6 +49,7 @@ sEltDrawer_renderToLines SEltDrawer {..} ot = r where
   pts = [[(x,y) | x <- [0..w-1]]| y <- [0..h-1]]
   r' = fmap (fmap (\(x,y) -> fromMaybe ' ' (_sEltDrawer_renderFn ot (V2 (sx+x) (sy+y))))) pts
   r = fmap T.pack r'
+
 
 
 {-

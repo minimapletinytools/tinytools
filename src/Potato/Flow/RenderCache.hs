@@ -73,3 +73,7 @@ renderCache_clearAtKeys rcache rids = RenderCache $ foldr IM.delete (unRenderCac
 
 renderCache_lookup :: RenderCache -> REltId -> Maybe OwlItemCache
 renderCache_lookup rcache rid = IM.lookup rid (unRenderCache rcache)
+
+-- TODO
+--makePreRender :: SEltDrawer -> PreRender
+--makePreRender SEltDrawer {..} = r where
