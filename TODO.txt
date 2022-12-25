@@ -83,8 +83,30 @@ WIDE
 👁️
 🙈
 
+:: UNICODE WIDE CHAR places that need to be updated ::
+-render
+  -rules
+    -render left to right/ right to left
+    -corner characters take precedence over wide chars that might overlap them
+  -you will need to pr-render the line, prob need to rewrite your box rendering function?
+    -could just render the entire object (maybe store in cache) and then pick from it, something like
+      -data WidePChar = WidePChar PChar Int -- the int is how far offset from where the character starts
+      -data RenderCache = RenderCache (SparseVector WidePChar) LBox 
+      -renderForCache :: SElt -> RenderCache 
+      -you can have Map REltId RenderCache since everything has the same type of cache
+        -or maybe you can redo the way cache is done and have cache to the item itself with its cache type i.e.
+          data SEltRenderCache = SEltRenderCacheLine SEltLine LineAnchorsForRender RenderCache
+  -box and line label box generation from text width needs to be updated to count char width
+  -AABB 
+    -sometimes needs to expand to the left/right by 1 (or max wide char size)
+      -could just always expand
+      -could also just ignore :(
+-TextZipper (does wide char stuff already work? needs more testing)
+-non-update
+  -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select)
 
 :: FUTURE FEATURES
+-EMOJIS
 -TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
@@ -143,11 +165,12 @@ WIDE
 -update README.md with usage instructions
 -move over to minimaple account
 DONE-empty canvas should have default size of 100x100 not 1x1
--proper command line parsing with --help option
+DONE-proper command line parsing with --help option
 -switch to cabal?
 
 
 ::NEWEST TODO::
+-update cache to not be intrusive, include elt in the cache
 -warning cleanup
 -add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?

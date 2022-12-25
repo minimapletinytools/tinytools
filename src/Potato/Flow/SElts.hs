@@ -425,7 +425,7 @@ instance ToJSON STextArea
 instance Binary STextArea
 instance NFData STextArea
 
--- TODO consider removing Folder
+-- TODO consider removing this all together and serializing Owl stuff directly
 data SElt =
   SEltNone
   | SEltFolderStart
