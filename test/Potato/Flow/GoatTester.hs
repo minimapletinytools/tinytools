@@ -100,7 +100,6 @@ verifyState' desc fn = GoatTesterT $ do
   unGoatTesterT $ putRecord desc mf
   return $ isJust mf
 
--- TODO take a test name
 verifyState :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m ()
 verifyState desc f = verifyState' desc f >> return ()
 

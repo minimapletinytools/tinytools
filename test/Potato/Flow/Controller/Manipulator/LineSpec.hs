@@ -18,6 +18,7 @@ import           Potato.Flow.Methods.LineDrawer
 
 import qualified Data.List                                      as L
 import qualified Data.Text                                      as T
+import qualified Data.IntMap as IM
 
 
 verifyMostRecentlyCreatedLinesLatestLineLabelHasText :: Text -> GoatTester ()
@@ -472,10 +473,12 @@ cache_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
   initSimpleLine
 
+  sowl <- mustGetMostRecentlyCreatedOwl
   let
-    -- TODO update to test separate cache
-    f sowl = Nothing
-  verifyMostRecentlyCreatedOwl' "verify cache got created for the line we just created" f
+    f gs = case IM.lookup (_superOwl_id sowl) (unRenderCache (_goatState_renderCache gs)) of
+      Just (OwlItemCache_Line _ _) -> Nothing
+      _ -> Just "expected to find cache"
+  verifyState "verify cache got created for the line we just created" f
 
 
 
@@ -498,4 +501,4 @@ spec = do
 
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
-    --describe "cache_basic" $ fromHUnitTest $ cache_basic_test
+    --describe "cache_basic_test" $ cache_basic_test
