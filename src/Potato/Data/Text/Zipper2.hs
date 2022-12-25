@@ -155,14 +155,17 @@ up    (TextZipper (x:xs) b [y] a la) = TextZipper (NE.tail lb) b' [] a' ((by <> 
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
-down (TextZipper lb b [] a [])    = TextZipper lb (b <> a) [] "" []
-down (TextZipper lb b [] a (x:xs) = TextZipper ((b <> a):lb) b' [] a' xs where
-        (b', a') = T.splitAt (T.length x) x
-down (TextZipper lb b [y] a [] = TextZipper lb (b <> y <> a) [] "" []
-down (TextZipper lb b [y] a (x:xs) = TextZipper ((by:lb) b' [] a' xs where
+down (TextZipper lb b [] a [])     = TextZipper lb (b <> a) [] "" []
+down (TextZipper lb b [] a (x:xs)) = TextZipper ((b <> a):lb) b' [] a' xs where
+        (b', a') = T.splitAt (T.length b) x
+down (TextZipper lb b [y] a []) = TextZipper lb (b <> y <> a) [] "" []
+down (TextZipper lb b [y] a (x:xs)) = TextZipper ((by <> a):lb) b' [] a' xs where
+        by = b <> y
         (b', a') = T.splitAt (T.length by) x
-down (TextZipper lb b (y:(ys:yss)) a la = TextZipper ((by:lb) b' [] a' xs where
-        (b', a') = T.splitAt (T.length by) x
+down (TextZipper lb b (y:(ys:yss)) a la) = TextZipper (by:lb) b' [] a' ((NE.init ys') <> [NE.last ys' <> a] <> la) where
+        ys' = ys NE.:| yss
+        by = b <> y
+        (b', a') = T.splitAt (T.length by) ys
 
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
