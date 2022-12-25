@@ -13,6 +13,7 @@ import           Test.Hspec.Contrib.HUnit          (fromHUnitTest)
 import           Test.HUnit
 
 import           Potato.Flow
+import Potato.Flow.RenderCache (toIndexSafe)
 
 -- test imports
 import           Potato.Flow.Common

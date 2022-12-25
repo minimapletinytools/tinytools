@@ -21,9 +21,24 @@ import qualified Data.Vector.Unboxed     as V
 import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
+-- TODO move these methods to Math
+-- | input index must be contained in the box
+toPoint :: LBox -> Int -> XY
+toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + x) (i `div` w + y)
+
+-- | input XY point must be contained in the box
+toIndex :: LBox -> XY -> Int
+toIndex (LBox (V2 x y) (V2 w _)) (V2 px py) = (py-y)*w+(px-x)
+
+-- | same as above but does bounds checking
+toIndexSafe :: LBox -> XY -> Maybe Int
+toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
+  then Just $ toIndex lbx xy
+  else Nothing
+
 
 -- | WidePChar represents part of a PChar that
--- the Int8 parameter is offset from where the PChar originates from, so for example 
+-- the Int8 parameter is offset from where the PChar originates from, so for example
 -- '😱' <- PChar
 --  01 <- Int8 offset parameter
 --
@@ -35,6 +50,10 @@ data PreRender = PreRender (V.Vector (MWidePChar)) LBox deriving (Show)
 
 emptyPreRender :: PreRender
 emptyPreRender = PreRender V.empty (LBox 0 0)
+
+preRender_lookup :: PreRender -> XY -> MWidePChar
+preRender_lookup (PreRender v lbox) pos = assert (does_lBox_contains_XY lbox pos) $ v V.! (toIndex lbox pos)
+
 
 data OwlItemCache =
   -- TODO change to LineAnchorsForRenderList prob

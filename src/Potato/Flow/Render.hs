@@ -25,7 +25,6 @@ module Potato.Flow.Render (
   , updateCanvas
 
   -- exposed for testing
-  , toIndexSafe
   , moveRenderedCanvasRegionNoReRender
 ) where
 
@@ -150,21 +149,6 @@ emptyRenderedCanvasRegion lb@(LBox _ (V2 w h)) = RenderedCanvasRegion {
 renderedCanvasRegion_nonEmptyCount :: RenderedCanvasRegion -> Int
 renderedCanvasRegion_nonEmptyCount = V.length . V.filter (\x -> x /= emptyChar) . _renderedCanvasRegion_contents
 
--- TODO move these methods to Math
--- | input index must be contained in the box
-toPoint :: LBox -> Int -> XY
-toPoint (LBox (V2 x y) (V2 w _)) i = V2 (i `mod` w + x) (i `div` w + y)
-
--- | input XY point must be contained in the box
-toIndex :: LBox -> XY -> Int
-toIndex (LBox (V2 x y) (V2 w _)) (V2 px py) = (py-y)*w+(px-x)
-
--- | same as above but does bounds checking
-toIndexSafe :: LBox -> XY -> Maybe Int
-toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
-  then Just $ toIndex lbx xy
-  else Nothing
-
 -- | brute force renders a RenderedCanvasRegion (ignores broadphase)
 potatoRenderWithOwlTree :: OwlTree -> [OwlSubItem] -> RenderedCanvasRegion -> RenderedCanvasRegion
 potatoRenderWithOwlTree ot osubitems RenderedCanvasRegion {..} = r where
@@ -230,7 +214,7 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
     sowl = owlTree_mustFindSuperOwl _renderContext_owlTree rid
     OwlItem _ osubitem = _superOwl_elt sowl
     mupdatedcache = updateOwlSubItemCache _renderContext_owlTree osubitem
-    r = case mprevcache of 
+    r = case mprevcache of
       Just c -> (cacheacc, (osubitem, Just c))
       Nothing -> case mupdatedcache of
         Just c -> (IM.insert rid c cacheacc, (osubitem, Just c))
