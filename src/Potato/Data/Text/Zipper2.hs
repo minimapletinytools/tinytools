@@ -155,9 +155,14 @@ up    (TextZipper (x:xs) b [y] a la) = TextZipper (NE.tail lb) b' [] a' ((by <> 
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
-down (TextZipper lb b [] "" []) = TextZipper lb b [] "" []
-down (TextZipper lb b [] "" (x:xs)) = TextZipper (lb <> [b]) x [] "" (NE.tail a) where
-    a = x NE.:| xs
+down (TextZipper lb b [] a [])    = TextZipper lb (b <> a) [] "" []
+down (TextZipper lb b [] a (x:xs) = TextZipper ((b <> a):lb) b' [] a' xs where
+        (b', a') = T.splitAt (T.length x) x
+down (TextZipper lb b [y] a [] = TextZipper lb (b <> y <> a) [] "" []
+down (TextZipper lb b [y] a (x:xs) = TextZipper ((by:lb) b' [] a' xs where
+        (b', a') = T.splitAt (T.length by) x
+down (TextZipper lb b (y:(ys:yss)) a la = TextZipper ((by:lb) b' [] a' xs where
+        (b', a') = T.splitAt (T.length by) x
 
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
