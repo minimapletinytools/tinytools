@@ -104,3 +104,8 @@ spec =
                     ["blah blah blah"]
     home tz_0 `shouldBe` tz_1h
     end tz_0 `shouldBe` tz_1e
+
+  it "top examples" $ do
+    top (TextZipper [] "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "dd d" ["a","b"]
+    top (TextZipper ["hello"] "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "hello" ["dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
