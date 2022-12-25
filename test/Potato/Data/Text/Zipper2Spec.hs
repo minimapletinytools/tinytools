@@ -120,14 +120,55 @@ spec =
          TextZipper [] "" [] "hello" ["ok", "very good", "a b c", "d e dd d", "a","b"]
 
   it "up examples" $ do
-    up (TextZipper [] "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab dd d" ["a","b"])
-    up (TextZipper ["cat dog"] "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "cat" [] " dog" ["ab dd d", "a","b"])
-    up (TextZipper ["cat dog"] "abfeeeere " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "cat dog" [] "" ["abfeeeere dd d", "a","b"])
-    up (TextZipper (reverse ["cat dog", "bird_sky"]) "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper ["cat dog"] "bir" [] "d_sky" ["ab dd d", "a","b"])
-    up (TextZipper [] "ab " ["story"] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab storydd d" ["a","b"])
-    up (TextZipper [] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab story" ["cooldd d", "a","b"])
-    up (TextZipper (reverse ["a", "b"]) "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` (TextZipper (reverse (["a", "b"])) "" [] "ab story" ["cooldd d", "a","b"])
-    up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
+    up (TextZipper [] "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "" [] "ab dd d" ["a","b"])
+    up (TextZipper ["cat dog"] "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "cat" [] " dog" ["ab dd d", "a","b"])
+    up (TextZipper ["cat dog"] "abfeeeere " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "cat dog" [] "" ["abfeeeere dd d", "a","b"])
+    up (TextZipper (reverse ["cat dog", "bird_sky"]) "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["cat dog"] "bir" [] "d_sky" ["ab dd d", "a","b"])
+    up (TextZipper [] "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "" [] "ab storydd d" ["a","b"])
+    up (TextZipper [] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "" [] "ab story" ["cooldd d", "a","b"])
+    up (TextZipper ["a", "b"] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["a", "b"] "" [] "ab story" ["cooldd d", "a","b"])
+    up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
+
+  it "down example_1" $ do
+    down (TextZipper ["a","b"] "ab " [] "dd d" []) `shouldBe` 
+        (TextZipper ["a", "b"] "ab dd d" [] "" [])
+  it "down example_2" $ do
+    down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" [])
+  it "down example_3" $ do
+    down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello", "thanks"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" ["thanks"])
+  it "down example_4" $ do
+{-
+a
+b
+ab CENTERdd d|
+-}
+    down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER"] "dd d" []) `shouldBe` 
+         (TextZipper (reverse ["a", "b"]) "ab CENTERdd d" [] "" [])
+  it "down example_5" $ do
+    down (TextZipper (reverse ["a","b"]) "ab " ["center"] "dd d" ["hello", "thanks"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab centerdd d"]) "hello" [] "" ["thanks"])
+  it "down example_6" $ do
+{-
+a
+b
+ab CENTER
+MIDDLE dd d
+hello|
+thanks
+-}
+    down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER", "MIDDLE"] " dd d" ["hello", "thanks"]) `shouldBe`
+         (TextZipper (reverse ["a", "b", "ab CENTER"]) "hello" [] "" ["thanks"] )
+         
 
 
 
