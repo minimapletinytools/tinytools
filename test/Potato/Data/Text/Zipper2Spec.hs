@@ -119,6 +119,24 @@ spec =
     top (TextZipper (reverse ["hello", "ok", "very good"]) "" ["a b c", "d e "] "dd d" ["a","b"]) `shouldBe` 
          TextZipper [] "" [] "hello" ["ok", "very good", "a b c", "d e dd d", "a","b"]
 
+  it "up examples" $ do
+    up (TextZipper [] "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab dd d" ["a","b"])
+    up (TextZipper ["cat dog"] "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "cat" [] " dog" ["ab dd d", "a","b"])
+    up (TextZipper ["cat dog"] "abfeeeere " [] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "cat dog" [] "" ["abfeeeere dd d", "a","b"])
+    up (TextZipper (reverse ["cat dog", "bird_sky"]) "ab " [] "dd d" ["a","b"]) `shouldBe` (TextZipper ["cat dog"] "bir" [] "d_sky" ["ab dd d", "a","b"])
+    up (TextZipper [] "ab " ["story"] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab storydd d" ["a","b"])
+    up (TextZipper [] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` (TextZipper [] "" [] "ab story" ["cooldd d", "a","b"])
+    up (TextZipper (reverse ["a", "b"]) "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` (TextZipper (reverse (["a", "b"])) "" [] "ab story" ["cooldd d", "a","b"])
+    up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
+
+
+
+
+
+
+
+
+
 
 
 
