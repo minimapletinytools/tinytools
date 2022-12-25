@@ -141,10 +141,17 @@ rightLeftWord = undefined
 
 -- | Move the cursor up one logical line (clearing the selection)
 up :: TextZipper -> TextZipper
-up (TextZipper [] "" [] a la) = TextZipper [] "" [] a la
-up (TextZipper (x:xs) "" [] a la) = TextZipper (NE.init lb) "" [] (NE.last lb) (a:la) where
-    lb = x NE.:| xs
-up tz = top $ home tz
+up    (TextZipper []     b [] a la) = TextZipper [] "" [] (b <> a) la
+up    (TextZipper (x:xs) b [] a la) = TextZipper (NE.tail lb) b' [] a' ((b <> a):la) where
+        lb = x NE.:| xs
+        (b', a') = T.splitAt (T.length b) x
+up    (TextZipper [] b [y] a la) = TextZipper [] "" [] (b <> y <> a) la
+up    (TextZipper lb b (y:(ys:yss)) a la) = TextZipper lb "" [] (b <> y) (NE.init ys' <> [NE.last ys' <> a] <> la) where
+        ys' = ys NE.:| yss
+up    (TextZipper (x:xs) b [y] a la) = TextZipper (NE.tail lb) b' [] a' ((by <> a):la) where
+        lb = x NE.:| xs
+        by = b <> y
+        (b', a') = T.splitAt (T.length by) x
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
