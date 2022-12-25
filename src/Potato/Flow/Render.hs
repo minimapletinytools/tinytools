@@ -7,6 +7,7 @@ module Potato.Flow.Render (
   , emptyRenderContext
   , emptyRenderCache
   , renderCache_clearAtKeys
+  , renderCache_lookup
 
   , RenderedCanvasRegion(..)
   , renderedCanvas_box
@@ -40,7 +41,7 @@ import Potato.Flow.OwlState
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
-import Potato.Flow.Controller.Manipulator.Select
+import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Methods.LineTypes
 
 
@@ -105,6 +106,9 @@ emptyRenderCache = RenderCache IM.empty
 
 renderCache_clearAtKeys :: RenderCache -> [REltId] -> RenderCache
 renderCache_clearAtKeys rcache rids = RenderCache $ foldr IM.delete (unRenderCache rcache) rids
+
+renderCache_lookup :: RenderCache -> REltId -> Maybe OwlItemCache
+renderCache_lookup rcache rid = IM.lookup rid (unRenderCache rcache)
 
 -- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {

@@ -1,6 +1,8 @@
+
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+-- TODO move to Potato.Flow.Controller
 module Potato.Flow.Controller.OwlLayers where
 
 import           Relude
@@ -299,3 +301,19 @@ buildLayerEntriesRecursive ot lmm acc mparent = r where
 
 generateLayersNew :: OwlTree -> LayerMetaMap -> Seq LayerEntry
 generateLayersNew ot lmm = buildLayerEntriesRecursive ot lmm Seq.empty Nothing
+
+
+layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
+layerMetaMap_isInheritHiddenOrLocked ot rid lmm = case IM.lookup rid lmm of
+  -- these may both be false, but it may inherit from a parent where these are true therefore we still need to walk up the tree if these are both false
+  Just lm | _layerMeta_isLocked lm || _layerMeta_isHidden lm -> True
+  _ -> case IM.lookup rid (_owlTree_mapping ot) of
+    Nothing -> False
+    Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlItemMeta_parent oem) lmm
+
+layerMetaMap_isInheritHidden :: OwlTree -> REltId -> LayerMetaMap -> Bool
+layerMetaMap_isInheritHidden ot rid lmm = case IM.lookup rid lmm of
+  Just lm | _layerMeta_isHidden lm -> True
+  _ -> case IM.lookup rid (_owlTree_mapping ot) of
+    Nothing -> False
+    Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlItemMeta_parent oem) lmm

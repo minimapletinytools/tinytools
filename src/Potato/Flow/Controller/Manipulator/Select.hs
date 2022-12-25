@@ -2,8 +2,6 @@
 
 module Potato.Flow.Controller.Manipulator.Select (
   SelectHandler(..)
-  , layerMetaMap_isInheritHiddenOrLocked
-  , layerMetaMap_isInheritHidden
 ) where
 
 import           Relude
@@ -13,12 +11,14 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Box
 import           Potato.Flow.Controller.OwlLayers
+import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.SEltMethods
+import Potato.Flow.Render
 import           Potato.Flow.SElts
 
 import           Control.Exception                      (assert)
@@ -27,28 +27,27 @@ import           Data.Foldable                          (maximumBy)
 import qualified Data.IntMap                            as IM
 import qualified Data.Sequence                          as Seq
 
-
-layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
-layerMetaMap_isInheritHiddenOrLocked ot rid lmm = case IM.lookup rid lmm of
-  -- these may both be false, but it may inherit from a parent where these are true therefore we still need to walk up the tree if these are both false
-  Just lm | _layerMeta_isLocked lm || _layerMeta_isHidden lm -> True
-  _ -> case IM.lookup rid (_owlTree_mapping ot) of
-    Nothing -> False
-    Just (oem,_) -> layerMetaMap_isInheritHiddenOrLocked ot (_owlItemMeta_parent oem) lmm
-
-layerMetaMap_isInheritHidden :: OwlTree -> REltId -> LayerMetaMap -> Bool
-layerMetaMap_isInheritHidden ot rid lmm = case IM.lookup rid lmm of
-  Just lm | _layerMeta_isHidden lm -> True
-  _ -> case IM.lookup rid (_owlTree_mapping ot) of
-    Nothing -> False
-    Just (oem,_) -> layerMetaMap_isInheritHidden ot (_owlItemMeta_parent oem) lmm
-
 selectBoxFromRelMouseDrag :: RelMouseDrag -> LBox
 selectBoxFromRelMouseDrag (RelMouseDrag MouseDrag {..}) = r where
   LBox pos' sz' = make_lBox_from_XYs _mouseDrag_to _mouseDrag_from
   -- always expand selection by 1
   r = LBox pos' (sz' + V2 1 1)
 
+
+doesOwlSubItemIntersectBox :: OwlTree -> RenderCache -> LBox -> SuperOwl -> Bool
+doesOwlSubItemIntersectBox ot rcache lbox sowl = case superOwl_owlSubItem sowl of
+  OwlSubItemBox x -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
+  OwlSubItemTextArea x -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
+  OwlSubItemLine sline@SAutoLine {..} -> r where
+    anchors = case renderCache_lookup rcache (_superOwl_id sowl) of
+      Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
+      Just (OwlItemCache_Line lar _)  -> lar
+      _ -> assert False (sSimpleLineNewRenderFnComputeCache ot sline)
+    r = lineAnchorsForRender_doesIntersectBox anchors lbox
+  _ -> False
+
+
+-- TODO pass in cache
 -- TODO ignore locked and hidden elements here
 -- for now hidden + locked elements ARE inctluded in BroadPhaseState
 selectMagic :: OwlPFState -> LayerMetaMap -> BroadPhaseState -> RelMouseDrag -> Selection
@@ -69,7 +68,7 @@ selectMagic pfs lmm bps rmd = r where
     sowl | isboxshaped sowl -> True
 
     -- TODO you need to pass / return render cache here
-    sowl -> doesOwlSubItemIntersectBox (_owlPFState_owlTree pfs) selectBox (superOwl_owlSubItem sowl)
+    sowl -> doesOwlSubItemIntersectBox (_owlPFState_owlTree pfs) emptyRenderCache selectBox sowl
 
 
   -- remove lock and hidden stuff

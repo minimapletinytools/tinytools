@@ -18,6 +18,7 @@ import qualified Data.Map                       as Map
 import           Data.Maybe                     (fromJust)
 import qualified Data.Text                      as T
 import qualified Potato.Data.Text.Zipper        as TZ
+import Control.Exception (assert)
 
 
 data PreRender = PreRender deriving (Show)
@@ -72,20 +73,6 @@ doesSEltIntersectBox_DEPRECATED lbox selt = case selt of
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool
 doesSEltIntersectPoint pos selt = doesSEltIntersectBox_DEPRECATED (LBox pos (V2 1 1)) selt
-
--- TODO pass in optional cache
-doesOwlSubItemIntersectBox :: OwlTree -> LBox -> OwlSubItem -> Bool
-doesOwlSubItemIntersectBox ot lbox osubitem = case osubitem of
-  OwlSubItemBox x -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
-  OwlSubItemTextArea x -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
-  OwlSubItemLine sline@SAutoLine {..} -> r where
-    -- TODO use cache here
-    anchors = case Nothing of
-      Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
-      Just x  -> x
-    r = lineAnchorsForRender_doesIntersectBox anchors lbox
-  _ -> False
-
 
 getSEltSuperStyle :: SElt -> Maybe SuperStyle
 getSEltSuperStyle selt = case selt of
@@ -223,7 +210,7 @@ getDrawerWithCache osubitem mcache = case osubitem of
   OwlSubItemLine sline -> case mcache of 
     Just (OwlItemCache_Line lars _) -> sSimpleLineNewRenderFn sline (Just lars)
     Nothing -> sSimpleLineNewRenderFn sline Nothing
-    _ -> error "assert: invalid cache type"
+    _ -> assert False (sSimpleLineNewRenderFn sline Nothing)
   OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
 
 -- TODO pass in cache here
