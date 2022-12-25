@@ -106,6 +106,24 @@ spec =
     end tz_0 `shouldBe` tz_1e
 
   it "top examples" $ do
-    top (TextZipper [] "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "dd d" ["a","b"]
-    top (TextZipper ["hello"] "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "hello" ["dd d", "a","b"]
-    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
+    top (TextZipper [] "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "dd d" ["a","b"]
+    top (TextZipper ["hello"] "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" ["a b c"] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","a b cdd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" ["a b c", "d e "] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good", "a b c", "d e dd d", "a","b"]
+
+
+
+
+
+
+
+
+
