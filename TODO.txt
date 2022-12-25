@@ -90,8 +90,9 @@ WIDE
     -corner characters take precedence over wide chars that might overlap them
   -you will need to pr-render the line, prob need to rewrite your box rendering function?
     -could just render the entire object (maybe store in cache) and then pick from it, something like
+
       -data WidePChar = WidePChar PChar Int -- the int is how far offset from where the character starts
-      -data RenderCache = RenderCache (SparseVector WidePChar) LBox 
+      -data PreRender = PreRender (Either (SparseVector WidePChar) (Vector WidePChar)) LBox 
       -renderForCache :: SElt -> RenderCache 
       -you can have Map REltId RenderCache since everything has the same type of cache
         -or maybe you can redo the way cache is done and have cache to the item itself with its cache type i.e.
@@ -170,7 +171,7 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
--update cache to not be intrusive, include elt in the cache
+
 -warning cleanup
 -add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
@@ -189,6 +190,8 @@ DONE-proper command line parsing with --help option
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-pass cache in through PotatoHandlerInput and use in Select (you could use in Line too)
+DONE-update cache to not be intrusive, include elt in the cache
 DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
 DONE-BUG fix line bugs
   DONE-       ^                                                                                                                                                               
@@ -261,6 +264,7 @@ DONE-BUG fix line bugs
 
 
 :: CUT Line
+-consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
 -LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
 -BUG figure out what's going on with cache updated render bugs...
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')

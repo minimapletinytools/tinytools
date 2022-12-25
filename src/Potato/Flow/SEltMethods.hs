@@ -9,6 +9,7 @@ import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Methods.TextCommon
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.Owl
+import Potato.Flow.RenderCache
 import           Potato.Flow.OwlItem
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
@@ -19,16 +20,6 @@ import           Data.Maybe                     (fromJust)
 import qualified Data.Text                      as T
 import qualified Potato.Data.Text.Zipper        as TZ
 import Control.Exception (assert)
-
-
-data PreRender = PreRender deriving (Show)
-
-emptyPreRender :: PreRender
-emptyPreRender = PreRender
-
-data OwlItemCache =
-  OwlItemCache_Line LineAnchorsForRender PreRender
-  | OwlItemCache_Generic PreRender deriving (Show)
 
 
 -- DisplayLines tag is Int, 0 for no cursor 1 for cursor
@@ -236,6 +227,7 @@ getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 
 updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> Maybe OwlItemCache
 updateOwlSubItemCache ot x = case x of
+  -- TODO use sAutoLine_to_lineAnchorsForRenderList 
   (OwlSubItemLine sline) -> Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) emptyPreRender
   _ -> Nothing
 

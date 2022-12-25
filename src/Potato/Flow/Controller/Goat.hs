@@ -355,6 +355,7 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     _potatoHandlerInput_pFState       = last_pFState
     , _potatoHandlerInput_potatoDefaultParameters = _goatState_potatoDefaultParameters
     , _potatoHandlerInput_broadPhase  = _goatState_broadPhaseState
+    , _potatoHandlerInput_renderCache = _goatState_renderCache
 
     -- the screen region in canvas space
     , _potatoHandlerInput_screenRegion = LBox (-_goatState_pan) _goatState_screenRegion

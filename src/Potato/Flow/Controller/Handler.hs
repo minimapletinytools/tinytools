@@ -11,6 +11,7 @@ import           Potato.Flow.Controller.OwlLayers
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
 import           Potato.Flow.Owl
+import           Potato.Flow.Render
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
@@ -48,6 +49,7 @@ data PotatoHandlerInput = PotatoHandlerInput {
     _potatoHandlerInput_pFState                   :: OwlPFState
     , _potatoHandlerInput_potatoDefaultParameters :: PotatoDefaultParameters
     , _potatoHandlerInput_broadPhase              :: BroadPhaseState
+    , _potatoHandlerInput_renderCache :: RenderCache
 
     -- from Frontend
     , _potatoHandlerInput_layersState             :: LayersState

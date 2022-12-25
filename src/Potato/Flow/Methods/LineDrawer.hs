@@ -617,7 +617,6 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
   -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
   anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver_NEW ("",0) cartRotationReflection_identity params lbal1 lbal2) $ pairs ((startlbal : midlbals) <> [endlbal])
 
-
 sSimpleLineNewRenderFnComputeCache :: (HasOwlTree a) => a -> SAutoLine -> LineAnchorsForRender
 sSimpleLineNewRenderFnComputeCache ot sline = anchors where
   anchors = lineAnchorsForRender_simplify . lineAnchorsForRender_concat $ sAutoLine_to_lineAnchorsForRenderList ot sline

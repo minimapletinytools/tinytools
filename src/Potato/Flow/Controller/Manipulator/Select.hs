@@ -18,7 +18,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.SEltMethods
-import Potato.Flow.Render
+import Potato.Flow.RenderCache
 import           Potato.Flow.SElts
 
 import           Control.Exception                      (assert)
@@ -47,11 +47,10 @@ doesOwlSubItemIntersectBox ot rcache lbox sowl = case superOwl_owlSubItem sowl o
   _ -> False
 
 
--- TODO pass in cache
 -- TODO ignore locked and hidden elements here
 -- for now hidden + locked elements ARE inctluded in BroadPhaseState
-selectMagic :: OwlPFState -> LayerMetaMap -> BroadPhaseState -> RelMouseDrag -> Selection
-selectMagic pfs lmm bps rmd = r where
+selectMagic :: OwlPFState -> RenderCache -> LayerMetaMap -> BroadPhaseState -> RelMouseDrag -> Selection
+selectMagic pfs rcache lmm bps rmd = r where
   selectBox = selectBoxFromRelMouseDrag rmd
   boxSize = lBox_area selectBox
   singleClick = boxSize == 1
@@ -66,10 +65,7 @@ selectMagic pfs lmm bps rmd = r where
   selectedsowls'' = flip filter unculledsowls $ \case
     -- if it's box shaped, there's no need to test for intersection as we already know it intersects based on broadphase
     sowl | isboxshaped sowl -> True
-
-    -- TODO you need to pass / return render cache here
-    sowl -> doesOwlSubItemIntersectBox (_owlPFState_owlTree pfs) emptyRenderCache selectBox sowl
-
+    sowl -> doesOwlSubItemIntersectBox (_owlPFState_owlTree pfs) rcache selectBox sowl
 
   -- remove lock and hidden stuff
   selectedsowls' = flip filter selectedsowls'' $ \sowl -> not (layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) lmm)
@@ -100,7 +96,7 @@ instance PotatoHandler SelectHandler where
   pHandleMouse sh phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = Just $ case _mouseDrag_state of
     MouseDragState_Down -> r where
 
-      nextSelection@(SuperOwlParliament sowls) = selectMagic _potatoHandlerInput_pFState (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
+      nextSelection@(SuperOwlParliament sowls) = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_renderCache (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
       -- since selection came from canvas, it's definitely a valid CanvasSelection, no need to convert
       nextCanvasSelection = CanvasSelection sowls
       shiftClick = isJust $ find (==KeyModifier_Shift) _mouseDrag_modifiers
@@ -122,7 +118,7 @@ instance PotatoHandler SelectHandler where
       }
     MouseDragState_Up -> def { _potatoHandlerOutput_select = Just (shiftClick, newSelection) }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)
-      newSelection = selectMagic _potatoHandlerInput_pFState (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
+      newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_renderCache (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
   pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
   pRenderHandler sh PotatoHandlerInput {..} = HandlerRenderOutput (fmap defaultRenderHandle $ substract_lBox full inside) where

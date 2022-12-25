@@ -31,6 +31,7 @@ module Potato.Flow.Render (
 
 import           Relude
 
+import           Potato.Flow.RenderCache
 import           Potato.Flow.BroadPhase
 import           Potato.Flow.Math
 import           Potato.Flow.SEltMethods
@@ -73,10 +74,6 @@ updateLookupWithKeyReturnAfterUpdate f0 !k0 t0 = StrictPair.toPair $ go f0 k0 t0
           | otherwise     -> (Nothing StrictPair.:*: t)
         IMI.Nil -> (Nothing StrictPair.:*: IMI.Nil)
 
-
-
-
-
 -- rather pointless abstraction but it's useful to have during refactors such that I don't ned to provide an explicit LayerMetaMap
 class OwlRenderSet a where
   findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
@@ -95,20 +92,6 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
     hidden = layerMetaMap_isInheritHidden ot rid lmm
     r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
-
-newtype RenderCache = RenderCache {
-    -- map for REltId to cache for each owl
-    unRenderCache :: REltIdMap OwlItemCache
-  } deriving (Show)
-
-emptyRenderCache :: RenderCache
-emptyRenderCache = RenderCache IM.empty
-
-renderCache_clearAtKeys :: RenderCache -> [REltId] -> RenderCache
-renderCache_clearAtKeys rcache rids = RenderCache $ foldr IM.delete (unRenderCache rcache) rids
-
-renderCache_lookup :: RenderCache -> REltId -> Maybe OwlItemCache
-renderCache_lookup rcache rid = IM.lookup rid (unRenderCache rcache)
 
 -- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {

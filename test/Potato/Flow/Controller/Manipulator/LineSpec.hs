@@ -15,6 +15,7 @@ import           Potato.Flow.GoatTester
 import           Potato.Flow
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 import           Potato.Flow.Methods.LineDrawer
+import           Potato.Flow.RenderCache
 
 import qualified Data.List                                      as L
 import qualified Data.Text                                      as T
