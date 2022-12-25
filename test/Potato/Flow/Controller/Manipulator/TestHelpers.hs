@@ -30,6 +30,6 @@ drawCanvasLine (sx, sy) (ex, ey) = do
   canvasMouseUp (ex, ey)
   let
     f sowl = case _superOwl_elt sowl of
-      OwlItem _ (OwlSubItemLine _ _) -> Nothing
+      OwlItem _ (OwlSubItemLine _) -> Nothing
       x -> Just ("expected line, got " <> show x)
   verifySelectionIsAndOnlyIs "line is selected" f

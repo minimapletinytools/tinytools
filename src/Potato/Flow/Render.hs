@@ -6,6 +6,7 @@ module Potato.Flow.Render (
   , RenderContext(..)
   , emptyRenderContext
   , emptyRenderCache
+  , renderCache_clearAtKeys
 
   , RenderedCanvasRegion(..)
   , renderedCanvas_box
@@ -75,7 +76,7 @@ updateLookupWithKeyReturnAfterUpdate f0 !k0 t0 = StrictPair.toPair $ go f0 k0 t0
 
 
 
--- rather pointless abstraction but it's useful to have during refactors
+-- rather pointless abstraction but it's useful to have during refactors such that I don't ned to provide an explicit LayerMetaMap
 class OwlRenderSet a where
   findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
   sortForRendering :: a -> Seq.Seq SuperOwl -> Seq.Seq SuperOwl
@@ -94,19 +95,16 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
     r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
-
-data PreRender = PreRender deriving (Show)
-data OwlItemCache = 
-  OwlItemCache_Line LineAnchorsForRender PreRender 
-  | OwlItemCache_Generic PreRender deriving (Show)
-
 newtype RenderCache = RenderCache {
     -- map for REltId to cache for each owl
     unRenderCache :: REltIdMap OwlItemCache
-  }
+  } deriving (Show)
 
 emptyRenderCache :: RenderCache
 emptyRenderCache = RenderCache IM.empty
+
+renderCache_clearAtKeys :: RenderCache -> [REltId] -> RenderCache
+renderCache_clearAtKeys rcache rids = RenderCache $ foldr IM.delete (unRenderCache rcache) rids
 
 -- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {
@@ -239,18 +237,22 @@ render_new :: LBox -> [REltId] -> RenderContext -> RenderContext
 render_new llbx rids rctx@RenderContext {..} = rctxout where
   prevrcr = _renderContext_renderedCanvasRegion
 
-  -- TODO change this to return separate cache rather than new owl tree
-  foldrfn rid (otacc, itemsacc) = r where
-    mapping = _owlTree_mapping otacc
-    updatefn _ (meta, OwlItem oi osubitem) = Just (meta, OwlItem oi (updateOwlSubItemCache _renderContext_owlTree osubitem)) where
-    (mnewoitem, newmapping) = updateLookupWithKeyReturnAfterUpdate updatefn rid mapping
-    r = case mnewoitem of
-      Nothing -> error "this should never happen"
-      Just (_, OwlItem _ newosubitem) -> (_renderContext_owlTree { _owlTree_mapping = newmapping}, newosubitem:itemsacc)
+  mapaccumlfn cacheacc rid = r where
+    -- see if it was in the previous cache
+    mprevcache = IM.lookup rid (unRenderCache _renderContext_cache)
+    sowl = owlTree_mustFindSuperOwl _renderContext_owlTree rid
+    OwlItem _ osubitem = _superOwl_elt sowl
+    mupdatedcache = updateOwlSubItemCache _renderContext_owlTree osubitem
+    r = case mprevcache of 
+      Just c -> (cacheacc, (osubitem, Just c))
+      Nothing -> case mupdatedcache of
+        Just c -> (IM.insert rid c cacheacc, (osubitem, Just c))
+        Nothing -> (cacheacc, (osubitem, Nothing))
 
-  (newowltree, osubitems) = foldr foldrfn (_renderContext_owlTree, []) rids
-  drawers = map getDrawer osubitems
+  (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache _renderContext_cache) rids
+  drawers = map (uncurry getDrawerWithCache) owlswithcache
 
+  -- TODO update PreRender portion of cache here
   genfn i = newc' where
     -- construct parent point and index
     pt = toPoint llbx i
@@ -267,7 +269,7 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
   -- go through each point in target LBox and render it
   newc = V.generate (lBox_area llbx) genfn
   rctxout = rctx {
-      _renderContext_owlTree = newowltree
+      _renderContext_cache = RenderCache newcache
       , _renderContext_renderedCanvasRegion = prevrcr {
           _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
         }

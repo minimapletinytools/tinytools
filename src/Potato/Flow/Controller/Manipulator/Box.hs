@@ -45,7 +45,7 @@ superOwl_isTransformable :: (HasOwlTree o) => SuperOwl -> o -> Bool
 superOwl_isTransformable sowl ot = case _owlItem_subItem (_superOwl_elt sowl) of
   OwlSubItemNone -> False
   OwlSubItemFolder _ -> False
-  OwlSubItemLine sline _ -> not $
+  OwlSubItemLine sline -> not $
     (fromMaybe False $ _sAutoLine_attachStart sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
     && (fromMaybe False $ _sAutoLine_attachEnd sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
   _ -> True

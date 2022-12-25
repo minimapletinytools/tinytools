@@ -74,6 +74,7 @@ data GoatState = GoatState {
     , _goatState_layersHandler           :: SomePotatoHandler
     -- TODO consider moving into _goatState_workspace
     , _goatState_attachmentMap           :: AttachmentMap -- map of targets to things attached to it. This is a cache that gets updated over time and can be regenerated from the current OwlTree
+    , _goatState_renderCache :: RenderCache
 
     -- shared across documents
     -- , _goatState_configurations  :: () -- TODO, also move PotatoDefaultParameters into this
@@ -126,6 +127,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
         , _goatState_renderedCanvas = initialrc
         , _goatState_renderedSelection = initialemptyrcr
         , _goatState_layersState     = initiallayersstate
+        , _goatState_renderCache = emptyRenderCache
         , _goatState_clipboard = Nothing
         , _goatState_focusedArea = GoatFocusedArea_None
         , _goatState_screenRegion = V2 screenx screeny - (_controllerMeta_pan controllermeta)
@@ -690,22 +692,24 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
 
-  -- TODO change to separate cache
-  owlTree_withCacheResetOnAttachments = owlTree_clearCacheAtKeys (_owlPFState_owlTree pFState_afterEvent) (IM.keys attachmentChanges)
-
   -- | compute SuperOwlChanges for rendering |
   cslmap_withAttachments = IM.union cslmap_afterEvent attachmentChanges
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
 
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (owlTree_withCacheResetOnAttachments) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
+  -- | clear the cache at places that have changed
+  renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys _goatState_renderCache (IM.keys cslmap_withAttachments)
+
+  -- | update the BroadPhase
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
 
   -- | update the rendered region if we moved the screen |
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
   didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
   rendercontext_forMove = RenderContext {
-      _renderContext_owlTree = owlTree_withCacheResetOnAttachments
+      _renderContext_cache = renderCache_resetOnChangesAndAttachments
+      , _renderContext_owlTree = _owlPFState_owlTree pFState_afterEvent
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas
@@ -729,18 +733,19 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching (you can fix by commenting it out)
       -- IDK WHY BUT IF YOU SELECT AUTOLINE WITH BOX AND MOVE BOTH THE CACHE STAYS WITH ORIGINAL PLACE AND SELECTED LINE DOESN'T MOVE
       -- so temp fix it by reseting the cache on attached lines whos target moved
-      , _renderContext_owlTree = owlTree_withCacheResetOnAttachments
-
+      , _renderContext_cache = renderCache_resetOnChangesAndAttachments
 
       -- empty canvas to render our selection in
       -- we just re-render everything for now (in the future you can try and do partial rendering though)
       , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
     }
   selectionselts = toList . fmap (_owlItem_subItem . _superOwl_elt) $ unSuperOwlParliament next_selection
-  next_renderedSelection = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
+
+  (next_renderedSelection, next_renderCache) = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
-    then _goatState_renderedSelection
-    else _renderContext_renderedCanvasRegion $ render newBox selectionselts rendercontext_forSelection
+    then (_goatState_renderedSelection, _renderContext_cache rendercontext_afterUpdate)
+    else (_renderContext_renderedCanvasRegion rctx, _renderContext_cache rctx) where
+      rctx = render newBox selectionselts rendercontext_forSelection 
 
   -- TODO just DELETE this...
   {- TODO render only parts of selection that have changed TODO broken
@@ -780,4 +785,5 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
         , _goatState_renderedSelection = next_renderedSelection
         , _goatState_layersState     = next_layersState
         , _goatState_attachmentMap = next_attachmentMap
+        , _goatState_renderCache = next_renderCache
       }

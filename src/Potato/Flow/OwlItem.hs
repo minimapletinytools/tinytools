@@ -19,24 +19,15 @@ data OwlSubItem =
   OwlSubItemNone
   | OwlSubItemFolder (Seq REltId)
   | OwlSubItemBox SBox
-
-  -- TODO remove cache
-  -- TODO maybe cache should also include line labels?
-  | OwlSubItemLine SAutoLine (Maybe LineAnchorsForRender)
-
+  | OwlSubItemLine SAutoLine
   | OwlSubItemTextArea STextArea
   deriving (Generic, Show, Eq)
 
 instance NFData OwlSubItem
 
 owlSubItem_equivalent :: OwlSubItem -> OwlSubItem -> Bool
-owlSubItem_equivalent (OwlSubItemLine slinea _) (OwlSubItemLine slineb _) = slinea == slineb
+owlSubItem_equivalent (OwlSubItemLine slinea) (OwlSubItemLine slineb) = slinea == slineb
 owlSubItem_equivalent a b = a == b
-
-owlSubItem_clearCache :: OwlSubItem -> OwlSubItem
-owlSubItem_clearCache = \case
-  OwlSubItemLine x _ -> OwlSubItemLine x Nothing
-  x -> x
 
 data OwlItem = OwlItem {
   _owlItem_info :: OwlInfo
@@ -51,12 +42,8 @@ instance PotatoShow OwlItem where
     OwlItem oinfo subitem -> "elt: " <> (_owlInfo_name oinfo) <> ": " <> case subitem of
         OwlSubItemNone -> "none"
         OwlSubItemBox sbox -> show sbox
-        OwlSubItemLine sline cache -> show sline <> " " <> show cache
+        OwlSubItemLine sline -> show sline
         OwlSubItemTextArea stextarea -> show stextarea
-
-owlItem_clearCache :: OwlItem -> OwlItem
-owlItem_clearCache (OwlItem oinfo osubitem) = OwlItem oinfo (owlSubItem_clearCache osubitem)
-
 
 class MommyOwl o where
   mommyOwl_kiddos :: o -> Maybe (Seq REltId)
@@ -96,7 +83,7 @@ owlSubItem_to_sElt_hack :: OwlSubItem -> SElt
 owlSubItem_to_sElt_hack = \case
   OwlSubItemFolder _ -> SEltFolderStart
   OwlSubItemBox sbox -> SEltBox sbox
-  OwlSubItemLine sline _ -> SEltLine sline
+  OwlSubItemLine sline -> SEltLine sline
   OwlSubItemTextArea stextarea -> SEltTextArea stextarea
   OwlSubItemNone -> SEltNone
 
@@ -107,7 +94,7 @@ instance HasOwlItem OwlItem where
     OwlSubItemFolder _ -> True
     _ -> False
   hasOwlItem_attachments o = case _owlItem_subItem o of
-    OwlSubItemLine sline _ -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
+    OwlSubItemLine sline -> catMaybes [_sAutoLine_attachStart sline, _sAutoLine_attachEnd sline]
     _ -> []
   hasOwlItem_toSElt_hack = owlSubItem_to_sElt_hack . _owlItem_subItem
   hasOwlItem_toSEltLabel_hack o = SEltLabel (hasOwlItem_name o) (hasOwlItem_toSElt_hack o)
@@ -119,7 +106,7 @@ owlItem_toSElt_hack = hasOwlItem_toSElt_hack
 sElt_to_owlSubItem :: SElt -> OwlSubItem
 sElt_to_owlSubItem s = case s of
   SEltBox x -> OwlSubItemBox x
-  SEltLine x -> OwlSubItemLine x Nothing
+  SEltLine x -> OwlSubItemLine x
   SEltTextArea x -> OwlSubItemTextArea x
   SEltNone -> OwlSubItemNone
   _ -> error $ "cannot convert " <> show s

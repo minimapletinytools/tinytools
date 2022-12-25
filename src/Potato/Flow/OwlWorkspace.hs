@@ -192,7 +192,7 @@ makeLlamaToSetAttachedLinesToCurrentPosition pfs am target = case IM.lookup targ
   where
     makeLlama :: REltId -> Llama
     makeLlama rid = case _superOwl_elt (hasOwlTree_mustFindSuperOwl pfs rid) of
-        OwlItem _ (OwlSubItemLine sline _) -> r where
+        OwlItem _ (OwlSubItemLine sline) -> r where
           startAttachment = _sAutoLine_attachStart sline
           endAttachment = _sAutoLine_attachEnd sline
           affectstart = fmap _attachment_target startAttachment == Just target

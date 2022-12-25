@@ -263,7 +263,7 @@ verifyMostRecentlyCreatedOwl = verifyMostRecentlyCreatedOwl' "verifyMostRecently
 verifyMostRecentlyCreatedLine :: (Monad m) => (SAutoLine -> Maybe Text) -> GoatTesterT m ()
 verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl' "verifyMostRecentlyCreatedLine" f' where
   f' sowl = case _owlItem_subItem (_superOwl_elt sowl) of
-    OwlSubItemLine sline _ -> f sline
+    OwlSubItemLine sline -> f sline
     x                      -> Just $ "expected SAutoLine got: " <> show x
 
 verifySelectionIsAndOnlyIs :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()

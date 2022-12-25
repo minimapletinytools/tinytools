@@ -24,6 +24,7 @@ makeRenderContextForTest a bps rc = RenderContext {
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = bps
     , _renderContext_renderedCanvasRegion = rc
+    , _renderContext_cache = emptyRenderCache
   }
 
 potatoRenderWithSEltAndEmptyOwlTreeForTest :: [SElt] -> RenderedCanvasRegion -> RenderedCanvasRegion

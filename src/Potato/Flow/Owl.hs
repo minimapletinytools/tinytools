@@ -31,10 +31,10 @@ type OwlMapping = REltIdMap (OwlItemMeta, OwlItem)
 -- | update attachments based on remap
 owlItem_updateAttachments :: Bool -> REltIdMap REltId -> OwlItem -> OwlItem
 owlItem_updateAttachments breakNonExistng ridremap oitem = case oitem of
-  OwlItem oinfo (OwlSubItemLine sline _) -> OwlItem oinfo $ OwlSubItemLine (sline {
+  OwlItem oinfo (OwlSubItemLine sline) -> OwlItem oinfo $ OwlSubItemLine (sline {
       _sAutoLine_attachStart = remapAttachment $ _sAutoLine_attachStart sline
       , _sAutoLine_attachEnd = remapAttachment $ _sAutoLine_attachEnd sline
-    }) Nothing
+    })
     where
       remapAttachment ma = case ma of
         Nothing -> Nothing
@@ -752,15 +752,6 @@ owliteratechildrenat od rid = owlTree_foldChildrenAt (|>) Seq.empty od rid where
 -- | iterates everything in the directory
 owliterateall :: OwlTree -> Seq SuperOwl
 owliterateall od = owlTree_fold (|>) Seq.empty od
-
-owlTree_clearCacheAtKeys :: OwlTree -> [REltId] -> OwlTree
-owlTree_clearCacheAtKeys ot keys = r where
-  adjustfn (oem, oitem) = (oem, owlItem_clearCache oitem)
-  foldrfn rid acc = IM.adjust adjustfn rid acc
-  newmapping = foldr foldrfn (_owlTree_mapping ot) keys
-  r = ot {
-      _owlTree_mapping = newmapping
-    }
 
 class HasOwlTree o where
   hasOwlTree_owlTree :: o -> OwlTree

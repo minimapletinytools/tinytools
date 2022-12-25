@@ -1,25 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.SEltMethods (
-  getSEltSuperStyle
-  , getSEltLabelSuperStyle
-  , getSEltLineStyle
-  , getSEltLineStyleEnd
-  , getSEltLabelLineStyle
-  , getSEltLabelLineStyleEnd
-  , getSEltBoxTextStyle
-  , getSEltLabelBoxTextStyle
-  , getSEltBoxType
-  , getSEltLabelBoxType
-  , doesSEltIntersectBox_DEPRECATED
-  , doesSEltIntersectPoint
-  , doesOwlSubItemIntersectBox
-  , updateFnFromController
-  , getDrawer
-  , getDrawerFromSEltForTest
-  , updateOwlSubItemCache
-  , offsetSEltTree
-) where
+module Potato.Flow.SEltMethods where
 
 import           Relude
 
@@ -37,6 +18,17 @@ import qualified Data.Map                       as Map
 import           Data.Maybe                     (fromJust)
 import qualified Data.Text                      as T
 import qualified Potato.Data.Text.Zipper        as TZ
+
+
+data PreRender = PreRender deriving (Show)
+
+emptyPreRender :: PreRender
+emptyPreRender = PreRender
+
+data OwlItemCache =
+  OwlItemCache_Line LineAnchorsForRender PreRender
+  | OwlItemCache_Generic PreRender deriving (Show)
+
 
 -- DisplayLines tag is Int, 0 for no cursor 1 for cursor
 noTrailngCursorDisplayLines :: Int -> TextAlign -> T.Text -> TZ.DisplayLines Int
@@ -81,12 +73,14 @@ doesSEltIntersectBox_DEPRECATED lbox selt = case selt of
 doesSEltIntersectPoint :: XY -> SElt -> Bool
 doesSEltIntersectPoint pos selt = doesSEltIntersectBox_DEPRECATED (LBox pos (V2 1 1)) selt
 
+-- TODO pass in optional cache
 doesOwlSubItemIntersectBox :: OwlTree -> LBox -> OwlSubItem -> Bool
 doesOwlSubItemIntersectBox ot lbox osubitem = case osubitem of
   OwlSubItemBox x -> does_lBox_intersect_include_zero_area lbox (_sBox_box x)
   OwlSubItemTextArea x -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
-  OwlSubItemLine sline@SAutoLine {..} manchors -> r where
-    anchors = case manchors of
+  OwlSubItemLine sline@SAutoLine {..} -> r where
+    -- TODO use cache here
+    anchors = case Nothing of
       Nothing -> sSimpleLineNewRenderFnComputeCache ot sline
       Just x  -> x
     r = lineAnchorsForRender_doesIntersectBox anchors lbox
@@ -221,12 +215,24 @@ sTextArea_drawer STextArea {..} = r where
       , _sEltDrawer_renderFn = \_ -> renderfn
     }
 
+getDrawerWithCache :: OwlSubItem -> Maybe OwlItemCache -> SEltDrawer
+getDrawerWithCache osubitem mcache = case osubitem of 
+  OwlSubItemNone        -> nilDrawer
+  OwlSubItemFolder _ -> nilDrawer
+  OwlSubItemBox sbox    -> sBox_drawer sbox
+  OwlSubItemLine sline -> case mcache of 
+    Just (OwlItemCache_Line lars _) -> sSimpleLineNewRenderFn sline (Just lars)
+    Nothing -> sSimpleLineNewRenderFn sline Nothing
+    _ -> error "assert: invalid cache type"
+  OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
+
+-- TODO pass in cache here
 getDrawer :: OwlSubItem -> SEltDrawer
 getDrawer = \case
   OwlSubItemNone        -> nilDrawer
   OwlSubItemFolder _ -> nilDrawer
   OwlSubItemBox sbox    -> sBox_drawer sbox
-  OwlSubItemLine sline mcache  -> sSimpleLineNewRenderFn sline mcache
+  OwlSubItemLine sline -> sSimpleLineNewRenderFn sline Nothing
   OwlSubItemTextArea stextarea  -> sTextArea_drawer stextarea
   {-
   where
@@ -240,13 +246,11 @@ getDrawerFromSEltForTest :: SElt -> SEltDrawer
 getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 
 
-updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> OwlSubItem
+
+updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> Maybe OwlItemCache
 updateOwlSubItemCache ot x = case x of
-  x'@(OwlSubItemLine sline mcache) -> case mcache of
-    -- if there's already a cache, it is up to date by assumption
-    Just _ -> x'
-    Nothing -> OwlSubItemLine sline (Just $ sSimpleLineNewRenderFnComputeCache ot sline)
-  _ -> x
+  (OwlSubItemLine sline) -> Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) emptyPreRender
+  _ -> Nothing
 
 
 

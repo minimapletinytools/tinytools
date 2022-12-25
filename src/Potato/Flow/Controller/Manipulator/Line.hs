@@ -393,7 +393,7 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
 
         op = if _autoLineEndPointHandler_isCreation
-          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd Nothing)
+          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd)
           else WSEApplyLlama (_autoLineEndPointHandler_undoFirst, llama)
 
         r = def {

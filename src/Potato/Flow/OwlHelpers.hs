@@ -10,7 +10,7 @@ import Potato.Flow.Llama
 
 superOwl_mustGetSLine :: SuperOwl -> SAutoLine
 superOwl_mustGetSLine sowl = case _owlItem_subItem$ _superOwl_elt sowl of
-  OwlSubItemLine sline _  -> sline
+  OwlSubItemLine sline -> sline
   x -> error $ "expected SAutoLine, got " <> show x <> " instead"
 
 data SetLineStyleEnd = SetLineStyleEnd_Start | SetLineStyleEnd_End | SetLineStyleEnd_Both
