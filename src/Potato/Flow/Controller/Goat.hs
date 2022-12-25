@@ -689,6 +689,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap _goatState_attachmentMap
   --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
+
+  -- TODO change to separate cache
   owlTree_withCacheResetOnAttachments = owlTree_clearCacheAtKeys (_owlPFState_owlTree pFState_afterEvent) (IM.keys attachmentChanges)
 
   -- | compute SuperOwlChanges for rendering |

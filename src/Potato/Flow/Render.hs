@@ -40,6 +40,8 @@ import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
 import Potato.Flow.Controller.Manipulator.Select
+import           Potato.Flow.Methods.LineTypes
+
 
 import qualified Data.IntMap             as IM
 import qualified Data.Text               as T
@@ -93,15 +95,23 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
 
+data PreRender = PreRender deriving (Show)
+data OwlItemCache = 
+  OwlItemCache_Line LineAnchorsForRender PreRender 
+  | OwlItemCache_Generic PreRender deriving (Show)
 
-data RenderCache = RenderCache
+newtype RenderCache = RenderCache {
+    -- map for REltId to cache for each owl
+    unRenderCache :: REltIdMap OwlItemCache
+  }
 
 emptyRenderCache :: RenderCache
-emptyRenderCache = RenderCache
+emptyRenderCache = RenderCache IM.empty
 
 -- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {
-  _renderContext_owlTree :: OwlTree -- r/w
+  _renderContext_cache :: RenderCache -- r/w
+  , _renderContext_owlTree :: OwlTree -- r
   , _renderContext_layerMetaMap :: LayerMetaMap -- r
   , _renderContext_broadPhase :: BroadPhaseState -- r
   , _renderContext_renderedCanvasRegion :: RenderedCanvasRegion -- r/w
@@ -109,7 +119,8 @@ data RenderContext = RenderContext {
 
 emptyRenderContext :: LBox -> RenderContext
 emptyRenderContext lbox = RenderContext {
-    _renderContext_owlTree = emptyOwlTree
+    _renderContext_cache = emptyRenderCache
+    , _renderContext_owlTree = emptyOwlTree
     , _renderContext_layerMetaMap = IM.empty
     , _renderContext_broadPhase = emptyBroadPhaseState
     , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion lbox
@@ -228,6 +239,7 @@ render_new :: LBox -> [REltId] -> RenderContext -> RenderContext
 render_new llbx rids rctx@RenderContext {..} = rctxout where
   prevrcr = _renderContext_renderedCanvasRegion
 
+  -- TODO change this to return separate cache rather than new owl tree
   foldrfn rid (otacc, itemsacc) = r where
     mapping = _owlTree_mapping otacc
     updatefn _ (meta, OwlItem oi osubitem) = Just (meta, OwlItem oi (updateOwlSubItemCache _renderContext_owlTree osubitem)) where
