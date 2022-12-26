@@ -149,8 +149,6 @@ deselect    (TextZipper lb b (x:(xs:xss)) a la) = TextZipper ((reverse $ NE.init
 -- | Move the cursor up one logical line (clearing the selection)
 up ::  TextZipper -> TextZipper
 up    (TextZipper [] b [] a la) = TextZipper [] "" [] (b <> a) la
-up    (TextZipper [x] b [] a la) = TextZipper [] b' [] a' ([b <> a] <> la) where
-        (b', a') = T.splitAt (T.length b) x
 up    (TextZipper (x:xs) b [] a la) = TextZipper xs b' [] a' ([b <> a] <> la) where
         (b', a') = T.splitAt (T.length b) x
 up tz@(TextZipper lb b s a la) = up $ deselect tz
@@ -158,8 +156,6 @@ up tz@(TextZipper lb b s a la) = up $ deselect tz
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
 down    (TextZipper lb b []  a []) = TextZipper lb (b <> a) [] "" []
-down    (TextZipper lb b [] a [x]) = TextZipper ([b <> a] <> lb) b' [] a' [] where
-          (b', a') = T.splitAt (T.length b) x
 down    (TextZipper lb b [] a (x:xs)) = TextZipper ([b <> a] <> lb) b' [] a' xs where
           (b', a') = T.splitAt (T.length b) x
 down tz@(TextZipper lb b s a la) = down $ deselect tz
@@ -188,7 +184,7 @@ end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper (lb <> ([b <> x] <> NE.init 
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
-top tz@(TextZipper [] "" [] a la) = tz
+top tz@(TextZipper [] "" [] _ _) = tz
 top (TextZipper [x]    "" [] a la) = TextZipper [] "" [] x (a:la)
 top (TextZipper (x:xs) "" [] a la) = TextZipper [] "" [] (NE.last xs') ((reverse $ NE.init xs') <> (a:la)) where
     xs' = x NE.:| xs
