@@ -50,7 +50,6 @@ data TextZipper = TextZipper
   }
   deriving (Show, Eq)
 
-
 -- example:
 --
 -- this is an example content of
@@ -140,13 +139,26 @@ rightWord = undefined
 rightLeftWord :: TextZipper -> TextZipper
 rightLeftWord = undefined
 
+-- | Clear the selection and move the cursor to the end of selection
+deselect :: TextZipper -> TextZipper
+deselect tz@(TextZipper lb b []           a la) = tz
+deselect    (TextZipper lb b [x]          a la) = TextZipper lb (b <> x) [] a la
+deselect    (TextZipper lb b (x:(xs:xss)) a la) = TextZipper ((reverse $ NE.init xs') <> [b <> x] <> lb) (NE.last xs') [] a la where
+                xs' = xs NE.:| xss
+
 -- | Move the cursor up one logical line (clearing the selection)
-up :: TextZipper -> TextZipper
-up z@(TextZipper lb b s a la) = undefined
+up ::  TextZipper -> TextZipper
+up    (TextZipper [] b [] a la) = TextZipper [] "" [] (b <> a) la
+up    (TextZipper (x:xs) b [] a la) = TextZipper xs b' [] a' ([b <> a] <> la) where
+        (b', a') = T.splitAt (T.length b) x
+up tz@(TextZipper lb b s a la) = up $ deselect tz
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
-down z@(TextZipper lb b s a la) = undefined
+down    (TextZipper lb b []  a []) = TextZipper lb (b <> a) [] "" []
+down    (TextZipper lb b [] a (x:xs)) = TextZipper ([b <> a] <> lb) b' [] a' xs where
+          (b', a') = T.splitAt (T.length b) x
+down tz@(TextZipper lb b s a la) = down $ deselect tz
 
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
@@ -172,7 +184,11 @@ end (TextZipper lb b (x:(xs:xss)) a la) =TextZipper (lb <> ([b <> x] <> NE.init 
 
 -- | Move the cursor to the top of the document (clearing the selection)
 top :: TextZipper -> TextZipper
-top (TextZipper lb b s a la) = undefined
+top tz@(TextZipper [] "" [] _ _) = tz
+top (TextZipper [x]    "" [] a la) = TextZipper [] "" [] x (a:la)
+top (TextZipper (x:xs) "" [] a la) = TextZipper [] "" [] (NE.last xs') ((reverse $ NE.init xs') <> (a:la)) where
+    xs' = x NE.:| xs
+top tz = top $ home tz
 
 -- | Insert a character at the current cursor position (overwriting the selection)
 insertChar :: Char -> TextZipper -> TextZipper
