@@ -130,18 +130,10 @@ spec =
         (TextZipper ["cat dog"] "bir" [] "d_sky" ["ab dd d", "a","b"])
     up (TextZipper [] "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
         (TextZipper [] "" [] "ab storydd d" ["a","b"])
-    up (TextZipper [] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` 
-        (TextZipper [] "" [] "ab story" ["cooldd d", "a","b"])
-{-
-b
-a
-ab S|TORY
-COOLdd d
-a
-b
--}
+    up (TextZipper [] "ab " ["STORY", "COOL"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "ab S" [] "TORY" ["COOLdd d", "a","b"])
     up (TextZipper ["a", "b"] "ab " ["STORY", "COOL"] "dd d" ["a","b"]) `shouldBe` 
-        (TextZipper ["a", "b"] "ab S" [] "TORY" ["cooldd d", "a","b"])
+        (TextZipper ["a", "b"] "ab S" [] "TORY" ["COOLdd d", "a","b"])
         -- (TextZipper ["a", "b"] "" [] "ab story" ["cooldd d", "a","b"])
     up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
         (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
@@ -149,49 +141,13 @@ b
   it "down example_1" $ do
     down (TextZipper ["a","b"] "ab " [] "dd d" []) `shouldBe` 
         (TextZipper ["a", "b"] "ab dd d" [] "" [])
-  it "down example_2" $ do
     down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello"]) `shouldBe` 
         (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" [])
-  it "down example_3" $ do
     down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello", "thanks"]) `shouldBe` 
         (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" ["thanks"])
-  it "down example_4" $ do
-{-
-a
-b
-ab CENTERdd d|
--}
     down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER"] "dd d" []) `shouldBe` 
          (TextZipper (reverse ["a", "b"]) "ab CENTERdd d" [] "" [])
-  it "down example_5" $ do
     down (TextZipper (reverse ["a","b"]) "ab " ["center"] "dd d" ["hello", "thanks"]) `shouldBe` 
         (TextZipper (reverse ["a", "b", "ab centerdd d"]) "hello" [] "" ["thanks"])
-  it "down example_6" $ do
-{-
-a
-b
-ab CENTER
-MIDDLE dd d
-hello|
-thanks
--}
     down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER", "MIDDLE"] " dd d" ["hello", "thanks"]) `shouldBe`
-         (TextZipper (reverse ["a", "b", "ab CENTER"]) "hello" [] "" ["thanks"] )
-         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+         (TextZipper (reverse ["a", "b", "ab CENTER", "MIDDLE dd d"]) "hello" [] "" ["thanks"] )
