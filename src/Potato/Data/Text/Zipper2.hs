@@ -157,19 +157,13 @@ up tz@(TextZipper lb b s a la) = up $ deselect tz
 
 -- | Move the cursor down one logical line (clearing the selection)
 down :: TextZipper -> TextZipper
-down (TextZipper lb b [] a [])     = TextZipper lb (b <> a) [] "" []
-down (TextZipper lb b [] a (x:xs)) = TextZipper ((b <> a):lb) b' [] a' xs where
-        (b', a') = T.splitAt (T.length b) x
-down (TextZipper lb b [x] a [])     = TextZipper lb (b <> x <> a) [] "" []
-down (TextZipper lb b (x:(xs:xss)) a []) = TextZipper (NE.init xs' <> (b:x:lb)) (NE.last xs' <> a) [] "" [] where
-        xs' = xs NE.:| xss
-down (TextZipper lb b [y] a (x:xs)) = TextZipper ((by <> a):lb) b' [] a' xs where
-        by = b <> y
-        (b', a') = T.splitAt (T.length by) x
-down (TextZipper lb b (y:(ys:yss)) a (x:xs)) = TextZipper ((reverse $ NE.init ys') <>  [b <> y] <> lb) b' [] a'  xs where
-        ys' = ys NE.:| yss
-        (b', a') = T.splitAt (T.length $ NE.last ys') x
-        
+down    (TextZipper lb b []  a []) = TextZipper lb (b <> a) [] "" []
+down    (TextZipper lb b [] a [x]) = TextZipper ([b <> a] <> lb) b' [] a' [] where
+          (b', a') = T.splitAt (T.length b) x
+down    (TextZipper lb b [] a (x:xs)) = TextZipper ([b <> a] <> lb) b' [] a' xs where
+          (b', a') = T.splitAt (T.length b) x
+down tz@(TextZipper lb b s a la) = down $ deselect tz
+
 -- | Move the cursor up by the given number of lines (clearing the selection)
 pageUp :: Int -> TextZipper -> TextZipper
 pageUp pageSize z = undefined
