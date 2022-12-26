@@ -132,8 +132,17 @@ spec =
         (TextZipper [] "" [] "ab storydd d" ["a","b"])
     up (TextZipper [] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` 
         (TextZipper [] "" [] "ab story" ["cooldd d", "a","b"])
-    up (TextZipper ["a", "b"] "ab " ["story", "cool"] "dd d" ["a","b"]) `shouldBe` 
-        (TextZipper ["a", "b"] "" [] "ab story" ["cooldd d", "a","b"])
+{-
+b
+a
+ab S|TORY
+COOLdd d
+a
+b
+-}
+    up (TextZipper ["a", "b"] "ab " ["STORY", "COOL"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["a", "b"] "ab S" [] "TORY" ["cooldd d", "a","b"])
+        -- (TextZipper ["a", "b"] "" [] "ab story" ["cooldd d", "a","b"])
     up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
         (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
 

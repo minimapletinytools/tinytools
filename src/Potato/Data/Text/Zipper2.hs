@@ -139,6 +139,13 @@ rightWord = undefined
 rightLeftWord :: TextZipper -> TextZipper
 rightLeftWord = undefined
 
+-- | Clear the selection and move the cursor to the end of selection
+deselect :: TextZipper -> TextZipper
+deselect tz@(TextZipper lb b []           a la) = tz
+deselect    (TextZipper lb b [x]          a la) = TextZipper lb (b <> x) [] a la
+deselect    (TextZipper lb b (x:(xs:xss)) a la) = TextZipper ((reverse $ NE.init xs') <> [b <> x] <> lb) (NE.last xs') [] a la where
+                xs' = xs NE.:| xss
+
 -- | Move the cursor up one logical line (clearing the selection)
 up :: TextZipper -> TextZipper
 up    (TextZipper []     b [] a la) = TextZipper [] "" [] (b <> a) la
@@ -164,7 +171,7 @@ down (TextZipper lb b (x:(xs:xss)) a []) = TextZipper (NE.init xs' <> (b:x:lb)) 
 down (TextZipper lb b [y] a (x:xs)) = TextZipper ((by <> a):lb) b' [] a' xs where
         by = b <> y
         (b', a') = T.splitAt (T.length by) x
-down (TextZipper lb b (y:(ys:yss)) a (x:xs)) = TextZipper ((reverse $ NE.init ys') <> [b <> y] <> lb) b' [] a'  xs where
+down (TextZipper lb b (y:(ys:yss)) a (x:xs)) = TextZipper ((reverse $ NE.init ys') <>  [b <> y] <> lb) b' [] a'  xs where
         ys' = ys NE.:| yss
         (b', a') = T.splitAt (T.length $ NE.last ys') x
         
