@@ -221,7 +221,7 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
         Nothing -> (cacheacc, (osubitem, Nothing))
 
   (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache _renderContext_cache) rids
-  drawers = map (uncurry getDrawerWithCache) owlswithcache
+  drawerswithcache = map (\(x, c)-> (getDrawerWithCache x c, c)) owlswithcache
 
   -- TODO update PreRender portion of cache here
   genfn i = newc' where
@@ -230,7 +230,20 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
     pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
 
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+    --mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+    -- go through caches (they should have all been updated in the previous step) until you find a match
+    drawfn (drawer, mcache) = case mcache of 
+      -- cache should be generated with every items so this should never happen
+      Nothing -> assert False $ drawnocache
+      Just cache -> case owlItemCache_preRender cache of
+        -- TODO pass on wide char directly in drawnocache case
+        Nothing -> drawnocache
+        Just pr -> case preRender_lookup pr pt of
+          (0, pc) -> Just pc
+          _ -> Nothing
+      where 
+        drawnocache = _sEltDrawer_renderFn drawer _renderContext_owlTree pt
+    mdrawn = join . find isJust $ (fmap (\(drawer, cache) -> _sEltDrawer_renderFn drawer _renderContext_owlTree pt) drawerswithcache)
 
     -- render what we found or empty otherwise
     newc' = case mdrawn of

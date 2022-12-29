@@ -171,6 +171,9 @@ sBox_drawer sbox@SBox {..} = r where
         SBoxType_NoBoxText -> rfnnoborder
         SBoxType_NoBox     -> rfnnoborder
         _                  -> rfnborder
+      
+      -- TODO 
+      , _sEltDrawer_maxCharWidth = 1
     }
 
 sTextArea_drawer :: STextArea -> SEltDrawer
@@ -191,6 +194,9 @@ sTextArea_drawer STextArea {..} = r where
   r = SEltDrawer {
       _sEltDrawer_box = const lbox
       , _sEltDrawer_renderFn = \_ -> renderfn
+
+      -- TODO
+      , _sEltDrawer_maxCharWidth = 1
     }
 
 getDrawerWithCache :: OwlSubItem -> Maybe OwlItemCache -> SEltDrawer
@@ -223,18 +229,14 @@ getDrawer = \case
 getDrawerFromSEltForTest :: SElt -> SEltDrawer
 getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 
-
-
 updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> Maybe OwlItemCache
-updateOwlSubItemCache ot x = case x of
-  -- TODO use sAutoLine_to_lineAnchorsForRenderList 
-  (OwlSubItemLine sline) -> Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) emptyPreRender
-  _ -> Nothing
-
-
-
-
-
+updateOwlSubItemCache ot x = r where
+  r = case x of
+    -- TODO use sAutoLine_to_lineAnchorsForRenderList 
+    (OwlSubItemLine sline) -> Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) prerender
+    _ -> Nothing
+  seltdrawer = getDrawerWithCache  x r
+  prerender = makePreRender ot seltdrawer 
 
 
 -- TODO move modify methods to another file

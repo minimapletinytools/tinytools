@@ -18,7 +18,9 @@ import qualified Data.Text         as T
 
 -- TODO get rid of (HasOwlTree a) arg, this can be passed in at the getDrawer level instead!
 type SEltDrawerRenderFn = forall a. (HasOwlTree a) => a -> XY -> Maybe PChar
+-- returns minimal bounding LBox. Does NOT include expanded box due to wide chars
 type SEltDrawerBoxFn = forall a. (HasOwlTree a) => a -> LBox
+
 
 makePotatoRenderer :: LBox -> SEltDrawerRenderFn
 makePotatoRenderer lbox _ pt = if does_lBox_contains_XY lbox pt
@@ -33,6 +35,8 @@ data SEltDrawer = SEltDrawer {
 
   , _sEltDrawer_renderFn :: SEltDrawerRenderFn
 
+  , _sEltDrawer_maxCharWidth :: Int
+
   --, _sEltDrawer_renderToBoxFn :: LBox -> Vector PChar -- consider this version for better performance
 }
 
@@ -41,6 +45,7 @@ nilDrawer = SEltDrawer {
     -- maybe retun type of _sEltDrawer_box should be Maybe LBox?
     _sEltDrawer_box = const nilLBox
     , _sEltDrawer_renderFn = \_ _ -> Nothing
+    , _sEltDrawer_maxCharWidth = 1
   }
 
 sEltDrawer_renderToLines :: (HasOwlTree a) => SEltDrawer -> a -> [Text]

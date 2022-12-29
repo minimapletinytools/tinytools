@@ -573,6 +573,9 @@ sSimpleLineNewRenderFn ssline@SAutoLine {..} mcache = drawer where
   drawer = SEltDrawer {
       _sEltDrawer_box = boxfn
       , _sEltDrawer_renderFn = renderfn
+
+      -- TODO
+      , _sEltDrawer_maxCharWidth = 1
     }
 
 lineAnchorsForRender_concat :: [LineAnchorsForRender] -> LineAnchorsForRender
