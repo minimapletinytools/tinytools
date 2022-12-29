@@ -102,9 +102,15 @@ WIDE
     -sometimes needs to expand to the left/right by 1 (or max wide char size)
       -could just always expand
       -could also just ignore :(
+-implementation details
+  -you can have textNoRenderSpaces skip characters after wide chars
+    -HOWEVER this might destroy text in text boxes, so text box needs to report extra spaces in the render function D:
+  -you can have rendered canvas report text with extra characters skipped
+  -you can do both?
+  
 -TextZipper (does wide char stuff already work? needs more testing)
 -non-update
-  -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select)
+  -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select
 
 :: FUTURE FEATURES
 -EMOJIS
@@ -162,16 +168,42 @@ WIDE
 
 
 :: RELEASE prep
--update ChangeLog.md
 -update README.md with usage instructions
 -move over to minimaple account
+-switch to cabal?
+  -prob need to learn nix first ;__;
+DONE/IGNORE-update ChangeLog.md
 DONE-empty canvas should have default size of 100x100 not 1x1
 DONE-proper command line parsing with --help option
--switch to cabal?
 
 
 ::NEWEST TODO::
-
+-wide char rendering
+  -prob best to  have RenderedCanvasRegion work with WideChar
+DONE-uses ~/.tinytools/ to store unicode width table
+-pregenerate unicode and figure out how to distribute using nix?
+-BUG selecting severals items and moving takes forever :(
+-BUG resizing unattached lines does not work
+-BUG you need to change a > to >= somewhere       
+  -or does this happen becaues we don't support turns right from edge even if there is now arrow head?                                                                                                                                                                     
+              ╔═════════════╗                                                                                                                                                             
+              ║╔GoatState═══║═══════════╗                                                                                                                                                 
+              ║║            ║           ║                                                                                                                                                 
+              ║║            ║           ║                                                                                                                                                 
+              ║║            ║           ║                                                                                                                                                 
+              ║║            ║           ║                                                                                                                                                 
+              ║╚════════════║═══════════╝                                                                                                                                                 
+              ║            ║║                                                                                                                                                             
+              ║            ║v                                                                                                                                                             
+              ║╔OwlPFWorksp║ce══════════╗                                                                                                                                                 
+              ║║           ║            ║                                                                                                                                                 
+              ║║           ║            ║                                                                                                                                                 
+              ║║           ║            ║                                                                                                                                                 
+              ║║           ║            ║                                                                                                                                                 
+              ║╚═══════════║════════════╝                                                                                                                                                 
+              ╚════════════╝                      
+-Line presets sholud be for start/end 
+-add switch start/end button to line params?
 -warning cleanup
 -add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?

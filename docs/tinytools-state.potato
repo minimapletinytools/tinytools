@@ -1,0 +1,238 @@
+[
+    {
+        "_sPotatoFlow_sEltTree": [
+            [
+                8,
+                {
+                    "_sEltLabel_name": "OwlTree",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_BoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "tree of all elements or \"owls\" in the doc"
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    23,
+                                    4
+                                ],
+                                "_lBox_tl": [
+                                    4,
+                                    13
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "OwlTree"
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                6,
+                {
+                    "_sEltLabel_name": "OwlState",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_BoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "-canvas"
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    25,
+                                    8
+                                ],
+                                "_lBox_tl": [
+                                    3,
+                                    10
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "OwlState"
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                3,
+                {
+                    "_sEltLabel_name": "OwlPFWorkspace",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_BoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "-do/undo stack"
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    27,
+                                    12
+                                ],
+                                "_lBox_tl": [
+                                    2,
+                                    7
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "OwlPFWorkspace"
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                1,
+                {
+                    "_sEltLabel_name": "GoatState",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_BoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "-document info\n-render state  \n-input state"
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    29,
+                                    18
+                                ],
+                                "_lBox_tl": [
+                                    1,
+                                    2
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "GoatState"
+                            }
+                        }
+                    }
+                }
+            ]
+        ],
+        "_sPotatoFlow_sCanvas": {
+            "_sCanvas_box": {
+                "_lBox_size": [
+                    50,
+                    20
+                ],
+                "_lBox_tl": [
+                    0,
+                    0
+                ]
+            }
+        }
+    },
+    {
+        "_controllerMeta_layers": [
+            [
+                1,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                3,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                6,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                8,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ]
+        ],
+        "_controllerMeta_pan": [
+            14,
+            7
+        ]
+    }
+]

@@ -1,0 +1,1600 @@
+[
+    {
+        "_sPotatoFlow_sEltTree": [
+            [
+                234,
+                {
+                    "_sEltLabel_name": "<text>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_NoBoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "..."
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    4,
+                                    2
+                                ],
+                                "_lBox_tl": [
+                                    30,
+                                    23
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                233,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                45,
+                                25
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [],
+                            "_sAutoLine_end": [
+                                50,
+                                27
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": {
+                                "_attachment_location": "AL_Top",
+                                "_attachment_target": 230
+                            },
+                            "_sAutoLine_attachStart": {
+                                "_attachment_location": "AL_Right",
+                                "_attachment_target": 229
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                232,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": "@"
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    8,
+                                    6
+                                ],
+                                "_lBox_tl": [
+                                    38,
+                                    28
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "boop"
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                230,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    6,
+                                    3
+                                ],
+                                "_lBox_tl": [
+                                    47,
+                                    28
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                229,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    6,
+                                    3
+                                ],
+                                "_lBox_tl": [
+                                    39,
+                                    24
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                114,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    19,
+                                    13
+                                ],
+                                "_lBox_tl": [
+                                    36,
+                                    22
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                231,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    7,
+                                    5
+                                ],
+                                "_lBox_tl": [
+                                    38,
+                                    28
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                228,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                30,
+                                31
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [],
+                            "_sAutoLine_end": [
+                                34,
+                                31
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                113,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                30,
+                                28
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [],
+                            "_sAutoLine_end": [
+                                34,
+                                28
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                112,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    7,
+                                    13
+                                ],
+                                "_lBox_tl": [
+                                    29,
+                                    22
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                111,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -2,
+                                6
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [],
+                            "_sAutoLine_end": [
+                                26,
+                                27
+                            ],
+                            "_sAutoLine_midpoints": [
+                                [
+                                    -2,
+                                    28
+                                ]
+                            ],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": {
+                                "_attachment_location": "AL_Left",
+                                "_attachment_target": 109
+                            },
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                110,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                85,
+                                6
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [],
+                            "_sAutoLine_end": [
+                                56,
+                                28
+                            ],
+                            "_sAutoLine_midpoints": [
+                                [
+                                    85,
+                                    28
+                                ]
+                            ],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": {
+                                "_attachment_location": "AL_Right",
+                                "_attachment_target": 109
+                            },
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                107,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                16
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "other"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                16
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                98,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                14
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "handler info"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                14
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                71,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                8
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "canvas info"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                8
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                89,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                12
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "selection"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                12
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                80,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                10
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "rendered scene"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                10
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                62,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                56,
+                                6
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "owl state"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                83,
+                                6
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                53,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                16
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "other"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                16
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                44,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                14
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "load file"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                14
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                17,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                8
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "screen size"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                8
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                35,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                12
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "style changes"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                12
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                26,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                10
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "canvas resize"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                10
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                8,
+                {
+                    "_sEltLabel_name": "<line>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltLine",
+                        "contents": {
+                            "_sAutoLine_start": [
+                                -1,
+                                6
+                            ],
+                            "_sAutoLine_lineStyleEnd": {
+                                "_lineStyle_leftArrows": "<",
+                                "_lineStyle_rightArrows": ">",
+                                "_lineStyle_downArrows": "v",
+                                "_lineStyle_upArrows": "^"
+                            },
+                            "_sAutoLine_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sAutoLine_labels": [
+                                {
+                                    "_sAutoLineLabel_position": 0.4814815,
+                                    "_sAutoLineLabel_index": 0,
+                                    "_sAutoLineLabel_text": "kb/mouse"
+                                }
+                            ],
+                            "_sAutoLine_end": [
+                                26,
+                                6
+                            ],
+                            "_sAutoLine_midpoints": [],
+                            "_sAutoLine_lineStyle": {
+                                "_lineStyle_leftArrows": "",
+                                "_lineStyle_rightArrows": "",
+                                "_lineStyle_downArrows": "",
+                                "_lineStyle_upArrows": ""
+                            },
+                            "_sAutoLine_attachEnd": null,
+                            "_sAutoLine_attachStart": null
+                        }
+                    }
+                }
+            ],
+            [
+                2,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "*",
+                                "_superStyle_horizontal": "-",
+                                "_superStyle_tl": "*",
+                                "_superStyle_vertical": "|",
+                                "_superStyle_point": " ",
+                                "_superStyle_bl": "*",
+                                "_superStyle_br": "*",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Blank"
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_BoxText",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": "GoatState"
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    16,
+                                    4
+                                ],
+                                "_lBox_tl": [
+                                    28,
+                                    14
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": null
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                109,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "█",
+                                "_superStyle_horizontal": "█",
+                                "_superStyle_tl": "█",
+                                "_superStyle_vertical": "█",
+                                "_superStyle_point": " ",
+                                "_superStyle_bl": "█",
+                                "_superStyle_br": "█",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Blank"
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    29,
+                                    15
+                                ],
+                                "_lBox_tl": [
+                                    27,
+                                    21
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "tinytools-myviewcontroller"
+                            }
+                        }
+                    }
+                }
+            ],
+            [
+                1,
+                {
+                    "_sEltLabel_name": "<box>",
+                    "_sEltLabel_sElt": {
+                        "tag": "SEltBox",
+                        "contents": {
+                            "_sBox_superStyle": {
+                                "_superStyle_tr": "╗",
+                                "_superStyle_horizontal": "═",
+                                "_superStyle_tl": "╔",
+                                "_superStyle_vertical": "║",
+                                "_superStyle_point": "█",
+                                "_superStyle_bl": "╚",
+                                "_superStyle_br": "╝",
+                                "_superStyle_fill": {
+                                    "tag": "FillStyle_Simple",
+                                    "contents": " "
+                                }
+                            },
+                            "_sBox_boxType": "SBoxType_Box",
+                            "_sBox_text": {
+                                "_sBoxText_style": {
+                                    "_textStyle_alignment": "TextAlign_Left"
+                                },
+                                "_sBoxText_text": ""
+                            },
+                            "_sBox_box": {
+                                "_lBox_size": [
+                                    29,
+                                    14
+                                ],
+                                "_lBox_tl": [
+                                    27,
+                                    5
+                                ]
+                            },
+                            "_sBox_title": {
+                                "_sBoxTitle_align": "TextAlign_Left",
+                                "_sBoxTitle_title": "GoatWidget"
+                            }
+                        }
+                    }
+                }
+            ]
+        ],
+        "_sPotatoFlow_sCanvas": {
+            "_sCanvas_box": {
+                "_lBox_size": [
+                    50,
+                    20
+                ],
+                "_lBox_tl": [
+                    0,
+                    0
+                ]
+            }
+        }
+    },
+    {
+        "_controllerMeta_layers": [
+            [
+                1,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                2,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                8,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                17,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                26,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                35,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                44,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                53,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                62,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                71,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                80,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                89,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                98,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                107,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                109,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                110,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                111,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                112,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                113,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                114,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                228,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                229,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                230,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                231,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                232,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                233,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ],
+            [
+                234,
+                {
+                    "_layerMeta_isCollapsed": true,
+                    "_layerMeta_isLocked": false,
+                    "_layerMeta_isHidden": false
+                }
+            ]
+        ],
+        "_controllerMeta_pan": [
+            14,
+            7
+        ]
+    }
+]
