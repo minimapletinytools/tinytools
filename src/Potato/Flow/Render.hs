@@ -227,28 +227,42 @@ renderedCanvasToText rcr = renderedCanvasRegionToText (_renderedCanvasRegion_box
 -- TODO this does not handle wide chars at all fack
 -- | assumes region LBox is strictly contained in _renderedCanvasRegion_box
 renderedCanvasRegionToText :: LBox -> RenderedCanvasRegion -> Text
-renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvasRegion_box)
-  else r where
+renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes 
+  then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvasRegion_box)
+  else r 
+  where
+    validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
+    -- TODO preloop and include widechars
 
-  validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
-
-  l = lBox_area lbx
-  (LBox _ (V2 lw _)) = lbx
-  unfoldfn (i, eol) = if i == l
-    then Nothing
-    else if eol
-      then Just $ ('\n', (i, False))
-      else Just $ (pchar, (i+1, neweol))
-      where
-        neweol = (i+1) `mod` lw == 0
-        (_, pchar) = _renderedCanvasRegion_contents V.! pindex
-        pt = toPoint lbx i
-        pindex = toIndex _renderedCanvasRegion_box pt
-  r' = T.unfoldr unfoldfn (0, False)
-
-  -- TODO need to remove extra characters following wide char
-  -- or better yet do preloop to remove wide characters before unfoldring your output text
-  r = r'
+    l = lBox_area lbx
+    (LBox _ (V2 lw _)) = lbx
+    unfoldfn (i, eol, waseol) = if i == l
+      then Nothing
+      else if eol
+        -- use -2 to indicate eol
+        then Just $ (eolchar, (i, False, newwaseol))
+        else Just $ (regchar, (i+1, neweol, newwaseol))
+        where
+          neweol = (i+1) `mod` lw == 0
+          -- maintain waseol status if there is offset
+          newwaseol = eol || (waseol && ofs > 0)
+          (ofs, pch) = _renderedCanvasRegion_contents V.! pindex
+          eolchar = Just '\n'
+          regchar = if waseol && ofs > 0
+            -- TODO is this what we want? Will this overwrite the previous wide char? Also this should never happen as broadphase should have included the widechar at bol
+            -- if we were at eol and there is offset then use ' ' padding character
+            then Just ' '
+            else if ofs > 0
+              -- if there is offset, skip the character
+              then Nothing
+              else Just pch
+          pt = toPoint lbx i
+          pindex = toIndex _renderedCanvasRegion_box pt
+    
+    -- TODO use something more efficient than a string
+    r' = unfoldr unfoldfn (0, False, True)
+    r = T.pack $ mapMaybe id r' 
+  
 
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc

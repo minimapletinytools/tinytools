@@ -178,6 +178,8 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-selection rendering of widechars is incorrect
+-BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an OwlTree
 -wide char rendering
   -prob best to  have RenderedCanvasRegion work with WideChar

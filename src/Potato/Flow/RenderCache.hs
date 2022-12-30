@@ -128,7 +128,7 @@ makePreRender ot SEltDrawer {..} = r where
           Just (pch, width) -> if width > 1
             then Just (1,width,pch)
             else Nothing
-        Just (a,b,_) | a == b -> Nothing
+        Just (a,b,_) | a == b-1 -> Nothing
         Just (a,b,pch) -> Just (a+1, b, pch)
 
     r2 = if i == area 
