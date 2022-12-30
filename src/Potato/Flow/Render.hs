@@ -52,28 +52,6 @@ import qualified Data.Vector.Unboxed     as V
 import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
-import qualified Data.IntMap.Internal as IMI
-import qualified Utils.Containers.Internal.StrictPair as StrictPair
-
-
--- DELETE
--- same as Data.IntMap.updateLookupWithKey except returns the value after updated (rather than before)
-updateLookupWithKeyReturnAfterUpdate ::  (IM.Key -> a -> Maybe a) -> IM.Key -> IM.IntMap a -> (Maybe a,IM.IntMap a)
-updateLookupWithKeyReturnAfterUpdate f0 !k0 t0 = StrictPair.toPair $ go f0 k0 t0
-  where
-    go f k t =
-      case t of
-        IMI.Bin p m l r
-          | IMI.nomatch k p m -> (Nothing StrictPair.:*: t)
-          | IMI.zero k m      -> let (found StrictPair.:*: l') = go f k l in (found StrictPair.:*: IMI.binCheckLeft p m l' r)
-          | otherwise     -> let (found StrictPair.:*: r') = go f k r in (found StrictPair.:*: IMI.binCheckRight p m l r')
-        IMI.Tip ky y
-          | k==ky         -> case f k y of
-                               Just !y' -> (Just y' StrictPair.:*: IMI.Tip ky y')
-                               Nothing  -> (Nothing StrictPair.:*: IMI.Nil)
-          | otherwise     -> (Nothing StrictPair.:*: t)
-        IMI.Nil -> (Nothing StrictPair.:*: IMI.Nil)
-
 -- rather pointless abstraction but it's useful to have during refactors such that I don't ned to provide an explicit LayerMetaMap
 class OwlRenderSet a where
   findSuperOwl :: a -> REltId -> Maybe (SuperOwl, Bool)
