@@ -57,10 +57,18 @@ data PreRender = PreRender (V.Vector (MWidePChar)) LBox deriving (Show)
 emptyPreRender :: PreRender
 emptyPreRender = PreRender V.empty (LBox 0 0)
 
-preRender_lookup :: PreRender -> XY -> MWidePChar
-preRender_lookup (PreRender v lbox) pos = assert (does_lBox_contains_XY lbox pos) $ v V.! (toIndex lbox pos)
+preRender_lookup :: (HasCallStack) => PreRender -> XY -> MWidePChar
+preRender_lookup (PreRender v lbox) pos = r where
+  -- we still have to do this check here since toIndex expects point to be contained in box
+  r = if does_lBox_contains_XY lbox pos 
+    then case v V.!? (toIndex lbox pos) of
+      Nothing -> assert "False" emptyMWidePChar
+      Just x -> x
+    else emptyMWidePChar
 
 
+-- NOTE OwlIteCache is intended to be used at several stages in the event loop
+-- it can be used in Handlers, it can be used when generating SEltDrawers and it can be used for rendering itself
 data OwlItemCache =
   -- TODO change to LineAnchorsForRenderList prob
   OwlItemCache_Line LineAnchorsForRender PreRender
@@ -91,7 +99,7 @@ makePreRender :: forall a. (HasOwlTree a) => a -> SEltDrawer -> PreRender
 makePreRender ot SEltDrawer {..} = r where
   
   lbox' = _sEltDrawer_box ot 
-  lbox@(LBox _ (V2 w _)) = lBox_expand lbox' (0, _sEltDrawer_maxCharWidth, 0, 0)
+  lbox@(LBox _ (V2 w _)) = lBox_expand lbox' (0, _sEltDrawer_maxCharWidth-1, 0, 0)
   area = lBox_area lbox
 
   getPCharWidth :: PChar -> Int8

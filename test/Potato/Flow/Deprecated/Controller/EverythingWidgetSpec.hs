@@ -680,7 +680,7 @@ everything_hasSavedChanges_test = constructTest "has saved changes" owlpfstate_b
 testForChar_internal :: RenderedCanvasRegion -> XY -> Bool
 testForChar_internal rc pos = case toIndexSafe (_renderedCanvasRegion_box rc) pos of
   Nothing -> False
-  Just i -> _renderedCanvasRegion_contents rc V.! i /= ' '
+  Just i -> _renderedCanvasRegion_contents rc V.! i /= (-1, ' ')
 
 
 -- bad because this function assumes:

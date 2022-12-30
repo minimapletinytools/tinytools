@@ -8,6 +8,7 @@ module Potato.Flow.Render (
   , emptyRenderCache
   , renderCache_clearAtKeys
   , renderCache_lookup
+  , render -- TODO DELETE use render_new instead because it uses cache
 
   , RenderedCanvasRegion(..)
   , renderedCanvas_box
@@ -16,7 +17,6 @@ module Potato.Flow.Render (
   , printRenderedCanvasRegion
   , potatoRenderWithOwlTree
   , potatoRenderPFState
-  , render
   , renderedCanvasToText
   , renderedCanvasRegionToText
 
@@ -56,6 +56,7 @@ import qualified Data.IntMap.Internal as IMI
 import qualified Utils.Containers.Internal.StrictPair as StrictPair
 
 
+-- DELETE
 -- same as Data.IntMap.updateLookupWithKey except returns the value after updated (rather than before)
 updateLookupWithKeyReturnAfterUpdate ::  (IM.Key -> a -> Maybe a) -> IM.Key -> IM.IntMap a -> (Maybe a,IM.IntMap a)
 updateLookupWithKeyReturnAfterUpdate f0 !k0 t0 = StrictPair.toPair $ go f0 k0 t0
@@ -134,7 +135,7 @@ class IsRenderedCanvasRegion rc where
 -- A rendered region in Canvas space
 data RenderedCanvasRegion = RenderedCanvasRegion {
   _renderedCanvasRegion_box        :: LBox
-  , _renderedCanvasRegion_contents :: V.Vector PChar -- ^ row major
+  , _renderedCanvasRegion_contents :: V.Vector MWidePChar -- ^ row major
 } deriving (Eq, Show)
 
 renderedCanvas_box :: RenderedCanvasRegion -> LBox
@@ -143,62 +144,73 @@ renderedCanvas_box = _renderedCanvasRegion_box
 emptyRenderedCanvasRegion :: LBox -> RenderedCanvasRegion
 emptyRenderedCanvasRegion lb@(LBox _ (V2 w h)) = RenderedCanvasRegion {
     _renderedCanvasRegion_box = lb
-    , _renderedCanvasRegion_contents = V.replicate (w*h) emptyChar
+    , _renderedCanvasRegion_contents = V.replicate (w*h) emptyMWidePChar
   }
 
+-- empty spaces due to wide chars to the left are not counted
 renderedCanvasRegion_nonEmptyCount :: RenderedCanvasRegion -> Int
-renderedCanvasRegion_nonEmptyCount = V.length . V.filter (\x -> x /= emptyChar) . _renderedCanvasRegion_contents
+renderedCanvasRegion_nonEmptyCount = V.length . V.filter (\x -> x /= emptyMWidePChar) . _renderedCanvasRegion_contents
 
 -- | brute force renders a RenderedCanvasRegion (ignores broadphase)
 potatoRenderWithOwlTree :: OwlTree -> [OwlSubItem] -> RenderedCanvasRegion -> RenderedCanvasRegion
-potatoRenderWithOwlTree ot osubitems RenderedCanvasRegion {..} = r where
-  drawers = map getDrawer osubitems
-  genfn i = newc' where
-    pt = toPoint _renderedCanvasRegion_box i
-    -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d ot pt) drawers)
-    newc' = case mdrawn of
-      Just c  -> c
-      Nothing -> ' '
-  newc = V.generate (V.length _renderedCanvasRegion_contents) genfn
-  r = RenderedCanvasRegion {
-      _renderedCanvasRegion_box = _renderedCanvasRegion_box
-      , _renderedCanvasRegion_contents = newc
-    }
+potatoRenderWithOwlTree ot osubitems prevrcr = r where
+  drawerswithcache = fmap (\osubitem -> (getDrawerWithCache osubitem Nothing, Nothing)) osubitems 
+  llbx = _renderedCanvasRegion_box prevrcr
+  r = render_withCache ot llbx drawerswithcache prevrcr
 
 potatoRenderPFState :: OwlPFState -> RenderedCanvasRegion
 potatoRenderPFState OwlPFState {..} = potatoRenderWithOwlTree _owlPFState_owlTree (fmap _owlItem_subItem . fmap snd . toList . _owlTree_mapping $ _owlPFState_owlTree) (emptyRenderedCanvasRegion (_sCanvas_box _owlPFState_canvas))
 
 
--- TODO DELETE (except it's used by UTs :\)
--- | renders just a portion of the RenderedCanvasRegion
--- caller is expected to provide all SElts that intersect the rendered LBox (broadphase is ignored)
--- SElts are rendered in ORDER
-render :: LBox -> [OwlSubItem] -> RenderContext -> RenderContext
-render llbx osubitems rctx@RenderContext {..} = r where
-  prevrcr = _renderContext_renderedCanvasRegion
-  drawers = map getDrawer osubitems
+render_withCache :: (HasOwlTree a) => a -> LBox -> [(SEltDrawer, Maybe OwlItemCache)] -> RenderedCanvasRegion -> RenderedCanvasRegion
+render_withCache ot llbx drawerswithcache prevrcr = r where
+
   genfn i = newc' where
     -- construct parent point and index
     pt = toPoint llbx i
     pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
 
-    -- TODO  pass in + cache render stuff here
     -- go through drawers in reverse order until you find a match
-    mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+    --mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
+    -- go through caches (they should have all been updated in the previous step) until you find a match
+    drawfn (drawer, mcache) = case mcache of
+      Nothing -> drawnocache
+      --Just _ -> drawnocache
+      Just cache -> case owlItemCache_preRender cache of
+        Nothing -> drawnocache
+        Just pr -> case preRender_lookup pr pt of
+          (-1, _) -> Nothing
+          x       -> Just x
+      where
+        drawnocache = case _sEltDrawer_renderFn drawer ot pt of
+          Nothing -> Nothing
+          Just x  -> Just (0, x)
+    mdrawn = join . find isJust $ fmap drawfn drawerswithcache
 
     -- render what we found or empty otherwise
     newc' = case mdrawn of
       Just c  -> (pindex, c)
-      Nothing -> (pindex,emptyChar)
+      Nothing -> (pindex, emptyMWidePChar)
+
   -- go through each point in target LBox and render it
   newc = V.generate (lBox_area llbx) genfn
-  r = rctx {
-      -- TODO update cache
-      _renderContext_renderedCanvasRegion = prevrcr {
-          _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
-        }
+  r = prevrcr {
+      _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
     }
+
+
+-- TODO DELETE use render_new instead
+-- | renders just a portion of the RenderedCanvasRegion
+-- caller is expected to provide all SElts that intersect the rendered LBox (broadphase is ignored)
+-- SElts are rendered in ORDER
+render :: LBox -> [OwlSubItem] -> RenderContext -> RenderContext
+render llbx osubitems rctx@RenderContext {..} = r where
+  drawerswithcache = fmap (\osubitem -> (getDrawerWithCache osubitem Nothing, Nothing)) osubitems 
+  prevrcr = _renderContext_renderedCanvasRegion
+  r = rctx {
+      _renderContext_renderedCanvasRegion = render_withCache _renderContext_owlTree llbx drawerswithcache prevrcr
+    }
+
 
 -- | renders just a portion of the RenderedCanvasRegion
 -- updates cache as appropriate
@@ -208,6 +220,7 @@ render_new :: LBox -> [REltId] -> RenderContext -> RenderContext
 render_new llbx rids rctx@RenderContext {..} = rctxout where
   prevrcr = _renderContext_renderedCanvasRegion
 
+  -- TODO split cache update into a separate function
   mapaccumlfn cacheacc rid = r where
     -- see if it was in the previous cache
     mprevcache = IM.lookup rid (unRenderCache _renderContext_cache)
@@ -223,62 +236,21 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
   (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache _renderContext_cache) rids
   drawerswithcache = map (\(x, c)-> (getDrawerWithCache x c, c)) owlswithcache
 
-  -- TODO update PreRender portion of cache here
-  genfn i = newc' where
-    -- construct parent point and index
-    pt = toPoint llbx i
-    pindex = toIndex (_renderedCanvasRegion_box prevrcr) pt
-
-    -- go through drawers in reverse order until you find a match
-    --mdrawn = join . find isJust $ (fmap (\d -> _sEltDrawer_renderFn d _renderContext_owlTree pt) drawers)
-    -- go through caches (they should have all been updated in the previous step) until you find a match
-    drawfn (drawer, mcache) = case mcache of 
-      -- cache should be generated with every items so this should never happen
-      Nothing -> assert False $ drawnocache
-      Just cache -> case owlItemCache_preRender cache of
-        -- TODO pass on wide char directly in drawnocache case
-        Nothing -> drawnocache
-        Just pr -> case preRender_lookup pr pt of
-          (0, pc) -> Just pc
-          _ -> Nothing
-      where 
-        drawnocache = _sEltDrawer_renderFn drawer _renderContext_owlTree pt
-    mdrawn = join . find isJust $ (fmap (\(drawer, cache) -> _sEltDrawer_renderFn drawer _renderContext_owlTree pt) drawerswithcache)
-
-    -- render what we found or empty otherwise
-    newc' = case mdrawn of
-      Just c  -> (pindex, c)
-      Nothing -> (pindex,emptyChar)
-
-  -- go through each point in target LBox and render it
-  newc = V.generate (lBox_area llbx) genfn
   rctxout = rctx {
       _renderContext_cache = RenderCache newcache
-      , _renderContext_renderedCanvasRegion = prevrcr {
-          _renderedCanvasRegion_contents = V.update (_renderedCanvasRegion_contents prevrcr) newc
-        }
+      , _renderContext_renderedCanvasRegion = render_withCache _renderContext_owlTree llbx drawerswithcache prevrcr
     }
 
 
-
 renderedCanvasToText :: RenderedCanvasRegion -> Text
-renderedCanvasToText RenderedCanvasRegion {..} = T.unfoldr unfoldfn (0, False) where
-  l = V.length _renderedCanvasRegion_contents
-  (LBox _ (V2 w _)) = _renderedCanvasRegion_box
-  unfoldfn (i, eol) = if i == l
-    then Nothing
-    else if eol
-      then Just $ ('\n', (i, False))
-      else if (i+1) `mod` w == 0
-        then Just $ (_renderedCanvasRegion_contents V.! i, (i+1, True))
-        else Just $ (_renderedCanvasRegion_contents V.! i, (i+1, False))
+renderedCanvasToText rcr = renderedCanvasRegionToText (_renderedCanvasRegion_box rcr) rcr
 
 
 -- TODO this does not handle wide chars at all fack
 -- | assumes region LBox is strictly contained in _renderedCanvasRegion_box
 renderedCanvasRegionToText :: LBox -> RenderedCanvasRegion -> Text
 renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes then error ("render region outside canvas:\n" <> show lbx <> "\n" <> show _renderedCanvasRegion_box)
-  else T.unfoldr unfoldfn (0, False) where
+  else r where
 
   validBoxes = intersect_lBox_include_zero_area lbx _renderedCanvasRegion_box == Just lbx
 
@@ -288,12 +260,17 @@ renderedCanvasRegionToText lbx RenderedCanvasRegion {..} = if not validBoxes the
     then Nothing
     else if eol
       then Just $ ('\n', (i, False))
-      else if (i+1) `mod` lw == 0
-        then Just $ (_renderedCanvasRegion_contents V.! pindex, (i+1, True))
-        else Just $ (_renderedCanvasRegion_contents V.! pindex, (i+1, False))
-    where
-      pt = toPoint lbx i
-      pindex = toIndex _renderedCanvasRegion_box pt
+      else Just $ (pchar, (i+1, neweol))
+      where
+        neweol = (i+1) `mod` lw == 0
+        (_, pchar) = _renderedCanvasRegion_contents V.! pindex
+        pt = toPoint lbx i
+        pindex = toIndex _renderedCanvasRegion_box pt
+  r' = T.unfoldr unfoldfn (0, False)
+
+  -- TODO need to remove extra characters following wide char
+  -- or better yet do preloop to remove wide characters before unfoldring your output text
+  r = r'
 
 printRenderedCanvasRegion :: RenderedCanvasRegion -> IO ()
 printRenderedCanvasRegion rc@RenderedCanvasRegion {..} = T.putStrLn $ renderedCanvasRegionToText _renderedCanvasRegion_box rc
@@ -320,7 +297,7 @@ moveRenderedCanvasRegionNoReRender lbx RenderedCanvasRegion {..} = assert (area 
   -- unnecessary to init with empty vector as moveRenderedCanvasRegion will re-render those areas
   -- but it's still nice to do and makes testing easier
   area = lBox_area lbx
-  emptyv = V.replicate area ' '
+  emptyv = V.replicate area emptyMWidePChar
   newv = case intersect_lBox lbx _renderedCanvasRegion_box of
     Just intersectlbx -> copiedv where
       (l,r,t,b) = lBox_to_axis intersectlbx

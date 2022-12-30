@@ -199,6 +199,9 @@ sTextArea_drawer STextArea {..} = r where
       , _sEltDrawer_maxCharWidth = 1
     }
 
+-- NOTE that there is not a 1-1 mapping between `OwlSubItem` and `OwlItemCache` as the `OwlItemCache` is dependent on the OwlTree
+-- this function assumes that you are requesting the drawer with the intent of passing in an OwlTree
+-- TODO it would have been better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an OwlTree
 getDrawerWithCache :: OwlSubItem -> Maybe OwlItemCache -> SEltDrawer
 getDrawerWithCache osubitem mcache = case osubitem of 
   OwlSubItemNone        -> nilDrawer
@@ -232,11 +235,14 @@ getDrawerFromSEltForTest = getDrawer . sElt_to_owlSubItem
 updateOwlSubItemCache :: (HasOwlTree a) => a -> OwlSubItem -> Maybe OwlItemCache
 updateOwlSubItemCache ot x = r where
   r = case x of
-    -- TODO use sAutoLine_to_lineAnchorsForRenderList 
-    (OwlSubItemLine sline) -> Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) prerender
-    _ -> Nothing
-  seltdrawer = getDrawerWithCache  x r
-  prerender = makePreRender ot seltdrawer 
+    -- TODO use sAutoLine_to_lineAnchorsForRenderList here instead
+    (OwlSubItemLine sline) -> cache where
+      cache = Just $ OwlItemCache_Line (sSimpleLineNewRenderFnComputeCache ot sline) prerender
+      seltdrawer = getDrawerWithCache x cache
+      prerender = makePreRender ot seltdrawer 
+    _ -> Just $ OwlItemCache_Generic prerender where
+      seltdrawer = getDrawerWithCache x Nothing
+      prerender = makePreRender ot seltdrawer 
 
 
 -- TODO move modify methods to another file

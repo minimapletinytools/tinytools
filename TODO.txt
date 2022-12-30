@@ -178,8 +178,10 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an OwlTree
 -wide char rendering
   -prob best to  have RenderedCanvasRegion work with WideChar
+  -broadphase needs to use expanded unicode boxes rather than logical boxes
 DONE-uses ~/.tinytools/ to store unicode width table
 -pregenerate unicode and figure out how to distribute using nix?
 -BUG selecting severals items and moving takes forever :(
