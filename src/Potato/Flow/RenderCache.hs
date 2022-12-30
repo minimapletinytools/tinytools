@@ -62,7 +62,7 @@ preRender_lookup (PreRender v lbox) pos = r where
   -- we still have to do this check here since toIndex expects point to be contained in box
   r = if does_lBox_contains_XY lbox pos 
     then case v V.!? (toIndex lbox pos) of
-      Nothing -> assert "False" emptyMWidePChar
+      Nothing -> assert False emptyMWidePChar
       Just x -> x
     else emptyMWidePChar
 
