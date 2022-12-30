@@ -47,6 +47,9 @@ toIndexSafe lbx xy = if does_lBox_contains_XY lbx xy
 -- -1 value for offset means there is no character in the space, the PChar value is ignored in this case
 type MWidePChar = (Int8, PChar)
 
+emptyMWidePChar :: MWidePChar 
+emptyMWidePChar = (-1, ' ') -- ' ' is a dummy character needed to pad the unboxed vector
+
 -- TODO consider making sparse variant
 -- | the LBox may exceed the logical bounding box of the object that is being represented if that object contains wide chars
 data PreRender = PreRender (V.Vector (MWidePChar)) LBox deriving (Show)
@@ -106,7 +109,7 @@ makePreRender ot SEltDrawer {..} = r where
     moutputchar = case mprevwidechar of
       Nothing        -> case mchar of  
         Just pch -> (0, pch)
-        Nothing -> (-1, ' ') -- ' ' is a dummy character needed to pad the unboxed vector
+        Nothing -> emptyMWidePChar 
       Just (a,_,pch) -> (a, pch)
 
     mnextwidechar = if eol 
