@@ -225,6 +225,7 @@ removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
   -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
   r = makeCompositionLlama $ resetattachllamas <> [removellama]
 
+-- TODO take PotatoConfiguration here???
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_owlPFState ws
