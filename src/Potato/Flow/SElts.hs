@@ -5,6 +5,7 @@ module Potato.Flow.SElts where
 import           Relude
 
 import           Potato.Flow.Math
+import Potato.Data.Text.Unicode
 
 import           Control.Exception (assert)
 import           Data.Aeson
@@ -14,16 +15,16 @@ import qualified Text.Show
 import qualified Data.Text as T
 import qualified Data.List         as L
 import qualified Data.Map as Map
-import qualified Potato.Data.Text.Zipper                          as TZ
+import qualified Potato.Data.Text.Zipper as TZ
+
 
 
 type REltId = Int
 type PChar = Char
 type MPChar = Maybe PChar
 
-
-getPCharWidth :: PChar -> Int8
-getPCharWidth = fromIntegral . TZ.charWidth
+getPCharWidth :: Char -> Int8
+getPCharWidth = getCharWidth
 
 
 data FillStyle = FillStyle_Blank | FillStyle_Simple PChar deriving (Eq, Generic, Show)

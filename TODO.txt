@@ -63,7 +63,9 @@ stuff for Dad to do
 
 
 ----------
+to get call stacks, first build with:
 stack build --profile
+then run with:
 stack exec --profile -- potato-flow-vty-exe +RTS -xc
 
 stack exec -- potato-flow-vty-exe mycommandlineargs
@@ -86,37 +88,14 @@ WIDE
 👁️
 🙈
 
-:: UNICODE WIDE CHAR places that need to be updated ::
--render
-  -rules
-    -render left to right/ right to left
-    -corner characters take precedence over wide chars that might overlap them
-  -you will need to pr-render the line, prob need to rewrite your box rendering function?
-    -could just render the entire object (maybe store in cache) and then pick from it, something like
-
-      -data WidePChar = WidePChar PChar Int -- the int is how far offset from where the character starts
-      -data PreRender = PreRender (Either (SparseVector WidePChar) (Vector WidePChar)) LBox 
-      -renderForCache :: SElt -> RenderCache 
-      -you can have Map REltId RenderCache since everything has the same type of cache
-        -or maybe you can redo the way cache is done and have cache to the item itself with its cache type i.e.
-          data SEltRenderCache = SEltRenderCacheLine SEltLine LineAnchorsForRender RenderCache
-  -box and line label box generation from text width needs to be updated to count char width
-  -AABB 
-    -sometimes needs to expand to the left/right by 1 (or max wide char size)
-      -could just always expand
-      -could also just ignore :(
--implementation details
-  -you can have textNoRenderSpaces skip characters after wide chars
-    -HOWEVER this might destroy text in text boxes, so text box needs to report extra spaces in the render function D:
-  -you can have rendered canvas report text with extra characters skipped
-  -you can do both?
-  
--TextZipper (does wide char stuff already work? needs more testing)
--non-update
-  -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select
 
 :: FUTURE FEATURES
--EMOJIS
+-grapheme cluster 
+  -terminals don't support it but browser will
+  -for terminals, you need grapheme cluster detection to remove those chars
+  -you may as well add unicode detections as well
+  -need to update style types to take Text instead of Char to support grapheme clusters
+DONE-EMOJIS
 -TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
@@ -181,13 +160,9 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
--selection rendering of widechars is incorrect
+-find someway to
 -BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
--I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an OwlTree
--wide char rendering
-  -prob best to  have RenderedCanvasRegion work with WideChar
-  -broadphase needs to use expanded unicode boxes rather than logical boxes
-DONE-uses ~/.tinytools/ to store unicode width table
+-I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?
 -BUG selecting severals items and moving takes forever :(
 -BUG resizing unattached lines does not work
@@ -229,6 +204,11 @@ DONE-uses ~/.tinytools/ to store unicode width table
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-selection rendering of widechars is incorrect
+DONE-wide char rendering
+  -prob best to  have RenderedCanvasRegion work with WideChar
+  -broadphase needs to use expanded unicode boxes rather than logical boxes
+DONE-uses ~/.tinytools/ to store unicode width table
 DONE-pass cache in through PotatoHandlerInput and use in Select (you could use in Line too)
 DONE-update cache to not be intrusive, include elt in the cache
 DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
@@ -303,6 +283,8 @@ DONE-BUG fix line bugs
 
 
 :: CUT Line
+-enable/disable widechar/grapheme cluster configs
+-charwidth needs to be passed in rather than rely on global
 -consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
 -LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
 -BUG figure out what's going on with cache updated render bugs...
@@ -1432,6 +1414,35 @@ makeResizeBoxController :: DeltaBox -> Controller
 -- do we support changing SElt type?? I think you need to add handling for folder -> not folder as SuperOwlChanges doesn't know what the element use to be (although we do a total regen on layers right so so it just doesn't matter)
 makeSetController :: (REltId, SEltLabel) -> Controller
 
+
+:: 12/2022 UNICODE WIDE CHAR places that need to be updated ::
+-render
+  -rules
+    -render left to right/ right to left
+    -corner characters take precedence over wide chars that might overlap them
+  -you will need to pr-render the line, prob need to rewrite your box rendering function?
+    -could just render the entire object (maybe store in cache) and then pick from it, something like
+
+      -data WidePChar = WidePChar PChar Int -- the int is how far offset from where the character starts
+      -data PreRender = PreRender (Either (SparseVector WidePChar) (Vector WidePChar)) LBox 
+      -renderForCache :: SElt -> RenderCache 
+      -you can have Map REltId RenderCache since everything has the same type of cache
+        -or maybe you can redo the way cache is done and have cache to the item itself with its cache type i.e.
+          data SEltRenderCache = SEltRenderCacheLine SEltLine LineAnchorsForRender RenderCache
+  -box and line label box generation from text width needs to be updated to count char width
+  -AABB 
+    -sometimes needs to expand to the left/right by 1 (or max wide char size)
+      -could just always expand
+      -could also just ignore :(
+-implementation details
+  -you can have textNoRenderSpaces skip characters after wide chars
+    -HOWEVER this might destroy text in text boxes, so text box needs to report extra spaces in the render function D:
+  -you can have rendered canvas report text with extra characters skipped
+  -you can do both?
+  
+-TextZipper (does wide char stuff already work? needs more testing)
+-non-update
+  -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select
 
 
 

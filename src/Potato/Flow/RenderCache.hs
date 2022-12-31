@@ -4,6 +4,7 @@ module Potato.Flow.RenderCache where
 
 import           Relude
 
+import Potato.Data.Text.Unicode
 import           Potato.Flow.Math
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts

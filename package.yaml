@@ -106,6 +106,7 @@ dependencies:
 - mtl
 - vty
 - pretty-simple
+- text-icu
 
 #- smash
 - deepseq
