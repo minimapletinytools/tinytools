@@ -63,6 +63,9 @@ stuff for Dad to do
 
 
 ----------
+stack build --profile
+stack exec --profile -- potato-flow-vty-exe +RTS -xc
+
 stack exec -- potato-flow-vty-exe mycommandlineargs
 stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)

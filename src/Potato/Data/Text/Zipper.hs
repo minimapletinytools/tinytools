@@ -340,6 +340,7 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   loop (x:xs) cumw out = r where
     newWidth = textWidth x + cumw
     r = if newWidth > maxWidth
+      -- TODO index out of bounds sometimes in the presence of widechars
       then if isSpace $ T.index x (toLogicalIndex (maxWidth - cumw) x)
         -- if line runs over but character of splitting is whitespace then split on the whitespace
         then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
