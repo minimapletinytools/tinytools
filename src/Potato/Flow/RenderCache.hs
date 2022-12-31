@@ -14,7 +14,6 @@ import           Potato.Flow.Controller.Types
 import           Potato.Flow.Methods.LineTypes
 
 
-import Potato.Data.Text.Zipper (charWidth)
 import qualified Data.IntMap             as IM
 import qualified Data.Text               as T
 import qualified Data.Text.IO as T
@@ -101,9 +100,6 @@ makePreRender ot SEltDrawer {..} = r where
   lbox' = _sEltDrawer_box ot 
   lbox@(LBox _ (V2 w _)) = lBox_expand lbox' (0, _sEltDrawer_maxCharWidth-1, 0, 0)
   area = lBox_area lbox
-
-  getPCharWidth :: PChar -> Int8
-  getPCharWidth = fromIntegral . charWidth
 
   -- the (Int8, Int8, PChar) is (distance from prev wide pchar, width of prev wide pchar, wide pchar)
   -- width of prev wide pchar could be determined from wide pchar of course but may as well cache it

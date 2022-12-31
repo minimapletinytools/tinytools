@@ -16,9 +16,15 @@ import qualified Data.List         as L
 import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper                          as TZ
 
+
 type REltId = Int
 type PChar = Char
 type MPChar = Maybe PChar
+
+
+getPCharWidth :: PChar -> Int8
+getPCharWidth = fromIntegral . TZ.charWidth
+
 
 data FillStyle = FillStyle_Blank | FillStyle_Simple PChar deriving (Eq, Generic, Show)
 

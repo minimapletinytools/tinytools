@@ -9,6 +9,7 @@ module Potato.Flow.Render (
   , renderCache_clearAtKeys
   , renderCache_lookup
   , render -- TODO DELETE use render_new instead because it uses cache
+  , render_new
 
   , RenderedCanvasRegion(..)
   , renderedCanvas_box
@@ -189,6 +190,24 @@ render llbx osubitems rctx@RenderContext {..} = r where
       _renderContext_renderedCanvasRegion = render_withCache _renderContext_owlTree llbx drawerswithcache prevrcr
     }
 
+mapREltIdToCaches :: OwlTree -> [REltId] -> RenderCache -> (RenderCache, [(OwlSubItem, Maybe OwlItemCache)])
+mapREltIdToCaches ot rids rcache = r where
+
+  mapaccumlfn cacheacc rid = r where
+    -- see if it was in the previous cache
+    mprevcache = IM.lookup rid (unRenderCache rcache)
+    sowl = owlTree_mustFindSuperOwl ot rid
+    OwlItem _ osubitem = _superOwl_elt sowl
+    mupdatedcache = updateOwlSubItemCache ot osubitem
+    r = case mprevcache of
+      Just c -> (cacheacc, (osubitem, Just c))
+      Nothing -> case mupdatedcache of
+        Just c  -> (IM.insert rid c cacheacc, (osubitem, Just c))
+        Nothing -> (cacheacc, (osubitem, Nothing))
+  (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache rcache) rids
+  r = (RenderCache newcache, owlswithcache)
+
+
 
 -- | renders just a portion of the RenderedCanvasRegion
 -- updates cache as appropriate
@@ -196,27 +215,11 @@ render llbx osubitems rctx@RenderContext {..} = r where
 -- REltIds are rendered in ORDER
 render_new :: LBox -> [REltId] -> RenderContext -> RenderContext
 render_new llbx rids rctx@RenderContext {..} = rctxout where
-  prevrcr = _renderContext_renderedCanvasRegion
-
-  -- TODO split cache update into a separate function
-  mapaccumlfn cacheacc rid = r where
-    -- see if it was in the previous cache
-    mprevcache = IM.lookup rid (unRenderCache _renderContext_cache)
-    sowl = owlTree_mustFindSuperOwl _renderContext_owlTree rid
-    OwlItem _ osubitem = _superOwl_elt sowl
-    mupdatedcache = updateOwlSubItemCache _renderContext_owlTree osubitem
-    r = case mprevcache of
-      Just c -> (cacheacc, (osubitem, Just c))
-      Nothing -> case mupdatedcache of
-        Just c -> (IM.insert rid c cacheacc, (osubitem, Just c))
-        Nothing -> (cacheacc, (osubitem, Nothing))
-
-  (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache _renderContext_cache) rids
-  drawerswithcache = map (\(x, c)-> (getDrawerWithCache x c, c)) owlswithcache
-
+  (newcache, owlswithcache) = mapREltIdToCaches _renderContext_owlTree rids _renderContext_cache
+  drawerswithcache = map (\(x, c)-> (getDrawerWithCache x c, c)) owlswithcache 
   rctxout = rctx {
-      _renderContext_cache = RenderCache newcache
-      , _renderContext_renderedCanvasRegion = render_withCache _renderContext_owlTree llbx drawerswithcache prevrcr
+      _renderContext_cache = newcache
+      , _renderContext_renderedCanvasRegion = render_withCache _renderContext_owlTree llbx drawerswithcache _renderContext_renderedCanvasRegion
     }
 
 

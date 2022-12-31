@@ -740,13 +740,13 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       -- we just re-render everything for now (in the future you can try and do partial rendering though)
       , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
     }
-  selectionselts = toList . fmap (_owlItem_subItem . _superOwl_elt) $ unSuperOwlParliament next_selection
+  selectionselts = toList . fmap _superOwl_id $ unSuperOwlParliament next_selection
 
   (next_renderedSelection, next_renderCache) = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then (_goatState_renderedSelection, _renderContext_cache rendercontext_afterUpdate)
     else (_renderContext_renderedCanvasRegion rctx, _renderContext_cache rctx) where
-      rctx = render newBox selectionselts rendercontext_forSelection 
+      rctx = render_new newBox selectionselts rendercontext_forSelection 
 
   -- TODO just DELETE this...
   {- TODO render only parts of selection that have changed TODO broken
