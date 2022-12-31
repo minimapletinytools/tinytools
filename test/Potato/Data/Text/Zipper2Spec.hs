@@ -14,13 +14,7 @@ import Control.Monad
 
 import           Potato.Data.Text.Zipper2
 
-tz_ = TextZipper ["this is an example content of", "a text zipper"]
-                "the capital "
-                ["TEXT IS THE SELECTED", "PORTION"]
-                " of the"
-                ["text zipper"]
-
-tz = TextZipper ["a text zipper", "this is an example content of"]
+tz = TextZipper (reverse ["this is an example content of", "a text zipper"])
                 "the capital "
                 ["TEXT IS THE SELECTED", "PORTION"]
                 " of the"
@@ -29,8 +23,9 @@ tz = TextZipper ["a text zipper", "this is an example content of"]
 spec :: Spec
 spec =
   describe "Zipper2" $ do
+
   it "leftN 1" $ do
-    let tz_1 = TextZipper   ["a text zipper", "this is an example content of"]
+    let tz_1 = TextZipper (reverse ["this is an example content of", "a text zipper"])
                         "the capital"
                         []
                         " TEXT IS THE SELECTED"
@@ -38,7 +33,7 @@ spec =
     leftN 1 tz `shouldBe` tz_1
 
   it "leftN 5" $ do
-    let tz_5 = TextZipper   ["a text zipper", "this is an example content of"]
+    let tz_5 = TextZipper   (reverse ["this is an example content of", "a text zipper"])
                             "the cap"
                             []
                             "ital TEXT IS THE SELECTED"
@@ -72,7 +67,7 @@ spec =
     home tz_0 `shouldBe` tz_1h
     end tz_0 `shouldBe` tz_1e
 
-  it "home example_2" $ do
+  it "home/end example_2" $ do
     let tz_0 = TextZipper  ["this is an example"]
                     "this line is selected "
                     ["pooh bear"]
@@ -91,7 +86,7 @@ spec =
     home tz_0 `shouldBe` tz_1h
     end tz_0 `shouldBe` tz_1e
     
-  it "home example_3" $ do
+  it "home/end example_3" $ do
     let tz_0 = TextZipper  ["this is an example"]
                     "this line is selected "
                     ["pooh bear", "canned chicken cat"]
@@ -109,3 +104,50 @@ spec =
                     ["blah blah blah"]
     home tz_0 `shouldBe` tz_1h
     end tz_0 `shouldBe` tz_1e
+
+  it "top examples" $ do
+    top (TextZipper [] "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "dd d" ["a","b"]
+    top (TextZipper ["hello"] "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" [] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","dd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" ["a b c"] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good","a b cdd d", "a","b"]
+    top (TextZipper (reverse ["hello", "ok", "very good"]) "" ["a b c", "d e "] "dd d" ["a","b"]) `shouldBe` 
+         TextZipper [] "" [] "hello" ["ok", "very good", "a b c", "d e dd d", "a","b"]
+
+  it "up examples" $ do
+    up (TextZipper [] "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "" [] "ab dd d" ["a","b"])
+    up (TextZipper ["cat dog"] "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "cat" [] " dog" ["ab dd d", "a","b"])
+    up (TextZipper ["cat dog"] "abfeeeere " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "cat dog" [] "" ["abfeeeere dd d", "a","b"])
+    up (TextZipper (reverse ["cat dog", "bird_sky"]) "ab " [] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["cat dog"] "bir" [] "d_sky" ["ab dd d", "a","b"])
+    up (TextZipper [] "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "" [] "ab storydd d" ["a","b"])
+    up (TextZipper [] "ab " ["STORY", "COOL"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper [] "ab S" [] "TORY" ["COOLdd d", "a","b"])
+    up (TextZipper ["a", "b"] "ab " ["STORY", "COOL"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["a", "b"] "ab S" [] "TORY" ["COOLdd d", "a","b"])
+        -- (TextZipper ["a", "b"] "" [] "ab story" ["cooldd d", "a","b"])
+    up (TextZipper (reverse ["a", "b"]) "ab " ["story"] "dd d" ["a","b"]) `shouldBe` 
+        (TextZipper ["a"] "b" [] "" ["ab storydd d", "a","b"])
+
+  it "down example_1" $ do
+    down (TextZipper ["a","b"] "ab " [] "dd d" []) `shouldBe` 
+        (TextZipper ["a", "b"] "ab dd d" [] "" [])
+    down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" [])
+    down (TextZipper (reverse ["a","b"]) "ab " [] "dd d" ["hello", "thanks"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab dd d"]) "hel" [] "lo" ["thanks"])
+    down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER"] "dd d" []) `shouldBe` 
+         (TextZipper (reverse ["a", "b"]) "ab CENTERdd d" [] "" [])
+    down (TextZipper (reverse ["a","b"]) "ab " ["center"] "dd d" ["hello", "thanks"]) `shouldBe` 
+        (TextZipper (reverse ["a", "b", "ab centerdd d"]) "hello" [] "" ["thanks"])
+    down (TextZipper (reverse ["a", "b"]) "ab " ["CENTER", "MIDDLE"] " dd d" ["hello", "thanks"]) `shouldBe`
+         (TextZipper (reverse ["a", "b", "ab CENTER", "MIDDLE dd d"]) "hello" [] "" ["thanks"] )
