@@ -86,6 +86,7 @@ data GoatState = GoatState {
     , _goatState_screenRegion            :: XY -- the screen dimensions
     , _goatState_clipboard               :: Maybe SEltTree
     , _goatState_focusedArea             :: GoatFocusedArea
+    , _goatState_unbrokenInput       :: Text -- grapheme clusters are inputed as several keyboard character events so we track these inputs here
 
     -- debug stuff (shared across documents)
     , _goatState_debugLabel              :: Text
@@ -134,6 +135,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
         , _goatState_renderCache = emptyRenderCache
         , _goatState_clipboard = Nothing
         , _goatState_focusedArea = GoatFocusedArea_None
+        , _goatState_unbrokenInput = ""
         , _goatState_screenRegion = V2 screenx screeny - (_controllerMeta_pan controllermeta)
         , _goatState_debugCommands = []
       }
@@ -370,32 +372,41 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
   }
 
 
+
+
 -- | filters out keyboard input based on the configuration
 -- must provide last character-unbroken sequence of text input in order to detect grapheme cluster
-potatoModifyKeyboardKey :: PotatoConfiguration -> Text -> KeyboardKey -> Maybe KeyboardKey
+-- relies on assumption 🙈
+-- let ...(n-1)(n) be a sequence of codepoints that is a grapheme cluster
+-- then ...(n-1) is also a grapheme cluster
+potatoModifyKeyboardKey :: PotatoConfiguration -> Text -> KeyboardData -> Maybe KeyboardData
 potatoModifyKeyboardKey PotatoConfiguration {..} lastUnbrokenCharacters k = case k of
-  KeyboardKey_Char c -> r where
+  KeyboardData (KeyboardKey_Char c) mods -> r where
     fulltext = T.snoc lastUnbrokenCharacters c
-    r = if _potatoConfiguration_allowGraphemeClusters && endsInGraphemeCluster fulltext
+    r = if not _potatoConfiguration_allowGraphemeClusters && endsInGraphemeCluster fulltext
       then Nothing
       else case _potatoConfiguration_allowOrReplaceUnicodeWideChars of
         Nothing -> Just k
         Just x -> if getCharWidth c > 1
-          then maybe Nothing (Just . KeyboardKey_Char)  x
+          then maybe Nothing (\nc -> Just (KeyboardData (KeyboardKey_Char nc) mods))  x
           else Just k
+  _ -> Just k
 
 -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
-foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState where
---foldGoatFn cmd goatStateIgnore = finalGoatState where
+--foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState where
+foldGoatFn cmd goatStateIgnore = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
   -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
   --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
-  goatState = goatStateIgnore
+  goatState' = goatStateIgnore
 
+  -- it's convenient/lazy to reset unbrokenInput here, this will get overriden in cases where it needs to be
+  goatState = goatState' { _goatState_unbrokenInput = "" }
+  last_unbrokenInput = _goatState_unbrokenInput goatState'
   last_workspace = _goatState_workspace goatState
   last_pFState = _owlPFWorkspace_owlPFState last_workspace
 
@@ -485,13 +496,18 @@ foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState
 
             Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 
-      GoatCmdKeyboard kbd -> let
-          dummy = "aoeu"
-        in case kbd of
+      GoatCmdKeyboard kbd' -> let
+          next_unbrokenInput = case kbd' of
+            KeyboardData (KeyboardKey_Char c) _ -> T.snoc last_unbrokenInput c
+            _ -> ""
+          mkbd =   potatoModifyKeyboardKey (_goatState_configuration goatState) last_unbrokenInput kbd'
+          goatState_withKeyboard =  goatState { _goatState_unbrokenInput = next_unbrokenInput}
+        in case mkbd of
+          Nothing -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
           -- special case, treat escape cancel mouse drag as a mouse input
-          KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive (_goatState_mouseDrag goatState) -> r where
-            canceledMouse = cancelDrag (_goatState_mouseDrag goatState)
-            goatState_withNewMouse = goatState {
+          Just (KeyboardData KeyboardKey_Esc _) | mouseDrag_isActive (_goatState_mouseDrag goatState_withKeyboard) -> r where
+            canceledMouse = cancelDrag (_goatState_mouseDrag goatState_withKeyboard)
+            goatState_withNewMouse = goatState_withKeyboard {
                 _goatState_mouseDrag = canceledMouse
 
                 -- escape will cancel mouse focus
@@ -501,54 +517,54 @@ foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState
               }
 
             -- TODO use _goatState_focusedArea instead
-            r = if _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState)
-              then case pHandleMouse (_goatState_layersHandler goatState) potatoHandlerInput (RelMouseDrag canceledMouse) of
+            r = if _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState_withKeyboard)
+              then case pHandleMouse (_goatState_layersHandler goatState_withKeyboard) potatoHandlerInput (RelMouseDrag canceledMouse) of
                 Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
                 Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
-              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState (_goatState_pan goatState) canceledMouse) of
+              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState (_goatState_pan goatState_withKeyboard) canceledMouse) of
                 Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
                 Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
 
           -- we are in the middle of mouse drag, ignore all keyboard inputs
           -- perhaps a better way to do this is to have handlers capture all inputs when active
-          _ | mouseDrag_isActive (_goatState_mouseDrag goatState) -> makeGoatCmdTempOutputFromNothing goatState
+          Just _ | mouseDrag_isActive (_goatState_mouseDrag goatState_withKeyboard) -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
 
-          _ ->
+          Just kbd ->
             let
               maybeHandleLayers = do
-                guard $ _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState)
-                pho <- pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput kbd
-                return $ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState pho
+                guard $ _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState_withKeyboard)
+                pho <- pHandleKeyboard (_goatState_layersHandler goatState_withKeyboard) potatoHandlerInput kbd
+                return $ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withKeyboard pho
             in case maybeHandleLayers of
               Just x -> x
               Nothing -> case pHandleKeyboard handler potatoHandlerInput kbd of
-                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState pho
+                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withKeyboard pho
                 -- input not captured by handler
-                -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState which PotatoHandlerOutput can't atm
+                -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState_withKeyboard which PotatoHandlerOutput can't atm
                 Nothing -> case kbd of
                   KeyboardData KeyboardKey_Esc _ ->
-                    (makeGoatCmdTempOutputFromNothing goatState) {
+                    (makeGoatCmdTempOutputFromNothing goatState_withKeyboard) {
                         -- TODO change tool back to select?
                         -- cancel selection if we are in a neutral mouse state and there is no handler
-                        _goatCmdTempOutput_select = case _mouseDrag_state (_goatState_mouseDrag goatState) of
+                        _goatCmdTempOutput_select = case _mouseDrag_state (_goatState_mouseDrag goatState_withKeyboard) of
                           MouseDragState_Up        -> Just (False, isParliament_empty)
                           MouseDragState_Cancelled -> Just (False, isParliament_empty)
                           _                        -> Nothing
                       }
 
                   KeyboardData (KeyboardKey_Delete) [] -> r where
-                    r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
+                    r = makeGoatCmdTempOutputFromMaybeEvent goatState_withKeyboard (deleteSelectionEvent goatState_withKeyboard)
                   KeyboardData (KeyboardKey_Backspace) [] -> r where
-                    r = makeGoatCmdTempOutputFromMaybeEvent goatState (deleteSelectionEvent goatState)
+                    r = makeGoatCmdTempOutputFromMaybeEvent goatState_withKeyboard (deleteSelectionEvent goatState_withKeyboard)
 
                   KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
-                    copied = makeClipboard goatState
-                    r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_clipboard = copied }
+                    copied = makeClipboard goatState_withKeyboard
+                    r = makeGoatCmdTempOutputFromNothing $ goatState_withKeyboard { _goatState_clipboard = copied }
                   KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
-                    copied = makeClipboard goatState
-                    r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
-                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState of
-                    Nothing    -> makeGoatCmdTempOutputFromNothing goatState
+                    copied = makeClipboard goatState_withKeyboard
+                    r = makeGoatCmdTempOutputFromMaybeEvent (goatState_withKeyboard { _goatState_clipboard = copied }) (deleteSelectionEvent goatState_withKeyboard)
+                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState_withKeyboard of
+                    Nothing    -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
                     Just stree -> r where
 
                       -- TODO this is totally wrong, it won't handle parent/children stuff correctly
@@ -556,18 +572,18 @@ foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState
                       offsetstree = offsetSEltTree (V2 1 1) stree
                       minitree' = owlTree_fromSEltTree offsetstree
                       maxid1 = owlTree_maxId minitree' + 1
-                      maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState))
+                      maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState_withKeyboard))
                       minitree = owlTree_reindex (max maxid1 maxid2) minitree'
-                      spot = lastPositionInSelection (goatState_owlTree goatState) (_goatState_selection goatState)
+                      spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
                       treePastaEv = WSEAddTree (spot, minitree)
 
 
 
-                      r = makeGoatCmdTempOutputFromEvent (goatState { _goatState_clipboard = Just offsetstree }) treePastaEv
+                      r = makeGoatCmdTempOutputFromEvent (goatState_withKeyboard { _goatState_clipboard = Just offsetstree }) treePastaEv
                   KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
-                    r = makeGoatCmdTempOutputFromEvent goatState WSEUndo
+                    r = makeGoatCmdTempOutputFromEvent goatState_withKeyboard WSEUndo
                   KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
-                    r = makeGoatCmdTempOutputFromEvent goatState WSERedo
+                    r = makeGoatCmdTempOutputFromEvent goatState_withKeyboard WSERedo
                   -- tool hotkeys
                   KeyboardData (KeyboardKey_Char key) _ -> r where
                     mtool = case key of
@@ -579,11 +595,11 @@ foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState
                       'n' -> Just Tool_TextArea
                       _   -> Nothing
 
-                    newHandler = maybe (_goatState_handler goatState) (makeHandlerFromNewTool goatState) mtool
-                    r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_handler = newHandler }
+                    newHandler = maybe (_goatState_handler goatState_withKeyboard) (makeHandlerFromNewTool goatState_withKeyboard) mtool
+                    r = makeGoatCmdTempOutputFromNothing $ goatState_withKeyboard { _goatState_handler = newHandler }
 
                   -- unhandled input
-                  _ -> makeGoatCmdTempOutputFromNothing goatState
+                  _ -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
 
   -- | update OwlPFWorkspace from GoatCmdTempOutput |
   (workspace_afterEvent, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of

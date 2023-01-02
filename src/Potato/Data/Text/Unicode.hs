@@ -25,6 +25,9 @@ internal_getCharacterBreaks input = r where
   breaker = ICU.breakCharacter ICU.Current 
   r = ICU.breaks breaker input
 
+zwidge :: Char
+zwidge = '\8205'
+
 -- | True if the Text is a single grapheme cluster, False otherwise
 isSingleGraphemeCluster :: Text -> Bool
 isSingleGraphemeCluster input = r where

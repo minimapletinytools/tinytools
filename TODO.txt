@@ -161,11 +161,11 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
--properly disable grapheme clusters 
-  -disable unicode wide chars too ;__;
-  -prob best to do this at goat keyboard input processing level
+DONE-properly disable grapheme clusters 
+  DONE-disable unicode wide chars too ;__;
+  DONE-prob best to do this at goat keyboard input processing level
     -something like makeInputLessFun :: KeyboardInput -> KeyboardInput
-  -hook up configuration
+  DONE-hook up configuration
 -BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?

@@ -6,7 +6,8 @@ tinytools consists of the M (as in MVC) of the tinytools app. The VC implementat
 
 ## Terminology
 
-- Scene: 
+- Document:
+- Scene: same as document 
 - Canvas: the 2D interactable area of tinytools
 - Owl: an element in the scene
 - Layers: the layer system which is a logical view into the scene state
@@ -122,7 +123,7 @@ Each update operation returns a list of modified elements and only the areas on 
 
 Each time there is a change, the `RenderCache` is cleared on the objects that got changed, and will get regenerated in the render step.
 
-`OwlItemCache` include caches specific to each owl type as well as a generic `PreRender` cache that applies to all types.
+`OwlItemCache` include caches specific to each owl type as well as a generic `PreRender` cache that applies to all types. The `PreRender` cache is also necessary for properly rendering unicode wide chars
 
 The `RenderCache` is also used by the handlers for visual based interface operations.
 
@@ -142,6 +143,25 @@ These tests go through the Reflex interface which is very unecessary and have si
 
 
 
+## Known Issues
+
+- bugs in Potato.Data.Text.Zipper 
+  - handling cursore position based no DisplayLinesWithAlignment is broken
+  - unicode wide chars cause crashes
+- `foldGoatFn` evaluated multiple times per input event. Specifically, any input event to GoatWidget will cause `foldGoatFn` to be evaluated at least twice.
+
+## Future Plans
+There are many future additions we'd like to make to tinytools. The most relevant ones to be aware of are:
+
+- multi-document support, in particular, part of `GoatState` will be separated out into `[GoatTab]`
+- multiplayer support
+  - we will use a trusted/permissioned decentralized consensus algorithm for this
+- refactor `OwlTree` to be a tree and `OwlPartialment` to be a zipper rather than a list of ids such that we can remove most partial functions in Owl.hs
+  - `OwlTree` still needs to support id lookup as some things will continue to use id references
+    - attachments
+    - over the wire changes (when multiplayer support is added)
+- style objects to be switched over to swatch references rather than stored per-owl
+- see ::FUTURE FEATURES:: in TODO.txt for more stuff :D
 
 ## FAQ
 

@@ -22,6 +22,7 @@ spec = describe "Unicode" $ do
     isSingleGraphemeCluster "" `shouldBe` False
     isSingleGraphemeCluster "a" `shouldBe` False
     isSingleGraphemeCluster "👎🏻👎🏼👎🏽👎🏾👎🏿" `shouldBe` False
+    isSingleGraphemeCluster "🧑\8205🍳" `shouldBe` True -- zwidges can't be used directly https://gitlab.haskell.org/ghc/ghc/-/issues/21228
   it "endsInGraphemeCluster" $ do
     endsInGraphemeCluster "👎🏼" `shouldBe` True
     endsInGraphemeCluster "👎🏿" `shouldBe` True
