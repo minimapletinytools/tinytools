@@ -1,6 +1,6 @@
-              
-                                                                                                                                                                              
-                                            
+
+
+
 
 
 
@@ -90,7 +90,7 @@ WIDE
 
 
 :: FUTURE FEATURES
--grapheme cluster 
+-grapheme cluster
   -terminals don't support it but browser will
   -for terminals, you need grapheme cluster detection to remove those chars
   -you may as well add unicode detections as well
@@ -150,6 +150,7 @@ DONE-EMOJIS
 
 
 :: RELEASE prep
+-performance pass
 -update README.md with usage instructions
 -move over to minimaple account
 -switch to cabal?
@@ -160,31 +161,37 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
--find someway to
+-properly disable grapheme clusters 
+  -disable unicode wide chars too ;__;
+  -prob best to do this at goat keyboard input processing level
+    -something like makeInputLessFun :: KeyboardInput -> KeyboardInput
+  -hook up configuration
 -BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?
 -BUG selecting severals items and moving takes forever :(
+  -can't repro anymore? at least not  from opening a file, maybe it's due to a leak?
+  -also selecting via folders and moving didn't seem to cause this slowdown
 -BUG resizing unattached lines does not work
--BUG you need to change a > to >= somewhere       
-  -or does this happen becaues we don't support turns right from edge even if there is now arrow head?                                                                                                                                                                     
-              ╔═════════════╗                                                                                                                                                             
-              ║╔GoatState═══║═══════════╗                                                                                                                                                 
-              ║║            ║           ║                                                                                                                                                 
-              ║║            ║           ║                                                                                                                                                 
-              ║║            ║           ║                                                                                                                                                 
-              ║║            ║           ║                                                                                                                                                 
-              ║╚════════════║═══════════╝                                                                                                                                                 
-              ║            ║║                                                                                                                                                             
-              ║            ║v                                                                                                                                                             
-              ║╔OwlPFWorksp║ce══════════╗                                                                                                                                                 
-              ║║           ║            ║                                                                                                                                                 
-              ║║           ║            ║                                                                                                                                                 
-              ║║           ║            ║                                                                                                                                                 
-              ║║           ║            ║                                                                                                                                                 
-              ║╚═══════════║════════════╝                                                                                                                                                 
-              ╚════════════╝                      
--Line presets sholud be for start/end 
+-BUG you need to change a > to >= somewhere
+  -or does this happen becaues we don't support turns right from edge even if there is now arrow head?
+              ╔═════════════╗
+              ║╔GoatState═══║═══════════╗
+              ║║            ║           ║
+              ║║            ║           ║
+              ║║            ║           ║
+              ║║            ║           ║
+              ║╚════════════║═══════════╝
+              ║            ║║
+              ║            ║v
+              ║╔OwlPFWorksp║ce══════════╗
+              ║║           ║            ║
+              ║║           ║            ║
+              ║║           ║            ║
+              ║║           ║            ║
+              ║╚═══════════║════════════╝
+              ╚════════════╝
+-Line presets sholud be for start/end
 -add switch start/end button to line params?
 -warning cleanup
 -add an anchor for the box label so you know you can add one easily
@@ -213,57 +220,57 @@ DONE-pass cache in through PotatoHandlerInput and use in Select (you could use i
 DONE-update cache to not be intrusive, include elt in the cache
 DONE-should be allowed to click on label directly from BoxTextHandler (you need to pass on input to underlying BoxHandler
 DONE-BUG fix line bugs
-  DONE-       ^                                                                                                                                                               
-              ║                                                                                                                                                               
-              ║                                                                                                                                                               
-              ║                                                                                                                                                               
-              ║                                                                                                                                                               
-              ║             ^                                                                                                                                                 
-              ╚═════════════╝-----*                                                                                                                                           
-                      |cool       |                                                                                                                                           
-                      |features!  |                                                                                                                                           
-                      *-----------*                                                                                                                                           
-                                                                                                                                                                              
-                            ╔═══════════════════════════╗                                                                                                                     
-                            ║this is a placeholder for  ║                                                                                                                     
-                            ║the actualy tutorial       ║                                                                                                                     
-                            ║                           ║                                                                                                                     
-                            ║                           ║                                                                                                                     
-                            ║                           ║                                                                                                                     
-                            ║                           ║                                                                                                                     
-                            ╚═══════════════════════════╝           
-  DONE-                     ╔═══════════════════════════╗                                                                                                                                              
-                            ║this is a placeholder for  ║                                                                                                                                              
-                            ║the actualy tutorial       ║                                                                                                                                              
-                            ║                           ║                                                                                                                                              
-                            ║                           ║                                                                                                                                              
-                            ║                           ║                                                                                                                                              
-                            ║                           ║                                                                                                                                              
-                            ╚═══════════════════════════╝                                                                                                                                              
-              ╔═══════════════════════════╗                                                                                                                                                            
-              ║*-----------*                                                                                                                                                                           
-              ║|cool       |                                                                                                                                                                           
-              ║|features!  |                                                                                                                                                                           
-              ║*-----------*                                                                                                                                                                           
-              ║      ^                                                                                                                                                                                 
-              ╚══════╝                  
-  DONE-                       ╔═══════════╗                                                                                                                                                            
-                              ║           v                                                                                                                                                            
-                            ╔═║═════════════════════════╗                                                                                                                                              
-                            ║t║is is a placeholder for  ║                                                                                                                                              
-                            ║t║e actualy tutorial       ║                                                                                                                                              
-                            ║ ║                         ║                                                                                                                                              
-                            ║ ║                         ║                                                                                                                                              
-                            ║ ║                         ║                                                                                                                                              
-                            ║ ║                         ║                                                                                                                                              
-                            ╚═║═════════════════════════╝                                                                                                                                              
-                              ║                                                                                                                                                                        
-           *-----------*      ║                                                                                                                                                                        
-           |cool       |      ║                                                                                                                                                                        
-           |features!  |      ║                                                                                                                                                                        
-           *-----------*      ║                                                                                                                                                                        
-                 ^            ║                                                                                                                                                                        
-                 ╚════════════╝           
+  DONE-       ^
+              ║
+              ║
+              ║
+              ║
+              ║             ^
+              ╚═════════════╝-----*
+                      |cool       |
+                      |features!  |
+                      *-----------*
+
+                            ╔═══════════════════════════╗
+                            ║this is a placeholder for  ║
+                            ║the actualy tutorial       ║
+                            ║                           ║
+                            ║                           ║
+                            ║                           ║
+                            ║                           ║
+                            ╚═══════════════════════════╝
+  DONE-                     ╔═══════════════════════════╗
+                            ║this is a placeholder for  ║
+                            ║the actualy tutorial       ║
+                            ║                           ║
+                            ║                           ║
+                            ║                           ║
+                            ║                           ║
+                            ╚═══════════════════════════╝
+              ╔═══════════════════════════╗
+              ║*-----------*
+              ║|cool       |
+              ║|features!  |
+              ║*-----------*
+              ║      ^
+              ╚══════╝
+  DONE-                       ╔═══════════╗
+                              ║           v
+                            ╔═║═════════════════════════╗
+                            ║t║is is a placeholder for  ║
+                            ║t║e actualy tutorial       ║
+                            ║ ║                         ║
+                            ║ ║                         ║
+                            ║ ║                         ║
+                            ║ ║                         ║
+                            ╚═║═════════════════════════╝
+                              ║
+           *-----------*      ║
+           |cool       |      ║
+           |features!  |      ║
+           *-----------*      ║
+                 ^            ║
+                 ╚════════════╝
   DONE-BUG start and end anchors behave differently when attaching and aren't attaching to correct anchor points
     -fix with cartRotationReflection_apply_lBox
   IGNORE-BUG some bot to bot cases are broken
@@ -1424,13 +1431,13 @@ makeSetController :: (REltId, SEltLabel) -> Controller
     -could just render the entire object (maybe store in cache) and then pick from it, something like
 
       -data WidePChar = WidePChar PChar Int -- the int is how far offset from where the character starts
-      -data PreRender = PreRender (Either (SparseVector WidePChar) (Vector WidePChar)) LBox 
-      -renderForCache :: SElt -> RenderCache 
+      -data PreRender = PreRender (Either (SparseVector WidePChar) (Vector WidePChar)) LBox
+      -renderForCache :: SElt -> RenderCache
       -you can have Map REltId RenderCache since everything has the same type of cache
         -or maybe you can redo the way cache is done and have cache to the item itself with its cache type i.e.
           data SEltRenderCache = SEltRenderCacheLine SEltLine LineAnchorsForRender RenderCache
   -box and line label box generation from text width needs to be updated to count char width
-  -AABB 
+  -AABB
     -sometimes needs to expand to the left/right by 1 (or max wide char size)
       -could just always expand
       -could also just ignore :(
@@ -1439,7 +1446,7 @@ makeSetController :: (REltId, SEltLabel) -> Controller
     -HOWEVER this might destroy text in text boxes, so text box needs to report extra spaces in the render function D:
   -you can have rendered canvas report text with extra characters skipped
   -you can do both?
-  
+
 -TextZipper (does wide char stuff already work? needs more testing)
 -non-update
   -_sEltDrawer_box (so selecting a wide char that overflows the logical bounds will not select
