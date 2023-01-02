@@ -388,30 +388,28 @@ potatoModifyKeyboardKey PotatoConfiguration {..} lastUnbrokenCharacters k = case
 -- TODO extract this method into another file
 -- TODO make State monad for this
 foldGoatFn :: GoatCmd -> GoatState -> GoatState
-foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $ finalGoatState where
+foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState where
 --foldGoatFn cmd goatStateIgnore = finalGoatState where
 
   -- TODO do some sort of rolling buffer here prob
   -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
   --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
+  goatState = goatStateIgnore
 
-  -- TODO don't used record syntax for GoatState {..}
-  goatState@GoatState {..} = goatStateIgnore
-
-  last_workspace = _goatState_workspace
+  last_workspace = _goatState_workspace goatState
   last_pFState = _owlPFWorkspace_owlPFState last_workspace
 
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
 
   -- TODO this step can update OwlState built-in cache (via select operation)
   -- | Process commands |
-  goatCmdTempOutput = case _goatState_handler of
+  goatCmdTempOutput = case (_goatState_handler goatState) of
     SomePotatoHandler handler -> case cmd of
       GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
-        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  _goatState_workspace) _goatState_selection
+        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
         newFolderEv = WSEAddFolder (folderPos, x)
       GoatCmdLoad (spf, cm) -> r where
         -- HACK this won't get generated until later but we need this to generate layersState...
@@ -431,15 +429,15 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
 
       GoatCmdMouse mouseData ->
         let
-          sameSource = _mouseDrag_isLayerMouse _goatState_mouseDrag == _lMouseData_isLayerMouse mouseData
-          mouseSourceFailure = _mouseDrag_state _goatState_mouseDrag /= MouseDragState_Up && not sameSource
-          mouseDrag = case _mouseDrag_state _goatState_mouseDrag of
+          sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
+          mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
+          mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
             MouseDragState_Up        -> newDrag mouseData
-            MouseDragState_Cancelled -> (continueDrag mouseData _goatState_mouseDrag) { _mouseDrag_state = MouseDragState_Cancelled }
+            MouseDragState_Cancelled -> (continueDrag mouseData (_goatState_mouseDrag goatState)) { _mouseDrag_state = MouseDragState_Cancelled }
 
-            _                        ->  continueDrag mouseData _goatState_mouseDrag
+            _                        ->  continueDrag mouseData (_goatState_mouseDrag goatState)
 
-          canvasDrag = toRelMouseDrag last_pFState _goatState_pan mouseDrag
+          canvasDrag = toRelMouseDrag last_pFState (_goatState_pan goatState) mouseDrag
 
           goatState_withNewMouse = goatState {
               _goatState_mouseDrag = mouseDrag
@@ -464,7 +462,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
             else noChangeOutput -- still cancelled
 
           -- if mouse is intended for layers
-          _ | isLayerMouse -> case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag mouseDrag) of
+          _ | isLayerMouse -> case pHandleMouse (_goatState_layersHandler goatState) potatoHandlerInput (RelMouseDrag mouseDrag) of
             Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
             Nothing  -> noChangeOutput
 
@@ -491,8 +489,8 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
           dummy = "aoeu"
         in case kbd of
           -- special case, treat escape cancel mouse drag as a mouse input
-          KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive _goatState_mouseDrag -> r where
-            canceledMouse = cancelDrag _goatState_mouseDrag
+          KeyboardData KeyboardKey_Esc _ | mouseDrag_isActive (_goatState_mouseDrag goatState) -> r where
+            canceledMouse = cancelDrag (_goatState_mouseDrag goatState)
             goatState_withNewMouse = goatState {
                 _goatState_mouseDrag = canceledMouse
 
@@ -503,23 +501,23 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
               }
 
             -- TODO use _goatState_focusedArea instead
-            r = if _mouseDrag_isLayerMouse _goatState_mouseDrag
-              then case pHandleMouse _goatState_layersHandler potatoHandlerInput (RelMouseDrag canceledMouse) of
+            r = if _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState)
+              then case pHandleMouse (_goatState_layersHandler goatState) potatoHandlerInput (RelMouseDrag canceledMouse) of
                 Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
                 Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
-              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState _goatState_pan canceledMouse) of
+              else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState (_goatState_pan goatState) canceledMouse) of
                 Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
                 Nothing  -> makeGoatCmdTempOutputFromNothingClearHandler goatState_withNewMouse
 
           -- we are in the middle of mouse drag, ignore all keyboard inputs
           -- perhaps a better way to do this is to have handlers capture all inputs when active
-          _ | mouseDrag_isActive _goatState_mouseDrag -> makeGoatCmdTempOutputFromNothing goatState
+          _ | mouseDrag_isActive (_goatState_mouseDrag goatState) -> makeGoatCmdTempOutputFromNothing goatState
 
           _ ->
             let
               maybeHandleLayers = do
-                guard $ _mouseDrag_isLayerMouse _goatState_mouseDrag
-                pho <- pHandleKeyboard _goatState_layersHandler potatoHandlerInput kbd
+                guard $ _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState)
+                pho <- pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput kbd
                 return $ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState pho
             in case maybeHandleLayers of
               Just x -> x
@@ -532,7 +530,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
                     (makeGoatCmdTempOutputFromNothing goatState) {
                         -- TODO change tool back to select?
                         -- cancel selection if we are in a neutral mouse state and there is no handler
-                        _goatCmdTempOutput_select = case _mouseDrag_state _goatState_mouseDrag of
+                        _goatCmdTempOutput_select = case _mouseDrag_state (_goatState_mouseDrag goatState) of
                           MouseDragState_Up        -> Just (False, isParliament_empty)
                           MouseDragState_Cancelled -> Just (False, isParliament_empty)
                           _                        -> Nothing
@@ -549,7 +547,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
                   KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
                     copied = makeClipboard goatState
                     r = makeGoatCmdTempOutputFromMaybeEvent (goatState { _goatState_clipboard = copied }) (deleteSelectionEvent goatState)
-                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard of
+                  KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState of
                     Nothing    -> makeGoatCmdTempOutputFromNothing goatState
                     Just stree -> r where
 
@@ -558,9 +556,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
                       offsetstree = offsetSEltTree (V2 1 1) stree
                       minitree' = owlTree_fromSEltTree offsetstree
                       maxid1 = owlTree_maxId minitree' + 1
-                      maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState _goatState_workspace)
+                      maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState))
                       minitree = owlTree_reindex (max maxid1 maxid2) minitree'
-                      spot = lastPositionInSelection (goatState_owlTree goatState) _goatState_selection
+                      spot = lastPositionInSelection (goatState_owlTree goatState) (_goatState_selection goatState)
                       treePastaEv = WSEAddTree (spot, minitree)
 
 
@@ -581,7 +579,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
                       'n' -> Just Tool_TextArea
                       _   -> Nothing
 
-                    newHandler = maybe _goatState_handler (makeHandlerFromNewTool goatState) mtool
+                    newHandler = maybe (_goatState_handler goatState) (makeHandlerFromNewTool goatState) mtool
                     r = makeGoatCmdTempOutputFromNothing $ goatState { _goatState_handler = newHandler }
 
                   -- unhandled input
@@ -590,21 +588,21 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
   -- | update OwlPFWorkspace from GoatCmdTempOutput |
   (workspace_afterEvent, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
-    Nothing   -> (_goatState_workspace, IM.empty)
+    Nothing   -> (_goatState_workspace goatState, IM.empty)
     Just (_, wsev) -> (r1,r2) where
-      r1 = updateOwlPFWorkspace wsev _goatState_workspace
+      r1 = updateOwlPFWorkspace wsev (_goatState_workspace goatState)
       r2 = _owlPFWorkspace_lastChanges r1
   pFState_afterEvent = _owlPFWorkspace_owlPFState workspace_afterEvent
 
   -- | update pan from GoatCmdTempOutput |
   next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
-    Nothing -> _goatState_pan
+    Nothing -> _goatState_pan goatState
     Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
-      V2 cx0 cy0 = _goatState_pan
+      V2 cx0 cy0 = _goatState_pan goatState
 
   -- | get layersState from GoatCmdTempOutput |
   next_layersState'' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
-    Nothing -> _goatState_layersState
+    Nothing -> _goatState_layersState goatState
     Just ls -> ls
 
   -- | get selection from GoatCmdTempOutput |
@@ -614,13 +612,13 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
     Just (add, sel) -> assert (superOwlParliament_isValid nextot r) (Just r)where
       nextot = _owlPFState_owlTree pFState_afterEvent
       r' = if add
-        then superOwlParliament_disjointUnionAndCorrect nextot _goatState_selection sel
+        then superOwlParliament_disjointUnionAndCorrect nextot (_goatState_selection goatState) sel
         else sel
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
   -- | compute selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate) |
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap_afterEvent
-    then (False, _goatState_selection)
+    then (False, _goatState_selection goatState)
     else r where
 
       -- extract elements that got created
@@ -641,7 +639,7 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
 
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
-        then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament _goatState_selection) $ \sowl ->
+        then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState)) $ \sowl ->
           case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
             -- no changes means not deleted
             Nothing       -> Just sowl
@@ -706,9 +704,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
   --_goatState_layersHandler
 
   -- | update AttachmentMap based on new state and clear the cache on these changes |
-  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent _goatState_attachmentMap
+  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent (_goatState_attachmentMap goatState)
   -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
-  attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap _goatState_attachmentMap
+  attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap (_goatState_attachmentMap goatState)
   --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
   attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
 
@@ -718,21 +716,21 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
 
   -- | clear the cache at places that have changed
-  renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys _goatState_renderCache (IM.keys cslmap_withAttachments)
+  renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys (_goatState_renderCache goatState) (IM.keys cslmap_withAttachments)
 
   -- | update the BroadPhase
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_forRendering (_broadPhaseState_bPTree _goatState_broadPhaseState)
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_forRendering (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
 
   -- | update the rendered region if we moved the screen |
   canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
   newBox = canvasRegionBox
-  didScreenRegionMove = _renderedCanvasRegion_box _goatState_renderedCanvas /= newBox
+  didScreenRegionMove = _renderedCanvasRegion_box (_goatState_renderedCanvas goatState) /= newBox
   rendercontext_forMove = RenderContext {
       _renderContext_cache = renderCache_resetOnChangesAndAttachments
       , _renderContext_owlTree = _owlPFState_owlTree pFState_afterEvent
       , _renderContext_layerMetaMap = _layersState_meta next_layersState
       , _renderContext_broadPhase = next_broadPhaseState
-      , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas
+      , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas goatState
     }
   rendercontext_forUpdate = if didScreenRegionMove
     then moveRenderedCanvasRegion newBox rendercontext_forMove
@@ -761,9 +759,9 @@ foldGoatFn cmd goatStateIgnore@GoatState {..} = trace ("FOLDING " <> show cmd) $
     }
   selectionselts = toList . fmap _superOwl_id $ unSuperOwlParliament next_selection
 
-  (next_renderedSelection, next_renderCache) = if _goatState_selection == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
+  (next_renderedSelection, next_renderCache) = if _goatState_selection goatState == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
-    then (_goatState_renderedSelection, _renderContext_cache rendercontext_afterUpdate)
+    then (_goatState_renderedSelection goatState, _renderContext_cache rendercontext_afterUpdate)
     else (_renderContext_renderedCanvasRegion rctx, _renderContext_cache rctx) where
       rctx = render_new newBox selectionselts rendercontext_forSelection
 
