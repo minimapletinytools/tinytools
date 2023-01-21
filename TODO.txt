@@ -161,11 +161,6 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
-DONE-properly disable grapheme clusters 
-  DONE-disable unicode wide chars too ;__;
-  DONE-prob best to do this at goat keyboard input processing level
-    -something like makeInputLessFun :: KeyboardInput -> KeyboardInput
-  DONE-hook up configuration
 -BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?
@@ -211,6 +206,11 @@ DONE-properly disable grapheme clusters
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-properly disable grapheme clusters 
+  DONE-disable unicode wide chars too ;__;
+  DONE-prob best to do this at goat keyboard input processing level
+    -something like makeInputLessFun :: KeyboardInput -> KeyboardInput
+  DONE-hook up configuration
 DONE-selection rendering of widechars is incorrect
 DONE-wide char rendering
   -prob best to  have RenderedCanvasRegion work with WideChar
