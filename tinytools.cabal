@@ -81,8 +81,6 @@ library
       Potato.Flow.SElts
       Potato.Flow.TestStates
       Potato.Flow.Types
-  other-modules:
-      Paths_tinytools
   hs-source-dirs:
       src
   default-extensions:
@@ -148,9 +146,9 @@ library
     , pretty-simple
     , random-shuffle
     , ref-tf
-    , reflex
-    , reflex-potatoes
-    , reflex-test-host
+    , reflex >= 0.8 && <1
+    , reflex-potatoes >=0.1
+    , reflex-test-host >=0.1.2
     , relude
     , semialign
     , template-haskell
