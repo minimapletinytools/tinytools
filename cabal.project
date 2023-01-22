@@ -3,4 +3,4 @@ packages: .
 source-repository-package
   type: git
   location: https://github.com/pdlla/reflex-potatoes
-  tag: 157c08726aec4381c6e1ec34037c39eaf980ee12
+  tag: 4df6f79a7957e701f8f38df8c1f6d63b0d17147e
