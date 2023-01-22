@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Potato.Flow.Cmd (
   PFCmdTag(..)
