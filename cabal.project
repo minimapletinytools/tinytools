@@ -4,3 +4,10 @@ source-repository-package
   type: git
   location: https://github.com/pdlla/reflex-potatoes
   tag: 4df6f79a7957e701f8f38df8c1f6d63b0d17147e
+
+
+-- do I need this for icu?
+-- extra-lib-dirs:
+--   - /usr/local/opt/icu4c/lib
+-- extra-include-dirs:
+--   - /usr/local/opt/icu4c/include
