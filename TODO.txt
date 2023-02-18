@@ -150,6 +150,7 @@ DONE-EMOJIS
 
 
 :: RELEASE prep
+
 -performance pass
 -update README.md with usage instructions
 -move over to minimaple account
@@ -161,6 +162,11 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
+  -from playing around with line arrows clikcing back and forth...
+DONE-flip arrow button
+-move over to minimaple account?
+-probbaly remove text ICU dependency :\
 -BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?
@@ -206,7 +212,7 @@ DONE-proper command line parsing with --help option
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
-DONE-properly disable grapheme clusters 
+DONE-properly disable grapheme clusters
   DONE-disable unicode wide chars too ;__;
   DONE-prob best to do this at goat keyboard input processing level
     -something like makeInputLessFun :: KeyboardInput -> KeyboardInput
