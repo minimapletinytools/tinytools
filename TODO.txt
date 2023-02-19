@@ -174,8 +174,8 @@ DONE-flip arrow button
   -can't repro anymore? at least not  from opening a file, maybe it's due to a leak?
   -also selecting via folders and moving didn't seem to cause this slowdown
 -BUG resizing unattached lines does not work
--BUG you need to change a > to >= somewhere
-  -or does this happen becaues we don't support turns right from edge even if there is now arrow head?
+-BUG 
+  -this is due to (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
               ╔═════════════╗
               ║╔GoatState═══║═══════════╗
               ║║            ║           ║

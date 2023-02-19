@@ -219,7 +219,24 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
   end@(V2 ax2 ay2) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb2) lbx2 al2
 
 
-  -- TODO use attach offset here
+  -- TODO use attach offset here??
+  -- this causes stuff like this right now
+              -- ╔═════════════╗
+              -- ║╔GoatState═══║═══════════╗
+              -- ║║            ║           ║
+              -- ║║            ║           ║
+              -- ║║            ║           ║
+              -- ║║            ║           ║
+              -- ║╚════════════║═══════════╝
+              -- ║            ║║
+              -- ║            ║v
+              -- ║╔OwlPFWorksp║ce══════════╗
+              -- ║║           ║            ║
+              -- ║║           ║            ║
+              -- ║║           ║            ║
+              -- ║║           ║            ║
+              -- ║╚═══════════║════════════╝
+              -- ╚════════════╝
   (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
 
   lbx1isstrictlyleft = ax1 < ax2
@@ -227,8 +244,8 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
   lbx1isstrictlyabove = ay1 < ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
-  --traceStep = trace
-  traceStep _ x = x
+  traceStep = trace
+  --traceStep _ x = x
   stepdetail = show lbal1 <> " | " <> show lbal2 <> "\n"
   nextmsg step = (errormsg <> " " <> step <> ": " <> stepdetail, depth+1)
 

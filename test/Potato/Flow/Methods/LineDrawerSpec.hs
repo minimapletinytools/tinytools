@@ -22,12 +22,12 @@ generateTestCases :: [OwlPFState]
 generateTestCases = r where
 
   -- MODIFY THESE TO TEST WHAT YOU NEED TO TEST :O
-  al1s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
-  al2s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
-  --al1s = [AL_Top]
-  --al2s = [AL_Bot]
-  box1s = [LBox (V2 0 10) 5]
-  box2s = [LBox (V2 5 8) 3]
+  --al1s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
+  --al2s = [AL_Left, AL_Right, AL_Top, AL_Bot, AL_Any]
+  al1s = [AL_Bot]
+  al2s = [AL_Top]
+  box1s = [LBox (V2 0 0) 10]
+  box2s = [LBox (V2 0 12) 10]
   canvasbox = LBox (-5) (V2 25 25)
 
 
@@ -39,7 +39,10 @@ generateTestCases = r where
   makestree (b1,b2) (al1, al2) =
     [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
     , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
-    , (2, SEltLabel "l" (SEltLine (def {_sAutoLine_attachStart = Just (Attachment 0 al1), _sAutoLine_attachEnd = Just (Attachment 1 al2)})))
+    , (2, SEltLabel "l" (SEltLine (def {
+          _sAutoLine_attachStart = Just (Attachment 0 al1), _sAutoLine_attachEnd = Just (Attachment 1 al2)
+          , _sAutoLine_lineStyle = LineStyle "" "" "" ""
+        })))
     --, (3, SEltLabel "lreverse" (SEltLine (def {_sAutoLine_attachStart = Just (Attachment 1 al2), _sAutoLine_attachEnd = Just (Attachment 0 al1)})))
     ]
 
