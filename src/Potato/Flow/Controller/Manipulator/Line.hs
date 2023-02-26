@@ -55,7 +55,7 @@ getAvailableAttachments includeNoBorder offsetBorder pfs bps screenRegion = r wh
   -- you could silently fail here by ignoring maybes but that would definitely be an indication of a bug so we fail here instead (you could do a better job about dumping debug info though)
   sowls = fmap (hasOwlTree_mustFindSuperOwl pfs) culled
   -- TODO sort sowls
-  fmapfn sowl = fmap (\(a,p) -> (Attachment (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments includeNoBorder offsetBorder (_superOwl_elt sowl)
+  fmapfn sowl = fmap (\(a,p) -> (attachment_create_default (_superOwl_id sowl) a, p)) $ owlItem_availableAttachments includeNoBorder offsetBorder (_superOwl_elt sowl)
   r = join $ fmap fmapfn sowls
 
 renderAttachments :: PotatoHandlerInput -> (Maybe Attachment, Maybe Attachment) -> [RenderHandle]
@@ -359,6 +359,9 @@ instance PotatoHandler AutoLineEndPointHandler where
         sslinestart = _sAutoLine_attachStart ssline
         sslineend = _sAutoLine_attachEnd ssline
 
+
+        -- TODO do projecting here
+        -- NOTE projecting rules are different in creation/modification cases
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineEndPointHandler_isStart
           then Just _mouseDrag_to /= (maybeGetAttachmentPosition _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState =<< sslineend)

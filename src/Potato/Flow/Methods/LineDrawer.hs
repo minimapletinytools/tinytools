@@ -609,7 +609,8 @@ pairs xs = zip xs (tail xs)
 
 maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
 maybeGetAttachBox ot mattachment = do
-  Attachment rid al <- mattachment
+  -- TODO update to use ratio
+  Attachment rid al ratio <- mattachment
   sowl <- hasOwlTree_findSuperOwl ot rid
   sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
   return (sbox, al)

@@ -20,6 +20,7 @@ import           Data.Maybe
 import qualified Data.Text as T
 
 
+-- TODO take additional params
 -- prob not the best place for these...
 maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
 maybeGetAttachmentPosition offsetBorder pfs a = do

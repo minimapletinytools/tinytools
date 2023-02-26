@@ -89,6 +89,23 @@ WIDE
 🙈
 
 
+:: glyph widget spec ::
+-unicode char / full art
+-allow option to embed if height is only 1
+-toggle option to search for only single char vs art
+-separate file for single char glyph database maybe?
+
+:: dragable anchor spec ::
+- -- takes position and returns anchor position if its valid
+  -- not the output XY may not be the input XY because some projecting may happen 
+  projectAnchor :: AttachmentLocation -> SBox -> XY -> Maybe XY
+-anchor move process
+  -click to select line
+  -clck on anchor to drag
+  -case projectAnchor xy of Just -> drag anchor, Nothing -> release attachment
+  -note if you drag off to release attachment and drag back in range, it should snap back to attaching
+  -note if you start a new line to attach you must first attach to the starting middle attachment location
+
 :: FUTURE FEATURES
 -grapheme cluster
   -terminals don't support it but browser will
@@ -96,6 +113,7 @@ WIDE
   -you may as well add unicode detections as well
   -need to update style types to take Text instead of Char to support grapheme clusters
 DONE-EMOJIS
+-moveable line anchors
 -TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
@@ -137,6 +155,7 @@ DONE-EMOJIS
 -background pattern fills
   -crop or stop at end of last repeating pattern
 
+
 :: refactors
 -MDI
   -Flow needs some kind of switcher on all input events/dynamics
@@ -154,7 +173,8 @@ DONE-EMOJIS
 -performance pass
 -update README.md with usage instructions
 -move over to minimaple account
--switch to cabal?
+-strip everything and upload to hackage
+DONE-switch to cabal?
   -prob need to learn nix first ;__;
 DONE/IGNORE-update ChangeLog.md
 DONE-empty canvas should have default size of 100x100 not 1x1

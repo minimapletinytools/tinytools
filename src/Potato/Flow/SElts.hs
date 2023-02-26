@@ -16,7 +16,7 @@ import qualified Data.Text as T
 import qualified Data.List         as L
 import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper as TZ
-
+import Data.Ratio
 
 
 type REltId = Int
@@ -150,15 +150,25 @@ data Attachment = Attachment {
   _attachment_target :: REltId
   , _attachment_location :: AttachmentLocation
   -- you can prob just delete these, don't think we need them.
-  -- + is right or down - is left or up
-  -- , _attach_offset_abs :: Int
-  -- , _attach_offset_rel :: Float
+  -- 1 is right/down most, 0 is left/top most, `1 % 2` is the middle
+  , _attachment_offset_rel :: Ratio Int
 } deriving (Eq, Generic, Show)
 
 instance FromJSON Attachment
 instance ToJSON Attachment
 instance Binary Attachment
 instance NFData Attachment
+
+
+attachment_offset_rel_default :: Ratio Int
+attachment_offset_rel_default =  1 % 2
+
+attachment_create_default :: REltId -> AttachmentLocation -> Attachment
+attachment_create_default rid al = Attachment {
+    _attachment_target = rid
+    , _attachment_location = al
+    , _attachment_offset_rel = attachment_offset_rel_default
+  }
 
 -- |
 data SBoxTitle = SBoxTitle {
@@ -176,7 +186,7 @@ instance Default SBoxTitle where
       _sBoxTitle_title = Nothing
       , _sBoxTitle_align = def
     }
-  
+
 instance Show SBoxTitle where
   show SBoxTitle {..} = "SBoxTitle: " <> show _sBoxTitle_align <> " " <> show _sBoxTitle_title
 

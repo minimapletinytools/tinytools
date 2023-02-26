@@ -40,7 +40,7 @@ generateTestCases = r where
     [ (0, SEltLabel "b1" (SEltBox (def {_sBox_box = b1})))
     , (1, SEltLabel "b2" (SEltBox (def {_sBox_box = b2})))
     , (2, SEltLabel "l" (SEltLine (def {
-          _sAutoLine_attachStart = Just (Attachment 0 al1), _sAutoLine_attachEnd = Just (Attachment 1 al2)
+          _sAutoLine_attachStart = Just (attachment_create_default 0 al1), _sAutoLine_attachEnd = Just (attachment_create_default 1 al2)
           , _sAutoLine_lineStyle = LineStyle "" "" "" ""
         })))
     --, (3, SEltLabel "lreverse" (SEltLine (def {_sAutoLine_attachStart = Just (Attachment 1 al2), _sAutoLine_attachEnd = Just (Attachment 0 al1)})))
