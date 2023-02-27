@@ -194,29 +194,31 @@ instance TransformMe OffsetBorder where
   transformMe_reflectHorizontally = id
 
 
-sSimpleLineSolver_NEW :: (Text, Int) -> CartRotationReflection -> SimpleLineSolverParameters_NEW -> (LBox, AttachmentLocation, OffsetBorder) -> (LBox, AttachmentLocation, OffsetBorder) -> LineAnchorsForRender
-sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_, offb2) =  finaloutput where
+-- TODO update to be (LBox, AttachmentLocation, AttachmentOffsetRatio, OffsetBorder)
+sSimpleLineSolver_NEW :: (Text, Int) -> CartRotationReflection -> SimpleLineSolverParameters_NEW -> (BoxWithAttachmentLocation, OffsetBorder) -> (BoxWithAttachmentLocation, OffsetBorder) -> LineAnchorsForRender
+sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx2, al2_, af2), offb2) =  finaloutput where
   --LBox (V2 x1 y1) (V2 w1 h1) = lbx1
   LBox (V2 _ y2) (V2 _ h2) = lbx2
 
   attachoffset = _simpleLineSolverParameters_NEW_attachOffset sls
 
   al1 = case al1_ of
-    AL_Any -> makeAL (_lBox_tl lbx1) $ case al2_ of
+    AL_Any -> assert (af1 == attachment_offset_rel_default) $ makeAL (_lBox_tl lbx1) $ case al2_ of
       AL_Any -> _lBox_tl lbx2
       _      -> end
     x -> x
   al2 = case al2_ of
-    AL_Any -> makeAL (_lBox_tl lbx2) $ case al1_ of
+    AL_Any -> assert (af1 == attachment_offset_rel_default) $ makeAL (_lBox_tl lbx2) $ case al1_ of
       AL_Any -> _lBox_tl lbx1
       _      -> start
     x -> x
 
-  lbal1 = (lbx1, al1, offb1)
-  lbal2 = (lbx2, al2, offb2)
+  lbal1 = ((lbx1, al1, af1), offb1)
+  lbal2 = ((lbx2, al2, af2), offb2)
 
-  start@(V2 ax1 ay1) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb1) lbx1 al1
-  end@(V2 ax2 ay2) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb2) lbx2 al2
+  -- TODO pass in ratio
+  start@(V2 ax1 ay1) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb1) (lbx1, al1, af1)
+  end@(V2 ax2 ay2) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb2) (lbx2, al2, af2)
 
 
   -- TODO use attach offset here??
@@ -420,10 +422,9 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls (lbx1, al1_, offb1) (lbx2, al2_,
     -- <-2->  1 (will not get covered by rotation)
     AL_Top | al2 == AL_Left || al2 == AL_Right -> traceStep "case 10 (flip)" $  transformMe_reflectHorizontally $ sSimpleLineSolver_NEW (nextmsg "case 10") (transformMe_reflectHorizontally crr) (transformMe_reflectHorizontally sls) (transformMe_reflectHorizontally lbal1) (transformMe_reflectHorizontally lbal2)
 
-    -- TODO DELETE these are handled earlier by substitution
-    AL_Top | al2 == AL_Any -> traceStep "case 11 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 11") crr sls lbal1 (lbx2, AL_Left, offb2)
-    AL_Any | al2 == AL_Top -> traceStep "case 12 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 12") crr sls (lbx1, AL_Right, offb1) lbal2
-    AL_Any | al2 == AL_Any -> traceStep "case 13 (any)" $ sSimpleLineSolver_NEW (nextmsg "case 13") crr sls (lbx1, AL_Right, offb1) (lbx2, AL_Left, offb2 )
+    AL_Top | al2 == AL_Any -> error "should have been handled by earlier substitution"
+    AL_Any | al2 == AL_Top -> error "should have been handled by earlier substitution"
+    AL_Any | al2 == AL_Any -> error "should have been handled by earlier substitution"
 
     _ -> traceStep "case 14 (rotate)" $ transformMe_rotateRight $ sSimpleLineSolver_NEW (nextmsg "case 14") (transformMe_rotateLeft crr) (transformMe_rotateLeft sls) (transformMe_rotateLeft lbal1) (transformMe_rotateLeft lbal2)
 
@@ -607,13 +608,22 @@ pairs :: [a] -> [(a, a)]
 pairs [] = []
 pairs xs = zip xs (tail xs)
 
+
 maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
 maybeGetAttachBox ot mattachment = do
-  -- TODO update to use ratio
   Attachment rid al ratio <- mattachment
   sowl <- hasOwlTree_findSuperOwl ot rid
   sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
   return (sbox, al)
+
+
+maybeGetAttachBox_NEW2 :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation, XY)
+maybeGetAttachBox_NEW2 ot mattachment = do
+  Attachment rid al ratio <- mattachment
+  sowl <- hasOwlTree_findSuperOwl ot rid
+  sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
+  -- TODO update to use ratio
+  return (sbox, al, 0)
 
 -- returns a list of LineAnchorsForRender, one for each segment separated by midpoints
 sAutoLine_to_lineAnchorsForRenderList :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
@@ -625,16 +635,18 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
       _simpleLineSolverParameters_NEW_attachOffset = 1
     }
 
-  offsetBorder x (a,b) = (a,b, OffsetBorder x)
+  offsetBorder x (a,b,c) = ((a,b,c), OffsetBorder x)
   startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
-    Nothing    -> (LBox _sAutoLine_start 1, AL_Any, OffsetBorder False)
-    Just (x,y) -> (x, y, OffsetBorder True)
+    Nothing    -> ((LBox _sAutoLine_start 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)
+    -- TODO
+    Just (x,y) -> ((x, y, attachment_offset_rel_default), OffsetBorder True)
   endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
-    Nothing    -> (LBox _sAutoLine_end 1, AL_Any, OffsetBorder False)
-    Just (x,y) -> (x, y, OffsetBorder True)
-  midlbals = fmap (\(SAutoLineConstraintFixed xy) -> offsetBorder False (LBox xy 1, AL_Any)) _sAutoLine_midpoints
+    Nothing    -> ((LBox _sAutoLine_end 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)
+    --TODO
+    Just (x,y) -> ((x, y, attachment_offset_rel_default), OffsetBorder True)
+  midlbals = fmap (\(SAutoLineConstraintFixed xy) ->   ((LBox xy 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)) _sAutoLine_midpoints
 
-  -- TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
+  -- ???? TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
   -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
   anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver_NEW ("",0) cartRotationReflection_identity params lbal1 lbal2) $ pairs ((startlbal : midlbals) <> [endlbal])
 

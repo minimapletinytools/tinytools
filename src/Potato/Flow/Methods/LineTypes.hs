@@ -12,6 +12,7 @@ import Data.Default
 
 import Linear.Vector ((^*))
 import Linear.Matrix (M22, (!*))
+import Data.Ratio
 
 import Control.Exception (assert)
 
@@ -196,7 +197,7 @@ instance (TransformMe a, TransformMe b, TransformMe c) => TransformMe (a,b,c) wh
   transformMe_reflectHorizontally (a,b,c) = (transformMe_reflectHorizontally a, transformMe_reflectHorizontally b, transformMe_reflectHorizontally c)
 
 
--- assumes LBox is Canonical)
+-- NOTE assumes LBox is Canonical
 instance TransformMe LBox where
   transformMe_rotateLeft lbox@(LBox tl (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     V2 blx bly = (!*) matrix_ccw_90 tl
@@ -206,6 +207,16 @@ instance TransformMe LBox where
     r = LBox (V2 (trx-h) try) (V2 h w)
   transformMe_reflectHorizontally lbox@(LBox (V2 x y) (V2 w h)) = assert (lBox_isCanonicalLBox lbox) r where
     r = LBox (V2 (-(x+w)) y) (V2 w h)
+
+
+
+-- very specific to the way AttachmentOffsetRatio is associated with a certain side of a box
+instance TransformMe AttachmentOffsetRatio where
+  transformMe_rotateLeft = id
+  transformMe_rotateRight = id
+  transformMe_reflectHorizontally r = (d-n) % d where
+    n = numerator r
+    d = denominator r
 
 
 -- TODO UTs for CartRotationReflection stuff

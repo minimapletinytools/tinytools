@@ -97,7 +97,7 @@ WIDE
 
 :: dragable anchor spec ::
 - -- takes position and returns anchor position if its valid
-  -- not the output XY may not be the input XY because some projecting may happen 
+  -- not the output XY may not be the input XY because some projecting may happen
   projectAnchor :: AttachmentLocation -> SBox -> XY -> Maybe XY
 -anchor move process
   -click to select line
@@ -182,6 +182,7 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
 -you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
   -from playing around with line arrows clikcing back and forth...
 DONE-flip arrow button
@@ -194,7 +195,7 @@ DONE-flip arrow button
   -can't repro anymore? at least not  from opening a file, maybe it's due to a leak?
   -also selecting via folders and moving didn't seem to cause this slowdown
 -BUG resizing unattached lines does not work
--BUG 
+-BUG
   -this is due to (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
               ╔═════════════╗
               ║╔GoatState═══║═══════════╗

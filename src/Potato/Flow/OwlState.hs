@@ -20,13 +20,13 @@ import           Data.Maybe
 import qualified Data.Text as T
 
 
--- TODO take additional params
+
 -- prob not the best place for these...
 maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
 maybeGetAttachmentPosition offsetBorder pfs a = do
   target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
   return $ case hasOwlItem_owlItem target of
-    OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox) (_attachment_location a)
+    OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox, _attachment_location a, _attachment_offset_rel a)
     _ -> error "expecteed OwlSubItemBox"
 
 maybeLookupAttachment :: Bool -> OwlPFState -> Maybe Attachment -> Maybe XY

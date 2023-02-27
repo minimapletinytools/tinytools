@@ -146,12 +146,14 @@ instance ToJSON AttachmentLocation
 instance Binary AttachmentLocation
 instance NFData AttachmentLocation
 
+type AttachmentOffsetRatio = Ratio Int
+
 data Attachment = Attachment {
   _attachment_target :: REltId
   , _attachment_location :: AttachmentLocation
   -- you can prob just delete these, don't think we need them.
   -- 1 is right/down most, 0 is left/top most, `1 % 2` is the middle
-  , _attachment_offset_rel :: Ratio Int
+  , _attachment_offset_rel :: AttachmentOffsetRatio
 } deriving (Eq, Generic, Show)
 
 instance FromJSON Attachment

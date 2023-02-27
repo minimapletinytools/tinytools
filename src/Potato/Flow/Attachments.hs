@@ -1,6 +1,7 @@
 
 module Potato.Flow.Attachments (
-  attachLocationFromLBox_conjugateCartRotationReflection
+  BoxWithAttachmentLocation
+  , attachLocationFromLBox_conjugateCartRotationReflection
   , attachLocationFromLBox
   , attachLocationsFromLBox
   , owlItem_availableAttachments
@@ -17,34 +18,40 @@ import Potato.Flow.Owl
 import Potato.Flow.SElts
 import Potato.Flow.Methods.LineTypes
 
+import Data.Ratio
+
+type BoxWithAttachmentLocation = (LBox, AttachmentLocation, AttachmentOffsetRatio)
+
 -- uh not sure if this is actually conjugation...
-attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> LBox -> AttachmentLocation -> XY
-attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder box al = r where
+attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> BoxWithAttachmentLocation -> XY
+attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder (box, al, af) = r where
   box' = cartRotationReflection_invert_apply crr box
-  r' = attachLocationFromLBox offsetBorder box' (cartRotationReflection_invert_apply crr al)
+  r' = attachLocationFromLBox offsetBorder (box', cartRotationReflection_invert_apply crr al, cartRotationReflection_invert_apply crr af)
   r = cartRotationReflection_apply crr r'
 
-attachLocationFromLBox :: Bool -> LBox -> AttachmentLocation -> XY
-attachLocationFromLBox True (LBox (V2 x y) (V2 w h)) = \case
-  -- NOTE the (_+1) `div` 2 on AL_Bot/AL_Left is such that this function is invariant under conjugation with rotations
-  --   except I think I didn't do it right because I think it does what you don't want it to do right now...
-  --   oh, the issue is it's not invariant under reflection conjugation :(
-  AL_Top -> V2 (x+w `div` 2) (y-1)
-  AL_Bot -> V2 (x+(w-1) `div` 2) (y+h)
-  AL_Left -> V2 (x-1) (y+(h-1) `div` 2)
-  AL_Right -> V2 (x+w) (y+h `div` 2)
-  -- or maybe in the middle is better?
-  AL_Any -> V2 x y
-attachLocationFromLBox False (LBox (V2 x y) (V2 w h)) = \case
-  AL_Top -> V2 (x+w `div` 2) y
-  AL_Bot -> V2 (x+(w-1) `div` 2) (y+h-1)
-  AL_Left -> V2 x (y+(h-1) `div` 2 )
-  AL_Right -> V2 (x+w-1) (y+h `div` 2 )
-  -- or maybe in the middle is better?
-  AL_Any -> V2 x y
+-- TODO use af param
+attachLocationFromLBox :: Bool -> BoxWithAttachmentLocation -> XY
+attachLocationFromLBox offset (LBox (V2 x y) (V2 w h), al, af)
+  | offset = case al of
+    AL_Top -> V2 (x + w * n `div` d) (y-1)
+    AL_Bot -> V2 (x+(w-1) * n `div` d) (y+h)
+    AL_Left -> V2 (x-1) (y+(h-1) * n `div` d)
+    AL_Right -> V2 (x+w) (y+h * n `div` d)
+    -- or maybe in the middle is better?
+    AL_Any -> V2 x y
+  | otherwise = case al of
+    AL_Top -> V2 (x+w * n `div` d) y
+    AL_Bot -> V2 (x+(w-1) * n `div` d) (y+h-1)
+    AL_Left -> V2 x (y+(h-1) * n `div` d )
+    AL_Right -> V2 (x+w-1) (y+h * n `div` d )
+    -- or maybe in the middle is better?
+    AL_Any -> V2 x y
+  where
+    n = numerator af
+    d = denominator af
 
 attachLocationsFromLBox :: Bool -> LBox -> [(AttachmentLocation, XY)]
-attachLocationsFromLBox offsetBorder lbx = fmap (\a -> (a,attachLocationFromLBox offsetBorder lbx a)) [AL_Top, AL_Bot, AL_Left, AL_Right]
+attachLocationsFromLBox offsetBorder lbx = fmap (\a -> (a,attachLocationFromLBox offsetBorder (lbx, a, attachment_offset_rel_default))) [AL_Top, AL_Bot, AL_Left, AL_Right]
 
 owlItem_availableAttachments :: Bool -> Bool -> OwlItem -> [(AttachmentLocation, XY)]
 owlItem_availableAttachments includeNoBorder offsetBorder o = case _owlItem_subItem o of
