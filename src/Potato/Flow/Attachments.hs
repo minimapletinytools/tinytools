@@ -21,7 +21,9 @@ import Potato.Flow.Owl
 import Potato.Flow.SElts
 import Potato.Flow.Methods.LineTypes
 
+import Data.List (maximumBy)
 import Data.Ratio
+import Data.Tuple.Extra
 import Control.Exception (assert)
 
 
@@ -107,10 +109,21 @@ isOverAttachment :: XY -> [(Attachment, XY)] -> Maybe (Attachment, XY)
 isOverAttachment pos attachments = find (\(a,x) -> x == pos) attachments
 
 -- TODO
-projectAttachment :: XY -> LBox -> Maybe (Attachment, XY)
+projectAttachment :: XY -> LBox -> Maybe (AttachmentLocation, XY)
 projectAttachment pos lbox = r where
-  -- TODO call availableAttachLocationsFromLBox
-  r = undefined
+  als = availableAttachLocationsFromLBox False lbox
+
+  -- TODO
+  -- returns (projection distance, project position)
+  projdfn :: AvailableAttachment -> (Int, XY, AvailableAttachment)
+  projdfn = undefined
+
+  rslts = fmap projdfn als
+  (d, pos, AvailableAttachment_CartSegment _ al) = maximumBy (\a b -> compare (fst3 a) (fst3 b)) rslts
+
+  r = if d < 2
+    then Nothing
+    else Just $ (al, pos)
 
 attachmentRenderChar :: Attachment -> PChar
 attachmentRenderChar att = case _attachment_location att of
