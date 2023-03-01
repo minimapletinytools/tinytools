@@ -246,8 +246,8 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
   lbx1isstrictlyabove = ay1 < ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
-  traceStep = trace
-  --traceStep _ x = x
+  --traceStep = trace
+  traceStep _ x = x
   stepdetail = show lbal1 <> " | " <> show lbal2 <> "\n"
   nextmsg step = (errormsg <> " " <> step <> ": " <> stepdetail, depth+1)
 
@@ -611,19 +611,18 @@ pairs xs = zip xs (tail xs)
 
 maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
 maybeGetAttachBox ot mattachment = do
-  Attachment rid al ratio <- mattachment
+  Attachment rid al _ <- mattachment
   sowl <- hasOwlTree_findSuperOwl ot rid
   sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
   return (sbox, al)
 
 
-maybeGetAttachBox_NEW2 :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation, XY)
+maybeGetAttachBox_NEW2 :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe BoxWithAttachmentLocation
 maybeGetAttachBox_NEW2 ot mattachment = do
   Attachment rid al ratio <- mattachment
   sowl <- hasOwlTree_findSuperOwl ot rid
   sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
-  -- TODO update to use ratio
-  return (sbox, al, 0)
+  return (sbox, al, ratio)
 
 -- returns a list of LineAnchorsForRender, one for each segment separated by midpoints
 sAutoLine_to_lineAnchorsForRenderList :: (HasOwlTree a) => a -> SAutoLine -> [LineAnchorsForRender]
@@ -635,15 +634,15 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
       _simpleLineSolverParameters_NEW_attachOffset = 1
     }
 
+
+
   offsetBorder x (a,b,c) = ((a,b,c), OffsetBorder x)
-  startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
+  startlbal = case maybeGetAttachBox_NEW2 ot _sAutoLine_attachStart of
     Nothing    -> ((LBox _sAutoLine_start 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)
-    -- TODO
-    Just (x,y) -> ((x, y, attachment_offset_rel_default), OffsetBorder True)
-  endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
+    Just bal -> (bal, OffsetBorder True)
+  endlbal = case maybeGetAttachBox_NEW2 ot _sAutoLine_attachEnd of
     Nothing    -> ((LBox _sAutoLine_end 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)
-    --TODO
-    Just (x,y) -> ((x, y, attachment_offset_rel_default), OffsetBorder True)
+    Just bal -> (bal, OffsetBorder True)
   midlbals = fmap (\(SAutoLineConstraintFixed xy) ->   ((LBox xy 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)) _sAutoLine_midpoints
 
   -- ???? TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint

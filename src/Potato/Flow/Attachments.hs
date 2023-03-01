@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Attachments (
   AvailableAttachment
@@ -80,14 +81,14 @@ availableAttachLocationFromLBox offset (LBox (V2 x y) (V2 w h), al)
   | offset = flip AvailableAttachment_CartSegment al $ case al of
     AL_Top -> CartSegment False (y-1) x (x+w)
     AL_Bot -> CartSegment False (y+h) x (x+w)
-    AL_Left -> CartSegment False (x-1) y (y+h)
-    AL_Right -> CartSegment False (x+w) y (y+h)
+    AL_Left -> CartSegment True (x-1) y (y+h)
+    AL_Right -> CartSegment True (x+w) y (y+h)
     AL_Any -> assert False $ CartSegment False x y y
   | otherwise = flip AvailableAttachment_CartSegment al $ case al of
     AL_Top -> CartSegment False y x (x+w)
     AL_Bot -> CartSegment False (y+h-1) x (x+w)
-    AL_Left -> CartSegment False x y (y+h)
-    AL_Right -> CartSegment False (x+w-1) y (y+h)
+    AL_Left -> CartSegment True x y (y+h)
+    AL_Right -> CartSegment True (x+w-1) y (y+h)
     AL_Any -> assert False $ CartSegment False x y y
 
 availableAttachLocationsFromLBox :: Bool -> LBox -> [AvailableAttachment]
