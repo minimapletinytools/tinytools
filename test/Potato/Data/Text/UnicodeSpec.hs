@@ -36,4 +36,3 @@ spec = describe "Unicode" $ do
   it "containsGraphemeCluster" $ do
     containsGraphemeCluster "👎👎👎👎👎" `shouldBe` False
     containsGraphemeCluster "👎👎👎🏿👎👎👎" `shouldBe` True
-    
