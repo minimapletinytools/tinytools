@@ -1,3 +1,4 @@
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Methods.LineDrawer (
@@ -60,19 +61,31 @@ determineSeparation (lbx1, p1) (lbx2, p2) = r where
   vsep = t1 >= b2 || t2 >= b1
   r = (hsep, vsep)
 
+determineSeparationForAttachment_custom :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
+determineSeparationForAttachment_custom = determineSeparation
 
+
+-- TODO DELETE this version was to help support arrows very close to each other but not in one line (see diagram), however it causes undesireable behavior in other cases so we don't use it anymore, it needs to be fixed on an ad-hoc bases
 -- in order to be separated for attachment, there must be space for a line in between the two boxes
 -- e.g. both ends are offset by 2 but they only need a space of 3 between them
 --   +-*
 --   |
 -- *-+
-determineSeparationForAttachment :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
-determineSeparationForAttachment (lbx1, p1) (lbx2, p2) = r where
-  (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
-  (l2,r2,t2,b2) = lBox_to_axis $ lBox_expand lbx2 p2
-  hsep = l1 >= r2+1 || l2 >= r1+1
-  vsep = t1 >= b2+1 || t2 >= b1+1
-  r = (hsep, vsep)
+--determineSeparationForAttachment_custom :: (LBox, (Int, Int, Int, Int)) -> (LBox, (Int, Int, Int, Int)) -> (Bool, Bool)
+--determineSeparationForAttachment_custom (lbx1, p1) (lbx2, p2) = r where
+--  (l1,r1,t1,b1) = lBox_to_axis $ lBox_expand lbx1 p1
+--  (l2,r2,t2,b2) = lBox_to_axis $ lBox_expand lbx2 p2
+--  hsep = l1 >= r2+1 || l2 >= r1+1
+--  vsep = t1 >= b2+1 || t2 >= b1+1
+--  r = (hsep, vsep)
+
+
+determineSeparationForAttachment :: (LBox, Int) -> (LBox, Int) -> (Bool, Bool)
+determineSeparationForAttachment (lbx1, amt1') (lbx2, amt2') = determineSeparationForAttachment_custom (lbx1, amt1) (lbx2, amt2) where
+  amt1 = (amt1',amt1',amt1',amt1')
+  amt2 = (amt2',amt2',amt2',amt2')
+
+
 
 maybeIndex :: Text -> Int -> Maybe MPChar
 maybeIndex t i = if i < T.length t
@@ -120,7 +133,10 @@ lineAnchorsForRender_simplify LineAnchorsForRender {..} = r where
         [] -> []
         x:[] -> [x]
         (_, 0, False):xs -> xs
-        (_, 0, True):_ -> error "unexpected 0 length subsegment starting anchor"
+        -- this can happen now in a few cases, I don't think it's a big deal
+        -- it does mess up our subsegmenting starting flags but I think in that case the midpoint probably got removed entirely due to it being too close to another one maybe??
+        --(_, 0, True):_ -> error "unexpected 0 length subsegment starting anchor"
+        (_, 0, True):xs -> xs
         x:xs -> x:withoutzerosback xs
 
   foldrfn (cd, d, s) [] = [(cd, d, s)]
@@ -194,6 +210,7 @@ instance TransformMe OffsetBorder where
   transformMe_reflectHorizontally = id
 
 
+-- 🙈🙈🙈
 -- TODO update to be (LBox, AttachmentLocation, AttachmentOffsetRatio, OffsetBorder)
 sSimpleLineSolver_NEW :: (Text, Int) -> CartRotationReflection -> SimpleLineSolverParameters_NEW -> (BoxWithAttachmentLocation, OffsetBorder) -> (BoxWithAttachmentLocation, OffsetBorder) -> LineAnchorsForRender
 sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx2, al2_, af2), offb2) =  finaloutput where
@@ -216,12 +233,11 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
   lbal1 = ((lbx1, al1, af1), offb1)
   lbal2 = ((lbx2, al2, af2), offb2)
 
-  -- TODO pass in ratio
   start@(V2 ax1 ay1) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb1) (lbx1, al1, af1)
   end@(V2 ax2 ay2) = attachLocationFromLBox_conjugateCartRotationReflection crr (unOffsetBorder offb2) (lbx2, al2, af2)
 
 
-  -- TODO use attach offset here??
+  -- TODO need to selectively remove offset border based on whether there is an arrow or not (you need to set sSimpleLineSolver_NEW OffsetBorder parameter, issue isn't here)
   -- this causes stuff like this right now
               -- ╔═════════════╗
               -- ║╔GoatState═══║═══════════╗
@@ -239,7 +255,7 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
               -- ║║           ║            ║
               -- ║╚═══════════║════════════╝
               -- ╚════════════╝
-  (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
+  (hsep, vsep) = determineSeparationForAttachment (lbx1, if unOffsetBorder offb1 then 1 else 0) (lbx2, if unOffsetBorder offb2 then 1 else 0)
 
   lbx1isstrictlyleft = ax1 < ax2
   lbx1isleft = ax1 <= ax2
@@ -259,7 +275,6 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
   t = min (t1_inc-1) (t2_inc-1)
   b = max b1 b2
 
-  --anchors = trace (show al1 <> " " <> show al2) $ case al1 of
   anchors = case al1 of
     -- WORKING
     -- degenerate case
@@ -334,10 +349,17 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
         }
 
     -- WORKING
-    -- not vsep is the wrong condition here, we want ay1 to be above or below lbx2
+    --
     -- 1->
     --     2->
-    AL_Right | al2 == AL_Right && ay1isvsepfromlbx2 -> traceStep "case 4" $ answer where
+    -- ay1isvsepfromlbx2 (different boxes)
+    --
+    -- OR
+    --
+    -- ->1
+    -- ->2
+    -- r1 == r2 (special case when the 2 boxes are the same)
+    AL_Right | al2 == AL_Right && (ay1isvsepfromlbx2 || r1 == r2) -> traceStep "case 4" $ answer where
       rightedge = max r1 r2 + attachoffset
       lb1_to_right1 = (CD_Right, rightedge-r1)
       right1_to_right2 = if lbx1isstrictlyabove
@@ -351,17 +373,19 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
 
     -- WORKING
     -- ->1 ->2
-    AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5" $  answer where
-      goup = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
+    AL_Right | al2 == AL_Right && lbx1isleft && not ay1isvsepfromlbx2 -> traceStep "case 5b" $  answer where
+
+
+      goupordown = (ay1-t)+(ay2-t) < (b-ay1)+(b-ay2)
 
       -- TODO maybe it would be nice if this traveled a little further right
       lb1_to_right1 = (CD_Right, attachoffset)
 
-      right1_to_torb = if goup
+      right1_to_torb = if goupordown
         then (CD_Up, ay1-t)
         else (CD_Down, b-ay1)
       torb = (CD_Right, r2-r1)
-      torb_to_right2 = if goup
+      torb_to_right2 = if goupordown
         then (CD_Down, ay2-t)
         else (CD_Up, b-ay2)
       right2_to_lb2 = (CD_Left, attachoffset)

@@ -154,6 +154,8 @@ DONE-EMOJIS
 -scripting and extensions lol
 -background pattern fills
   -crop or stop at end of last repeating pattern
+-would be cool to have a way to manipulate multiple line midpoints at the same time
+  -but really you should just switch to segment based midpoints instead..?
 
 
 :: refactors
@@ -183,11 +185,11 @@ DONE-proper command line parsing with --help option
 
 ::NEWEST TODO::
 -draggable anchors
-  -- TODO change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
-  -you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case
-  -BUG some of the anchors don't match with where the line gets drawn to
+  -change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
+  DONE-you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case
+  DONE-BUG some of the anchors don't match with where the line gets drawn to
     -I think basically you need to rewrite a bunch of the linedrawer methods which assumed anchors started from the middle? ug?
-    DONE-project ratio calculation seems to project to a point that's off by 1 sometimes 
+    DONE-project ratio calculation seems to project to a point that's off by 1 sometimes
       -might be due to offset border nonsense?
   DONE-break ties use mpreval in projectAttach
 -BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
@@ -204,6 +206,13 @@ DONE-flip arrow button
   -also selecting via folders and moving didn't seem to cause this slowdown
 -BUG resizing unattached lines does not work
 -BUG
+  -now you get stuff like this, there's no arrow when there should be one, that's because you messed with determineSeparationForAttachment to not have the extra 1 offset
+  -really there just a bunch of edge cases here that you need to deeal with based on arrow/now arrow and whether the attachment points are in 1 line or not etc :(
+    ║╚═══════════════════════╝
+    ║            ╚╗
+    ║             v
+    ║╔OwlPFWor═══════════════╗
+DONE-BUG
   -this is due to (hsep, vsep) = determineSeparationForAttachment (lbx1, (1,1,1,1)) (lbx2, (1,1,1,1))
               ╔═════════════╗
               ║╔GoatState═══║═══════════╗
