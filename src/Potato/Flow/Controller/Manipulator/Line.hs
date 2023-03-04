@@ -24,6 +24,7 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
 
+import Control.Monad (msum)
 import           Control.Exception
 import           Data.Default
 import qualified Data.List                                         as L
@@ -349,7 +350,21 @@ instance PotatoHandler AutoLineEndPointHandler where
   pHandleMouse slh@AutoLineEndPointHandler {..} PotatoHandlerInput {..} (RelMouseDrag MouseDrag {..}) = let
       mridssline = maybeGetSLine _potatoHandlerInput_canvasSelection
       attachments = getAvailableAttachments False True _potatoHandlerInput_pFState _potatoHandlerInput_broadPhase _potatoHandlerInput_screenRegion
-      mattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
+
+      -- TODO change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
+      -- if we attached to some box we weren't already attached to
+      mnewattachend = fmap fst . isOverAttachment _mouseDrag_to $ attachments
+
+      -- if we attached to the box we were already attached to
+      mprojectattachend = case mridssline of
+        Nothing -> Nothing
+        Just (_, ssline) -> fmap fst $ do
+          aend <- if _autoLineEndPointHandler_isStart then _sAutoLine_attachStart ssline else _sAutoLine_attachEnd ssline
+          box <- maybeGetAttachmentBox _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState aend
+          projectAttachment (_attachment_location aend) _mouseDrag_to (_attachment_target aend) box
+
+      mattachend = msum [mprojectattachend, mnewattachend]
+
     in case _mouseDrag_state of
       MouseDragState_Down -> error "this should be handleed by AutoLineHandler"
       MouseDragState_Dragging -> Just r where
@@ -363,8 +378,7 @@ instance PotatoHandler AutoLineEndPointHandler where
         sslineend = _sAutoLine_attachEnd ssline
 
 
-        -- TODO do projecting here
-        -- NOTE projecting rules are different in creation/modification cases
+
 
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineEndPointHandler_isStart

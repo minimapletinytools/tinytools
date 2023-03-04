@@ -22,7 +22,7 @@ import Potato.Flow.Owl
 import Potato.Flow.SElts
 import Potato.Flow.Methods.LineTypes
 
-import Data.List (maximumBy)
+import Data.List (minimumBy)
 import Data.Ratio
 import Data.Tuple.Extra
 import Control.Exception (assert)
@@ -42,34 +42,23 @@ type BoxWithAttachmentLocation = (LBox, AttachmentLocation, AttachmentOffsetRati
 -- uh not sure if this is actually conjugation...
 attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> BoxWithAttachmentLocation -> XY
 attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder (box, al, af) = r where
-  box' = cartRotationReflection_invert_apply crr box
-  r' = attachLocationFromLBox offsetBorder (box', cartRotationReflection_invert_apply crr al, cartRotationReflection_invert_apply crr af)
+  r' = attachLocationFromLBox offsetBorder (cartRotationReflection_invert_apply crr box, cartRotationReflection_invert_apply crr al, cartRotationReflection_invert_apply crr af)
   r = cartRotationReflection_apply crr r'
 
 -- NOTE assumes LBox is canonical
 attachLocationFromLBox :: Bool -> BoxWithAttachmentLocation -> XY
-attachLocationFromLBox offset (LBox (V2 x y) (V2 w h), al, af)
-  | offset = case al of
-    AL_Top -> V2 (x + w * n `div` d) (y-1)
-    -- TODO you need to get rid of the -1 here
-    AL_Bot -> V2 (x+(w-1) * n `div` d) (y+h)
-    -- TODO you need to get rid of the -1 here
-    AL_Left -> V2 (x-1) (y+(h-1) * n `div` d)
-    AL_Right -> V2 (x+w) (y+h * n `div` d)
-    -- or maybe in the middle is better?
-    AL_Any -> V2 x y
-  | otherwise = case al of
-    AL_Top -> V2 (x+w * n `div` d) y
-    -- TODO you need to get rid of the -1 here
-    AL_Bot -> V2 (x+(w-1) * n `div` d) (y+h-1)
-    -- TODO you need to get rid of the -1 here
-    AL_Left -> V2 x (y+(h-1) * n `div` d )
-    AL_Right -> V2 (x+w-1) (y+h * n `div` d )
-    -- or maybe in the middle is better?
-    AL_Any -> V2 x y
+attachLocationFromLBox True (lbx, al, af) = attachLocationFromLBox False (lBox_expand lbx (1,1,1,1), al, af)
+attachLocationFromLBox offset (LBox (V2 x y) (V2 w h), al, af) = case al of
+  AL_Top -> V2 (x+w * n `div` d) y
+  AL_Bot -> V2 (x+(w-1) * dn `div` d) (y+h-1)
+  AL_Left -> V2 x (y+(h-1) * dn `div` d )
+  AL_Right -> V2 (x+w-1) (y+h * n `div` d )
+  -- or maybe in the middle is better?
+  AL_Any -> V2 x y
   where
     n = numerator af
     d = denominator af
+    dn = d-n
 
 
 defaultAttachLocationsFromLBox :: Bool -> LBox -> [(AttachmentLocation, XY)]
@@ -109,22 +98,49 @@ owlItem_availableAttachments includeNoBorder offsetBorder o = case _owlItem_subI
 isOverAttachment :: XY -> [(Attachment, XY)] -> Maybe (Attachment, XY)
 isOverAttachment pos attachments = find (\(a,x) -> x == pos) attachments
 
--- TODO
-projectAttachment :: XY -> LBox -> Maybe (AttachmentLocation, XY)
-projectAttachment pos lbox = r where
+
+projectAttachment :: AttachmentLocation -> XY -> REltId -> LBox -> Maybe (Attachment, XY)
+projectAttachment preval (V2 x y) rid lbox = r where
   als = availableAttachLocationsFromLBox False lbox
 
-  -- TODO
-  -- returns (projection distance, project position)
-  projdfn :: AvailableAttachment -> (Int, XY, AvailableAttachment)
-  projdfn = undefined
+  -- returns (projection distance, (projection ratio, projection position)
+  projdfn :: AvailableAttachment -> (Int, (AttachmentOffsetRatio, XY), AvailableAttachment)
+  projdfn aa@(AvailableAttachment_CartSegment (CartSegment {..}) al) = r2 where
+    projcomp = if _cartSegment_isVertical then x else y
+    (orthd, orthcomp) = (abs (projcomp - _cartSegment_common), _cartSegment_common)
+    slidecomp = if _cartSegment_isVertical then y else x
+    (parad, paracomp) = if slidecomp < _cartSegment_leftOrTop
+      then (_cartSegment_leftOrTop - slidecomp, _cartSegment_leftOrTop)
+      else if slidecomp > _cartSegment_rightOrBot
+        then (slidecomp - _cartSegment_rightOrBot, _cartSegment_rightOrBot)
+        else (0, slidecomp)
+
+    pos@(V2 px py) = if _cartSegment_isVertical then V2 orthcomp paracomp else V2 paracomp orthcomp
+    segl = _cartSegment_rightOrBot - _cartSegment_leftOrTop
+    ratio = case al of
+      AL_Top -> (px - _cartSegment_leftOrTop) % segl
+      AL_Bot -> (_cartSegment_rightOrBot - px) % segl
+      AL_Left -> (_cartSegment_rightOrBot - py) % segl
+      AL_Right -> (py - _cartSegment_leftOrTop) % segl
+      AL_Any -> error "unexpected"
+
+    r2 = (parad+orthd, (ratio, pos), aa)
 
   rslts = fmap projdfn als
-  (d, pos, AvailableAttachment_CartSegment _ al) = maximumBy (\a b -> compare (fst3 a) (fst3 b)) rslts
+  cmpfn (d1, _, AvailableAttachment_CartSegment _ al1) (d2, _, AvailableAttachment_CartSegment _ al2) = compare d1 d2 <> compare (al2 == preval) (al1 == preval)
+  (d, (ratio, pos), AvailableAttachment_CartSegment _ al) = minimumBy cmpfn rslts
 
-  r = if d < 2
+  attachment = Attachment {
+      _attachment_target = rid
+      , _attachment_location = al
+      , _attachment_offset_rel = ratio
+    }
+
+  r = if d > 2
     then Nothing
-    else Just $ (al, pos)
+    else Just $ (attachment, pos)
+
+
 
 attachmentRenderChar :: Attachment -> PChar
 attachmentRenderChar att = case _attachment_location att of

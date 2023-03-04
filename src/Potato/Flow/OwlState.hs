@@ -22,14 +22,21 @@ import qualified Data.Text as T
 
 
 -- prob not the best place for these...
-maybeGetAttachmentPosition :: Bool -> OwlPFState -> Attachment -> Maybe XY
+maybeGetAttachmentPosition :: (HasCallStack) => Bool -> OwlPFState -> Attachment -> Maybe XY
 maybeGetAttachmentPosition offsetBorder pfs a = do
   target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
   return $ case hasOwlItem_owlItem target of
     OwlItem _ (OwlSubItemBox sbox) -> attachLocationFromLBox offsetBorder (_sBox_box sbox, _attachment_location a, _attachment_offset_rel a)
-    _ -> error "expecteed OwlSubItemBox"
+    x -> error ("expecteed OwlSubItemBox, got: " <> show x)
 
-maybeLookupAttachment :: Bool -> OwlPFState -> Maybe Attachment -> Maybe XY
+maybeGetAttachmentBox :: Bool -> OwlPFState -> Attachment -> Maybe LBox
+maybeGetAttachmentBox offsetBorder pfs a = do
+  target <- hasOwlTree_findSuperOwl pfs (_attachment_target a)
+  return $ case hasOwlItem_owlItem target of
+    OwlItem _ (OwlSubItemBox sbox) -> if offsetBorder then lBox_expand (_sBox_box sbox) (1,1,1,1) else _sBox_box sbox
+    x -> error ("expecteed OwlSubItemBox, got: " <> show x)
+
+maybeLookupAttachment :: (HasCallStack) => Bool -> OwlPFState -> Maybe Attachment -> Maybe XY
 maybeLookupAttachment offsetBorder pfs matt = maybeGetAttachmentPosition offsetBorder pfs =<< matt
 
 

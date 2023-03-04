@@ -208,7 +208,7 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
       _      -> end
     x -> x
   al2 = case al2_ of
-    AL_Any -> assert (af1 == attachment_offset_rel_default) $ makeAL (_lBox_tl lbx2) $ case al1_ of
+    AL_Any -> assert (af2 == attachment_offset_rel_default) $ makeAL (_lBox_tl lbx2) $ case al1_ of
       AL_Any -> _lBox_tl lbx1
       _      -> start
     x -> x
@@ -609,6 +609,7 @@ pairs [] = []
 pairs xs = zip xs (tail xs)
 
 
+-- DELETE
 maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
 maybeGetAttachBox ot mattachment = do
   Attachment rid al _ <- mattachment

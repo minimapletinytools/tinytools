@@ -182,6 +182,14 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-draggable anchors
+  -- TODO change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
+  -you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case
+  -BUG some of the anchors don't match with where the line gets drawn to
+    -I think basically you need to rewrite a bunch of the linedrawer methods which assumed anchors started from the middle? ug?
+    DONE-project ratio calculation seems to project to a point that's off by 1 sometimes 
+      -might be due to offset border nonsense?
+  DONE-break ties use mpreval in projectAttach
 -BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
 -you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
   -from playing around with line arrows clikcing back and forth...
