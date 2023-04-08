@@ -26,7 +26,6 @@ source-repository head
 
 library
   exposed-modules:
-      Data.Wedge
       Potato.Data.Text.Unicode
       Potato.Data.Text.Zipper
       Potato.Data.Text.Zipper2
@@ -228,7 +227,7 @@ test-suite potato-flow-test
       TypeFamilyDependencies
       TypeOperators
       NoImplicitPrelude
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -fno-ignore-asserts -j
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -fno-ignore-asserts
   build-depends:
       HUnit
     , MonadRandom
