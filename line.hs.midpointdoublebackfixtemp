@@ -1,0 +1,42 @@
+startlbal = case maybeGetAttachBox ot _sAutoLine_attachStart of
+    Nothing -> (LBox _sAutoLine_start 1, Nothing, OffsetBorder False)
+    Just (x,y) -> (x, Just y, OffsetBorder True)
+  endlbal = case maybeGetAttachBox ot _sAutoLine_attachEnd of
+    Nothing -> (LBox _sAutoLine_end 1, Nothing, OffsetBorder False)
+    Just (x,y) -> (x, Just y, OffsetBorder True)
+  midlbals = fmap (\(SAutoLineConstraintFixed xy) ->  (LBox xy 1, Nothing, OffsetBorder False)) _sAutoLine_midpoints
+  paired' = pairs ((startlbal : midlbals) <> [endlbal])
+
+
+  -- TODO WIP FINISH be smarter about generating attach direction
+  {-
+  al1 = case al1_ of
+    AL_Any -> makeAL (_lBox_tl lbx1) $ case al2_ of
+      AL_Any -> _lBox_tl lbx2
+      _      -> end
+    x -> x
+  al2 = case al2_ of
+    AL_Any -> makeAL (_lBox_tl lbx2) $ case al1_ of
+      AL_Any -> _lBox_tl lbx1
+      _      -> start
+    x -> x
+  attachWithConstraint incomingdir _ _ = undefined
+  mapAccumFn acc ((a1@(LBox (V2 x1 y1) _), b1, c1), (a2@(LBox (V2 x2, y2) _), b2, c2)) = r where
+    case x of
+      -- if there was no previous pair, attach however you please
+      [] -> undefined
+      -- if there was a previous pair, attach with constraint
+      ((_,_):_) -> undefined
+  paired = reverse . fst $ mapAccumL mapAccumFn [] paired'
+  -}
+  paired = paired'
+
+
+
+
+
+
+
+  -- TODO BUG this is a problem, you need selective offsetting for each side of the box, in particular, midpoints can't offset and the point needs to land exactly on the midpoint
+  -- NOTE for some reason sticking trace statements in sSimpleLineSolver will causes regenanchors to get called infinite times :(
+  anchorss = fmap (\(lbal1, lbal2) -> sSimpleLineSolver_NEW ("",0) params lbal1 lbal2) $ paired'

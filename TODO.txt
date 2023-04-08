@@ -91,9 +91,14 @@ WIDE
 
 :: glyph widget spec ::
 -unicode char / full art
--allow option to embed if height is only 1
+  -should single unicode be separate or no?
+  -for unicode, how do handle grapheme clusters?
+    -maybe just encourage folks to use OS-level picker instead?
+-allow option to embed in definition file if height is only 1
 -toggle option to search for only single char vs art
 -separate file for single char glyph database maybe?
+
+character_glpyhs
 
 :: dragable anchor spec ::
 - -- takes position and returns anchor position if its valid
@@ -184,6 +189,11 @@ DONE-proper command line parsing with --help option
 
 
 ::NEWEST TODO::
+-tutorial...
+-add version # to serialization (how?)
+-add beta title
+-probably want pop up error when you try and open a file that is invalid
+-add versioning to serialized file
 -draggable anchors
   -change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
   DONE-you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case
