@@ -29,6 +29,8 @@ import           Data.Aeson
 import           Data.Default
 import qualified Data.IntMap            as IM
 import qualified Text.Show
+import           Data.Binary
+
 
 
 -- someday it would be nice to support graphene clusters and RTL 😭
@@ -112,6 +114,8 @@ instance Show LayerMeta where
 instance FromJSON LayerMeta
 instance ToJSON LayerMeta
 instance NFData LayerMeta
+instance Binary LayerMeta
+
 
 -- Not sure which way I want to do it, so make it configurable for now.
 defaultFolderCollapseState :: Bool
@@ -150,6 +154,8 @@ data ControllerMeta = ControllerMeta {
 
 instance FromJSON ControllerMeta
 instance ToJSON ControllerMeta
+instance NFData ControllerMeta
+instance Binary ControllerMeta
 
 emptyControllerMeta :: ControllerMeta
 emptyControllerMeta = ControllerMeta 0 IM.empty
