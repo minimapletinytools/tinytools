@@ -180,20 +180,9 @@ DONE-EMOJIS
 -performance pass
 -update README.md with usage instructions
 -move over to minimaple account
--strip everything and upload to hackage
-DONE-switch to cabal?
-  -prob need to learn nix first ;__;
-DONE/IGNORE-update ChangeLog.md
-DONE-empty canvas should have default size of 100x100 not 1x1
-DONE-proper command line parsing with --help option
-
 
 ::NEWEST TODO::
 -tutorial...
--add version # to serialization (how?)
--add beta title
--probably want pop up error when you try and open a file that is invalid
--add versioning to serialized file
 -draggable anchors
   -change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
   DONE-you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case
@@ -260,6 +249,16 @@ DONE-BUG
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-strip everything and upload to hackage
+DONE-switch to cabal?
+  -prob need to learn nix first ;__;
+DONE/IGNORE-update ChangeLog.md
+DONE-empty canvas should have default size of 100x100 not 1x1
+DONE-proper command line parsing with --help option
+DONE-add version # to serialization (how?)
+DONE/IGNORE-add beta title
+DONE-probably want pop up error when you try and open a file that is invalid
+DONE-add versioning to serialized file
 DONE-properly disable grapheme clusters
   DONE-disable unicode wide chars too ;__;
   DONE-prob best to do this at goat keyboard input processing level
