@@ -1,5 +1,3 @@
-[![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
-
 # tinytools
 `tinytools` is a mono-space unicode flow-chart editor written in Haskell.
 
@@ -31,14 +29,3 @@ The view/controller is connected to the model using a [reflex](https://github.co
   - ordering service interface
   - basic single client authoritative implementation of ordering service interface (for now)
 - scriptable command interface
-
-
-# Contribution Guide
-
-Help wanted! I will of course review any PR. For large or small ideas, it would be best to drop me an email first at chippermonky at gmail dot com
-
-Below are a list of tasks that I think would be extra good projects to work on
-
-- CI scripts for creating binary releases
-- add text selection support to current `TextZipper` implementation and fix bugs
-- refactoring 😑
