@@ -23,12 +23,11 @@ import qualified Data.IntMap as IM
 
 
 verifyMostRecentlyCreatedLinesLatestLineLabelHasText :: Text -> GoatTester ()
-verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyMostRecentlyCreatedLine  checkfn where
-  checkfn sline = case _sAutoLine_labels sline of
-    [] -> Just "most recently created line has no line labels"
-    (x:_) -> if _sAutoLineLabel_text x == text
-      then Nothing
-      else Just $ "found line label with text: " <> _sAutoLineLabel_text x <> " expected: " <> text
+verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyStateObjectHasProperty "verifyMostRecentlyCreatedLinesLatestLineLabelHasText" fetchfn checkfn where
+  fetchfn = composeObjectFetcher fetchLatestLine fetchLineLabel_from_latestLine
+  checkfn llabel = if _sAutoLineLabel_text llabel == text
+    then Nothing
+    else Just $ "found line label with text: " <> _sAutoLineLabel_text llabel <> " expected: " <> text
 
 
 
@@ -46,7 +45,6 @@ fetchLineLabel_from_latestLine sline = case _sAutoLine_labels sline of
   []    -> Left "most recently created line has no line labels"
   (x:_) -> Right x
 
--- TODO make verifyMostRecentlyCreateLineHasProperty helper
 verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition :: (Int, Int) -> GoatTester ()
 verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (px, py) = verifyState "verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition" checkfn where
   checkfn gs = r where
@@ -68,27 +66,15 @@ verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (px, py) = verifyState 
         then Nothing
         else Just $ "expected line label position: " <> show (px, py) <> " got " <> show (x, y)
 
--- TODO make verifyMostRecentlyCreateLineHasProperty helper
 verifyMostRecentlyCreateLineIsAttached :: (Maybe AttachmentLocation, Maybe AttachmentLocation) -> GoatTester ()
-verifyMostRecentlyCreateLineIsAttached (mstartalexp, mendalexp) = verifyState "verifyMostRecentlyCreateLineIsAttached" checkfn where
-  checkfn gs = r where
-    pfs = goatState_pFState gs
-    r' = do
-      sowl <- case maybeGetMostRecentlyCreatedOwl' (goatState_pFState gs) of
-        Nothing -> Left "failed, no 🦉s"
-        Just x  -> Right x
-      sline <- case _owlItem_subItem (_superOwl_elt sowl) of
-        OwlSubItemLine x -> Right x
-        x                  -> Left $ "expected SAutoLine got: " <> show x
-      let
-        mstartal = fmap _attachment_location (_sAutoLine_attachStart sline)
-        mendal = fmap _attachment_location (_sAutoLine_attachEnd sline)
-      if mstartal == mstartalexp && mendal == mendalexp
-        then Right ()
-        else Left $ "expected attachments (start, end): (" <> show mstartalexp <> ", " <> show mendalexp <> ") got (" <> show mstartal <> ", " <> show mendal <> ")"
-    r = case r' of
-      Left e -> Just e
-      Right _ -> Nothing
+verifyMostRecentlyCreateLineIsAttached (mstartalexp, mendalexp) = verifyStateObjectHasProperty "verifyMostRecentlyCreateLineIsAttached" fetchLatestLine checkfn where
+  checkfn sline = r where
+    mstartal = fmap _attachment_location (_sAutoLine_attachStart sline)
+    mendal = fmap _attachment_location (_sAutoLine_attachEnd sline)
+    r = if mstartal == mstartalexp && mendal == mendalexp
+      then Nothing
+      else Just $ "expected attachments (start, end): (" <> show mstartalexp <> ", " <> show mendalexp <> ") got (" <> show mstartal <> ", " <> show mendal <> ")"
+
 
 blankOwlPFState :: OwlPFState
 blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))

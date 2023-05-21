@@ -42,6 +42,7 @@ verifyStateObjectHasProperty name objectfetcher objectpredicate = verifyState na
     Right o -> objectpredicate o
 
 
+-- TODO create operator
 composeObjectFetcher :: (OwlPFState -> Either Text a) -> (a -> Either Text b) -> (OwlPFState -> Either Text b)
 composeObjectFetcher f g pfs = case f pfs of
   Left e -> Left e
