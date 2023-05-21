@@ -182,7 +182,7 @@ DONE-EMOJIS
 -move over to minimaple account
 
 ::NEWEST TODO::
-DONE-get rid of textbox tools
+-finish line endpoint unit tests
 -introduce "cancelHandler" function
   -gets called from GoatWidget when some higher order operation cancels or replaces the handler
     -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
@@ -196,12 +196,13 @@ DONE-get rid of textbox tools
       -is this what happens when a you delete an object in the layers?
 
   -ways a handler can be canceled
+-move all serializable types into Snake for versioning
+DONE-get rid of textbox tools
 DONEish-bxoes should be text boxes by default, remove the text tool
   -click selected non text box will convert it to text box and clear all text
     -it's alittle weird because you singel click text box right now to end text
   -toggling text box will behave as before (preserving text)
--move all serializable types into Snake for versioning
--tutorial...
+DONE-tutorial...
 -draggable anchors
   -change this so it tracks box we were attached to at the beggining for the duration of the AutoLineEndPointHandler drag  such that you can detach and reattach
   DONE-you can now have lines coming from the same side of the box so you need to handle the both lines in same direction case

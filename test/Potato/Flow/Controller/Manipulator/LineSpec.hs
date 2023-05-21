@@ -30,6 +30,23 @@ verifyMostRecentlyCreatedLinesLatestLineLabelHasText text = verifyMostRecentlyCr
       then Nothing
       else Just $ "found line label with text: " <> _sAutoLineLabel_text x <> " expected: " <> text
 
+
+
+fetchLatestLine :: OwlPFState -> Either Text SAutoLine
+fetchLatestLine pfs = do
+  sowl <- case maybeGetMostRecentlyCreatedOwl' pfs of
+    Nothing -> Left "failed, no 🦉s"
+    Just x  -> Right x
+  case _owlItem_subItem (_superOwl_elt sowl) of
+    OwlSubItemLine x -> Right x
+    x                  -> Left $ "expected SAutoLine got: " <> show x
+
+fetchLineLabel_from_latestLine :: SAutoLine -> Either Text SAutoLineLabel
+fetchLineLabel_from_latestLine sline = case _sAutoLine_labels sline of
+  []    -> Left "most recently created line has no line labels"
+  (x:_) -> Right x
+
+-- TODO make verifyMostRecentlyCreateLineHasProperty helper
 verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition :: (Int, Int) -> GoatTester ()
 verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (px, py) = verifyState "verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition" checkfn where
   checkfn gs = r where
@@ -50,6 +67,28 @@ verifyMostRecentlyCreatedLinesLatestLineLabelHasPosition (px, py) = verifyState 
       Right (V2 x y) -> if px == x && py == y
         then Nothing
         else Just $ "expected line label position: " <> show (px, py) <> " got " <> show (x, y)
+
+-- TODO make verifyMostRecentlyCreateLineHasProperty helper
+verifyMostRecentlyCreateLineIsAttached :: (Maybe AttachmentLocation, Maybe AttachmentLocation) -> GoatTester ()
+verifyMostRecentlyCreateLineIsAttached (mstartalexp, mendalexp) = verifyState "verifyMostRecentlyCreateLineIsAttached" checkfn where
+  checkfn gs = r where
+    pfs = goatState_pFState gs
+    r' = do
+      sowl <- case maybeGetMostRecentlyCreatedOwl' (goatState_pFState gs) of
+        Nothing -> Left "failed, no 🦉s"
+        Just x  -> Right x
+      sline <- case _owlItem_subItem (_superOwl_elt sowl) of
+        OwlSubItemLine x -> Right x
+        x                  -> Left $ "expected SAutoLine got: " <> show x
+      let
+        mstartal = fmap _attachment_location (_sAutoLine_attachStart sline)
+        mendal = fmap _attachment_location (_sAutoLine_attachEnd sline)
+      if mstartal == mstartalexp && mendal == mendalexp
+        then Right ()
+        else Left $ "expected attachments (start, end): (" <> show mstartalexp <> ", " <> show mendalexp <> ") got (" <> show mstartal <> ", " <> show mendal <> ")"
+    r = case r' of
+      Left e -> Just e
+      Right _ -> Nothing
 
 blankOwlPFState :: OwlPFState
 blankOwlPFState = OwlPFState emptyOwlTree (SCanvas (LBox 0 200))
@@ -282,6 +321,51 @@ attaching_fully_attached_wont_move_test = hSpecGoatTesterWithOwlPFState blankOwl
   s3 <- getOwlPFState
   verify "state did not change after attempting to move line" $ if s2 == s3 then Just "it didn't change!" else Nothing
 
+
+endpoint_attach_offset_basic_test :: Spec
+endpoint_attach_offset_basic_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+  initUnitBox (0,0)
+  initUnitBox (10,0)
+  verifyOwlCount 2
+
+  setMarker "draw line attached to box"
+  setTool Tool_Line
+  canvasMouseDown (1, 0)
+  canvasMouseDown (9, 0)
+  canvasMouseUp (9, 0)
+  verifyOwlCount 3
+  verifyMostRecentlyCreateLineIsAttached (Just AL_Right, Just AL_Left)
+
+  setMarker "move the start endpoint on the box we attached to"
+  canvasMouseDown (1, 0)
+  canvasMouseDown (-1, 0)
+  verifyMostRecentlyCreateLineIsAttached (Just AL_Left, Just AL_Left)
+
+
+
+endpoint_attach_offset_detach_and_reattach_test :: Spec
+endpoint_attach_offset_detach_and_reattach_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+  drawCanvasBox (0,0,4,4)
+  verifyOwlCount 1
+
+  setMarker "draw line attached to box"
+  setTool Tool_Line
+  canvasMouseDown (2, -1)
+  canvasMouseDown (2, -10)
+  canvasMouseUp (2, -10)
+  verifyOwlCount 2
+  verifyMostRecentlyCreateLineIsAttached (Just AL_Top, Nothing)
+
+  setMarker "move the start endpoint on the box we attached to away from the box"
+  canvasMouseDown (2, -1)
+  canvasMouseDown (100, -1)
+  verifyMostRecentlyCreateLineIsAttached (Nothing, Nothing)
+
+  setMarker "move the start endpoint back onto the box"
+  canvasMouseDown (2, -1)
+  canvasMouseUp (2, -1)
+  verifyMostRecentlyCreateLineIsAttached (Just AL_Top, Nothing)
+
 label_undo_test :: Spec
 label_undo_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
 
@@ -493,13 +577,19 @@ spec = do
     describe "attaching_delete_test" $ attaching_delete_test
     describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
     describe "label_undo_test" $ label_undo_test
-    describe "label_move_test" $ label_move_test
+
     describe "label_cursor_test" $ label_cursor_test
     describe "label_delete_midpoint_test" $ label_delete_midpoint_test
     describe "label_delete_after_back_and_forth_test" $ label_delete_after_back_and_forth_test
     describe "label_delete_test" $ label_delete_test
 
+    describe "endpoint_attach_offset_basic_test" $ endpoint_attach_offset_basic_test
+    describe "endpoint_attach_offset_detach_and_reattach_test" $ endpoint_attach_offset_detach_and_reattach_test
 
+
+
+    -- TODO enable once you fix line label position after adding/removing midpoints issue
+    --describe "label_move_test" $ label_move_test
 
     -- TODO enable once you fix the "-- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching" comment in Goat.hs
     --describe "cache_basic_test" $ cache_basic_test

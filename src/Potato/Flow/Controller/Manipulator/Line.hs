@@ -236,9 +236,9 @@ instance PotatoHandler AutoLineHandler where
                   , _autoLineEndPointHandler_undoFirst  = False
                   , _autoLineEndPointHandler_isCreation = False
                   , _autoLineEndPointHandler_offsetAttach = _autoLineHandler_offsetAttach
-                  -- TODO I'm pretty sure you need to set these in order for things to be rendered correctly
                   , _autoLineEndPointHandler_attachStart = Nothing
                   , _autoLineEndPointHandler_attachEnd = Nothing
+                  , _autoLineEndPointHandler_lastAttachedBox = Nothing
                 }
             }
 
@@ -331,15 +331,13 @@ instance PotatoHandler AutoLineHandler where
 -- handles dragging endpoints (which can be attached) and creating new lines
 data AutoLineEndPointHandler = AutoLineEndPointHandler {
   _autoLineEndPointHandler_isStart        :: Bool -- either we are manipulating start, or we are manipulating end
-
   , _autoLineEndPointHandler_undoFirst    :: Bool
   , _autoLineEndPointHandler_isCreation   :: Bool
-
   , _autoLineEndPointHandler_offsetAttach :: Bool -- who sets this?
-
   -- where the current modified line is attached to (_autoLineEndPointHandler_attachStart will differ from actual line in the case when we start creating a line on mouse down)
   , _autoLineEndPointHandler_attachStart  :: Maybe Attachment
   , _autoLineEndPointHandler_attachEnd    :: Maybe Attachment
+  , _autoLineEndPointHandler_lastAttachedBox :: Maybe Attachment
 }
 
 
@@ -358,10 +356,22 @@ instance PotatoHandler AutoLineEndPointHandler where
       -- if we attached to the box we were already attached to
       mprojectattachend = case mridssline of
         Nothing -> Nothing
-        Just (_, ssline) -> fmap fst $ do
-          aend <- if _autoLineEndPointHandler_isStart then _sAutoLine_attachStart ssline else _sAutoLine_attachEnd ssline
-          box <- maybeGetAttachmentBox _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState aend
-          projectAttachment (_attachment_location aend) _mouseDrag_to (_attachment_target aend) box
+        Just (_, ssline) -> r_2 where
+          mattachedboxend = do
+            aend <- if _autoLineEndPointHandler_isStart then _sAutoLine_attachStart ssline else _sAutoLine_attachEnd ssline
+            box <- maybeGetAttachmentBox _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState aend
+            return (box, aend)
+          r_2 = do
+            (box, aend) <- case mattachedboxend of
+              -- if we didn't attach to the box we already attached to, see if we can attach to the last box we were attached to (w)
+              Nothing -> case _autoLineEndPointHandler_lastAttachedBox of
+                Just x -> do
+                  box <- maybeGetAttachmentBox _autoLineEndPointHandler_offsetAttach _potatoHandlerInput_pFState x
+                  return (box, x)
+                Nothing -> Nothing
+              Just x -> Just x
+            fmap fst $ projectAttachment (_attachment_location aend) _mouseDrag_to (_attachment_target aend) box
+
 
       mattachend = msum [mprojectattachend, mnewattachend]
 
@@ -376,9 +386,6 @@ instance PotatoHandler AutoLineEndPointHandler where
 
         sslinestart = _sAutoLine_attachStart ssline
         sslineend = _sAutoLine_attachEnd ssline
-
-
-
 
         -- only attach on non trivial changes so we don't attach to our starting point
         nontrivialline = if _autoLineEndPointHandler_isStart
@@ -422,6 +429,9 @@ instance PotatoHandler AutoLineEndPointHandler where
                 _autoLineEndPointHandler_undoFirst = True
                 , _autoLineEndPointHandler_attachStart = if _autoLineEndPointHandler_isStart then mattachendnontrivial else _autoLineEndPointHandler_attachStart
                 , _autoLineEndPointHandler_attachEnd = if not _autoLineEndPointHandler_isStart then mattachendnontrivial else _autoLineEndPointHandler_attachEnd
+                , _autoLineEndPointHandler_lastAttachedBox = case mattachendnontrivial of
+                  Nothing -> _autoLineEndPointHandler_lastAttachedBox
+                  Just x -> Just x
               }
             , _potatoHandlerOutput_pFEvent = Just op
           }
@@ -584,9 +594,6 @@ instance PotatoHandler AutoLineMidPointHandler where
     -- TODO render mouse position as there may not actually be a midpoint there
     r = HandlerRenderOutput boxes
   pIsHandlerActive _ = True
-
-
--- WIP BELOW THIS LINE
 
 -- handles creating and moving text labels
 data AutoLineLabelMoverHandler = AutoLineLabelMoverHandler {
