@@ -209,6 +209,7 @@ instance PotatoHandler AutoLineHandler where
               , _autoLineEndPointHandler_offsetAttach = _autoLineHandler_offsetAttach
               , _autoLineEndPointHandler_attachStart = mattachend
               , _autoLineEndPointHandler_attachEnd = Nothing
+              , _autoLineEndPointHandler_lastAttachedBox = Nothing
             }
         }
       -- if shift is held down, ignore inputs, this allows us to shift + click to deselect
