@@ -48,8 +48,8 @@ getSBox selection = case superOwl_toSElt_hack sowl of
 -- | shrink an LBox uniformly in each direction, but don't allow it to become negative
 shrink_lBox_no_negative :: LBox -> Int -> Int -> LBox
 shrink_lBox_no_negative (LBox (V2 x y) (V2 w h)) dw dh = LBox (V2 nx ny) (V2 nw nh) where
-  (nx, nw) = if w <= 2*dw 
-    then if w <= dw 
+  (nx, nw) = if w <= 2*dw
+    then if w <= dw
       -- prioritize shrinking from the right
       then (x, 0)
       else (x + (w - dw), 0)
@@ -62,7 +62,7 @@ shrink_lBox_no_negative (LBox (V2 x y) (V2 w h)) dw dh = LBox (V2 nx ny) (V2 nw 
     else (y+dh, h-2*dh)
 
 
-getSBoxTextBox :: SBox -> CanonicalLBox 
+getSBoxTextBox :: SBox -> CanonicalLBox
 getSBoxTextBox sbox = r where
   CanonicalLBox fx fy box' = canonicalLBox_from_lBox $ _sBox_box sbox
   r = CanonicalLBox fx fy $  if sBoxType_hasBorder (_sBox_boxType sbox)
@@ -181,6 +181,7 @@ instance PotatoHandler BoxTextHandler where
   pHandlerName _ = handlerName_boxText
   pHandlerDebugShow BoxTextHandler {..} = LT.toStrict $ Pretty.pShowNoColor _boxTextHandler_state
   pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
+      (rid, sbox) = getSBox _potatoHandlerInput_canvasSelection
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
@@ -199,12 +200,32 @@ instance PotatoHandler BoxTextHandler where
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
 
-      MouseDragState_Up -> Just $ def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-              _boxTextHandler_isActive = False
-              --, _boxTextHandler_undoFirst = False -- this variant adds new undo point each time cursor is moved
+      MouseDragState_Up -> r where
+
+        -- if box is not text box, convert to text box and set undoFirst to True
+        oldbt = _sBox_boxType $ sbox
+        istext = sBoxType_isText oldbt
+        newbt = make_sBoxType (sBoxType_hasBorder oldbt) True
+
+        -- if it's not a text box, convert it to one (remember that this gets called from pHandleMouse with MouseDragState_Up in BoxHandler)
+        r = if not istext
+          then Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+                  _boxTextHandler_isActive = False
+
+                  -- NOTE if we undofirst we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
+                  -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
+                  --, _boxTextHandler_undoFirst = True
+                }
+
+              -- TODO you also want to clear the existing text
+              , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))])
             }
-        }
+          else Just $ def {
+              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
+                  _boxTextHandler_isActive = False
+                }
+            }
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
   pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of

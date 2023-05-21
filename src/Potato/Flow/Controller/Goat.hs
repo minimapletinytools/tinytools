@@ -591,7 +591,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                       'p' -> Just Tool_Pan
                       'b' -> Just Tool_Box
                       'l' -> Just Tool_Line
-                      't' -> Just Tool_Text
                       'n' -> Just Tool_TextArea
                       _   -> Nothing
 

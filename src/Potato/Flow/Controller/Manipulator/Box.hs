@@ -23,9 +23,7 @@ import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlState
-import           Potato.Flow.OwlItem
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
 import Potato.Flow.Llama
@@ -316,6 +314,9 @@ instance PotatoHandler BoxHandler where
       -- TODO do selectMagic here so we can enter text edit modes from multi-selections (you will also need to modify the selection)
       nselected = Seq.length (unCanvasSelection _potatoHandlerInput_canvasSelection)
       selt = superOwl_toSElt_hack <$> selectionToMaybeFirstSuperOwl _potatoHandlerInput_canvasSelection
+      isBox = nselected == 1 && case selt of
+        Just (SEltBox _) -> True
+        _                                    -> False
       isText = nselected == 1 && case selt of
         Just (SEltBox SBox{..}) -> sBoxType_isText _sBox_boxType
         _                                    -> False
@@ -330,11 +331,12 @@ instance PotatoHandler BoxHandler where
       wasNotActuallyDragging = not _boxHandler_undoFirst
       -- always go straight to handler after creating a new SElt
       isCreation = boxCreationType_isCreation _boxHandler_creation
-      r = if isText
+      r = if (isText || (isBox && not isCreation))
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
-        -- create box handler and pass on the input
+        -- create box handler and pass on the input (if it was not a text box it will be converted to one by the BoxTextHandler)
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
+
         else if isTextArea
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
@@ -375,7 +377,7 @@ instance PotatoHandler BoxHandler where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_pFState _potatoHandlerInput_canvasSelection
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
-    r = if not _boxHandler_active && boxCreationType_isCreation _boxHandler_creation 
+    r = if not _boxHandler_active && boxCreationType_isCreation _boxHandler_creation
       -- don't render anything if we are about to create a box
       then emptyHandlerRenderOutput
       else HandlerRenderOutput (fmap defaultRenderHandle handlePoints)

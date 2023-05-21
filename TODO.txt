@@ -134,7 +134,7 @@ DONE-EMOJIS
     -per character width (already a property of TextZipper but you need to pass it in as a function and test it...)
     -kerning in general (or just have user use manual spaces)
     -height adjustment (some characters go over char box)
-    -overflow box or crop (some characters go over char box 
+    -overflow box or crop (some characters go over char box
       -need to expand render box
     -font data type
       -bonus, it seme some fonts have speical rules for renfdering where the font overlaps
@@ -182,7 +182,24 @@ DONE-EMOJIS
 -move over to minimaple account
 
 ::NEWEST TODO::
--bxoes should be text boxes by default, remove the text tool
+DONE-get rid of textbox tools
+-introduce "cancelHandler" function
+  -gets called from GoatWidget when some higher order operation cancels or replaces the handler
+    -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
+  -can this be somehow combined with reset handler?
+  -exsiting ways ah andler can be canceled
+    -mousedrag_cancel (actually dosen't cancel, jsut resets the handler so no)
+    -you get lazy sometimes and just return no handler such that Goat regenerates the handler from selsection and this will now become a cancel
+    -keyboard escape
+    -click outside of handler capture area which causes goat to regenrate a new selection handler
+    -pReseteHandler may clear the handler
+      -is this what happens when a you delete an object in the layers?
+
+  -ways a handler can be canceled
+DONEish-bxoes should be text boxes by default, remove the text tool
+  -click selected non text box will convert it to text box and clear all text
+    -it's alittle weird because you singel click text box right now to end text
+  -toggling text box will behave as before (preserving text)
 -move all serializable types into Snake for versioning
 -tutorial...
 -draggable anchors
