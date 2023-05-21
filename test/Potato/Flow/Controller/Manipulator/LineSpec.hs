@@ -344,9 +344,10 @@ endpoint_attach_offset_detach_and_reattach_test = hSpecGoatTesterWithOwlPFState 
 
   setMarker "move the start endpoint on the box we attached to away from the box"
   canvasMouseDown (2, -1)
-  canvasMouseDown (100, -1)
+  canvasMouseDown (2, -100)
   verifyMostRecentlyCreateLineIsAttached (Nothing, Nothing)
 
+  -- TODO this is suppose to work if we drag back to anywhere that projects onto the box, but it's not for some reason and I don't know why
   setMarker "move the start endpoint back onto the box"
   canvasMouseDown (2, -1)
   canvasMouseUp (2, -1)
