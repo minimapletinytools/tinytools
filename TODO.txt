@@ -182,7 +182,7 @@ DONE-EMOJIS
 -move over to minimaple account
 
 ::NEWEST TODO::
-
+-disable or fix circleci
 -introduce "cancelHandler" function
   -gets called from GoatWidget when some higher order operation cancels or replaces the handler
     -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
