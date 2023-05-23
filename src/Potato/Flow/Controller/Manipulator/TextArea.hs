@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.TextArea (

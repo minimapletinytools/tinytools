@@ -113,6 +113,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
       , _renderContext_layerMetaMap = _layersState_meta initiallayersstate
       , _renderContext_broadPhase = initialbp -- this is ignored but we may as well set in correctly
       , _renderContext_renderedCanvasRegion = initialemptyrcr
+      , _renderContext_cache = emptyRenderCache
     }
     initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
 

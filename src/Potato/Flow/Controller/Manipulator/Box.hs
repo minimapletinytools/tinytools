@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+
 
 module Potato.Flow.Controller.Manipulator.Box (
   BoxHandleType(..)

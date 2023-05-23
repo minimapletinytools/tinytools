@@ -20,16 +20,15 @@ module Potato.Flow.Controller.Types (
 import           Relude
 
 import           Potato.Flow.Math
+import           Potato.Flow.Owl
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 
 import           Data.Aeson
-import           Data.Default
-import qualified Data.IntMap            as IM
-import qualified Text.Show
 import           Data.Binary
+import           Data.Default
+import qualified Data.IntMap       as IM
+import qualified Text.Show
 
 
 
@@ -50,12 +49,12 @@ tool_isCreate = \case
   _ -> True
 
 data PotatoDefaultParameters = PotatoDefaultParameters {
-  _potatoDefaultParameters_sBoxType :: SBoxType -- currently not used as we have Tool_TextArea, consider using this instead
-  , _potatoDefaultParameters_superStyle :: SuperStyle
-  , _potatoDefaultParameters_lineStyle :: LineStyle
-  , _potatoDefaultParameters_lineStyleEnd :: LineStyle
+  _potatoDefaultParameters_sBoxType              :: SBoxType -- currently not used as we have Tool_TextArea, consider using this instead
+  , _potatoDefaultParameters_superStyle          :: SuperStyle
+  , _potatoDefaultParameters_lineStyle           :: LineStyle
+  , _potatoDefaultParameters_lineStyleEnd        :: LineStyle
   , _potatoDefaultParameters_box_label_textAlign :: TextAlign
-  , _potatoDefaultParameters_box_text_textAlign :: TextAlign
+  , _potatoDefaultParameters_box_text_textAlign  :: TextAlign
 } deriving (Eq, Show)
 
 
@@ -70,12 +69,12 @@ instance Default PotatoDefaultParameters where
     }
 
 data SetPotatoDefaultParameters = SetPotatoDefaultParameters {
-  _setPotatoDefaultParameters_sBoxType :: Maybe SBoxType
-  , _setPotatoDefaultParameters_lineStyle :: Maybe LineStyle
-  , _setPotatoDefaultParameters_lineStyleEnd :: Maybe LineStyle
-  , _setPotatoDefaultParameters_superStyle :: Maybe SuperStyle
+  _setPotatoDefaultParameters_sBoxType              :: Maybe SBoxType
+  , _setPotatoDefaultParameters_lineStyle           :: Maybe LineStyle
+  , _setPotatoDefaultParameters_lineStyleEnd        :: Maybe LineStyle
+  , _setPotatoDefaultParameters_superStyle          :: Maybe SuperStyle
   , _setPotatoDefaultParameters_box_label_textAlign :: Maybe TextAlign
-  , _setPotatoDefaultParameters_box_text_textAlign :: Maybe TextAlign
+  , _setPotatoDefaultParameters_box_text_textAlign  :: Maybe TextAlign
 } deriving (Eq, Show)
 
 instance Default SetPotatoDefaultParameters where

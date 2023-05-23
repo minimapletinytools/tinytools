@@ -26,7 +26,6 @@ import           Potato.Flow.Render
 import           Potato.Flow.Types
 
 import           Control.Monad.Fix
-import           Data.Default
 
 
 

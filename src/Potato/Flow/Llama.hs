@@ -190,7 +190,7 @@ makeCompositionLlama llamas = r where
   apply pfs = go llamas (pfs, IM.empty, []) where
     go [] (state, changes, undollamas) = Right (state, changes, makeCompositionLlama undollamas)
     go (llama:rest) (state, changes, undollamas) = case _llama_apply llama state of
-      Right newoutput@(newstate, newchanges, newundollama) -> go rest (newstate, IM.union newchanges changes, newundollama:undollamas)
+      Right (newstate, newchanges, newundollama) -> go rest (newstate, IM.union newchanges changes, newundollama:undollamas)
       e -> e
 
 

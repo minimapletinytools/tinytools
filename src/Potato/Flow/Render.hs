@@ -191,21 +191,21 @@ render llbx osubitems rctx@RenderContext {..} = r where
     }
 
 mapREltIdToCaches :: OwlTree -> [REltId] -> RenderCache -> (RenderCache, [(OwlSubItem, Maybe OwlItemCache)])
-mapREltIdToCaches ot rids rcache = r where
+mapREltIdToCaches ot rids rcache = r1 where
 
-  mapaccumlfn cacheacc rid = r where
+  mapaccumlfn cacheacc rid = r2 where
     -- see if it was in the previous cache
     mprevcache = IM.lookup rid (unRenderCache rcache)
     sowl = owlTree_mustFindSuperOwl ot rid
     OwlItem _ osubitem = _superOwl_elt sowl
     mupdatedcache = updateOwlSubItemCache ot osubitem
-    r = case mprevcache of
+    r2 = case mprevcache of
       Just c -> (cacheacc, (osubitem, Just c))
       Nothing -> case mupdatedcache of
         Just c  -> (IM.insert rid c cacheacc, (osubitem, Just c))
         Nothing -> (cacheacc, (osubitem, Nothing))
   (newcache, owlswithcache) = mapAccumL mapaccumlfn (unRenderCache rcache) rids
-  r = (RenderCache newcache, owlswithcache)
+  r1 = (RenderCache newcache, owlswithcache)
 
 
 

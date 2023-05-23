@@ -60,7 +60,7 @@ doesSEltIntersectBox_DEPRECATED lbox selt = case selt of
   SEltTextArea x                   -> does_lBox_intersect_include_zero_area lbox (_sTextArea_box x)
   -- TODO this is wrong, do it correctly...
   -- we use does_lBox_intersect since it's impossible for a SAutoLine to have zero sized box
-  SEltLine sline@SAutoLine {..} -> does_lBox_intersect lbox (fromJust $ getSEltBox_naive (SEltLine sline))
+  SEltLine sline -> does_lBox_intersect lbox (fromJust $ getSEltBox_naive (SEltLine sline))
 
 doesSEltIntersectPoint :: XY -> SElt -> Bool
 doesSEltIntersectPoint pos selt = doesSEltIntersectBox_DEPRECATED (LBox pos (V2 1 1)) selt

@@ -6,9 +6,7 @@ module Potato.Flow.Methods.TextCommon (
 
 import           Relude
 
-import           Potato.Flow.Math
 import           Potato.Flow.SElts
-
 
 import qualified Data.Map as Map
 import qualified Data.Text                      as T
@@ -25,7 +23,9 @@ subWidth t = join . fmap fn . T.unpack $ t where
   fn c = case TZ.charWidth c of
     1 -> [Just c]
     2 -> [Just c, Nothing]
-    n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
+    n -> [Nothing]
+    --n -> trace ("unexpected char " <> [c] <> " of width " <> show n) [Nothing]
+
 
 
 displayLinesToChar ::

@@ -159,7 +159,7 @@ lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
   revgo acc ((cd,d,False):[]) = (flipCartDir cd,d,True):acc
   revgo _ ((_,_,True):[]) = error "unexpected subsegment starting anchor at end"
   revgo acc ((cd,d,False):xs) = revgo ((flipCartDir cd, d, False):acc) xs
-  revgo acc ((_,_,True):[]) = error "TODO this does not handle midpoint subsegment starting anchors correctly (not that it needs to right now)"
+  revgo _ ((_,_,True):xs) = error "TODO this does not handle midpoint subsegment starting anchors correctly (not that it needs to right now)"
   revgostart [] = []
   revgostart ((cd,d,True):xs) = revgo [(flipCartDir cd,d,False)] xs
   revgostart _ = error "unexpected non-subsegment starting anchor at start"
@@ -262,8 +262,9 @@ sSimpleLineSolver_NEW (errormsg, depth) crr sls ((lbx1, al1_, af1), offb1) ((lbx
   lbx1isstrictlyabove = ay1 < ay2
   ay1isvsepfromlbx2 = ay1 < y2 || ay1 >= y2 + h2
 
-  --traceStep = trace
+  traceStep :: String -> a -> a
   traceStep _ x = x
+  --traceStep = trace  
   stepdetail = show lbal1 <> " | " <> show lbal2 <> "\n"
   nextmsg step = (errormsg <> " " <> step <> ": " <> stepdetail, depth+1)
 
@@ -477,7 +478,7 @@ doesLineContainBox lbox (V2 sx sy) (tcd, tl, _) = r where
 
 
 walkToRender :: SuperStyle -> LineStyle -> LineStyle -> Bool -> XY -> (CartDir, Int, Bool) -> Maybe (CartDir, Int, Bool) -> Int -> (XY, MPChar)
-walkToRender ss@SuperStyle {..} ls lse isstart begin (tcd, tl, _) mnext d = r where
+walkToRender ss ls lse isstart begin (tcd, tl, _) mnext d = r where
   currentpos = begin + (cartDirToUnit tcd) ^* d
 
   endorelbow = renderAnchorType ss lse $ cartDirToAnchor tcd (fmap fst3 mnext)
@@ -633,15 +634,6 @@ pairs [] = []
 pairs xs = zip xs (tail xs)
 
 
--- DELETE
-maybeGetAttachBox :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe (LBox, AttachmentLocation)
-maybeGetAttachBox ot mattachment = do
-  Attachment rid al _ <- mattachment
-  sowl <- hasOwlTree_findSuperOwl ot rid
-  sbox <- getSEltBox_naive $ hasOwlItem_toSElt_hack sowl
-  return (sbox, al)
-
-
 maybeGetAttachBox_NEW2 :: (HasOwlTree a) => a -> Maybe Attachment -> Maybe BoxWithAttachmentLocation
 maybeGetAttachBox_NEW2 ot mattachment = do
   Attachment rid al ratio <- mattachment
@@ -659,9 +651,6 @@ sAutoLine_to_lineAnchorsForRenderList ot SAutoLine {..} = anchorss where
       _simpleLineSolverParameters_NEW_attachOffset = 1
     }
 
-
-
-  offsetBorder x (a,b,c) = ((a,b,c), OffsetBorder x)
   startlbal = case maybeGetAttachBox_NEW2 ot _sAutoLine_attachStart of
     Nothing    -> ((LBox _sAutoLine_start 1, AL_Any, attachment_offset_rel_default), OffsetBorder False)
     Just bal -> (bal, OffsetBorder True)
@@ -688,9 +677,9 @@ internal_getSAutoLineLabelPosition_walk lar targetd = r where
       else walk rest nextbegin (traveld + d)
   r = walk (_lineAnchorsForRender_rest lar) (_lineAnchorsForRender_start lar) 0
 
-
+-- TODO remove SAutoLine arg
 internal_getSAutoLineLabelPosition :: LineAnchorsForRender -> SAutoLine -> SAutoLineLabel -> XY
-internal_getSAutoLineLabelPosition lar SAutoLine {..} SAutoLineLabel {..} = r where
+internal_getSAutoLineLabelPosition lar _ SAutoLineLabel {..} = r where
   totall = lineAnchorsForRender_length lar
   targetd = case _sAutoLineLabel_position of
     SAutoLineLabelPositionRelative rp -> max 0 . floor $ (fromIntegral totall * rp)

@@ -60,7 +60,7 @@ hasScopingProperty scopeTypeFn xs = not finalFail && finalScope == 0 where
         0 -> (scopes, True)
         _ -> (scopes-1, didFail)
       False -> (scopes+1, didFail)
-  (finalScope, finalFail) = foldr foldfn (0,False) xs
+  (finalScope, finalFail) = foldr foldfn (0 :: Int, False) xs
 
 -- | assumes selection is ordered and is valid
 selectionHasScopingProperty :: (a -> Maybe Bool) -> Seq a -> [Int] -> Bool

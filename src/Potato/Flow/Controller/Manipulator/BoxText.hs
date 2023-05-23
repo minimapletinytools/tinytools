@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+
 
 -- TODO probably move this to Manipulator.Box.Text
 module Potato.Flow.Controller.Manipulator.BoxText (
@@ -365,8 +367,8 @@ inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
 
 
 -- | just a helper for pHandleMouse
-handleMouseDownOrFirstUpForBoxLabelHandler :: BoxLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> SBox -> Bool -> Maybe PotatoHandlerOutput
-handleMouseDownOrFirstUpForBoxLabelHandler tah@BoxLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) sbox isdown = r where
+handleMouseDownOrFirstUpForBoxLabelHandler :: BoxLabelHandler -> PotatoHandlerInput -> RelMouseDrag -> Bool -> Maybe PotatoHandlerOutput
+handleMouseDownOrFirstUpForBoxLabelHandler tah@BoxLabelHandler {..} phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) isdown = r where
   clickInside = does_lBox_contains_XY (_textInputState_box _boxLabelHandler_state) _mouseDrag_to
   newState = mouseText _boxLabelHandler_state rmd
   r = if clickInside
@@ -387,17 +389,16 @@ instance PotatoHandler BoxLabelHandler where
   -- UNTESTED
   pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
       tah@BoxLabelHandler {..} = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
-      (_, sbox) = getSBox _potatoHandlerInput_canvasSelection
     in case _mouseDrag_state of
 
 
-      MouseDragState_Down -> handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd sbox True
+      MouseDragState_Down -> handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd True
 
       -- TODO drag select text someday
       MouseDragState_Dragging -> Just $ captureWithNoChange tah
 
       MouseDragState_Up -> if not _boxLabelHandler_active
-        then handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd sbox False
+        then handleMouseDownOrFirstUpForBoxLabelHandler tah phi rmd False
         else Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                 _boxLabelHandler_active = False
