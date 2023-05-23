@@ -183,7 +183,9 @@ DONE-EMOJIS
 -move over to minimaple account
 
 ::NEWEST TODO::
--fix -- TODO this should be r' not a FIX ME why is stuff even working???
+-fix
+  -- TODO this should be r' not a FIX ME why is stuff even working???
+  -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
 DONE-disable or fix circleci
 -introduce "cancelHandler" function
   -gets called from GoatWidget when some higher order operation cancels or replaces the handler

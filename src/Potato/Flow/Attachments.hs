@@ -37,6 +37,7 @@ data AvailableAttachment = AvailableAttachment_CartSegment CartSegment Attachmen
 
 type BoxWithAttachmentLocation = (LBox, AttachmentLocation, AttachmentOffsetRatio)
 
+-- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
 -- uh not sure if this is actually conjugation...
 attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> BoxWithAttachmentLocation -> XY
 attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder (box, al, af) = r where
