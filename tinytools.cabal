@@ -10,7 +10,8 @@ description:    tinytools is a mono-space unicode diagram editor
 homepage:       https://github.com/minimapletinytools/tinytools#readme
 bug-reports:    https://github.com/minimapletinytools/tinytools/issues
 author:         minimaple
-maintainer:     chippermonky@gmail.com
+maintainer:     minimapletinytools@gmail.com
+synopsis:       tinytools is a mono-space unicode diagram editor
 copyright:      2022 Peter Lu
 license:        BSD3
 license-file:   LICENSE
