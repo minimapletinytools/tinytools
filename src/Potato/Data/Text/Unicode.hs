@@ -3,8 +3,6 @@ module Potato.Data.Text.Unicode where
 
 import           Prelude
 
-import           Graphics.Text.Width     (wcwidth)
-
 import           Data.Int
 import           Data.Text               (Text)
 import qualified Data.Text               as T

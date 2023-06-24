@@ -74,7 +74,7 @@ debugPrintOwlPFState OwlPFState {..} = fromString . T.unpack $ potatoShow _owlPF
 
 -- TODO owlPFState_selectionIsValid pfs OwlParliament $ Seq.fromList [0..Seq.length _owlPFState_layers - 1]
 owlPFState_isValid :: OwlPFState -> Bool
-owlPFState_isValid OwlPFState {..} = True
+owlPFState_isValid _ = True
 
 owlPFState_selectionIsValid :: OwlPFState -> OwlParliament -> Bool
 owlPFState_selectionIsValid OwlPFState {..} (OwlParliament op) = validElts where

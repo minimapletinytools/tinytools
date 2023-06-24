@@ -33,3 +33,27 @@ drawCanvasLine (sx, sy) (ex, ey) = do
       OwlItem _ (OwlSubItemLine _) -> Nothing
       x -> Just ("expected line, got " <> show x)
   verifySelectionIsAndOnlyIs "line is selected" f
+
+
+verifyStateObjectHasProperty :: Text -> (OwlPFState -> Either Text a) -> (a -> Maybe Text) -> GoatTester ()
+verifyStateObjectHasProperty name objectfetcher objectpredicate = verifyState name checkfn where
+  checkfn gs = case objectfetcher (goatState_pFState gs) of
+    Left e -> Just e
+    Right o -> objectpredicate o
+
+
+-- TODO create operator
+composeObjectFetcher :: (OwlPFState -> Either Text a) -> (a -> Either Text b) -> (OwlPFState -> Either Text b)
+composeObjectFetcher f g pfs = case f pfs of
+  Left e -> Left e
+  Right o1 -> case g o1 of
+    Left e -> Left e
+    Right o2 -> Right o2
+
+
+composeObjectFetcherKeep :: (OwlPFState -> Either Text a) -> (a -> Either Text b) -> (OwlPFState -> Either Text (a,b))
+composeObjectFetcherKeep f g pfs = case f pfs of
+  Left e -> Left e
+  Right o1 -> case g o1 of
+    Left e -> Left e
+    Right o2 -> Right (o1, o2)

@@ -5,14 +5,12 @@ module Potato.Flow.Serialization.Snake where
 import           Relude
 
 import           Potato.Flow.Types
-import           Potato.Flow.SElts
 import Potato.Flow.Controller.Types
 
 import qualified Data.Aeson               as Aeson
 import qualified Data.Aeson.Encode.Pretty as PrettyAeson
 import qualified Data.Binary as Binary
 import qualified Data.ByteString.Lazy as LBS
-import           System.FilePath
 import qualified Data.Text.Encoding as Text
 
 

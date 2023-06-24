@@ -159,7 +159,7 @@ undo_newElts seltls PFState {..} = (r, changes) where
   newLayers = removeEltList poss _pFState_layers
   newDir = _pFState_directory `IM.difference` IM.fromList els
   r = PFState newLayers newDir _pFState_canvas
-  changes = IM.fromList $ map (\(x,y)->(x,Nothing)) els
+  changes = IM.fromList $ map (\(x,_)->(x,Nothing)) els
 
 -- CHANGE [SuperOwl] -> PFState -> (PFState, SEltLabelChanges)
 do_deleteElts :: [SuperSEltLabel] -> PFState -> (PFState, SEltLabelChanges)

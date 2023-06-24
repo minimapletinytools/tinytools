@@ -1,5 +1,11 @@
 -- TODO DELETE ME
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+{-# OPTIONS_GHC -fno-warn-unused-local-binds #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
+{-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
+
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.CartLine (

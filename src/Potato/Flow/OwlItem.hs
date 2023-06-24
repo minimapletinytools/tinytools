@@ -5,8 +5,6 @@ module Potato.Flow.OwlItem where
 import Relude
 
 import Potato.Flow.SElts
-import Potato.Flow.Types
-import Potato.Flow.Methods.LineTypes
 import Potato.Flow.DebugHelpers
 
 data OwlInfo = OwlInfo {

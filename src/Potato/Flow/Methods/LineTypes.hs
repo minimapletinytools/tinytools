@@ -7,9 +7,6 @@ import           Relude
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
 
-
-import Data.Default
-
 import Linear.Vector ((^*))
 import Linear.Matrix (M22, (!*))
 import Data.Ratio
@@ -179,7 +176,7 @@ instance TransformMe AnchorType where
     AT_Elbow_TR -> AT_Elbow_TL
     AT_Elbow_BR -> AT_Elbow_BL
     AT_Elbow_BL -> AT_Elbow_BR
-    AT_Elbow_Invalid -> AT_Elbow_Invalid
+    x -> x
 
 instance TransformMe XY where
   transformMe_rotateLeft p = (!*) matrix_ccw_90 p - (V2 0 1)
@@ -255,4 +252,5 @@ cartRotationReflection_apply :: (TransformMe a) => CartRotationReflection -> a -
 cartRotationReflection_apply CartRotationReflection {..} a = r where
   nrl = _cartRotationReflection_rotateLeftTimes `mod` 4
   r' = nTimes nrl transformMe_rotateLeft a
+  -- TODO this should be r' not a FIX ME why is stuff even working???
   r = if _cartRotationReflection_reflectVertical then transformMe_reflectVertically a else a

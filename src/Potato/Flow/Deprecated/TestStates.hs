@@ -28,10 +28,6 @@ import qualified Data.IntMap   as IM
 import qualified Data.Sequence as Seq
 import           Potato.Flow
 import           Potato.Flow.Deprecated.State
---import           Potato.Flow.OwlItem
-import Potato.Flow.OwlState
---import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 
 folderStart :: SEltLabel
 folderStart = SEltLabel "folder" SEltFolderStart
@@ -191,10 +187,12 @@ pfstate_attachments1 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Left
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       , (5, SEltLabel "b2v ^b4" (SEltLine def {
@@ -203,11 +201,13 @@ pfstate_attachments1 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Bot
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
 
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Top
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       ]
@@ -242,10 +242,12 @@ pfstate_attachments2 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Left
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       , (5, SEltLabel "<-b1 b2->" (SEltLine def {
@@ -254,11 +256,13 @@ pfstate_attachments2 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Left
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
 
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 1
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       , (6, SEltLabel "<-b1 b4->" (SEltLine def {
@@ -267,11 +271,13 @@ pfstate_attachments2 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Left
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
 
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       , (7, SEltLabel "b1-> b4->" (SEltLine def {
@@ -280,11 +286,13 @@ pfstate_attachments2 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
 
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 3
               , _attachment_location = AL_Right
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
         , (8, SEltLabel "b1-> b2->" (SEltLine def {
@@ -293,11 +301,13 @@ pfstate_attachments2 = PFState {
             , _sAutoLine_attachStart = Just (Attachment {
                 _attachment_target = 0
                 , _attachment_location = AL_Right
+                , _attachment_offset_rel = attachment_offset_rel_default
               })
 
             , _sAutoLine_attachEnd = Just (Attachment {
                 _attachment_target = 1
                 , _attachment_location = AL_Right
+                , _attachment_offset_rel = attachment_offset_rel_default
               })
           }))
       , (9, SEltLabel "b1v ^b3" (SEltLine def {
@@ -306,11 +316,13 @@ pfstate_attachments2 = PFState {
           , _sAutoLine_attachStart = Just (Attachment {
               _attachment_target = 0
               , _attachment_location = AL_Bot
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
 
           , _sAutoLine_attachEnd = Just (Attachment {
               _attachment_target = 2
               , _attachment_location = AL_Top
+              , _attachment_offset_rel = attachment_offset_rel_default
             })
         }))
       ]

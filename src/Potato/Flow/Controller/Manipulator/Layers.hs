@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+
 {-# LANGUAGE RecordWildCards #-}
 
 module Potato.Flow.Controller.Manipulator.Layers (
@@ -9,25 +11,24 @@ import           Relude
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.OwlLayers
-import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
+import           Potato.Flow.Llama
 import           Potato.Flow.Math
-import           Potato.Flow.Types
-import           Potato.Flow.SElts
+import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
-import Potato.Flow.OwlWorkspace
-import Potato.Flow.OwlState
-import Potato.Flow.Llama
+import           Potato.Flow.OwlState
+import           Potato.Flow.OwlWorkspace
+import           Potato.Flow.SElts
+import           Potato.Flow.Types
 
-import           Data.Dependent.Sum                        (DSum ((:=>)))
+import           Data.Char
 import           Data.Default
-import qualified Data.IntMap                    as IM
-import qualified Data.Sequence                  as Seq
-import Data.Sequence ((<|))
-import qualified Potato.Data.Text.Zipper                          as TZ
-import qualified Data.Text as T
-import Data.Char
+import           Data.Dependent.Sum               (DSum ((:=>)))
+import qualified Data.IntMap                      as IM
+import           Data.Sequence                    ((<|))
+import qualified Data.Sequence                    as Seq
+import qualified Data.Text                        as T
+import qualified Potato.Data.Text.Zipper          as TZ
 
 data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
 
@@ -69,7 +70,7 @@ clickLayerNew lentries  (V2 absx lepos) = case Seq.lookup lepos lentries of
 data LayersHandler = LayersHandler {
     _layersHandler_dragState   :: LayerDragState
     , _layersHandler_cursorPos :: XY
-    , _layersHandler_dropSpot :: Maybe OwlSpot
+    , _layersHandler_dropSpot  :: Maybe OwlSpot
 
   }
 
@@ -185,19 +186,19 @@ instance PotatoHandler LayersHandler where
         mJustAboveDropSowl = do
           lentry <- case mDropSowlWithOffset of
             Nothing -> Seq.lookup (Seq.length lentries - 1) lentries
-            Just _ -> Seq.lookup (lepos-1) lentries
+            Just _  -> Seq.lookup (lepos-1) lentries
           return $ _layerEntry_superOwl lentry
 
 
         nparentoffset = case mDropSowlWithOffset of
           Nothing -> case mJustAboveDropSowl of
-            Nothing -> error "this should never happen"
+            Nothing    -> error "this should never happen"
             -- we are at the very bottom
             Just asowl -> rawxoffset - superOwl_depth asowl
 
           Just (dsowl, x) -> case mJustAboveDropSowl of
             -- we are at the very top
-            Nothing -> 0
+            Nothing    -> 0
             -- limit how deep in the hierarchy we can move based on what's below the cursor
             Just asowl -> max x (superOwl_depth dsowl - superOwl_depth asowl)
 
@@ -217,7 +218,7 @@ instance PotatoHandler LayersHandler where
                 newsiblingid = owlTree_superOwlNthParentId owltree asowl nsibling
                 siblingout = case newsiblingid of
                   x | x == noOwl -> Nothing
-                  x -> Just x
+                  x              -> Just x
 
         -- check if spot is valid
         -- instead we do this check when we drop instead, that behavior "felt" nicer to me even though this is probably more correct
@@ -343,7 +344,7 @@ instance PotatoHandler LayersHandler where
             x | x == noOwl -> (maybe Nothing Just (_owlSpot_leftSibling ds), True)
             x -> case _owlSpot_leftSibling ds of
               Nothing -> (Just x, False)
-              Just s -> (Just s, True)
+              Just s  -> (Just s, True)
 
         r = case mleftmost of
           Nothing -> LayersHandlerRenderEntryDummy 0 <| newlentries1
@@ -364,7 +365,7 @@ instance PotatoHandler LayersHandler where
     mapaccumrfn_fordots mdropdepth lhre = case mdropdepth of
       Nothing -> case lhre of
         LayersHandlerRenderEntryDummy d -> (Just d, lhre)
-        _ -> (mdropdepth, lhre)
+        _                               -> (mdropdepth, lhre)
       Just x -> case lhre of
         LayersHandlerRenderEntryNormal s _ _ lentry -> if layerEntry_depth lentry >= x
           then (mdropdepth, LayersHandlerRenderEntryNormal s (Just x) Nothing lentry)
@@ -381,13 +382,13 @@ instance PotatoHandler LayersHandler where
         then (False, selected:selstack)
         else if selected
           then case selstack of
-            [] -> (False, [True]) -- this happens if on the first element that we mapAccumR on
+            []   -> (False, [True]) -- this happens if on the first element that we mapAccumR on
             _:xs -> (False, True:xs)
           else if depth < lastdepth
             then case selstack of
               [] -> error "this should never happen"
               x1:xs1 -> case xs1 of
-                [] -> (x1, [x1])
+                []     -> (x1, [x1])
                 x2:xs2 -> (x1 && not x2, (x1 || x2) : xs2)
             else (False, selstack)
       newlhre = if childSelected
@@ -401,18 +402,18 @@ instance PotatoHandler LayersHandler where
 
 
 data LayersRenameHandler = LayersRenameHandler {
-    _layersRenameHandler_original :: LayersHandler
-    , _layersRenameHandler_renaming   :: SuperOwl
-    , _layersRenameHandler_index :: Int -- LayerEntries index of what we are renaming
+    _layersRenameHandler_original   :: LayersHandler
+    , _layersRenameHandler_renaming :: SuperOwl
+    , _layersRenameHandler_index    :: Int -- LayerEntries index of what we are renaming
     , _layersRenameHandler_zipper   :: TZ.TextZipper
   }
 
 isValidLayerRenameChar :: Char -> Bool
 isValidLayerRenameChar c = case c of
   _ | isControl c -> False
-  ' ' -> True -- only allow ' ' for whitespace character
-  _ | isSpace c -> False
-  _ -> True
+  ' '             -> True -- only allow ' ' for whitespace character
+  _ | isSpace c   -> False
+  _               -> True
 
 renameTextZipperTransform :: KeyboardKey -> Maybe (TZ.TextZipper -> TZ.TextZipper)
 renameTextZipperTransform = \case
@@ -462,7 +463,7 @@ instance PotatoHandler LayersRenameHandler where
     in case _mouseDrag_state of
       MouseDragState_Down | lepos == renaminglepos -> r where
         xpos = case clickLayerNew lentries leposxy of
-          Nothing -> error "this should never happen"
+          Nothing           -> error "this should never happen"
           Just (_, _, xoff) -> xoff - layerJunkOffset
 
         dl = toDisplayLines lh

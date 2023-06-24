@@ -7,7 +7,6 @@ import           Relude
 import           Potato.Data.Text.Unicode
 
 import           Data.Default
-import           Data.Int
 import qualified Text.Show
 
 data PotatoConfiguration = PotatoConfiguration {

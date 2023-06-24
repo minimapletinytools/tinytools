@@ -113,6 +113,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
       , _renderContext_layerMetaMap = _layersState_meta initiallayersstate
       , _renderContext_broadPhase = initialbp -- this is ignored but we may as well set in correctly
       , _renderContext_renderedCanvasRegion = initialemptyrcr
+      , _renderContext_cache = emptyRenderCache
     }
     initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
 
@@ -591,7 +592,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                       'p' -> Just Tool_Pan
                       'b' -> Just Tool_Box
                       'l' -> Just Tool_Line
-                      't' -> Just Tool_Text
                       'n' -> Just Tool_TextArea
                       _   -> Nothing
 

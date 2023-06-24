@@ -18,13 +18,11 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.OwlItem
-import Potato.Flow.Owl
 import Potato.Flow.SElts
 import Potato.Flow.Methods.LineTypes
 
 import Data.List (minimumBy)
 import Data.Ratio
-import Data.Tuple.Extra
 import Control.Exception (assert)
 
 
@@ -39,6 +37,7 @@ data AvailableAttachment = AvailableAttachment_CartSegment CartSegment Attachmen
 
 type BoxWithAttachmentLocation = (LBox, AttachmentLocation, AttachmentOffsetRatio)
 
+-- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
 -- uh not sure if this is actually conjugation...
 attachLocationFromLBox_conjugateCartRotationReflection :: CartRotationReflection -> Bool -> BoxWithAttachmentLocation -> XY
 attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder (box, al, af) = r where
@@ -48,7 +47,7 @@ attachLocationFromLBox_conjugateCartRotationReflection crr offsetBorder (box, al
 -- NOTE assumes LBox is canonical
 attachLocationFromLBox :: Bool -> BoxWithAttachmentLocation -> XY
 attachLocationFromLBox True (lbx, al, af) = attachLocationFromLBox False (lBox_expand lbx (1,1,1,1), al, af)
-attachLocationFromLBox offset (LBox (V2 x y) (V2 w h), al, af) = case al of
+attachLocationFromLBox False (LBox (V2 x y) (V2 w h), al, af) = case al of
   AL_Top -> V2 (x+w * n `div` d) y
   AL_Bot -> V2 (x+(w-1) * dn `div` d) (y+h-1)
   AL_Left -> V2 x (y+(h-1) * dn `div` d )
@@ -96,7 +95,7 @@ owlItem_availableAttachments includeNoBorder offsetBorder o = case _owlItem_subI
   _ -> []
 
 isOverAttachment :: XY -> [(Attachment, XY)] -> Maybe (Attachment, XY)
-isOverAttachment pos attachments = find (\(a,x) -> x == pos) attachments
+isOverAttachment pos attachments = find (\(_,x) -> x == pos) attachments
 
 
 projectAttachment :: AttachmentLocation -> XY -> REltId -> LBox -> Maybe (Attachment, XY)
@@ -115,30 +114,30 @@ projectAttachment preval (V2 x y) rid lbox = r where
         then (slidecomp - _cartSegment_rightOrBot, _cartSegment_rightOrBot)
         else (0, slidecomp)
 
-    pos@(V2 px py) = if _cartSegment_isVertical then V2 orthcomp paracomp else V2 paracomp orthcomp
+    pos2@(V2 px py) = if _cartSegment_isVertical then V2 orthcomp paracomp else V2 paracomp orthcomp
     segl = _cartSegment_rightOrBot - _cartSegment_leftOrTop
-    ratio = case al of
+    ratio2 = case al of
       AL_Top -> (px - _cartSegment_leftOrTop) % segl
       AL_Bot -> (_cartSegment_rightOrBot - px) % segl
       AL_Left -> (_cartSegment_rightOrBot - py) % segl
       AL_Right -> (py - _cartSegment_leftOrTop) % segl
       AL_Any -> error "unexpected"
 
-    r2 = (parad+orthd, (ratio, pos), aa)
+    r2 = (parad+orthd, (ratio2, pos2), aa)
 
   rslts = fmap projdfn als
   cmpfn (d1, _, AvailableAttachment_CartSegment _ al1) (d2, _, AvailableAttachment_CartSegment _ al2) = compare d1 d2 <> compare (al2 == preval) (al1 == preval)
-  (d, (ratio, pos), AvailableAttachment_CartSegment _ al) = minimumBy cmpfn rslts
+  (d, (ratio1, pos1), AvailableAttachment_CartSegment _ alfinal) = minimumBy cmpfn rslts
 
   attachment = Attachment {
       _attachment_target = rid
-      , _attachment_location = al
-      , _attachment_offset_rel = ratio
+      , _attachment_location = alfinal
+      , _attachment_offset_rel = ratio1
     }
 
   r = if d > 2
     then Nothing
-    else Just $ (attachment, pos)
+    else Just $ (attachment, pos1)
 
 
 

@@ -4,22 +4,17 @@ module Potato.Flow.RenderCache where
 
 import           Relude
 
-import Potato.Data.Text.Unicode
 import           Potato.Flow.Math
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.SElts
 import Potato.Flow.Types
-import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
-import           Potato.Flow.Controller.Types
 import           Potato.Flow.Methods.LineTypes
 
 
 import qualified Data.IntMap             as IM
-import qualified Data.Text               as T
 import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
-import qualified Data.Sequence as Seq
 import Control.Exception (assert)
 
 -- TODO move these methods to Math

@@ -164,7 +164,7 @@ updateAttachmentMapFromSuperOwlChanges changes am = newam_4 where
 
 -- | update SuperOwlChanges to include stuff attached to stuff that changed (call before rendering)
 getChangesFromAttachmentMap :: OwlTree -> AttachmentMap -> SuperOwlChanges -> SuperOwlChanges
-getChangesFromAttachmentMap owltreeafterchanges@OwlTree {..} am changes = r where
+getChangesFromAttachmentMap owltreeafterchanges am changes = r where
   -- collect all stuff attaching to changed stuff
   changeset = IS.unions . catMaybes $ foldr (\k acc -> IM.lookup k am : acc) [] (IM.keys changes)
 
@@ -418,7 +418,7 @@ superOwlParliament_isValid od sop@(SuperOwlParliament owls) = r
     r = r1 && r2
 
 superOwlParliament_toSEltTree :: OwlTree -> SuperOwlParliament -> SEltTree
-superOwlParliament_toSEltTree od@OwlTree {..} (SuperOwlParliament sowls) = toList $ join r
+superOwlParliament_toSEltTree od (SuperOwlParliament sowls) = toList $ join r
   where
     makeSElt :: REltId -> SuperOwl -> (REltId, Seq (REltId, SEltLabel))
     makeSElt maxid sowl = case _superOwl_elt sowl of
@@ -439,7 +439,7 @@ newtype CanvasSelection = CanvasSelection { unCanvasSelection :: Seq SuperOwl } 
 -- | convert SuperOwlParliament to CanvasSelection (includes children and no folders)
 -- does not omits locked/hidden elts since Owl should not depend on Layers, you should do this using filterfn I guess??
 superOwlParliament_convertToCanvasSelection :: OwlTree -> (SuperOwl -> Bool) -> SuperOwlParliament -> CanvasSelection
-superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlParliament sowls) = r where
+superOwlParliament_convertToCanvasSelection od filterfn (SuperOwlParliament sowls) = r where
   filtered = Seq.filter filterfn sowls
   sopify children = owlParliament_toSuperOwlParliament od (OwlParliament children)
   -- if folder then recursively include children otherwise include self
@@ -450,7 +450,7 @@ superOwlParliament_convertToCanvasSelection od@OwlTree {..} filterfn (SuperOwlPa
 
 -- converts a SuperOwlParliament to its ordered Seq of SuperOwls including its children
 superOwlParliament_convertToSeqWithChildren :: OwlTree -> SuperOwlParliament -> Seq SuperOwl
-superOwlParliament_convertToSeqWithChildren od@OwlTree {..} (SuperOwlParliament sowls) = r where
+superOwlParliament_convertToSeqWithChildren od (SuperOwlParliament sowls) = r where
   sopify children = owlParliament_toSuperOwlParliament od (OwlParliament children)
   -- if folder then recursively include children otherwise include self
   mapfn sowl = case _superOwl_elt sowl of
@@ -462,7 +462,7 @@ superOwlParliament_convertToSeqWithChildren od@OwlTree {..} (SuperOwlParliament 
 -- generate MiniOwlTree will be reindexed so as not to conflict with OwlTree
 -- relies on OwlParliament being correctly ordered
 owlParliament_convertToMiniOwltree :: OwlTree -> OwlParliament -> MiniOwlTree
-owlParliament_convertToMiniOwltree od@OwlTree {..} op@(OwlParliament owls) = assert valid r where
+owlParliament_convertToMiniOwltree od op@(OwlParliament owls) = assert valid r where
   valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od op
 
   addOwl :: REltId -> REltId -> Seq REltId -> (OwlMapping, IM.IntMap REltId, REltId, SiblingPosition) -> (OwlMapping, IM.IntMap REltId, REltId)
@@ -576,7 +576,7 @@ owlTree_equivalent ota otb = r
     r = kiddos_equivalent (_owlTree_topOwls ota) (_owlTree_topOwls otb)
 
 instance PotatoShow OwlTree where
-  potatoShow od@OwlTree {..} = r where
+  potatoShow od = r where
     foldlfn acc rid =
       let sowl = owlTree_mustFindSuperOwl od rid
           selfEntry' = T.replicate (_owlItemMeta_depth . _superOwl_meta $ sowl) " " <> potatoShow sowl
@@ -651,7 +651,7 @@ owlTree_findKiddos OwlTree {..} rid = case rid of
     mommyOwl_kiddos oelt
 
 owlTree_findSuperOwlAtOwlSpot :: OwlTree -> OwlSpot -> Maybe SuperOwl
-owlTree_findSuperOwlAtOwlSpot od@OwlTree {..} OwlSpot {..} = do
+owlTree_findSuperOwlAtOwlSpot od OwlSpot {..} = do
   kiddos <- owlTree_findKiddos od _owlSpot_parent
   kid <- case _owlSpot_leftSibling of
     Nothing -> Seq.lookup 0 kiddos
@@ -661,7 +661,7 @@ owlTree_findSuperOwlAtOwlSpot od@OwlTree {..} OwlSpot {..} = do
 
 -- move one spot to the left, returns Nothing if not possible
 owlTree_goRightFromOwlSpot :: OwlTree -> OwlSpot -> Maybe OwlSpot
-owlTree_goRightFromOwlSpot od@OwlTree {..} ospot = do
+owlTree_goRightFromOwlSpot od ospot = do
   sowl <- owlTree_findSuperOwlAtOwlSpot od ospot
   return $ ospot {_owlSpot_leftSibling = Just $ _superOwl_id sowl}
 
@@ -696,7 +696,7 @@ owlTree_rEltId_toOwlSpot od@OwlTree {..} rid = r
 -- |
 -- super inefficient implementation for testing only
 owlTree_rEltId_toFlattenedIndex_debug :: OwlTree -> REltId -> Int
-owlTree_rEltId_toFlattenedIndex_debug od@OwlTree {..} rid = r
+owlTree_rEltId_toFlattenedIndex_debug od rid = r
   where
     sowls = owliterateall od
     r = fromMaybe (-1) $ Seq.findIndexL (\sowl -> _superOwl_id sowl == rid) sowls
@@ -1118,7 +1118,7 @@ owlTree_fromOldState oldDir oldLayers = r
         }
 
 owlTree_toSEltTree :: OwlTree -> SEltTree
-owlTree_toSEltTree od@OwlTree {..} = superOwlParliament_toSEltTree od (owlTree_toSuperOwlParliament od)
+owlTree_toSEltTree od = superOwlParliament_toSEltTree od (owlTree_toSuperOwlParliament od)
 
 -- DELETE use hasOwlElt variant
 superOwl_toSElt_hack :: SuperOwl -> SElt

@@ -1,4 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
+
+
 
 module Potato.Flow.Controller.Manipulator.Select (
   SelectHandler(..)
@@ -17,14 +20,12 @@ import           Potato.Flow.Math
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
-import           Potato.Flow.SEltMethods
 import Potato.Flow.RenderCache
 import           Potato.Flow.SElts
 
 import           Control.Exception                      (assert)
 import           Data.Default
 import           Data.Foldable                          (maximumBy)
-import qualified Data.IntMap                            as IM
 import qualified Data.Sequence                          as Seq
 
 selectBoxFromRelMouseDrag :: RelMouseDrag -> LBox
