@@ -180,9 +180,20 @@ DONE-EMOJIS
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
 -update README.md with usage instructions
--move over to minimaple account
+DONE-move over to minimaple account
 
 ::NEWEST TODO::
+-BUG fix text zipper bugs
+  -you should just rewrite text zipper and add select support..
+  -BUG can't enter multiple new lines into text box
+    -seems to be a bug in TextZipper
+  -BUG click on eol in text box is kind of broken in general[]
+    -doesn't always take you to the end
+    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
+      -this is probably because there is a bug with how you handle the cursor/selected character 
+  -BUG cilcking on auto wrapped lines after the first one does not work
+  -wrapping when single word exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
+
 -fix
   -- TODO this should be r' not a FIX ME why is stuff even working???
   -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
@@ -219,7 +230,7 @@ DONE-disable or fix circleci
     ║╔OwlPFWor═══════════════╗
 
 -Line presets sholud be for start/end
--add switch start/end button to line params?
+DONE-add switch start/end button to line params?
 -warning cleanup
 -add an anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
@@ -384,13 +395,6 @@ DONE-BUG fix line bugs
   DONE-add double click support to file explorer
     -need to hook into IO time stuff
 -BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe
--BUG fix text zipper bugs
-  -you should just rewrite text zipper and add select support..
-  -BUG can't enter multiple new lines into text box
-    -seems to be a bug in TextZipper
-  -BUG click on eol in text box is kind of broken in general[]
-    -doesn't always take you to the end
-    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
 -fix PanSpec...
 -FEATURE add line labels
   -adding midpoints when line labels exist need to be smarter about reposition line labels

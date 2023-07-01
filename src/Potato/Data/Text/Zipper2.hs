@@ -259,12 +259,16 @@ data DisplayLines = DisplayLines
   }
   deriving (Eq, Show)
 
+-- TODO helper function to convert DisplayLines into lines before selection, selection lines, lines after selection
+
 -- | Adjust the cursor and/or selection of the 'TextZipper' by the given display line coordinates
 -- If the x coordinate is beyond the start/end of a line, the cursor is moved to the start/end of that line respectively
 -- if `add` is true, the selection is expanded to the given position
 -- if `add` is false, the selection is cleared and the cursor is moved to the given position
 goToDisplayLinePosition :: Bool -> Int -> Int -> DisplayLines -> TextZipper -> TextZipper
 goToDisplayLinePosition add x y dl tz = undefined
+
+
 -- | Given a `TextAlignment`, a width and a 'TextZipper', produce a `DisplayLines`
 -- wrapping happens at word boundaries such that the most possible words fit into each display line
 -- if a line can not be wrapped (i.e. it contains a word longer than the display width) then the line is cropped in the middle of the word as necessary

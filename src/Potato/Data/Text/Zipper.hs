@@ -25,6 +25,7 @@ import Data.Text.Unsafe
 import qualified Data.List as L
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import GHC.Stack
 
 import Graphics.Text.Width (wcwidth)
 
@@ -235,11 +236,15 @@ splitAtWidth n t@(Text arr off len)
                   in (text arr off k, text arr (off+k) (len-k))
 
 toLogicalIndex :: Int -> Text -> Int
-toLogicalIndex n' t'@(Text _ _ len') = loop 0 0
-  where loop !i !cnt
-            | i >= len' || cnt + w > n' = i
-            | otherwise = loop (i+d) (cnt + w)
-          where Iter c d = iter t' i
+toLogicalIndex n' t'@(Text _ _ len') = loop 0 0 0
+  where loop !iteri !li !cumw
+            -- if we've gone past the last byte
+            | iteri >= len' = li-1
+            -- if we hit our target
+            | cumw + w > n' = li
+            -- advance one character
+            | otherwise = loop (iteri+d) (li+1) (cumw + w)
+          where Iter c d = iter t' iteri
                 w = charWidth c
 
 -- | Takes the given number of columns of characters. For example
@@ -359,7 +364,7 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
 -- lines are not.
 wrapWithOffsetAndAlignment
-  :: TextAlignment
+  :: (HasCallStack) => TextAlignment
   -> Int -- ^ Maximum width
   -> Int -- ^ Offset for first line
   -> Text -- ^ Text to be wrapped
@@ -407,7 +412,7 @@ offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLinesWithAlignment
-  :: TextAlignment
+  :: (HasCallStack) => TextAlignment
   -> Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
@@ -453,7 +458,9 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         headTail $ case T.uncons a of
           Nothing -> [[Span cursorTag " "]]
           Just (c, rest) ->
-            let o = if cursorAfterEOL then cursorCharWidth else curLineOffset + cursorCharWidth
+            let 
+                eolcursor = min (curLineOffset + cursorCharWidth) width
+                o = if cursorAfterEOL then cursorCharWidth else eolcursor
                 cursor = Span cursorTag (T.singleton c)
             in case map ((:[]) . Span tag) $ _wrappedLines_text <$> (wrapWithOffsetAndAlignment alignment width o rest) of
                   []     -> [[cursor]]
