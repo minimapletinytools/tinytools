@@ -192,8 +192,10 @@ DONE-move over to minimaple account
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
       -this is probably because there is a bug with how you handle the cursor/selected character 
   DONE-BUG cilcking on auto wrapped lines after the first one does not work
+  -gotolineposition broken when word is wrapped to next line (still does it based on character level wrapping for some reason)
   -you should just rewrite text zipper and add select support..
-  -wrapping when single word exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
+  -wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
+  -cursor up/down should work with display lines
 
 -fix
   -- TODO this should be r' not a FIX ME why is stuff even working???
