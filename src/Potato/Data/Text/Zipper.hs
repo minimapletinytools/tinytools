@@ -216,10 +216,12 @@ data WrappedLine = WrappedLine
   deriving (Eq, Show)
 
 -- | Information about the document as it is displayed (i.e., post-wrapping)
-data DisplayLines tag = DisplayLines
-  { _displayLines_spans :: [[Span tag]]
-  , _displayLines_offsetMap :: OffsetMapWithAlignment
-  , _displayLines_cursorPos :: (Int, Int) -- cursor position relative to upper left hand corner
+data DisplayLines tag = DisplayLines { 
+    -- NOTE this will contain a dummy ' ' character if the cursor is at the end
+    _displayLines_spans :: [[Span tag]]
+    -- NOTE this will not include offsets for the y position of dummy ' ' character if it is on its own line
+    , _displayLines_offsetMap :: OffsetMapWithAlignment
+    , _displayLines_cursorPos :: (Int, Int) -- cursor position relative to upper left hand corner
   }
   deriving (Eq, Show)
 
@@ -371,7 +373,9 @@ wrapWithOffsetAndAlignment
   -> [WrappedLine] -- (words on that line, hidden space char, offset from beginning of line)
 wrapWithOffsetAndAlignment _ maxWidth _ _ | maxWidth <= 0 = []
 wrapWithOffsetAndAlignment alignment maxWidth n txt = assert (n <= maxWidth) r where
-  r' = splitWordsAtDisplayWidth maxWidth $ wordsWithWhitespace ( T.replicate n "." <> txt)
+  r' = if T.null txt 
+    then [("",False)]
+    else splitWordsAtDisplayWidth maxWidth $ wordsWithWhitespace ( T.replicate n "." <> txt)
   fmapfn (t,b) = case alignment of
     TextAlignment_Left   -> WrappedLine t b 0
     TextAlignment_Right  -> WrappedLine t b (maxWidth-l)
@@ -419,10 +423,11 @@ displayLinesWithAlignment
   -> TextZipper -- ^ The text input contents and cursor state
   -> DisplayLines tag
 displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
-  let linesBefore :: [[WrappedLine]] -- The wrapped lines before the cursor line
+  let 
+      linesBefore :: [[WrappedLine]] -- The wrapped lines before the cursor line
       linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
       linesAfter :: [[WrappedLine]] -- The wrapped lines after the cursor line
-      linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) la
+      linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) $ la
 
       -- simulate trailing cursor character when computing OffsetMap
       afterWithCursor = if T.null a then " " else a
@@ -458,7 +463,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         headTail $ case T.uncons a of
           Nothing -> [[Span cursorTag " "]]
           Just (c, rest) ->
-            let 
+            let
                 eolcursor = min (curLineOffset + cursorCharWidth) width
                 o = if cursorAfterEOL then cursorCharWidth else eolcursor
                 cursor = Span cursorTag (T.singleton c)

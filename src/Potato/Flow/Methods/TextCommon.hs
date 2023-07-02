@@ -39,7 +39,9 @@ displayLinesToChar (x, y) dl (x',y') (xoff, yoff) = outputChar where
   offsetMap = TZ._displayLines_offsetMap dl
   yidx = y' - y - yoff
   xalignoffset = case Map.lookup yidx offsetMap of
-    Nothing -> error $ "should not happen. got " <> show yidx <> " in\n" <> show dl <> "\n" <> show spans
+    -- this will happen because the last character in spans is a generated cursor character if the cursor is at the end and the text ends with a new line
+    Nothing -> -1
+    --Nothing -> error $ "should not happen. got " <> show yidx <> " in\n" <> show dl <> "\n" <> show spans <> "\n" <> show offsetMap
     Just (offset,_) -> offset
   outputChar = case spans !!? yidx of
     Nothing -> Nothing

@@ -78,12 +78,14 @@ makeTextHandlerRenderOutput btis = r where
     --guard $ lBox_area origBox > 0
 
     -- TODO would be nice to assert that this exists...
-    (alignxoff,_) <- Map.lookup y offsetMap
+    (alignxoff,_) <- traceShow offsetMap $ Map.lookup y offsetMap
     let
       LBox p _ = _textInputState_box $ btis
       cursorh = RenderHandle {
           _renderHandle_box = LBox (p + (V2 (x + alignxoff) y)) (V2 1 1)
-          , _renderHandle_char = mCursorChar
+          , _renderHandle_char =  case mCursorChar of
+            Nothing -> Just ' '
+            x -> x
           , _renderHandle_color = RHC_Default
         }
     return [cursorh]

@@ -14,9 +14,13 @@ import Control.Monad
 
 import           Potato.Data.Text.Zipper
 
+import Debug.Trace
 
 someSentence :: T.Text
 someSentence = "12345 1234 12"
+
+newlineSentence :: T.Text
+newlineSentence = "\n\n\n\n\n"
 
 splitSentenceAtDisplayWidth :: Int -> T.Text -> [(T.Text, Bool)]
 splitSentenceAtDisplayWidth w t = splitWordsAtDisplayWidth w (wordsWithWhitespace t)
@@ -41,6 +45,7 @@ spec =
     wrapWithOffsetAndAlignment TextAlignment_Right 5 0 someSentence `shouldBe` [(WrappedLine "12345" True 0), (WrappedLine "1234" True 1), (WrappedLine "12" False 3)]
     wrapWithOffsetAndAlignment TextAlignment_Center 5 0 someSentence `shouldBe` [(WrappedLine "12345" True 0), (WrappedLine "1234" True 0), (WrappedLine "12" False 1)]
     wrapWithOffsetAndAlignment TextAlignment_Left 5 1 someSentence `shouldBe` [(WrappedLine "1234" False 0), (WrappedLine "5" True 0), (WrappedLine "1234" True 0), (WrappedLine "12" False 0)]
+
   it "eolSpacesToLogicalLines" $ do
     eolSpacesToLogicalLines
       [
@@ -70,6 +75,28 @@ spec =
       , (4, (2,8)) -- jump by 2 for char and 1 for space
       , (5, (3,11)) -- jump by 2 for char and 1 for space
       ]
+  it "displayLinesWithAlignment - spans" $ do 
+    let
+      makespans = fmap (fmap (Span ()))
+      insertcharnewlinesentence = insertChar '\n' $ insertChar '\n' $ insertChar '\n' $ insertChar '\n' $ insertChar '\n' $ fromText ""
+      cursorspan = [[Span () " "]]
+      -- newline cases
+      dl0 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText newlineSentence)
+      dl1 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n\n\naoeu")
+      dl2 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "\n\n\naoeu")
+      dl3 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n\n\n")
+
+    insertcharnewlinesentence `shouldBe` fromText newlineSentence
+
+    -- TODO fix broken text, generating unecessary "" span at eol
+    -- NOTE last " " is the generated cursor span char
+    --_displayLines_spans dl0 `shouldBe` makespans [[""],[""],[""],[""],[""],[" "]]
+    --_displayLines_spans dl1 `shouldBe` makespans [["aoeu"],[""],[""],["aoeu", " "]]
+    _displayLines_spans dl2 `shouldBe` makespans [[""],[""],[""],["aoeu", " "]]
+    --_displayLines_spans dl3 `shouldBe` makespans [["aoeu"],[""],[""],[" "]]
+    
+
+
   it "displayLines - cursorPos" $ do
     let
       dl0 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "")

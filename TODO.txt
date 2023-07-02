@@ -184,14 +184,15 @@ DONE-move over to minimaple account
 
 ::NEWEST TODO::
 -BUG fix text zipper bugs
-  -you should just rewrite text zipper and add select support..
-  -BUG can't enter multiple new lines into text box
+  DONE-cursor rendering is broke if there are multiple new lines
+  DONE-BUG can't enter multiple new lines into text box
     -seems to be a bug in TextZipper
-  -BUG click on eol in text box is kind of broken in general[]
+  DONE-BUG click on eol in text box is kind of broken in general[]
     -doesn't always take you to the end
     -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
       -this is probably because there is a bug with how you handle the cursor/selected character 
-  -BUG cilcking on auto wrapped lines after the first one does not work
+  DONE-BUG cilcking on auto wrapped lines after the first one does not work
+  -you should just rewrite text zipper and add select support..
   -wrapping when single word exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
 
 -fix
