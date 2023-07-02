@@ -427,7 +427,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       linesBefore :: [[WrappedLine]] -- The wrapped lines before the cursor line
       linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
       linesAfter :: [[WrappedLine]] -- The wrapped lines after the cursor line
-      linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) $ la
+      linesAfter = map (wrapWithOffsetAndAlignment alignment width 0) la
 
       -- simulate trailing cursor character when computing OffsetMap
       afterWithCursor = if T.null a then " " else a
@@ -444,10 +444,15 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
       -- * spans that are on earlier display lines (though on the same logical line), and
       -- * spans that are on the same display line
 
-      (spansCurrentBefore, spansCurLineBefore) = fromMaybe ([], []) $
+      (spansCurrentBefore, spansCurLineBefore') = fromMaybe ([], []) $
         initLast $ map ((:[]) . Span tag) $ _wrappedLines_text <$> (wrapWithOffsetAndAlignment alignment width 0 b)
+      
+      -- wrapWithOffsetAndAlignment generates dummy spans for new line characters that we don't need
+      spansCurLineBefore = case spansCurLineBefore' of
+        [Span _ ""] -> [] 
+        _ -> spansCurLineBefore'
       -- Calculate the number of columns on the cursor's display line before the cursor
-      curLineOffset = spansWidth spansCurLineBefore
+      curLineOffset = spansWidth spansCurLineBefore'
       -- Check whether the spans on the current display line are long enough that
       -- the cursor has to go to the next line
       cursorAfterEOL = curLineOffset == width

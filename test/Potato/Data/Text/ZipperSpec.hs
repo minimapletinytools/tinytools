@@ -88,12 +88,11 @@ spec =
 
     insertcharnewlinesentence `shouldBe` fromText newlineSentence
 
-    -- TODO fix broken text, generating unecessary "" span at eol
     -- NOTE last " " is the generated cursor span char
-    --_displayLines_spans dl0 `shouldBe` makespans [[""],[""],[""],[""],[""],[" "]]
-    --_displayLines_spans dl1 `shouldBe` makespans [["aoeu"],[""],[""],["aoeu", " "]]
+    _displayLines_spans dl0 `shouldBe` makespans [[""],[""],[""],[""],[""],[" "]]
+    _displayLines_spans dl1 `shouldBe` makespans [["aoeu"],[""],[""],["aoeu", " "]]
     _displayLines_spans dl2 `shouldBe` makespans [[""],[""],[""],["aoeu", " "]]
-    --_displayLines_spans dl3 `shouldBe` makespans [["aoeu"],[""],[""],[" "]]
+    _displayLines_spans dl3 `shouldBe` makespans [["aoeu"],[""],[""],[" "]]
     
 
 
