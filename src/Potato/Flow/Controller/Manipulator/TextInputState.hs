@@ -82,7 +82,7 @@ makeTextHandlerRenderOutput btis = r where
     let
       LBox p _ = _textInputState_box $ btis
       cursorh = RenderHandle {
-          _renderHandle_box = LBox (p + (V2 (x + alignxoff) y)) (V2 1 1)
+          _renderHandle_box = LBox (p + (V2 x y)) (V2 1 1)
           , _renderHandle_char =  case mCursorChar of
             Nothing -> Just ' '
             x -> x

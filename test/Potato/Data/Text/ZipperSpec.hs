@@ -98,13 +98,15 @@ spec =
 
   it "displayLines - cursorPos" $ do
     let
-      dl0 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "")
-      dl1 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu")
-      dl2 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n")
-      dl3 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "0123456789")
-      dl4 = displayLinesWithAlignment TextAlignment_Right 10 () () (insertChar 'a' $ fromText "aoeu")
-      dl5 = displayLinesWithAlignment TextAlignment_Right 10 () () (left $ insertChar 'a' $ fromText "aoeu")
-      dl6 = displayLinesWithAlignment TextAlignment_Right 10 () () (deleteLeft $ insertChar 'a' $ fromText "aoeu")
+      dl0 = displayLinesWithAlignment TextAlignment_Left 10 () () (fromText "")
+      dl1 = displayLinesWithAlignment TextAlignment_Left 10 () () (fromText "aoeu")
+      dl2 = displayLinesWithAlignment TextAlignment_Left 10 () () (fromText "aoeu\n")
+      dl3 = displayLinesWithAlignment TextAlignment_Left 10 () () (fromText "0123456789")
+      dl4 = displayLinesWithAlignment TextAlignment_Left 10 () () (insertChar 'a' $ fromText "aoeu")
+      dl5 = displayLinesWithAlignment TextAlignment_Left 10 () () (left $ insertChar 'a' $ fromText "aoeu")
+      dl6 = displayLinesWithAlignment TextAlignment_Left 10 () () (deleteLeft $ insertChar 'a' $ fromText "aoeu")
+      dl7 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "")
+
     _displayLines_cursorPos dl0 `shouldBe` (0,0)
     _displayLines_cursorPos dl1 `shouldBe` (4,0)
     _displayLines_cursorPos dl2 `shouldBe` (0,1)
@@ -112,6 +114,7 @@ spec =
     _displayLines_cursorPos dl4 `shouldBe` (5,0)
     _displayLines_cursorPos dl5 `shouldBe` (4,0)
     _displayLines_cursorPos dl6 `shouldBe` (4,0)
+    _displayLines_cursorPos dl7 `shouldBe` (10,0)
   it "displayLinesWithAlignment - spans" $ do
     let
       someText = top $ fromText "0123456789abcdefgh"

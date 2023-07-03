@@ -411,7 +411,7 @@ test_output = constructTest "output" emptyOwlPFState bs expected where
           -- make sure REltId is 0 because next step we will modify using it
           , firstSuperOwlPredicate (Just "<text>") $ \sowl -> _superOwl_id sowl == 1
         ]
-      , checkRenderHandlerPos (V2 19 10)
+      , checkRenderHandlerPos (V2 20 10)
     ]
 
 
