@@ -6,7 +6,7 @@ tinytools consists of the M (as in MVC) of the tinytools app. The VC implementat
 
 ## Terminology
 
-- Document:
+- Document: the thing you are working on in tinytools, I don't know how else to describe this 🤣
 - Scene: same as document 
 - Canvas: the 2D interactable area of tinytools
 - Owl: an element in the scene
@@ -15,7 +15,7 @@ tinytools consists of the M (as in MVC) of the tinytools app. The VC implementat
 
 ## State
 
-The main tinytools hierarchy looks something like this
+The main tinytools state hierarchy looks something like this:
 
 ```
                ╔GoatState══════════════════╗                                                                                                                                              
@@ -111,11 +111,11 @@ tinytools contains 3 main optimizations for rendering
 
 The broadphase culling step is managed by the `BroadPhase` class which uses axis aligned bounding boxes (AABBs) to cull out anything outside the regions to be re-rendered.
 
-NOTE `BroadPhase` uses a linear search implementation and will be upgrade to a kd-tree implementation if that should ever make a meaningful difference.
+- NOTE `BroadPhase` uses a linear search implementation and will be upgrade to a kd-tree implementation if that should ever make a meaningful difference.
 
 ### Incremental Rendering
 
-Each update operation returns a list of modified elements and only the areas on the screen that are impacted by the modified elements are rerenders.
+Each update operation returns a list of modified elements and only the areas on the screen that are impacted by the modified elements are rerenderered. 
 
 ### Caching
 
@@ -123,7 +123,7 @@ Each update operation returns a list of modified elements and only the areas on 
 
 Each time there is a change, the `RenderCache` is cleared on the objects that got changed, and will get regenerated in the render step.
 
-`OwlItemCache` include caches specific to each owl type as well as a generic `PreRender` cache that applies to all types. The `PreRender` cache is also necessary for properly rendering unicode wide chars
+`OwlItemCache` include caches specific to each owl type as well as a generic `PreRender` cache that applies to all owl types. The `PreRender` cache is also used for rendering unicode wide chars.
 
 The `RenderCache` is also used by the handlers for visual based interface operations.
 
@@ -139,20 +139,22 @@ tinytools has many many unit tests (UTs). They come in 3 types:
 `GoatTester` is a `State` monad that contains a `GoatState` and an interface to sensibly update, read, and test the state. Mosts tests thus consist of several operations (as if one were using the app) before checking if the state is as expected.
 
 ### GoatWidget testing
-These tests go through the Reflex interface which is very unecessary and have since been replaced by `GoatTester`
-
-
+These tests go through the Reflex interface which is very unecessary and have since been replaced by `GoatTester`.
 
 ## Known Issues
 
-- bugs in Potato.Data.Text.Zipper 
-  - handling cursore position based no DisplayLinesWithAlignment is broken
-  - unicode wide chars cause crashes
 - `foldGoatFn` evaluated multiple times per input event. Specifically, any input event to GoatWidget will cause `foldGoatFn` to be evaluated at least twice.
 
 ## Future Plans
 There are many future additions we'd like to make to tinytools. The most relevant ones to be aware of are:
 
+- better styling tools
+  - style objects to be switched over to swatch references rather than stored per-owl
+  - user defined swatch pallete
+- glyph widget ༼ つ ◕_◕ ༽つ
+- more primitive shapes...
+  - ellipse
+  - parallelogram
 - multi-document support, in particular, part of `GoatState` will be separated out into `[GoatTab]`
 - multiplayer support
   - we will use a trusted/permissioned decentralized consensus algorithm for this
@@ -160,11 +162,12 @@ There are many future additions we'd like to make to tinytools. The most relevan
   - `OwlTree` still needs to support id lookup as some things will continue to use id references
     - attachments
     - over the wire changes (when multiplayer support is added)
-- style objects to be switched over to swatch references rather than stored per-owl
-- see ::FUTURE FEATURES:: in TODO.txt for more stuff :D
+- see ::FUTURE FEATURES:: in TODO.txt for even more stuff :D
 
 ## FAQ
 
 - why are things randomly named after animals like 🐐🦙🦉?
   - I was having a hard time coming up with unambiguous terminology following more conventional naming patterns. You can see use more conventional naming in some places.
   - I like animals
+- why are so many things prefixed with potato
+  - some animals eat potatoes 🥔

@@ -179,7 +179,7 @@ DONE-EMOJIS
 
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
--update README.md with usage instructions
+DONE-update README.md with usage instructions
 DONE-move over to minimaple account
 
 ::NEWEST TODO::
@@ -200,7 +200,6 @@ DONE-move over to minimaple account
 -fix
   -- TODO this should be r' not a FIX ME why is stuff even working???
   -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
-DONE-disable or fix circleci
 -introduce "cancelHandler" function
   -gets called from GoatWidget when some higher order operation cancels or replaces the handler
     -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
@@ -217,7 +216,7 @@ DONE-disable or fix circleci
 -you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
   -from playing around with line arrows clikcing back and forth...
 -move over to minimaple account?
--BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
+
 -I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
 -pregenerate unicode and figure out how to distribute using nix?
 -BUG selecting severals items and moving takes forever :(
@@ -233,11 +232,9 @@ DONE-disable or fix circleci
     ║╔OwlPFWor═══════════════╗
 
 -Line presets sholud be for start/end
-DONE-add switch start/end button to line params?
 -warning cleanup
--add an anchor for the box label so you know you can add one easily
+-add a visual anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
--make tutorial file, I think you have everythingy ou need now!!!
 -you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
 -do label position adjustment when adding midpoints
 -high level bugs
@@ -252,6 +249,10 @@ DONE-add switch start/end button to line params?
     -it's definitely possible to do that but nothing seemed to break???
     DONE-auto expand folder after dragging into it
     DONE-do proper folder position
+DONE-disable or fix circleci
+DONE-BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
+DONE-add switch start/end button to line params?
+DONE/FAIL-make tutorial file, I think you have everythingy ou need now!!!
 DONE-finish line endpoint unit tests
 DONE-get rid of textbox tools
 DONEish-bxoes should be text boxes by default, remove the text tool

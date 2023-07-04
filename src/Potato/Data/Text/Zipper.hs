@@ -12,12 +12,12 @@ module Potato.Data.Text.Zipper where
 import           Prelude
 
 import Control.Exception (assert)
-import Control.Monad
-import Control.Monad.State (evalState, forM, get, put)
+import Control.Monad.State (evalState, get, put)
 import Data.Char (isSpace)
 import Data.Map (Map)
-import Data.Maybe (fromMaybe)
 import Data.String
+import Control.Monad
+
 import Data.Text (Text)
 import Data.Text.Internal (Text(..), text)
 import Data.Text.Internal.Fusion (stream)
@@ -26,11 +26,8 @@ import Data.Text.Unsafe
 import qualified Data.List as L
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import GHC.Stack
 
 import Graphics.Text.Width (wcwidth)
-
-import Debug.Trace
 
 
 -- | A zipper of the logical text input contents (the "document"). The lines
@@ -219,7 +216,7 @@ data WrappedLine = WrappedLine
   deriving (Eq, Show)
 
 -- | Information about the document as it is displayed (i.e., post-wrapping)
-data DisplayLines tag = DisplayLines { 
+data DisplayLines tag = DisplayLines {
     -- NOTE this will contain a dummy ' ' character if the cursor is at the end
     _displayLines_spans :: [[Span tag]]
     -- NOTE this will not include offsets for the y position of dummy ' ' character if it is on its own line
@@ -350,7 +347,6 @@ splitWordsAtDisplayWidth maxWidth wwws = reverse $ loop wwws 0 [] where
   loop (x:xs) cumw out = r where
     newWidth = textWidth x + cumw
     r = if newWidth > maxWidth
-      -- TODO index out of bounds sometimes in the presence of widechars
       then if isSpace $ T.index x (toLogicalIndex (maxWidth - cumw) x)
         -- if line runs over but character of splitting is whitespace then split on the whitespace
         then let (t1,t2) = splitAtWidth (maxWidth - cumw) x
@@ -383,14 +379,14 @@ alignmentOffset alignment maxWidth t = case alignment of
 -- wrapped line is offset by the number of columns provided. Subsequent wrapped
 -- lines are not.
 wrapWithOffsetAndAlignment
-  :: (HasCallStack) => TextAlignment
+  :: TextAlignment
   -> Int -- ^ Maximum width
   -> Int -- ^ Offset for first line
   -> Text -- ^ Text to be wrapped
   -> [WrappedLine] -- (words on that line, hidden space char, offset from beginning of line)
 wrapWithOffsetAndAlignment _ maxWidth _ _ | maxWidth <= 0 = []
 wrapWithOffsetAndAlignment alignment maxWidth n txt = assert (n <= maxWidth) r where
-  r' = if T.null txt 
+  r' = if T.null txt
     then [("",False)]
     -- I'm not sure why this is working, the "." padding will mess up splitWordsAtDisplayWidth for the next line if a single line exceeds the display width (but it doesn't)
     -- it should be `T.replicate n " "` instead (which also works but makes an extra "" Wrappedline somewhere)
@@ -403,8 +399,7 @@ wrapWithOffsetAndAlignment alignment maxWidth n txt = assert (n <= maxWidth) r w
 
 -- converts deleted eol spaces into logical lines
 eolSpacesToLogicalLines :: [[WrappedLine]] -> [[(Text, Int)]]
-eolSpacesToLogicalLines = fmap (fmap (\(WrappedLine a _ c) -> (a,c))) . ((L.groupBy (\(WrappedLine _ b _) _ -> not b)) =<<)
-
+eolSpacesToLogicalLines = fmap (fmap (\(WrappedLine a _ c) -> (a,c))) .  concatMap (L.groupBy (\(WrappedLine _ b _) _ -> not b))
 
 offsetMapWithAlignmentInternal :: [[WrappedLine]] -> OffsetMapWithAlignment
 offsetMapWithAlignmentInternal = offsetMapWithAlignment . eolSpacesToLogicalLines
@@ -425,24 +420,6 @@ offsetMapWithAlignment ts = evalState (offsetMap' ts) (0, 0)
       -- add additional offset to last line in wrapped lines (for newline char)
       return $ Map.adjust (\(align,_)->(align,o+1)) dl $ Map.unions maps
 
--- DELETE ME
--- | split a list on a condition, returning the list before and after (inclusive) the condition
--- the condition is on a foldl accumulator and the current element
--- the function f returns Nothing when the condition is met
-foldlSplitOnCondition :: (b -> a -> Maybe b) -> b -> [a] -> ([a],[a])
-foldlSplitOnCondition f acc0 xs = r where
-  foldfn (cacc, (before, after)) y = case cacc of
-    -- we've already hit our condition
-    Nothing -> (Nothing, (before, y:after))
-    Just cacc' -> case f cacc' y of
-      -- we've hit our condition, split here
-      Nothing    -> (Nothing, (before, y:after))
-      -- we have not hit our condition yet
-      Just cacc' -> (Just cacc', (y:before, after))
-  (_, (bs, as)) = foldl foldfn (Just acc0, ([],[])) xs
-  r = (reverse bs, reverse as)
-
-
 
 -- | Given a width and a 'TextZipper', produce a list of display lines
 -- (i.e., lines of wrapped text) with special attributes applied to
@@ -450,14 +427,14 @@ foldlSplitOnCondition f acc0 xs = r where
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLinesWithAlignment
-  :: (HasCallStack, Show tag) => TextAlignment
+  :: TextAlignment
   -> Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
   -> TextZipper -- ^ The text input contents and cursor state
   -> DisplayLines tag
 displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
-  let 
+  let
       linesBefore :: [[WrappedLine]] -- The wrapped lines before the cursor line
       linesBefore = map (wrapWithOffsetAndAlignment alignment width 0) $ reverse lb
       linesAfter :: [[WrappedLine]] -- The wrapped lines after the cursor line
@@ -496,16 +473,16 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         ctlength = textWidth $ T.take charsbeforecursor t
         cursorx = xoff + ctlength
         nextecpos = case ecpos of
-          Left y -> if cursoroncurspan 
+          Left y -> if cursoroncurspan
             then if ctlength == width
               -- cursor wraps to next line case
-              then Right (y+1, 0) 
+              then Right (y+1, 0)
               else Right (y, cursorx)
             else Left (y+1)
           Right x -> Right x
 
         beforecursor = T.take charsbeforecursor t
-        cursortext = T.take 1 $ T.drop charsbeforecursor t 
+        cursortext = T.take 1 $ T.drop charsbeforecursor t
         aftercursor = T.drop (charsbeforecursor+1) t
 
         cursorspans = [Span tag beforecursor, Span cursorTag cursortext] <> if T.null aftercursor then [] else [Span tag aftercursor]
@@ -513,16 +490,16 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         r = if cursoroncurspan
           then (nextacc, cursorspans)
           else (nextacc, [Span tag t])
-      ((_, ecpos), curlinespans) = if T.null curlinetext 
+      ((_, ecpos_out), curlinespans) = if T.null curlinetext
         -- manually handle empty case because mapaccumlfn doesn't handle it
         then ((0, Right (0, alignmentOffset alignment width "")), [[Span tag ""]])
         else L.mapAccumL mapaccumlfn (0, Left 0) curwrappedlines
 
-      (cursorY', cursorX) = case ecpos of 
+      (cursorY', cursorX) = case ecpos_out of
         Right (y,x) -> (y,x)
         -- if we never hit the cursor position, this means it's at the beginning of the next line
         Left y -> (y+1, alignmentOffset alignment width "")
-      cursorY = traceShow (cursorY', spansBefore, curwrappedlines) $ cursorY' + length spansBefore
+      cursorY = cursorY' + length spansBefore
 
   in  DisplayLines
         { _displayLines_spans = concat
@@ -533,18 +510,6 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
         , _displayLines_offsetMap = offsets
         , _displayLines_cursorPos = (cursorX, cursorY)
         }
-  where
-    initLast :: [a] -> Maybe ([a], a)
-    initLast = \case
-      [] -> Nothing
-      (x:xs) -> case initLast xs of
-        Nothing      -> Just ([], x)
-        Just (ys, y) -> Just (x:ys, y)
-    headTail :: [a] -> Maybe (a, [a])
-    headTail = \case
-      [] -> Nothing
-      x:xs -> Just (x, xs)
-
 
 -- | Move the cursor of the given 'TextZipper' to the logical position indicated
 -- by the given display line coordinates, using the provided 'DisplayLinesWithAlignment'
@@ -569,7 +534,7 @@ goToDisplayLinePosition x y dl tz =
 -- y-coordinate of the cursor and a mapping from display line number to text
 -- offset
 displayLines
-  :: (Show tag) => Int -- ^ Width, used for wrapping
+  :: Int -- ^ Width, used for wrapping
   -> tag -- ^ Metadata for normal characters
   -> tag -- ^ Metadata for the cursor
   -> TextZipper -- ^ The text input contents and cursor state
