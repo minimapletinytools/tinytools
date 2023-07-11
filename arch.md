@@ -9,7 +9,10 @@ tinytools consists of the M (as in MVC) of the tinytools app. The VC implementat
 - Document: the thing you are working on in tinytools, I don't know how else to describe this 🤣
 - Scene: same as document 
 - Canvas: the 2D interactable area of tinytools
+  - Canvas also refers to the designated area of the document that we care about (TODO explain better)
+- Layers: the logical list view of elements and folders in the scene
 - Owl: an element in the scene
+- Element: same as owl
 - Layers: the layer system which is a logical view into the scene state
 
 
@@ -101,13 +104,27 @@ Some mouse and keyboard input is handled within tinytools. In particular, the ca
 Most mouse and keyboard input is managed by instances of the  `Handler` class. The layers and canvas portions can each only have 1 handler each at a time.
 If a `Handler` method processes the input, it returns a `PotatoHandlerOutput` which contains information on how to update the scene as well as a new `Handler`.
 
+Mouse input is reported as click streams, see `LMouseData`
+Mouse input must be reported separately for the Layers and canvas area by setting the `_lMouseData_isLayerMouse` field. All input sequences in one area must end with a mouse release (`_lMouseData_isRelease = True`) before switching to the other area or it will assert. (in retrospect, this is could have been done a little more clear/safe)
+
+
 ## Rendering
 
 tinytools contains 3 main optimizations for rendering
 
 - a broadphase culling step
+  - This is managed by the state object `BroadPhaseState` 
+  - Note, the current implementation just does a linear cull but someday it will use a proper KD tree.
 - incremental rendering of only parts that changed
+  - Each change operation produces a list of boxes indicating the areas that changed and only those areas are re-rendered
+  - Only the visible screen region is rendered. The screen region can be set with `_goatWidgetConfig_canvasRegionDim`
 - caching
+  - each object has a generic cache which is the post rendered unicode output as well as an optional specific cache based on its needs
+
+The rendered scene available through `_goatWidget_renderedCanvas` and the rendered selection is available through `_goatWidget_renderedSelection`.
+
+The handler gizmos (the things you use to manipulate the scene or layers) are available through `_goatWidget_handlerRenderOutput` and `_goatWidget_layersHandlerRenderOutput`
+
 
 ### BroadPhase
 
