@@ -58,10 +58,9 @@ data MouseButton = MouseButton_Left | MouseButton_Middle | MouseButton_Right der
 
 data MouseDragState = MouseDragState_Down | MouseDragState_Dragging | MouseDragState_Up | MouseDragState_Cancelled deriving (Show, Eq)
 
--- TODO add modifier
--- TODO is this the all encompassing mouse event we want?
+
 -- TODO is there a way to optionally support more fidelity here?
--- mouse drags are sent as click streams
+-- NOTE mouse drags are sent as click streams
 data LMouseData = LMouseData {
   _lMouseData_position       :: XY
   , _lMouseData_isRelease    :: Bool

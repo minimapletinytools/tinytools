@@ -68,6 +68,7 @@ instance Default PotatoDefaultParameters where
       , _potatoDefaultParameters_box_text_textAlign = def
     }
 
+-- TODO rename to SetPotatoDefaultStyleParameters or something like that
 data SetPotatoDefaultParameters = SetPotatoDefaultParameters {
   _setPotatoDefaultParameters_sBoxType              :: Maybe SBoxType
   , _setPotatoDefaultParameters_lineStyle           :: Maybe LineStyle

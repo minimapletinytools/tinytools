@@ -35,29 +35,37 @@ import           Control.Monad.Fix
 data GoatWidgetConfig t = GoatWidgetConfig {
 
   -- initialization parameters
+  -- the initial state of the scene, set this to `(owlpfstate_newProject, emptyControllerMeta)` for an empty scene
   _goatWidgetConfig_initialState     :: (OwlPFState, ControllerMeta)
+  -- not used yet, set this to Nothing
   , _goatWidgetConfig_unicodeWidthFn :: Maybe UnicodeWidthFn
 
   -- canvas direct input
   , _goatWidgetConfig_mouse          :: Event t LMouseData
   , _goatWidgetConfig_keyboard       :: Event t KeyboardData
 
-  -- other canvas stuff
+  -- use this to set the rendered region size (set this to the size of the area that renders the scene)
   , _goatWidgetConfig_canvasRegionDim     :: Event t XY
 
   -- command based
+  -- and event to change the tool (NOTE keyboard input may also change the tool, but that's handled by _goatWidgetConfig_keyboard)
   , _goatWidgetConfig_selectTool     :: Event t Tool
+  -- an event to load a new scene
   , _goatWidgetConfig_load           :: Event t EverythingLoadState
-  -- only intended for setting params
+  -- an event to apply a Llama (operation). This is only intended for setting style parameters.
   , _goatWidgetConfig_paramsEvent    :: Event t Llama
+  -- an event to apply a change that will set the canvas size of the scene
   , _goatWidgetConfig_canvasSize     :: Event t XY
+  -- an event to create a new folder underneath the current selection
   , _goatWidgetConfig_newFolder :: Event t ()
 
   -- command based (via new endo style)
+  -- and event to set the default styling parameters
   , _goatWidgetConfig_setPotatoDefaultParameters :: Event t SetPotatoDefaultParameters
+  -- an event to mark the scene as saved, which is needed for the `goatState_hasUnsavedChanges` method to work
   , _goatWidgetConfig_markSaved :: Event t ()
+  -- an event that should fire each time the focus area changes. This is needed such that preview changes are applied when you change focus.
   , _goatWidgetConfig_setFocusedArea :: Event t GoatFocusedArea
-
 
   -- debugging
   , _goatWidgetConfig_setDebugLabel  :: Event t Text
@@ -85,16 +93,14 @@ emptyGoatWidgetConfig = GoatWidgetConfig {
 
 
 data GoatWidget t = GoatWidget {
-  _goatWidget_tool                  :: Dynamic t Tool
 
+  _goatWidget_tool                  :: Dynamic t Tool
 
   , _goatWidget_selection           :: Dynamic t Selection
   , _goatWidget_potatoDefaultParameters :: Dynamic t PotatoDefaultParameters
-
   , _goatWidget_layers              :: Dynamic t LayersState -- do I even need this?
-
-  , _goatWidget_pan                 :: Dynamic t XY
-  , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState
+  , _goatWidget_pan                 :: Dynamic t XY 
+  , _goatWidget_broadPhase          :: Dynamic t BroadPhaseState -- you can probably remove this
   , _goatWidget_handlerRenderOutput :: Dynamic t HandlerRenderOutput
   , _goatWidget_layersHandlerRenderOutput :: Dynamic t LayersViewHandlerRenderOutput
   , _goatWidget_canvas              :: Dynamic t SCanvas -- TODO DELETE just use OwlPFState

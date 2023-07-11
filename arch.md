@@ -91,6 +91,8 @@ The inputs on the left in the diagram below are reflex `Event`s and the outputs 
                                                                                                                                                                                                                                  
 ```                           
 
+Please see comments in `GoatWidget` and `GoatWidgetConfig` in GoatWidget.hs for more details.
+For an example setup, see `Potato.Flow.Vty.Main` in the tinytools-vty project
 
 ## Input
 
