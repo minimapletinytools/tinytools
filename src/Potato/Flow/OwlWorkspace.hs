@@ -28,7 +28,7 @@ import qualified Data.IntMap.Strict   as IM
 import qualified Data.IntSet          as IS
 import qualified Data.Sequence        as Seq
 
--- TODO rename
+-- TODO get rid of this, now needed
 data OwlPFWorkspace = OwlPFWorkspace {
   _owlPFWorkspace_owlPFState    :: OwlPFState
 
@@ -36,6 +36,7 @@ data OwlPFWorkspace = OwlPFWorkspace {
   -- TODO better to have methods return (OwlPFWorkspace, SuperOwlChanges) instead of embedding in OwlPFWorkspace
   , _owlPFWorkspace_lastChanges :: SuperOwlChanges
 
+  -- TODO move me elsewhere
   , _owlPFWorkspace_llamaStack  :: LlamaStack
 } deriving (Show, Generic)
 
@@ -225,6 +226,7 @@ removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
   -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
   r = makeCompositionLlama $ resetattachllamas <> [removellama]
 
+-- TODO have this return _owlPFWorkspace_lastChanges :: SuperOwlChanges
 -- TODO take PotatoConfiguration here???
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> OwlPFWorkspace
 updateOwlPFWorkspace evt ws = let

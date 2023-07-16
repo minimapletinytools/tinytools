@@ -77,7 +77,6 @@ data SLlama =
   SLlama_Set [(REltId, SElt)]
   | SLlama_Rename (REltId, Text)
   | SLlama_Compose [SLlama]
-  -- TODO OwlItem contains caches which we don't want to so serialize with Llama so ideally there should be a mirrored type to remove the cache, should be able to use SElt equivalents here instead?
   | SLlama_OwlPFCmd OwlPFCmd Bool
   deriving (Show, Generic)
 

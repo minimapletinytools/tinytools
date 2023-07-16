@@ -112,13 +112,14 @@ character_glpyhs
   -note if you start a new line to attach you must first attach to the starting middle attachment location
 
 :: FUTURE FEATURES
--grapheme cluster
+IGNORE-grapheme cluster
   -terminals don't support it but browser will
   -for terminals, you need grapheme cluster detection to remove those chars
   -you may as well add unicode detections as well
   -need to update style types to take Text instead of Char to support grapheme clusters
 DONE-EMOJIS
--moveable line anchors
+DONE-moveable line anchors
+DONE-adjustable attachment spec
 -TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
@@ -140,8 +141,15 @@ DONE-EMOJIS
       -bonus, it seme some fonts have speical rules for renfdering where the font overlaps
     -font picker...
 -segment style multipoint line spec
--adjustable attachment spec
 -shape tool spec
+  -can we generalize box and boxtext handlers to support any shape
+    -I think you need to consider refactoring box handler whichever way
+    -parameterize the following
+      -transform box -> shape -> transform box (when resizing)
+      -shape -> Maybe text label position
+      -shape -> Maybe text area 
+      -shape -> starting attachment position
+      -shape -> attachement projection function
   -tool for creating non box shapes, must support resizing
     -allow snapping to only valid sizes?
       -however, should it remember what inbetween size it's at (when resizing multiple things) or no?
@@ -152,7 +160,7 @@ DONE-EMOJIS
       -hexagon
       -octagon
       -circle/ellipse
-      -3d cube
+      -3d cube (this might be a different handler? requires a 3rd degree of adjustment (could use box handler for creation, and separate handler for modify))
 -straight line tool spec
   -same as autoline (with midpoints) but has fancy line rendering straight lines
   -line style picker
@@ -161,6 +169,7 @@ DONE-EMOJIS
   -crop or stop at end of last repeating pattern
 -would be cool to have a way to manipulate multiple line midpoints at the same time
   -but really you should just switch to segment based midpoints instead..?
+  
 
 
 :: refactors
@@ -174,27 +183,92 @@ DONE-EMOJIS
 -no partial owls!
   -except when converting remote changes to llamas
 
+:: MDI REFACTOR NOTES
+-get rid of PFWorkspace first
+-handlers should return preview action
+  -review pRefreshHandler as it will now take update cations
+  -preview start, preview continue, preview commit, preview cancel
+    -preview continue is prob unecessary, sending another preview start should implicitly cancel the last preview, but having it as an explicit state might still be nice
+  -get rid of undofirst stuff
+-goat changes
+  -goat has preview list for each user
+  -goat has commit preview operation
+  -you can just directly preview commit to apply an operation without having preview I guess, or have a separate function to apply operation directly which might help with organization
+  -preview commit could fail
+    -a client might try and commit a preview that was invalidated 
+  -goat needs to be able to apply several state changes,
+    -do I need to make any changes to the SuperOwlChanges stuff?
+      -probably union them all should just be fine, might have some useless info (i.e. do/undo one operation would leave an entry but didn't make any changes) in it but that's not a big deal.
+-state changes
+  -state needs to track preview changes to roll them back and reapply them when applying remote finalized changes 
+  -state needs to track pending (commit but not finaized) changes i.e. CLIENT ROLLBACK so that commit operations can be applied locally and then sent to the network, but these might get overidden by the server
+      -but this allows you to previwe->apply many operations before receiving updates so this is just better.
+  -state needs to track change id/# (no # for preview changes)
+-edge cases
+  -handler in middle of preview operation and state update
+  -conflicting previews
+  -attaching to something that gets deleted
+    -we do support attachment to deleted elt right now at the state level, not sure if it's supported at the handler level
+  -how to handler layers hide/lock?
+    -note these are not managed as llama actions weird!
+    -prob easiest just to cancel any previews if anything gets lock/hidden, but maybe we can try and allow the preivew operation to complete, not sure if this is already done or super hard, could eb either!
+    -however for undo/redo should be able to bypass
+-llamastack updates
+  -undo redo might fail if REltId does not exist. 
+    -note that non-set llama changes do not contain a copy of the element so we can't just recreate it.
+      -but maybe we can store a copy of the entire element to adjust for these cases?
+      -but IMO maybe easier just to fail the whole do/undo operation in this case
+        -gosh sure sucks if collaborator deletes a whole bunch of stuff though?
+  -do we care that we are undo/redo overriding other peoples changes?
+    -should be OK with fine grained changes
+-will commute op1 op2
+  -note that if op1 and op2 commute, we hope/expect op1 op2' to commute where op2' is a continuation of op2. But this isn't even strictly necessary and pRefreshHandler should just cancel the operation if it does not commute with some newly added operation
+-need to create fine grain updaters rather than ones that set the entire owl to allow for better commuting
+  -in particular
+    -we don't want property updates to conflict with transform updates
+    -we don't want layer hirerachy changes to conflict with other operations
+  -confirm if PFCMove/add/delete is ok
+  -the CTag PFCmd stuff needs to be redone as well as we want "set" style as oppose to deltas which don't play well if other changes had been applied on top of th particular fine grained change
+  -The SLlama_Set stuff needs to be rewritten. Make like a SLlama_Update type deeal
+-need to build multi-preview store inside of goat
+  -???what happens when 2 previews conflict???
+    -one person should just have their action cancelled I guess
+      -sucks that you can lock out the entire scene by drag dropping everything
+-soft locking elements that are being updated by other users?
+  -we don't want to block selection because that would suck and we don't want to block params/layers update from other move operations
+  -so I guess it's really just bblocking drag operations if someone else is dragging anything in our selection?
+-highlight other user selection please
+  -oof, need to make selection rendering a list??
+    -maybe we can add color to the rendering? And combine it all selection into 1 renderer??
+      -nah, probbaly better just to have separate renderer for each person
+-Maybe there can be fine grain change history that lets you selectively undo and see who made what changes, that would be pretty cool!!!!
+  -note the main issue here is that if there are a sequence of changes to the same fine-grained thing, it's weird to undo a change from a while ago, but maybe that's just how it is.
+  -could store this is controller meta? Not really controller meta anymore though, so maybe create a separate object.. 
+    -I mean PFWorkspace but I think it's better to store it side by side...
+      -we do expect the state to be reconstructable from the change log so maybe it make sense to store it together with the state somehow?
+-no conflict REltId generator
+  -easiest just to go to 128 or 256 bits I guess....
+-ordering service
+  -preview -> Goat -> State
+  -commit -> ordering service -> Goat -> State (rollback previews, apply commit change, apply reviews)
+    -note this isn't e
+  -consensus -> ordering service -> finalize commit -> Goat -> State (rollback previews, rollback commit state, apply finalized changes, apply unfinalized commits, apply previews)
+  -consensus
+    -just do hardcoded singel authority model for now, this also works well with the cloud model
+    -need something sophisticated for P2P model :(, would be cool to do PBFT/PaLa but TBH raft is prob best since its tursted/permissioned
+  -does ordering service need to know about state/non commuting changes
+    -no it doesn't, goat can just toss out failed changes
 
 :: RELEASE prep
 
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
-DONE-update README.md with usage instructions
-DONE-move over to minimaple account
+
 
 ::NEWEST TODO::
--BUG fix text zipper bugs
-  DONE-cursor rendering is broke if there are multiple new lines
-  DONE-BUG can't enter multiple new lines into text box
-    -seems to be a bug in TextZipper
-  DONE-BUG click on eol in text box is kind of broken in general[]
-    -doesn't always take you to the end
-    -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
-      -this is probably because there is a bug with how you handle the cursor/selected character 
-  DONE-BUG cilcking on auto wrapped lines after the first one does not work
-  DONE-gotolineposition broken when word is wrapped to next line (still does it based on character level wrapping for some reason)
+-text zipper
   -you should just rewrite text zipper and add select support..
-  -wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
+  -BUG wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
   -cursor up/down should work with display lines
 
 -fix
@@ -232,7 +306,6 @@ DONE-move over to minimaple account
     ║╔OwlPFWor═══════════════╗
 
 -Line presets sholud be for start/end
--warning cleanup
 -add a visual anchor for the box label so you know you can add one easily
   -but where to put it if there is already text?
 -you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
@@ -243,12 +316,26 @@ DONE-move over to minimaple account
   -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
-  -figure out why scrolling in file explorer is hecka broken
-    -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
-  IGNORE/DONE?-make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
-    -it's definitely possible to do that but nothing seemed to break???
-    DONE-auto expand folder after dragging into it
-    DONE-do proper folder position
+
+
+DONE-warning cleanup
+DONE-figure out why scrolling in file explorer is hecka broken
+  -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
+IGNORE/DONE?-make sure it's not possible to open up a pop up while mouse dragging (or you will break mouse drag pane2 stuff again)
+  -it's definitely possible to do that but nothing seemed to break???
+  DONE-auto expand folder after dragging into it
+  DONE-do proper folder position
+DONE-update README.md with usage instructions
+DONE-move over to minimaple account
+DONE-cursor rendering is broke if there are multiple new lines
+DONE-BUG can't enter multiple new lines into text box
+  -seems to be a bug in TextZipper
+DONE-BUG click on eol in text box is kind of broken in general[]
+  -doesn't always take you to the end
+  -sometimes takes you to begining of next line (it happened to me when you click the same place past EOL twice in a row)
+    -this is probably because there is a bug with how you handle the cursor/selected character 
+DONE-BUG cilcking on auto wrapped lines after the first one does not work
+DONE-gotolineposition broken when word is wrapped to next line (still does it based on character level wrapping for some reason)
 DONE-disable or fix circleci
 DONE-BUG index out of bounds somwhere with wide chars (pretty sure it's in ttvty but may be in zipper)
 DONE-add switch start/end button to line params?

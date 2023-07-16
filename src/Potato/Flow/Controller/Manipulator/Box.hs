@@ -1,3 +1,8 @@
+-- This handler does the following things 
+-- - transform any selection (drag + resize)
+-- - create boxes (consider splitting this one out)
+-- - go to box text label or text area edit handler
+
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
 
