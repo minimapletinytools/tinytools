@@ -118,7 +118,7 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
     initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
 
     goat = GoatState {
-        _goatState_workspace      = loadOwlPFStateIntoWorkspace (initialstate) emptyWorkspace
+        _goatState_workspace      = fst $ loadOwlPFStateIntoWorkspace (initialstate) emptyWorkspace
         , _goatState_pan             = _controllerMeta_pan controllermeta
         , _goatState_mouseDrag       = def
         , _goatState_handler         = SomePotatoHandler EmptyHandler
@@ -605,9 +605,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   (workspace_afterEvent, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- if there was no update, then changes are not valid
     Nothing   -> (_goatState_workspace goatState, IM.empty)
-    Just (_, wsev) -> (r1,r2) where
-      r1 = updateOwlPFWorkspace wsev (_goatState_workspace goatState)
-      r2 = _owlPFWorkspace_lastChanges r1
+    Just (_, wsev) -> updateOwlPFWorkspace wsev (_goatState_workspace goatState)
   pFState_afterEvent = _owlPFWorkspace_owlPFState workspace_afterEvent
 
   -- | update pan from GoatCmdTempOutput |

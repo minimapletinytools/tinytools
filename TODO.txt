@@ -185,6 +185,8 @@ DONE-adjustable attachment spec
 
 :: MDI REFACTOR NOTES
 -get rid of PFWorkspace first
+  DONE-get rid of lastChanges
+  -or do we keep it? could be nic eplace to store preview list and local llama stack
 -handlers should return preview action
   -review pRefreshHandler as it will now take update cations
   -preview start, preview continue, preview commit, preview cancel
@@ -270,7 +272,7 @@ DONE-adjustable attachment spec
   -you should just rewrite text zipper and add select support..
   -BUG wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
   -cursor up/down should work with display lines
-
+-add a visual anchor for the box label so you know you can add one easily
 -fix
   -- TODO this should be r' not a FIX ME why is stuff even working???
   -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
