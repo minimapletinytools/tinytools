@@ -55,7 +55,6 @@ library
       Potato.Flow.Deprecated.Layers
       Potato.Flow.Deprecated.State
       Potato.Flow.Deprecated.TestStates
-      Potato.Flow.Deprecated.Workspace
       Potato.Flow.Llama
       Potato.Flow.Math
       Potato.Flow.Methods.LineDrawer
