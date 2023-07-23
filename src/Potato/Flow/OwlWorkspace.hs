@@ -149,7 +149,6 @@ data WSEvent =
   -- TODO DELETE these they will be replaced by Llama
   WSEAddElt (Bool, OwlSpot, OwlItem)
   | WSEAddTree (OwlSpot, MiniOwlTree)
-  | WSEAddFolder (OwlSpot, Text)
   -- WIP
   | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
@@ -186,9 +185,6 @@ pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
   sop = owlParliament_toSuperOwlParliament od owlp
   sowlswithchildren = superOwlParliament_convertToSeqWithChildren od sop
   r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlItemMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
-
-pfc_addFolder_to_newElts :: OwlPFState -> (OwlSpot, Text) -> OwlPFCmd
-pfc_addFolder_to_newElts pfs (spot, name) = OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItem (OwlInfo name) (OwlSubItemFolder Seq.empty))]
 
 -- UNTESTED
 makeLlamaToSetAttachedLinesToCurrentPosition :: OwlPFState -> AttachmentMap -> REltId -> [Llama]
@@ -229,7 +225,7 @@ noChanges ws = (ws, IM.empty)
 -- TODO rename to removeElts
 removeEltAndUpdateAttachments_to_llama :: OwlPFState -> AttachmentMap -> OwlParliament -> Llama
 removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
-  removellama = makePFCLlama$  pfc_removeElt_to_deleteElts pfs op
+  removellama = makePFCLlama $  pfc_removeElt_to_deleteElts pfs op
   resetattachllamas = join $ fmap (makeLlamaToSetAttachedLinesToCurrentPosition pfs am) (toList rids)
   -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
   r = makeCompositionLlama $ resetattachllamas <> [removellama]
@@ -245,7 +241,6 @@ updateOwlPFWorkspace evt ws = let
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
-    WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
 
     -- TODO add validation step (in particular, we need this for canvas size)

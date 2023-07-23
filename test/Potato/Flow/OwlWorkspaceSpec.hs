@@ -61,20 +61,4 @@ spec = do
         --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_owlPFState newws2)
         verifyOwlAt newws2 spot2 (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_owlPFState someWorkspace0) `shouldBe` True
-      it "WSEAddFolder" $ do
-        let
-          folderName = "🥕🥕🥕"
-          wse1 = WSEAddFolder (spot2, folderName)
-          newws1 = fst $ updateOwlPFWorkspace wse1 someWorkspace0
-          ot1 = _owlPFState_owlTree $ _owlPFWorkspace_owlPFState newws1
-        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_owlPFState newws1)
-        verifyOwlAt newws1 spot2 (pred_nameIs folderName) `shouldBe` True
-        undoAndVerify newws1 (_owlPFWorkspace_owlPFState someWorkspace0) `shouldBe` True
-        -- create a child in the folder we just created and verify it got added correctly
-        let
-          sowl = fromJust $ owlTree_findSuperOwlAtOwlSpot ot1 spot2
-          childSpot = OwlSpot (_superOwl_id sowl) Nothing
-          wse2 = WSEAddElt (False, childSpot, owlItem1)
-          newws2 = fst $ updateOwlPFWorkspace wse2 newws1
-        verifyOwlAt newws2 childSpot (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
-        undoAndVerify newws2 (_owlPFWorkspace_owlPFState newws1) `shouldBe` True
+      
