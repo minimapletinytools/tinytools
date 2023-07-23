@@ -15,6 +15,7 @@ import           Potato.Flow.Render
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
+import qualified Potato.Flow.Preview as Preview
 
 import qualified Potato.Data.Text.Zipper          as TZ
 
@@ -27,10 +28,16 @@ import qualified Text.Show
 data PotatoHandlerOutput = PotatoHandlerOutput {
     _potatoHandlerOutput_nextHandler             :: Maybe SomePotatoHandler
     , _potatoHandlerOutput_select                :: Maybe (Bool, Selection)
+
+    -- TODO DELETE ME
     , _potatoHandlerOutput_pFEvent               :: Maybe WSEvent
+
     , _potatoHandlerOutput_pan                   :: Maybe XY
     , _potatoHandlerOutput_layersState           :: Maybe LayersState
     , _potatoHandlerOutput_changesFromToggleHide :: SuperOwlChanges
+
+    -- TODO USE ME
+    , _potatoHandlerOutput_previewEvent          :: Maybe Preview.Preview
   } deriving (Show)
 
 instance Default PotatoHandlerOutput where
@@ -41,6 +48,7 @@ instance Default PotatoHandlerOutput where
       , _potatoHandlerOutput_select = Nothing
       , _potatoHandlerOutput_layersState = Nothing
       , _potatoHandlerOutput_changesFromToggleHide = IM.empty
+      , _potatoHandlerOutput_previewEvent = Nothing
     }
 
 -- TODO replace this with just GoatState

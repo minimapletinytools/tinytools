@@ -40,6 +40,7 @@ import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.Types
+import qualified Potato.Flow.Preview as Preview
 
 import           Control.Exception                           (assert)
 import           Data.Default
@@ -194,6 +195,7 @@ data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFla
 -}
 
 
+type DoesRefreshHandlers = Bool
 data GoatCmdTempOutput = GoatCmdTempOutput {
   _goatCmdTempOutput_goatState               :: GoatState
   --, _goatCmdTempOutput_wasCanvasInput :: Bool
@@ -202,7 +204,13 @@ data GoatCmdTempOutput = GoatCmdTempOutput {
   , _goatCmdTempOutput_nextHandler           :: Maybe SomePotatoHandler
 
   , _goatCmdTempOutput_select                :: Maybe (Bool, Selection)
-  , _goatCmdTempOutput_pFEvent               :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event
+
+  -- TODO DELETE
+  , _goatCmdTempOutput_pFEvent               :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event (TODO maybe just store was canvas handler as a separate bool?)
+
+  -- TODO use me
+  --, _goatCmdTempOutput_previewEvent          :: Maybe (DoesRefreshHandlers, Preview.Preview)
+
   , _goatCmdTempOutput_pan                   :: Maybe XY
   , _goatCmdTempOutput_layersState           :: Maybe LayersState
   , _goatCmdTempOutput_changesFromToggleHide :: SuperOwlChanges
@@ -250,6 +258,8 @@ makeGoatCmdTempOutputFromNothingClearHandler goatState = def {
 makeGoatCmdTempOutputFromEvent :: GoatState -> WSEvent -> GoatCmdTempOutput
 makeGoatCmdTempOutputFromEvent goatState wsev = (makeGoatCmdTempOutputFromNothing goatState) {
     _goatCmdTempOutput_pFEvent = Just (False, wsev)
+
+    --_goatCmdTempOutput_previewEvent = Just (False, Preview.Commit wsev)
   }
 
 makeGoatCmdTempOutputFromMaybeEvent :: GoatState -> Maybe WSEvent -> GoatCmdTempOutput
@@ -568,17 +578,14 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                     Nothing    -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
                     Just stree -> r where
 
-                      -- TODO this is totally wrong, it won't handle parent/children stuff correctly
-                      -- TODO convert to MiniOwlTree :D
                       offsetstree = offsetSEltTree (V2 1 1) stree
                       minitree' = owlTree_fromSEltTree offsetstree
+                      -- reindex the tree so there are no collisions with the current state
                       maxid1 = owlTree_maxId minitree' + 1
                       maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState_withKeyboard))
                       minitree = owlTree_reindex (max maxid1 maxid2) minitree'
                       spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
                       treePastaEv = WSEAddTree (spot, minitree)
-
-
 
                       r = makeGoatCmdTempOutputFromEvent (goatState_withKeyboard { _goatState_clipboard = Just offsetstree }) treePastaEv
                   KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
@@ -690,22 +697,24 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pFState_afterEvent) filterHiddenOrLocked next_selection
   nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
   next_handler' = if isNewSelection
-    -- if there is a new selection, update the handler with new selection if handler wasn't active
+    -- (a) if there is a new selection, update the handler with new selection if handler wasn't active
     then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_canvasSelection
-    -- otherwise, use the returned handler or make a new one from selection
+    -- (b) otherwise, use the returned handler or make a new one from selection if there was no returned handler
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
   next_layersHandler' = goatCmdTempOutput_layersHandler goatCmdTempOutput
+
+  -- TODO simplify this logic, it's confusing A.F.
+  -- refresh the handler if there was a non-canvas event
+  -- TODO you only need to do this if handler is one that came from mHandlerFromPho (b) above because handlers produced from selection should already be up to date
   (next_handler, next_layersHandler) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
-
-
-    -- TODO you only need to do this if handler is one that came from mHandlerFromPho
-    -- if there was a non-canvas event, reset the handler D:
     -- since we don't have multi-user events, the handler should never be active when this happens
     Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
+      -- TODO you need to create a second event processing stage (i.e. intermediateGoatState) because refresh handler might return a cancel operation 
       -- CAREFUL INFINITE LOOP DANGER WITH USE OF `finalGoatState`
       -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
       next_potatoHandlerInput = potatoHandlerInputFromGoatState finalGoatState
       refreshedHandler = fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput)
+      -- a little weird that we refresh the layers handler in cases where the event was an event that came from layers, but it doesn't matter since the layers handler won't be active when it produces that event
       refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
 
 

@@ -138,24 +138,27 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 
 ------ update functions via commands
 data WSEvent =
+
+  -- TODO DELETE these they will be replaced by Llama
   WSEAddElt (Bool, OwlSpot, OwlItem)
   | WSEAddTree (OwlSpot, MiniOwlTree)
   | WSEAddFolder (OwlSpot, Text)
-
   -- DELETE
   | WSERemoveElt OwlParliament
-
   -- WIP
   | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
-
-
   | WSEMoveElt (OwlSpot, OwlParliament)
-  -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
-  | WSEApplyLlama (Bool, Llama)
   | WSEResizeCanvas DeltaLBox
+  -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
+  | WSELoad SPotatoFlow
+
+  -- TODO get rid of undo first parameter 
+  | WSEApplyLlama (Bool, Llama)
+
+
   | WSEUndo
   | WSERedo
-  | WSELoad SPotatoFlow
+  
   deriving (Show)
 
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
@@ -232,6 +235,8 @@ updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlCh
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_owlPFState ws
   r = case evt of
+
+    -- TODO DELETE ALL OF THESE
     WSEAddElt (undo, spot, oelt) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
@@ -242,15 +247,17 @@ updateOwlPFWorkspace evt ws = let
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
 
     WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
-
-    WSEApplyLlama (undo, x) -> if undo
-      then doLlamaWorkspaceUndoPermanentFirst x ws
-      else doLlamaWorkspace x ws
     WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     -- ignore invalid canvas resize events
     WSEResizeCanvas x -> if validateCanvasSizeOperation x ws
       then doCmdWorkspace (OwlPFCResizeCanvas x) ws
       else noChanges ws
+
+
+    WSEApplyLlama (undo, x) -> if undo
+      then doLlamaWorkspaceUndoPermanentFirst x ws
+      else doLlamaWorkspace x ws
+    
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
     WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
