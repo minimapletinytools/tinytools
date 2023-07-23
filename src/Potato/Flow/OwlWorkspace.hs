@@ -148,16 +148,13 @@ data WSEvent =
 
   -- TODO DELETE these they will be replaced by Llama
   WSEAddElt (Bool, OwlSpot, OwlItem)
-  | WSEAddTree (OwlSpot, MiniOwlTree)
-  | WSELoad SPotatoFlow
 
   -- TODO get rid of undo first parameter 
   | WSEApplyLlama (Bool, Llama)
 
-
   | WSEUndo
   | WSERedo
-  
+  | WSELoad SPotatoFlow
   deriving (Show)
   
 
@@ -188,7 +185,6 @@ updateOwlPFWorkspace evt ws = let
     WSEAddElt (undo, spot, oelt) -> if undo
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
-    WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
 
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws

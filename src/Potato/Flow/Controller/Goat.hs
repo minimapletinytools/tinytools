@@ -361,7 +361,7 @@ makeClipboard goatState@GoatState {..} = r where
     then _goatState_clipboard
     else Just $ superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
 
--- TODO move to Potato.Flow.Workspace
+-- TODO move to Potato.Flow.Methods.LlamaWorks
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent gs@GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
@@ -578,7 +578,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                   KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState_withKeyboard of
                     Nothing    -> makeGoatCmdTempOutputFromNothing goatState_withKeyboard
                     Just stree -> r where
-
                       offsetstree = offsetSEltTree (V2 1 1) stree
                       minitree' = owlTree_fromSEltTree offsetstree
                       -- reindex the tree so there are no collisions with the current state
@@ -586,8 +585,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
                       maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState_withKeyboard))
                       minitree = owlTree_reindex (max maxid1 maxid2) minitree'
                       spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
-                      treePastaEv = WSEAddTree (spot, minitree)
-
+                      treePastaEv = WSEApplyLlama (False, makePFCLlama $ OwlPFCNewTree (minitree, spot))
                       r = makeGoatCmdTempOutputFromEvent (goatState_withKeyboard { _goatState_clipboard = Just offsetstree }) treePastaEv
                   KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
                     r = makeGoatCmdTempOutputFromEvent goatState_withKeyboard WSEUndo
