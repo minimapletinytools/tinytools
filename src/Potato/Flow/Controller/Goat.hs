@@ -359,6 +359,10 @@ makeClipboard goatState@GoatState {..} = r where
     then _goatState_clipboard
     else Just $ superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
 
+makeAddFolderLlama :: OwlPFState -> (OwlSpot, Text) -> Llama
+makeAddFolderLlama pfs (spot, name) = makePFCLlama $ OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItem (OwlInfo name) (OwlSubItemFolder Seq.empty))]
+
+
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
@@ -381,8 +385,6 @@ potatoHandlerInputFromGoatState GoatState {..} = r where
     , _potatoHandlerInput_selection   = _goatState_selection
     , _potatoHandlerInput_canvasSelection = _goatState_canvasSelection
   }
-
-
 
 
 -- | filters out keyboard input based on the configuration
@@ -432,7 +434,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
-        newFolderEv = WSEAddFolder (folderPos, x)
+        newFolderEv = WSEApplyLlama (False, makeAddFolderLlama last_pFState (folderPos, x))
       GoatCmdLoad (spf, cm) -> r where
         -- HACK this won't get generated until later but we need this to generate layersState...
         -- someday we'll split up foldGoatFn by `GoatCmd` (or switch to Endo `GoatState`) and clean this up
