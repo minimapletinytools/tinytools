@@ -78,13 +78,3 @@ spec = do
           newws2 = fst $ updateOwlPFWorkspace wse2 newws1
         verifyOwlAt newws2 childSpot (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_owlPFState newws1) `shouldBe` True
-        {-
-      it "WSEResizeCanvas" $ do
-        1 `shouldBe` 1
-      it "WSEUndo" $ do
-        1 `shouldBe` 1
-      it "WSERedo" $ do
-        1 `shouldBe` 1
-      it "WSELoad" $ do
-        1 `shouldBe` 1
-        -}

@@ -38,6 +38,7 @@ module Potato.Flow.Math (
   , Delta(..)
   , DeltaXY(..)
   , DeltaLBox(..)
+  , deltaLBox_invert
 
   , module Linear.V2
 ) where
@@ -338,3 +339,9 @@ instance Delta LBox DeltaLBox where
       _lBox_tl = minusDelta _lBox_tl _deltaLBox_translate
       , _lBox_size = minusDelta _lBox_size _deltaLBox_resizeBy
     }
+
+deltaLBox_invert :: DeltaLBox -> DeltaLBox
+deltaLBox_invert DeltaLBox {..} = DeltaLBox {
+    _deltaLBox_translate = negate _deltaLBox_translate
+    , _deltaLBox_resizeBy = negate _deltaLBox_resizeBy
+  }

@@ -95,9 +95,12 @@ undoPermanentWorkspace pfw =  r where
 
 doLlamaWorkspace :: Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doLlamaWorkspace llama pfw = r where
-  (newpfs, changes, undollama) = case _llama_apply llama (_owlPFWorkspace_owlPFState pfw) of
-    Left e  -> error $ show e
-    Right x -> x
+  oldpfs = _owlPFWorkspace_owlPFState pfw
+  (newpfs, changes, mundollama) = case _llama_apply llama oldpfs of
+    -- TODO would be nice to output error to user somehow?
+    Left e  -> (oldpfs, IM.empty, Nothing)
+    Right x -> case x of 
+      (newpfs', changes', undollama') -> (newpfs', changes', Just undollama')
   LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
   newLastSaved = case _llamaStack_lastSaved of
     Nothing -> Nothing
@@ -109,7 +112,9 @@ doLlamaWorkspace llama pfw = r where
   r' = OwlPFWorkspace {
       _owlPFWorkspace_owlPFState       = newpfs
       , _owlPFWorkspace_llamaStack  = LlamaStack {
-          _llamaStack_done = undollama : _llamaStack_done
+          _llamaStack_done = case mundollama of
+            Nothing -> _llamaStack_done
+            Just undollama -> undollama : _llamaStack_done
           , _llamaStack_undone = _llamaStack_undone
           , _llamaStack_lastSaved = newLastSaved
         }
@@ -145,7 +150,6 @@ data WSEvent =
   | WSEAddFolder (OwlSpot, Text)
   -- WIP
   | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
-  | WSEResizeCanvas DeltaLBox
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSELoad SPotatoFlow
 
@@ -157,6 +161,7 @@ data WSEvent =
   | WSERedo
   
   deriving (Show)
+  
 
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
@@ -238,13 +243,10 @@ updateOwlPFWorkspace evt ws = let
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
+    WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
     WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
-    -- ignore invalid canvas resize events
-    WSEResizeCanvas x -> if validateCanvasSizeOperation x ws
-      then doCmdWorkspace (OwlPFCResizeCanvas x) ws
-      else noChanges ws
 
-
+    -- TODO add validation step (in particular, we need this for canvas size)
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
@@ -257,12 +259,3 @@ updateOwlPFWorkspace evt ws = let
   in if isValidAfter
     then r
     else error ("INVALID " <> show evt <> "\n" <> debugPrintBeforeAfterState lastState afterState)
-
-
--- | returns true if the applying `OwlPFCResizeCanvas lbox` results in a valid canvas size
-validateCanvasSizeOperation :: DeltaLBox -> OwlPFWorkspace -> Bool
-validateCanvasSizeOperation lbox ws = r where
-  pfs = _owlPFWorkspace_owlPFState ws
-  oldcanvas = _sCanvas_box $ _owlPFState_canvas pfs
-  newcanvas = plusDelta oldcanvas lbox
-  r = isValidCanvas (SCanvas newcanvas)

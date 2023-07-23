@@ -146,7 +146,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
         -- these two need to be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
         , ffor _goatWidgetConfig_paramsEvent $ \llama -> (GoatCmdWSEvent (WSEApplyLlama (False, llama)))
-        , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEResizeCanvas (DeltaLBox 0 xy))
+        , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy)))
         , ffor _goatWidgetConfig_setFocusedArea $ \fa -> GoatCmdSetFocusedArea fa
       ]
 

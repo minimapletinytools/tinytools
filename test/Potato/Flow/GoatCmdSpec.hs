@@ -22,7 +22,7 @@ verifyCanvasSize (w,h) = verifyState "verifyCanvasSize" f where
       else Just $ "expected: " <> show (w, h) <> " got " <> show (w', h')
 
 deltaResizeCanvasCmd :: (Int, Int) -> GoatCmd
-deltaResizeCanvasCmd (w, h) = GoatCmdWSEvent $ WSEResizeCanvas (DeltaLBox 0 (V2 w h))
+deltaResizeCanvasCmd (w, h) = GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 (V2 w h))))
 
 goatCmdWSEvent_basic_test ::  Spec
 goatCmdWSEvent_basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
