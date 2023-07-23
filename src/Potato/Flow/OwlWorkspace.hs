@@ -149,9 +149,6 @@ data WSEvent =
   -- TODO DELETE these they will be replaced by Llama
   WSEAddElt (Bool, OwlSpot, OwlItem)
   | WSEAddTree (OwlSpot, MiniOwlTree)
-  -- WIP
-  | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
-  -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSELoad SPotatoFlow
 
   -- TODO get rid of undo first parameter 
@@ -178,57 +175,8 @@ pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spo
 pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
 pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
 
-pfc_removeElt_to_deleteElts :: OwlPFState -> OwlParliament -> OwlPFCmd
-pfc_removeElt_to_deleteElts pfs owlp = assert valid r where
-  od = _owlPFState_owlTree pfs
-  valid = superOwlParliament_isValid od $ owlParliament_toSuperOwlParliament od owlp
-  sop = owlParliament_toSuperOwlParliament od owlp
-  sowlswithchildren = superOwlParliament_convertToSeqWithChildren od sop
-  r = OwlPFCDeleteElts $ toList (fmap (\SuperOwl {..} -> (_superOwl_id, owlTree_owlItemMeta_toOwlSpot od _superOwl_meta, _superOwl_elt)) sowlswithchildren)
-
--- UNTESTED
-makeLlamaToSetAttachedLinesToCurrentPosition :: OwlPFState -> AttachmentMap -> REltId -> [Llama]
-makeLlamaToSetAttachedLinesToCurrentPosition pfs am target = case IM.lookup target am of
-    Nothing       -> []
-    Just attached -> fmap makeLlama . IS.toList $ attached
-  where
-    makeLlama :: REltId -> Llama
-    makeLlama rid = case _superOwl_elt (hasOwlTree_mustFindSuperOwl pfs rid) of
-        OwlItem _ (OwlSubItemLine sline) -> r where
-          startAttachment = _sAutoLine_attachStart sline
-          endAttachment = _sAutoLine_attachEnd sline
-          affectstart = fmap _attachment_target startAttachment == Just target
-          affectend = fmap _attachment_target endAttachment == Just target
-          newstartpos = case maybeLookupAttachment False pfs startAttachment of
-            Nothing -> error $ "expected to find attachment " <> show startAttachment
-            Just x -> x
-          newendpos = case maybeLookupAttachment False pfs endAttachment of
-            Nothing -> error $ "expected to find attachment " <> show endAttachment
-            Just x -> x
-          newsline = sline {
-              -- disconnect from target if it was deleted
-              -- NOTE strictly speaking necessary! Not sure which way is better in multi-user mode
-              _sAutoLine_attachStart = if affectstart then Nothing else _sAutoLine_attachStart sline
-              , _sAutoLine_attachEnd = if affectend  then Nothing else _sAutoLine_attachEnd sline
-
-              -- place endpoints in new place
-              , _sAutoLine_start = if affectstart then newstartpos else _sAutoLine_start sline
-              , _sAutoLine_end = if affectend then newendpos else _sAutoLine_end sline
-
-            }
-          r = makeSetLlama (rid, SEltLine newsline)
-        _ -> error $ "found non-line element in attachment list"
-
 noChanges :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 noChanges ws = (ws, IM.empty)
-
--- TODO rename to removeElts
-removeEltAndUpdateAttachments_to_llama :: OwlPFState -> AttachmentMap -> OwlParliament -> Llama
-removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
-  removellama = makePFCLlama $  pfc_removeElt_to_deleteElts pfs op
-  resetattachllamas = join $ fmap (makeLlamaToSetAttachedLinesToCurrentPosition pfs am) (toList rids)
-  -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
-  r = makeCompositionLlama $ resetattachllamas <> [removellama]
 
 -- TODO take PotatoConfiguration here???
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
@@ -241,9 +189,7 @@ updateOwlPFWorkspace evt ws = let
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
-    WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
 
-    -- TODO add validation step (in particular, we need this for canvas size)
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws

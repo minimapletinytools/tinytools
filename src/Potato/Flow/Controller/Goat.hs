@@ -39,8 +39,10 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
+import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import qualified Potato.Flow.Preview as Preview
+import Potato.Flow.Methods.LlamaWorks
 
 import           Control.Exception                           (assert)
 import           Data.Default
@@ -359,14 +361,11 @@ makeClipboard goatState@GoatState {..} = r where
     then _goatState_clipboard
     else Just $ superOwlParliament_toSEltTree (goatState_owlTree goatState) _goatState_selection
 
-makeAddFolderLlama :: OwlPFState -> (OwlSpot, Text) -> Llama
-makeAddFolderLlama pfs (spot, name) = makePFCLlama $ OwlPFCNewElts [(owlPFState_nextId pfs, spot, OwlItem (OwlInfo name) (OwlSubItemFolder Seq.empty))]
-
-
+-- TODO move to Potato.Flow.Workspace
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
-deleteSelectionEvent GoatState {..} = if isParliament_null _goatState_selection
+deleteSelectionEvent gs@GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
-  else Just $ WSERemoveEltAndUpdateAttachments (superOwlParliament_toOwlParliament _goatState_selection) (_goatState_attachmentMap)
+  else Just $ WSEApplyLlama (False, removeEltAndUpdateAttachments_to_llama (goatState_pFState gs) _goatState_attachmentMap (superOwlParliament_toOwlParliament _goatState_selection))
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
