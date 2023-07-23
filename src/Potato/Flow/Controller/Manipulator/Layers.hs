@@ -101,6 +101,13 @@ resetLayersHandler lh = lh {
   }
 
 
+
+--TODO need to reorder so it becomes undo friendly here I think? (uhh, pretty sure it's ok to delete this TODO? should be ordered by assumption)
+-- TODO assert elts are valid
+moveEltLlama :: OwlPFState -> (OwlSpot, OwlParliament) -> Llama
+moveEltLlama pfs (ospot, op) = makePFCLlama $ OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
+
+
 -- spot is invalid if it's a descendent of a already selected element
 isSpotValidToDrop :: OwlTree -> Selection -> OwlSpot -> Bool
 isSpotValidToDrop ot sel spot = not $ owlParliamentSet_descendent ot (_owlSpot_parent spot) (superOwlParliament_toOwlParliamentSet sel)
@@ -274,6 +281,8 @@ instance PotatoHandler LayersHandler where
 
 
 
+
+
       -- TODO when we have multi-user mode, we'll want to test if the target drop space is still valid
       (MouseDragState_Up, LDS_Dragging) -> r where
         mev = do
@@ -284,7 +293,7 @@ instance PotatoHandler LayersHandler where
             -- TODO modify if we drag on top of existing elt... Is there anything to do here? I can't remember why I added this comment. Pretty sure there's nothing to do
             modifiedSpot = spot
           guard isSpotValid
-          return $ WSEMoveElt (modifiedSpot, superOwlParliament_toOwlParliament selection)
+          return $ WSEApplyLlama (False, moveEltLlama pfs (modifiedSpot, superOwlParliament_toOwlParliament selection))
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)

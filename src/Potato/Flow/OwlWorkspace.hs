@@ -147,7 +147,6 @@ data WSEvent =
   | WSERemoveElt OwlParliament
   -- WIP
   | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
-  | WSEMoveElt (OwlSpot, OwlParliament)
   | WSEResizeCanvas DeltaLBox
   -- | WSEDuplicate OwlParliament -- kiddos get duplicated??
   | WSELoad SPotatoFlow
@@ -247,7 +246,6 @@ updateOwlPFWorkspace evt ws = let
     WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
 
     WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
-    WSEMoveElt x -> doCmdWorkspace (pfc_moveElt_to_move lastState x) ws
     -- ignore invalid canvas resize events
     WSEResizeCanvas x -> if validateCanvasSizeOperation x ws
       then doCmdWorkspace (OwlPFCResizeCanvas x) ws

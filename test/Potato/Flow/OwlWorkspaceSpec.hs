@@ -87,14 +87,6 @@ spec = do
         -- b2 should now be where b1 was
         verifyOwlAt newws1 (OwlSpot 1 Nothing) (pred_nameIs ("b2")) `shouldBe` True
         undoAndVerify newws1 (_owlPFWorkspace_owlPFState someWorkspace0) `shouldBe` True
-      it "WSEMoveElt" $ do
-        let
-          -- move b2 to b1
-          b1spot = owlTree_rEltId_toOwlSpot owlTree0 2
-          wse1 = WSEMoveElt (b1spot, (OwlParliament $ Seq.fromList [3]))
-          newws1 = fst $ updateOwlPFWorkspace wse1 someWorkspace0
-        verifyOwlAt newws1 b1spot (pred_nameIs "b2") `shouldBe` True
-        undoAndVerify newws1 (_owlPFWorkspace_owlPFState someWorkspace0) `shouldBe` True
         {-
       it "WSEResizeCanvas" $ do
         1 `shouldBe` 1
