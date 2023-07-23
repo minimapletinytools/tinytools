@@ -183,6 +183,22 @@ DONE-adjustable attachment spec
 -no partial owls!
   -except when converting remote changes to llamas
 
+:: Preview Operations Mini Refactor
+-get rid of controllerswithid->llama->controllerswithid circular nonsense
+  -in particular, get rid of Llama->ControllersWithId, we work with Llama's directly now!
+  -remove PFCmd stuff from WSEevent
+    -this is hard because of usage of lastState in OwlWorkspace. We need a notion of lastState which is state before any preview is applied (or better just the local preview)
+      -may you can unapply the local preview to generate last state, requires assumption that local preview can always be unapplied which I'm not sure is true or not...
+        -actually just carry around state before any previews applied? But will that break any assupmtions? Maybe we really just want only the local preview unapplied
+      -or does this lastState stuff even matter anymore if you use set operations
+        -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
+-refactor goat to do second event processing stage in case refresh handler returns a cancel operation
+-create preview list (I guess you can just put it in PFWorkspace for now...)
+  -Map UserKey (Maybe LLama)
+    -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
+-handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
+
+
 :: MDI REFACTOR NOTES
 -get rid of PFWorkspace first
   DONE-get rid of lastChanges
@@ -207,7 +223,8 @@ DONE-adjustable attachment spec
       -but this allows you to previwe->apply many operations before receiving updates so this is just better.
   -state needs to track change id/# (no # for preview changes)
 -edge cases
-  -handler in middle of preview operation and state update
+  -handler in middle of preview operation and state update (i.e. refreshing an active handler)
+    -in this case the refresh might return a preview cancel operation
   -conflicting previews
   -attaching to something that gets deleted
     -we do support attachment to deleted elt right now at the state level, not sure if it's supported at the handler level
