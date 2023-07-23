@@ -66,7 +66,7 @@ doCmdState cmd s = r where
     OwlPFCMove x         -> Right $ do_move x s
     OwlPFCResizeCanvas x -> if validateCanvasSizeOperation x s 
       then Right $ (do_resizeCanvas x s, IM.empty)
-      else Left $ ApplyLlamaError_Generic $ "Invalid canvas size operation " <> show x
+      else Left $ ApplyLLamaError_Soft $ "Invalid canvas size operation " <> show x
 
   r = case r' of 
     Right (newState, changes) -> assert (owlPFState_isValid newState) r'
@@ -87,7 +87,7 @@ undoCmdState cmd s = r where
     OwlPFCMove x         -> Right $ undo_move x s
     OwlPFCResizeCanvas x -> if validateCanvasSizeOperation (deltaLBox_invert x) s 
       then Right $ (undo_resizeCanvas x s, IM.empty)
-      else Left $ ApplyLlamaError_Generic $ "Invalid canvas size operation " <> show x
+      else Left $ ApplyLLamaError_Soft $ "Invalid canvas size operation " <> show x
 
   r = case r' of
     Right (newState, changes) -> assert (owlPFState_isValid newState) r'
@@ -105,7 +105,7 @@ data SLlama =
 
 instance NFData SLlama
 
-data ApplyLlamaError = ApplyLlamaError_Generic Text deriving (Show)
+data ApplyLlamaError = ApplyLlamaError_Fatal Text | ApplyLLamaError_Soft Text deriving (Show)
 
 data Llama = Llama {
   _llama_apply :: OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges, Llama)
@@ -142,7 +142,7 @@ makeRenameLlama (rid, newname) = r where
   apply pfs = let
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
-        Nothing -> Left $ ApplyLlamaError_Generic $ "Element to rename does not exist " <> show rid
+        Nothing -> Left $ ApplyLlamaError_Fatal $ "Element to rename does not exist " <> show rid
         Just (oldoem, oldoitem) -> let
             (newoitem, oldname) = (owlItem_setName oldoitem newname, owlItem_name oldoitem)
             newsowl = SuperOwl rid oldoem newoitem
@@ -166,8 +166,8 @@ makeSetLlama (rid, selt) = r where
   apply pfs = let
       mapping = _owlTree_mapping . _owlPFState_owlTree $ pfs
     in case IM.lookup rid mapping of
-        Nothing -> Left $ ApplyLlamaError_Generic $ "Element to modify does not exist " <> show rid <> " " <> potatoShow (_owlPFState_owlTree $ pfs)
-        Just (_, OwlItem _ (OwlSubItemFolder _)) -> Left $ ApplyLlamaError_Generic $ "Element to modify is a folder " <> show rid
+        Nothing -> Left $ ApplyLlamaError_Fatal $ "Element to modify does not exist " <> show rid <> " " <> potatoShow (_owlPFState_owlTree $ pfs)
+        Just (_, OwlItem _ (OwlSubItemFolder _)) -> Left $ ApplyLlamaError_Fatal $ "Element to modify is a folder " <> show rid
         Just (oldoem, OwlItem oinfo oldsubitem) -> let
             -- this will clear the cache in OwlItem
             newoitem = OwlItem oinfo $ sElt_to_owlSubItem selt

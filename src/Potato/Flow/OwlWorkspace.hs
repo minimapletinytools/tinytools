@@ -98,7 +98,9 @@ doLlamaWorkspace llama pfw = r where
   oldpfs = _owlPFWorkspace_owlPFState pfw
   (newpfs, changes, mundollama) = case _llama_apply llama oldpfs of
     -- TODO would be nice to output error to user somehow?
-    Left e  -> (oldpfs, IM.empty, Nothing)
+    Left e  -> case e of
+      ApplyLlamaError_Fatal x -> error x
+      ApplyLLamaError_Soft _ -> (oldpfs, IM.empty, Nothing)
     Right x -> case x of 
       (newpfs', changes', undollama') -> (newpfs', changes', Just undollama')
   LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
