@@ -143,8 +143,6 @@ data WSEvent =
   WSEAddElt (Bool, OwlSpot, OwlItem)
   | WSEAddTree (OwlSpot, MiniOwlTree)
   | WSEAddFolder (OwlSpot, Text)
-  -- DELETE
-  | WSERemoveElt OwlParliament
   -- WIP
   | WSERemoveEltAndUpdateAttachments OwlParliament AttachmentMap
   | WSEResizeCanvas DeltaLBox
@@ -240,11 +238,6 @@ updateOwlPFWorkspace evt ws = let
       then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
       else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
     WSEAddTree x -> doCmdWorkspace (OwlPFCNewTree (swap x)) ws
-    WSEAddFolder x -> doCmdWorkspace (pfc_addFolder_to_newElts lastState x) ws
-
-    -- DELETE
-    WSERemoveElt x -> doCmdWorkspace (pfc_removeElt_to_deleteElts lastState x) ws
-
     WSERemoveEltAndUpdateAttachments x am -> doLlamaWorkspace (removeEltAndUpdateAttachments_to_llama lastState am x) ws
     -- ignore invalid canvas resize events
     WSEResizeCanvas x -> if validateCanvasSizeOperation x ws

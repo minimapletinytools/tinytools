@@ -78,15 +78,6 @@ spec = do
           newws2 = fst $ updateOwlPFWorkspace wse2 newws1
         verifyOwlAt newws2 childSpot (pred_nameIs (hasOwlItem_name owlItem1)) `shouldBe` True
         undoAndVerify newws2 (_owlPFWorkspace_owlPFState newws1) `shouldBe` True
-      it "WSERemoveElt" $ do
-        let
-          --remove b1
-          wse1 = WSERemoveElt (OwlParliament $ Seq.fromList [2])
-          newws1 = fst $ updateOwlPFWorkspace wse1 someWorkspace0
-        --putTextLn $ debugPrintOwlPFState (_owlPFWorkspace_owlPFState newws1)
-        -- b2 should now be where b1 was
-        verifyOwlAt newws1 (OwlSpot 1 Nothing) (pred_nameIs ("b2")) `shouldBe` True
-        undoAndVerify newws1 (_owlPFWorkspace_owlPFState someWorkspace0) `shouldBe` True
         {-
       it "WSEResizeCanvas" $ do
         1 `shouldBe` 1
