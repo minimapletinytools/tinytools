@@ -41,35 +41,58 @@ data OwlPFCmd =
 
 instance NFData OwlPFCmd
 
-doCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-doCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
-  (newState, changes) = case cmd of
 
-    OwlPFCNewElts x      ->  do_newElts x s
-    OwlPFCDeleteElts x   ->  do_deleteElts x s
 
-    OwlPFCNewTree x      -> do_newMiniOwlTree x s
-    OwlPFCDeleteTree x   -> do_deleteMiniOwlTree x s
 
-    OwlPFCManipulate x   ->  do_manipulate x s
+-- | returns true if the applying DeltaLBox results in a valid canvas size
+validateCanvasSizeOperation :: DeltaLBox -> OwlPFState -> Bool
+validateCanvasSizeOperation lbox pfs = r where
+  oldcanvas = _sCanvas_box $ _owlPFState_canvas pfs
+  newcanvas = plusDelta oldcanvas lbox
+  r = isValidCanvas (SCanvas newcanvas)
 
-    OwlPFCMove x         -> do_move x s
-    OwlPFCResizeCanvas x -> (do_resizeCanvas x s, IM.empty)
+doCmdState :: OwlPFCmd -> OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges)
+doCmdState cmd s = r where
+  r' = case cmd of
 
-undoCmdState :: OwlPFCmd -> OwlPFState -> (OwlPFState, SuperOwlChanges)
-undoCmdState cmd s = assert (owlPFState_isValid newState) (newState, changes) where
-  (newState, changes) =  case cmd of
+    OwlPFCNewElts x      ->  Right $ do_newElts x s
+    OwlPFCDeleteElts x   ->  Right $ do_deleteElts x s
 
-    OwlPFCNewElts x      ->  undo_newElts x s
-    OwlPFCDeleteElts x   ->  undo_deleteElts x s
+    OwlPFCNewTree x      -> Right $ do_newMiniOwlTree x s
+    OwlPFCDeleteTree x   -> Right $ do_deleteMiniOwlTree x s
 
-    OwlPFCNewTree x      -> undo_newMiniOwlTree x s
-    OwlPFCDeleteTree x   -> undo_deleteMiniOwlTree x s
+    OwlPFCManipulate x   ->  Right $ do_manipulate x s
 
-    OwlPFCManipulate x   ->  undo_manipulate x s
+    OwlPFCMove x         -> Right $ do_move x s
+    OwlPFCResizeCanvas x -> if validateCanvasSizeOperation x s 
+      then Right $ (do_resizeCanvas x s, IM.empty)
+      else Left $ ApplyLlamaError_Generic $ "Invalid canvas size operation " <> show x
 
-    OwlPFCMove x         -> undo_move x s
-    OwlPFCResizeCanvas x -> (undo_resizeCanvas x s, IM.empty)
+  r = case r' of 
+    Right (newState, changes) -> assert (owlPFState_isValid newState) r'
+    Left e -> Left e
+
+undoCmdState :: OwlPFCmd -> OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges)
+undoCmdState cmd s = r where
+  r' =  case cmd of
+
+    OwlPFCNewElts x      ->  Right $ undo_newElts x s
+    OwlPFCDeleteElts x   ->  Right $ undo_deleteElts x s
+
+    OwlPFCNewTree x      -> Right $ undo_newMiniOwlTree x s
+    OwlPFCDeleteTree x   -> Right $ undo_deleteMiniOwlTree x s
+
+    OwlPFCManipulate x   -> Right $ undo_manipulate x s
+
+    OwlPFCMove x         -> Right $ undo_move x s
+    OwlPFCResizeCanvas x -> if validateCanvasSizeOperation (deltaLBox_invert x) s 
+      then Right $ (undo_resizeCanvas x s, IM.empty)
+      else Left $ ApplyLlamaError_Generic $ "Invalid canvas size operation " <> show x
+
+  r = case r' of
+    Right (newState, changes) -> assert (owlPFState_isValid newState) r'
+    Left e                    -> Left e
+
 
 
 
@@ -169,9 +192,12 @@ makePFCLlama' :: Bool -> OwlPFCmd -> Llama
 makePFCLlama' isDo cmd = r where
   apply pfs = let
       unset = makePFCLlama' (not isDo) cmd
-      (newState, changes) = if isDo then doCmdState cmd pfs else undoCmdState cmd pfs
-    in Right $ (newState, changes, unset)
+    in case (if isDo then doCmdState cmd pfs else undoCmdState cmd pfs) of
+      Right (newState, changes) -> Right $ (newState, changes, unset)
+      Left e -> Left e
 
+
+        
   serialize = SLlama_OwlPFCmd cmd isDo
   r = Llama {
       _llama_apply = apply
