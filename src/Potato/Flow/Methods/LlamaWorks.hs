@@ -1,4 +1,4 @@
--- variosu methods for creating Llamas
+-- various methods for creating Llamas
 
 {-# LANGUAGE RecordWildCards #-}
 

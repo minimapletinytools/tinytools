@@ -113,17 +113,6 @@ data GoatWidget t = GoatWidget {
   , _goatWidget_DEBUG_goatState     :: Dynamic t GoatState
 }
 
-foldGoatCmdSetDefaultParams :: SetPotatoDefaultParameters -> GoatState -> GoatState
-foldGoatCmdSetDefaultParams spdp gs = gs {
-    _goatState_potatoDefaultParameters = potatoDefaultParameters_set (_goatState_potatoDefaultParameters gs) spdp
-  }
-
-foldGoatCmdMarkSaved :: () -> GoatState -> GoatState
-foldGoatCmdMarkSaved _ gs = gs {
-    _goatState_workspace = markWorkspaceSaved (_goatState_workspace gs)
-  }
-
-
 holdGoatWidget :: forall t m. (Adjustable t m, MonadHold t m, MonadFix m)
   => GoatWidgetConfig t
   -> m (GoatWidget t)
@@ -154,8 +143,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     goatEndoEvent = foldGoatFn <<$>> goatEvent
 
     -- new Endo folding
-    setDefaultParamsEndoEvent = fmap foldGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
-    markSavedEvent = fmap foldGoatCmdMarkSaved _goatWidgetConfig_markSaved
+    setDefaultParamsEndoEvent = fmap endoGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
+    markSavedEvent = fmap endoGoatCmdMarkSaved _goatWidgetConfig_markSaved
 
   -- DELETE
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
