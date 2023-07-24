@@ -25,6 +25,7 @@ import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
+import Potato.Flow.Methods.LlamaWorks
 
 import Control.Monad (msum)
 import           Control.Exception
@@ -424,7 +425,7 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
 
         op = if _autoLineEndPointHandler_isCreation
-          then WSEAddElt (_autoLineEndPointHandler_undoFirst, newEltPos, OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd)
+          then WSEApplyLlama $  (_autoLineEndPointHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd))
           else WSEApplyLlama (_autoLineEndPointHandler_undoFirst, llama)
 
         r = def {

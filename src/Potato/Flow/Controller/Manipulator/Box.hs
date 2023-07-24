@@ -34,6 +34,8 @@ import Potato.Flow.OwlState
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
 import Potato.Flow.Llama
+import           Potato.Flow.Methods.LlamaWorks
+
 
 import           Data.Default
 import           Data.Dependent.Sum                         (DSum ((:=>)))
@@ -292,9 +294,10 @@ instance PotatoHandler BoxHandler where
         BoxCreationType_TextArea -> "<textarea>"
         _ -> error "invalid BoxCreationType"
 
+
       mop = case _boxHandler_creation of
-        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd))
-        BoxCreationType_TextArea -> Just $ WSEAddElt (_boxHandler_undoFirst, newEltPos, OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd))
+        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ WSEApplyLlama (_boxHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd)))
+        BoxCreationType_TextArea -> Just $ WSEApplyLlama (_boxHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd)))
         _ -> makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh {
