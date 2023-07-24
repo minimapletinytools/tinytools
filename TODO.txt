@@ -184,15 +184,31 @@ DONE-adjustable attachment spec
   -except when converting remote changes to llamas
 
 :: Preview Operations Mini Refactor
--get rid of controllerswithid->llama->controllerswithid circular nonsense
-  -in particular, get rid of Llama->ControllersWithId, we work with Llama's directly now!
-  -remove PFCmd stuff from WSEevent
+DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
+  DONE-in particular, get rid of Llama->ControllersWithId, we work with Llama's directly now!
+  DONE-remove PFCmd stuff from WSEevent
     -this is hard because of usage of lastState in OwlWorkspace. We need a notion of lastState which is state before any preview is applied (or better just the local preview)
       -may you can unapply the local preview to generate last state, requires assumption that local preview can always be unapplied which I'm not sure is true or not...
         -actually just carry around state before any previews applied? But will that break any assupmtions? Maybe we really just want only the local preview unapplied
       -or does this lastState stuff even matter anymore if you use set operations
         -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
--refactor goat to do second event processing stage in case refresh handler returns a cancel operation
+-goat refactor warmup
+  -do goatCmd endo refactor, separate routines for each GoatCmd
+  -refactor out goat update routines in foldGoatFn
+    -set selection
+    -set pan 
+    -update layers state
+    -apply event
+    -render / render selection
+    -update selection
+    -set handler from selection
+    -refresh Handler
+      -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
+      -I think you want to reset the handler sooner in the flow (before set handler from selection)
+  -refactor out layers handler in foldGoatFn
+  -get rid of GoatCmdTempOutput
+    -the real issue might be PotatoHandlerOutput doing too much
+      -probably not worth trying to fix
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]

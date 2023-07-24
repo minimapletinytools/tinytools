@@ -11,6 +11,10 @@ module Potato.Flow.Controller.Goat (
   , GoatCmd(..)
   , foldGoatFn
 
+  -- endo style
+  , endoGoatCmdSetDefaultParams
+  , endoGoatCmdMarkSaved
+
   -- exposed for testing
   , potatoHandlerInputFromGoatState
 ) where
@@ -198,10 +202,10 @@ data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFla
 
 
 type DoesRefreshHandlers = Bool
+
+-- TODO get rid of me
 data GoatCmdTempOutput = GoatCmdTempOutput {
   _goatCmdTempOutput_goatState               :: GoatState
-  --, _goatCmdTempOutput_wasCanvasInput :: Bool
-  --, _goatCmdTempOutput_wasLayerInput :: Bool
 
   , _goatCmdTempOutput_nextHandler           :: Maybe SomePotatoHandler
 
@@ -689,7 +693,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   next_layersState = expandAllCollapsedParents next_selection pFState_afterEvent next_layersState'
   --next_layersState = next_layersState'
 
-
   -- | update the next handler |
   mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
   filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pFState_afterEvent) (_superOwl_id sowl) (_layersState_meta next_layersState)
@@ -702,8 +705,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
     else fromMaybe nextHandlerFromSelection mHandlerFromPho
   next_layersHandler' = goatCmdTempOutput_layersHandler goatCmdTempOutput
 
+  -- | refresh the handler if there was a non-canvas event |
   -- TODO simplify this logic, it's confusing A.F.
-  -- refresh the handler if there was a non-canvas event
   -- TODO you only need to do this if handler is one that came from mHandlerFromPho (b) above because handlers produced from selection should already be up to date
   (next_handler, next_layersHandler) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
     -- since we don't have multi-user events, the handler should never be active when this happens
@@ -715,10 +718,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       refreshedHandler = fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput)
       -- a little weird that we refresh the layers handler in cases where the event was an event that came from layers, but it doesn't matter since the layers handler won't be active when it produces that event
       refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
-
-
-
     _ -> (next_handler', next_layersHandler')
+
 
   -- | TODO enter rename mode for newly created folders |
   -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
@@ -737,7 +738,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
   cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
 
-  -- | clear the cache at places that have changed
+  -- | clear the cache at places that have changed |
   renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys (_goatState_renderCache goatState) (IM.keys cslmap_withAttachments)
 
   -- | update the BroadPhase
@@ -827,3 +828,17 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
         , _goatState_attachmentMap = next_attachmentMap
         , _goatState_renderCache = next_renderCache
       }
+
+
+
+-- Endo stuff
+
+endoGoatCmdSetDefaultParams :: SetPotatoDefaultParameters -> GoatState -> GoatState
+endoGoatCmdSetDefaultParams spdp gs = gs {
+    _goatState_potatoDefaultParameters = potatoDefaultParameters_set (_goatState_potatoDefaultParameters gs) spdp
+  }
+
+endoGoatCmdMarkSaved :: () -> GoatState -> GoatState
+endoGoatCmdMarkSaved _ gs = gs {
+    _goatState_workspace = markWorkspaceSaved (_goatState_workspace gs)
+  }
