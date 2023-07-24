@@ -75,3 +75,8 @@ removeEltAndUpdateAttachments_to_llama pfs am op@(OwlParliament rids) = r where
   resetattachllamas = join $ fmap (makeLlamaToSetAttachedLinesToCurrentPosition pfs am) (toList rids)
   -- seems more correct to detach lines first and then delete the target so that undo operation is more sensible
   r = makeCompositionLlama $ resetattachllamas <> [removellama]
+
+
+-- TODO assert elts are valid
+makeAddEltLlama :: OwlPFState -> OwlSpot -> OwlItem -> Llama
+makeAddEltLlama pfs spot oelt = makePFCLlama $ OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]

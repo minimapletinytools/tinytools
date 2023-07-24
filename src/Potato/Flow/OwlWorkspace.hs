@@ -126,9 +126,9 @@ doLlamaWorkspace llama pfw = r where
 doLlamaWorkspaceUndoPermanentFirst :: Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doLlamaWorkspaceUndoPermanentFirst llama ws = r where
   -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
-  (undoedws, _) = undoPermanentWorkspace ws
-  -- TODO do I need to combine changes from the undo operation? I think I do ;__;
-  r = doLlamaWorkspace llama undoedws
+  (undoedws, undochanges) = undoPermanentWorkspace ws
+  (newpfs, changes) = doLlamaWorkspace llama undoedws
+  r = (newpfs, IM.union changes undochanges)
 
 doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doCmdWorkspace cmd pfw = force r where
@@ -137,20 +137,17 @@ doCmdWorkspace cmd pfw = force r where
 doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
   -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
-  (undoedws, _) = undoPermanentWorkspace ws
+  (undoedws, undochanges) = undoPermanentWorkspace ws
   undoedpfs = _owlPFWorkspace_owlPFState undoedws
   cmd = cmdFn undoedpfs
-  -- TODO do I need to combine changes from the undo operation? I think I do ;__;
-  r = doLlamaWorkspace (makePFCLlama cmd) undoedws
+  (newpfs, changes) = doLlamaWorkspace (makePFCLlama cmd) undoedws
+  r = (newpfs, IM.union changes undochanges)
+
 
 ------ update functions via commands
 data WSEvent =
-
-  -- TODO DELETE these they will be replaced by Llama
-  WSEAddElt (Bool, OwlSpot, OwlItem)
-
   -- TODO get rid of undo first parameter 
-  | WSEApplyLlama (Bool, Llama)
+  WSEApplyLlama (Bool, Llama)
 
   | WSEUndo
   | WSERedo
@@ -162,16 +159,6 @@ debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
 
 
------- helpers for converting events to cmds
--- TODO assert elts are valid
-pfc_addElt_to_newElts :: OwlPFState -> OwlSpot -> OwlItem -> OwlPFCmd
-pfc_addElt_to_newElts pfs spot oelt = OwlPFCNewElts [(owlPFState_nextId pfs, spot, oelt)]
-
---TODO need to reorder so it becomes undo friendly here I think? (uhh, pretty sure it's ok to delete this TODO? should be ordered by assumption)
--- TODO assert elts are valid
-pfc_moveElt_to_move :: OwlPFState -> (OwlSpot, OwlParliament) -> OwlPFCmd
-pfc_moveElt_to_move pfs (ospot, op) = OwlPFCMove (ospot, owlParliament_toSuperOwlParliament (_owlPFState_owlTree pfs) op)
-
 noChanges :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 noChanges ws = (ws, IM.empty)
 
@@ -180,11 +167,6 @@ updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlCh
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_owlPFState ws
   r = case evt of
-
-    -- TODO DELETE ALL OF THESE
-    WSEAddElt (undo, spot, oelt) -> if undo
-      then doCmdOwlPFWorkspaceUndoPermanentFirst (\pfs -> pfc_addElt_to_newElts pfs spot oelt) ws
-      else doCmdWorkspace (pfc_addElt_to_newElts lastState spot oelt) ws
 
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws

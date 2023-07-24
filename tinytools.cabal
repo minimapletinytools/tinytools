@@ -190,7 +190,6 @@ test-suite tinytools-test
       Potato.Flow.MathSpec
       Potato.Flow.Methods.LineDrawerSpec
       Potato.Flow.OwlSpec
-      Potato.Flow.OwlWorkspaceSpec
       Potato.Flow.RenderSpec
       Potato.Flow.SEltMethodsSpec
       Paths_tinytools
