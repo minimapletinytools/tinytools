@@ -199,16 +199,15 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
     -set pan
     -update layers state
     -apply event
-    -render / render selection
+    DONE-render / render selection
     -update selection
     -set handler from selection
     -refresh Handler
       -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
       -I think you want to reset the handler sooner in the flow (before set handler from selection)
   -refactor out layers handler in foldGoatFn
+  -refactor PotatoHandlerOutput to be mutually exclusive
   -get rid of GoatCmdTempOutput
-    -the real issue might be PotatoHandlerOutput doing too much
-      -probably not worth trying to fix
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]

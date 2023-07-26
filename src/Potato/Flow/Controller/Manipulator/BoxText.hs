@@ -221,7 +221,7 @@ instance PotatoHandler BoxTextHandler where
                 }
 
               -- TODO you also want to clear the existing text
-              , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))])
+              , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))])
             }
           else Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
@@ -250,7 +250,8 @@ instance PotatoHandler BoxTextHandler where
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
-          , _potatoHandlerOutput_pFEvent = mev
+          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
+
         }
 
   -- TODO do you need to reset _boxTextHandler_prevHandler as well?
@@ -426,7 +427,7 @@ instance PotatoHandler BoxLabelHandler where
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
-          , _potatoHandlerOutput_pFEvent = mev
+          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
         }
 
   -- UNTESTED

@@ -310,7 +310,7 @@ instance PotatoHandler BoxHandler where
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
-          , _potatoHandlerOutput_pFEvent = mop
+          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mop
         }
 
     MouseDragState_Up | _boxHandler_downOnLabel -> if isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
@@ -358,7 +358,7 @@ instance PotatoHandler BoxHandler where
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
     -- TODO check undo first condition
-    MouseDragState_Cancelled -> if _boxHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
+    MouseDragState_Cancelled -> if _boxHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
 
 
   pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key _) = r where
@@ -380,7 +380,7 @@ instance PotatoHandler BoxHandler where
           mop = makeDragOperation False phi move
           r2 = def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
-              , _potatoHandlerOutput_pFEvent = mop
+              , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mop
             }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where

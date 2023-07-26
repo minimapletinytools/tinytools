@@ -89,10 +89,10 @@ instance PotatoHandler TextAreaHandler where
       start = (Map.empty, tah)
       finish (mc, h) = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
-          , _potatoHandlerOutput_pFEvent = if null mc
-            then Nothing
+          , _potatoHandlerOutput_action = if null mc
+            then HOA_Nothing
             -- TODO if you store mc in TextAreaHandler you can continue to build on it which would allow you to set "undoFirst" paremeter to True
-            else Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.singleton rid controller)
+            else HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.singleton rid controller)
         } where
           controller = CTagTextArea :=> (Identity $ CTextArea (DeltaTextArea mc))
       moveAndWrap dp (mc, h) = (mc, h {
