@@ -279,11 +279,21 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput
 makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} =  def {
     _goatCmdTempOutput_goatState = goatState
     , _goatCmdTempOutput_nextHandler = _potatoHandlerOutput_nextHandler
-    , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
-    , _goatCmdTempOutput_pFEvent     = fmap (\x -> (True,x)) _potatoHandlerOutput_pFEvent
-    , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
-    , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
-    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide -- actually not needed, only used by layers
+    , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
+      HOA_Select x -> Just x
+      _ -> Nothing
+    , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
+      HOA_DEPRECATED_PFEvent x -> Just (True,x)
+      _ -> Nothing
+    , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
+      HOA_Pan x -> Just x
+      _ -> Nothing
+    , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
+      HOA_Layers x _ -> x
+      _ -> Nothing
+    , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of 
+      HOA_Layers _ x -> x
+      _ -> IM.empty
   }
 
 
@@ -296,11 +306,21 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
       }
     -- TODO flag that this was not canvas input
     , _goatCmdTempOutput_nextHandler = Nothing
-    , _goatCmdTempOutput_select      = _potatoHandlerOutput_select
-    , _goatCmdTempOutput_pFEvent     = fmap (\x -> (False,x)) _potatoHandlerOutput_pFEvent
-    , _goatCmdTempOutput_pan         = _potatoHandlerOutput_pan
-    , _goatCmdTempOutput_layersState = _potatoHandlerOutput_layersState
-    , _goatCmdTempOutput_changesFromToggleHide = _potatoHandlerOutput_changesFromToggleHide
+    , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
+      HOA_Select x -> Just x
+      _ -> Nothing
+    , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
+      HOA_DEPRECATED_PFEvent x -> Just (False,x)
+      _ -> Nothing
+    , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
+      HOA_Pan x -> Just x
+      _ -> Nothing
+    , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
+      HOA_Layers x _ -> x
+      _ -> Nothing
+    , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of
+      HOA_Layers _ x -> x
+      _ -> IM.empty
   }
 
 makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea :: GoatState -> GoatFocusedArea -> GoatCmdTempOutput
@@ -417,7 +437,7 @@ foldGoatFn :: GoatCmd -> GoatState -> GoatState
 --foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState where
 foldGoatFn cmd goatStateIgnore = finalGoatState where
 
-  -- TODO do some sort of rolling buffer here prob
+  -- TODO do some sort of rolling buffer here for _goatState_debugCommands prob
   -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
   --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
   goatState' = goatStateIgnore
@@ -636,6 +656,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
 
   -- | compute selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate) |
+  -- we only want to do this for local changes 
   (isNewSelection', selectionAfterChanges) = if IM.null cslmap_afterEvent
     then (False, _goatState_selection goatState)
     else r where
@@ -845,8 +866,6 @@ endoGoatCmdLoad (spf, cm) gs = r where
 
 
 ---- WIP separate out goat stuff herer
-
-
 
 goat_renderCanvas_move :: RenderContext -> XY -> XY -> (RenderContext, Bool)
 goat_renderCanvas_move rc@RenderContext {..} pan sr = r where

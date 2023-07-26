@@ -25,30 +25,35 @@ import qualified Data.Sequence                    as Seq
 import qualified Data.Text                        as T
 import qualified Text.Show
 
+
+data HandlerOutputAction = 
+  HOA_Nothing
+  | HOA_Pan XY 
+  | HOA_Select (Bool, Selection) 
+  -- maybe new layers state and changes from show/hide (could be empty)
+  | HOA_Layers (Maybe LayersState) SuperOwlChanges
+  | HOA_Preview Preview.Preview 
+  | HOA_DEPRECATED_PFEvent WSEvent 
+  deriving (Show)
+
+handlerOutputAction_isSelect :: HandlerOutputAction -> Bool
+handlerOutputAction_isSelect = \case
+  HOA_Select _ -> True
+  _ -> False
+
+-- TODO split out into mutually exclusive actions
 data PotatoHandlerOutput = PotatoHandlerOutput {
     _potatoHandlerOutput_nextHandler             :: Maybe SomePotatoHandler
-    , _potatoHandlerOutput_select                :: Maybe (Bool, Selection)
 
-    -- TODO DELETE ME
-    , _potatoHandlerOutput_pFEvent               :: Maybe WSEvent
-
-    , _potatoHandlerOutput_pan                   :: Maybe XY
-    , _potatoHandlerOutput_layersState           :: Maybe LayersState
-    , _potatoHandlerOutput_changesFromToggleHide :: SuperOwlChanges
-
-    -- TODO USE ME
-    , _potatoHandlerOutput_previewEvent          :: Maybe Preview.Preview
+    , _potatoHandlerOutput_action                  :: HandlerOutputAction
   } deriving (Show)
+
+
 
 instance Default PotatoHandlerOutput where
   def = PotatoHandlerOutput {
       _potatoHandlerOutput_nextHandler = Nothing
-      , _potatoHandlerOutput_pFEvent = Nothing
-      , _potatoHandlerOutput_pan = Nothing
-      , _potatoHandlerOutput_select = Nothing
-      , _potatoHandlerOutput_layersState = Nothing
-      , _potatoHandlerOutput_changesFromToggleHide = IM.empty
-      , _potatoHandlerOutput_previewEvent = Nothing
+      , _potatoHandlerOutput_action = HOA_Nothing
     }
 
 -- TODO replace this with just GoatState

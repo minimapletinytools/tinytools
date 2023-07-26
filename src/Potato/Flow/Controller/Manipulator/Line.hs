@@ -437,11 +437,11 @@ instance PotatoHandler AutoLineEndPointHandler where
                   Nothing -> _autoLineEndPointHandler_lastAttachedBox
                   Just x -> Just x
               }
-            , _potatoHandlerOutput_pFEvent = Just op
+            , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent op
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def
-      MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
+      MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
 
   pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
@@ -588,11 +588,11 @@ instance PotatoHandler AutoLineMidPointHandler where
               _autoLineMidPointHandler_isMidpointCreation = diddelete && not _autoLineMidPointHandler_isMidpointCreation
               , _autoLineMidPointHandler_undoFirst  = True
             }
-          , _potatoHandlerOutput_pFEvent = Just event
+          , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent event
         }
     -- no need to return AutoLineHandler, it will be recreated from selection by goat
     MouseDragState_Up -> Just def
-    MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_pFEvent = Just WSEUndo } else Just def
+    MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
     -- TODO render mouse position as there may not actually be a midpoint there
@@ -636,7 +636,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelMoverHandler_undoFirst = True
               }
-            , _potatoHandlerOutput_pFEvent = Just op
+            , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent op
           }
 
       MouseDragState_Up -> Just def {
@@ -650,9 +650,9 @@ instance PotatoHandler AutoLineLabelMoverHandler where
         }
 
       MouseDragState_Cancelled -> Just def {
-          _potatoHandlerOutput_pFEvent = if _autoLineLabelMoverHandler_undoFirst then Just WSEUndo else Nothing
           -- go back to previous handler on cancel (could be AutoLineHandler or AutoLineLabelHandler)
-          , _potatoHandlerOutput_nextHandler = Just (_autoLineLabelMoverHandler_prevHandler)
+          _potatoHandlerOutput_nextHandler = Just (_autoLineLabelMoverHandler_prevHandler)
+          , _potatoHandlerOutput_action = if _autoLineLabelMoverHandler_undoFirst then HOA_DEPRECATED_PFEvent WSEUndo else HOA_Nothing
         }
 
 
@@ -880,7 +880,7 @@ instance PotatoHandler AutoLineLabelHandler where
                   Just WSEUndo -> False
                   _            -> True
               }
-            , _potatoHandlerOutput_pFEvent = mev
+            , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
           }
 
   pRefreshHandler slh PotatoHandlerInput {..} =  if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)

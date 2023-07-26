@@ -90,7 +90,7 @@ handleScroll h PotatoHandlerInput {..} scroll  = r where
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
       -- TODO clamp based on number of entries
-      , _potatoHandlerOutput_layersState = Just $ _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}
+      , _potatoHandlerOutput_action = HOA_Layers (Just _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}) IM.empty
     }
 
 
@@ -179,8 +179,8 @@ instance PotatoHandler LayersHandler where
                 , _layersHandler_cursorPos = _mouseDrag_to
                 , _layersHandler_dropSpot = Nothing
               }
-            , _potatoHandlerOutput_layersState = mNextLayerState
-            , _potatoHandlerOutput_changesFromToggleHide = changes
+            , _potatoHandlerOutput_action = HOA_Layers mNextLayerState changes
+
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
       (MouseDragState_Dragging, LDS_Dragging) -> r where
@@ -253,7 +253,7 @@ instance PotatoHandler LayersHandler where
         sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-            , _potatoHandlerOutput_select = Just (shift, SuperOwlParliament $ Seq.singleton sowl)
+            , _potatoHandlerOutput_action = HOA_Select (shift, SuperOwlParliament $ Seq.singleton sowl)
           }
 
       -- NOTE this will not work on inherit selected children, feature or bug??
@@ -297,12 +297,12 @@ instance PotatoHandler LayersHandler where
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-            , _potatoHandlerOutput_pFEvent = mev
+            , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
           }
 
       (MouseDragState_Up, LDS_None) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-          , _potatoHandlerOutput_select = Just (False, isParliament_empty)
+          , _potatoHandlerOutput_action = HOA_Select (False, isParliament_empty)
         }
 
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly (resetLayersHandler lh)
@@ -444,7 +444,7 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
     })
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
-      , _potatoHandlerOutput_pFEvent = Just $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
+      , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
     }
 
 toDisplayLines :: LayersRenameHandler -> TZ.DisplayLines ()
@@ -495,7 +495,7 @@ instance PotatoHandler LayersRenameHandler where
         -- so just do both and sketch combine the results... probably ok...
         r = case mpho' of
           Nothing -> error "this should never happen..."
-          Just pho' -> pho' { _potatoHandlerOutput_pFEvent = _potatoHandlerOutput_pFEvent pho'' }
+          Just pho' -> pho' { _potatoHandlerOutput_action = _potatoHandlerOutput_action pho'' }
 
   pHandleKeyboard lh@LayersRenameHandler {..} phi@PotatoHandlerInput {..} kbd = case kbd of
     -- don't allow ctrl shortcuts while renaming
