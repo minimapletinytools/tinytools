@@ -196,7 +196,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
   -do goatCmd endo refactor, separate routines for each GoatCmd
   -refactor out goat update routines in foldGoatFn
     -set selection
-    -set pan 
+    -set pan
     -update layers state
     -apply event
     -render / render selection
