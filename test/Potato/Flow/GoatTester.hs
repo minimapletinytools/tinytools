@@ -53,6 +53,14 @@ newtype GoatTesterT m a = GoatTesterT { unGoatTesterT :: StateT GoatTesterState 
 type GoatTester a = GoatTesterT Identity a
 
 
+runEndo :: (Monad m) => (GoatState -> GoatState) -> GoatTesterT m ()
+runEndo fn = GoatTesterT $ modify $
+  \gts@GoatTesterState {..} -> gts {
+      _goatTesterState_goatState = fn _goatTesterState_goatState
+      , _goatTesterState_rawOperationCount = _goatTesterState_rawOperationCount + 1
+      , _goatTesterState_rawOperationCountSinceLastMarker = _goatTesterState_rawOperationCountSinceLastMarker + 1
+    }
+
 runCommand :: (Monad m) => GoatCmd -> GoatTesterT m ()
 runCommand cmd = GoatTesterT $ modify $
   \gts@GoatTesterState {..} -> gts {
@@ -164,7 +172,7 @@ mustGetMostRecentlyCreatedOwl = do
 -- operation helpers
 
 setTool :: (Monad m) => Tool -> GoatTesterT m ()
-setTool tool = runCommand $ GoatCmdTool tool
+setTool tool = runEndo (endoGoatCmdSetTool tool)
 
 setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
 setFocusArea fa = runCommand $ GoatCmdSetFocusedArea fa

@@ -14,6 +14,12 @@ module Potato.Flow.Controller.Goat (
   -- endo style
   , endoGoatCmdSetDefaultParams
   , endoGoatCmdMarkSaved
+  , endoGoatCmdSetTool 
+  , endoGoatCmdSetDebugLabel
+  , endoGoatCmdSetCanvasRegionDim
+  , endoGoatCmdWSEvent
+  , endoGoatCmdNewFolder 
+  , endoGoatCmdLoad
 
   -- exposed for testing
   , potatoHandlerInputFromGoatState
@@ -164,21 +170,17 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
-  GoatCmdTool Tool
-  | GoatCmdSetFocusedArea GoatFocusedArea
+  GoatCmdSetFocusedArea GoatFocusedArea
   | GoatCmdLoad EverythingLoadState
 
   -- command based input for widgets not owned by tiny tools
   | GoatCmdWSEvent WSEvent
-  | GoatCmdSetCanvasRegionDim XY
   | GoatCmdNewFolder Text
+  | GoatCmdSetCanvasRegionDim XY
 
   -- direct input for widgets owned by tiny tools
   | GoatCmdMouse LMouseData
   | GoatCmdKeyboard KeyboardData
-
-  -- debug nonsense
-  | GoatCmdSetDebugLabel Text
   deriving (Show)
 
 
@@ -432,8 +434,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   -- | Process commands |
   goatCmdTempOutput = case (_goatState_handler goatState) of
     SomePotatoHandler handler -> case cmd of
-      GoatCmdSetDebugLabel x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_debugLabel = x }
-      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
+      
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
@@ -446,14 +447,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
             _goatCmdTempOutput_pan = Just $ _controllerMeta_pan cm
             , _goatCmdTempOutput_layersState = Just $ makeLayersStateFromOwlPFState tempOwlPFStateHack (_controllerMeta_layers cm)
            }
-
-
-      GoatCmdTool x -> r where
-        -- TODO do we need to cancel the old handler?
-        r = makeGoatCmdTempOutputFromNothing (goatState { _goatState_handler = makeHandlerFromNewTool goatState x })
-
+      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdSetFocusedArea gfa -> makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea goatState gfa
-
       GoatCmdMouse mouseData ->
         let
           sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
@@ -854,10 +849,18 @@ endoGoatCmdSetDebugLabel x gs = gs {
     _goatState_debugLabel = x
   }
 
+
+
+
+
+-- UNFINISHED STUFF BELOW HERE
+
+
 endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
 endoGoatCmdSetCanvasRegionDim x gs = gs {
     _goatState_screenRegion = x
   }
+-- TODO this needs to trigger a rerender 
 
 -- TODO
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
