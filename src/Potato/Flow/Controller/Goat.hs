@@ -739,10 +739,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   -- | update the BroadPhase
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_forRendering (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
 
-  -- | update the rendered region if we moved the screen |
-  canvasRegionBox = LBox (-next_pan) (goatCmdTempOutput_screenRegion goatCmdTempOutput)
-  newBox = canvasRegionBox
-  didScreenRegionMove = _renderedCanvasRegion_box (_goatState_renderedCanvas goatState) /= newBox
+  -- | create the initial render context
   rendercontext_forMove = RenderContext {
       _renderContext_cache = renderCache_resetOnChangesAndAttachments
       , _renderContext_owlTree = _owlPFState_owlTree pFState_afterEvent
@@ -750,63 +747,25 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       , _renderContext_broadPhase = next_broadPhaseState
       , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas goatState
     }
-  rendercontext_forUpdate = if didScreenRegionMove
-    then moveRenderedCanvasRegion newBox rendercontext_forMove
-    else rendercontext_forMove
 
-  -- | render the scene if there were changes, note that updates from actual changes are mutually exclusive from updates due to panning (although I think it would still work even if it weren't) |
-  rendercontext_afterUpdate = if IM.null cslmap_forRendering
-    then rendercontext_forUpdate
-    else updateCanvas cslmap_forRendering needsupdateaabbs rendercontext_forUpdate
-
+  -- | render the canvas
+  (rendercontext_forUpdate, didScreenRegionMove) = goat_renderCanvas_move rendercontext_forMove next_pan (goatCmdTempOutput_screenRegion goatCmdTempOutput)
+  rendercontext_afterUpdate = goat_renderCanvas_update rendercontext_forUpdate needsupdateaabbs cslmap_forRendering
   next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext_afterUpdate
 
-  -- | render the selection |
-  rendercontext_forSelection = rendercontext_afterUpdate {
-      -- NOTE this will render hidden stuff that's selected via layers!!
-      _renderContext_layerMetaMap = IM.empty
-
-      -- TODO DELETE THIS YOU SHOULDN'T HAVE TO DO THIS, this is breaking caching (you can fix by commenting it out)
-      -- IDK WHY BUT IF YOU SELECT AUTOLINE WITH BOX AND MOVE BOTH THE CACHE STAYS WITH ORIGINAL PLACE AND SELECTED LINE DOESN'T MOVE
-      -- so temp fix it by reseting the cache on attached lines whos target moved
-      , _renderContext_cache = renderCache_resetOnChangesAndAttachments
-
-      -- empty canvas to render our selection in
-      -- we just re-render everything for now (in the future you can try and do partial rendering though)
-      , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
-    }
-  selectionselts = toList . fmap _superOwl_id $ unSuperOwlParliament next_selection
-
+  -- | render the selection
   (next_renderedSelection, next_renderCache) = if _goatState_selection goatState == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
     -- nothing changed, we can keep our selection rendering
     then (_goatState_renderedSelection goatState, _renderContext_cache rendercontext_afterUpdate)
     else (_renderContext_renderedCanvasRegion rctx, _renderContext_cache rctx) where
-      rctx = render_new newBox selectionselts rendercontext_forSelection
+      rctx = goat_renderCanvas_selection rendercontext_afterUpdate next_selection
 
-  -- TODO just DELETE this...
-  {- TODO render only parts of selection that have changed TODO broken
-  next_renderedSelection' = if didScreenRegionMove
-    then moveRenderedCanvasRegion next_broadPhaseState (owlTree_withCacheResetOnAttachments) newBox _goatState_renderedSelection
-    else _goatState_renderedSelection
-  prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
-  curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
-  -- TODO you can be even smarter about this by combining cslmap_forRendering I think
-  cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
-  -- you need to do something like this but this is wrong....
-  --(needsupdateaabbsforrenderselection, _) = update_bPTree cslmapForSelectionRendering (_broadPhaseState_bPTree next_broadPhaseState)
-  needsupdateaabbsforrenderselection = needsupdateaabbs
-  next_renderedSelection = if IM.null cslmapForSelectionRendering
-    then next_renderedSelection'
-    else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
-  -}
-
-  next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_forSelection }
+  -- | create the final GoatState
+  next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_afterUpdate }
   next_workspace = workspace_afterEvent { _owlPFWorkspace_owlPFState = next_pFState}
-
-  checkAttachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState) == next_attachmentMap
-
-  -- TODO remove assert in production builds
-  finalGoatState = if not checkAttachmentMap
+  debug_checkAttachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState) == next_attachmentMap
+  finalGoatState = if not debug_checkAttachmentMap
+    -- TODO remove this check in production builds
     then error $ (show (owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState))) <> "\n\n\n" <> show next_attachmentMap
     else
       (_goatCmdTempOutput_goatState goatCmdTempOutput) {
@@ -881,3 +840,59 @@ endoGoatCmdLoad (spf, cm) gs = r where
     }
   -- TODO do you need to reset the layers handler, or did that already happen in endoGoatCmdWSEvent?
 
+
+
+
+
+---- WIP separate out goat stuff herer
+
+
+
+goat_renderCanvas_move :: RenderContext -> XY -> XY -> (RenderContext, Bool)
+goat_renderCanvas_move rc@RenderContext {..} pan sr = r where
+  newBox = LBox (-pan) sr
+  didScreenRegionMove = _renderedCanvasRegion_box _renderContext_renderedCanvasRegion /= newBox
+  r = if didScreenRegionMove
+    then (moveRenderedCanvasRegion newBox rc, True)
+    else (rc, False)
+
+
+goat_renderCanvas_update :: RenderContext -> NeedsUpdateSet -> SuperOwlChanges -> RenderContext
+goat_renderCanvas_update rc needsupdateaabbs cslmap = r where
+  r = if IM.null cslmap
+    then rc
+    else updateCanvas cslmap needsupdateaabbs rc
+
+
+-- USAGE this function is a little sneaky, we pass in the canvas RenderContext and alter it to use it for selection rendering
+-- So you want to pull out the _renderContext_renderedCanvasRegion but throw away the rest of the render context from the output
+-- I guess you also want to pull out _renderContext_cache?
+-- In the future, selection rendering will have its own context and you won't want to do this I guess?
+goat_renderCanvas_selection :: RenderContext -> SuperOwlParliament -> RenderContext
+goat_renderCanvas_selection rc_from_canvas next_selection = r where
+  newBox = _renderedCanvasRegion_box $ _renderContext_renderedCanvasRegion rc_from_canvas
+  rendercontext_forSelection = rc_from_canvas {
+      -- NOTE this will render hidden stuff that's selected via layers!!
+      _renderContext_layerMetaMap = IM.empty
+      -- empty canvas to render our selection in, we just re-render everything for now (in the future you can try and do partial rendering though)
+      , _renderContext_renderedCanvasRegion = emptyRenderedCanvasRegion newBox
+    }
+  selectionselts = toList . fmap _superOwl_id $ unSuperOwlParliament next_selection
+  r = render_new newBox selectionselts rendercontext_forSelection
+
+  -- TODO just DELETE this...
+  {- TODO render only parts of selection that have changed TODO broken
+  next_renderedSelection' = if didScreenRegionMove
+    then moveRenderedCanvasRegion next_broadPhaseState (owlTree_withCacheResetOnAttachments) newBox _goatState_renderedSelection
+    else _goatState_renderedSelection
+  prevSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ unSuperOwlParliament _goatState_selection
+  curSelChangeMap = IM.fromList . toList . fmap (\sowl -> (_superOwl_id sowl, Just sowl)) $ unSuperOwlParliament next_selection
+  -- TODO you can be even smarter about this by combining cslmap_forRendering I think
+  cslmapForSelectionRendering = curSelChangeMap `IM.union` prevSelChangeMap
+  -- you need to do something like this but this is wrong....
+  --(needsupdateaabbsforrenderselection, _) = update_bPTree cslmapForSelectionRendering (_broadPhaseState_bPTree next_broadPhaseState)
+  needsupdateaabbsforrenderselection = needsupdateaabbs
+  next_renderedSelection = if IM.null cslmapForSelectionRendering
+    then next_renderedSelection'
+    else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
+  -}
