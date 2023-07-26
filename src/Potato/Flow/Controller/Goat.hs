@@ -842,3 +842,39 @@ endoGoatCmdMarkSaved :: () -> GoatState -> GoatState
 endoGoatCmdMarkSaved _ gs = gs {
     _goatState_workspace = markWorkspaceSaved (_goatState_workspace gs)
   }
+
+-- TODO do I need to do anything else after setting handler??
+endoGoatCmdSetTool :: Tool -> GoatState -> GoatState
+endoGoatCmdSetTool tool gs = gs {
+    _goatState_handler = makeHandlerFromNewTool gs tool
+  }
+
+endoGoatCmdSetDebugLabel :: Text -> GoatState -> GoatState
+endoGoatCmdSetDebugLabel x gs = gs {
+    _goatState_debugLabel = x
+  }
+
+endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
+endoGoatCmdSetCanvasRegionDim x gs = gs {
+    _goatState_screenRegion = x
+  }
+
+-- TODO
+endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
+endoGoatCmdWSEvent wsev gs = undefined
+
+endoGoatCmdNewFolder :: Text -> GoatState -> GoatState
+endoGoatCmdNewFolder x gs = endoGoatCmdWSEvent newFolderEv gs where
+  pfs = goatState_pFState gs
+  folderPos = lastPositionInSelection (_owlPFState_owlTree pfs) (_goatState_selection gs)
+  newFolderEv = WSEApplyLlama (False, makeAddFolderLlama pfs (folderPos, x))
+
+endoGoatCmdLoad :: (SPotatoFlow, ControllerMeta) -> GoatState -> GoatState
+endoGoatCmdLoad (spf, cm) gs = r where
+  gs' = endoGoatCmdWSEvent (WSELoad spf) gs
+  r = gs' {
+      _goatState_pan = _controllerMeta_pan cm
+      , _goatState_layersState = makeLayersStateFromOwlPFState (goatState_pFState gs') (_controllerMeta_layers cm)
+    }
+  -- TODO do you need to reset the layers handler, or did that already happen in endoGoatCmdWSEvent?
+
