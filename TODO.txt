@@ -206,7 +206,13 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
       -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
       -I think you want to reset the handler sooner in the flow (before set handler from selection)
   -refactor out layers handler in foldGoatFn
-  -refactor PotatoHandlerOutput to be mutually exclusive
+  DONE-switch HOA_DEPRECATED_PFEvent to HOA_Preview
+    -remember to do Preview_Commit as needed 
+      -or instead we do the thing where the next Preview_Start commits the last preview?
+        -no I think you want explicit commits
+        -actually I think you don't want explicit commits, or make it optional. It's kind of awkward to cancel in some places e.g. keyboard movement
+          -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
+  DONE-refactor PotatoHandlerOutput to be mutually exclusive
   -get rid of GoatCmdTempOutput
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)

@@ -51,7 +51,7 @@ import           Potato.Flow.Render
 import           Potato.Flow.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
-import qualified Potato.Flow.Preview as Preview
+import  Potato.Flow.Preview 
 import Potato.Flow.Methods.LlamaWorks
 
 import           Control.Exception                           (assert)
@@ -283,7 +283,8 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
       HOA_Select x -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
-      HOA_DEPRECATED_PFEvent x -> Just (True,x)
+      HOA_Preview (Preview po x) -> Just (True, WSEApplyLlama (previewOperation_toUndoFirst po, x))
+      HOA_Preview Preview_Cancel -> Just (True, WSEUndo)
       _ -> Nothing
     , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
       HOA_Pan x -> Just x
@@ -310,7 +311,8 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
       HOA_Select x -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
-      HOA_DEPRECATED_PFEvent x -> Just (False,x)
+      HOA_Preview (Preview po x) -> Just (False, WSEApplyLlama (previewOperation_toUndoFirst po, x))
+      HOA_Preview Preview_Cancel -> Just (False, WSEUndo)
       _ -> Nothing
     , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
       HOA_Pan x -> Just x
