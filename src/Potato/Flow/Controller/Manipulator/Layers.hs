@@ -20,6 +20,8 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import           Potato.Flow.Preview
+
 
 import           Data.Char
 import           Data.Default
@@ -285,7 +287,7 @@ instance PotatoHandler LayersHandler where
 
       -- TODO when we have multi-user mode, we'll want to test if the target drop space is still valid
       (MouseDragState_Up, LDS_Dragging) -> r where
-        mev = do
+        mllama = do
           spot <- _layersHandler_dropSpot
           let
             isSpotValid = isSpotValidToDrop owltree _potatoHandlerInput_selection spot
@@ -293,11 +295,11 @@ instance PotatoHandler LayersHandler where
             -- TODO modify if we drag on top of existing elt... Is there anything to do here? I can't remember why I added this comment. Pretty sure there's nothing to do
             modifiedSpot = spot
           guard isSpotValid
-          return $ WSEApplyLlama (False, moveEltLlama pfs (modifiedSpot, superOwlParliament_toOwlParliament selection))
+          return $ moveEltLlama pfs (modifiedSpot, superOwlParliament_toOwlParliament selection)
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-            , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
+            , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview PO_StartAndCommit) mllama
           }
 
       (MouseDragState_Up, LDS_None) -> Just $ def {
@@ -444,7 +446,7 @@ renameToAndReturn LayersRenameHandler {..} newName = r where
     })
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler _layersRenameHandler_original
-      , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)])
+      , _potatoHandlerOutput_action = HOA_Preview $ Preview PO_StartAndCommit $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id _layersRenameHandler_renaming,controller)]
     }
 
 toDisplayLines :: LayersRenameHandler -> TZ.DisplayLines ()

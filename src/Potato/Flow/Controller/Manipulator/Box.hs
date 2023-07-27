@@ -35,6 +35,7 @@ import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
 import Potato.Flow.Llama
 import           Potato.Flow.Methods.LlamaWorks
+import           Potato.Flow.Preview
 
 
 import           Data.Default
@@ -177,8 +178,8 @@ makeDragDeltaBox bht rmd = r where
 
   r = makeDeltaBox bht boxRestrictedDelta
 
-makeDragOperation :: Bool -> PotatoHandlerInput -> DeltaLBox -> Maybe WSEvent
-makeDragOperation undoFirst phi dbox = op where
+makeDragOperation :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
+makeDragOperation phi dbox = op where
   selection = transformableSelection phi
 
   makeController _ = cmd where
@@ -188,7 +189,7 @@ makeDragOperation undoFirst phi dbox = op where
 
   op = if Seq.null selection
     then Nothing
-    else Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection)))
+    else Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection))
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)
@@ -296,9 +297,9 @@ instance PotatoHandler BoxHandler where
 
 
       mop = case _boxHandler_creation of
-        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ WSEApplyLlama (_boxHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd)))
-        BoxCreationType_TextArea -> Just $ WSEApplyLlama (_boxHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd)))
-        _ -> makeDragOperation _boxHandler_undoFirst phi (makeDragDeltaBox _boxHandler_handle rmd)
+        x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd))
+        BoxCreationType_TextArea -> Just $ makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd))
+        _ -> makeDragOperation phi (makeDragDeltaBox _boxHandler_handle rmd)
 
       newbh = bh {
           _boxHandler_undoFirst = True
@@ -310,7 +311,9 @@ instance PotatoHandler BoxHandler where
 
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler newbh
-          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mop
+          , _potatoHandlerOutput_action = case mop of
+            Nothing -> HOA_Nothing
+            Just op -> HOA_Preview $ Preview (previewOperation_fromUndoFirst _boxHandler_undoFirst) op
         }
 
     MouseDragState_Up | _boxHandler_downOnLabel -> if isMouseOnSelectionSBoxBorder _potatoHandlerInput_canvasSelection rmd
@@ -357,8 +360,7 @@ instance PotatoHandler BoxHandler where
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
-    -- TODO check undo first condition
-    MouseDragState_Cancelled -> if _boxHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
+    MouseDragState_Cancelled -> if _boxHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
 
 
   pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key _) = r where
@@ -377,10 +379,14 @@ instance PotatoHandler BoxHandler where
       else case mmove of
         Nothing -> Nothing
         Just move -> Just r2 where
-          mop = makeDragOperation False phi move
+          mop = makeDragOperation phi move
           r2 = def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
-              , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mop
+              , _potatoHandlerOutput_action = case mop of
+                Nothing -> HOA_Nothing
+
+                -- TODO we want to PO_Start/Continue here, but we need to Preview_Commit somewhere
+                Just op -> HOA_Preview $ Preview PO_StartAndCommit op
             }
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where

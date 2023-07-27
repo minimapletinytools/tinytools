@@ -26,6 +26,7 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
 import Potato.Flow.Methods.LlamaWorks
+import Potato.Flow.Preview
 
 import Control.Monad (msum)
 import           Control.Exception
@@ -409,7 +410,6 @@ instance PotatoHandler AutoLineEndPointHandler where
               _sAutoLine_end       = _mouseDrag_to
               , _sAutoLine_attachEnd = mattachendnontrivial
             }
-        llama = makeSetLlama $ (rid, SEltLine modifiedline)
 
         -- for creating new elt
         newEltPos = lastPositionInSelection (_owlPFState_owlTree _potatoHandlerInput_pFState) _potatoHandlerInput_selection
@@ -425,8 +425,8 @@ instance PotatoHandler AutoLineEndPointHandler where
           }
 
         op = if _autoLineEndPointHandler_isCreation
-          then WSEApplyLlama $  (_autoLineEndPointHandler_undoFirst, makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd))
-          else WSEApplyLlama (_autoLineEndPointHandler_undoFirst, llama)
+          then makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo "<line>") $ OwlSubItemLine lineToAdd)
+          else makeSetLlama $ (rid, SEltLine modifiedline)
 
         r = def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
@@ -437,11 +437,11 @@ instance PotatoHandler AutoLineEndPointHandler where
                   Nothing -> _autoLineEndPointHandler_lastAttachedBox
                   Just x -> Just x
               }
-            , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent op
+            , _potatoHandlerOutput_action = HOA_Preview $ Preview (previewOperation_fromUndoFirst _autoLineEndPointHandler_undoFirst) op
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
       MouseDragState_Up -> Just def
-      MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
+      MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
 
   pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
   pRenderHandler AutoLineEndPointHandler {..} phi@PotatoHandlerInput {..} = r where
@@ -574,13 +574,13 @@ instance PotatoHandler AutoLineMidPointHandler where
 
       (diddelete, event) = case firstlm of
         -- create the new midpoint if none existed
-        _ | _autoLineMidPointHandler_isMidpointCreation -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+        _ | _autoLineMidPointHandler_isMidpointCreation -> (False,) $ makeSetLlama $ (rid, SEltLine newsline)
 
         -- if overlapping existing ADJACENT endpoint do nothing (or undo if undo first)
-        _ | isoveradjacent -> (True,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama (rid, SEltLine newslinedelete))
+        _ | isoveradjacent -> (True,) $ makeSetLlama (rid, SEltLine newslinedelete)
 
         -- normal case, update the midpoint position
-        _ -> (False,) $ WSEApplyLlama (_autoLineMidPointHandler_undoFirst, makeSetLlama $ (rid, SEltLine newsline))
+        _ -> (False,) $ makeSetLlama $ (rid, SEltLine newsline)
 
       r = Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
@@ -588,11 +588,11 @@ instance PotatoHandler AutoLineMidPointHandler where
               _autoLineMidPointHandler_isMidpointCreation = diddelete && not _autoLineMidPointHandler_isMidpointCreation
               , _autoLineMidPointHandler_undoFirst  = True
             }
-          , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent event
+          , _potatoHandlerOutput_action = HOA_Preview $ Preview (previewOperation_fromUndoFirst _autoLineMidPointHandler_undoFirst) event
         }
     -- no need to return AutoLineHandler, it will be recreated from selection by goat
     MouseDragState_Up -> Just def
-    MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent WSEUndo } else Just def
+    MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
     -- TODO render mouse position as there may not actually be a midpoint there
@@ -631,15 +631,18 @@ instance PotatoHandler AutoLineLabelMoverHandler where
         newsal = sal {
             _sAutoLine_labels = L.setAt _autoLineLabelMoverHandler_labelIndex newl (_sAutoLine_labels sal)
           }
-        op = WSEApplyLlama (_autoLineLabelMoverHandler_undoFirst, makeSetLlama (rid, SEltLine newsal))
+        op = makeSetLlama (rid, SEltLine newsal)
         r = Just def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelMoverHandler_undoFirst = True
               }
-            , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent op
+            , _potatoHandlerOutput_action = HOA_Preview $ Preview (previewOperation_fromUndoFirst _autoLineLabelMoverHandler_undoFirst) op
           }
 
       MouseDragState_Up -> Just def {
+
+          -- TODO Preview_Commit 
+
           -- go back to AutoLineLabelHandler on completion
           _potatoHandlerOutput_nextHandler = if not _autoLineLabelMoverHandler_undoFirst
             -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler
@@ -652,7 +655,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
       MouseDragState_Cancelled -> Just def {
           -- go back to previous handler on cancel (could be AutoLineHandler or AutoLineLabelHandler)
           _potatoHandlerOutput_nextHandler = Just (_autoLineLabelMoverHandler_prevHandler)
-          , _potatoHandlerOutput_action = if _autoLineLabelMoverHandler_undoFirst then HOA_DEPRECATED_PFEvent WSEUndo else HOA_Nothing
+          , _potatoHandlerOutput_action = if _autoLineLabelMoverHandler_undoFirst then HOA_Preview Preview_Cancel else HOA_Nothing
         }
 
 
@@ -864,23 +867,23 @@ instance PotatoHandler AutoLineLabelHandler where
             then newsal_creation
             else newsal_update
 
-        mev = if not changed
-          then Nothing
+        action = if not changed
+          then HOA_Nothing
           else if doesdelete && _autoLineLabelHandler_creation slh
             -- if we deleted a newly created line just undo the last operation
-            then Just WSEUndo
-            else Just $ WSEApplyLlama (_autoLineLabelHandler_undoFirst slh, makeSetLlama (rid, SEltLine newsal))
+            then HOA_Preview Preview_Cancel
+            else HOA_Preview $ Preview (previewOperation_fromUndoFirst (_autoLineLabelHandler_undoFirst slh)) $ makeSetLlama (rid, SEltLine newsal)
 
 
         r = def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler slh {
                 _autoLineLabelHandler_state  = newtais
-                , _autoLineLabelHandler_undoFirst = case mev of
-                  Nothing      -> _autoLineLabelHandler_undoFirst slh
-                  Just WSEUndo -> False
+                , _autoLineLabelHandler_undoFirst = case action of
+                  HOA_Nothing      -> _autoLineLabelHandler_undoFirst slh
+                  HOA_Preview Preview_Cancel -> False
                   _            -> True
               }
-            , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
+            , _potatoHandlerOutput_action = action
           }
 
   pRefreshHandler slh PotatoHandlerInput {..} =  if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)

@@ -18,6 +18,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.Preview
 
 import           Data.Default
 import           Data.Dependent.Sum                        (DSum ((:=>)))
@@ -91,8 +92,8 @@ instance PotatoHandler TextAreaHandler where
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
           , _potatoHandlerOutput_action = if null mc
             then HOA_Nothing
-            -- TODO if you store mc in TextAreaHandler you can continue to build on it which would allow you to set "undoFirst" paremeter to True
-            else HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.singleton rid controller)
+            -- TODO if you track mc, you can do a PO_ContinueAndCommit  
+            else HOA_Preview . Preview PO_StartAndCommit $ makePFCLlama . OwlPFCManipulate $ IM.singleton rid controller
         } where
           controller = CTagTextArea :=> (Identity $ CTextArea (DeltaTextArea mc))
       moveAndWrap dp (mc, h) = (mc, h {

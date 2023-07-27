@@ -33,7 +33,6 @@ data HandlerOutputAction =
   -- maybe new layers state and changes from show/hide (could be empty)
   | HOA_Layers (Maybe LayersState) SuperOwlChanges
   | HOA_Preview Preview.Preview 
-  | HOA_DEPRECATED_PFEvent WSEvent 
   deriving (Show)
 
 handlerOutputAction_isSelect :: HandlerOutputAction -> Bool

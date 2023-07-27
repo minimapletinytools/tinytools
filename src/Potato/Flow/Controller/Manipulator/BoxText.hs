@@ -29,6 +29,7 @@ import           Potato.Flow.Types
 import Potato.Flow.Owl
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.Llama
+import           Potato.Flow.Preview
 
 import           Control.Exception
 import           Data.Default
@@ -127,14 +128,14 @@ inputBoxTextZipper tais kk = (changed, tais { _textInputState_zipper = newZip })
 
     k                   -> error $ "unexpected keyboard char (event should have been handled outside of this handler)" <> show k
 
-inputBoxText :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
-inputBoxText tais undoFirst sowl kk = (newtais, mop) where
+inputBoxText :: TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
+inputBoxText tais sowl kk = (newtais, mop) where
   (changed, newtais) = inputBoxTextZipper tais kk
   controller = CTagBoxText :=> (Identity $ CBoxText {
       _cBoxText_deltaText = (fromMaybe "" (_textInputState_original tais), TZ.value (_textInputState_zipper newtais))
     })
   mop = if changed
-    then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
+    then Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)]
     else Nothing
 
 data BoxTextHandler = BoxTextHandler {
@@ -213,15 +214,12 @@ instance PotatoHandler BoxTextHandler where
         r = if not istext
           then Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _boxTextHandler_isActive = False
-
-                  -- NOTE if we undofirst we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
-                  -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
-                  --, _boxTextHandler_undoFirst = True
+                  _boxTextHandler_isActive = False    
                 }
+              -- NOTE if we PO_Start/_boxTextHandler_undoFirst = True we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
+              -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
+              , _potatoHandlerOutput_action = HOA_Preview $ Preview PO_StartAndCommit $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))]
 
-              -- TODO you also want to clear the existing text
-              , _potatoHandlerOutput_action = HOA_DEPRECATED_PFEvent $ WSEApplyLlama (False, makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))])
             }
           else Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
@@ -241,16 +239,17 @@ instance PotatoHandler BoxTextHandler where
 
       -- TODO decide what to do with mods
 
-      (nexttais, mev) = inputBoxText _boxTextHandler_state _boxTextHandler_undoFirst sowl k
+      (nexttais, mllama) = inputBoxText _boxTextHandler_state sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxTextHandler_state  = nexttais
-              , _boxTextHandler_undoFirst = case mev of
+              , _boxTextHandler_undoFirst = case mllama of
                 Nothing -> _boxTextHandler_undoFirst
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
-          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
+          -- TODO we wnat to PO_Continue here, but we don't have a good place to commit right now as there's no explicit cancel for us to Preview_Commit
+          , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview (previewOperation_fromUndoFirst _boxTextHandler_undoFirst)) mllama
 
         }
 
@@ -357,13 +356,13 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   }
 
 
-inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe WSEvent)
+inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
 inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
   (changed, newtais) = inputSingleLineZipper tais kk
   newtext = TZ.value (_textInputState_zipper newtais)
   controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
   mop = if changed
-    then Just $ WSEApplyLlama (undoFirst, makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)])
+    then Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)]
     else Nothing
 
 
@@ -418,16 +417,16 @@ instance PotatoHandler BoxLabelHandler where
 
       -- TODO decide what to do with mods
 
-      (nexttais, mev) = inputBoxLabel _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
+      (nexttais, mllama) = inputBoxLabel _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxLabelHandler_state  = nexttais
-              , _boxLabelHandler_undoFirst = case mev of
+              , _boxLabelHandler_undoFirst = case mllama of
                 Nothing -> _boxLabelHandler_undoFirst
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
-          , _potatoHandlerOutput_action = maybe HOA_Nothing HOA_DEPRECATED_PFEvent mev
+          , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview (previewOperation_fromUndoFirst _boxLabelHandler_undoFirst)) mllama
         }
 
   -- UNTESTED
