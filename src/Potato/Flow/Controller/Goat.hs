@@ -471,6 +471,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
            }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
       GoatCmdSetFocusedArea gfa -> makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea goatState gfa
+
+
       GoatCmdMouse mouseData ->
         let
           sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
@@ -836,8 +838,6 @@ endoGoatCmdSetDebugLabel x gs = gs {
 
 
 -- UNFINISHED STUFF BELOW HERE
-
-
 endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
 endoGoatCmdSetCanvasRegionDim x gs = gs {
     _goatState_screenRegion = x
@@ -929,7 +929,38 @@ goat_renderCanvas_selection rc_from_canvas next_selection = r where
     else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
   -}
 
+renderContextFromGoatState :: GoatState -> RenderContext
+renderContextFromGoatState goatState = RenderContext {
+    _renderContext_cache = _goatState_renderCache goatState
+    , _renderContext_owlTree = _owlPFState_owlTree (goatState_pFState goatState)
+    , _renderContext_layerMetaMap = _layersState_meta (_goatState_layersState goatState)
+    , _renderContext_broadPhase = _goatState_broadPhaseState goatState
+    , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas goatState
+  }
 
+goat_setPan :: XY -> GoatState -> GoatState
+goat_setPan pan goatState = r where
+  rc = renderContextFromGoatState goatState
+  (nextrc, _) = goat_renderCanvas_move rc pan (_goatState_screenRegion goatState)
+  -- set the pan and rerender
+  r = goatState {
+      _goatState_pan = pan
+      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion nextrc
+    }
+
+goat_select :: Bool -> SuperOwlParliament -> GoatState -> GoatState
+goat_select add selection goatState = r where
+  -- TODO
+  -- set the new selection
+  -- create new handler as appropriate
+  -- rerender selection
+  r = undefined
+
+goat_setLayersScroll :: Int -> GoatState -> GoatState
+goat_setLayersScroll x goatState = r where
+  oldls = _goatState_layersState goatState
+  r = goatState { _goatState_layersState = oldls { _layersState_scrollPos = x } }
+  
 
 processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
 processHandlerOutput canvas pho gs_0 = r where
@@ -938,14 +969,9 @@ processHandlerOutput canvas pho gs_0 = r where
   gs_1 = gs_0 { _goatState_handler = fromMaybe (_goatState_handler gs_0) (_potatoHandlerOutput_nextHandler pho) }
 
 
-  _ = case _potatoHandlerOutput_action pho of 
-    HOA_Select x -> undefined
-      -- set the new selection
-      -- create new handler as appropriate
-      -- rerender selection
-    HOA_Pan x -> undefined
-      -- update pan state
-      -- rerender everything
+  r = case _potatoHandlerOutput_action pho of 
+    HOA_Select x -> uncurry goat_select x gs_1
+    HOA_Pan x -> goat_setPan x gs_1
     HOA_Layers x y -> undefined
       -- update layers state
       -- rerender everything if there were changes
@@ -963,5 +989,3 @@ processHandlerOutput canvas pho gs_0 = r where
       -- rerender everything 
     HOA_Preview Preview_Commit -> undefined
       -- update the preview stack
-
-  r = undefined
