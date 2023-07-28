@@ -197,7 +197,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
     -after moving everything to endo style, you'll need to find a new home for 
       `goatState = goatState' { _goatState_unbrokenInput = "" }`
       -probably add some common routine to every endo fn I guess
-  -split hoa_layers into 2 separate things
+  DONE-split hoa_layers into 2 separate things
   -add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
   -get rid of GoatCmdTempOutput
   -refactor out goat update routines in foldGoatFn
