@@ -280,7 +280,7 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
     _goatCmdTempOutput_goatState = goatState
     , _goatCmdTempOutput_nextHandler = _potatoHandlerOutput_nextHandler
     , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
-      HOA_Select x -> Just x
+      HOA_Select x y -> Just (x, y)
       _ -> Nothing
     , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
       HOA_Preview (Preview po x) -> Just (True, WSEApplyLlama (previewOperation_toUndoFirst po, x))
@@ -290,7 +290,7 @@ makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} 
       HOA_Pan x -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
-      HOA_Layers x _ -> x
+      HOA_Layers x _ -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of 
       HOA_Layers _ x -> x
@@ -308,7 +308,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
     -- TODO flag that this was not canvas input
     , _goatCmdTempOutput_nextHandler = Nothing
     , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
-      HOA_Select x -> Just x
+      HOA_Select x y -> Just (x, y)
       _ -> Nothing
     , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
       HOA_Preview (Preview po x) -> Just (False, WSEApplyLlama (previewOperation_toUndoFirst po, x))
@@ -318,7 +318,7 @@ makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput
       HOA_Pan x -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
-      HOA_Layers x _ -> x
+      HOA_Layers x _ -> Just x
       _ -> Nothing
     , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of
       HOA_Layers _ x -> x
@@ -956,11 +956,16 @@ goat_select add selection goatState = r where
   -- rerender selection
   r = undefined
 
-goat_setLayersScroll :: Int -> GoatState -> GoatState
-goat_setLayersScroll x goatState = r where
-  oldls = _goatState_layersState goatState
-  r = goatState { _goatState_layersState = oldls { _layersState_scrollPos = x } }
-  
+
+
+goat_setLayersStateWithChangesFromToggleHide :: LayersState -> SuperOwlChanges -> GoatState -> GoatState
+goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
+  -- update layers state
+      -- rerender everything if there were changes
+    -- HOA_LayersScroll x -> undefined
+      -- update layers state
+  r = undefined
+
 
 processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
 processHandlerOutput canvas pho gs_0 = r where
@@ -970,13 +975,9 @@ processHandlerOutput canvas pho gs_0 = r where
 
 
   r = case _potatoHandlerOutput_action pho of 
-    HOA_Select x -> uncurry goat_select x gs_1
+    HOA_Select x y -> goat_select x y gs_1
     HOA_Pan x -> goat_setPan x gs_1
     HOA_Layers x y -> undefined
-      -- update layers state
-      -- rerender everything if there were changes
-    -- HOA_LayersScroll x -> undefined
-      -- update layers state
     HOA_Preview (Preview po x) -> undefined
       -- update the preview stack
       -- update selection from newly created

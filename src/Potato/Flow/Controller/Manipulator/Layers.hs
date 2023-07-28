@@ -92,7 +92,7 @@ handleScroll h PotatoHandlerInput {..} scroll  = r where
   r = def {
       _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler h
       -- TODO clamp based on number of entries
-      , _potatoHandlerOutput_action = HOA_Layers (Just _potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}) IM.empty
+      , _potatoHandlerOutput_action = HOA_Layers (_potatoHandlerInput_layersState { _layersState_scrollPos = newScrollPos}) IM.empty
     }
 
 
@@ -181,7 +181,9 @@ instance PotatoHandler LayersHandler where
                 , _layersHandler_cursorPos = _mouseDrag_to
                 , _layersHandler_dropSpot = Nothing
               }
-            , _potatoHandlerOutput_action = HOA_Layers mNextLayerState changes
+            , _potatoHandlerOutput_action = case mNextLayerState of 
+              Nothing -> HOA_Nothing
+              Just nextLayersState -> HOA_Layers nextLayersState changes
 
           }
       (MouseDragState_Down, _) -> error "unexpected, _layersHandler_dragState should have been reset on last mouse up"
@@ -255,7 +257,7 @@ instance PotatoHandler LayersHandler where
         sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-            , _potatoHandlerOutput_action = HOA_Select (shift, SuperOwlParliament $ Seq.singleton sowl)
+            , _potatoHandlerOutput_action = HOA_Select shift (SuperOwlParliament $ Seq.singleton sowl)
           }
 
       -- NOTE this will not work on inherit selected children, feature or bug??
@@ -304,7 +306,7 @@ instance PotatoHandler LayersHandler where
 
       (MouseDragState_Up, LDS_None) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
-          , _potatoHandlerOutput_action = HOA_Select (False, isParliament_empty)
+          , _potatoHandlerOutput_action = HOA_Select False isParliament_empty
         }
 
       (MouseDragState_Cancelled, _) -> Just $ setHandlerOnly (resetLayersHandler lh)
