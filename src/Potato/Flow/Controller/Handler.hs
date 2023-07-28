@@ -30,8 +30,14 @@ data HandlerOutputAction =
   HOA_Nothing
   | HOA_Pan XY 
   | HOA_Select (Bool, Selection) 
+  
+  -- TODO split this into 2
+  -- | HOA_Layers LayersState SuperOwlChanges
+  -- | HOA_LayersScroll Int
+  
   -- maybe new layers state and changes from show/hide (could be empty)
   | HOA_Layers (Maybe LayersState) SuperOwlChanges
+  
   | HOA_Preview Preview.Preview 
   deriving (Show)
 
