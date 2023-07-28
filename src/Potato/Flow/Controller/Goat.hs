@@ -917,3 +917,39 @@ goat_renderCanvas_selection rc_from_canvas next_selection = r where
     then next_renderedSelection'
     else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
   -}
+
+
+processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
+processHandlerOutput canvas pho gs_0 = r where
+
+  -- TODO do I do this here?
+  gs_1 = gs_0 { _goatState_handler = fromMaybe (_goatState_handler gs_0) (_potatoHandlerOutput_nextHandler pho) }
+
+
+  _ = case _potatoHandlerOutput_action pho of 
+    HOA_Select x -> undefined
+      -- set the new selection
+      -- create new handler as appropriate
+      -- rerender selection
+    HOA_Pan x -> undefined
+      -- update pan state
+      -- rerender everything
+    HOA_Layers x y -> undefined
+      -- update layers state
+      -- rerender everything if there were changes
+    -- HOA_LayersScroll x -> undefined
+      -- update layers state
+    HOA_Preview (Preview po x) -> undefined
+      -- update the preview stack
+      -- update selection from newly created
+      -- update handler from selection???
+      -- rerender everything 
+    HOA_Preview Preview_Cancel -> undefined
+      -- update the preview stack
+      -- update selection???
+      -- update handler???
+      -- rerender everything 
+    HOA_Preview Preview_Commit -> undefined
+      -- update the preview stack
+
+  r = undefined

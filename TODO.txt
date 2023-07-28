@@ -194,6 +194,9 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
 -goat refactor warmup
   -do goatCmd endo refactor, separate routines for each GoatCmd
+  -split hoa_layers into 2 separate things
+  -add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
+  -get rid of GoatCmdTempOutput
   -refactor out goat update routines in foldGoatFn
     -set selection
     -set pan
@@ -213,7 +216,6 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -actually I think you don't want explicit commits, or make it optional. It's kind of awkward to cancel in some places e.g. keyboard movement
           -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
   DONE-refactor PotatoHandlerOutput to be mutually exclusive
-  -get rid of GoatCmdTempOutput
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
