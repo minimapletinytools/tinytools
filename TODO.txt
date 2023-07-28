@@ -194,6 +194,9 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
 -goat refactor warmup
   -do goatCmd endo refactor, separate routines for each GoatCmd
+    -after moving everything to endo style, you'll need to find a new home for 
+      `goatState = goatState' { _goatState_unbrokenInput = "" }`
+      -probably add some common routine to every endo fn I guess
   -split hoa_layers into 2 separate things
   -add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
   -get rid of GoatCmdTempOutput
