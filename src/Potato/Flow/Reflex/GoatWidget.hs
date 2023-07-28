@@ -145,12 +145,13 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     setToolEvent = fmap endoGoatCmdSetTool _goatWidgetConfig_selectTool
     setDebugLabelEvent = fmap endoGoatCmdSetDebugLabel _goatWidgetConfig_setDebugLabel
     --setCanvasRegionDimEvent = fmap endoGoatCmdSetCanvasRegionDim _goatWidgetConfig_canvasRegionDim
+    --setFocusedAreaEvent = fmap endoGoatCmdSetFocusedArea _goatWidgetConfig_setFocusedArea
 
   -- DELETE
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
 
   goatDyn' :: Dynamic t GoatState
-  --  <- foldDyn ($) initialgoat $ mergeWith (.) ([setDefaultParamsEndoEvent, markSavedEvent, setToolEvent, setDebugLabelEvent, setCanvasRegionDimEvent] <> goatEndoEvent)
+  --  <- foldDyn ($) initialgoat $ mergeWith (.) ([setDefaultParamsEndoEvent, markSavedEvent, setToolEvent, setDebugLabelEvent, setCanvasRegionDimEvent, setFocusedAreaEvent] <> goatEndoEvent)
     <- foldDyn ($) initialgoat $ mergeWith (.) ([setDefaultParamsEndoEvent, markSavedEvent, setToolEvent, setDebugLabelEvent] <> goatEndoEvent)
 
   -- reduces # of calls to foldGoatFn to 2 :\

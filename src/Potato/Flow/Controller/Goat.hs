@@ -863,6 +863,17 @@ endoGoatCmdLoad (spf, cm) gs = r where
     }
   -- TODO do you need to reset the layers handler, or did that already happen in endoGoatCmdWSEvent?
 
+endoGoatCmdSetFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
+endoGoatCmdSetFocusedArea gfa goatState = r where
+  didchange = gfa /= _goatState_focusedArea goatState
+  goatstatewithnewfocus = goatState { _goatState_focusedArea = gfa }
+  noactionneeded = goatstatewithnewfocus
+  potatoHandlerInput = potatoHandlerInputFromGoatState goatState
+  r = if didchange && pHandlerName (_goatState_layersHandler goatState) == handlerName_layersRename
+    then assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
+      Nothing -> noactionneeded
+      Just pho -> processHandlerOutput False pho goatstatewithnewfocus
+    else noactionneeded
 
 
 
@@ -917,6 +928,7 @@ goat_renderCanvas_selection rc_from_canvas next_selection = r where
     then next_renderedSelection'
     else updateCanvas cslmapForSelectionRendering needsupdateaabbsforrenderselection next_broadPhaseState pFState_withCacheResetOnAttachments next_renderedSelection'
   -}
+
 
 
 processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
