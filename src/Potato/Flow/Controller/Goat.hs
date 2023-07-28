@@ -842,11 +842,16 @@ endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
 endoGoatCmdSetCanvasRegionDim x gs = gs {
     _goatState_screenRegion = x
   }
--- TODO this needs to trigger a rerender 
+-- TODO this needs to trigger a rerender (just call goat_setPan with current pan)
 
 -- TODO
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
 endoGoatCmdWSEvent wsev gs = undefined
+-- apply the event
+-- update selection
+-- refresh the handler (and possible apply updates)
+-- if event was local, maybe set the handler
+-- render everything
 
 endoGoatCmdNewFolder :: Text -> GoatState -> GoatState
 endoGoatCmdNewFolder x gs = endoGoatCmdWSEvent newFolderEv gs where
@@ -940,44 +945,71 @@ renderContextFromGoatState goatState = RenderContext {
 
 goat_setPan :: XY -> GoatState -> GoatState
 goat_setPan pan goatState = r where
+  -- set the pan
+  -- render move
+  -- render selection
   rc = renderContextFromGoatState goatState
-  (nextrc, _) = goat_renderCanvas_move rc pan (_goatState_screenRegion goatState)
-  -- set the pan and rerender
+  (rc_aftermove, _) = goat_renderCanvas_move rc pan (_goatState_screenRegion goatState)
+  rc_afterselection = goat_renderCanvas_selection rc_aftermove (_goatState_selection goatState)
   r = goatState {
       _goatState_pan = pan
-      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion nextrc
+      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_aftermove
+      , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
 
+ 
+-- TODO select logic is weird here is what I think it is
+-- apply changes from local preview
+--  newly created stuff -> new selection
+--  no newly created stuff -> update selection
+-- if new selection
+--  if handler is NOT active, create handler from selection (use maybeUpdateHandlerFromSelection) (the reason for this is that if handler is active, it was the one that just created the elt and knows what it just did and needs state to move into updating the newly created elt)
+-- otherwise makeHandlerFromSelection
+--
+-- for regular select via select handler it's simpler, maybe make this function just for that?
 goat_select :: Bool -> SuperOwlParliament -> GoatState -> GoatState
 goat_select add selection goatState = r where
   -- TODO
   -- set the new selection
   -- create new handler as appropriate
   -- rerender selection
-  r = undefined
+  rc = renderContextFromGoatState goatState
+  rc_afterselection = goat_renderCanvas_selection rc selection
+  r = goatState {
+      _goatState_selection = selection
+      , _goatState_handler = undefined
+      , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
+    }
 
 
 
 goat_setLayersStateWithChangesFromToggleHide :: LayersState -> SuperOwlChanges -> GoatState -> GoatState
 goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
-  -- update layers state
-      -- rerender everything if there were changes
-    -- HOA_LayersScroll x -> undefined
-      -- update layers state
-  r = undefined
+  -- set layers state
+  -- render changes
+  -- render selectino
+  rc = renderContextFromGoatState goatState
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
+  rc_afterupdate = goat_renderCanvas_update rc needsupdateaabbs changes
+  rc_afterselection = goat_renderCanvas_selection rc_afterupdate (_goatState_selection goatState)
+  r = goatState {
+      _goatState_layersState = ls
+      , _goatState_broadPhaseState = next_broadPhaseState
+      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_afterupdate
+      , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
+    }
 
 
 processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
 processHandlerOutput canvas pho gs_0 = r where
 
-  -- TODO do I do this here?
+  -- set the handler output in the GoatState (note it might get overwritten later)
   gs_1 = gs_0 { _goatState_handler = fromMaybe (_goatState_handler gs_0) (_potatoHandlerOutput_nextHandler pho) }
-
 
   r = case _potatoHandlerOutput_action pho of 
     HOA_Select x y -> goat_select x y gs_1
     HOA_Pan x -> goat_setPan x gs_1
-    HOA_Layers x y -> undefined
+    HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y gs_1
     HOA_Preview (Preview po x) -> undefined
       -- update the preview stack
       -- update selection from newly created
