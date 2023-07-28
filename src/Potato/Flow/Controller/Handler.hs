@@ -29,21 +29,15 @@ import qualified Text.Show
 data HandlerOutputAction = 
   HOA_Nothing
   | HOA_Pan XY 
-  | HOA_Select (Bool, Selection) 
-  
-  -- TODO split this into 2
-  -- | HOA_Layers LayersState SuperOwlChanges
-  -- | HOA_LayersScroll Int
-  
-  -- maybe new layers state and changes from show/hide (could be empty)
-  | HOA_Layers (Maybe LayersState) SuperOwlChanges
-  
+  | HOA_Select Bool Selection
+  | HOA_Layers LayersState SuperOwlChanges
+  | HOA_LayersScroll Int
   | HOA_Preview Preview.Preview 
   deriving (Show)
 
 handlerOutputAction_isSelect :: HandlerOutputAction -> Bool
 handlerOutputAction_isSelect = \case
-  HOA_Select _ -> True
+  HOA_Select _ _ -> True
   _ -> False
 
 -- TODO split out into mutually exclusive actions

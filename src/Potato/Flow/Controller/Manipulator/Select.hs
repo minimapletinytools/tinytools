@@ -110,14 +110,14 @@ instance PotatoHandler SelectHandler where
         else case pHandleMouse (def { _boxHandler_creation = BoxCreationType_DragSelect }) (phi { _potatoHandlerInput_selection = nextSelection, _potatoHandlerInput_canvasSelection = nextCanvasSelection }) rmd of
           -- force the selection from outside the handler and ignore the new selection results returned by pho (which should always be Nothing)
           Just pho -> assert (not . handlerOutputAction_isSelect $ _potatoHandlerOutput_action pho)
-            $ pho { _potatoHandlerOutput_action = HOA_Select (False, nextSelection) }
+            $ pho { _potatoHandlerOutput_action = HOA_Select False nextSelection }
           Nothing -> error "handler was expected to capture this mouse state"
 
 
     MouseDragState_Dragging -> setHandlerOnly sh {
         _selectHandler_selectArea = selectBoxFromRelMouseDrag rmd
       }
-    MouseDragState_Up -> def { _potatoHandlerOutput_action = HOA_Select (shiftClick, newSelection) }  where
+    MouseDragState_Up -> def { _potatoHandlerOutput_action = HOA_Select shiftClick newSelection }  where
       shiftClick = isJust $ find (==KeyModifier_Shift) (_mouseDrag_modifiers)
       newSelection = selectMagic _potatoHandlerInput_pFState _potatoHandlerInput_renderCache (_layersState_meta _potatoHandlerInput_layersState) _potatoHandlerInput_broadPhase rmd
     MouseDragState_Cancelled -> def
