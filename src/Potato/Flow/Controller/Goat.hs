@@ -843,24 +843,23 @@ endoGoatCmdSetCanvasRegionDim x gs = gs {
   }
 -- TODO this needs to trigger a rerender (just call goat_setPan with current pan)
 
--- TODO
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
-endoGoatCmdWSEvent wsev gs = goat_applyWSEvent wsev gs
+endoGoatCmdWSEvent wsev gs = goat_applyWSEvent WSEventType_Local_Refresh wsev gs
 
 endoGoatCmdNewFolder :: Text -> GoatState -> GoatState
-endoGoatCmdNewFolder x gs = goat_applyWSEvent newFolderEv gs where
+endoGoatCmdNewFolder x gs = goat_applyWSEvent WSEventType_Local_Refresh newFolderEv gs where
   pfs = goatState_pFState gs
   folderPos = lastPositionInSelection (_owlPFState_owlTree pfs) (_goatState_selection gs)
   newFolderEv = WSEApplyLlama (False, makeAddFolderLlama pfs (folderPos, x))
 
 endoGoatCmdLoad :: (SPotatoFlow, ControllerMeta) -> GoatState -> GoatState
 endoGoatCmdLoad (spf, cm) gs = r where
-  gs' = goat_applyWSEvent (WSELoad spf) gs
+  gs' = goat_applyWSEvent WSEventType_Local_Refresh (WSELoad spf) gs
   r = gs' {
       _goatState_pan = _controllerMeta_pan cm
       , _goatState_layersState = makeLayersStateFromOwlPFState (goatState_pFState gs') (_controllerMeta_layers cm)
+      -- NOTE _goatState_layersHandler gets set by goat_applyWSEvent during refresh
     }
-  -- TODO do you need to reset the layers handler, or did that already happen in endoGoatCmdWSEvent?
 
 endoGoatCmdSetFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
 endoGoatCmdSetFocusedArea gfa goatState = r where
@@ -999,7 +998,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
 
             KeyboardData k [] | k == KeyboardKey_Delete || k == KeyboardKey_Backspace -> case deleteSelectionEvent goatState_withKeyboard of
               Nothing -> goatState_withKeyboard
-              Just wsev -> goat_applyWSEvent wsev goatState_withKeyboard
+              Just wsev -> goat_applyWSEvent WSEventType_Local_Refresh wsev goatState_withKeyboard
             KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
               copied = makeClipboard goatState_withKeyboard
               r = goatState_withKeyboard { _goatState_clipboard = copied }
@@ -1008,7 +1007,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
               goatState_withClipboard = goatState_withKeyboard { _goatState_clipboard = copied }
               r = case deleteSelectionEvent goatState_withKeyboard of
                 Nothing -> goatState_withClipboard
-                Just wsev -> goat_applyWSEvent wsev goatState_withClipboard
+                Just wsev -> goat_applyWSEvent WSEventType_Local_Refresh wsev goatState_withClipboard
             KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState_withKeyboard of
               Nothing    -> goatState_withKeyboard
               Just stree -> r where
@@ -1020,11 +1019,11 @@ endoGoatCmdKeyboard kbd' goatState = r where
                 minitree = owlTree_reindex (max maxid1 maxid2) minitree'
                 spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
                 treePastaEv = WSEApplyLlama (False, makePFCLlama $ OwlPFCNewTree (minitree, spot))
-                r = goat_applyWSEvent treePastaEv (goatState_withKeyboard { _goatState_clipboard = Just offsetstree })
+                r = goat_applyWSEvent WSEventType_Local_Refresh treePastaEv (goatState_withKeyboard { _goatState_clipboard = Just offsetstree })
             KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
-              r = goat_applyWSEvent WSEUndo goatState_withKeyboard
+              r = goat_applyWSEvent WSEventType_Local_Refresh WSEUndo goatState_withKeyboard
             KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
-              r = goat_applyWSEvent WSERedo goatState_withKeyboard
+              r = goat_applyWSEvent WSEventType_Local_Refresh WSERedo goatState_withKeyboard
             -- tool hotkeys
             KeyboardData (KeyboardKey_Char key) _ -> r where
               mtool = case key of
@@ -1123,8 +1122,6 @@ computeCanvasSelection goatState = r where
   r = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pfs) filterHiddenOrLocked (_goatState_selection goatState)
 
 
-
--- TODO rename to setSelect
 goat_setSelection :: Bool -> SuperOwlParliament -> GoatState -> GoatState
 goat_setSelection add selection goatState = r where
   -- set the new selection
@@ -1132,7 +1129,7 @@ goat_setSelection add selection goatState = r where
   -- rerender selection
   next_canvasSelection = computeCanvasSelection goatState
   next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState) next_canvasSelection
-  -- TODO consider rendering selected hidden/locked stuff too (it's still possible to select them via layers)? 
+  -- MAYBE TODO consider rendering selected hidden/locked stuff too (it's still possible to select them via layers)? 
   -- Except we removed it from the BroadPhase already. And it would be weird because you bulk selected you would edit only the non-hidden/locked stuff
   rc_afterselection = goat_renderCanvas_selection (renderContextFromGoatState goatState) (SuperOwlParliament $ unCanvasSelection next_canvasSelection)
   r = goatState {
@@ -1189,8 +1186,20 @@ goat_processHandlerOutput pho gs_0 = r where
 
 --goat_updateSelectionAfterWSEvent :: 
 
-goat_applyWSEvent :: WSEvent -> GoatState -> GoatState
-goat_applyWSEvent wse goatState = goatState_final where
+
+data WSEventType = WSEventType_Local_NoRefresh | WSEventType_Local_Refresh | WSEventType_Remote_Refresh deriving (Eq, Show)
+
+wSEventType_isRemote :: WSEventType -> Bool
+wSEventType_isRemote WSEventType_Remote_Refresh = True
+wSEventType_isRemote _ = False
+
+wSEventType_needsRefresh :: WSEventType -> Bool
+wSEventType_needsRefresh WSEventType_Local_Refresh = True
+wSEventType_needsRefresh WSEventType_Remote_Refresh = True
+wSEventType_needsRefresh _ = False
+
+goat_applyWSEvent :: WSEventType -> WSEvent -> GoatState -> GoatState
+goat_applyWSEvent wsetype wse goatState = goatState_final where
 
   -- apply the event
   last_pFState = goatState_pFState goatState
@@ -1221,7 +1230,7 @@ goat_applyWSEvent wse goatState = goatState_final where
         _             -> False
 
       -- TODO add `|| wasRemoteChange` condition
-      r = if wasLoad || null newlyCreatedSEltls
+      r = if wasLoad || null newlyCreatedSEltls || wSEventType_isRemote wsetype
         -- if there are no newly created elts, we still need to update the selection
         then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState_afterEvent)) $ \sowl ->
           case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
@@ -1237,10 +1246,9 @@ goat_applyWSEvent wse goatState = goatState_final where
   goatState_afterSelection = goatState_afterEvent { _goatState_selection = next_selection }
 
   -- | refresh the handler if there was a non-canvas or non-local state change |
-  needRefreshHandler = False -- TODO
   layersHandler = _goatState_layersHandler goatState_afterSelection
   canvasHandler = _goatState_handler goatState_afterSelection
-  goatState_afterRefreshHandler = if needRefreshHandler
+  goatState_afterRefreshHandler = if wSEventType_needsRefresh wsetype
     then let
         -- since we don't have multi-user events, the handler should never be active when this happens
         checkvalid = assert (not (pIsHandlerActive canvasHandler) && not (pIsHandlerActive layersHandler))
