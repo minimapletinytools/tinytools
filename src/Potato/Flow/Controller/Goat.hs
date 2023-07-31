@@ -836,12 +836,10 @@ endoGoatCmdSetDebugLabel x gs = gs {
     _goatState_debugLabel = x
   }
 
--- UNFINISHED STUFF BELOW HERE
 endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
-endoGoatCmdSetCanvasRegionDim x gs = gs {
+endoGoatCmdSetCanvasRegionDim x gs = goat_setPan (_goatState_pan gs) $ gs {
     _goatState_screenRegion = x
   }
--- TODO this needs to trigger a rerender (just call goat_setPan with current pan)
 
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
 endoGoatCmdWSEvent wsev gs = goat_applyWSEvent WSEventType_Local_Refresh wsev gs
