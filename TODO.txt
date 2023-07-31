@@ -312,6 +312,9 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
 
 
 ::NEWEST TODO::
+-tests
+  -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
+-return key in layers during rename will act like "tab" taking you to params, don't do this
 -REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas
 -text zipper
   -you should just rewrite text zipper and add select support..

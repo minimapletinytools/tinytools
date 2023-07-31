@@ -176,10 +176,7 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
-  GoatCmdLoad EverythingLoadState
-
-  -- command based input for widgets not owned by tiny tools
-  | GoatCmdWSEvent WSEvent
+  GoatCmdWSEvent WSEvent
   | GoatCmdNewFolder Text
   | GoatCmdSetCanvasRegionDim XY
 
@@ -466,14 +463,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
         newFolderEv = WSEApplyLlama (False, makeAddFolderLlama last_pFState (folderPos, x))
-      GoatCmdLoad (spf, cm) -> r where
-        -- HACK this won't get generated until later but we need this to generate layersState...
-        -- someday we'll split up foldGoatFn by `GoatCmd` (or switch to Endo `GoatState`) and clean this up
-        tempOwlPFStateHack = sPotatoFlow_to_owlPFState spf
-        r = (makeGoatCmdTempOutputFromEvent goatState (WSELoad spf)) {
-            _goatCmdTempOutput_pan = Just $ _controllerMeta_pan cm
-            , _goatCmdTempOutput_layersState = Just $ makeLayersStateFromOwlPFState tempOwlPFStateHack (_controllerMeta_layers cm)
-           }
       GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
 
       GoatCmdMouse mouseData ->
@@ -680,10 +669,8 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       -- pretty sure this does the same thing..
       --sortedNewlyCreatedSEltls = makeSortedSuperOwlParliament (_owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
 
-      wasLoad = case cmd of
-        GoatCmdLoad _ -> True
-        _             -> False
-
+      wasLoad = False
+      
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
         then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState)) $ \sowl ->
