@@ -178,7 +178,6 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 data GoatCmd =
   GoatCmdWSEvent WSEvent
   | GoatCmdNewFolder Text
-  | GoatCmdSetCanvasRegionDim XY
 
   -- direct input for widgets owned by tiny tools
   | GoatCmdMouse LMouseData
@@ -463,7 +462,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
         folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
         newFolderEv = WSEApplyLlama (False, makeAddFolderLlama last_pFState (folderPos, x))
-      GoatCmdSetCanvasRegionDim x -> makeGoatCmdTempOutputFromNothing $ goatState { _goatState_screenRegion = x }
 
       GoatCmdMouse mouseData ->
         let
@@ -670,7 +668,7 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
       --sortedNewlyCreatedSEltls = makeSortedSuperOwlParliament (_owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
 
       wasLoad = False
-      
+
       r = if wasLoad || null newlyCreatedSEltls
         -- if there are no newly created elts, we still need to update the selection
         then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState)) $ \sowl ->
