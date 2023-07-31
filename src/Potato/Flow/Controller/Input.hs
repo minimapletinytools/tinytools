@@ -66,6 +66,7 @@ data LMouseData = LMouseData {
   , _lMouseData_isRelease    :: Bool
   , _lMouseData_button       :: MouseButton
   , _lMouseData_modifiers    :: [KeyModifier]
+  -- TODO get rid of this, instead split input into 2
   , _lMouseData_isLayerMouse :: Bool
 } deriving (Show, Eq)
 
@@ -75,6 +76,7 @@ data MouseDrag = MouseDrag {
   , _mouseDrag_modifiers    :: [KeyModifier] -- tracks modifiers held at current state of drag
   , _mouseDrag_to           :: XY -- likely not needed as they will be in the input event, but whatever
   , _mouseDrag_state        :: MouseDragState
+  -- TODO get rid of this, instead split input into 2
   , _mouseDrag_isLayerMouse :: Bool
 } deriving (Show, Eq)
 

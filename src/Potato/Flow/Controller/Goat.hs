@@ -99,6 +99,9 @@ data GoatState = GoatState {
     , _goatState_screenRegion            :: XY -- the screen dimensions
     , _goatState_clipboard               :: Maybe SEltTree
     , _goatState_focusedArea             :: GoatFocusedArea
+
+    -- TODO you broke this with endo refactor
+    -- TODO this isn't even used right now... DELETE ME
     , _goatState_unbrokenInput       :: Text -- grapheme clusters are inputed as several keyboard character events so we track these inputs here
 
     -- debug stuff (shared across documents)
@@ -833,10 +836,6 @@ endoGoatCmdSetDebugLabel x gs = gs {
     _goatState_debugLabel = x
   }
 
-
-
-
-
 -- UNFINISHED STUFF BELOW HERE
 endoGoatCmdSetCanvasRegionDim :: V2 Int -> GoatState -> GoatState
 endoGoatCmdSetCanvasRegionDim x gs = gs {
@@ -846,22 +845,17 @@ endoGoatCmdSetCanvasRegionDim x gs = gs {
 
 -- TODO
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
-endoGoatCmdWSEvent wsev gs = undefined
--- apply the event
--- update selection
--- refresh the handler (and possible apply updates)
--- if event was local, maybe set the handler
--- render everything
+endoGoatCmdWSEvent wsev gs = goat_applyWSEvent wsev gs
 
 endoGoatCmdNewFolder :: Text -> GoatState -> GoatState
-endoGoatCmdNewFolder x gs = endoGoatCmdWSEvent newFolderEv gs where
+endoGoatCmdNewFolder x gs = goat_applyWSEvent newFolderEv gs where
   pfs = goatState_pFState gs
   folderPos = lastPositionInSelection (_owlPFState_owlTree pfs) (_goatState_selection gs)
   newFolderEv = WSEApplyLlama (False, makeAddFolderLlama pfs (folderPos, x))
 
 endoGoatCmdLoad :: (SPotatoFlow, ControllerMeta) -> GoatState -> GoatState
 endoGoatCmdLoad (spf, cm) gs = r where
-  gs' = endoGoatCmdWSEvent (WSELoad spf) gs
+  gs' = goat_applyWSEvent (WSELoad spf) gs
   r = gs' {
       _goatState_pan = _controllerMeta_pan cm
       , _goatState_layersState = makeLayersStateFromOwlPFState (goatState_pFState gs') (_controllerMeta_layers cm)
@@ -877,9 +871,173 @@ endoGoatCmdSetFocusedArea gfa goatState = r where
   r = if didchange && pHandlerName (_goatState_layersHandler goatState) == handlerName_layersRename
     then assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
       Nothing -> noactionneeded
-      Just pho -> processHandlerOutput False pho goatstatewithnewfocus
+      Just pho -> goat_processHandlerOutput pho goatstatewithnewfocus
     else noactionneeded
 
+
+
+
+endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
+endoGoatCmdMouse mouseData goatState = r where
+  sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
+  mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
+  mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
+    MouseDragState_Up        -> newDrag mouseData
+    MouseDragState_Cancelled -> (continueDrag mouseData (_goatState_mouseDrag goatState)) { _mouseDrag_state = MouseDragState_Cancelled }
+
+    _                        ->  continueDrag mouseData (_goatState_mouseDrag goatState)
+  canvasDrag = toRelMouseDrag last_pFState (_goatState_pan goatState) mouseDrag
+  goatState_withNewMouse = goatState {
+      _goatState_mouseDrag = mouseDrag
+      , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
+    }
+  noChangeOutput = goatState_withNewMouse
+  -- TODO maybe split this case out to endoGoatCmdLayerMouse
+  isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
+
+  potatoHandlerInput = potatoHandlerInputFromGoatState goatState_withNewMouse
+  last_pFState = goatState_pFState goatState_withNewMouse
+  handler = _goatState_handler goatState_withNewMouse
+
+
+  r = case _mouseDrag_state mouseDrag of
+
+    -- TODO soft failure
+    _ | mouseSourceFailure -> error "invalid mouse sequence due to source"
+
+    -- TODO assert false here? I'm pretty sure this should never happen
+    -- if mouse was cancelled, update _goatState_mouseDrag accordingly
+    MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
+      then goatState_withNewMouse { _goatState_mouseDrag = def }
+      else noChangeOutput -- still cancelled
+
+    -- if mouse is intended for layers
+    _ | isLayerMouse -> case pHandleMouse (_goatState_layersHandler goatState) potatoHandlerInput (RelMouseDrag mouseDrag) of
+      Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+      Nothing  -> noChangeOutput
+
+    -- if middle mouse button, create a temporary PanHandler
+    MouseDragState_Down | _lMouseData_button mouseData == MouseButton_Middle -> r where
+      panhandler = def { _panHandler_maybePrevHandler = Just (SomePotatoHandler handler) }
+      r = case pHandleMouse panhandler potatoHandlerInput canvasDrag of
+        Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+        Nothing -> error "PanHandler expected to capture mouse input"
+
+    -- pass onto canvas handler
+    _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
+      Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+
+      -- input not captured by handler, pass onto select or select+drag
+      Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
+        r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
+          Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+          Nothing -> error "handler was expected to capture this mouse state"
+
+      Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
+
+
+
+
+endoGoatCmdKeyboard :: KeyboardData -> GoatState -> GoatState
+endoGoatCmdKeyboard kbd' goatState = r where
+  -- TODO you need to do reset logic for this (basically, reset it anytime there was a non-keyboard event)
+  last_unbrokenInput = _goatState_unbrokenInput goatState
+  next_unbrokenInput = case kbd' of
+    KeyboardData (KeyboardKey_Char c) _ -> T.snoc last_unbrokenInput c
+    _ -> ""
+  mkbd =   potatoModifyKeyboardKey (_goatState_configuration goatState) last_unbrokenInput kbd'
+  goatState_withKeyboard =  goatState { _goatState_unbrokenInput = next_unbrokenInput}
+  potatoHandlerInput = potatoHandlerInputFromGoatState goatState_withKeyboard
+  last_pFState = goatState_pFState goatState_withKeyboard
+  handler = _goatState_handler goatState_withKeyboard
+
+  r = case mkbd of
+    Nothing -> goatState_withKeyboard
+    -- special case, treat escape cancel mouse drag as a mouse input
+    Just (KeyboardData KeyboardKey_Esc _) | mouseDrag_isActive (_goatState_mouseDrag goatState_withKeyboard) -> r where
+      canceledMouse = cancelDrag (_goatState_mouseDrag goatState_withKeyboard)
+      goatState_withNewMouse = goatState_withKeyboard {
+          _goatState_mouseDrag = canceledMouse
+
+          -- escape will cancel mouse focus
+          -- TODO this isn't correct, you have some handlers that cancel into each other, you should only reset to GoatFocusedArea_None if they canceled to Nothing
+          , _goatState_focusedArea = GoatFocusedArea_None
+
+        }
+
+      -- TODO use _goatState_focusedArea instead
+      r = if _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState_withKeyboard)
+        then case pHandleMouse (_goatState_layersHandler goatState_withKeyboard) potatoHandlerInput (RelMouseDrag canceledMouse) of
+          Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+          -- TODO I think this is fine, but maybe you should you clear the handler instead?
+          Nothing  -> goatState_withNewMouse
+        else case pHandleMouse handler potatoHandlerInput (toRelMouseDrag last_pFState (_goatState_pan goatState_withKeyboard) canceledMouse) of
+          Just pho -> goat_processHandlerOutput pho goatState_withNewMouse
+          -- TODO I think this is fine, but maybe you should you clear the handler instead?
+          Nothing  -> goatState_withNewMouse
+
+    -- we are in the middle of mouse drag, ignore all keyboard inputs
+    -- perhaps a better way to do this is to have handlers capture all inputs when active
+    Just _ | mouseDrag_isActive (_goatState_mouseDrag goatState_withKeyboard) -> goatState_withKeyboard
+
+    Just kbd ->
+      let
+        maybeHandleLayers = do
+          guard $ _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState_withKeyboard)
+          pho <- pHandleKeyboard (_goatState_layersHandler goatState_withKeyboard) potatoHandlerInput kbd
+          return $ goat_processHandlerOutput pho goatState_withKeyboard
+      in case maybeHandleLayers of
+        Just x -> x
+        Nothing -> case pHandleKeyboard handler potatoHandlerInput kbd of
+          Just pho -> goat_processHandlerOutput pho goatState_withKeyboard
+          -- input not captured by handler
+          -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState_withKeyboard which PotatoHandlerOutput can't atm
+          Nothing -> case kbd of
+            KeyboardData KeyboardKey_Esc _ -> case _mouseDrag_state (_goatState_mouseDrag goatState_withKeyboard) of
+                    x | x == MouseDragState_Up || x == MouseDragState_Cancelled -> goat_select False isParliament_empty goatState_withKeyboard
+                    _                        -> goatState_withKeyboard
+
+            KeyboardData k [] | k == KeyboardKey_Delete || k == KeyboardKey_Backspace -> case deleteSelectionEvent goatState_withKeyboard of
+              Nothing -> goatState_withKeyboard
+              Just wsev -> goat_applyWSEvent wsev goatState_withKeyboard
+            KeyboardData (KeyboardKey_Char 'c') [KeyModifier_Ctrl] -> r where
+              copied = makeClipboard goatState_withKeyboard
+              r = goatState_withKeyboard { _goatState_clipboard = copied }
+            KeyboardData (KeyboardKey_Char 'x') [KeyModifier_Ctrl] -> r where
+              copied = makeClipboard goatState_withKeyboard
+              goatState_withClipboard = goatState_withKeyboard { _goatState_clipboard = copied }
+              r = case deleteSelectionEvent goatState_withKeyboard of
+                Nothing -> goatState_withClipboard
+                Just wsev -> goat_applyWSEvent wsev goatState_withClipboard
+            KeyboardData (KeyboardKey_Char 'v') [KeyModifier_Ctrl] -> case _goatState_clipboard goatState_withKeyboard of
+              Nothing    -> goatState_withKeyboard
+              Just stree -> r where
+                offsetstree = offsetSEltTree (V2 1 1) stree
+                minitree' = owlTree_fromSEltTree offsetstree
+                -- reindex the tree so there are no collisions with the current state
+                maxid1 = owlTree_maxId minitree' + 1
+                maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState_withKeyboard))
+                minitree = owlTree_reindex (max maxid1 maxid2) minitree'
+                spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
+                treePastaEv = WSEApplyLlama (False, makePFCLlama $ OwlPFCNewTree (minitree, spot))
+                r = goat_applyWSEvent treePastaEv (goatState_withKeyboard { _goatState_clipboard = Just offsetstree })
+            KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
+              r = goat_applyWSEvent WSEUndo goatState_withKeyboard
+            KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl] -> r where
+              r = goat_applyWSEvent WSERedo goatState_withKeyboard
+            -- tool hotkeys
+            KeyboardData (KeyboardKey_Char key) _ -> r where
+              mtool = case key of
+                'v' -> Just Tool_Select
+                'p' -> Just Tool_Pan
+                'b' -> Just Tool_Box
+                'l' -> Just Tool_Line
+                'n' -> Just Tool_TextArea
+                _   -> Nothing
+              newHandler = maybe (_goatState_handler goatState_withKeyboard) (makeHandlerFromNewTool goatState_withKeyboard) mtool
+              -- TODO should I call a goat_setHandler function instead?
+              r = goatState_withKeyboard { _goatState_handler = newHandler }
+            _ -> goatState_withKeyboard
 
 
 
@@ -957,28 +1115,31 @@ goat_setPan pan goatState = r where
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
 
- 
--- TODO select logic is weird here is what I think it is
--- apply changes from local preview
---  newly created stuff -> new selection
---  no newly created stuff -> update selection
--- if new selection
---  if handler is NOT active, create handler from selection (use maybeUpdateHandlerFromSelection) (the reason for this is that if handler is active, it was the one that just created the elt and knows what it just did and needs state to move into updating the newly created elt)
--- otherwise makeHandlerFromSelection
---
--- for regular select via select handler it's simpler, maybe make this function just for that?
+
+computeCanvasSelection :: GoatState -> CanvasSelection
+computeCanvasSelection goatState = r where
+  pfs = goatState_pFState goatState
+  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) (_layersState_meta (_goatState_layersState goatState))
+  r = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pfs) filterHiddenOrLocked (_goatState_selection goatState)
+
+
+
+-- TODO rename to setSelect
 goat_select :: Bool -> SuperOwlParliament -> GoatState -> GoatState
 goat_select add selection goatState = r where
-  -- TODO
   -- set the new selection
   -- create new handler as appropriate
   -- rerender selection
-  rc = renderContextFromGoatState goatState
-  rc_afterselection = goat_renderCanvas_selection rc selection
+  next_canvasSelection = computeCanvasSelection goatState
+  next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState) next_canvasSelection
+  -- TODO consider rendering selected hidden/locked stuff too (it's still possible to select them via layers)? 
+  -- Except we removed it from the BroadPhase already. And it would be weird because you bulk selected you would edit only the non-hidden/locked stuff
+  rc_afterselection = goat_renderCanvas_selection (renderContextFromGoatState goatState) (SuperOwlParliament $ unCanvasSelection next_canvasSelection)
   r = goatState {
       _goatState_selection = selection
-      , _goatState_handler = undefined
+      , _goatState_handler = next_handler
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
+      , _goatState_canvasSelection = next_canvasSelection
     }
 
 
@@ -1000,11 +1161,14 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
     }
 
 
-processHandlerOutput :: Bool -> PotatoHandlerOutput -> GoatState -> GoatState
-processHandlerOutput canvas pho gs_0 = r where
+goat_processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
+goat_processHandlerOutput pho gs_0 = r where
 
   -- set the handler output in the GoatState (note it might get overwritten later)
   gs_1 = gs_0 { _goatState_handler = fromMaybe (_goatState_handler gs_0) (_potatoHandlerOutput_nextHandler pho) }
+
+  -- TODO create new handler from selection if the handler returned was Nothing
+  -- NOTE if the handler returned Nothing and also a HOA_Select/HOA_Preview, then we will set the new handler from selection later
 
   r = case _potatoHandlerOutput_action pho of 
     HOA_Select x y -> goat_select x y gs_1
@@ -1022,3 +1186,144 @@ processHandlerOutput canvas pho gs_0 = r where
       -- rerender everything 
     HOA_Preview Preview_Commit -> undefined
       -- update the preview stack
+
+--goat_updateSelectionAfterWSEvent :: 
+
+goat_applyWSEvent :: WSEvent -> GoatState -> GoatState
+goat_applyWSEvent wse goatState = goatState_final where
+
+  -- apply the event
+  last_pFState = goatState_pFState goatState
+  (workspace_afterEvent, cslmap_afterEvent) = updateOwlPFWorkspace wse (_goatState_workspace goatState)
+  goatState_afterEvent = goatState { _goatState_workspace = workspace_afterEvent }
+  pFState_afterEvent = _owlPFWorkspace_owlPFState workspace_afterEvent
+
+
+  -- compute selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate)
+  (isNewSelection, next_selection) = if IM.null cslmap_afterEvent
+    then (False, _goatState_selection goatState_afterEvent)
+    else r where
+
+      -- extract elements that got created
+      newEltFoldMapFn rid v = case v of
+        Nothing     -> []
+        Just sowl -> if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
+
+      -- NOTE, undoing a deleted element counts as a newly created element (and will be auto-selected)
+      newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap_afterEvent
+
+      sortedNewlyCreatedSEltls = SuperOwlParliament $ Seq.sortBy (owlTree_superOwl_comparePosition $ _owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
+      -- pretty sure this does the same thing..
+      --sortedNewlyCreatedSEltls = makeSortedSuperOwlParliament (_owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
+
+      wasLoad = case wse of
+        WSELoad _ -> True
+        _             -> False
+
+      -- TODO add `|| wasRemoteChange` condition
+      r = if wasLoad || null newlyCreatedSEltls
+        -- if there are no newly created elts, we still need to update the selection
+        then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState_afterEvent)) $ \sowl ->
+          case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
+            -- no changes means not deleted
+            Nothing       -> Just sowl
+            -- if deleted, remove it
+            Just Nothing  -> Nothing
+            -- it was changed, update selection to newest version
+            Just (Just x) -> Just x
+        else (True, sortedNewlyCreatedSEltls)
+  -- for now, newly created stuff is the same as anything that got auto selected
+  --newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
+  goatState_afterSelection = goatState_afterEvent { _goatState_selection = next_selection }
+
+  -- | refresh the handler if there was a non-canvas or non-local state change |
+  needRefreshHandler = False -- TODO
+  layersHandler = _goatState_layersHandler goatState_afterSelection
+  canvasHandler = _goatState_handler goatState_afterSelection
+  goatState_afterRefreshHandler = if needRefreshHandler
+    then let
+        -- since we don't have multi-user events, the handler should never be active when this happens
+        checkvalid = assert (not (pIsHandlerActive canvasHandler) && not (pIsHandlerActive layersHandler))
+
+        -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
+        next_potatoHandlerInput = potatoHandlerInputFromGoatState goatState_afterSelection
+        canvasSelection = computeCanvasSelection goatState_afterSelection
+        refreshedCanvasHandler = fromMaybe (makeHandlerFromSelection canvasSelection) ( pRefreshHandler canvasHandler next_potatoHandlerInput)
+        -- a little weird that we refresh the layers handler in cases where the event was an event that came from layers, but it doesn't matter since the layers handler won't be active when it produces that event
+        refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler layersHandler next_potatoHandlerInput)
+
+        -- TODO
+        -- TODO pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
+        -- TODO
+        
+      in checkvalid goatState_afterSelection {
+          _goatState_handler = refreshedCanvasHandler
+          , _goatState_layersHandler = refreshedLayersHandler
+        }
+    else goatState_afterSelection
+
+
+
+
+
+  -- | update LayersState based from SuperOwlChanges after applying events |
+  next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent (_goatState_layersState goatState_afterRefreshHandler)
+
+  -- | auto-expand folders and compute LayersState |
+  -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
+  -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
+  -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
+  next_layersState = expandAllCollapsedParents next_selection pFState_afterEvent next_layersState'
+  goatState_afterSetLayersState = goatState_afterRefreshHandler { _goatState_layersState = next_layersState }
+
+  -- | set the new handler based on the new Selection and LayersState
+  next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
+  next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSetLayersState) next_canvasSelection
+  goatState_afterSetHandler = goatState_afterSetLayersState {
+      _goatState_handler = next_handler
+      , _goatState_canvasSelection = next_canvasSelection
+    }
+
+  -- | update AttachmentMap based on new state and clear the cache on these changes |
+  (needsupdateaabbs, goatState_afterUpdateAttachmentsAndRenderState) = goat_updateAttachmentsAndRenderStateFromChanges cslmap_afterEvent goatState_afterSetHandler
+
+  -- | render everything
+  rc = renderContextFromGoatState goatState_afterUpdateAttachmentsAndRenderState
+  rc_afterRenderCanvas = goat_renderCanvas_update rc needsupdateaabbs cslmap_afterEvent
+  rc_afterRenderSelection = goat_renderCanvas_selection rc (_goatState_selection goatState_afterUpdateAttachmentsAndRenderState)
+
+  -- | DONE
+  goatState_final = goatState_afterUpdateAttachmentsAndRenderState {
+      _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_afterRenderCanvas
+      , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterRenderSelection
+    }
+
+
+-- this one also updates attachment map based on changes
+goat_updateAttachmentsAndRenderStateFromChanges :: SuperOwlChanges -> GoatState -> ([AABB], GoatState)
+goat_updateAttachmentsAndRenderStateFromChanges cslmap_afterEvent goatState = r where
+
+  pFState_afterEvent = goatState_pFState goatState
+
+  -- | update AttachmentMap based on new state and clear the cache on these changes |
+  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent (_goatState_attachmentMap goatState)
+  -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
+  attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap (_goatState_attachmentMap goatState)
+  --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
+  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
+
+  -- | compute SuperOwlChanges for rendering |
+  cslmap_withAttachments = IM.union cslmap_afterEvent attachmentChanges
+
+  -- | clear the cache at places that have changed
+  renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys (_goatState_renderCache goatState) (IM.keys cslmap_withAttachments)
+
+  -- | update the BroadPhase
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_withAttachments (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
+
+  r = (needsupdateaabbs, goatState {
+      _goatState_attachmentMap = next_attachmentMap
+      , _goatState_broadPhaseState = next_broadPhaseState
+      , _goatState_renderCache = renderCache_resetOnChangesAndAttachments
+    })
+
