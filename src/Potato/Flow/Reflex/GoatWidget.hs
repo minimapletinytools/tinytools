@@ -124,12 +124,10 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
     -- old command style
     goatEvent = [
-        GoatCmdLoad <$> _goatWidgetConfig_load
-        , GoatCmdMouse <$> _goatWidgetConfig_mouse
+        GoatCmdMouse <$> _goatWidgetConfig_mouse
         , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
         , GoatCmdNewFolder "folder" <$ _goatWidgetConfig_newFolder
         , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
-        -- these two need to be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
         , ffor _goatWidgetConfig_paramsEvent $ \llama -> (GoatCmdWSEvent (WSEApplyLlama (False, llama)))
         , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy)))
       ]
@@ -138,18 +136,25 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     goatEndoEvent = foldGoatFn <<$>> goatEvent
 
     -- new Endo folding
-    setDefaultParamsEndoEvent = fmap endoGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
-    markSavedEvent = fmap endoGoatCmdMarkSaved _goatWidgetConfig_markSaved
-    setToolEvent = fmap endoGoatCmdSetTool _goatWidgetConfig_selectTool
-    setDebugLabelEvent = fmap endoGoatCmdSetDebugLabel _goatWidgetConfig_setDebugLabel
-    setCanvasRegionDimEvent = fmap endoGoatCmdSetCanvasRegionDim _goatWidgetConfig_canvasRegionDim
-    setFocusedAreaEvent = fmap endoGoatCmdSetFocusedArea _goatWidgetConfig_setFocusedArea
+    endoStyle = [ 
+        -- these be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
+        fmap endoGoatCmdSetFocusedArea _goatWidgetConfig_setFocusedArea
+
+        -- the order of the rest doesn't matter
+        , fmap endoGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
+        , fmap endoGoatCmdMarkSaved _goatWidgetConfig_markSaved
+        , fmap endoGoatCmdSetTool _goatWidgetConfig_selectTool
+        , fmap endoGoatCmdSetDebugLabel _goatWidgetConfig_setDebugLabel
+        , fmap endoGoatCmdSetCanvasRegionDim _goatWidgetConfig_canvasRegionDim
+
+        , fmap endoGoatCmdLoad _goatWidgetConfig_load
+      ]
 
   -- DELETE
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
 
   goatDyn' :: Dynamic t GoatState
-    <- foldDyn ($) initialgoat $ mergeWith (.) (goatEndoEvent <> [setDefaultParamsEndoEvent, markSavedEvent, setToolEvent, setDebugLabelEvent, setCanvasRegionDimEvent, setFocusedAreaEvent])
+    <- foldDyn ($) initialgoat $ mergeWith (.) (goatEndoEvent <> endoStyle)
 
   -- reduces # of calls to foldGoatFn to 2 :\
   let goatDyn = fmap id goatDyn'
