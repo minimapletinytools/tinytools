@@ -177,7 +177,6 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
   GoatCmdWSEvent WSEvent
-  | GoatCmdNewFolder Text
 
   -- direct input for widgets owned by tiny tools
   | GoatCmdMouse LMouseData
@@ -459,9 +458,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
     SomePotatoHandler handler -> case cmd of
       
       GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
-      GoatCmdNewFolder x -> makeGoatCmdTempOutputFromEvent goatState newFolderEv where
-        folderPos = lastPositionInSelection (_owlPFState_owlTree . _owlPFWorkspace_owlPFState $  (_goatState_workspace goatState)) (_goatState_selection goatState)
-        newFolderEv = WSEApplyLlama (False, makeAddFolderLlama last_pFState (folderPos, x))
 
       GoatCmdMouse mouseData ->
         let
