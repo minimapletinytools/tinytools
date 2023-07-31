@@ -994,7 +994,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
           -- TODO consider wrapping this all up in KeyboardHandler or something? Unfortunately, copy needs to modify goatState_withKeyboard which PotatoHandlerOutput can't atm
           Nothing -> case kbd of
             KeyboardData KeyboardKey_Esc _ -> case _mouseDrag_state (_goatState_mouseDrag goatState_withKeyboard) of
-                    x | x == MouseDragState_Up || x == MouseDragState_Cancelled -> goat_select False isParliament_empty goatState_withKeyboard
+                    x | x == MouseDragState_Up || x == MouseDragState_Cancelled -> goat_setSelection False isParliament_empty goatState_withKeyboard
                     _                        -> goatState_withKeyboard
 
             KeyboardData k [] | k == KeyboardKey_Delete || k == KeyboardKey_Backspace -> case deleteSelectionEvent goatState_withKeyboard of
@@ -1125,8 +1125,8 @@ computeCanvasSelection goatState = r where
 
 
 -- TODO rename to setSelect
-goat_select :: Bool -> SuperOwlParliament -> GoatState -> GoatState
-goat_select add selection goatState = r where
+goat_setSelection :: Bool -> SuperOwlParliament -> GoatState -> GoatState
+goat_setSelection add selection goatState = r where
   -- set the new selection
   -- create new handler as appropriate
   -- rerender selection
@@ -1171,7 +1171,7 @@ goat_processHandlerOutput pho gs_0 = r where
   -- NOTE if the handler returned Nothing and also a HOA_Select/HOA_Preview, then we will set the new handler from selection later
 
   r = case _potatoHandlerOutput_action pho of 
-    HOA_Select x y -> goat_select x y gs_1
+    HOA_Select x y -> goat_setSelection x y gs_1
     HOA_Pan x -> goat_setPan x gs_1
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y gs_1
     HOA_Preview (Preview po x) -> undefined
