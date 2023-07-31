@@ -219,6 +219,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -actually I think you don't want explicit commits, or make it optional. It's kind of awkward to cancel in some places e.g. keyboard movement
           -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
   DONE-refactor PotatoHandlerOutput to be mutually exclusive
+-pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
@@ -311,6 +312,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
 
 
 ::NEWEST TODO::
+-REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas
 -text zipper
   -you should just rewrite text zipper and add select support..
   -BUG wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
