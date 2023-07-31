@@ -14,6 +14,7 @@ tinytools consists of the M (as in MVC) of the tinytools app. The VC implementat
 - Owl: an element in the scene
 - Element: same as owl
 - Layers: the layer system which is a logical view into the scene state
+- OwlState: the data structure representing the document state
 
 
 ## State
@@ -101,12 +102,33 @@ For an example setup, see `Potato.Flow.Vty.Main` in the tinytools-vty project
 
 Some mouse and keyboard input is handled within tinytools. In particular, the canvas and layers input are handled by tinytools. 
 
-Most mouse and keyboard input is managed by instances of the  `Handler` class. The layers and canvas portions can each only have 1 handler each at a time.
-If a `Handler` method processes the input, it returns a `PotatoHandlerOutput` which contains information on how to update the scene as well as a new `Handler`.
-
 Mouse input is reported as click streams, see `LMouseData`
 Mouse input must be reported separately for the Layers and canvas area by setting the `_lMouseData_isLayerMouse` field. All input sequences in one area must end with a mouse release (`_lMouseData_isRelease = True`) before switching to the other area or it will assert. (in retrospect, this is could have been done a little more clear/safe)
 
+
+### Handlers
+
+Most mouse and keyboard input is managed by instances of the  `Handler` class. The layers and canvas portions can each only have 1 handler each at a time.
+If a `Handler` method processes the input, it returns a `PotatoHandlerOutput` which contains information on how to update the scene as well as a new `Handler`.
+
+#### Handler Lifecycle
+
+The handler lifecycle is important and has a few subtle/idiosyncratic requirements. Below is a description of the key state transition of the handler lifecycle (for both Layers and Canvas handlers, although some scenarios described really only apply to the Canvas handler)
+
+- there is always a handler
+- handlers may be active or inactive
+  - an example of an active handler is when `BoxHandler; is in the middle of resizing an object via mouse drag
+- after processing input, handlers return some output action as well as a maybe a new handler
+  - if no new handler is returned, the handler does not process the input and the input may be processed in other ways
+    - for example, if a mouse down input is not handled by the canvas handler, then a `SelectHandler` is created (replacing the other handler) to process the input
+  - If a new handler is returned, it is set as the handler
+- after a new object(s) is created locally
+  - select the newly created object(s)
+    - NOTE this is SUPER important, as the handler that just created the element expects it to be selected to continue modifying it
+  - if the current handler is not active, create a new handler based on the newly created object
+  - if the current handler is active, do nothing, trust that the current handler knows what it's doing
+- after any change to the doc's OwlState, refresh the handler, which may produce a non-trivial output
+- if Esc is pressed, cancel the current handler, which may produce a non-trivial output 
 
 ## Rendering
 
