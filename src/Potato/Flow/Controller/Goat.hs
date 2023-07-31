@@ -1162,25 +1162,19 @@ goat_processHandlerOutput pho gs_0 = r where
   -- set the handler output in the GoatState (note it might get overwritten later)
   gs_1 = gs_0 { _goatState_handler = fromMaybe (_goatState_handler gs_0) (_potatoHandlerOutput_nextHandler pho) }
 
-  -- TODO create new handler from selection if the handler returned was Nothing
-  -- NOTE if the handler returned Nothing and also a HOA_Select/HOA_Preview, then we will set the new handler from selection later
+  needsUndoFirst po = case po of
+    PO_Start -> False
+    PO_StartAndCommit -> False
+    _ -> True
 
   r = case _potatoHandlerOutput_action pho of 
     HOA_Select x y -> goat_setSelection x y gs_1
     HOA_Pan x -> goat_setPan x gs_1
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y gs_1
-    HOA_Preview (Preview po x) -> undefined
-      -- update the preview stack
-      -- update selection from newly created
-      -- update handler from selection???
-      -- rerender everything 
-    HOA_Preview Preview_Cancel -> undefined
-      -- update the preview stack
-      -- update selection???
-      -- update handler???
-      -- rerender everything 
-    HOA_Preview Preview_Commit -> undefined
-      -- update the preview stack
+    -- TODO set preview stack 
+    HOA_Preview (Preview po x) -> goat_applyWSEvent WSEventType_Local_Refresh (WSEApplyLlama (needsUndoFirst po, x)) gs_1
+    HOA_Preview Preview_Cancel -> goat_applyWSEvent WSEventType_Local_Refresh WSEUndo gs_1
+    HOA_Preview Preview_Commit -> gs_1
 
 --goat_updateSelectionAfterWSEvent :: 
 
