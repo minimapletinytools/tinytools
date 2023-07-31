@@ -175,7 +175,7 @@ setTool :: (Monad m) => Tool -> GoatTesterT m ()
 setTool tool = runEndo (endoGoatCmdSetTool tool)
 
 setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
-setFocusArea fa = runCommand $ GoatCmdSetFocusedArea fa
+setFocusArea fa = runEndo $ endoGoatCmdSetFocusedArea fa
 
 addFolder :: (Monad m) => Text -> GoatTesterT m ()
 addFolder name = runCommand $ GoatCmdNewFolder name
