@@ -126,7 +126,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     goatEvent = [
         GoatCmdMouse <$> _goatWidgetConfig_mouse
         , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
-        , GoatCmdNewFolder "folder" <$ _goatWidgetConfig_newFolder
         , ffor _goatWidgetConfig_bypassEvent GoatCmdWSEvent
         , ffor _goatWidgetConfig_paramsEvent $ \llama -> (GoatCmdWSEvent (WSEApplyLlama (False, llama)))
         , ffor _goatWidgetConfig_canvasSize $ \xy -> GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy)))
@@ -146,8 +145,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , fmap endoGoatCmdSetTool _goatWidgetConfig_selectTool
         , fmap endoGoatCmdSetDebugLabel _goatWidgetConfig_setDebugLabel
         , fmap endoGoatCmdSetCanvasRegionDim _goatWidgetConfig_canvasRegionDim
-
         , fmap endoGoatCmdLoad _goatWidgetConfig_load
+        , fmap (\_ -> endoGoatCmdNewFolder "folder") _goatWidgetConfig_newFolder
       ]
 
   -- DELETE
