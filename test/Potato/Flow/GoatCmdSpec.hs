@@ -21,17 +21,17 @@ verifyCanvasSize (w,h) = verifyState "verifyCanvasSize" f where
       then Nothing
       else Just $ "expected: " <> show (w, h) <> " got " <> show (w', h')
 
-deltaResizeCanvasCmd :: (Int, Int) -> GoatCmd
-deltaResizeCanvasCmd (w, h) = GoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 (V2 w h))))
+endoDeltaResizeCanvas :: (Int, Int) -> (GoatState -> GoatState) 
+endoDeltaResizeCanvas (w, h) = endoGoatCmdWSEvent (WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 (V2 w h))))
 
 goatCmdWSEvent_basic_test ::  Spec
 goatCmdWSEvent_basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyCanvasSize (1,1)
 
   setMarker "resize canvas"
-  runCommand $ deltaResizeCanvasCmd (10, 0)
+  runEndo $ endoDeltaResizeCanvas (10, 0)
   verifyCanvasSize (11,1)
-  runCommand $ deltaResizeCanvasCmd (-5, 5)
+  runEndo $ endoDeltaResizeCanvas (-5, 5)
   verifyCanvasSize (6,6)
 
 
@@ -41,7 +41,7 @@ goatCmdWSEvent_invalid_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyCanvasSize (1,1)
 
   setMarker "resize canvas"
-  runCommand $ deltaResizeCanvasCmd (-1, 0)
+  runEndo $ endoDeltaResizeCanvas (-1, 0)
   verifyCanvasSize (1,1)
   
 

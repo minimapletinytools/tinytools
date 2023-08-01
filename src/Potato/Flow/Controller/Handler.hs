@@ -220,6 +220,7 @@ class PotatoHandler h where
   pRefreshHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   pRefreshHandler _ _ = Nothing
 
+  -- TODO you can probably replace this based on whether there is a preview operation or not
   -- active manipulators will not be overwritten by new handlers via selection from changes
   pIsHandlerActive :: h -> Bool
   pIsHandlerActive _ = False
