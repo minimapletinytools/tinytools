@@ -139,8 +139,10 @@ inputBoxText tais sowl kk = (newtais, mop) where
     else Nothing
 
 data BoxTextHandler = BoxTextHandler {
+    -- TODO this should be active if you have a preview operation going on, not based on mouse like it is right now
     -- TODO rename to active
     _boxTextHandler_isActive      :: Bool
+    
     , _boxTextHandler_state       :: TextInputState
     -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
     , _boxTextHandler_prevHandler :: SomePotatoHandler

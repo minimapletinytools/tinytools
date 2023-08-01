@@ -194,24 +194,24 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
 -goat refactor warmup
   -do goatCmd endo refactor, separate routines for each GoatCmd
-    -after moving everything to endo style, you'll need to find a new home for 
+    IGNORE-after moving everything to endo style, you'll need to find a new home for 
       `goatState = goatState' { _goatState_unbrokenInput = "" }`
       -probably add some common routine to every endo fn I guess
-  DONE-split hoa_layers into 2 separate things
-  -add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
   -get rid of GoatCmdTempOutput
-  -refactor out goat update routines in foldGoatFn
-    -set selection
-    -set pan
-    -update layers state
-    -apply event
+  DONE-split hoa_layers into 2 separate things
+  DONE-add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
+  DONE-refactor out goat update routines in foldGoatFn
+    DONE-set selection
+    DONE-set pan
+    DONE-update layers state
+    DONE-apply event
     DONE-render / render selection
-    -update selection
-    -set handler from selection
-    -refresh Handler
+    DONE-update selection
+    DONE-set handler from selection
+    DONE-refresh Handler
       -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
       -I think you want to reset the handler sooner in the flow (before set handler from selection)
-  -refactor out layers handler in foldGoatFn
+  IGNORE-refactor out layers handler in foldGoatFn
   DONE-switch HOA_DEPRECATED_PFEvent to HOA_Preview
     -remember to do Preview_Commit as needed 
       -or instead we do the thing where the next Preview_Start commits the last preview?
@@ -224,6 +224,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
 -handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
+-replace pIsHandlerActive with just checking if there is a live preview opeartion or not
 
 
 :: MDI REFACTOR NOTES
@@ -312,6 +313,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
 
 
 ::NEWEST TODO::
+-add render handler name
 -tests
   -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
 -return key in layers during rename will act like "tab" taking you to params, don't do this

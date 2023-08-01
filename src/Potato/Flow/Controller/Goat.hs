@@ -176,10 +176,7 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
-  GoatCmdWSEvent WSEvent
-
-  -- direct input for widgets owned by tiny tools
-  | GoatCmdMouse LMouseData
+  GoatCmdMouse LMouseData
   | GoatCmdKeyboard KeyboardData
   deriving (Show)
 
@@ -379,6 +376,7 @@ makeHandlerFromSelection selection = case computeSelectionType selection of
 
 maybeUpdateHandlerFromSelection :: SomePotatoHandler -> CanvasSelection -> SomePotatoHandler
 maybeUpdateHandlerFromSelection sph selection = case sph of
+  -- TODO instead, just check if there is a preview operation or not
   SomePotatoHandler h -> if pIsHandlerActive h
     then sph
     else makeHandlerFromSelection selection
@@ -456,8 +454,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   -- | Process commands |
   goatCmdTempOutput = case (_goatState_handler goatState) of
     SomePotatoHandler handler -> case cmd of
-      
-      GoatCmdWSEvent x ->  makeGoatCmdTempOutputFromEvent goatState x
 
       GoatCmdMouse mouseData ->
         let
@@ -1232,6 +1228,7 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
   canvasHandler = _goatState_handler goatState_afterSelection
   goatState_afterRefreshHandler = if wSEventType_needsRefresh wsetype
     then let
+        -- TODO remove this assert, this will happen for stuff like boxtexthandler
         -- since we don't have multi-user events, the handler should never be active when this happens
         checkvalid = assert (not (pIsHandlerActive canvasHandler) && not (pIsHandlerActive layersHandler))
 
