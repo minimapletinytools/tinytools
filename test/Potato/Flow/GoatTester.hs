@@ -178,7 +178,7 @@ setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
 setFocusArea fa = runEndo $ endoGoatCmdSetFocusedArea fa
 
 addFolder :: (Monad m) => Text -> GoatTesterT m ()
-addFolder name = runCommand $ GoatCmdNewFolder name
+addFolder name = runEndo $ endoGoatCmdNewFolder name
 
 canvasMouseToScreenMouse :: GoatState -> XY -> XY
 canvasMouseToScreenMouse gs pos = owlPFState_fromCanvasCoordinates (goatState_pFState gs) pos + _goatState_pan gs
