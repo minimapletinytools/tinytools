@@ -1156,7 +1156,7 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
 
 
 goat_processHandlerOutput_noSetHandler :: PotatoHandlerOutput -> GoatState -> GoatState
-goat_processHandlerOutput_noSetHandler pho goatState = r where
+goat_processHandlerOutput_noSetHandler pho goatState = trace ("goat_processHandlerOutput_noSetHandler " <> show pho) $ r where
   needsUndoFirst po = case po of
     PO_Start          -> False
     PO_StartAndCommit -> False
@@ -1166,17 +1166,25 @@ goat_processHandlerOutput_noSetHandler pho goatState = r where
     HOA_Select x y -> goat_setSelection x y goatState
     HOA_Pan x -> goat_setPan x goatState
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y goatState
+
+
+    -- TODO this is bugged, you need to regenerate the handler if the handler returned Nothing
     -- TODO set preview stack
-    HOA_Preview (Preview po x) -> goat_applyWSEvent WSEventType_Local_Refresh (WSEApplyLlama (needsUndoFirst po, x)) goatState
-    HOA_Preview Preview_Cancel -> goat_applyWSEvent WSEventType_Local_Refresh WSEUndo goatState
+    HOA_Preview (Preview po x) -> goat_applyWSEvent WSEventType_Local_NoRefresh (WSEApplyLlama (needsUndoFirst po, x)) goatState
+    HOA_Preview Preview_Cancel -> goat_applyWSEvent WSEventType_Local_NoRefresh WSEUndo goatState
     HOA_Preview Preview_Commit -> goatState
+    HOA_Nothing -> goatState
 
 
 goat_processLayersHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processLayersHandlerOutput pho goatState = goat_processHandlerOutput_noSetHandler pho $ goatState { _goatState_layersHandler = fromMaybe (_goatState_layersHandler goatState) (_potatoHandlerOutput_nextHandler pho) }
 
 goat_processCanvasHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
-goat_processCanvasHandlerOutput pho goatState = goat_processHandlerOutput_noSetHandler pho $ goatState { _goatState_handler = fromMaybe (_goatState_handler goatState) (_potatoHandlerOutput_nextHandler pho) }
+goat_processCanvasHandlerOutput pho goatState = r where
+  canvasSelection = computeCanvasSelection goatState
+  nextHandler = fromMaybe (makeHandlerFromSelection canvasSelection) (_potatoHandlerOutput_nextHandler pho)
+  goatState' = goatState { _goatState_handler = nextHandler }
+  r = goat_processHandlerOutput_noSetHandler pho $ goatState'
 
 
 data WSEventType = WSEventType_Local_NoRefresh | WSEventType_Local_Refresh | WSEventType_Remote_Refresh deriving (Eq, Show)
