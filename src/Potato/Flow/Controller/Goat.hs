@@ -1135,18 +1135,21 @@ goat_setSelection add selection goatState = r where
 
 goat_setLayersStateWithChangesFromToggleHide :: LayersState -> SuperOwlChanges -> GoatState -> GoatState
 goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
+  
+  -- set the broadphase
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
+  goatState_afterUpdateBroadPhase = goatState { _goatState_broadPhaseState = next_broadPhaseState }
+
   -- set layers state
   -- render changes
-  -- render selectino
-  rc = renderContextFromGoatState goatState
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
+  -- render selection
+  rc = renderContextFromGoatState goatState_afterUpdateBroadPhase
   rc_afterupdate = goat_renderCanvas_update rc needsupdateaabbs changes
-  rc_afterselection = goat_renderCanvas_selection rc_afterupdate (_goatState_selection goatState)
-  r = goatState {
+  rc_afterselection = goat_renderCanvas_selection rc_afterupdate (_goatState_selection goatState_afterUpdateBroadPhase)
+  r = goatState_afterUpdateBroadPhase {
       _goatState_layersState = ls
       -- MAYBE TODO refresh the layers handler (), this might be relevant if we support shared lock/hide state of layers in the future
       --, _goatState_layersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) ....
-      , _goatState_broadPhaseState = next_broadPhaseState
       , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_afterupdate
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
