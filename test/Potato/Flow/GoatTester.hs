@@ -186,7 +186,7 @@ canvasMouseToScreenMouse gs pos = owlPFState_fromCanvasCoordinates (goatState_pF
 mouse :: (Monad m) => Bool -> Bool -> [KeyModifier] -> MouseButton -> XY -> GoatTesterT m ()
 mouse isCanvas isRelease modifiers button pos = do
   gts <- get
-  runCommand $ GoatCmdMouse $ LMouseData {
+  runEndo $ endoGoatCmdMouse $ LMouseData {
     _lMouseData_position       = if isCanvas then canvasMouseToScreenMouse (_goatTesterState_goatState gts ) pos else pos
     , _lMouseData_isRelease    = isRelease
     , _lMouseData_button       = button
