@@ -61,13 +61,6 @@ runEndo fn = GoatTesterT $ modify $
       , _goatTesterState_rawOperationCountSinceLastMarker = _goatTesterState_rawOperationCountSinceLastMarker + 1
     }
 
-runCommand :: (Monad m) => GoatCmd -> GoatTesterT m ()
-runCommand cmd = GoatTesterT $ modify $
-  \gts@GoatTesterState {..} -> gts {
-      _goatTesterState_goatState = foldGoatFn cmd _goatTesterState_goatState
-      , _goatTesterState_rawOperationCount = _goatTesterState_rawOperationCount + 1
-      , _goatTesterState_rawOperationCountSinceLastMarker = _goatTesterState_rawOperationCountSinceLastMarker + 1
-    }
 
 getOwlPFState :: (Monad m) => GoatTesterT m OwlPFState
 getOwlPFState = GoatTesterT $ do

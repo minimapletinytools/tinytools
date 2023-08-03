@@ -8,8 +8,6 @@ module Potato.Flow.Controller.Goat (
   , goatState_pFState
   , goatState_selectedTool
   , GoatState(..)
-  , GoatCmd(..)
-  , foldGoatFn
 
   -- endo style
   , endoGoatCmdSetDefaultParams
@@ -109,7 +107,6 @@ data GoatState = GoatState {
 
     -- debug stuff (shared across documents)
     , _goatState_debugLabel              :: Text
-    , _goatState_debugCommands           :: [GoatCmd]
 
   } deriving (Show)
 
@@ -157,7 +154,6 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
         , _goatState_focusedArea = GoatFocusedArea_None
         , _goatState_unbrokenInput = ""
         , _goatState_screenRegion = V2 screenx screeny - (_controllerMeta_pan controllermeta)
-        , _goatState_debugCommands = []
       }
 
 
@@ -174,183 +170,6 @@ goatState_hasUnsavedChanges = llamaStack_hasUnsavedChanges . _owlPFWorkspace_lla
 goatState_selectedTool :: GoatState -> Tool
 goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handler
 
--- TODO deprecate this in favor of Endo style
-data GoatCmd =
-  GoatCmdGoAwayForever
-  deriving (Show)
-
-
-
--- Ok, don't think this needs to be a part of GoatCmdTempOutput but does need to be a part of GoatState
--- TODO do this later
-{-
-data DynGoatFlags = DynGoatFlags {
-  _dynGoatFlags_tool           = r_tool
-  , _dynGoatFlags_selection    = r_selection
-  , _dynGoatFlags_layers       = r_layers
-  , _dynGoatFlags_pan          = r_pan
-  , _dynGoatFlags_broadPhase   = r_broadphase
-  , _dynGoatFlags_canvas = r_canvas
-  , _dynGoatFlags_renderedCanvas = r_renderedCanvas
-  , _dynGoatFlags_handlerRenderOutput =  r_handlerRenderOutput
-} deriving (Show)
-
-data GoatStateFlag = GoatStateFlag_Tool | GoatStateFlag_Selection | GoatStateFlag_Layers | GoatStateFlag_Pan | GoatStateFlag_BroadPhase | GoatStateFlag_Canvas | GoatStateFlag_RenderedCanvasRegion | GoatStateFlag_HandlerRenderOutput deriving (Show, Eq)
--}
-
-
-type DoesRefreshHandlers = Bool
-
--- TODO get rid of me
-data GoatCmdTempOutput = GoatCmdTempOutput {
-  _goatCmdTempOutput_goatState               :: GoatState
-
-  , _goatCmdTempOutput_nextHandler           :: Maybe SomePotatoHandler
-
-  , _goatCmdTempOutput_select                :: Maybe (Bool, Selection)
-
-  -- TODO DELETE
-  , _goatCmdTempOutput_pFEvent               :: Maybe (Bool, WSEvent) -- bool is true if it was a canvas handler event (TODO maybe just store was canvas handler as a separate bool?)
-
-  -- TODO use me
-  --, _goatCmdTempOutput_previewEvent          :: Maybe (DoesRefreshHandlers, Preview.Preview)
-
-  , _goatCmdTempOutput_pan                   :: Maybe XY
-  , _goatCmdTempOutput_layersState           :: Maybe LayersState
-  , _goatCmdTempOutput_changesFromToggleHide :: SuperOwlChanges
-} deriving (Show)
-
--- helpers to extract stuff out of goatState because we use record wildcards and can't access otherwise
-goatCmdTempOutput_screenRegion :: GoatCmdTempOutput -> XY
-goatCmdTempOutput_screenRegion = _goatState_screenRegion . _goatCmdTempOutput_goatState
-
-goatCmdTempOutput_layersHandler :: GoatCmdTempOutput -> SomePotatoHandler
-goatCmdTempOutput_layersHandler = _goatState_layersHandler . _goatCmdTempOutput_goatState
-
-
-instance Default GoatCmdTempOutput where
-  def = GoatCmdTempOutput {
-
-      -- TODO just don't use Default if you're gonna do this...
-      _goatCmdTempOutput_goatState = undefined --error "this is expected to be overwritten during initialization"
-
-      , _goatCmdTempOutput_nextHandler  = Nothing
-      , _goatCmdTempOutput_select      = Nothing
-      , _goatCmdTempOutput_pFEvent     = Nothing
-      , _goatCmdTempOutput_pan         = Nothing
-      , _goatCmdTempOutput_layersState = Nothing
-      , _goatCmdTempOutput_changesFromToggleHide = IM.empty
-    }
-
-makeGoatCmdTempOutputFromNothing :: GoatState -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromNothing goatState = def {
-    _goatCmdTempOutput_goatState = goatState
-
-    -- NOTE the value of _potatoHandlerOutput_nextHandler is not directly translated here
-    -- PotatoHandlerOutput interpretation: isNothing _potatoHandlerOutput_nextHandler => handler does not capture input
-    -- GoatCmdTempOutput interpretation (when non-canvas input):
-    --    -isNothing _potatoHandlerOutput_nextHandler => the particular event we just processed is not related to the canvas handler
-    --    -so in this case we default _goatCmdTempOutput_nextHandler = Just _goatState_handler
-    , _goatCmdTempOutput_nextHandler = Just (_goatState_handler goatState)
-  }
-
-makeGoatCmdTempOutputFromNothingClearHandler :: GoatState -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromNothingClearHandler goatState = def {
-    _goatCmdTempOutput_goatState = goatState
-  }
-
-makeGoatCmdTempOutputFromEvent :: GoatState -> WSEvent -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromEvent goatState wsev = (makeGoatCmdTempOutputFromNothing goatState) {
-    _goatCmdTempOutput_pFEvent = Just (False, wsev)
-
-    --_goatCmdTempOutput_previewEvent = Just (False, Preview.Commit wsev)
-  }
-
-makeGoatCmdTempOutputFromMaybeEvent :: GoatState -> Maybe WSEvent -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromMaybeEvent goatState mwsev = (makeGoatCmdTempOutputFromNothing goatState) {
-    _goatCmdTempOutput_pFEvent = fmap (\x -> (False,x)) mwsev
-  }
-
-makeGoatCmdTempOutputFromPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromPotatoHandlerOutput goatState PotatoHandlerOutput {..} =  def {
-    _goatCmdTempOutput_goatState = goatState
-    , _goatCmdTempOutput_nextHandler = _potatoHandlerOutput_nextHandler
-    , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
-      HOA_Select x y -> Just (x, y)
-      _ -> Nothing
-    , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
-      HOA_Preview (Preview po x) -> Just (True, WSEApplyLlama (previewOperation_toUndoFirst po, x))
-      HOA_Preview Preview_Cancel -> Just (True, WSEUndo)
-      _ -> Nothing
-    , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
-      HOA_Pan x -> Just x
-      _ -> Nothing
-    , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
-      HOA_Layers x _ -> Just x
-      _ -> Nothing
-    , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of 
-      HOA_Layers _ x -> x
-      _ -> IM.empty
-  }
-
-
-makeGoatCmdTempOutputFromLayersPotatoHandlerOutput :: GoatState -> PotatoHandlerOutput -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState PotatoHandlerOutput {..} =  def {
-    _goatCmdTempOutput_goatState = goatState {
-        _goatState_layersHandler = case _potatoHandlerOutput_nextHandler of
-          Just h  -> h
-          Nothing -> error "expected LayersHandler to return a new handler"
-      }
-    -- TODO flag that this was not canvas input
-    , _goatCmdTempOutput_nextHandler = Nothing
-    , _goatCmdTempOutput_select      = case _potatoHandlerOutput_action of
-      HOA_Select x y -> Just (x, y)
-      _ -> Nothing
-    , _goatCmdTempOutput_pFEvent     = case _potatoHandlerOutput_action of 
-      HOA_Preview (Preview po x) -> Just (False, WSEApplyLlama (previewOperation_toUndoFirst po, x))
-      HOA_Preview Preview_Cancel -> Just (False, WSEUndo)
-      _ -> Nothing
-    , _goatCmdTempOutput_pan         = case _potatoHandlerOutput_action of
-      HOA_Pan x -> Just x
-      _ -> Nothing
-    , _goatCmdTempOutput_layersState = case _potatoHandlerOutput_action of
-      HOA_Layers x _ -> Just x
-      _ -> Nothing
-    , _goatCmdTempOutput_changesFromToggleHide = case _potatoHandlerOutput_action of
-      HOA_Layers _ x -> x
-      _ -> IM.empty
-  }
-
-makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea :: GoatState -> GoatFocusedArea -> GoatCmdTempOutput
-makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea goatState gfa = r where
-  didchange = gfa /= _goatState_focusedArea goatState
-  goatstatewithnewfocus = goatState { _goatState_focusedArea = gfa }
-  noactionneeded = makeGoatCmdTempOutputFromNothing goatstatewithnewfocus
-  potatoHandlerInput = potatoHandlerInputFromGoatState goatState
-  -- if we were renaming, finalize the rename operation by sending a fake return key event, I can't think of a less ad-hoc way to do this
-  r = if didchange && pHandlerName (_goatState_layersHandler goatState) == handlerName_layersRename
-    then assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
-      Nothing -> noactionneeded
-      Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatstatewithnewfocus pho
-    else noactionneeded
-
--- | hack function for resetting both handlers
--- It would be nice if we actually cancel/reset the handlers (such that in progress operations are undone), but I don't think it really matters
-forceResetBothHandlersAndMakeGoatCmdTempOutput :: GoatState -> GoatCmdTempOutput
-forceResetBothHandlersAndMakeGoatCmdTempOutput goatState = r where
-
-  -- I think this is Ok
-  msph_h = Nothing
-  msph_lh = Just (SomePotatoHandler (def :: LayersHandler))
-
-  r = def {
-      _goatCmdTempOutput_goatState = goatState {
-          _goatState_layersHandler = case msph_lh of
-            Just x  -> x
-            Nothing -> error "expected LayersHandler to return a new handler"
-        }
-      , _goatCmdTempOutput_nextHandler = msph_h
-    }
 
 makeHandlerFromNewTool :: GoatState -> Tool -> SomePotatoHandler
 makeHandlerFromNewTool GoatState{..} = \case
@@ -429,210 +248,10 @@ potatoModifyKeyboardKey PotatoConfiguration {..} lastUnbrokenCharacters k = case
           else Just k
   _ -> Just k
 
--- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
--- TODO extract this method into another file
--- TODO make State monad for this
-foldGoatFn :: GoatCmd -> GoatState -> GoatState
---foldGoatFn cmd goatStateIgnore = trace ("FOLDING " <> show cmd) $ finalGoatState where
-foldGoatFn cmd goatStateIgnore = finalGoatState where
-
-  -- TODO do some sort of rolling buffer here for _goatState_debugCommands prob
-  -- NOTE even with a rolling buffer, I think this will leak if no one forces the thunk!
-  --goatState = goatStateIgnore { _goatState_debugCommands = cmd:_goatState_debugCommands }
-  goatState' = goatStateIgnore
-
-  -- it's convenient/lazy to reset unbrokenInput here, this will get overriden in cases where it needs to be
-  goatState = goatState' { _goatState_unbrokenInput = "" }
-  last_unbrokenInput = _goatState_unbrokenInput goatState'
-  last_workspace = _goatState_workspace goatState
-  last_pFState = _owlPFWorkspace_owlPFState last_workspace
-
-  potatoHandlerInput = potatoHandlerInputFromGoatState goatState
-
-  -- TODO this step can update OwlState built-in cache (via select operation)
-  -- | Process commands |
-  goatCmdTempOutput = case (_goatState_handler goatState) of
-    _ -> undefined
-
-  -- | update OwlPFWorkspace from GoatCmdTempOutput |
-  (workspace_afterEvent, cslmap_afterEvent) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
-    -- if there was no update, then changes are not valid
-    Nothing   -> (_goatState_workspace goatState, IM.empty)
-    Just (_, wsev) -> updateOwlPFWorkspace wsev (_goatState_workspace goatState)
-  pFState_afterEvent = _owlPFWorkspace_owlPFState workspace_afterEvent
-
-  -- | update pan from GoatCmdTempOutput |
-  next_pan = case _goatCmdTempOutput_pan goatCmdTempOutput of
-    Nothing -> _goatState_pan goatState
-    Just (V2 dx dy) -> V2 (cx0+dx) (cy0 + dy) where
-      V2 cx0 cy0 = _goatState_pan goatState
-
-  -- | get layersState from GoatCmdTempOutput |
-  next_layersState'' = case _goatCmdTempOutput_layersState goatCmdTempOutput of
-    Nothing -> _goatState_layersState goatState
-    Just ls -> ls
-
-  -- | get selection from GoatCmdTempOutput |
-  mSelectionFromPho = case _goatCmdTempOutput_select goatCmdTempOutput of
-    Nothing -> Nothing
-    --Just (add, sel) -> assert (superOwlParliament_isValid nextot r) $ Just r where
-    Just (add, sel) -> assert (superOwlParliament_isValid nextot r) (Just r)where
-      nextot = _owlPFState_owlTree pFState_afterEvent
-      r' = if add
-        then superOwlParliament_disjointUnionAndCorrect nextot (_goatState_selection goatState) sel
-        else sel
-      r = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition nextot) . unSuperOwlParliament $ r'
-
-  -- | compute selection based on changes from updating OwlPFState (i.e. auto select newly created stuff if appropriate) |
-  -- we only want to do this for local changes 
-  (isNewSelection', selectionAfterChanges) = if IM.null cslmap_afterEvent
-    then (False, _goatState_selection goatState)
-    else r where
-
-      -- extract elements that got created
-      newEltFoldMapFn rid v = case v of
-        Nothing     -> []
-        Just sowl -> if IM.member rid (_owlTree_mapping . _owlPFState_owlTree $ last_pFState) then [] else [sowl]
-
-      -- NOTE, undoing a deleted element counts as a newly created element (and will be auto-selected)
-      newlyCreatedSEltls = IM.foldMapWithKey newEltFoldMapFn cslmap_afterEvent
-
-      sortedNewlyCreatedSEltls = SuperOwlParliament $ Seq.sortBy (owlTree_superOwl_comparePosition $ _owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
-      -- pretty sure this does the same thing..
-      --sortedNewlyCreatedSEltls = makeSortedSuperOwlParliament (_owlPFState_owlTree $ pFState_afterEvent) (Seq.fromList newlyCreatedSEltls)
-
-      wasLoad = False
-
-      r = if wasLoad || null newlyCreatedSEltls
-        -- if there are no newly created elts, we still need to update the selection
-        then (\x -> (False, SuperOwlParliament x)) $ catMaybesSeq . flip fmap (unSuperOwlParliament (_goatState_selection goatState)) $ \sowl ->
-          case IM.lookup (_superOwl_id sowl) cslmap_afterEvent of
-            -- no changes means not deleted
-            Nothing       -> Just sowl
-            -- if deleted, remove it
-            Just Nothing  -> Nothing
-            -- it was changed, update selection to newest version
-            Just (Just x) -> Just x
-        else (True, sortedNewlyCreatedSEltls)
-
-  -- for now, newly created stuff is the same as anything that got auto selected
-  --newlyCreatedRids = IS.fromList . toList . fmap _superOwl_id . unSuperOwlParliament $ selectionAfterChanges
-
-  -- | update the new selection based on previous computations|
-  (isNewSelection, next_selection) = case mSelectionFromPho of
-    Just x  -> assert (not isNewSelection') (True, x)
-    -- better/more expensive check to ensure mSelectionFromPho stuff is mutually exclusive to selectionAfterChanges
-    --Just x -> assert (selectionAfterChanges == _goatState_selection) (True, x)
-    Nothing -> (isNewSelection', selectionAfterChanges)
-
-  -- | update LayersState based from SuperOwlChanges after applying events |
-  next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent next_layersState''
-
-  -- | auto-expand folders and compute LayersState |
-  -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
-  -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
-  -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
-  next_layersState = expandAllCollapsedParents next_selection pFState_afterEvent next_layersState'
-  --next_layersState = next_layersState'
-
-  -- | update the next handler |
-  mHandlerFromPho = _goatCmdTempOutput_nextHandler goatCmdTempOutput
-  filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pFState_afterEvent) (_superOwl_id sowl) (_layersState_meta next_layersState)
-  next_canvasSelection = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pFState_afterEvent) filterHiddenOrLocked next_selection
-  nextHandlerFromSelection = makeHandlerFromSelection next_canvasSelection
-  next_handler' = if isNewSelection
-    -- (a) if there is a new selection, update the handler with new selection if handler wasn't active
-    then maybeUpdateHandlerFromSelection (fromMaybe (SomePotatoHandler EmptyHandler) mHandlerFromPho) next_canvasSelection
-    -- (b) otherwise, use the returned handler or make a new one from selection if there was no returned handler
-    else fromMaybe nextHandlerFromSelection mHandlerFromPho
-  next_layersHandler' = goatCmdTempOutput_layersHandler goatCmdTempOutput
-
-  -- | refresh the handler if there was a non-canvas event |
-  -- TODO simplify this logic, it's confusing A.F.
-  -- TODO you only need to do this if handler is one that came from mHandlerFromPho (b) above because handlers produced from selection should already be up to date
-  (next_handler, next_layersHandler) = case _goatCmdTempOutput_pFEvent goatCmdTempOutput of
-    -- since we don't have multi-user events, the handler should never be active when this happens
-    Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
-      -- TODO you need to create a second event processing stage (i.e. intermediateGoatState) because refresh handler might return a cancel operation 
-      -- CAREFUL INFINITE LOOP DANGER WITH USE OF `finalGoatState`
-      -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
-      next_potatoHandlerInput = potatoHandlerInputFromGoatState finalGoatState
-      refreshedHandler = fromMaybe nextHandlerFromSelection ( pRefreshHandler next_handler' next_potatoHandlerInput)
-      -- a little weird that we refresh the layers handler in cases where the event was an event that came from layers, but it doesn't matter since the layers handler won't be active when it produces that event
-      refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler next_layersHandler' next_potatoHandlerInput)
-    _ -> (next_handler', next_layersHandler')
-
-
-  -- | TODO enter rename mode for newly created folders |
-  -- TODO if cslmap_afterEvent has a newly created folder (i.e. we just createda folder) then we want to enter rename mode for that folder
-    -- this is not correct, we want a condition for when we hit the "new folder" button. Perhaps there needs to be a separate command for enter rename and FE triggers 2 events in succession?
-  --_goatState_layersHandler
-
-  -- | update AttachmentMap based on new state and clear the cache on these changes |
-  next_attachmentMap = updateAttachmentMapFromSuperOwlChanges cslmap_afterEvent (_goatState_attachmentMap goatState)
-  -- we need to union with `_goatState_attachmentMap` as next_attachmentMap does not contain deleted targets and stuff we detached from
-  attachmentMapForComputingChanges = IM.unionWith IS.union next_attachmentMap (_goatState_attachmentMap goatState)
-  --attachmentChanges = trace "ATTACHMENTS" $ traceShow (IM.size cslmap_afterEvent) $ traceShowId $ getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
-  attachmentChanges = getChangesFromAttachmentMap (_owlPFState_owlTree pFState_afterEvent) attachmentMapForComputingChanges cslmap_afterEvent
-
-  -- | compute SuperOwlChanges for rendering |
-  cslmap_withAttachments = IM.union cslmap_afterEvent attachmentChanges
-  cslmap_fromLayersHide = _goatCmdTempOutput_changesFromToggleHide goatCmdTempOutput
-  cslmap_forRendering = cslmap_fromLayersHide `IM.union` cslmap_withAttachments
-
-  -- | clear the cache at places that have changed |
-  renderCache_resetOnChangesAndAttachments = renderCache_clearAtKeys (_goatState_renderCache goatState) (IM.keys cslmap_withAttachments)
-
-  -- | update the BroadPhase
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (_owlPFState_owlTree pFState_afterEvent) cslmap_forRendering (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
-
-  -- | create the initial render context
-  rendercontext_forMove = RenderContext {
-      _renderContext_cache = renderCache_resetOnChangesAndAttachments
-      , _renderContext_owlTree = _owlPFState_owlTree pFState_afterEvent
-      , _renderContext_layerMetaMap = _layersState_meta next_layersState
-      , _renderContext_broadPhase = next_broadPhaseState
-      , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas goatState
-    }
-
-  -- | render the canvas
-  (rendercontext_forUpdate, didScreenRegionMove) = goat_renderCanvas_move rendercontext_forMove next_pan (goatCmdTempOutput_screenRegion goatCmdTempOutput)
-  rendercontext_afterUpdate = goat_renderCanvas_update rendercontext_forUpdate needsupdateaabbs cslmap_forRendering
-  next_renderedCanvas = _renderContext_renderedCanvasRegion rendercontext_afterUpdate
-
-  -- | render the selection
-  (next_renderedSelection, next_renderCache) = if _goatState_selection goatState == next_selection && not didScreenRegionMove && IM.null cslmap_forRendering
-    -- nothing changed, we can keep our selection rendering
-    then (_goatState_renderedSelection goatState, _renderContext_cache rendercontext_afterUpdate)
-    else (_renderContext_renderedCanvasRegion rctx, _renderContext_cache rctx) where
-      rctx = goat_renderCanvas_selection rendercontext_afterUpdate next_selection
-
-  -- | create the final GoatState
-  next_pFState = pFState_afterEvent { _owlPFState_owlTree = _renderContext_owlTree rendercontext_afterUpdate }
-  next_workspace = workspace_afterEvent { _owlPFWorkspace_owlPFState = next_pFState}
-  debug_checkAttachmentMap = owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState) == next_attachmentMap
-  finalGoatState = if not debug_checkAttachmentMap
-    -- TODO remove this check in production builds
-    then error $ (show (owlTree_makeAttachmentMap (_owlPFState_owlTree next_pFState))) <> "\n\n\n" <> show next_attachmentMap
-    else
-      (_goatCmdTempOutput_goatState goatCmdTempOutput) {
-        _goatState_workspace      = next_workspace
-        , _goatState_pan             = next_pan
-        , _goatState_layersHandler  = next_layersHandler
-        , _goatState_handler         = next_handler
-        , _goatState_selection       = next_selection
-        , _goatState_canvasSelection = next_canvasSelection
-        , _goatState_broadPhaseState = next_broadPhaseState
-        , _goatState_renderedCanvas = next_renderedCanvas
-        , _goatState_renderedSelection = next_renderedSelection
-        , _goatState_layersState     = next_layersState
-        , _goatState_attachmentMap = next_attachmentMap
-        , _goatState_renderCache = next_renderCache
-      }
 
 
 
--- Endo stuff
+
 
 endoGoatCmdSetDefaultParams :: SetPotatoDefaultParameters -> GoatState -> GoatState
 endoGoatCmdSetDefaultParams spdp gs = gs {
@@ -861,9 +480,6 @@ endoGoatCmdKeyboard kbd' goatState = r where
               r = goatState_withKeyboard { _goatState_handler = newHandler }
             _ -> goatState_withKeyboard
 
-
-
----- WIP separate out goat stuff herer
 
 goat_renderCanvas_move :: RenderContext -> XY -> XY -> (RenderContext, Bool)
 goat_renderCanvas_move rc@RenderContext {..} pan sr = r where

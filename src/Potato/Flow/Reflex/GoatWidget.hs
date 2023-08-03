@@ -122,11 +122,6 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialscreensize = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
     initialgoat = makeGoatState initialscreensize _goatWidgetConfig_initialState
 
-    goatEvent = [never]
-
-    -- TODO split up foldGoatFn to be endo style
-    goatEndoEvent = foldGoatFn <<$>> goatEvent
-
     -- new Endo folding
     endoStyle = [ 
         -- these be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
@@ -151,7 +146,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
   --goatDyn' :: Dynamic t GoatState <- foldDyn foldGoatFn initialgoat goatEvent
 
   goatDyn' :: Dynamic t GoatState
-    <- foldDyn ($) initialgoat $ mergeWith (.) (goatEndoEvent <> endoStyle)
+    <- foldDyn ($) initialgoat $ mergeWith (.) endoStyle
 
   -- reduces # of calls to foldGoatFn to 2 :\
   let goatDyn = fmap id goatDyn'
