@@ -1,3 +1,4 @@
+-- TODO Rename this file to EndoGoatSpec or something or just delete it you know
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo     #-}
 

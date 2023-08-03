@@ -42,9 +42,8 @@ The main tinytools state hierarchy looks something like this:
                ╚═══════════════════════════╝    
 ```
 
-Goat.hs is the effective entry point into `tinytools` with `foldGoatFn :: GoatCmd -> GoatState -> GoatState` as the primary state update function.
+Goat.hs is the effective entry point into `tinytools` with `endoGoatCmd... :: Endo GoatState` as the primary state update functions.
 
-- NOTE this will eventually be refactored into individual update methods of type  `Endo GoatState`
 - NOTE `GoatState` will eventually be refactored to contain a list of `GoatTabs`, one for each document tab.
 
 `OwlPFWorkspace` contains the `LLamaStack` which contains information on `OwlState` update operations or `Llama`s 

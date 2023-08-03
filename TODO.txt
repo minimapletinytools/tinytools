@@ -192,12 +192,12 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
         -actually just carry around state before any previews applied? But will that break any assupmtions? Maybe we really just want only the local preview unapplied
       -or does this lastState stuff even matter anymore if you use set operations
         -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
--goat refactor warmup
-  -do goatCmd endo refactor, separate routines for each GoatCmd
+DONE-goat refactor warmup
+  DONE-get rid of GoatCmdTempOutput
+  DONE-do goatCmd endo refactor, separate routines for each GoatCmd
     IGNORE-after moving everything to endo style, you'll need to find a new home for 
       `goatState = goatState' { _goatState_unbrokenInput = "" }`
       -probably add some common routine to every endo fn I guess
-  -get rid of GoatCmdTempOutput
   DONE-BUG selecting does not auto expand folders
   DONE-BUG hiding layers causes crash because broadphase isn't being updated
   DONE-split hoa_layers into 2 separate things
