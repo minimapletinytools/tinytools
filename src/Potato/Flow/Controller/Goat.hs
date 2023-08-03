@@ -1238,7 +1238,7 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
 
   -- TODO currently we use to only reset the handler here if the prev handler returned Nothing (did not capture input) using `resetHandlerIfInactive` to pipe this info in
-  -- instead, we can just always reset it if the handler is inactive
+  -- instead, we can just always reset it if the handler is inactive once we properly do handler active stuff
   next_handler = if resetHandlerIfInactive then maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSetLayersState) next_canvasSelection else _goatState_handler goatState_afterSetLayersState
   goatState_afterSetHandler = goatState_afterSetLayersState {
       _goatState_handler = next_handler
