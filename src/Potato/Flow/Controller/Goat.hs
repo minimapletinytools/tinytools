@@ -1150,7 +1150,16 @@ wSEventType_needsRefresh WSEventType_Remote_Refresh = True
 wSEventType_needsRefresh _ = False
 
 goat_applyWSEvent :: WSEventType -> WSEvent -> GoatState -> GoatState
-goat_applyWSEvent wsetype wse goatState = goatState_final where
+goat_applyWSEvent = goat_applyWSEvent' True
+
+
+-- TODO DELETE ME, no need to pass in resetHandlerIfInactive, you can just always reset the handler once you properly do handler active stuff
+goat_applyWSEventNoResetHandler :: WSEventType -> WSEvent -> GoatState -> GoatState
+goat_applyWSEventNoResetHandler = goat_applyWSEvent' False
+
+
+goat_applyWSEvent' :: Bool -> WSEventType -> WSEvent -> GoatState -> GoatState
+goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_final where
 
   -- apply the event
   last_pFState = goatState_pFState goatState
@@ -1197,10 +1206,10 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
   goatState_afterSelection = goatState_afterEvent { _goatState_selection = next_selection }
 
   -- | refresh the handler if there was a non-canvas or non-local state change |
-  layersHandler = _goatState_layersHandler goatState_afterSelection
-  canvasHandler = _goatState_handler goatState_afterSelection
   goatState_afterRefreshHandler = if wSEventType_needsRefresh wsetype
     then let
+        layersHandler = _goatState_layersHandler goatState_afterSelection
+        canvasHandler = _goatState_handler goatState_afterSelection 
         -- TODO remove this assert, this will happen for stuff like boxtexthandler
         -- since we don't have multi-user events, the handler should never be active when this happens
         checkvalid = assert (not (pIsHandlerActive canvasHandler) && not (pIsHandlerActive layersHandler))
@@ -1227,7 +1236,10 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
 
   -- | set the new handler based on the new Selection and LayersState
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
-  next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSetLayersState) next_canvasSelection
+
+  -- TODO currently we use to only reset the handler here if the prev handler returned Nothing (did not capture input) using `resetHandlerIfInactive` to pipe this info in
+  -- instead, we can just always reset it if the handler is inactive
+  next_handler = if resetHandlerIfInactive then maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSetLayersState) next_canvasSelection else _goatState_handler goatState_afterSetLayersState
   goatState_afterSetHandler = goatState_afterSetLayersState {
       _goatState_handler = next_handler
       , _goatState_canvasSelection = next_canvasSelection
