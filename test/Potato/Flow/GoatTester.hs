@@ -207,7 +207,7 @@ layerMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 layerMouseUp (x,y) = mouse False True [] MouseButton_Left (V2 x y)
 
 pressKeyboardKey :: (Monad m) => KeyboardKey -> GoatTesterT m ()
-pressKeyboardKey k = runCommand (GoatCmdKeyboard (KeyboardData k []))
+pressKeyboardKey k = runEndo $ endoGoatCmdKeyboard (KeyboardData k [])
 
 pressKey :: (Monad m) => Char -> GoatTesterT m ()
 pressKey c = pressKeyboardKey (KeyboardKey_Char c)
@@ -228,10 +228,10 @@ pressDelete :: (Monad m) => GoatTesterT m ()
 pressDelete = pressKeyboardKey KeyboardKey_Delete
 
 pressUndo :: (Monad m) => GoatTesterT m ()
-pressUndo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl]))
+pressUndo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl])
 
 pressRedo :: (Monad m) => GoatTesterT m ()
-pressRedo = runCommand (GoatCmdKeyboard (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl]))
+pressRedo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
 
 -- verification helpers
 

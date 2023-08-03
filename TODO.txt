@@ -198,7 +198,7 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
       `goatState = goatState' { _goatState_unbrokenInput = "" }`
       -probably add some common routine to every endo fn I guess
   -get rid of GoatCmdTempOutput
-  -BUG selecting does not auto expand folders
+  DONE-BUG selecting does not auto expand folders
   DONE-BUG hiding layers causes crash because broadphase isn't being updated
   DONE-split hoa_layers into 2 separate things
   DONE-add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
@@ -315,8 +315,8 @@ DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
 
 
 ::NEWEST TODO::
--BUG toggle expand/hide/lock in layers should not alter selection
--add render handler name
+-BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
+-add render handler name property so you know what the render handler is from its renderhandleroutput
 -tests
   -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
   -auto expand folders after selection

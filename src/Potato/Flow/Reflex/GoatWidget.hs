@@ -122,10 +122,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
     initialscreensize = 0 -- we can't know this at initialization time without causing an infinite loop so it is expected that the app sends this information immediately after initializing (i.e. during postBuild)
     initialgoat = makeGoatState initialscreensize _goatWidgetConfig_initialState
 
-    -- old command style
-    goatEvent = [
-        GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
-      ]
+    goatEvent = [never]
 
     -- TODO split up foldGoatFn to be endo style
     goatEndoEvent = foldGoatFn <<$>> goatEvent
@@ -147,6 +144,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_paramsEvent $ \llama -> WSEApplyLlama (False, llama)
         , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_canvasSize $ \xy -> WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy))
         , fmap endoGoatCmdMouse _goatWidgetConfig_mouse
+        , fmap endoGoatCmdKeyboard _goatWidgetConfig_keyboard
       ]
 
   -- DELETE
