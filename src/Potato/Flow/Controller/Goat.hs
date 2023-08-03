@@ -176,8 +176,7 @@ goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handl
 
 -- TODO deprecate this in favor of Endo style
 data GoatCmd =
-  GoatCmdMouse LMouseData
-  | GoatCmdKeyboard KeyboardData
+  GoatCmdKeyboard KeyboardData
   deriving (Show)
 
 
@@ -455,63 +454,6 @@ foldGoatFn cmd goatStateIgnore = finalGoatState where
   goatCmdTempOutput = case (_goatState_handler goatState) of
     SomePotatoHandler handler -> case cmd of
 
-      GoatCmdMouse mouseData ->
-        let
-          sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
-          mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
-          mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
-            MouseDragState_Up        -> newDrag mouseData
-            MouseDragState_Cancelled -> (continueDrag mouseData (_goatState_mouseDrag goatState)) { _mouseDrag_state = MouseDragState_Cancelled }
-
-            _                        ->  continueDrag mouseData (_goatState_mouseDrag goatState)
-
-          canvasDrag = toRelMouseDrag last_pFState (_goatState_pan goatState) mouseDrag
-
-          goatState_withNewMouse = goatState {
-              _goatState_mouseDrag = mouseDrag
-              , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
-            }
-          -- TODO call makeGoatCmdTempOutputFromUpdateGoatStateFocusedArea and merge outputs instead UG, or is there a trick for us to be renentrant into foldGoatFn?
-
-          noChangeOutput = makeGoatCmdTempOutputFromNothing goatState_withNewMouse
-
-          isLayerMouse = _mouseDrag_isLayerMouse mouseDrag
-
-        in case _mouseDrag_state mouseDrag of
-
-          -- hack to recover after sameSource issue
-          -- TODO TEST
-          _ | mouseSourceFailure -> assert False $
-            forceResetBothHandlersAndMakeGoatCmdTempOutput goatState_withNewMouse
-
-          -- if mouse was cancelled, update _goatState_mouseDrag accordingly
-          MouseDragState_Cancelled -> if _lMouseData_isRelease mouseData
-            then makeGoatCmdTempOutputFromNothing $ goatState_withNewMouse { _goatState_mouseDrag = def }
-            else noChangeOutput -- still cancelled
-
-          -- if mouse is intended for layers
-          _ | isLayerMouse -> case pHandleMouse (_goatState_layersHandler goatState) potatoHandlerInput (RelMouseDrag mouseDrag) of
-            Just pho -> makeGoatCmdTempOutputFromLayersPotatoHandlerOutput goatState_withNewMouse pho
-            Nothing  -> noChangeOutput
-
-          -- if middle mouse button, create a temporary PanHandler
-          MouseDragState_Down | _lMouseData_button mouseData == MouseButton_Middle -> r where
-            panhandler = def { _panHandler_maybePrevHandler = Just (SomePotatoHandler handler) }
-            r = case pHandleMouse panhandler potatoHandlerInput canvasDrag of
-              Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
-              Nothing -> error "PanHandler expected to capture mouse input"
-
-          -- pass onto canvas handler
-          _ -> case pHandleMouse handler potatoHandlerInput canvasDrag of
-            Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
-
-            -- input not captured by handler, pass onto select or select+drag
-            Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-              r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-                Just pho -> makeGoatCmdTempOutputFromPotatoHandlerOutput goatState_withNewMouse pho
-                Nothing -> error "handler was expected to capture this mouse state"
-
-            Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 
       GoatCmdKeyboard kbd' -> let
           next_unbrokenInput = case kbd' of
@@ -857,7 +799,7 @@ endoGoatCmdSetFocusedArea gfa goatState = r where
 
 
 endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
-endoGoatCmdMouse mouseData goatState = r where
+endoGoatCmdMouse mouseData goatState = trace ("endoGoatCmdMouse " <> show (_goatState_handler goatState)) $ r where
   sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
   mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
   mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
@@ -1032,7 +974,7 @@ goat_renderCanvas_move rc@RenderContext {..} pan sr = r where
     else (rc, False)
 
 
-goat_renderCanvas_update :: RenderContext -> NeedsUpdateSet -> SuperOwlChanges -> RenderContext
+goat_renderCanvas_update :: (HasCallStack) => RenderContext -> NeedsUpdateSet -> SuperOwlChanges -> RenderContext
 goat_renderCanvas_update rc needsupdateaabbs cslmap = r where
   r = if IM.null cslmap
     then rc
@@ -1140,7 +1082,7 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
   (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
   goatState_afterUpdateBroadPhase = goatState { _goatState_broadPhaseState = next_broadPhaseState }
 
-  -- set layers state
+  -- set layers state  
   -- render changes
   -- render selection
   rc = renderContextFromGoatState goatState_afterUpdateBroadPhase
@@ -1277,6 +1219,7 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
   -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent (_goatState_layersState goatState_afterRefreshHandler)
 
+  -- TODO move to helper function to use it goat_setSelection as well
   -- | auto-expand folders and compute LayersState |
   -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
   -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it

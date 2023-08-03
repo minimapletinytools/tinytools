@@ -124,8 +124,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
     -- old command style
     goatEvent = [
-        GoatCmdMouse <$> _goatWidgetConfig_mouse
-        , GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
+        GoatCmdKeyboard <$> _goatWidgetConfig_keyboard
       ]
 
     -- TODO split up foldGoatFn to be endo style
@@ -147,6 +146,7 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , fmap endoGoatCmdWSEvent _goatWidgetConfig_bypassEvent
         , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_paramsEvent $ \llama -> WSEApplyLlama (False, llama)
         , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_canvasSize $ \xy -> WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy))
+        , fmap endoGoatCmdMouse _goatWidgetConfig_mouse
       ]
 
   -- DELETE
