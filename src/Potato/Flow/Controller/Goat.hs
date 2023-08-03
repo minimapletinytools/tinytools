@@ -1109,17 +1109,24 @@ computeCanvasSelection goatState = r where
 
 goat_setSelection :: Bool -> SuperOwlParliament -> GoatState -> GoatState
 goat_setSelection add selection goatState = r where
+
   -- set the new selection
+  ot = hasOwlTree_owlTree . goatState_pFState $ goatState
+  next_selection = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition ot) . unSuperOwlParliament $ if add
+    then superOwlParliament_disjointUnionAndCorrect ot (_goatState_selection goatState) selection
+    else selection
+  goatState_afterSelection = goatState { _goatState_selection = next_selection }
+
+  -- set the new canvas selection
   -- create new handler as appropriate
   -- rerender selection
-  next_canvasSelection = computeCanvasSelection goatState
-  next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState) next_canvasSelection
+  next_canvasSelection = computeCanvasSelection goatState_afterSelection
+  next_handler = maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSelection) next_canvasSelection
   -- MAYBE TODO consider rendering selected hidden/locked stuff too (it's still possible to select them via layers)? 
   -- Except we removed it from the BroadPhase already. And it would be weird because you bulk selected you would edit only the non-hidden/locked stuff
-  rc_afterselection = goat_renderCanvas_selection (renderContextFromGoatState goatState) (SuperOwlParliament $ unCanvasSelection next_canvasSelection)
-  r = goatState {
-      _goatState_selection = selection
-      , _goatState_handler = next_handler
+  rc_afterselection = goat_renderCanvas_selection (renderContextFromGoatState goatState_afterSelection) (SuperOwlParliament $ unCanvasSelection next_canvasSelection)
+  r = goatState_afterSelection {
+      _goatState_handler = next_handler
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
       , _goatState_canvasSelection = next_canvasSelection
     }
