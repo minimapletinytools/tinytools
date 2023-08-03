@@ -1082,18 +1082,22 @@ renderContextFromGoatState goatState = RenderContext {
   }
 
 goat_setPan :: XY -> GoatState -> GoatState
-goat_setPan pan goatState = r where
+goat_setPan (V2 dx dy) goatState = r where
   -- set the pan
   -- render move
   -- render selection
+  V2 cx0 cy0 = _goatState_pan goatState
+  next_pan = V2 (cx0+dx) (cy0 + dy) 
+
   rc = renderContextFromGoatState goatState
-  (rc_aftermove, _) = goat_renderCanvas_move rc pan (_goatState_screenRegion goatState)
+  (rc_aftermove, _) = goat_renderCanvas_move rc next_pan (_goatState_screenRegion goatState)
   rc_afterselection = goat_renderCanvas_selection rc_aftermove (_goatState_selection goatState)
   r = goatState {
-      _goatState_pan = pan
+      _goatState_pan = next_pan
       , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_aftermove
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
+
 
 
 computeCanvasSelection :: GoatState -> CanvasSelection
