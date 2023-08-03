@@ -1049,6 +1049,15 @@ computeCanvasSelection goatState = r where
   r = superOwlParliament_convertToCanvasSelection (_owlPFState_owlTree pfs) filterHiddenOrLocked (_goatState_selection goatState)
 
 
+goat_autoExpandFoldersOfSelection :: GoatState -> GoatState
+goat_autoExpandFoldersOfSelection goatState = r where
+  -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
+  -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it (that's not true, you can still collapse it but it will rexpand the moment you make any changes, which might be kind of buggy)
+  -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
+  next_layersState = expandAllCollapsedParents (_goatState_selection goatState) (goatState_pFState goatState) (_goatState_layersState goatState)
+  r = goatState { _goatState_layersState = next_layersState }
+
+
 goat_setSelection :: Bool -> SuperOwlParliament -> GoatState -> GoatState
 goat_setSelection add selection goatState = r where
 
@@ -1057,7 +1066,7 @@ goat_setSelection add selection goatState = r where
   next_selection = SuperOwlParliament . Seq.sortBy (owlTree_superOwl_comparePosition ot) . unSuperOwlParliament $ if add
     then superOwlParliament_disjointUnionAndCorrect ot (_goatState_selection goatState) selection
     else selection
-  goatState_afterSelection = goatState { _goatState_selection = next_selection }
+  goatState_afterSelection = goat_autoExpandFoldersOfSelection goatState { _goatState_selection = next_selection }
 
   -- set the new canvas selection
   -- create new handler as appropriate
@@ -1212,20 +1221,9 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
         }
     else goatState_afterSelection
 
-
-
-
-
   -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent (_goatState_layersState goatState_afterRefreshHandler)
-
-  -- TODO move to helper function to use it goat_setSelection as well
-  -- | auto-expand folders and compute LayersState |
-  -- auto expand folders for selected elements + (this will also auto expand when you drag or paste stuff into a folder)
-  -- NOTE this will prevent you from ever collapsing a folder that has a selected child in it
-  -- so maybe auto expand should only happen on newly created elements or add a way to detect for newly selected elements (e.g. diff between old selection)
-  next_layersState = expandAllCollapsedParents next_selection pFState_afterEvent next_layersState'
-  goatState_afterSetLayersState = goatState_afterRefreshHandler { _goatState_layersState = next_layersState }
+  goatState_afterSetLayersState = goat_autoExpandFoldersOfSelection $ goatState_afterRefreshHandler { _goatState_layersState = next_layersState' }
 
   -- | set the new handler based on the new Selection and LayersState
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
