@@ -82,10 +82,7 @@ data GoatState = GoatState {
     _goatState_workspace                 :: OwlPFWorkspace
     , _goatState_pan                     :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection               :: Selection
-
-    -- TODO get rid of this, you only need this to create the tool from selection, and you can just regenerate the canvas selection in that case
     , _goatState_canvasSelection         :: CanvasSelection
-
     , _goatState_broadPhaseState         :: BroadPhaseState
     , _goatState_layersState             :: LayersState
     , _goatState_renderedCanvas          :: RenderedCanvasRegion

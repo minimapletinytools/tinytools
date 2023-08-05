@@ -193,11 +193,21 @@ canvasMouseDown (x,y) = mouse True False [] MouseButton_Left (V2 x y)
 canvasMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 canvasMouseUp (x,y) = mouse True True [] MouseButton_Left (V2 x y)
 
+canvasMouseDownUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
+canvasMouseDownUp (x,y) = do
+  canvasMouseDown (x,y)
+  canvasMouseUp (x,y)
+
 layerMouseDown :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 layerMouseDown (x,y) = mouse False False [] MouseButton_Left (V2 x y)
 
 layerMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 layerMouseUp (x,y) = mouse False True [] MouseButton_Left (V2 x y)
+
+layerMouseDownUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
+layerMouseDownUp (x,y) = do
+  layerMouseDown (x,y)
+  layerMouseUp (x,y)
 
 data LayerMouseOp = LMO_Collapse | LMO_Hide | LMO_Lock | LMO_Normal deriving (Show, Eq)
 
@@ -222,6 +232,12 @@ layerMouseDownRel = layerMouseRel' False
 
 layerMouseUpRel :: (Monad m) => LayerMouseOp -> Int -> Int -> GoatTesterT m ()
 layerMouseUpRel = layerMouseRel' True
+
+layerMouseDownUpRel :: (Monad m) => LayerMouseOp -> Int -> Int -> GoatTesterT m ()
+layerMouseDownUpRel op x y = do
+  layerMouseDownRel op x y
+  layerMouseUpRel op x y
+
 
 pressKeyboardKey :: (Monad m) => KeyboardKey -> GoatTesterT m ()
 pressKeyboardKey k = runEndo $ endoGoatCmdKeyboard (KeyboardData k [])
