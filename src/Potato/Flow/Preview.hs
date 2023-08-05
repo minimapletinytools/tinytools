@@ -6,6 +6,18 @@ import           Relude
 
 import Potato.Flow.Llama
 
+
+data Shepard = Shepard Int deriving (Eq, Show, Generic)
+
+instance NFData Shepard
+
+-- TODO use this to identify preview chains in the future
+-- TODO also use to identify handlers
+data Shift = Shift Int deriving (Eq, Show, Generic)
+
+instance NFData Shift
+
+
 -- PO_StartAndCommit and PO_ContinueAndCommit are equivalent to doing a PO_Start or PO_Continue followed by a Preview_Commit, just for convenience
 -- NOTE that PO_Start/PO_Continue will commit when another a preview comes in from the local user, the main reason you want to commit is to ensure the preview gets saved
 data PreviewOperation = PO_Start | PO_Continue | PO_StartAndCommit | PO_ContinueAndCommit deriving (Eq, Show, Generic)

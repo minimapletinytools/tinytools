@@ -22,6 +22,7 @@ import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
+import Potato.Flow.Preview
 
 import           Control.Exception    (assert)
 import qualified Data.IntMap.Strict   as IM
@@ -32,25 +33,39 @@ import qualified Data.Sequence        as Seq
 data OwlPFWorkspace = OwlPFWorkspace {
   _owlPFWorkspace_owlPFState    :: OwlPFState
 
-  -- TODO move me elsewhere?
+  -- TODO rename to localLlamaStack
   , _owlPFWorkspace_llamaStack  :: LlamaStack
 
   -- WIP preview stuff
-  --, _owlPFWorkspace_localPreview :: Maybe llama
+  -- Llama is the undo Llama for the preview as the preview has already been applied to _owlPFWorkspace_owlPFState
+  , _owlPFWorkspace_localPreview :: Maybe (Shepard, Shift, Llama) 
+  , _owlPFWorkspace_remotePreviews :: [(Shepard, Shift, Llama)]
 
 } deriving (Show, Generic)
 
 instance NFData OwlPFWorkspace
 
+owlPFWorkspace_hasLocalPreview :: OwlPFWorkspace -> Bool
+owlPFWorkspace_hasLocalPreview pfw = isJust (_owlPFWorkspace_localPreview pfw)
+
+-- NOTE this will reset all previews and the LlamaStack, be sure to synchronize with your ordering service!!!
 loadOwlPFStateIntoWorkspace :: OwlPFState -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
-loadOwlPFStateIntoWorkspace pfs ws = r where
+loadOwlPFStateIntoWorkspace pfs ws = (next_ws, changes) where
   removeOld = fmap (const Nothing) (_owlTree_mapping . _owlPFState_owlTree . _owlPFWorkspace_owlPFState $ ws)
   addNew = IM.mapWithKey (\rid (oem,oe) -> Just (SuperOwl rid oem oe)) (_owlTree_mapping . _owlPFState_owlTree $ pfs)
   changes = IM.union addNew removeOld
-  r = (OwlPFWorkspace pfs emptyLlamaStack, changes)
+  next_ws = emptyWorkspace {
+      _owlPFWorkspace_owlPFState = pfs
+      , _owlPFWorkspace_llamaStack = emptyLlamaStack
+    }
 
 emptyWorkspace :: OwlPFWorkspace
-emptyWorkspace = OwlPFWorkspace emptyOwlPFState emptyLlamaStack
+emptyWorkspace =  OwlPFWorkspace {
+    _owlPFWorkspace_owlPFState    = emptyOwlPFState
+    , _owlPFWorkspace_llamaStack  = emptyLlamaStack
+    , _owlPFWorkspace_localPreview = Nothing
+    , _owlPFWorkspace_remotePreviews = []
+  }
 
 -- UNTESTED
 markWorkspaceSaved :: OwlPFWorkspace -> OwlPFWorkspace
@@ -63,20 +78,28 @@ undoWorkspace :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 undoWorkspace pfw =  r where
   LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
   r = case _llamaStack_done of
-    c : cs -> (OwlPFWorkspace newpfs (LlamaStack cs (undollama:_llamaStack_undone) _llamaStack_lastSaved), changes) where
+    c : cs -> (next_ws , changes) where
       (newpfs, changes, undollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e  -> error $ show e
         Right x -> x
+      next_ws =  pfw {
+          _owlPFWorkspace_owlPFState = newpfs
+          , _owlPFWorkspace_llamaStack = (LlamaStack cs (undollama:_llamaStack_undone) _llamaStack_lastSaved)
+        }
     _ -> (pfw, IM.empty)
 
 redoWorkspace :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 redoWorkspace pfw = r where
   LlamaStack {..} = _owlPFWorkspace_llamaStack pfw
   r = case _llamaStack_undone of
-    c : cs -> (OwlPFWorkspace newpfs (LlamaStack (dollama:_llamaStack_done) cs _llamaStack_lastSaved), changes) where
+    c : cs -> (next_ws, changes) where
       (newpfs, changes, dollama) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e  -> error $ show e
         Right x -> x
+      next_ws = pfw {
+        _owlPFWorkspace_owlPFState = newpfs
+        , _owlPFWorkspace_llamaStack = (LlamaStack (dollama:_llamaStack_done) cs _llamaStack_lastSaved)
+      }
     _ -> (pfw, IM.empty)
 
 undoPermanentWorkspace :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
@@ -91,14 +114,39 @@ undoPermanentWorkspace pfw =  r where
       -- we are permanently undoing a change from last saved
       else Nothing
   r = case _llamaStack_done of
-    c : cs -> (OwlPFWorkspace newpfs (LlamaStack cs _llamaStack_undone newLastSaved), changes) where
+    c : cs -> (next_ws, changes) where
       (newpfs, changes, _) = case _llama_apply c (_owlPFWorkspace_owlPFState pfw) of
         Left e  -> error $ show e
         Right x -> x
+      next_ws =  pfw {
+        _owlPFWorkspace_owlPFState = newpfs
+        , _owlPFWorkspace_llamaStack = (LlamaStack cs _llamaStack_undone newLastSaved)
+      }
     _ -> (pfw, IM.empty)
 
+
+
+moveLlamaStackDone :: Llama -> LlamaStack -> LlamaStack
+moveLlamaStackDone undollama LlamaStack {..} = r where
+  newLastSaved = case _llamaStack_lastSaved of
+    Nothing -> Nothing
+    Just x -> if length _llamaStack_done < x
+      -- we "did" a change after last save
+      then Just x
+      -- we "did" a change from last save
+      else Nothing
+  r = LlamaStack {
+      _llamaStack_done = undollama : _llamaStack_done
+      , _llamaStack_undone = _llamaStack_undone
+      , _llamaStack_lastSaved = newLastSaved
+    }
+
 doLlamaWorkspace :: Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
-doLlamaWorkspace llama pfw = r where
+doLlamaWorkspace = doLlamaWorkspace' True
+
+
+doLlamaWorkspace' :: Bool -> Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
+doLlamaWorkspace' updatestack llama pfw = r where
   oldpfs = _owlPFWorkspace_owlPFState pfw
   (newpfs, changes, mundollama) = case _llama_apply llama oldpfs of
     -- TODO would be nice to output error to user somehow?
@@ -117,7 +165,7 @@ doLlamaWorkspace llama pfw = r where
       else Just x
   r' = OwlPFWorkspace {
       _owlPFWorkspace_owlPFState       = newpfs
-      , _owlPFWorkspace_llamaStack  = LlamaStack {
+      , _owlPFWorkspace_llamaStack  = if not updatestack then _owlPFWorkspace_llamaStack pfw  else LlamaStack {
           _llamaStack_done = case mundollama of
             Nothing -> _llamaStack_done
             Just undollama -> undollama : _llamaStack_done
@@ -150,8 +198,11 @@ doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
 
 ------ update functions via commands
 data WSEvent =
+  -- TODO DELETE
   -- TODO get rid of undo first parameter 
   WSEApplyLlama (Bool, Llama)
+
+  | WSEApplyPreview Shepard Shift Preview
 
   | WSEUndo
   | WSERedo
@@ -166,16 +217,41 @@ debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> d
 noChanges :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 noChanges ws = (ws, IM.empty)
 
+clearLocalPreview :: (OwlPFWorkspace, SuperOwlChanges) -> (OwlPFWorkspace, SuperOwlChanges)
+clearLocalPreview (ws, changes) = (ws { _owlPFWorkspace_localPreview = Nothing }, changes)
+
+moveLocalPreviewToLlamaStackAndClear :: OwlPFWorkspace -> OwlPFWorkspace
+moveLocalPreviewToLlamaStackAndClear ws = case _owlPFWorkspace_localPreview ws of
+  Nothing -> ws
+  Just (shep, shift, undollama) -> r_1 where
+    newstack = moveLlamaStackDone undollama (_owlPFWorkspace_llamaStack ws)
+    r_1 = ws { 
+        _owlPFWorkspace_llamaStack = newstack 
+        , _owlPFWorkspace_localPreview = Nothing
+      }
+    
+
+
 -- TODO take PotatoConfiguration here???
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 updateOwlPFWorkspace evt ws = let
   lastState = _owlPFWorkspace_owlPFState ws
   r = case evt of
 
+    WSEApplyPreview shep shift preview -> case preview of
+      Preview op llama -> case op of
+        PO_Start -> doLlamaWorkspace llama ws
+        PO_Continue -> doLlamaWorkspace llama ws
+        PO_StartAndCommit -> doLlamaWorkspace llama ws
+        PO_ContinueAndCommit -> doLlamaWorkspace llama ws
+      Preview_Commit -> clearLocalPreview $ noChanges ws
+      Preview_Cancel -> case _owlPFWorkspace_localPreview ws of 
+        Nothing -> error "expected local preview"
+        Just (_, _, undollama) -> clearLocalPreview $ doLlamaWorkspace' False undollama ws
+
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
-    
     WSEUndo -> undoWorkspace ws
     WSERedo -> redoWorkspace ws
     WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
