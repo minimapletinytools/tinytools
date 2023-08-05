@@ -320,11 +320,11 @@ IGNORE!!-get rid of PFWorkspace first
 
 
 ::NEWEST TODO::
--BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
+DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
 -add render handler name property so you know what the render handler is from its renderhandleroutput
 -tests
   -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
-  -auto expand folders after selection
+  DONE-auto expand folders after selection
   DONE-hide/lock layers and check selection works as expected
 -return key in layers during rename will act like "tab" taking you to params, don't do this
 -REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas

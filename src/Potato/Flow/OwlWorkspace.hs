@@ -34,6 +34,10 @@ data OwlPFWorkspace = OwlPFWorkspace {
 
   -- TODO move me elsewhere?
   , _owlPFWorkspace_llamaStack  :: LlamaStack
+
+  -- WIP preview stuff
+  --, _owlPFWorkspace_localPreview :: Maybe llama
+
 } deriving (Show, Generic)
 
 instance NFData OwlPFWorkspace
