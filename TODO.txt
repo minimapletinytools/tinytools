@@ -222,17 +222,22 @@ DONE-goat refactor warmup
           -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
   DONE-refactor PotatoHandlerOutput to be mutually exclusive
 -pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
+  -actually maybe it's not unreasonable just to cancel the preview always
+
+
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
+  -question should we store local preview separately and always apply it last/first?
+-assert when starting a new handler that there is no local preview action
 -handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
 -replace pIsHandlerActive with just checking if there is a live preview opeartion or not
 
 
 :: MDI REFACTOR NOTES
--get rid of PFWorkspace first
+IGNORE!!-get rid of PFWorkspace first
   DONE-get rid of lastChanges
-  -or do we keep it? could be nic eplace to store preview list and local llama stack
+  YES-or do we keep it? could be nic eplace to store preview list and local llama stack
 -handlers should return preview action
   -review pRefreshHandler as it will now take update cations
   -preview start, preview continue, preview commit, preview cancel
@@ -320,7 +325,7 @@ DONE-goat refactor warmup
 -tests
   -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
   -auto expand folders after selection
-  -hide/lock layers and check selection works as expected
+  DONE-hide/lock layers and check selection works as expected
 -return key in layers during rename will act like "tab" taking you to params, don't do this
 -REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas
 -text zipper

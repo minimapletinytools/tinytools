@@ -82,7 +82,10 @@ data GoatState = GoatState {
     _goatState_workspace                 :: OwlPFWorkspace
     , _goatState_pan                     :: XY -- panPos is position of upper left corner of canvas relative to screen
     , _goatState_selection               :: Selection
+
+    -- TODO get rid of this, you only need this to create the tool from selection, and you can just regenerate the canvas selection in that case
     , _goatState_canvasSelection         :: CanvasSelection
+
     , _goatState_broadPhaseState         :: BroadPhaseState
     , _goatState_layersState             :: LayersState
     , _goatState_renderedCanvas          :: RenderedCanvasRegion
@@ -318,7 +321,7 @@ endoGoatCmdSetFocusedArea gfa goatState = r where
 
 
 endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
-endoGoatCmdMouse mouseData goatState = trace ("endoGoatCmdMouse " <> show (_goatState_handler goatState)) $ r where
+endoGoatCmdMouse mouseData goatState = r where
   sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
   mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
   mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
@@ -603,21 +606,31 @@ goat_setSelection add selection goatState = r where
 goat_setLayersStateWithChangesFromToggleHide :: LayersState -> SuperOwlChanges -> GoatState -> GoatState
 goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
   
-  -- set the broadphase
-  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState))
-  goatState_afterUpdateBroadPhase = goatState { _goatState_broadPhaseState = next_broadPhaseState }
+  -- set the layers state
+  goatState_afterLayers = goatState {
+      _goatState_layersState = ls
+    }
 
-  -- set layers state  
+  -- set the canvas selection and handler
+  next_canvasSelection = computeCanvasSelection $ goatState_afterLayers
+  goatState_afterSelection = goatState_afterLayers {
+      _goatState_canvasSelection = next_canvasSelection  
+      , _goatState_handler = assert (not $ pIsHandlerActive (_goatState_handler goatState_afterLayers)) makeHandlerFromSelection next_canvasSelection
+    }
+
+  -- set the broadphase
+  (needsupdateaabbs, next_broadPhaseState) = update_bPTree (goatState_pFState goatState_afterSelection) changes (_broadPhaseState_bPTree (_goatState_broadPhaseState goatState_afterSelection))
+  goatState_afterUpdateBroadPhase = goatState_afterSelection { _goatState_broadPhaseState = next_broadPhaseState }
+
   -- render changes
   -- render selection
   rc = renderContextFromGoatState goatState_afterUpdateBroadPhase
   rc_afterupdate = goat_renderCanvas_update rc needsupdateaabbs changes
-  rc_afterselection = goat_renderCanvas_selection rc_afterupdate (_goatState_selection goatState_afterUpdateBroadPhase)
+  rc_afterselection = goat_renderCanvas_selection rc_afterupdate ( SuperOwlParliament . unCanvasSelection $ next_canvasSelection)
   r = goatState_afterUpdateBroadPhase {
-      _goatState_layersState = ls
       -- MAYBE TODO refresh the layers handler (), this might be relevant if we support shared lock/hide state of layers in the future
       --, _goatState_layersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) ....
-      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_afterupdate
+      _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_afterupdate
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
 

@@ -199,6 +199,30 @@ layerMouseDown (x,y) = mouse False False [] MouseButton_Left (V2 x y)
 layerMouseUp :: (Monad m) =>  (Int, Int) -> GoatTesterT m ()
 layerMouseUp (x,y) = mouse False True [] MouseButton_Left (V2 x y)
 
+data LayerMouseOp = LMO_Collapse | LMO_Hide | LMO_Lock | LMO_Normal deriving (Show, Eq)
+
+layerMouseRel' :: (Monad m) => Bool -> LayerMouseOp -> Int -> Int -> GoatTesterT m ()
+layerMouseRel' isup op y' depth = do
+  scrollPos <- (_layersState_scrollPos . _goatState_layersState . _goatTesterState_goatState) <$> get
+  let
+    x' = case op of
+      LMO_Collapse -> 0
+      LMO_Hide     -> 1
+      LMO_Lock     -> 2
+      LMO_Normal -> 3
+    y = y' - scrollPos
+    x = x' + depth
+  putRecord "validate y pos" (if y < 0 then Just ("y: " <> show y <> " outside of scroll position: " <> show scrollPos) else Nothing)
+  if isup
+    then layerMouseUp (x, y)
+    else layerMouseDown (x, y)
+
+layerMouseDownRel :: (Monad m) => LayerMouseOp -> Int -> Int -> GoatTesterT m ()
+layerMouseDownRel = layerMouseRel' False
+
+layerMouseUpRel :: (Monad m) => LayerMouseOp -> Int -> Int -> GoatTesterT m ()
+layerMouseUpRel = layerMouseRel' True
+
 pressKeyboardKey :: (Monad m) => KeyboardKey -> GoatTesterT m ()
 pressKeyboardKey k = runEndo $ endoGoatCmdKeyboard (KeyboardData k [])
 
