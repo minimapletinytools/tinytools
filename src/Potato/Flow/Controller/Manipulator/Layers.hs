@@ -32,7 +32,7 @@ import qualified Data.Sequence                    as Seq
 import qualified Data.Text                        as T
 import qualified Potato.Data.Text.Zipper          as TZ
 
-data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos deriving (Show, Eq)
+data LayerDragState = LDS_None | LDS_Dragging | LDS_Selecting LayerEntryPos | LDS_Option LayerDownType deriving (Show, Eq)
 
 data LayerDownType = LDT_Hide | LDT_Lock | LDT_Collapse | LDT_Normal deriving (Show, Eq)
 
@@ -116,7 +116,7 @@ isSpotValidToDrop ot sel spot = not $ owlParliamentSet_descendent ot (_owlSpot_p
 
 
 instance PotatoHandler LayersHandler where
-  pHandlerName _ = handlerName_layers
+  pHandlerName LayersHandler {..} = handlerName_layers <> " " <> show _layersHandler_dragState
 
   -- we incorrectly reuse RelMouseDrag for LayersHandler even though LayersHandler doesn't care about canvas pan coords
   -- pan offset should always be set to 0 in RelMouseDrag
@@ -171,9 +171,9 @@ instance PotatoHandler LayersHandler where
             LDT_Hide -> r' where
               nextLayersState = toggleLayerEntry pfs ls lepos LHCO_ToggleHide
               hideChanges = changesFromToggleHide pfs nextLayersState lepos
-              r' = (LDS_None, Just $ nextLayersState, hideChanges)
-            LDT_Lock -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleLock, IM.empty)
-            LDT_Collapse -> (LDS_None, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleCollapse, IM.empty)
+              r' = (LDS_Option LDT_Hide, Just $ nextLayersState, hideChanges)
+            LDT_Lock -> (LDS_Option LDT_Lock, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleLock, IM.empty)
+            LDT_Collapse -> (LDS_Option LDT_Collapse, Just $ toggleLayerEntry pfs ls lepos LHCO_ToggleCollapse, IM.empty)
 
         r = Just $ def {
             _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler lh {
@@ -304,8 +304,14 @@ instance PotatoHandler LayersHandler where
             , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview PO_StartAndCommit) mllama
           }
 
+      (MouseDragState_Up, LDS_Option _) -> Just $ def {
+          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
+        }
+        
       (MouseDragState_Up, LDS_None) -> Just $ def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
+
+          -- deselect everything 
           , _potatoHandlerOutput_action = HOA_Select False isParliament_empty
         }
 

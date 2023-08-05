@@ -83,6 +83,47 @@ create_in_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyMostRecentlyCreatedOwl $ \sowl -> if _owlItemMeta_parent (_superOwl_meta sowl) == _superOwl_id folder then Nothing else Just $ "expected parent " <> show (_superOwl_id folder) <> " got " <> show sowl
 
 
+lock_or_hide_select_test :: LayerMouseOp -> Spec
+lock_or_hide_select_test lmo = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+  setMarker "draw a box"
+  drawCanvasBox (0,0,10,10)
+  verifySelectionCount 1
+
+  setMarker "lock or hide the box"
+  layerMouseDownRel lmo 0 0
+  layerMouseUpRel lmo 0 0
+  verifySelectionCount 1
+  
+  setMarker "deselect"
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "try and select the box via canvas"
+  canvasMouseDown (5,5)
+  canvasMouseUp (5,5)
+  verifySelectionCount 0
+
+  setMarker "select the box via layers"
+  layerMouseDownRel LMO_Normal 0 0
+  layerMouseUpRel LMO_Normal 0 0
+  verifySelectionCount 1
+
+  setMarker "deselect"
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "unlock or unhide the box"
+  layerMouseDownRel lmo 0 0
+  layerMouseUpRel lmo 0 0
+
+  setMarker "select the box via canvas"
+  canvasMouseDown (5,5)
+  canvasMouseUp (5,5)
+  verifySelectionCount 1
+
+  
+
+  
 
 spec :: Spec
 spec = do
@@ -90,3 +131,5 @@ spec = do
     describe "basic" $ basic_test
     describe "rename_focus_test" $ rename_focus_test
     describe "create_in_folder_test" $ create_in_folder_test
+    describe "hide_select_test" $ lock_or_hide_select_test LMO_Hide
+    describe "lock_select_test" $ lock_or_hide_select_test LMO_Lock
