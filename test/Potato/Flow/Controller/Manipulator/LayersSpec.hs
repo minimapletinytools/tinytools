@@ -55,21 +55,28 @@ rename_focus_test :: Spec
 rename_focus_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   setMarker "draw a box"
-  setTool Tool_Box
-  canvasMouseDown (0, 0)
-  canvasMouseDown (100, 100)
-  canvasMouseUp (100, 100)
+  drawCanvasBox (0, 0, 100, 100)
   verifyOwlCount 1
 
   setMarker "select the box via layers"
-  -- TODO
+  layerMouseDownUpRel LMO_Normal 0 0
+  verifySelectionCount 1
 
   setMarker "begin renaming the box"
-  -- TODO
+  layerMouseDownUpRel LMO_Normal 0 0  
+  pressKeys "aoeu"
+  
+  let
+    origname = "<box>"
+    -- NOTE, when when have multi-select, we should auto-select the previous name such that it gets deleted
+    expectedname = "aoeu<box>"
 
+  setMarker "verify the name has not been changed yet (no preview)"
+  verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == origname then Nothing else Just $ "expected name " <> show origname <> " got " <> show (hasOwlItem_name sowl)
+  
   setMarker "change focus and ensure rename took effect"
   setFocusArea GoatFocusedArea_Other
-  -- TODO verify
+  verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == expectedname then Nothing else Just $ "expected name " <> show expectedname <> " got " <> show (hasOwlItem_name sowl)
 
 create_in_folder_and_collapse_test :: Spec
 create_in_folder_and_collapse_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
