@@ -223,8 +223,6 @@ DONE-goat refactor warmup
   DONE-refactor PotatoHandlerOutput to be mutually exclusive
 -pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
   -actually maybe it's not unreasonable just to cancel the preview always
-
-
 -create preview list (I guess you can just put it in PFWorkspace for now...)
   -Map UserKey (Maybe LLama)
     -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
@@ -232,6 +230,9 @@ DONE-goat refactor warmup
 -assert when starting a new handler that there is no local preview action
 -handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
 -replace pIsHandlerActive with just checking if there is a live preview opeartion or not
+  -no I think you need/want both, there are some handlers that are active but don't do Previews
+  -maybe default implementation of pIsHandlerActive could check for a live preview? Can/should previews be associated with handlers for error checking purposes?
+    -maybe give handlers an Id?
 
 
 :: MDI REFACTOR NOTES
@@ -320,13 +321,12 @@ IGNORE!!-get rid of PFWorkspace first
 
 
 ::NEWEST TODO::
-DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
+
+-rename
+  -OwlPFWorkspace -> OwlWorkspace
+  -OwlPFState -> OwlState
 -add render handler name property so you know what the render handler is from its renderhandleroutput
--tests
-  -endSetFocusedArea test, start renamin,g change focus, ensure rename happened
-  DONE-auto expand folders after selection
-  DONE-hide/lock layers and check selection works as expected
--return key in layers during rename will act like "tab" taking you to params, don't do this
+-BUG return key in layers during rename will act like "tab" taking you to params, don't do this
 -REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas
 -text zipper
   -you should just rewrite text zipper and add select support..
@@ -337,6 +337,7 @@ DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now
   -- TODO this should be r' not a FIX ME why is stuff even working???
   -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
 -introduce "cancelHandler" function
+  -why would I want to do this?
   -gets called from GoatWidget when some higher order operation cancels or replaces the handler
     -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
   -can this be somehow combined with reset handler?
@@ -380,6 +381,11 @@ DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now
     -you got it down to 2 :O
 
 
+DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
+DONE-tests
+  DONE-endSetFocusedArea test, start renamin,g change focus, ensure rename happened
+  DONE-auto expand folders after selection
+  DONE-hide/lock layers and check selection works as expected
 DONE-warning cleanup
 DONE-figure out why scrolling in file explorer is hecka broken
   -I don't think there's anything wrong with code, scrolling freezes input for some reason in vty on mac terminal :|
