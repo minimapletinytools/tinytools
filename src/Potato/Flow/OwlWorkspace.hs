@@ -230,11 +230,12 @@ updateOwlPFWorkspace evt ws = let
 
     WSEApplyPreview shep shift preview -> case preview of
       Preview op llama -> case op of
-        PO_Start -> doLlamaWorkspace llama ws
-        PO_Continue -> doLlamaWorkspace llama ws
-        PO_StartAndCommit -> doLlamaWorkspace llama ws
-        PO_ContinueAndCommit -> doLlamaWorkspace llama ws
-      Preview_Commit -> clearLocalPreview $ noChanges ws
+        -- TODO these are wrong
+        PO_Start -> doLlamaWorkspace' False llama ws
+        PO_Continue -> doLlamaWorkspace' False llama ws
+        PO_StartAndCommit -> doLlamaWorkspace' False llama ws
+        PO_ContinueAndCommit -> doLlamaWorkspace' False llama ws
+      Preview_Commit -> (moveLocalPreviewToLlamaStackAndClear ws, IM.empty)
       Preview_Cancel -> case _owlPFWorkspace_localPreview ws of 
         Nothing -> error "expected local preview"
         Just (_, _, undollama) -> clearLocalPreview $ doLlamaWorkspace' False undollama ws
