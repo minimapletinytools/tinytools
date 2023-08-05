@@ -131,10 +131,10 @@ moveLlamaStackDone undollama LlamaStack {..} = r where
   newLastSaved = case _llamaStack_lastSaved of
     Nothing -> Nothing
     Just x -> if length _llamaStack_done < x
-      -- we "did" a change after last save
-      then Just x
-      -- we "did" a change from last save
-      else Nothing
+      -- we "did" something when last save is still on undo stack, so we can never recover to last saved
+      then Nothing
+      -- we can still undo back to last save state
+      else Just x
   r = LlamaStack {
       _llamaStack_done = undollama : _llamaStack_done
       , _llamaStack_undone = _llamaStack_undone
@@ -144,7 +144,6 @@ moveLlamaStackDone undollama LlamaStack {..} = r where
 doLlamaWorkspace :: Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doLlamaWorkspace = doLlamaWorkspace' True
 
-
 doLlamaWorkspace' :: Bool -> Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 doLlamaWorkspace' updatestack llama pfw = r where
   oldpfs = _owlPFWorkspace_owlPFState pfw
@@ -152,26 +151,17 @@ doLlamaWorkspace' updatestack llama pfw = r where
     -- TODO would be nice to output error to user somehow?
     Left e  -> case e of
       ApplyLlamaError_Fatal x -> error x
-      ApplyLLamaError_Soft _ -> (oldpfs, IM.empty, Nothing)
-    Right x -> case x of 
+      ApplyLLamaError_Soft _  -> (oldpfs, IM.empty, Nothing)
+    Right x -> case x of
       (newpfs', changes', undollama') -> (newpfs', changes', Just undollama')
-  LlamaStack {..} = (_owlPFWorkspace_llamaStack pfw)
-  newLastSaved = case _llamaStack_lastSaved of
-    Nothing -> Nothing
-    Just x -> if length _llamaStack_done < x
-      -- we "did" something when last save is still on undo stack, so we can never recover to last saved
-      then Nothing
-      -- we can still undo back to last save state
-      else Just x
+  llamastack = (_owlPFWorkspace_llamaStack pfw)
+  newstack = case mundollama of
+    Nothing        -> llamastack
+    Just undollama -> moveLlamaStackDone undollama llamastack
+
   r' = OwlPFWorkspace {
       _owlPFWorkspace_owlPFState       = newpfs
-      , _owlPFWorkspace_llamaStack  = if not updatestack then _owlPFWorkspace_llamaStack pfw  else LlamaStack {
-          _llamaStack_done = case mundollama of
-            Nothing -> _llamaStack_done
-            Just undollama -> undollama : _llamaStack_done
-          , _llamaStack_undone = _llamaStack_undone
-          , _llamaStack_lastSaved = newLastSaved
-        }
+      , _owlPFWorkspace_llamaStack  = if updatestack then newstack else _owlPFWorkspace_llamaStack pfw
     }
   r = (r', changes)
 
