@@ -283,9 +283,9 @@ updateOwlPFWorkspace evt ws = r_0 where
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
-    WSEUndo -> undoWorkspace ws
-    WSERedo -> redoWorkspace ws
-    WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
+    WSEUndo -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ undoWorkspace ws
+    WSERedo -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ redoWorkspace ws
+    WSELoad x -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
   afterState = _owlPFWorkspace_owlPFState (fst r_0')
   isValidAfter = owlPFState_isValid afterState
   r_0 = if isValidAfter
