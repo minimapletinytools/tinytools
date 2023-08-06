@@ -190,6 +190,7 @@ instance PotatoHandler BoxTextHandler where
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
+        -- TODO if we have an active preview then commit
         clickInside = does_lBox_contains_XY (_textInputState_box _boxTextHandler_state) _mouseDrag_to
         newState = mouseText _boxTextHandler_state rmd
         r = if clickInside

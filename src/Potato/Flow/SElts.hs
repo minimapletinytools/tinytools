@@ -408,20 +408,7 @@ instance Default SAutoLine where
       , _sAutoLine_midpoints = []
       , _sAutoLine_labels = []
     }
-
--- TODO DELETE
--- |
-data SCartLines = SCartLines {
-  _sCartLines_start   :: XY
-  , _sCartLines_ends  :: NonEmpty (Either Int Int)
-  , _sCartLines_style :: SuperStyle
-} deriving (Eq, Generic, Show)
-
-instance FromJSON SCartLines
-instance ToJSON SCartLines
-instance Binary SCartLines
-instance NFData SCartLines
-
+    
 type TextAreaMapping = Map XY PChar
 
 -- | abitrary text confined to a box

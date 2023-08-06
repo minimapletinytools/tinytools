@@ -34,7 +34,6 @@ import           Potato.Flow.Configuration
 import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Box
-import           Potato.Flow.Controller.Manipulator.CartLine
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Manipulator.Layers
 import           Potato.Flow.Controller.Manipulator.Line
@@ -175,7 +174,6 @@ makeHandlerFromNewTool :: GoatState -> Tool -> SomePotatoHandler
 makeHandlerFromNewTool GoatState{..} = \case
   Tool_Box    -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Box }
   Tool_Line   -> SomePotatoHandler $ def { _autoLineHandler_isCreation = True }
-  Tool_CartLine -> SomePotatoHandler $ def { _cartLineHandler_isCreation = True }
   Tool_Select -> makeHandlerFromSelection _goatState_canvasSelection
   Tool_Text   -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_Text }
   Tool_TextArea -> SomePotatoHandler $ def { _boxHandler_creation = BoxCreationType_TextArea }

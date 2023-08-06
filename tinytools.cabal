@@ -41,7 +41,6 @@ library
       Potato.Flow.Controller.Input
       Potato.Flow.Controller.Manipulator.Box
       Potato.Flow.Controller.Manipulator.BoxText
-      Potato.Flow.Controller.Manipulator.CartLine
       Potato.Flow.Controller.Manipulator.Common
       Potato.Flow.Controller.Manipulator.Layers
       Potato.Flow.Controller.Manipulator.Line
@@ -177,7 +176,6 @@ test-suite tinytools-test
       Potato.Flow.Deprecated.Controller.LayersSpec
       Potato.Flow.Deprecated.Controller.Manipulator.BoxSpec
       Potato.Flow.Deprecated.Controller.Manipulator.BoxTextSpec
-      Potato.Flow.Deprecated.Controller.Manipulator.CartLineSpec
       Potato.Flow.Deprecated.Controller.Manipulator.LayersSpec
       Potato.Flow.Deprecated.Controller.Manipulator.SelectSpec
       Potato.Flow.Deprecated.Controller.Manipulator.TextAreaSpec
