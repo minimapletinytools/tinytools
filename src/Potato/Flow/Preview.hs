@@ -17,6 +17,12 @@ data Shift = Shift Int deriving (Eq, Show, Generic)
 
 instance NFData Shift
 
+dummyShepard :: Shepard
+dummyShepard = Shepard 0
+
+dummyShift :: Shift
+dummyShift = Shift 0
+
 
 -- PO_StartAndCommit and PO_ContinueAndCommit are equivalent to doing a PO_Start or PO_Continue followed by a Preview_Commit, just for convenience
 -- NOTE that PO_Start/PO_Continue will commit when another a preview comes in from the local user, the main reason you want to commit is to ensure the preview gets saved
