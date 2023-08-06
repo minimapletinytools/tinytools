@@ -1,11 +1,5 @@
 
 
-
-
-
-
--------
-
 pet childhood sportsteam
 
 
@@ -29,38 +23,6 @@ ghc options
 -drule-check = <rule name>
 
 
------
-
-stuff for Dad to do
-
--address the following TODO in substract_lBox
-  -- TODO crop away mleft/mright from mtop'/mbot'
-
--address the following TODOs in Goat.hs
-  1. -- TODO move into its own file
-  data GoatState = GoatState {
-
-  2. -- TODO instance GoatState HasOwlTree
-
-  3. -- TODO rename to makeHandlerFromCanvasSelection
-
-  4. (hard)
-  -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
-  -- TODO extract this method into another file
-  -- TODO make State monad for this
-  foldGoatFn :: GoatCmd -> GoatState -> GoatState
-    - `Endo GoatState = GoatState -> GoatState`
-    - this part of the code was written incorrectly, someday I want to split it up into several functions of type `Endo GoatState`, one for each GoatCmd
-    - the unit tests are also written overly complicated. They rely on going through GoatWidget which is very unecessary and makes everything very complicated
-    - so the most important part is to create a set of helper functions for unit testing this function directly
-
--address the following TODOs in OWl.hs
-  1. -- TODO remove OwlMapping arg not needed
-  locateLeftSiblingIdFromSiblingPosition :: OwlMapping -> Seq REltId -> SiblingPosition -> Maybe REltId
-
-  2. OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
-    for this one, print more info about OwlItem
-
 
 ----------
 to get call stacks, first build with:
@@ -71,6 +33,9 @@ stack exec --profile -- potato-flow-vty-exe +RTS -xc
 stack exec -- potato-flow-vty-exe mycommandlineargs
 stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
+
+
+----------
 
 normal
 ø×Ø⁐₪
@@ -97,19 +62,10 @@ WIDE
 -allow option to embed in definition file if height is only 1
 -toggle option to search for only single char vs art
 -separate file for single char glyph database maybe?
-
 character_glpyhs
 
-:: dragable anchor spec ::
-- -- takes position and returns anchor position if its valid
-  -- not the output XY may not be the input XY because some projecting may happen
-  projectAnchor :: AttachmentLocation -> SBox -> XY -> Maybe XY
--anchor move process
-  -click to select line
-  -clck on anchor to drag
-  -case projectAnchor xy of Just -> drag anchor, Nothing -> release attachment
-  -note if you drag off to release attachment and drag back in range, it should snap back to attaching
-  -note if you start a new line to attach you must first attach to the starting middle attachment location
+
+:: swatch spec ::
 
 :: FUTURE FEATURES
 IGNORE-grapheme cluster
@@ -120,7 +76,6 @@ IGNORE-grapheme cluster
 DONE-EMOJIS
 DONE-moveable line anchors
 DONE-adjustable attachment spec
--TABLE / DIVIDEABLE BOXES
 -swatches
 -unicode character picker
   -lives at params level
@@ -169,17 +124,8 @@ DONE-adjustable attachment spec
   -crop or stop at end of last repeating pattern
 -would be cool to have a way to manipulate multiple line midpoints at the same time
   -but really you should just switch to segment based midpoints instead..?
-  
-
-
-:: refactors
--MDI
-  -Flow needs some kind of switcher on all input events/dynamics
-    -GoatSwitcher?
-      -Prob better to do this in Goat rather than GoatWidget (i.e. don't use reflex)
-  -must support empty doc state
-    -r maybe it just always creates a new empty file in these cases?
--multi user mode
+-multi-goat
+-multi-shepard
 -no partial owls!
   -except when converting remote changes to llamas
 
@@ -1416,3 +1362,49 @@ DONE-copy pasta
     -we'll prob need to do something different for web version...
   DONE-copy pasta test
   IGNORE-I think the way it's handled right now (PFEventTag operations) is cor
+
+
+
+
+:: 2022 dragable anchor spec ::
+- -- takes position and returns anchor position if its valid
+  -- not the output XY may not be the input XY because some projecting may happen
+  projectAnchor :: AttachmentLocation -> SBox -> XY -> Maybe XY
+-anchor move process
+  -click to select line
+  -clck on anchor to drag
+  -case projectAnchor xy of Just -> drag anchor, Nothing -> release attachment
+  -note if you drag off to release attachment and drag back in range, it should snap back to attaching
+  -note if you start a new line to attach you must first attach to the starting middle attachment location
+
+
+
+:: 2022 stuff for Dad to do ::
+
+-address the following TODO in substract_lBox
+  -- TODO crop away mleft/mright from mtop'/mbot'
+
+-address the following TODOs in Goat.hs
+  1. -- TODO move into its own file
+  data GoatState = GoatState {
+
+  2. -- TODO instance GoatState HasOwlTree
+
+  3. -- TODO rename to makeHandlerFromCanvasSelection
+
+  4. (hard)
+  -- TODO probably should have done "Endo GoatState" instead of "GoatCmd"
+  -- TODO extract this method into another file
+  -- TODO make State monad for this
+  foldGoatFn :: GoatCmd -> GoatState -> GoatState
+    - `Endo GoatState = GoatState -> GoatState`
+    - this part of the code was written incorrectly, someday I want to split it up into several functions of type `Endo GoatState`, one for each GoatCmd
+    - the unit tests are also written overly complicated. They rely on going through GoatWidget which is very unecessary and makes everything very complicated
+    - so the most important part is to create a set of helper functions for unit testing this function directly
+
+-address the following TODOs in OWl.hs
+  1. -- TODO remove OwlMapping arg not needed
+  locateLeftSiblingIdFromSiblingPosition :: OwlMapping -> Seq REltId -> SiblingPosition -> Maybe REltId
+
+  2. OwlItem oinfo _ -> "elt: " <> (_owlInfo_name oinfo) -- TODO elt type
+    for this one, print more info about OwlItem
