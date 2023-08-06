@@ -347,12 +347,16 @@ instance PotatoHandler BoxHandler where
       r = if (isText || (isBox && not isCreation))
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
+
+        -- TODO you want to commit + start here
         -- create box handler and pass on the input (if it was not a text box it will be converted to one by the BoxTextHandler)
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
 
         else if isTextArea
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
+
+          -- TODO commit
           then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation) phi rmd
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
