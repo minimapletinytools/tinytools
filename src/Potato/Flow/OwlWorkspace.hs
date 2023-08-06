@@ -159,7 +159,7 @@ doLlamaWorkspace' updatestack llama pfw = r where
     Nothing        -> llamastack
     Just undollama -> moveLlamaStackDone undollama llamastack
 
-  r' = OwlPFWorkspace {
+  r' = pfw {
       _owlPFWorkspace_owlPFState       = newpfs
       , _owlPFWorkspace_llamaStack  = if updatestack then newstack else _owlPFWorkspace_llamaStack pfw
     }
@@ -252,30 +252,27 @@ doLocalPreview shepard shift llama ws = (next_ws, changes) where
 -- TODO take PotatoConfiguration here???
 updateOwlPFWorkspace :: WSEvent -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
 updateOwlPFWorkspace evt ws = r_0 where
-  shepard = dummyShepard
-  shift = dummyShift
   lastState = _owlPFWorkspace_owlPFState ws
+  ws_afterCommit = maybeCommitLocalPreviewToLlamaStackAndClear ws
   r_0' = case evt of
-    WSEApplyPreview shep shift preview -> case preview of
+    WSEApplyPreview shepard shift preview -> case preview of
       Preview op llama -> case op of
 
-        PO_Start -> doLocalPreview shepard shift llama (maybeCommitLocalPreviewToLlamaStackAndClear ws)
+        PO_Start -> doLocalPreview shepard shift llama ws_afterCommit
+        PO_StartAndCommit -> r_1 where
+          (next_ws, changes) = doLocalPreview shepard shift llama ws_afterCommit
+          r_1 = (maybeCommitLocalPreviewToLlamaStackAndClear next_ws, changes)
 
         PO_Continue -> r_1 where
           (next_ws', changes1) = mustUndoLocalPreview ws
           (next_ws, changes2) = doLocalPreview shepard shift llama next_ws'
           r_1 = (next_ws, IM.union changes2 changes1)
-
-        PO_StartAndCommit -> r_1 where
-          (next_ws, changes) = doLocalPreview shepard shift llama (maybeCommitLocalPreviewToLlamaStackAndClear ws)
-          r_1 = (maybeCommitLocalPreviewToLlamaStackAndClear next_ws, IM.empty)
-
         PO_ContinueAndCommit -> r_1 where
           (next_ws', changes1) = mustUndoLocalPreview ws
           (next_ws, changes2) = doLocalPreview shepard shift llama next_ws'
           r_1 = (maybeCommitLocalPreviewToLlamaStackAndClear next_ws, IM.union changes2 changes1)
 
-      Preview_Commit -> assert (owlPFWorkspace_hasLocalPreview ws) $ (maybeCommitLocalPreviewToLlamaStackAndClear ws, IM.empty)
+      Preview_Commit -> assert (owlPFWorkspace_hasLocalPreview ws) $ (ws_afterCommit, IM.empty)
       Preview_Cancel -> case _owlPFWorkspace_localPreview ws of 
         Nothing -> error "expected local preview"
         Just (_, _, undollama) -> clearLocalPreview $ doLlamaWorkspace' False undollama ws
@@ -283,9 +280,9 @@ updateOwlPFWorkspace evt ws = r_0 where
     WSEApplyLlama (undo, x) -> if undo
       then doLlamaWorkspaceUndoPermanentFirst x ws
       else doLlamaWorkspace x ws
-    WSEUndo -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ undoWorkspace ws
-    WSERedo -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ redoWorkspace ws
-    WSELoad x -> assert (not . owlPFWorkspace_hasLocalPreview $ ws) $ loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws
+    WSEUndo -> undoWorkspace ws_afterCommit
+    WSERedo -> redoWorkspace ws_afterCommit
+    WSELoad x -> loadOwlPFStateIntoWorkspace (sPotatoFlow_to_owlPFState x) ws_afterCommit
   afterState = _owlPFWorkspace_owlPFState (fst r_0')
   isValidAfter = owlPFState_isValid afterState
   r_0 = if isValidAfter

@@ -209,7 +209,7 @@ makeClipboard goatState@GoatState {..} = r where
 deleteSelectionEvent :: GoatState -> Maybe WSEvent
 deleteSelectionEvent gs@GoatState {..} = if isParliament_null _goatState_selection
   then Nothing
-  else Just $ WSEApplyLlama (False, removeEltAndUpdateAttachments_to_llama (goatState_pFState gs) _goatState_attachmentMap (superOwlParliament_toOwlParliament _goatState_selection))
+  else Just $ WSEApplyPreview dummyShepard dummyShift $ Preview PO_StartAndCommit $ removeEltAndUpdateAttachments_to_llama (goatState_pFState gs) _goatState_attachmentMap (superOwlParliament_toOwlParliament _goatState_selection)
 
 potatoHandlerInputFromGoatState :: GoatState -> PotatoHandlerInput
 potatoHandlerInputFromGoatState GoatState {..} = r where
@@ -291,7 +291,7 @@ endoGoatCmdNewFolder :: Text -> GoatState -> GoatState
 endoGoatCmdNewFolder x gs = goat_applyWSEvent WSEventType_Local_Refresh newFolderEv gs where
   pfs = goatState_pFState gs
   folderPos = lastPositionInSelection (_owlPFState_owlTree pfs) (_goatState_selection gs)
-  newFolderEv = WSEApplyLlama (False, makeAddFolderLlama pfs (folderPos, x))
+  newFolderEv = WSEApplyPreview dummyShepard dummyShift $ Preview PO_StartAndCommit $ makeAddFolderLlama pfs (folderPos, x)
 
 endoGoatCmdLoad :: (SPotatoFlow, ControllerMeta) -> GoatState -> GoatState
 endoGoatCmdLoad (spf, cm) gs = r where
@@ -460,7 +460,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
                 maxid2 = owlPFState_nextId (_owlPFWorkspace_owlPFState (_goatState_workspace goatState_withKeyboard))
                 minitree = owlTree_reindex (max maxid1 maxid2) minitree'
                 spot = lastPositionInSelection (goatState_owlTree goatState_withKeyboard) (_goatState_selection goatState_withKeyboard)
-                treePastaEv = WSEApplyLlama (False, makePFCLlama $ OwlPFCNewTree (minitree, spot))
+                treePastaEv = WSEApplyPreview dummyShepard dummyShift $ Preview PO_StartAndCommit $ makePFCLlama $ OwlPFCNewTree (minitree, spot)
                 r = goat_applyWSEvent WSEventType_Local_Refresh treePastaEv (goatState_withKeyboard { _goatState_clipboard = Just offsetstree })
             KeyboardData (KeyboardKey_Char 'z') [KeyModifier_Ctrl] -> r where
               r = goat_applyWSEvent WSEventType_Local_Refresh WSEUndo goatState_withKeyboard
@@ -558,7 +558,7 @@ goat_setPan (V2 dx dy) goatState = r where
 
 
 
-computeCanvasSelection :: GoatState -> CanvasSelection
+computeCanvasSelection :: (HasCallStack) => GoatState -> CanvasSelection
 computeCanvasSelection goatState = r where
   pfs = goatState_pFState goatState
   filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) (_layersState_meta (_goatState_layersState goatState))
@@ -647,7 +647,7 @@ goat_processHandlerOutput_noSetHandler pho goatState = trace ("goat_processHandl
 
     -- TODO this is bugged, you need to regenerate the handler if the handler returned Nothing
     -- TODO set preview stack
-    HOA_Preview (Preview po x) -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh (WSEApplyLlama (needsUndoFirst po, x)) goatState
+    HOA_Preview p@(Preview _ _) -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
     HOA_Preview Preview_Cancel -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh WSEUndo goatState
     HOA_Preview Preview_Commit -> goatState
     HOA_Nothing -> goatState
