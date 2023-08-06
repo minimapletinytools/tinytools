@@ -259,6 +259,7 @@ updateOwlPFWorkspace evt ws = r_0 where
       Preview op llama -> case op of
 
         PO_Start -> doLocalPreview shepard shift llama ws_afterCommit
+        PO_CommitAndStart -> assert (owlPFWorkspace_hasLocalPreview ws) $ doLocalPreview shepard shift llama ws_afterCommit
         PO_StartAndCommit -> r_1 where
           (next_ws, changes) = doLocalPreview shepard shift llama ws_afterCommit
           r_1 = (maybeCommitLocalPreviewToLlamaStackAndClear next_ws, changes)
@@ -271,6 +272,8 @@ updateOwlPFWorkspace evt ws = r_0 where
           (next_ws', changes1) = mustUndoLocalPreview ws
           (next_ws, changes2) = doLocalPreview shepard shift llama next_ws'
           r_1 = (maybeCommitLocalPreviewToLlamaStackAndClear next_ws, IM.union changes2 changes1)
+
+        
 
       Preview_Commit -> assert (owlPFWorkspace_hasLocalPreview ws) $ (ws_afterCommit, IM.empty)
       Preview_Cancel -> case _owlPFWorkspace_localPreview ws of 

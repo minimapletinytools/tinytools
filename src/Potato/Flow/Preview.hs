@@ -24,10 +24,17 @@ dummyShift :: Shift
 dummyShift = Shift 0
 
 
--- TODO add PO_CommitAndStart
+-- TODO add 
 -- PO_StartAndCommit and PO_ContinueAndCommit are equivalent to doing a PO_Start or PO_Continue followed by a Preview_Commit, just for convenience
 -- NOTE that PO_Start/PO_Continue will commit when another a preview comes in from the local user, the main reason you want to commit is to ensure the preview gets saved
-data PreviewOperation = PO_Start | PO_Continue | PO_StartAndCommit | PO_ContinueAndCommit deriving (Eq, Show, Generic)
+-- NOTE that PO_CommitAndStart is identitacl to PO_Start but also asserts that there is a local preview
+data PreviewOperation = 
+  PO_Start 
+  | PO_CommitAndStart 
+  | PO_StartAndCommit 
+  | PO_Continue 
+  | PO_ContinueAndCommit 
+  deriving (Eq, Show, Generic)
 
 data Preview = 
   -- apply a preview operation
