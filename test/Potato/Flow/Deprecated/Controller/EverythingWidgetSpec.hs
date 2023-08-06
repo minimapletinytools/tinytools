@@ -759,9 +759,6 @@ spec = do
     fromHUnitTest $ everything_lockhiddenselectionviacanvas_test
     fromHUnitTest $ everything_basic_test
     fromHUnitTest $ everything_inputfocusing_test
-
-    -- TODO FIX
-    --fromHUnitTest $ everything_hasSavedChanges_test
-    
+    fromHUnitTest $ everything_hasSavedChanges_test
     fromHUnitTest $ everything_hideStuff_test
     --fromHUnitTest $ everything_newfolder_test

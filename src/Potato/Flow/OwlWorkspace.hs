@@ -11,6 +11,7 @@ module Potato.Flow.OwlWorkspace (
   , WSEvent(..)
   , updateOwlPFWorkspace
   , loadOwlPFStateIntoWorkspace
+  , maybeCommitLocalPreviewToLlamaStackAndClear
 ) where
 
 import           Relude
@@ -234,7 +235,7 @@ mustUndoLocalPreview ws = case _owlPFWorkspace_localPreview ws of
     
 
 doLocalPreview :: Shepard -> Shift -> Llama -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
-doLocalPreview shepard shift llama ws = (next_ws, changes) where
+doLocalPreview shepard shift llama ws = assert (isNothing $ _owlPFWorkspace_localPreview ws) $ (next_ws, changes) where
   oldpfs = _owlPFWorkspace_owlPFState ws
   (newpfs, changes, undollama) = case _llama_apply llama oldpfs of
     Left e  -> case e of

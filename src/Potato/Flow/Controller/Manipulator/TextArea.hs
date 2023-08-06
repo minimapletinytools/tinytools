@@ -5,6 +5,7 @@
 module Potato.Flow.Controller.Manipulator.TextArea (
   TextAreaHandler(..)
   , makeTextAreaHandler
+  , textAreaHandler_pHandleMouse_onCreation
 ) where
 
 import           Relude
@@ -56,6 +57,13 @@ makeTextAreaHandler prev selection rmd creation = r where
     -- we want the cursor at the beginning if we are creating TextAreaHandler right after creating a new text area
     , _textAreaHandler_relCursor = if creation then 0 else newrelpos
   }
+
+textAreaHandler_pHandleMouse_onCreation :: TextAreaHandler -> PotatoHandlerInput -> RelMouseDrag -> Maybe PotatoHandlerOutput
+textAreaHandler_pHandleMouse_onCreation tah phi rmd@(RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of 
+  MouseDragState_Up -> case (pHandleMouse tah phi rmd) of
+    Nothing -> error "expected output"
+    Just x -> Just $ x { _potatoHandlerOutput_action = HOA_Preview Preview_Commit }
+  x -> error ("expected MouseDragState_Up got " <> show x)
 
 instance PotatoHandler TextAreaHandler where
   pHandlerName _ = handlerName_textArea

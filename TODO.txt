@@ -35,6 +35,9 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 
+cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
+
+
 ----------
 
 normal
@@ -176,12 +179,15 @@ DONE-handler -> preview -> goat -> pfworkspace -> unapply old previews by that u
 -pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
   -actually maybe it's not unreasonable just to cancel the preview always
 DONE-implement PO_CommitAndStart
--do PO_Commit on mouse up in all the handlers
--I think you need switching handlers to do a commit as not all handlers have a reliable point to commit
+IGNORE-do PO_Commit on mouse up in all the handlers
+DONE-I think you need switching handlers to do a commit as not all handlers have a reliable point to commit
 -replace pIsHandlerActive with just checking if there is a live preview opeartion or not
   -no I think you need/want both, there are some handlers that are active but don't do Previews
   -maybe default implementation of pIsHandlerActive could check for a live preview? Can/should previews be associated with handlers for error checking purposes?
-    -maybe give handlers an Id?
+    -maybe give handlers an Id
+-I think you may want explicit onReplaceHandler operation. Not every handler wants to commit their changes when they get replaced
+  -specifically, there's a convert to text box preview operation when you enter text mode on a non-text box, we want a preview to convert it to a text box, and if this handler gets replaced, we don't want to commit the change
+  -perhaps you can just have a commitOnReplace function, that's probably easiest
 
 
 :: MDI REFACTOR NOTES

@@ -347,20 +347,19 @@ instance PotatoHandler BoxHandler where
       r = if (isText || (isBox && not isCreation))
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
-
-        -- TODO you want to commit + start here
         -- create box handler and pass on the input (if it was not a text box it will be converted to one by the BoxTextHandler)
         then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
 
         else if isTextArea
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
+          then textAreaHandler_pHandleMouse_onCreation (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation) phi rmd
 
-          -- TODO commit
-          then pHandleMouse (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation) phi rmd
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
           else Just def
+
+        -- TODO if this was a text box creation case, consider entering text edit mode
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 

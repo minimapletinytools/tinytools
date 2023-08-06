@@ -62,6 +62,11 @@ runEndo fn = GoatTesterT $ modify $
     }
 
 
+getGoatState :: (Monad m) => GoatTesterT m GoatState
+getGoatState = GoatTesterT $ do
+  GoatTesterState {..} <- get
+  return _goatTesterState_goatState
+
 getOwlPFState :: (Monad m) => GoatTesterT m OwlPFState
 getOwlPFState = GoatTesterT $ do
   GoatTesterState {..} <- get
@@ -170,6 +175,11 @@ setTool tool = runEndo (endoGoatCmdSetTool tool)
 setFocusArea :: (Monad m) => GoatFocusedArea -> GoatTesterT m ()
 setFocusArea fa = runEndo $ endoGoatCmdSetFocusedArea fa
 
+
+setDefaultParams :: (Monad m) => SetPotatoDefaultParameters -> GoatTesterT m ()
+setDefaultParams params = runEndo $ endoGoatCmdSetDefaultParams params
+
+
 addFolder :: (Monad m) => Text -> GoatTesterT m ()
 addFolder name = runEndo $ endoGoatCmdNewFolder name
 
@@ -265,6 +275,10 @@ pressUndo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'z') 
 
 pressRedo :: (Monad m) => GoatTesterT m ()
 pressRedo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
+
+
+markSaved :: (Monad m) => GoatTesterT m ()
+markSaved = runEndo $ endoGoatCmdMarkSaved ()
 
 -- verification helpers
 

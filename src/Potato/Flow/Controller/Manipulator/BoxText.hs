@@ -190,7 +190,6 @@ instance PotatoHandler BoxTextHandler where
       tah@BoxTextHandler {..} = updateBoxTextHandlerState False _potatoHandlerInput_canvasSelection tah'
     in case _mouseDrag_state of
       MouseDragState_Down -> r where
-        -- TODO if we have an active preview then commit
         clickInside = does_lBox_contains_XY (_textInputState_box _boxTextHandler_state) _mouseDrag_to
         newState = mouseText _boxTextHandler_state rmd
         r = if clickInside
@@ -219,8 +218,10 @@ instance PotatoHandler BoxTextHandler where
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                   _boxTextHandler_isActive = False    
                 }
+              -- TODO change this to just PO_Start
               -- NOTE if we PO_Start/_boxTextHandler_undoFirst = True we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
               -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
+              -- NOTE this creates a weird undo operation that just converts from text to not text which is weird
               , _potatoHandlerOutput_action = HOA_Preview $ Preview PO_StartAndCommit $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))]
 
             }
@@ -228,6 +229,7 @@ instance PotatoHandler BoxTextHandler where
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                   _boxTextHandler_isActive = False
                 }
+              , _potatoHandlerOutput_action = HOA_Preview $ Preview_Commit
             }
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 

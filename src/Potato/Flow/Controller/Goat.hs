@@ -316,7 +316,7 @@ endoGoatCmdSetFocusedArea gfa goatState = r where
 
 
 endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
-endoGoatCmdMouse mouseData goatState = r where
+endoGoatCmdMouse mouseData goatState = trace ("endomouse: " <> show mouseData) $ r where
   sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
   mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
   mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
@@ -657,8 +657,16 @@ goat_processLayersHandlerOutput pho goatState = goat_processHandlerOutput_noSetH
 goat_processCanvasHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processCanvasHandlerOutput pho goatState = r where
   canvasSelection = computeCanvasSelection goatState
-  nextHandler = fromMaybe (makeHandlerFromSelection canvasSelection) (_potatoHandlerOutput_nextHandler pho)
-  goatState' = goatState { _goatState_handler = nextHandler }
+
+  -- TODO delete workspace stuff here once you do proper pIsHandlerActive 
+  (next_handler, next_workspace) = case _potatoHandlerOutput_nextHandler pho of
+    -- if we replaced the handler, commit its local preview if there was one
+    Nothing -> (makeHandlerFromSelection canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState)
+    Just x -> (x, _goatState_workspace goatState)
+  goatState' = goatState { 
+      _goatState_handler = next_handler 
+      , _goatState_workspace = next_workspace
+    }
   r = goat_processHandlerOutput_noSetHandler pho $ goatState'
 
 
@@ -761,12 +769,17 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
   -- | set the new handler based on the new Selection and LayersState
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
 
+
   -- TODO currently we use to only reset the handler here if the prev handler returned Nothing (did not capture input) using `resetHandlerIfInactive` to pipe this info in
-  -- instead, we can just always reset it if the handler is inactive once we properly do handler active stuff
-  next_handler = if resetHandlerIfInactive then maybeUpdateHandlerFromSelection (_goatState_handler goatState_afterSetLayersState) next_canvasSelection else _goatState_handler goatState_afterSetLayersState
+  -- instead, we can just always reset it if the handler is inactive once we properly do handler active stuff, (right now we can't do this because stuff like BoxTextHandler doesn't return correct pIsHandlerActive)
+  (next_handler, next_workspace) = if resetHandlerIfInactive && not (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState))
+    -- if we replaced the handler, commit its local preview if there was one
+    then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
+    else (_goatState_handler goatState_afterSetLayersState, _goatState_workspace goatState_afterSetLayersState)
   goatState_afterSetHandler = goatState_afterSetLayersState {
       _goatState_handler = next_handler
       , _goatState_canvasSelection = next_canvasSelection
+      , _goatState_workspace = next_workspace
     }
 
   -- | update AttachmentMap based on new state and clear the cache on these changes |
