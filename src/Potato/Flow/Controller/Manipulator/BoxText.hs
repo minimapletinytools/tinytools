@@ -279,10 +279,6 @@ instance PotatoHandler BoxTextHandler where
     btis = _boxTextHandler_state tah
     r = pRenderHandler (_boxTextHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
 
-
-
-  --pIsHandlerActive _ = True
-  
   -- TODO set properly
   pIsHandlerActive = _boxTextHandler_isActive
 
@@ -461,8 +457,6 @@ instance PotatoHandler BoxLabelHandler where
     tah = updateBoxLabelHandlerState False _potatoHandlerInput_canvasSelection tah'
     btis = _boxLabelHandler_state tah
     r = pRenderHandler (_boxLabelHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
-
-  --pIsHandlerActive _ = True
 
   -- TODO set properly
   pIsHandlerActive = _boxLabelHandler_active

@@ -774,7 +774,7 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
 
   -- we check both the pIsHandlerActive and goatState_hasLocalPreview condition to see if we want to recreate the handler
   -- actually, we could only check pIsHandlerActive if all handlers properly reported their state
-  -- TODO get rid of resetHandlerIfInactive condition, pretty sure you can just do this but cancelling creation handlers will cancel the handler, prob OK?
+  -- TODO get rid of resetHandlerIfInactive condition, pretty sure you can just do this but cancelling creation handlers will cancel the handler, prob OK? NO not OK, need to think on this more
   (next_handler, next_workspace) = if resetHandlerIfInactive && not (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
     -- if we replaced the handler, commit its local preview if there was one
     then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)

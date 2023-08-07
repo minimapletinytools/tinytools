@@ -363,7 +363,13 @@ instance PotatoHandler BoxHandler where
 
       -- TODO consider handling special case, handle when you click and release create a box in one spot, create a box that has size 1 (rather than 0 if we did it during MouseDragState_Down normal way)
 
-    MouseDragState_Cancelled -> if _boxHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
+    MouseDragState_Cancelled -> if _boxHandler_undoFirst 
+      then Just def { 
+          -- you may or may not want to do this?
+          --_potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (def :: BoxHandler)
+          _potatoHandlerOutput_action = HOA_Preview Preview_Cancel 
+        } 
+      else Just def
 
 
   pHandleKeyboard bh phi@PotatoHandlerInput {..} (KeyboardData key _) = r where
