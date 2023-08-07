@@ -910,4 +910,6 @@ instance PotatoHandler AutoLineLabelHandler where
     btis = _autoLineLabelHandler_state slh
     r = makeTextHandlerRenderOutput btis
 
-  pIsHandlerActive = _autoLineLabelHandler_active
+  pIsHandlerActive _ = True
+  -- TODO return more compilcated notion of activeness, for now, we just return true so that the handler does not get replaced when deleting a line label (maknig it really easy to delete the line afterwarnds)M
+  --pIsHandlerActive = _autoLineLabelHandler_active

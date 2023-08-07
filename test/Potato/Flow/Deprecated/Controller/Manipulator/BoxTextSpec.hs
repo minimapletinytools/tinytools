@@ -134,10 +134,7 @@ test_basic = constructTest "basic" emptyOwlPFState bs expected where
       , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
         SEltBox (SBox _ _ _ _ boxtype) -> boxtype == SBoxType_NoBoxText
         _                                 -> False
-      -- TODO the handler gets refreshed to box handler after EWCSetParams but really it shouldn't because the box text handler should be active!      
-      , checkHandlerNameAndState handlerName_box True
-      -- TODO uncomment once you implement proper pIsHandlerActive for BoxTextHandler
-      --, checkHandlerNameAndState handlerName_boxText True
+      , checkHandlerNameAndState handlerName_boxText True
       , checkHandlerNameAndState handlerName_boxText False
       , checkSBoxText "<text>" "p🥔aoopb"
     ]

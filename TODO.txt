@@ -185,9 +185,9 @@ DONE-I think you need switching handlers to do a commit as not all handlers have
   -no I think you need/want both, there are some handlers that are active but don't do Previews
   -maybe default implementation of pIsHandlerActive could check for a live preview? Can/should previews be associated with handlers for error checking purposes?
     -maybe give handlers an Id
--I think you may want explicit onReplaceHandler operation. Not every handler wants to commit their changes when they get replaced
+IGNORE-I think you may want explicit onReplaceHandler operation. Not every handler wants to commit their changes when they get replaced
   -specifically, there's a convert to text box preview operation when you enter text mode on a non-text box, we want a preview to convert it to a text box, and if this handler gets replaced, we don't want to commit the change
-  -perhaps you can just have a commitOnReplace function, that's probably easiest
+  -perhaps you can just have a commitOnReplace :: Bool function, that's probably easiest
 
 
 :: MDI REFACTOR NOTES
@@ -276,6 +276,7 @@ IGNORE!!-get rid of PFWorkspace first
 
 
 ::NEWEST TODO::
+-the border/text params dialog should show when seleting box tool
 DONE-delete CartLine
 -rename
   -OwlPFWorkspace -> OwlWorkspace

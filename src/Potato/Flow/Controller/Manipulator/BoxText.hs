@@ -139,8 +139,7 @@ inputBoxText tais sowl kk = (newtais, mop) where
     else Nothing
 
 data BoxTextHandler = BoxTextHandler {
-    -- TODO this should be active if you have a preview operation going on, not based on mouse like it is right now
-    -- TODO rename to active
+    -- TODO Delete this
     _boxTextHandler_isActive      :: Bool
     
     , _boxTextHandler_state       :: TextInputState
@@ -219,6 +218,7 @@ instance PotatoHandler BoxTextHandler where
                   _boxTextHandler_isActive = False    
                 }
               -- TODO change this to just PO_Start
+              -- the issue here is when you undo, it becomes not a text box, so you need to make sure to convert it to a text box in the preview operation (actually to do that, there's no point in converting it here really)
               -- NOTE if we PO_Start/_boxTextHandler_undoFirst = True we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
               -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
               -- NOTE this creates a weird undo operation that just converts from text to not text which is weird
@@ -279,6 +279,11 @@ instance PotatoHandler BoxTextHandler where
     btis = _boxTextHandler_state tah
     r = pRenderHandler (_boxTextHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
 
+
+
+  --pIsHandlerActive _ = True
+  
+  -- TODO set properly
   pIsHandlerActive = _boxTextHandler_isActive
 
 
@@ -457,4 +462,7 @@ instance PotatoHandler BoxLabelHandler where
     btis = _boxLabelHandler_state tah
     r = pRenderHandler (_boxLabelHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
 
+  --pIsHandlerActive _ = True
+
+  -- TODO set properly
   pIsHandlerActive = _boxLabelHandler_active

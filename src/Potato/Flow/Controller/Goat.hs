@@ -169,6 +169,9 @@ goatState_hasUnsavedChanges = llamaStack_hasUnsavedChanges . _owlPFWorkspace_lla
 goatState_selectedTool :: GoatState -> Tool
 goatState_selectedTool = fromMaybe Tool_Select . pHandlerTool . _goatState_handler
 
+goatState_hasLocalPreview :: GoatState -> Bool
+goatState_hasLocalPreview = owlPFWorkspace_hasLocalPreview . _goatState_workspace
+
 
 makeHandlerFromNewTool :: GoatState -> Tool -> SomePotatoHandler
 makeHandlerFromNewTool GoatState{..} = \case
@@ -366,10 +369,9 @@ endoGoatCmdMouse mouseData goatState = trace ("endomouse: " <> show mouseData) $
       Just pho -> goat_processCanvasHandlerOutput pho goatState_withNewMouse
 
       -- input not captured by handler, pass onto select or select+drag
-      Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> assert (not $ pIsHandlerActive handler) r where
-        r = case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
-          Just pho -> goat_processCanvasHandlerOutput pho goatState_withNewMouse
-          Nothing -> error "handler was expected to capture this mouse state"
+      Nothing | _mouseDrag_state mouseDrag == MouseDragState_Down -> case pHandleMouse (def :: SelectHandler) potatoHandlerInput canvasDrag of
+        Just pho -> goat_processCanvasHandlerOutput pho goatState_withNewMouse
+        Nothing -> error "handler was expected to capture this mouse state"
 
       Nothing -> error $ "handler " <> show (pHandlerName handler) <> "was expected to capture mouse state " <> show (_mouseDrag_state mouseDrag)
 
@@ -770,9 +772,10 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
 
 
-  -- TODO currently we use to only reset the handler here if the prev handler returned Nothing (did not capture input) using `resetHandlerIfInactive` to pipe this info in
-  -- instead, we can just always reset it if the handler is inactive once we properly do handler active stuff, (right now we can't do this because stuff like BoxTextHandler doesn't return correct pIsHandlerActive)
-  (next_handler, next_workspace) = if resetHandlerIfInactive && not (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState))
+  -- we check both the pIsHandlerActive and goatState_hasLocalPreview condition to see if we want to recreate the handler
+  -- actually, we could only check pIsHandlerActive if all handlers properly reported their state
+  -- TODO get rid of resetHandlerIfInactive condition, pretty sure you can just do this but cancelling creation handlers will cancel the handler, prob OK?
+  (next_handler, next_workspace) = if resetHandlerIfInactive && not (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
     -- if we replaced the handler, commit its local preview if there was one
     then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
     else (_goatState_handler goatState_afterSetLayersState, _goatState_workspace goatState_afterSetLayersState)
