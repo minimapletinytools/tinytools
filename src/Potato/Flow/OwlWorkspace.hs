@@ -12,6 +12,7 @@ module Potato.Flow.OwlWorkspace (
   , updateOwlPFWorkspace
   , loadOwlPFStateIntoWorkspace
   , maybeCommitLocalPreviewToLlamaStackAndClear
+  , owlPFWorkspace_hasLocalPreview
 ) where
 
 import           Relude

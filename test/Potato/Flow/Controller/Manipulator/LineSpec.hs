@@ -463,10 +463,13 @@ label_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
   setMarker "add a label"
   canvasMouseDown (50, 0)
   canvasMouseUp (50, 0)
+  setMarker "123"
   pressKey '1'
   pressKey '2'
   pressKey '3'
   verifyMostRecentlyCreatedLinesLatestLineLabelHasText "123"
+
+  setMarker "erase it and ensure there is no label"
   pressBackspace
   pressBackspace
   pressBackspace

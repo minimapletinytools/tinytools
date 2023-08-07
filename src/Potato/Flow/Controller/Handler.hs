@@ -152,6 +152,9 @@ emptyHandlerRenderOutput :: HandlerRenderOutput
 emptyHandlerRenderOutput = HandlerRenderOutput { _handlerRenderOutput_temp = [] }
 
 
+-- TODO use me
+data HandlerActiveState = HAS_None | HAS_Active_Mouse | HAS_Active_Keyboard deriving (Show, Eq)
+
 -- we check handler name for debug reasons so it's useful to have constants
 -- there should be no non-test code that depends on comparing pHandlerName
 handlerName_box :: Text
@@ -220,7 +223,8 @@ class PotatoHandler h where
   pRefreshHandler :: h -> PotatoHandlerInput -> Maybe SomePotatoHandler
   pRefreshHandler _ _ = Nothing
 
-  -- TODO you can probably replace this based on whether there is a preview operation or not
+  
+  -- TODO change this to an enum so you can capture different notion of activeness
   -- active manipulators will not be overwritten by new handlers via selection from changes
   pIsHandlerActive :: h -> Bool
   pIsHandlerActive _ = False
@@ -246,6 +250,12 @@ class PotatoHandler h where
   -- determine which selected tool to show
   pHandlerTool :: h -> Maybe Tool
   pHandlerTool _ = Nothing
+
+
+  -- whether to commit or cancel the Preview operation when replacing the handler or not
+  -- True is commit, False is cancel
+  --pCommitOrCancelOnReplace :: h -> Bool
+  --pCommitOrCancelOnReplace _ = True
 
 data SomePotatoHandler = forall h . PotatoHandler h  => SomePotatoHandler h
 
