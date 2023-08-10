@@ -639,7 +639,7 @@ goat_processHandlerOutput_noSetHandler pho goatState = trace ("goat_processHandl
     HOA_Select x y -> goat_setSelection x y goatState
     HOA_Pan x -> goat_setPan x goatState
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y goatState
-    HOA_Preview p -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
+    HOA_Preview p -> goat_applyWSEvent WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
     HOA_Nothing -> goatState
 
 
@@ -650,9 +650,7 @@ goat_processCanvasHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processCanvasHandlerOutput pho goatState = r where
   canvasSelection = computeCanvasSelection goatState
 
-
   wasNoAction = handlerOutputAction_isNothing $ _potatoHandlerOutput_action pho
-
   -- TODO you can DELETE workspace stuff here once all handlers properly return commit actions when they are done
   -- you need this right now otherwise, for example, drag creating a box via BoxHandler will not commit after mouseup as it returns (handler: Nothing, action: HOA_Nothing)
   (next_handler, next_workspace) = case _potatoHandlerOutput_nextHandler pho of
@@ -678,16 +676,7 @@ wSEventType_needsRefresh WSEventType_Remote_Refresh = True
 wSEventType_needsRefresh _ = False
 
 goat_applyWSEvent :: WSEventType -> WSEvent -> GoatState -> GoatState
-goat_applyWSEvent = goat_applyWSEvent' True
-
-
--- TODO DELETE ME, no need to pass in resetHandlerIfInactive, you can just always reset the handler once you properly do handler active stuff
-goat_applyWSEventNoResetHandler :: WSEventType -> WSEvent -> GoatState -> GoatState
-goat_applyWSEventNoResetHandler = goat_applyWSEvent' False
-
-
-goat_applyWSEvent' :: Bool -> WSEventType -> WSEvent -> GoatState -> GoatState
-goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_final where
+goat_applyWSEvent wsetype wse goatState = goatState_final where
 
   -- apply the event
   last_pFState = goatState_pFState goatState
