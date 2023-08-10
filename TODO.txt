@@ -37,7 +37,8 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 
 cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
 
-
+cabal test --test-options='--match "/Potato.Flow.Deprecated.Controller.Manipulator/Manipulator/Common/create/"'
+ 
 ----------
 
 normal
@@ -276,6 +277,9 @@ IGNORE!!-get rid of PFWorkspace first
 
 
 ::NEWEST TODO::
+-tests to add
+  -make line label + "aoeu" + backspace a bunch of times and ensure the line does not get deleted
+-cancelling a creation handler takes you back to empty handler
 -the border/text params dialog should show when seleting box tool
 DONE-delete CartLine
 -rename

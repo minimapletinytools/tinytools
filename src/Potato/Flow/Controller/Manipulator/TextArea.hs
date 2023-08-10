@@ -140,4 +140,6 @@ instance PotatoHandler TextAreaHandler where
         , _renderHandle_color = RHC_Default
       }
     r = pRenderHandler (_textAreaHandler_prevHandler tah) phi <>  HandlerRenderOutput [cursor]
-  pIsHandlerActive _ = False
+
+  -- TODO track mouse activity
+  pIsHandlerActive _ = HAS_Inactive

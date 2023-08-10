@@ -196,7 +196,7 @@ makeHandlerFromSelection selection = case computeSelectionType selection of
 maybeUpdateHandlerFromSelection :: SomePotatoHandler -> CanvasSelection -> SomePotatoHandler
 maybeUpdateHandlerFromSelection sph selection = case sph of
   -- TODO instead, just check if there is a preview operation or not
-  SomePotatoHandler h -> if pIsHandlerActive h
+  SomePotatoHandler h -> if handlerActiveState_isActive $ pIsHandlerActive h
     then sph
     else makeHandlerFromSelection selection
 
@@ -612,7 +612,7 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
   next_canvasSelection = computeCanvasSelection $ goatState_afterLayers
   goatState_afterSelection = goatState_afterLayers {
       _goatState_canvasSelection = next_canvasSelection  
-      , _goatState_handler = assert (not $ pIsHandlerActive (_goatState_handler goatState_afterLayers)) makeHandlerFromSelection next_canvasSelection
+      , _goatState_handler = assert (not . handlerActiveState_isActive $ pIsHandlerActive (_goatState_handler goatState_afterLayers)) makeHandlerFromSelection next_canvasSelection
     }
 
   -- set the broadphase
@@ -634,22 +634,12 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
 
 goat_processHandlerOutput_noSetHandler :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processHandlerOutput_noSetHandler pho goatState = trace ("goat_processHandlerOutput_noSetHandler HANDLER OUTPUT: " <> show pho <> " CURRENT HANDLER: " <> show (_goatState_handler goatState)) $ r where
-  needsUndoFirst po = case po of
-    PO_Start          -> False
-    PO_StartAndCommit -> False
-    _                 -> True
 
   r = case _potatoHandlerOutput_action pho of
     HOA_Select x y -> goat_setSelection x y goatState
     HOA_Pan x -> goat_setPan x goatState
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y goatState
-
-
-    -- TODO this is bugged, you need to regenerate the handler if the handler returned Nothing
-    -- TODO set preview stack
-    HOA_Preview p@(Preview _ _) -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
-    HOA_Preview Preview_Cancel -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh WSEUndo goatState
-    HOA_Preview Preview_Commit -> goatState
+    HOA_Preview p -> goat_applyWSEventNoResetHandler WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
     HOA_Nothing -> goatState
 
 
@@ -750,7 +740,7 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
         canvasHandler = _goatState_handler goatState_afterSelection 
         -- TODO remove this assert, this will happen for stuff like boxtexthandler
         -- since we don't have multi-user events, the handler should never be active when this happens
-        checkvalid = assert (not (pIsHandlerActive canvasHandler) && not (pIsHandlerActive layersHandler))
+        checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)
 
         -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
         next_potatoHandlerInput = potatoHandlerInputFromGoatState goatState_afterSelection
@@ -758,9 +748,8 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
         refreshedCanvasHandler = fromMaybe (makeHandlerFromSelection canvasSelection) ( pRefreshHandler canvasHandler next_potatoHandlerInput)
         refreshedLayersHandler = fromMaybe (SomePotatoHandler (def :: LayersHandler)) (pRefreshHandler layersHandler next_potatoHandlerInput)
 
-        -- TODO
-        -- TODO pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
-        -- TODO
+        -- TODO cancel the preview
+
         
       in checkvalid goatState_afterSelection {
           _goatState_handler = refreshedCanvasHandler
@@ -778,10 +767,12 @@ goat_applyWSEvent' resetHandlerIfInactive wsetype wse goatState = goatState_fina
 
   -- we check both the pIsHandlerActive and goatState_hasLocalPreview condition to see if we want to recreate the handler
   -- actually, we could only check pIsHandlerActive if all handlers properly reported their state
-  -- TODO get rid of resetHandlerIfInactive condition, pretty sure you can just do this but cancelling creation handlers will cancel the handler, prob OK? NO not OK, need to think on this more
-  (next_handler, next_workspace) = if resetHandlerIfInactive && not (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
+
+  -- TODO the issue with not (goatState_hasLocalPreview goatState_afterSetLayersState) is that we may actually want to regen the handler we just haven't commit its preview yet (i.e. box creation)
+  -- NO that's not true because in those cases you can return an explicit commit action or you return HOA_Nothing which should also commit when the handler is replaced
+  (next_handler, next_workspace) = if (not . handlerActiveState_isActive) (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
     -- if we replaced the handler, commit its local preview if there was one
-    then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
+    then trace "COMMIT: " $ (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
     else (_goatState_handler goatState_afterSetLayersState, _goatState_workspace goatState_afterSetLayersState)
   goatState_afterSetHandler = goatState_afterSetLayersState {
       _goatState_handler = next_handler

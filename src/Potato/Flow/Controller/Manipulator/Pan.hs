@@ -57,6 +57,6 @@ instance PotatoHandler PanHandler where
     Just x  -> pRenderHandler x phi
 
   -- always active so we never replace pan handler with new selection from changes (which should never happen anyways)
-  pIsHandlerActive _ = True
+  pIsHandlerActive _ = HAS_Active_Mouse
 
   pHandlerTool _ = Just Tool_Pan

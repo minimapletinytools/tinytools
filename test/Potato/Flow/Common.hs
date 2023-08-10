@@ -142,9 +142,19 @@ checkHandlerNameAndState name st = FunctionPredicate $
   (\(SomePotatoHandler h) ->
     let
       hName = pHandlerName h
+      hst = handlerActiveState_isActive $ pIsHandlerActive h
+    in ("Handler: " <> hName <> "(" <> show hst <> ") expected: " <> name <> " (" <> show st <> ")", hName == name && hst == st))
+  . _goatState_handler
+
+checkHandlerNameAndState2 :: Text -> HandlerActiveState -> EverythingPredicate
+checkHandlerNameAndState2 name st = FunctionPredicate $
+  (\(SomePotatoHandler h) ->
+    let
+      hName = pHandlerName h
       hst = pIsHandlerActive h
     in ("Handler: " <> hName <> "(" <> show hst <> ") expected: " <> name <> " (" <> show st <> ")", hName == name && hst == st))
   . _goatState_handler
+
 
 firstSelectedSuperOwlWithOwlTreePredicate :: Maybe Text -> (OwlTree -> SuperOwl -> Bool) -> EverythingPredicate
 firstSelectedSuperOwlWithOwlTreePredicate mlabel f = FunctionPredicate fn where

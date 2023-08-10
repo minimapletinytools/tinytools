@@ -323,7 +323,7 @@ instance PotatoHandler LayersHandler where
 
   --pRenderHandler lh@LayersHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
-  pIsHandlerActive LayersHandler {..} = _layersHandler_dragState /= LDS_None
+  pIsHandlerActive LayersHandler {..} = if _layersHandler_dragState /= LDS_None  then HAS_Active_Mouse else HAS_Inactive
 
   -- TODO this is incorrect, we may be in the middle of dragging elements that got deleted
   pRefreshHandler h _ = Just $ SomePotatoHandler h
@@ -531,7 +531,7 @@ instance PotatoHandler LayersRenameHandler where
   -- TODO render renaming stuff (or do we do this in pRenderLayersHandler?)
   --pRenderHandler lh@LayersRenameHandler {..} PotatoHandlerInput {..} = emptyHandlerRenderOutput
 
-  pIsHandlerActive LayersRenameHandler {..} = True
+  pIsHandlerActive LayersRenameHandler {..} = HAS_Active_Keyboard
 
   pRenderLayersHandler LayersRenameHandler {..} phi@PotatoHandlerInput {..} = r where
     r' = pRenderLayersHandler _layersRenameHandler_original phi

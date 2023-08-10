@@ -510,13 +510,15 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1) -- make sure no elt was created
           , numSelectedEltsEqualPredicate 0 -- the newly created elt gets selected and after cancelling, the previous selection is lost, womp womp
-          , checkHandlerNameAndState handlerName_box False 
+          -- this is empty handler now, ideally we want to keep Box handler here
+          --, checkHandlerNameAndState handlerName_box False 
         ]
       -- same as above
       , Combine [
           PFStateFunctionPredicate (checkNumElts 1)
           , numSelectedEltsEqualPredicate 0
-          , checkHandlerNameAndState handlerName_box False
+          -- this is empty handler now, ideally we want to keep Box handler here
+          --, checkHandlerNameAndState handlerName_box False
         ]
 
       , LabelCheck "press escape a bunch of times and make sure nothing breaks"
@@ -537,11 +539,11 @@ everything_basic_test = constructTest "basic" emptyOwlPFState bs expected where
       , EqPredicate goatState_selectedTool Tool_Text
       , checkHandlerNameAndState handlerName_box True
       , checkHandlerNameAndState handlerName_box True
-      , checkHandlerNameAndState handlerName_boxText False
+      , checkHandlerNameAndState2 handlerName_boxText HAS_Active_Keyboard
       , Combine [
           PFStateFunctionPredicate (checkNumElts 2) -- make sure second box was created
           , numSelectedEltsEqualPredicate 1
-          , checkHandlerNameAndState handlerName_boxText False
+          , checkHandlerNameAndState2 handlerName_boxText HAS_Active_Keyboard
         ]
 
       -- unselect

@@ -327,7 +327,7 @@ instance PotatoHandler AutoLineHandler where
       then HandlerRenderOutput attachmentBoxes
       else HandlerRenderOutput (attachmentBoxes <> boxes <> labels)
 
-  pIsHandlerActive _ = False
+  pIsHandlerActive _ = HAS_Inactive
   pHandlerTool AutoLineHandler {..} = if _autoLineHandler_isCreation
     then Just Tool_Line
     else Nothing
@@ -448,7 +448,7 @@ instance PotatoHandler AutoLineEndPointHandler where
     boxes = maybeRenderPoints (_autoLineEndPointHandler_isStart, not _autoLineEndPointHandler_isStart) _autoLineEndPointHandler_offsetAttach (-1) phi
     attachmentBoxes = renderAttachments phi (_autoLineEndPointHandler_attachStart, _autoLineEndPointHandler_attachEnd)
     r = HandlerRenderOutput (attachmentBoxes <> boxes)
-  pIsHandlerActive _ = True
+  pIsHandlerActive _ = HAS_Active_Mouse
   pHandlerTool AutoLineEndPointHandler {..} = if _autoLineEndPointHandler_isCreation
     then Just Tool_Line
     else Nothing
@@ -597,7 +597,7 @@ instance PotatoHandler AutoLineMidPointHandler where
     boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
     -- TODO render mouse position as there may not actually be a midpoint there
     r = HandlerRenderOutput boxes
-  pIsHandlerActive _ = True
+  pIsHandlerActive _ =  HAS_Active_Mouse
 
 -- handles creating and moving text labels
 data AutoLineLabelMoverHandler = AutoLineLabelMoverHandler {
@@ -663,7 +663,7 @@ instance PotatoHandler AutoLineLabelMoverHandler where
     labels = renderLabels phi False
     r = HandlerRenderOutput labels
 
-  pIsHandlerActive _ = True
+  pIsHandlerActive _ = HAS_Active_Mouse
 
 
 
@@ -910,6 +910,5 @@ instance PotatoHandler AutoLineLabelHandler where
     btis = _autoLineLabelHandler_state slh
     r = makeTextHandlerRenderOutput btis
 
-  pIsHandlerActive _ = True
-  -- TODO return more compilcated notion of activeness, for now, we just return true so that the handler does not get replaced when deleting a line label (maknig it really easy to delete the line afterwarnds)M
-  --pIsHandlerActive = _autoLineLabelHandler_active
+  -- TODO set properly
+  pIsHandlerActive slh = if _autoLineLabelHandler_active slh then HAS_Active_Mouse else HAS_Active_Keyboard

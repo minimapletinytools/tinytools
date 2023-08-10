@@ -162,7 +162,7 @@ handlerActiveState_isActive :: HandlerActiveState -> Bool
 handlerActiveState_isActive = \case
   HAS_Inactive -> False
   _ -> True
-
+  
 
 -- we check handler name for debug reasons so it's useful to have constants
 -- there should be no non-test code that depends on comparing pHandlerName
@@ -235,8 +235,8 @@ class PotatoHandler h where
   
   -- TODO change this to an enum so you can capture different notion of activeness
   -- active manipulators will not be overwritten by new handlers via selection from changes
-  pIsHandlerActive :: h -> Bool
-  pIsHandlerActive _ = False
+  pIsHandlerActive :: h -> HandlerActiveState
+  pIsHandlerActive _ = HAS_Inactive
 
   pRenderHandler :: h -> PotatoHandlerInput -> HandlerRenderOutput
   pRenderHandler _ _ = def
@@ -253,7 +253,7 @@ class PotatoHandler h where
   -- default version that ensures mouse state is valid when handler is active
   pValidateMouse h (RelMouseDrag MouseDrag {..}) = case _mouseDrag_state of
     MouseDragState_Cancelled -> False
-    MouseDragState_Down      -> not $ pIsHandlerActive h
+    MouseDragState_Down      -> not . handlerActiveState_isActive $ pIsHandlerActive h
     _                        -> True
 
   -- determine which selected tool to show

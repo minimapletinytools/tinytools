@@ -146,14 +146,17 @@ data BoxTextHandler = BoxTextHandler {
     -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
     , _boxTextHandler_prevHandler :: SomePotatoHandler
     , _boxTextHandler_undoFirst   :: Bool
+
+    , _boxTextHandler_commitOnMouseUp :: Bool
   }
 
-makeBoxTextHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
-makeBoxTextHandler prev selection rmd = BoxTextHandler {
+makeBoxTextHandler :: Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
+makeBoxTextHandler commit prev selection rmd = BoxTextHandler {
       _boxTextHandler_isActive = False
       , _boxTextHandler_state = uncurry makeTextInputState (getSBox selection) rmd
       , _boxTextHandler_prevHandler = prev
       , _boxTextHandler_undoFirst = False
+      , _boxTextHandler_commitOnMouseUp = commit
     }
 
 updateBoxTextHandlerState :: Bool -> CanvasSelection -> BoxTextHandler -> BoxTextHandler
@@ -228,8 +231,9 @@ instance PotatoHandler BoxTextHandler where
           else Just $ def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
                   _boxTextHandler_isActive = False
+                  , _boxTextHandler_commitOnMouseUp = False
                 }
-              , _potatoHandlerOutput_action = HOA_Preview $ Preview_Commit
+              , _potatoHandlerOutput_action = if _boxTextHandler_commitOnMouseUp then HOA_Preview Preview_Commit else HOA_Nothing
             }
       MouseDragState_Cancelled -> Just $ captureWithNoChange tah
 
@@ -253,7 +257,8 @@ instance PotatoHandler BoxTextHandler where
                 --Nothing -> False -- this variant adds new undo point each time cursoer is moved
                 Just _  -> True
             }
-          -- TODO we wnat to PO_Continue here, but we don't have a good place to commit right now as there's no explicit cancel for us to Preview_Commit
+          -- TODO do a Preview_Cancel if we reverted back to original text
+          -- TODO we want to PO_Continue here, but we don't have a good place to commit right now as there's no explicit cancel for us to Preview_Commit
           , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview (previewOperation_fromUndoFirst _boxTextHandler_undoFirst)) mllama
 
         }
@@ -279,8 +284,8 @@ instance PotatoHandler BoxTextHandler where
     btis = _boxTextHandler_state tah
     r = pRenderHandler (_boxTextHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
 
-  -- TODO set properly
-  pIsHandlerActive = _boxTextHandler_isActive
+  -- TODO set properly (_boxTextHandler_isActive checks mouse activity, but we have more subtle notions of active now)
+  pIsHandlerActive tah = if _boxTextHandler_isActive tah then HAS_Active_Mouse else HAS_Active_Keyboard
 
 
 
@@ -459,4 +464,4 @@ instance PotatoHandler BoxLabelHandler where
     r = pRenderHandler (_boxLabelHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
 
   -- TODO set properly
-  pIsHandlerActive = _boxLabelHandler_active
+  pIsHandlerActive tah = if _boxLabelHandler_active tah then HAS_Active_Mouse else HAS_Active_Keyboard

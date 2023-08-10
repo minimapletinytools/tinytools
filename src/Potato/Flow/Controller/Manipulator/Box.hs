@@ -348,7 +348,7 @@ instance PotatoHandler BoxHandler where
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
         -- create box handler and pass on the input (if it was not a text box it will be converted to one by the BoxTextHandler)
-        then pHandleMouse (makeBoxTextHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
+        then pHandleMouse (makeBoxTextHandler isCreation (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd) phi rmd
 
         else if isTextArea
           && (wasNotActuallyDragging || isCreation)
@@ -406,7 +406,8 @@ instance PotatoHandler BoxHandler where
       -- don't render anything if we are about to create a box
       then emptyHandlerRenderOutput
       else HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
-  pIsHandlerActive = _boxHandler_active
+      
+  pIsHandlerActive bh = if _boxHandler_active bh then HAS_Active_Mouse else HAS_Inactive
 
   pHandlerTool BoxHandler {..} = case _boxHandler_creation of
     BoxCreationType_Box -> Just Tool_Box
