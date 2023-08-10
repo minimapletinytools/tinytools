@@ -35,6 +35,11 @@ data HandlerOutputAction =
   | HOA_Preview Preview.Preview 
   deriving (Show)
 
+handlerOutputAction_isNothing :: HandlerOutputAction -> Bool  
+handlerOutputAction_isNothing = \case
+  HOA_Nothing -> True
+  _ -> False
+
 handlerOutputAction_isSelect :: HandlerOutputAction -> Bool
 handlerOutputAction_isSelect = \case
   HOA_Select _ _ -> True
@@ -151,9 +156,13 @@ instance Default HandlerRenderOutput where
 emptyHandlerRenderOutput :: HandlerRenderOutput
 emptyHandlerRenderOutput = HandlerRenderOutput { _handlerRenderOutput_temp = [] }
 
+data HandlerActiveState = HAS_Active_Mouse | HAS_Active_Keyboard | HAS_Active_Waiting | HAS_Inactive deriving (Show, Eq)
 
--- TODO use me
-data HandlerActiveState = HAS_None | HAS_Active_Mouse | HAS_Active_Keyboard deriving (Show, Eq)
+handlerActiveState_isActive :: HandlerActiveState -> Bool
+handlerActiveState_isActive = \case
+  HAS_Inactive -> False
+  _ -> True
+
 
 -- we check handler name for debug reasons so it's useful to have constants
 -- there should be no non-test code that depends on comparing pHandlerName

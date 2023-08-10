@@ -660,10 +660,14 @@ goat_processCanvasHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processCanvasHandlerOutput pho goatState = r where
   canvasSelection = computeCanvasSelection goatState
 
-  -- TODO delete workspace stuff here once you do proper pIsHandlerActive 
+
+  wasNoAction = handlerOutputAction_isNothing $ _potatoHandlerOutput_action pho
+
+  -- TODO you can DELETE workspace stuff here once all handlers properly return commit actions when they are done
+  -- you need this right now otherwise, for example, drag creating a box via BoxHandler will not commit after mouseup as it returns (handler: Nothing, action: HOA_Nothing)
   (next_handler, next_workspace) = case _potatoHandlerOutput_nextHandler pho of
-    -- if we replaced the handler, commit its local preview if there was one
-    Nothing -> (makeHandlerFromSelection canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState)
+    -- if we replaced the handler and there was HOA_Nothing, commit its local preview if there was one
+    Nothing -> (makeHandlerFromSelection canvasSelection, if wasNoAction then maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState else _goatState_workspace goatState)
     Just x -> (x, _goatState_workspace goatState)
   goatState' = goatState { 
       _goatState_handler = next_handler 
