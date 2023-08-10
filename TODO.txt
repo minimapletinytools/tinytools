@@ -133,65 +133,9 @@ DONE-adjustable attachment spec
 -no partial owls!
   -except when converting remote changes to llamas
 
-:: Preview Operations Mini Refactor
-DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
-  DONE-in particular, get rid of Llama->ControllersWithId, we work with Llama's directly now!
-  DONE-remove PFCmd stuff from WSEevent
-    -this is hard because of usage of lastState in OwlWorkspace. We need a notion of lastState which is state before any preview is applied (or better just the local preview)
-      -may you can unapply the local preview to generate last state, requires assumption that local preview can always be unapplied which I'm not sure is true or not...
-        -actually just carry around state before any previews applied? But will that break any assupmtions? Maybe we really just want only the local preview unapplied
-      -or does this lastState stuff even matter anymore if you use set operations
-        -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
-DONE-goat refactor warmup
-  DONE-get rid of GoatCmdTempOutput
-  DONE-do goatCmd endo refactor, separate routines for each GoatCmd
-    IGNORE-after moving everything to endo style, you'll need to find a new home for 
-      `goatState = goatState' { _goatState_unbrokenInput = "" }`
-      -probably add some common routine to every endo fn I guess
-  DONE-BUG selecting does not auto expand folders
-  DONE-BUG hiding layers causes crash because broadphase isn't being updated
-  DONE-split hoa_layers into 2 separate things
-  DONE-add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
-  DONE-refactor out goat update routines in foldGoatFn
-    DONE-set selection
-    DONE-set pan
-    DONE-update layers state
-    DONE-apply event
-    DONE-render / render selection
-    DONE-update selection
-    DONE-set handler from selection
-    DONE-refresh Handler
-      -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
-      -I think you want to reset the handler sooner in the flow (before set handler from selection)
-  IGNORE-refactor out layers handler in foldGoatFn
-  DONE-switch HOA_DEPRECATED_PFEvent to HOA_Preview
-    -remember to do Preview_Commit as needed 
-      -or instead we do the thing where the next Preview_Start commits the last preview?
-        -no I think you want explicit commits
-        -actually I think you don't want explicit commits, or make it optional. It's kind of awkward to cancel in some places e.g. keyboard movement
-          -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
-  DONE-refactor PotatoHandlerOutput to be mutually exclusive
-DONE-create preview list (I guess you can just put it in PFWorkspace for now...)
-  -Map UserKey (Maybe LLama)
-    -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
-  -question should we store local preview separately and always apply it last/first?
-DONE-assert when starting a new handler that there is no local preview action
-DONE-handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
-IGNORE-pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
-  -actually maybe it's not unreasonable just to cancel the preview always
-DONE-implement PO_CommitAndStart
-IGNORE-do PO_Commit on mouse up in all the handlers
-DONE-I think you need switching handlers to do a commit as not all handlers have a reliable point to commit
-IGNORE-replace pIsHandlerActive with just checking if there is a live preview opeartion or not
-  -no I think you need/want both, there are some handlers that are active but don't do Previews
-  -maybe default implementation of pIsHandlerActive could check for a live preview? Can/should previews be associated with handlers for error checking purposes?
-    -maybe give handlers an Id
-IGNORE-I think you may want explicit onReplaceHandler operation. Not every handler wants to commit their changes when they get replaced
-  -specifically, there's a convert to text box preview operation when you enter text mode on a non-text box, we want a preview to convert it to a text box, and if this handler gets replaced, we don't want to commit the change
-  -perhaps you can just have a commitOnReplace :: Bool function, that's probably easiest
 
 
-:: MDI REFACTOR NOTES
+:: MDI REFACTOR NOTES 7/2023
 IGNORE!!-get rid of PFWorkspace first
   DONE-get rid of lastChanges
   YES-or do we keep it? could be nic eplace to store preview list and local llama stack
@@ -270,18 +214,14 @@ IGNORE!!-get rid of PFWorkspace first
   -does ordering service need to know about state/non commuting changes
     -no it doesn't, goat can just toss out failed changes
 
-:: RELEASE prep
-
+::NEWEST TODO::
+-move all serializable types into Snake for versioning
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
-
-
-::NEWEST TODO::
 -tests to add
   -make line label + "aoeu" + backspace a bunch of times and ensure the line does not get deleted
 -cancelling a creation handler takes you back to empty handler
 -the border/text params dialog should show when seleting box tool
-DONE-delete CartLine
 -rename
   -OwlPFWorkspace -> OwlWorkspace
   -OwlPFState -> OwlState
@@ -296,19 +236,6 @@ DONE-delete CartLine
 -fix
   -- TODO this should be r' not a FIX ME why is stuff even working???
   -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
--introduce "cancelHandler" function
-  -why would I want to do this?
-  -gets called from GoatWidget when some higher order operation cancels or replaces the handler
-    -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
-  -can this be somehow combined with reset handler?
-  -exsiting ways ah andler can be canceled
-    -mousedrag_cancel (actually dosen't cancel, jsut resets the handler so no)
-    -you get lazy sometimes and just return no handler such that Goat regenerates the handler from selsection and this will now become a cancel
-    -keyboard escape
-    -click outside of handler capture area which causes goat to regenrate a new selection handler
-    -pReseteHandler may clear the handler
-      -is this what happens when a you delete an object in the layers?
--move all serializable types into Snake for versioning
 -BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
 -you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
   -from playing around with line arrows clikcing back and forth...
@@ -340,6 +267,80 @@ DONE-delete CartLine
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
 
+DONE-delete CartLine
+IGNORE-introduce "cancelHandler" function
+  -why would I want to do this?
+  -gets called from GoatWidget when some higher order operation cancels or replaces the handler
+    -must distinguish between cases where a handler is replaces vs when a new one gets returned by previous handler
+  -can this be somehow combined with reset handler?
+  -exsiting ways ah andler can be canceled
+    -mousedrag_cancel (actually dosen't cancel, jsut resets the handler so no)
+    -you get lazy sometimes and just return no handler such that Goat regenerates the handler from selsection and this will now become a cancel
+    -keyboard escape
+    -click outside of handler capture area which causes goat to regenrate a new selection handler
+    -pReseteHandler may clear the handler
+      -is this what happens when a you delete an object in the layers?
+
+
+:: Preview Operations Mini Refactor 8/2023
+DONE-get rid of controllerswithid->llama->controllerswithid circular nonsense
+  DONE-in particular, get rid of Llama->ControllersWithId, we work with Llama's directly now!
+  DONE-remove PFCmd stuff from WSEevent
+    -this is hard because of usage of lastState in OwlWorkspace. We need a notion of lastState which is state before any preview is applied (or better just the local preview)
+      -may you can unapply the local preview to generate last state, requires assumption that local preview can always be unapplied which I'm not sure is true or not...
+        -actually just carry around state before any previews applied? But will that break any assupmtions? Maybe we really just want only the local preview unapplied
+      -or does this lastState stuff even matter anymore if you use set operations
+        -I don't think it does, but for cerating new elts you need to call owlPFState_nextId to get the id, but we will have a state-independent uuid generation function now?
+DONE-goat refactor warmup
+  DONE-get rid of GoatCmdTempOutput
+  DONE-do goatCmd endo refactor, separate routines for each GoatCmd
+    IGNORE-after moving everything to endo style, you'll need to find a new home for 
+      `goatState = goatState' { _goatState_unbrokenInput = "" }`
+      -probably add some common routine to every endo fn I guess
+  DONE-BUG selecting does not auto expand folders
+  DONE-BUG hiding layers causes crash because broadphase isn't being updated
+  DONE-split hoa_layers into 2 separate things
+  DONE-add processHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
+  DONE-refactor out goat update routines in foldGoatFn
+    DONE-set selection
+    DONE-set pan
+    DONE-update layers state
+    DONE-apply event
+    DONE-render / render selection
+    DONE-update selection
+    DONE-set handler from selection
+    DONE-refresh Handler
+      -this is tricky because we this may cause the handler to send a cancel preview operation which would normally have us refreshing the handler again
+      -I think you want to reset the handler sooner in the flow (before set handler from selection)
+  IGNORE-refactor out layers handler in foldGoatFn
+  DONE-switch HOA_DEPRECATED_PFEvent to HOA_Preview
+    -remember to do Preview_Commit as needed 
+      -or instead we do the thing where the next Preview_Start commits the last preview?
+        -no I think you want explicit commits
+        -actually I think you don't want explicit commits, or make it optional. It's kind of awkward to cancel in some places e.g. keyboard movement
+          -we could cancel when they leave the handler which would require an additional cancel handler function and would not capture cases where user just went AFK with the handler after making some keyboard changes
+  DONE-refactor PotatoHandlerOutput to be mutually exclusive
+DONE-create preview list (I guess you can just put it in PFWorkspace for now...)
+  -Map UserKey (Maybe LLama)
+    -this isn't quite right, because the previews are applied/unapplied in order. so it should probably just be [(UserKey, Llama)]
+  -question should we store local preview separately and always apply it last/first?
+DONE-assert when starting a new handler that there is no local preview action
+DONE-handler -> preview -> goat -> pfworkspace -> unapply old previews by that user -> create new state/preview list
+IGNORE-pRefreshHandler needs to return an output action and the only possible output is HOA_Preview PreviewCancel (or HOA_Nothing for the layers handler)
+  -actually maybe it's not unreasonable just to cancel the preview always
+DONE-implement PO_CommitAndStart
+IGNORE-do PO_Commit on mouse up in all the handlers
+DONE-I think you need switching handlers to do a commit as not all handlers have a reliable point to commit
+IGNORE-replace pIsHandlerActive with just checking if there is a live preview opeartion or not
+  -no I think you need/want both, there are some handlers that are active but don't do Previews
+  -maybe default implementation of pIsHandlerActive could check for a live preview? Can/should previews be associated with handlers for error checking purposes?
+    -maybe give handlers an Id
+IGNORE-I think you may want explicit onReplaceHandler operation. Not every handler wants to commit their changes when they get replaced
+  -specifically, there's a convert to text box preview operation when you enter text mode on a non-text box, we want a preview to convert it to a text box, and if this handler gets replaced, we don't want to commit the change
+  -perhaps you can just have a commitOnReplace :: Bool function, that's probably easiest
+
+
+:: TODO 7/2023
 
 DONE-BUG toggle expand/hide/lock in layers should not alter selection (right now it deselects)
 DONE-tests
@@ -1374,6 +1375,8 @@ DONE-copy pasta
   DONE-copy pasta test
   IGNORE-I think the way it's handled right now (PFEventTag operations) is cor
 
+
+:: ARCHIVE START HERE ::
 
 
 
