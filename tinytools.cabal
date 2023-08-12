@@ -5,14 +5,14 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           tinytools
-version:        0.1.0.3
+version:        0.1.0.4
 description:    tinytools is a mono-space unicode diagram editor
 homepage:       https://github.com/minimapletinytools/tinytools#readme
 bug-reports:    https://github.com/minimapletinytools/tinytools/issues
 author:         minimaple
 maintainer:     minimapletinytools@gmail.com
 synopsis:       tinytools is a mono-space unicode diagram editor
-copyright:      2022 Peter Lu
+copyright:      2023 minimaple (Peter Lu)
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
