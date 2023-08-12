@@ -219,6 +219,7 @@ IGNORE!!-get rid of PFWorkspace first
   -you need to add a random generator to GoatState with sufficient entropy to generate Uuids
   -add shepard IDs
   -add shift ID
+  -consider making a `State GoatState` Monad... 
 -properyl return Preview_Commit actions where appropriate
   -BoxHandler creation, move
   -LineHandler creation, endpoint/midpoint/label move

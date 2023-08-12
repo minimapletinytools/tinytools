@@ -155,6 +155,7 @@ library
     , vector
     , vty
     , filepath
+    --, uuid
   default-language: Haskell2010
 
 test-suite tinytools-test

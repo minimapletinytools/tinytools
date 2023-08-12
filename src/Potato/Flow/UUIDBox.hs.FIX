@@ -1,0 +1,23 @@
+module Potato.Flow.UUIDBox where
+
+import           Relude
+
+import Data.UUID
+import qualified Data.UUID.V3 as V3
+import qualified Data.UUID.V5 as V5
+
+data UUIDBox = UUIDBox {
+    _uuidBox_uuid :: UUID
+  } deriving (Eq, Show, Generic)
+
+
+nextUUID :: UUIDBox -> (UUID, UUIDBox)
+nextUUID (UUIDBox uuid) = (uuid2, UUIDBox uuid2) where
+  -- not how generateNamed is was intended to be used but that's ok
+  uuid2 = V5.generateNamed uuid []
+  
+
+firstUUID :: IO (UUIDBox)
+firstUUID = do
+  uuid <- V3.nextRandom
+  return $ UUIDBox uuid
