@@ -223,6 +223,7 @@ IGNORE!!-get rid of PFWorkspace first
 -properyl return Preview_Commit actions where appropriate
   -BoxHandler creation, move
   -LineHandler creation, endpoint/midpoint/label move
+DONE-make the welcome pop up scrollable
 -move all serializable types into Snake for versioning
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
