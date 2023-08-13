@@ -156,6 +156,9 @@ boxCreationType_isCreation bct = bct /= BoxCreationType_None && bct /= BoxCreati
 data BoxHandler = BoxHandler {
 
     _boxHandler_handle      :: BoxHandleType -- the current handle we are dragging
+
+    -- TODO this is wrong as makeDragOperation does not always return a Llama
+    -- rename this to mouseActive or something
     , _boxHandler_undoFirst :: Bool
 
     -- with this you can use same code for both create and manipulate (create the handler and immediately pass input to it)
@@ -357,7 +360,11 @@ instance PotatoHandler BoxHandler where
 
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
-          else Just makePotatoHandlerOutput_maybeCommit
+          else Just def {
+              _potatoHandlerOutput_action = HOA_Preview Preview_MaybeCommit
+              -- doesn't work, see comments where _boxHandler_undoFirst is defined
+              --_potatoHandlerOutput_action = if _boxHandler_undoFirst then HOA_Preview Preview_Commit else HOA_Nothing
+            }
 
         -- TODO if this was a text box creation case, consider entering text edit mode
 

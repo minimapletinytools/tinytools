@@ -220,6 +220,9 @@ IGNORE!!-get rid of PFWorkspace first
   -add shepard IDs
   -add shift ID
   -consider making a `State GoatState` Monad... 
+  -deal with the undofirstsituation 
+    -rename to mouseACtive?
+    -just get rid of it and instead check if there is an associated local preview?
 -properyl return Preview_Commit actions where appropriate
   -BoxHandler creation, move
   -LineHandler creation, endpoint/midpoint/label move

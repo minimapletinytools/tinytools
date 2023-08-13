@@ -440,7 +440,9 @@ instance PotatoHandler AutoLineEndPointHandler where
             , _potatoHandlerOutput_action = HOA_Preview $ Preview (previewOperation_fromUndoFirst _autoLineEndPointHandler_undoFirst) op
           }
       -- no need to return AutoLineHandler, it will be recreated from selection by goat
-      MouseDragState_Up -> Just def
+      MouseDragState_Up -> Just def {
+          _potatoHandlerOutput_action = if _autoLineEndPointHandler_undoFirst then HOA_Preview Preview_Commit else HOA_Nothing
+        }
       MouseDragState_Cancelled -> if _autoLineEndPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
 
   pHandleKeyboard _ PotatoHandlerInput {..} _ = Nothing
@@ -591,7 +593,9 @@ instance PotatoHandler AutoLineMidPointHandler where
           , _potatoHandlerOutput_action = HOA_Preview $ Preview (previewOperation_fromUndoFirst _autoLineMidPointHandler_undoFirst) event
         }
     -- no need to return AutoLineHandler, it will be recreated from selection by goat
-    MouseDragState_Up -> Just def
+    MouseDragState_Up -> Just def {
+        _potatoHandlerOutput_action = if _autoLineMidPointHandler_undoFirst then HOA_Preview Preview_Commit else HOA_Nothing
+      }
     MouseDragState_Cancelled -> if _autoLineMidPointHandler_undoFirst then Just def { _potatoHandlerOutput_action = HOA_Preview Preview_Cancel } else Just def
   pRenderHandler AutoLineMidPointHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineMidPointHandler_offsetAttach _autoLineMidPointHandler_midPointIndex phi
@@ -640,9 +644,6 @@ instance PotatoHandler AutoLineLabelMoverHandler where
           }
 
       MouseDragState_Up -> Just def {
-
-          -- TODO Preview_Commit 
-
           -- go back to AutoLineLabelHandler on completion
           _potatoHandlerOutput_nextHandler = if not _autoLineLabelMoverHandler_undoFirst
             -- if _autoLineLabelMoverHandler_undoFirst is false, this means we didn't drag at all, in which case go to label edit handler
@@ -650,6 +651,8 @@ instance PotatoHandler AutoLineLabelMoverHandler where
               makeAutoLineLabelHandler_from_labelIndex _autoLineLabelMoverHandler_labelIndex _autoLineLabelMoverHandler_prevHandler phi rmd
             -- TODO consider also going into edit handler after dragging an endpoint, but for now, just go back to the previous handler (which will be AutoLineHandler)
             else Just (_autoLineLabelMoverHandler_prevHandler)
+
+          , _potatoHandlerOutput_action = if _autoLineLabelMoverHandler_undoFirst then HOA_Preview Preview_Commit else HOA_Nothing
         }
 
       MouseDragState_Cancelled -> Just def {

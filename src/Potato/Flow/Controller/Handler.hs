@@ -58,12 +58,6 @@ instance Default PotatoHandlerOutput where
       , _potatoHandlerOutput_action = HOA_Nothing
     }
 
-makePotatoHandlerOutput_maybeCommit :: PotatoHandlerOutput
-makePotatoHandlerOutput_maybeCommit = def {
-    _potatoHandlerOutput_nextHandler = Nothing
-    , _potatoHandlerOutput_action = HOA_Preview Preview.Preview_MaybeCommit
-  }
-
 -- TODO replace this with just GoatState
 data PotatoHandlerInput = PotatoHandlerInput {
     -- from PFOutput
