@@ -357,7 +357,7 @@ instance PotatoHandler BoxHandler where
 
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.
-          else Just def
+          else Just makePotatoHandlerOutput_maybeCommit
 
         -- TODO if this was a text box creation case, consider entering text edit mode
 

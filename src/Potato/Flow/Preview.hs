@@ -41,6 +41,8 @@ data Preview =
   Preview PreviewOperation Llama 
   -- commit the last operation
   | Preview_Commit
+  -- same as above but does not assert that there is a local preview
+  | Preview_MaybeCommit 
   -- cancel the preview 
   | Preview_Cancel 
   deriving (Show, Generic)

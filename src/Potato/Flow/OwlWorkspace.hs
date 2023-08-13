@@ -278,6 +278,7 @@ updateOwlPFWorkspace evt ws = r_0 where
         
 
       Preview_Commit -> assert (owlPFWorkspace_hasLocalPreview ws) $ (ws_afterCommit, IM.empty)
+      Preview_MaybeCommit -> (ws_afterCommit, IM.empty)
       Preview_Cancel -> case _owlPFWorkspace_localPreview ws of 
         Nothing -> error "expected local preview"
         Just (_, _, undollama) -> clearLocalPreview $ doLlamaWorkspace' False undollama ws
