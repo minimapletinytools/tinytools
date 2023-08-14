@@ -24,7 +24,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.Methods.SEltMethods
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 
 import qualified Data.IntMap.Strict        as IM

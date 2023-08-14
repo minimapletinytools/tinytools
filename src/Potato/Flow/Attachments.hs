@@ -18,7 +18,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.OwlItem
-import Potato.Flow.SElts
+import Potato.Flow.Serialization.Snake
 import Potato.Flow.Methods.LineTypes
 
 import Data.List (minimumBy)

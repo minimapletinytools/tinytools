@@ -16,7 +16,7 @@ import qualified Data.Set as Set
 import qualified Data.IntSet as IS
 import qualified Data.Text as T
 import Potato.Flow.OwlItem
-import Potato.Flow.SElts
+import Potato.Flow.Serialization.Snake
 import Potato.Flow.Types
 import Potato.Flow.DebugHelpers
 

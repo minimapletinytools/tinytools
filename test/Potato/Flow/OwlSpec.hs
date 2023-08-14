@@ -15,7 +15,7 @@ import Potato.Flow.Owl
 import           Potato.Flow.Deprecated.TestStates
 import           Potato.Flow.Deprecated.State
 import Potato.Flow.Types
-import Potato.Flow.SElts
+import Potato.Flow.Serialization.Snake
 
 
 -- | 'owlTree_toSEltTree' may change SEltFolderEnd name and REltId during reconstruction

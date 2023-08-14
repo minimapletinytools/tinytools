@@ -38,7 +38,7 @@ import           Potato.Flow.Methods.TextCommon
 import           Potato.Flow.Methods.Types
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 
 import qualified Data.List                      as L
 import qualified Data.List.Index                as L

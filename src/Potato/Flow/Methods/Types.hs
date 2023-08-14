@@ -11,7 +11,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.Owl
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 
 import qualified Data.Text         as T
 

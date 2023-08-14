@@ -16,7 +16,7 @@ import           Relude
 
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import Potato.Flow.DebugHelpers

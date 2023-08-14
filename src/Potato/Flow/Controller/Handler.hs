@@ -14,7 +14,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.Render
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import qualified Potato.Flow.Preview as Preview
 
 import qualified Potato.Data.Text.Zipper          as TZ

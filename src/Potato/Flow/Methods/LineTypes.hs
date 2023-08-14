@@ -5,7 +5,7 @@ module Potato.Flow.Methods.LineTypes where
 import           Relude
 
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 
 import Linear.Vector ((^*))
 import Linear.Matrix (M22, (!*))

@@ -49,7 +49,7 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
 import           Potato.Flow.Methods.SEltMethods
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import  Potato.Flow.Preview 
 import Potato.Flow.Methods.LlamaWorks

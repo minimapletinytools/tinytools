@@ -14,7 +14,7 @@ import Potato.Flow.Attachments
 import Potato.Flow.OwlWorkspace
 import Potato.Flow.OwlState
 import Potato.Flow.Llama
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 
 import           Control.Exception (assert)

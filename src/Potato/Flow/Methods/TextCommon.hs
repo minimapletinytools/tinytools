@@ -6,7 +6,7 @@ module Potato.Flow.Methods.TextCommon (
 
 import           Relude
 
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 
 import qualified Data.Map as Map
 import qualified Data.Text                      as T

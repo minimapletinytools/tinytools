@@ -3,7 +3,7 @@ module Potato.Flow.OwlHelpers where
 
 import Relude
 
-import Potato.Flow.SElts
+import Potato.Flow.Serialization.Snake
 import Potato.Flow.Owl
 import Potato.Flow.OwlItem
 import Potato.Flow.Llama

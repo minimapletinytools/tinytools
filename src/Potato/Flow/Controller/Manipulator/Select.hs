@@ -21,7 +21,7 @@ import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import Potato.Flow.RenderCache
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 
 import           Control.Exception                      (assert)
 import           Data.Default

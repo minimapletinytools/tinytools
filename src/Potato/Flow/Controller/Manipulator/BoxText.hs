@@ -24,7 +24,7 @@ import           Potato.Flow.Controller.Handler
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Math
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Owl
 import Potato.Flow.OwlWorkspace

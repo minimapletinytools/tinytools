@@ -1,5 +1,5 @@
 module Potato.Flow (
-  module Potato.Flow.SElts
+  module Potato.Flow.Serialization.Snake
   , module Potato.Flow.Math
   , module Potato.Flow.Methods.SEltMethods
   , module Potato.Flow.Types
@@ -23,7 +23,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Render
 import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.Methods.Types
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.OwlHelpers
 import Potato.Flow.OwlWorkspace

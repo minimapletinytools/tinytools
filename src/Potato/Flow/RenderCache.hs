@@ -6,7 +6,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import           Potato.Flow.Methods.Types
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import Potato.Flow.Types
 import Potato.Flow.Owl
 import           Potato.Flow.Methods.LineTypes

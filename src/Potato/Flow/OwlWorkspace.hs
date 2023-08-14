@@ -22,7 +22,7 @@ import           Potato.Flow.Math
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Preview
 

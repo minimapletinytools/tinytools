@@ -17,7 +17,7 @@ import           Potato.Flow.Llama
 import           Potato.Flow.Math
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlWorkspace
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Preview
 

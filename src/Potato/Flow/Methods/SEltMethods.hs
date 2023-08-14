@@ -11,7 +11,7 @@ import           Potato.Flow.Methods.Types
 import           Potato.Flow.Owl
 import Potato.Flow.RenderCache
 import           Potato.Flow.OwlItem
-import           Potato.Flow.SElts
+import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 
 import           Data.Dependent.Sum             (DSum ((:=>)))
