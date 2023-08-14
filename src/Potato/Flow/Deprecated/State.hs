@@ -40,7 +40,7 @@ import           Relude
 
 import           Potato.Flow.Deprecated.Layers
 import           Potato.Flow.Math
-import           Potato.Flow.SEltMethods
+import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.SEltMethods where
+module Potato.Flow.Methods.SEltMethods where
 
 import           Relude
 

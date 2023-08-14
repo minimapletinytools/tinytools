@@ -72,7 +72,7 @@ library
       Potato.Flow.Reflex.GoatWidget
       Potato.Flow.Render
       Potato.Flow.RenderCache
-      Potato.Flow.SEltMethods
+      Potato.Flow.Methods.SEltMethods
       Potato.Flow.SElts
       Potato.Flow.Serialization.Snake
       Potato.Flow.TestStates
@@ -190,7 +190,7 @@ test-suite tinytools-test
       Potato.Flow.Methods.LineDrawerSpec
       Potato.Flow.OwlSpec
       Potato.Flow.RenderSpec
-      Potato.Flow.SEltMethodsSpec
+      Potato.Flow.Methods.SEltMethodsSpec
       Paths_tinytools
   hs-source-dirs:
       test

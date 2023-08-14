@@ -48,7 +48,7 @@ import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
-import           Potato.Flow.SEltMethods
+import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import  Potato.Flow.Preview 

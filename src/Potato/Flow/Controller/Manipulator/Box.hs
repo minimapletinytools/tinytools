@@ -25,7 +25,7 @@ import           Potato.Flow.Controller.Manipulator.TextArea
 import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Math
-import           Potato.Flow.SEltMethods
+import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.SElts
 import           Potato.Flow.Types
 import           Potato.Flow.OwlItem

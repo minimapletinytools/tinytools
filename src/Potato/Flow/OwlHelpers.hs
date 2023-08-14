@@ -7,7 +7,7 @@ import Potato.Flow.SElts
 import Potato.Flow.Owl
 import Potato.Flow.OwlItem
 import Potato.Flow.Llama
-import Potato.Flow.SEltMethods
+import Potato.Flow.Methods.SEltMethods
 
 superOwl_mustGetSLine :: SuperOwl -> SAutoLine
 superOwl_mustGetSLine sowl = case _owlItem_subItem$ _superOwl_elt sowl of

@@ -9,7 +9,7 @@ import Potato.Flow.Attachments
 import Potato.Flow.OwlItem
 import           Potato.Flow.Math
 import           Potato.Flow.SElts
-import           Potato.Flow.SEltMethods
+import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.Types
 import Potato.Flow.DebugHelpers
 
