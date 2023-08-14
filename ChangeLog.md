@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- various internal improvements to how previews are staged and committed
 
 ## [0.1.0.4]
 ### Changed
