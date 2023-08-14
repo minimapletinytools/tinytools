@@ -74,7 +74,7 @@ library
       Potato.Flow.RenderCache
       Potato.Flow.Methods.SEltMethods
       Potato.Flow.SElts
-      Potato.Flow.Serialization.Snake
+      Potato.Flow.Serialization.SnakeWrangler
       Potato.Flow.TestStates
       Potato.Flow.Types
   hs-source-dirs:

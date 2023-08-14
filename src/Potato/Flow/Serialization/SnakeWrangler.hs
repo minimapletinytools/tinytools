@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Potato.Flow.Serialization.Snake where
+module Potato.Flow.Serialization.SnakeWrangler where
 
 import           Relude
 
