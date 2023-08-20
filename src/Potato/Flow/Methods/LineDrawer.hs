@@ -39,6 +39,7 @@ import           Potato.Flow.Methods.Types
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.Serialization.Snake
+import Potato.Flow.DebugHelpers
 
 import qualified Data.List                      as L
 import qualified Data.List.Index                as L
@@ -691,13 +692,13 @@ getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall = internal_getSAu
 -- the SAutoLineLabel does not have to be one of labels contained in the SAutoLine _sAutoLine_labels
 -- which is useful for positioning SAutoLineLabel before adding them to SAutoLine
 -- however the midpoint index in SAutoLineLabel is expected to map correctly to the SAutoLine
-getSAutoLineLabelPosition :: (HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
+getSAutoLineLabelPosition :: (HasCallStack, HasOwlTree a) => a -> SAutoLine -> SAutoLineLabel -> XY
 getSAutoLineLabelPosition ot sal sall = getSAutoLineLabelPositionFromLineAnchorsForRender lar sal sall where
-  lar = sAutoLine_to_lineAnchorsForRenderList ot sal L.!! (_sAutoLineLabel_index sall)
+  lar = sAutoLine_to_lineAnchorsForRenderList ot sal `debugBangBang` (_sAutoLineLabel_index sall)
 
 -- get SAutoLineLabel positions in visual order (which may not be the same as logical order)
 -- return includes SAutoLineLabel and its original logical index for convenience
-getSortedSAutoLineLabelPositions :: (HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
+getSortedSAutoLineLabelPositions :: (HasCallStack, HasOwlTree a) => a -> SAutoLine -> [(XY, Int, SAutoLineLabel)]
 getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
   sortfn (_,a) (_,b) = case compare (_sAutoLineLabel_index a) (_sAutoLineLabel_index b) of
     EQ -> case _sAutoLineLabel_position a of
@@ -708,7 +709,7 @@ getSortedSAutoLineLabelPositions ot sal@SAutoLine {..} = r where
 
   larlist = sAutoLine_to_lineAnchorsForRenderList ot sal
 
-  r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist L.!! _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
+  r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls
 
 
 -- takes a list of line anchors as returned by sAutoLine_to_lineAnchorsForRenderList and a position

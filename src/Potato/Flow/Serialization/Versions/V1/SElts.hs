@@ -6,6 +6,7 @@ import           Relude
 
 import           Potato.Flow.Math
 import Potato.Data.Text.Unicode
+import Potato.Flow.DebugHelpers
 
 import           Control.Exception (assert)
 import           Data.Aeson
@@ -17,6 +18,7 @@ import qualified Data.List         as L
 import qualified Data.Map as Map
 import qualified Potato.Data.Text.Zipper as TZ
 import Data.Ratio
+
 
 
 type REltId = Int
@@ -82,7 +84,7 @@ superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
     , _superStyle_vertical   = Just $ chars L.!! 4
     , _superStyle_horizontal = Just $ chars L.!! 5
     , _superStyle_point = Just $ chars L.!! 6
-    , _superStyle_fill = if l == 7 then FillStyle_Blank else FillStyle_Simple (chars L.!! 7)
+    , _superStyle_fill = if l == 7 then FillStyle_Blank else FillStyle_Simple (chars `debugBangBang` 7)
   }
 
 -- superStyle_fromListFormat "╔╗╚╝║═█" `shouldBe` def

@@ -182,7 +182,7 @@ getEndpointPosition offsetAttach pfs SAutoLine {..} isstart = if isstart
 
 -- |
 -- see indexing information in 'whichSubSegmentDidClick'
-getAnchorPosition :: Bool -> OwlPFState -> SAutoLine -> Int -> XY
+getAnchorPosition :: (HasCallStack) => Bool -> OwlPFState -> SAutoLine -> Int -> XY
 getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = r where
   mps = _sAutoLine_midpoints
   endindex = length mps + 1
@@ -191,7 +191,7 @@ getAnchorPosition offsetAttach pfs sline@SAutoLine {..} anchorindex = r where
     else if anchorindex == endindex
       then getEndpointPosition offsetAttach pfs sline False
       else if anchorindex > 0 && anchorindex < endindex
-        then case mps L.!! (anchorindex-1) of
+        then case mps `debugBangBang` (anchorindex-1) of
           SAutoLineConstraintFixed xy -> xy
         else error $ "out of bounds anchor index " <> show anchorindex
 

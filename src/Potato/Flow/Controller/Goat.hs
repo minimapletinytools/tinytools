@@ -319,7 +319,7 @@ endoGoatCmdSetFocusedArea gfa goatState = r where
 
 
 endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
-endoGoatCmdMouse mouseData goatState = trace ("endomouse: " <> show mouseData) $ r where
+endoGoatCmdMouse mouseData goatState = r where
   sameSource = _mouseDrag_isLayerMouse (_goatState_mouseDrag goatState) == _lMouseData_isLayerMouse mouseData
   mouseSourceFailure = _mouseDrag_state (_goatState_mouseDrag goatState) /= MouseDragState_Up && not sameSource
   mouseDrag = case _mouseDrag_state (_goatState_mouseDrag goatState) of
@@ -633,7 +633,7 @@ goat_setLayersStateWithChangesFromToggleHide ls changes goatState = r where
 
 
 goat_processHandlerOutput_noSetHandler :: PotatoHandlerOutput -> GoatState -> GoatState
-goat_processHandlerOutput_noSetHandler pho goatState = trace ("goat_processHandlerOutput_noSetHandler HANDLER OUTPUT: " <> show pho <> " CURRENT HANDLER: " <> show (_goatState_handler goatState)) $ r where
+goat_processHandlerOutput_noSetHandler pho goatState = r where
 
   r = case _potatoHandlerOutput_action pho of
     HOA_Select x y -> goat_setSelection x y goatState
@@ -756,7 +756,7 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
   -- NO that's not true because in those cases you can return an explicit commit action or you return HOA_Nothing which should also commit when the handler is replaced
   (next_handler, next_workspace) = if (not . handlerActiveState_isActive) (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
     -- if we replaced the handler, commit its local preview if there was one
-    then trace "COMMIT: " $ (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
+    then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
     else (_goatState_handler goatState_afterSetLayersState, _goatState_workspace goatState_afterSetLayersState)
   goatState_afterSetHandler = goatState_afterSetLayersState {
       _goatState_handler = next_handler
