@@ -74,6 +74,8 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
 
 cabal test --test-options='--match "/Potato.Flow.Deprecated.Controller.Manipulator/Manipulator/Common/create/"'
+
+cabal run tinytools -- -help
  
 ----------
 
@@ -258,13 +260,12 @@ IGNORE!!-get rid of PFWorkspace first
   -consider making a `State GoatState` Monad... 
   -deal with the undofirstsituation 
     -rename to mouseACtive?
-    -just get rid of it and instead check if there is an associated local preview?
-
--figure out what to do to generate default term width file
+    -just get rid of it and instead check if there is an associated local preview?)
+DONE/IGNORE-figure out what to do to generate default term width file
   -also improve instructions, maybe make term width file a option rather than it's own binary!
 -if both target and source of line is moved, then move midpoints as well
 -BUG some prelude.!! error somewher ;__;
--text-icu dependency issue https://github.rbx.com/GameEngine/game-engine/pull/56976#discussion_r846581
+-text-icu dependency issue
 -line labels still cropping on right side
   -allow new linesi n line labels :O
 -BUG you somehow hit `assert nochildrenifaddingfolder`
