@@ -25,8 +25,8 @@ assertPotatoShowAndDump a v b = if v
   then b
   else error $ "assert failed:\n" <> potatoShow a
 
-traceWith :: (a -> String) -> a -> a
-traceWith f x = trace (f x) x
+traceIdWith :: (a -> String) -> a -> a
+traceIdWith f x = trace (f x) x
 
 traceShowIdWithLabel :: (Show a) => String -> a -> a
 traceShowIdWithLabel label x = trace (label <> ": " <> show x) x

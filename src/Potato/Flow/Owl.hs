@@ -1000,7 +1000,7 @@ internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = assert nochild
       _ -> error $ "expected OwlItemFolder"
     newMapping = case _owlSpot_parent of
       x | x == noOwl -> newMapping'
-      _ -> IM.adjust adjustfn _owlSpot_parent newMapping'
+      _ -> assert (IM.member _owlSpot_parent newMapping') $ IM.adjust adjustfn _owlSpot_parent newMapping'
     -- or top owls if there is no parent
     newTopOwls = case _owlSpot_parent of
       x | x == noOwl -> modifyKiddos _owlTree_topOwls
