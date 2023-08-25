@@ -963,14 +963,10 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ r wher
   -- go from left to right such that parents/left siblings are added first
   r = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
 
--- parents NOT allowed :O
-internal_owlTree_addOwlItem :: OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)
-internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = assert nochildrenifaddingfolder r
+-- parents allowed ONLY if all the children already exist in the tree
+internal_owlTree_addOwlItem :: (HasCallStack) => OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)
+internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = r
   where
-    -- if we're adding a folder (in the normal case), ensure it has no children
-    nochildrenifaddingfolder = case oitem of
-      OwlItem _ (OwlSubItemFolder kiddos) -> Seq.null kiddos
-      _ -> True
 
     -- first add the OwlItem to the mapping
     meta =
