@@ -872,10 +872,12 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
       . filter ((== _owlSpot_parent) . _owlItemMeta_parent . _superOwl_meta)
       . toList
       $ sowls
+
     -- list of all siblings on the spot we are dragging to
     origSiblings = fromMaybe (error "expected siblings") $ if _owlSpot_parent == noOwl
       then mommyOwl_kiddos $ od
       else mommyOwl_kiddos $ owlTree_mustFindSuperOwl od _owlSpot_parent
+
     -- now we will walk from right to left picking out the first elt that is on or after the target spot we are dragging to (_owlSpot_leftSibling) and isn't in the removed list
     findPos ::
       REltId -- ^ original _owlSpot_leftSibling
@@ -896,9 +898,11 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
       else if x == y
         then findPos targetrid xs ys past
         else findPos targetrid (x:xs) ys past
+
     newLeftSibling = case _owlSpot_leftSibling of
       Nothing -> Nothing
       Just target -> findPos target (reverse $ toList removed) (reverse $ toList origSiblings) False
+
     correctedSpot = spot { _owlSpot_leftSibling = newLeftSibling}
 
     selttree = superOwlParliament_toSEltTree od sop
@@ -1027,6 +1031,7 @@ owlTree_addOwlItemList seltls od0 = r where
   mapaccumlfn od (rid,ospot,oitem) = internal_owlTree_addOwlItem ospot rid oitemmodded od where
     osubitemmodded = case _owlItem_subItem oitem of
       -- temp remove kiddos from parent as needed by internal_owlTree_addOwlItem
+      -- the kiddos will be set correctly when the children get added further down the seltls list
       OwlSubItemFolder _ -> OwlSubItemFolder Seq.empty
       x -> x
     oitemmodded = OwlItem (_owlItem_info oitem) osubitemmodded
