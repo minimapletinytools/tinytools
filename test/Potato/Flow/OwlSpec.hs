@@ -55,8 +55,8 @@ spec = do
         let
           sowl1 = owlTree_mustFindSuperOwl owlTree0 2 -- b1
           sowl2 = owlTree_mustFindSuperOwl owlTree0 1 -- fstart2
-          ot1 = owlTree_removeSuperOwl sowl1 owlTree0
-          ot2 = owlTree_removeSuperOwl sowl2 owlTree0
+          ot1 = owlTree_removeSuperOwl False sowl1 owlTree0
+          ot2 = owlTree_removeSuperOwl False sowl2 owlTree0
         owlTree_owlCount ot1 `shouldBe` 8
         owlTree_owlCount ot2 `shouldBe` 4
         fst (owlTree_validate ot1) `shouldBe` True

@@ -32,8 +32,19 @@ verifyLayersCount :: Int -> GoatTester ()
 verifyLayersCount n =  verifyState ("layers count is " <> show n) $ \s -> if (countentriesfn s) == n then Nothing else Just $ "expected " <> show n <> " elts, got " <> show (countentriesfn s)
   where countentriesfn = Seq.length . _layersState_entries . _goatState_layersState
 
-basic_test :: Spec
-basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+verifyFirstEntryInLayersIs :: REltId -> GoatTester()
+verifyFirstEntryInLayersIs rid = verifyState ("first entry in layers is " <> show rid) $ vf where
+  vf s = r where
+    lentries = _layersState_entries . _goatState_layersState $ s
+    mfirstentry = Seq.lookup 0 lentries 
+    r = case mfirstentry of 
+      Nothing -> Just $ "no first entry in layers"
+      Just lentry -> if firstentry == rid then Nothing else Just $ "expected REltId" <> show rid <> ", got " <> show firstentry where 
+        firstentry = _superOwl_id . _layerEntry_superOwl $ lentry
+    
+
+create_select_test :: Spec
+create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   setMarker "create a folder"
   verifyOwlCount 0
@@ -132,6 +143,7 @@ folder_collapse_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   layerMouseDownUpRel LMO_Collapse 0 0
   verifyLayersCount 2
 
+
   setMarker "expand the second folder"
   layerMouseDownUpRel LMO_Collapse 1 1
   verifyLayersCount 4
@@ -171,15 +183,64 @@ lock_or_hide_select_test lmo = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ d
   canvasMouseDownUp (5,5)
   verifySelectionCount 1
 
+drag_folder_test :: Spec
+drag_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+  setMarker "create a folder"
+  verifyOwlCount 0
+  addFolder someFolderName
+  verifyOwlCount 1
+  verifyFolderSelected someFolderName
+  folderrid <- _superOwl_id <$> mustGetMostRecentlyCreatedOwl 
+  verifyFirstEntryInLayersIs folderrid
+
+  setMarker "create box 1"
+  drawCanvasBox (0,0,10,10)
+  verifySelectionCount 1
+  -- TODO verify the box is in the folder
+  verifyFirstEntryInLayersIs folderrid
+
+  setMarker "unselect the box so that the next box is not in the folder"
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "create box 2"
+  drawCanvasBox (10,10,10,10)
+  verifySelectionCount 1
+  boxrid <- _superOwl_id <$> mustGetMostRecentlyCreatedOwl 
+  verifyFirstEntryInLayersIs boxrid
+
+  beforeDragTheFolder <- getLayersState
+  
+
+  setMarker "select and drag the folder"
+  layerMouseDownUpRel LMO_Normal 1 0
+  layerMouseDownRel LMO_Normal 1 0
+  layerMouseDownRel LMO_Normal 0 0
+  layerMouseUpRel LMO_Normal 0 0
+  -- TODO verify the folder is in the first position in layers
+  verifyFirstEntryInLayersIs folderrid
+
+  beforeUndo <- getLayersState
+
+  setMarker "undo"
+  pressUndo
+  afterPressUndo <- getLayersState
+  verifyEqual "undo state is same as before drag the folder" beforeDragTheFolder afterPressUndo
+
+  setMarker "redo"
+  pressRedo
+  afterPressRedo <- getLayersState
+  verifyEqual "undo state is same as before undo redo" beforeUndo afterPressRedo
 
   
 
 spec :: Spec
 spec = do
   describe "Layers" $ do
-    describe "basic" $ basic_test
+    describe "create_select_test" $ create_select_test
     describe "rename_focus_test" $ rename_focus_test
     describe "create_in_folder_and_collapse_test" $ create_in_folder_and_collapse_test
     describe "folder_collapse_test" $ folder_collapse_test
     describe "hide_select_test" $ lock_or_hide_select_test LMO_Hide
     describe "lock_select_test" $ lock_or_hide_select_test LMO_Lock
+    describe "drag_folder_test" $ drag_folder_test

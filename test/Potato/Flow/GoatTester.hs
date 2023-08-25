@@ -99,6 +99,14 @@ verify :: (Monad m) => Text -> Maybe Text -> GoatTesterT m ()
 verify desc mf = GoatTesterT $ do
   unGoatTesterT $ putRecord desc mf
 
+verifyBool :: (Monad m) => Text -> Bool -> GoatTesterT m ()
+verifyBool desc b = GoatTesterT $ do
+  unGoatTesterT $ putRecord desc (if b then Nothing else Just "failed")
+
+verifyEqual :: (Monad m, Show a, Eq a) => Text -> a -> a -> GoatTesterT m ()
+verifyEqual desc a b = GoatTesterT $ do
+  unGoatTesterT $ putRecord desc (if a == b then Nothing else Just $ "expected: " <> show a <> "\ngot: " <> show b)
+
 verifyState' :: (Monad m) => Text -> (GoatState -> Maybe Text) -> GoatTesterT m Bool
 verifyState' desc fn = GoatTesterT $ do
   gts <- get
@@ -166,6 +174,10 @@ mustGetMostRecentlyCreatedOwl = do
   pfs <- getOwlPFState
   return $ fromJust $ maybeGetMostRecentlyCreatedOwl' pfs
 
+getLayersState :: (Monad m) => GoatTesterT m LayersState
+getLayersState = GoatTesterT $ do
+  gts <- get
+  return $ _goatState_layersState $ _goatTesterState_goatState gts
 
 -- operation helpers
 
