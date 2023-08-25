@@ -73,7 +73,7 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 
 cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
 
-cabal test --test-options='--match "/Potato.Flow.Deprecated.Controller.Manipulator/Manipulator/Common/create/"'
+cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Layers/Layers/drag_folder_test"'
 
 cabal run tinytools -- -help
  
@@ -266,9 +266,11 @@ DONE/IGNORE-figure out what to do to generate default term width file
 -if both target and source of line is moved, then move midpoints as well
 -BUG some prelude.!! error somewher ;__;
 -text-icu dependency issue
+  -pretty sure you just need to install text-icu
 -line labels still cropping on right side
   -allow new linesi n line labels :O
--BUG you somehow hit `assert nochildrenifaddingfolder`
+DONE-BUG you somehow hit `assert nochildrenifaddingfolder`
+  -drag folder somewhere and then undo
 -line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
 -move all serializable types into Snake for versioning
 -performance pass

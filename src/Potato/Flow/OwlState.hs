@@ -18,6 +18,7 @@ import qualified Data.IntMap.Strict      as IM
 import           Data.List.Ordered       (isSortedBy)
 import           Data.Maybe
 import qualified Data.Text as T
+import qualified Data.Sequence as Seq
 
 
 
@@ -114,10 +115,10 @@ owlPFState_fromCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x+sx) (y+sy) whe
 owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
-do_newElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_newElts :: (HasCallStack) => [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newElts seltls pfs@OwlPFState {..} = r where
 
-  -- parents are allowed, but seltls must be sortefd from left -> right such that leftmost sibling/parent of OwlSpot exists (assuming elts are added to the tree from left to right)
+  -- notably, passing in a list here rather than SuperOwlParialment allows us to add parents with children so long as everything is sorted from left to right (such that the parent/sibling exist when the child gets added)
   (newot, changes') = owlTree_addOwlItemList seltls _owlPFState_owlTree
 
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
@@ -125,7 +126,7 @@ do_newElts seltls pfs@OwlPFState {..} = r where
 
 undo_newElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newElts seltls pfs@OwlPFState {..} = r where
-  foldfn (rid,_,_) od = owlTree_removeREltId rid od
+  foldfn (rid,_,_) od = owlTree_removeREltId False rid od
   -- assumes seltls sorted from left to right so that no parent is deleted before its child
   newot = foldr foldfn _owlPFState_owlTree seltls
   changes = IM.fromList $ fmap (\(rid,_,_) -> (rid, Nothing)) seltls
@@ -145,7 +146,7 @@ do_newMiniOwlTree (mot, ospot) pfs@OwlPFState {..} = r where
 
 undo_newMiniOwlTree :: (MiniOwlTree, OwlSpot) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_newMiniOwlTree (mot, _) pfs@OwlPFState {..} = r where
-  foldfn rid od = owlTree_removeREltId rid od
+  foldfn rid od = owlTree_removeREltId False rid od
   newot = foldr foldfn _owlPFState_owlTree (_owlTree_topOwls mot)
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Nothing)) $ toList $ owliterateall mot
   r = (pfs { _owlPFState_owlTree = newot}, changes)
@@ -176,7 +177,7 @@ do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
-undo_move :: (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+undo_move :: (HasCallStack) => (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
 
   -- NOTE that sop is likely invalid in pfs at this point
@@ -184,17 +185,43 @@ undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   -- make sure SuperOwlParliament is ordered in an undo-friendly way
   isUndoFriendly = isSuperOwlParliamentUndoFriendly sop
 
-  -- first remove all elements we moved
-  removefoldfn tree' so = owlTree_removeREltId (_superOwl_id so) tree'
+  -- first remove all elements we moved, but keep their children putting the tree in an invalid state
+  removefoldfn tree' so = owlTree_removeREltId True (_superOwl_id so) tree'
   removedTree = foldl' removefoldfn _owlPFState_owlTree (unSuperOwlParliament sop)
 
-  -- then add them back in in order
+  -- then add them back in in order (any children are still in the tree with missing parent)
   addmapaccumlfn tree' so = owlTree_addOwlItem ospot (_superOwl_id so) (_superOwl_elt so) tree' where
-    -- NOTE that because we are ordered from left to right, _superOwl_meta so is valid in tree'
+    -- NOTE that because we are ordered from left to right, `_superOwl_meta so` points to a vlaid spot in the tree' (parents comes before children)
     ospot = owlTree_owlItemMeta_toOwlSpot tree' $ _superOwl_meta so
   (addedTree, changes') = mapAccumL addmapaccumlfn removedTree (unSuperOwlParliament sop)
-
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (toList changes')
+  
+
+{- 
+  -- DELETE not correct
+  -- this version uses owlTree_addOwlItemList to reduce code duplication, not working IDK why, also doesn't actually dedupe that much code LOL
+  mapsofn mleft so = (rid, spot, elt) where
+    rid = _superOwl_id so
+    elt = _superOwl_elt so
+    meta = _superOwl_meta so
+    spot = case mleft of
+      Nothing -> OwlSpot {
+          _owlSpot_parent = _owlItemMeta_parent meta
+          , _owlSpot_leftSibling = Nothing
+        }
+      Just left -> OwlSpot {
+          _owlSpot_parent = _owlItemMeta_parent meta
+          -- if previous elt shares the same parent, then it's a sibling
+          , _owlSpot_leftSibling = if _owlItemMeta_parent meta == _owlItemMeta_parent (_superOwl_meta left) then Just (_superOwl_id left) else Nothing
+        }
+  addmapaccumlfn mleft so = (Just so, mapsofn mleft so)
+
+  -- then add them back in in order
+  -- NOTE that because we are ordered from left to right, `_superOwl_meta so` points to a vlaid spot in the tree' (parents comes before children)
+  (addedTree, changes') = owlTree_addOwlItemList (toList . snd $ mapAccumL addmapaccumlfn Nothing (unSuperOwlParliament sop)) removedTree
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
+-}
+  
   r = (pfs { _owlPFState_owlTree = addedTree}, changes)
 
 

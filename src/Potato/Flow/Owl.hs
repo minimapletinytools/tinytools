@@ -781,21 +781,25 @@ owlTree_toSuperOwlParliament od@OwlTree {..} = r
   where
     r = owlParliament_toSuperOwlParliament od . OwlParliament $ _owlTree_topOwls
 
-owlTree_removeREltId :: REltId -> OwlTree -> OwlTree
-owlTree_removeREltId rid od = owlTree_removeSuperOwl (owlTree_mustFindSuperOwl od rid) od
+owlTree_removeREltId :: Bool -> REltId -> OwlTree -> OwlTree
+owlTree_removeREltId keepChildren rid od = owlTree_removeSuperOwl keepChildren (owlTree_mustFindSuperOwl od rid) od
 
-owlTree_removeSuperOwl :: SuperOwl -> OwlTree -> OwlTree
-owlTree_removeSuperOwl sowl OwlTree {..} = r
+owlTree_removeSuperOwl :: Bool -> SuperOwl -> OwlTree -> OwlTree
+owlTree_removeSuperOwl keepChildren sowl OwlTree {..} = r
   where
     -- remove the element itself
     newMapping'' = IM.delete (_superOwl_id sowl) _owlTree_mapping
 
-    -- remove all children recursively
+
+    -- remove all children recursively if desired
+    -- NOTE if keepChildren is true, this will put the OwlTree in an invalid state (presumably so that you can fix it later)
     removeEltWithoutAdjustMommyFn rid mapping = case IM.lookup rid mapping of
       Nothing -> error $ errorMsg_owlMapping_lookupFail mapping rid
       Just (_, OwlItem _ (OwlSubItemFolder kiddos)) -> foldr removeEltWithoutAdjustMommyFn (IM.delete rid mapping) kiddos
       Just _ -> IM.delete rid mapping
-    newMapping' = case _superOwl_elt sowl of
+    newMapping' = if keepChildren
+      then newMapping''
+      else case _superOwl_elt sowl of
       OwlItem _ (OwlSubItemFolder kiddos) -> foldr removeEltWithoutAdjustMommyFn newMapping'' kiddos
       _ -> newMapping''
 
@@ -841,7 +845,7 @@ owlTree_moveOwlParliament op spot@OwlSpot {..} od@OwlTree {..} = assert isValid 
     -- NOTE, that _owlItemMeta_position in sowls may be incorrect in the middle of this fold
     -- this forces us to do linear search in the owlTree_removeSuperOwl call rather than use sibling position as index into children D:
     -- TODO fix by always sort from right to left to avoid this
-    removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl sowl acc) od sowls
+    removedOd = foldl (\acc sowl -> owlTree_removeSuperOwl False sowl acc) od sowls
 
     -- WIP start
     -- ??? I can't remember what this is anymore, did I aready fix this or no? Pretty sure I can just delet all of this
