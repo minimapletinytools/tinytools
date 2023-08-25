@@ -196,32 +196,6 @@ undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   (addedTree, changes') = mapAccumL addmapaccumlfn removedTree (unSuperOwlParliament sop)
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (toList changes')
   
-
-{- 
-  -- DELETE not correct
-  -- this version uses owlTree_addOwlItemList to reduce code duplication, not working IDK why, also doesn't actually dedupe that much code LOL
-  mapsofn mleft so = (rid, spot, elt) where
-    rid = _superOwl_id so
-    elt = _superOwl_elt so
-    meta = _superOwl_meta so
-    spot = case mleft of
-      Nothing -> OwlSpot {
-          _owlSpot_parent = _owlItemMeta_parent meta
-          , _owlSpot_leftSibling = Nothing
-        }
-      Just left -> OwlSpot {
-          _owlSpot_parent = _owlItemMeta_parent meta
-          -- if previous elt shares the same parent, then it's a sibling
-          , _owlSpot_leftSibling = if _owlItemMeta_parent meta == _owlItemMeta_parent (_superOwl_meta left) then Just (_superOwl_id left) else Nothing
-        }
-  addmapaccumlfn mleft so = (Just so, mapsofn mleft so)
-
-  -- then add them back in in order
-  -- NOTE that because we are ordered from left to right, `_superOwl_meta so` points to a vlaid spot in the tree' (parents comes before children)
-  (addedTree, changes') = owlTree_addOwlItemList (toList . snd $ mapAccumL addmapaccumlfn Nothing (unSuperOwlParliament sop)) removedTree
-  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
--}
-  
   r = (pfs { _owlPFState_owlTree = addedTree}, changes)
 
 
