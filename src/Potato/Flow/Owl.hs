@@ -611,6 +611,7 @@ owlTree_validate od = checkRecursive "" noOwl 0 (_owlTree_topOwls od)
               (rpass, rmsg) = (rpass1 && rpass2, rmsg2)
         r = Seq.foldlWithIndex foldfn (True, msg0) kiddos
 
+-- oops, this should have been -1 but it's 0 so we start indexing stuff at 1 🤷🏼‍♀️
 owlTree_maxId :: OwlTree -> REltId
 owlTree_maxId s = maybe 0 fst (IM.lookupMax (_owlTree_mapping s))
 
@@ -969,9 +970,25 @@ owlTree_addMiniOwlTree targetspot miniot od0 = assert (collisions == 0) $ r wher
       x -> x
 
   -- go from left to right such that parents/left siblings are added first
-  r = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
+  (newot, addedSowls) = mapAccumL mapaccumlfn od0 $ toList $ fmap (\sowl -> (owlTree_owlItemMeta_toOwlSpot miniot (_superOwl_meta sowl), sowl)) (owliterateall miniot)
+  r = (newot, addedSowls)
 
--- parents allowed ONLY if all the children already exist in the tree
+
+internal_owlTree_recalculateChildrenDepths_recursive :: OwlTree -> REltId -> OwlTree
+internal_owlTree_recalculateChildrenDepths_recursive ot rid = r_0 where
+  sowl = owlTree_mustFindSuperOwl ot rid
+  adjustdepthfn (oem, oitem) = (,oitem) $ oem { _owlItemMeta_depth = _owlItemMeta_depth (_superOwl_meta sowl) + 1 }
+  r_0 = case _superOwl_elt sowl of
+    OwlItem oinfo (OwlSubItemFolder kiddos) -> r_1 where
+      -- update the depth of all its kiddos
+      omwithadjusteddepth = foldr (\kid om -> IM.adjust adjustdepthfn kid om) (_owlTree_mapping ot) kiddos
+      newot_0 = ot {_owlTree_mapping = omwithadjusteddepth}
+      -- recurse
+      r_1 = foldl (internal_owlTree_recalculateChildrenDepths_recursive) newot_0 kiddos
+    x -> ot
+
+-- parents allowed ONLY if all the children already exist in the tree (as orphans) or it will crash
+-- returns the added element for convenience but NOT its children 
 internal_owlTree_addOwlItem :: (HasCallStack) => OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)
 internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = r
   where
@@ -991,8 +1008,8 @@ internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = r
 
     newMapping' = IM.insertWithKey (\k _ ov -> error ("key " <> show k <> " already exists with value " <> show ov)) rid (meta, oitem) _owlTree_mapping
 
-    -- modify kiddos of the parent we are adding to
-    modifyKiddos kiddos = Seq.insertAt position rid kiddos
+    -- update siblings in the parent we are adding to, leaving the tree in an invalid state (siblings have wrong position index in their OwlItemMeta)
+    updateSiblings kiddos = Seq.insertAt position rid kiddos
       where
         position = case _owlSpot_leftSibling of
           Nothing -> 0
@@ -1000,31 +1017,41 @@ internal_owlTree_addOwlItem OwlSpot {..} rid oitem OwlTree {..} = r
             Nothing -> error $ "expected to find leftmost sibling " <> show leftsibrid <> " in " <> show kiddos
             Just x -> x + 1
     adjustfn (oem, oitem') = case oitem' of
-      OwlItem oinfo (OwlSubItemFolder kiddos) -> (oem, OwlItem oinfo (OwlSubItemFolder (modifyKiddos kiddos)))
+      OwlItem oinfo (OwlSubItemFolder kiddos) -> (oem, OwlItem oinfo (OwlSubItemFolder (updateSiblings kiddos)))
       _ -> error $ "expected OwlItemFolder"
     newMapping = case _owlSpot_parent of
       x | x == noOwl -> newMapping'
       _ -> assert (IM.member _owlSpot_parent newMapping') $ IM.adjust adjustfn _owlSpot_parent newMapping'
     -- or top owls if there is no parent
     newTopOwls = case _owlSpot_parent of
-      x | x == noOwl -> modifyKiddos _owlTree_topOwls
+      x | x == noOwl -> updateSiblings _owlTree_topOwls
       _ -> _owlTree_topOwls
 
-    r' =
+    tree_1 =
       OwlTree
         { _owlTree_mapping = newMapping,
           _owlTree_topOwls = newTopOwls
         }
 
-    newtree = internal_owlTree_reorgKiddos r' _owlSpot_parent
+    -- correct the sibling indices
+    tree_2 = internal_owlTree_reorgKiddos tree_1 _owlSpot_parent
 
-    newsowl = owlTree_mustFindSuperOwl newtree rid
+    -- correct the children depths
+    tree_3 = internal_owlTree_recalculateChildrenDepths_recursive tree_2 rid
 
-    r = (newtree, newsowl)
+    newsowl = owlTree_mustFindSuperOwl tree_3 rid
 
--- OwlItem must not be a parent
-owlTree_addOwlItem :: OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, SuperOwl)
-owlTree_addOwlItem = internal_owlTree_addOwlItem
+    r = (tree_3, newsowl)
+
+-- NOTE parents are allowed here IF all the children already exist in the tree
+-- returns the added element and all its children
+owlTree_addOwlItem :: OwlSpot -> REltId -> OwlItem -> OwlTree -> (OwlTree, [SuperOwl])
+owlTree_addOwlItem ospot rid oitem ot = r where
+  (newot, addedSowls) = internal_owlTree_addOwlItem ospot rid oitem ot
+  addedSowlsWithChildren = toList . owliterateat newot . _superOwl_id $ addedSowls
+  r = (newot, addedSowlsWithChildren)
+
+  
 
 -- this method works for parents IF all children are included in the list and sorted from left to right
 owlTree_addOwlItemList :: [(REltId, OwlSpot, OwlItem)] -> OwlTree -> (OwlTree, [SuperOwl])
@@ -1041,9 +1068,7 @@ owlTree_addOwlItemList seltls od0 = r where
     oitemmodded = OwlItem (_owlItem_info oitem) osubitemmodded
 
   -- go from left to right such that parents are added first
-  (newot, changes) = mapAccumL mapaccumlfn od0 seltls
-
-  r = (newot, changes)
+  r = mapAccumL mapaccumlfn od0 seltls
 
 
 -- TODO TEST
