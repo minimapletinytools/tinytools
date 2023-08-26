@@ -120,6 +120,9 @@ verifyState desc f = verifyState' desc f >> return ()
 --verifyStateFatal :: (GoatState -> Maybe Text) -> GoatTesterT m ()
 --verifyStateFatal = undefined
 
+failWithMessage :: (Monad m) => Text -> GoatTesterT m ()
+failWithMessage = putRecord "failed: " . Just
+
 runGoatTesterT :: (Monad m) => GoatState -> GoatTesterT m a -> m [GoatTesterRecord]
 runGoatTesterT gs m = do
   gts <- execStateT (unGoatTesterT m) $ def { _goatTesterState_goatState = gs }

@@ -73,7 +73,7 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 
 cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
 
-cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Layers/Layers/drag_folder_test"'
+cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Layers/Layers/drag_folder2_test"'
 
 cabal run tinytools -- -help
  
@@ -253,6 +253,18 @@ IGNORE!!-get rid of PFWorkspace first
     -no it doesn't, goat can just toss out failed changes
 
 ::NEWEST TODO::
+-layers improvements
+  -when dragging into a folder, the | should then L to the element being moved
+  -currently not possible to drag the last element in folder outside of that folder if there's something below it
+    -the trick is if you drag the last element in a folder to the spot below it, you need exception case to move it outside of the folder rather than as the next sibling to itself since that doesn't do anything
+  -currently not possible to drag below a folder if the folder is thet last sibling :(
+    -not sure if there's a way around this :(
+-BUG inverting boxes is broken (anchors move wrong corners)
+  -I thought you disallowed inverted boxes? You definitely did, why is this OK again?
+-BUG if you undo a folder move from outside to inside another folder, it breaks, I think it's because the depth for the item inside the folder being moved is not being set correctly
+-undo_move is probably not very multi-user friendly, you should rewrite using do_move logic 
+  -(so remove all children recursively and then add them back in)
+  -(this will allow undo_move to work even if some of those childrens or parents have since been deleted I guess)
 -shepard P2
   -you need to add a random generator to GoatState with sufficient entropy to generate Uuids
   -add shepard IDs

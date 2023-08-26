@@ -32,15 +32,18 @@ verifyLayersCount :: Int -> GoatTester ()
 verifyLayersCount n =  verifyState ("layers count is " <> show n) $ \s -> if (countentriesfn s) == n then Nothing else Just $ "expected " <> show n <> " elts, got " <> show (countentriesfn s)
   where countentriesfn = Seq.length . _layersState_entries . _goatState_layersState
 
-verifyFirstEntryInLayersIs :: REltId -> GoatTester()
-verifyFirstEntryInLayersIs rid = verifyState ("first entry in layers is " <> show rid) $ vf where
+verifyNthEntryInLayersIs :: Int -> REltId -> GoatTester()
+verifyNthEntryInLayersIs n rid = verifyState (show n <> " entry in layers is " <> show rid) $ vf where
   vf s = r where
     lentries = _layersState_entries . _goatState_layersState $ s
-    mfirstentry = Seq.lookup 0 lentries 
-    r = case mfirstentry of 
-      Nothing -> Just $ "no first entry in layers"
-      Just lentry -> if firstentry == rid then Nothing else Just $ "expected REltId" <> show rid <> ", got " <> show firstentry where 
+    mfirstentry = Seq.lookup n lentries
+    r = case mfirstentry of
+      Nothing -> Just $ "no " <> show n <> " entry in layers"
+      Just lentry -> if firstentry == rid then Nothing else Just $ "expected REltId " <> show rid <> ", got " <> show firstentry where
         firstentry = _superOwl_id . _layerEntry_superOwl $ lentry
+
+verifyFirstEntryInLayersIs :: REltId -> GoatTester()
+verifyFirstEntryInLayersIs = verifyNthEntryInLayersIs 0
     
 
 create_select_test :: Spec
@@ -232,6 +235,73 @@ drag_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   afterPressRedo <- getLayersState
   verifyEqual "undo state is same as before undo redo" beforeUndo afterPressRedo
 
+drag_folder2_test :: Spec
+drag_folder2_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "setup scene"
+  drawCanvasBox (0,0,10,10) -- 1
+  addFolder someFolderName -- 2
+  drawCanvasBox (10,10,10,10) -- 3
+  addFolder "innerfolder" -- 4
+  -- 2testfolder 
+  --   4innerfolder
+  --   3<box>
+  -- 1<box> 
+
+  setMarker "drag second box into inner folder"
+  layerMouseDownUpRel LMO_Normal 2 1
+  layerMouseDownRel LMO_Normal 2 1
+  -- need to drag away first in order to move it into the folder
+  layerMouseDownRel LMO_Normal 1 1
+  layerMouseDownRel LMO_Normal 2 1
+  layerMouseDownRel LMO_Normal 2 1
+  layerMouseUpRel LMO_Normal 2 1
+  verifyNthEntryInLayersIs 2 3
+  -- 2testfolder
+  --   4innerfolder
+  --     3<box>
+  -- 1<box>
+
+  beforeDrag <- getLayersState
+
+  -- DELETE
+  --failWithMessage ("\n" <> show beforeDrag)
+
+  setMarker "drag inner folder outside of outer folder"
+  layerMouseDownUpRel LMO_Normal 1 1
+  layerMouseDownRel LMO_Normal 1 1
+  layerMouseDownRel LMO_Normal 5 0
+  layerMouseUpRel LMO_Normal 5 0
+  verifyNthEntryInLayersIs 2 4
+  -- 2testfolder
+  -- 1<box>
+  -- 4innerfolder
+  --   3<box>
+
+  -- DELETE
+  --afterDrag <- getLayersState
+  --failWithMessage ("\n" <> show afterDrag)
+
+  setMarker "undo"
+  pressUndo
+  afterUndo <- getLayersState
+  verifyEqual "undo state is same as before drag the folder" beforeDrag afterUndo
+
+  -- DELETE
+  --failWithMessage ("\n" <> show afterUndo)
+
+  setMarker "collapse the inner folder"
+  layerMouseDownUpRel LMO_Collapse 1 1
+
+  -- DELETE
+  --ls <- getLayersState
+  --failWithMessage ("\n" <> show ls)
+
+  verifyNthEntryInLayersIs 1 4
+  verifyNthEntryInLayersIs 2 1
+  -- 2testfolder
+  --   4innerfolder
+  -- 1<box>
   
 
 spec :: Spec
@@ -244,3 +314,4 @@ spec = do
     describe "hide_select_test" $ lock_or_hide_select_test LMO_Hide
     describe "lock_select_test" $ lock_or_hide_select_test LMO_Lock
     describe "drag_folder_test" $ drag_folder_test
+    describe "drag_folder2_test" $ drag_folder2_test
