@@ -136,7 +136,11 @@ instance PotatoShow LayersState where
     r = "LayersState: "
       <> show _layersState_meta
       <> "\nLayerEntries:\n"
-      <> showFoldable _layersState_entries
+      <> layerEntriesToPrettyText _layersState_entries
+
+--instance Show LayersState where
+--  show ls = T.unpack (potatoShow ls)
+
 
 data LockHideCollapseOp = LHCO_ToggleLock | LHCO_ToggleHide | LHCO_ToggleCollapse deriving (Show)
 
@@ -199,7 +203,7 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
   le = Seq.index _layersState_entries lepos
   lerid = layerEntry_rEltId le
   ledepth = layerEntry_depth le
-  childFrom nextLayerEntry = layerEntry_depth nextLayerEntry /= ledepth
+  childFrom nextLayerEntry = layerEntry_depth nextLayerEntry > ledepth
   -- visible children of le
   childles = Seq.takeWhileL childFrom . Seq.drop (lepos+1) $ _layersState_entries
   -- everything before le
