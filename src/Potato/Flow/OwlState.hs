@@ -175,6 +175,7 @@ do_move (os, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
   op = superOwlParliament_toOwlParliament sop
   (newot, changes') = owlTree_moveOwlParliament op os _owlPFState_owlTree
   changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) changes'
+
   r = (pfs { _owlPFState_owlTree = newot}, changes)
 
 undo_move :: (HasCallStack) => (OwlSpot, SuperOwlParliament) -> OwlPFState -> (OwlPFState, SuperOwlChanges)
@@ -194,7 +195,7 @@ undo_move (_, sop) pfs@OwlPFState {..} = assert isUndoFriendly r where
     -- NOTE that because we are ordered from left to right, `_superOwl_meta so` points to a vlaid spot in the tree' (parents comes before children)
     ospot = owlTree_owlItemMeta_toOwlSpot tree' $ _superOwl_meta so
   (addedTree, changes') = mapAccumL addmapaccumlfn removedTree (unSuperOwlParliament sop)
-  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (toList changes')
+  changes = IM.fromList $ fmap (\sowl -> (_superOwl_id sowl, Just sowl)) (join . toList $ changes')
   
   r = (pfs { _owlPFState_owlTree = addedTree}, changes)
 
