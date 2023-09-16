@@ -20,8 +20,9 @@ import           Potato.Flow.Controller.Manipulator.TestHelpers
 constrainDeltaLBox_test :: Spec
 constrainDeltaLBox_test = do
   it "constrains as expected" $ do
-    constrainDeltaLBox (DeltaLBox 0 (V2 (-10) (-10))) ((LBox 0 (V2 5 5))) `shouldBe` DeltaLBox 0 (V2 (-4) (-4))
-    constrainDeltaLBox (DeltaLBox 0 (V2 (-10) 5)) ((LBox 0 (V2 5 5))) `shouldBe` DeltaLBox 0 (V2 (-4) 5)
+    constrainDeltaLBox 1 (DeltaLBox 0 (V2 (-10) (-10))) ((LBox 0 (V2 5 5))) `shouldBe` DeltaLBox 0 (V2 (-4) (-4))
+    constrainDeltaLBox 1 (DeltaLBox 0 (V2 (-10) 5)) ((LBox 0 (V2 5 5))) `shouldBe` DeltaLBox 0 (V2 (-4) 5)
+    constrainDeltaLBox 1 (DeltaLBox (V2 10 0) (V2 (-10) 0)) ((LBox 0 (V2 5 5))) `shouldBe` DeltaLBox (V2 4 0) (V2 (-4) 0)
 
 fetchLatestBox :: OwlPFState -> Either Text SBox
 fetchLatestBox pfs = do
@@ -51,7 +52,6 @@ basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   initSimpleBox
 
   -- TODO
-
 
 basic_cancel_test :: Spec
 basic_cancel_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do

@@ -174,10 +174,21 @@ makeDragDeltaBox bht rmd = r where
 
   r = makeDeltaBox bht boxRestrictedDelta
 
--- TODO this is not what you want, it matters which direction you resize from
--- reduces the DeltaLBox such that the LBox does not go to 0 or invert
-constrainDeltaLBox :: DeltaLBox -> LBox -> DeltaLBox
-constrainDeltaLBox (DeltaLBox dt (V2 dx dy)) ((LBox _ (V2 x y))) = DeltaLBox dt (V2 (max 1 (x+dx) - x) (max 1 (y+dy) - y))
+-- reduces the DeltaLBox such that the LBox does not invert
+-- assumes LBox is canonical and that LBox is not already smaller than the desired constrained size
+constrainDeltaLBox :: Int -> DeltaLBox -> LBox -> DeltaLBox
+constrainDeltaLBox minsize d1@(DeltaLBox (V2 dx dy) (V2 dw dh)) d2@((LBox (V2 x y) (V2 w h))) = r where
+  optuple e = (e, -e)
+
+  (ndx, ndw) = if dx /= 0 
+    then optuple (min (w-minsize) dx)
+    else (dx, (max minsize (w+dw)) - w)
+  
+  (ndy, ndh) = if dy /= 0
+    then optuple (min (h-minsize) dy)
+    else (dy, (max minsize (h+dh)) - h)
+
+  r = DeltaLBox (V2 ndx ndy) (V2 ndw ndh)
 
 
 makeDragOperation :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
