@@ -7,14 +7,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-record-wildcards #-}
 
 
-module Potato.Flow.Controller.Manipulator.Box (
-  BoxHandleType(..)
-  , BoxHandler(..)
-  , BoxCreationType(..)
-  , makeHandleBox
-  , makeDeltaBox
-  --, MouseManipulator(..)
-) where
+module Potato.Flow.Controller.Manipulator.Box where
 
 import           Relude
 
@@ -180,6 +173,12 @@ makeDragDeltaBox bht rmd = r where
     else dragDelta
 
   r = makeDeltaBox bht boxRestrictedDelta
+
+-- TODO this is not what you want, it matters which direction you resize from
+-- reduces the DeltaLBox such that the LBox does not go to 0 or invert
+constrainDeltaLBox :: DeltaLBox -> LBox -> DeltaLBox
+constrainDeltaLBox (DeltaLBox dt (V2 dx dy)) ((LBox _ (V2 x y))) = DeltaLBox dt (V2 (max 1 (x+dx) - x) (max 1 (y+dy) - y))
+
 
 makeDragOperation :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
 makeDragOperation phi dbox = op where

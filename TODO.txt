@@ -177,15 +177,15 @@ DONE-adjustable attachment spec
 IGNORE!!-get rid of PFWorkspace first
   DONE-get rid of lastChanges
   YES-or do we keep it? could be nic eplace to store preview list and local llama stack
--handlers should return preview action
+DONE-handlers should return preview action
   -review pRefreshHandler as it will now take update cations
   -preview start, preview continue, preview commit, preview cancel
     -preview continue is prob unecessary, sending another preview start should implicitly cancel the last preview, but having it as an explicit state might still be nice
   -get rid of undofirst stuff
 -goat changes
   -goat has preview list for each user
-  -goat has commit preview operation
-  -you can just directly preview commit to apply an operation without having preview I guess, or have a separate function to apply operation directly which might help with organization
+  DONE-goat has commit preview operation
+  DONE-you can just directly preview commit to apply an operation without having preview I guess, or have a separate function to apply operation directly which might help with organization
   -preview commit could fail
     -a client might try and commit a preview that was invalidated 
   -goat needs to be able to apply several state changes,
