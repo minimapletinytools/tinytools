@@ -265,7 +265,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , EWCLabel "exit BoxText"
       , EWCKeyboard (KeyboardData KeyboardKey_Esc [])
 
-      , EWCLabel "resize box to 0"
+      , EWCLabel "resize box to 1"
       , EWCMouse (LMouseData (V2 12 12) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) False MouseButton_Left [] False)
       , EWCMouse (LMouseData (V2 10 10) True MouseButton_Left [] False)
@@ -291,7 +291,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , AlwaysPass
       , AlwaysPass
       , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
-        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 0 0)
+        SEltBox (SBox lbox _ _ _ _) -> lbox == LBox (V2 10 10) (V2 1 1)
         _                           -> False
 
     ]

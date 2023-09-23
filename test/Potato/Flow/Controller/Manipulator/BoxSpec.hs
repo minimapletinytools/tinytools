@@ -77,6 +77,19 @@ basic_cancel_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   initSimpleBox
 
+noinvert_test :: Spec
+noinvert_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 101, 101)
+
+  setMarker "resize the box"
+  canvasMouseDown (101,101)
+  canvasMouseDown (-10,-10)
+  canvasMouseUp (-10,-10)
+  verifyMostRecentlyCreatedBoxLabelHasSize (1, 1)
+
+  
 
 spec :: Spec
 spec = do
@@ -84,3 +97,4 @@ spec = do
     describe "basic" $ basic_test
     describe "basic_cancel" $ basic_cancel_test
     describe "constrainDeltaLBox" $ constrainDeltaLBox_test
+    describe "noinvert" $ noinvert_test

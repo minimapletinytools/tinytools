@@ -160,6 +160,9 @@ data BoxHandler = BoxHandler {
 
     , _boxHandler_downOnLabel :: Bool
 
+
+    , _boxHandler_prevDeltaLBox :: Maybe DeltaLBox
+
   } deriving (Show)
 
 makeDragDeltaBox :: BoxHandleType -> RelMouseDrag -> DeltaLBox
@@ -188,21 +191,54 @@ constrainDeltaLBox minsize d1@(DeltaLBox (V2 dx dy) (V2 dw dh)) d2@((LBox (V2 x 
     then optuple (min (h-minsize) dy)
     else (dy, (max minsize (h+dh)) - h)
 
-  r = DeltaLBox (V2 ndx ndy) (V2 ndw ndh)
+  istranslateonly = dw == 0 && dh == 0
+  
+  r = if istranslateonly 
+    then d1 
+    else DeltaLBox (V2 ndx ndy) (V2 ndw ndh)
+
+-- OR you remove the delta portion that already modified the box in preview
+makeDragOperationNew :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
+makeDragOperationNew phi dbox = op where
+  selection = transformableSelection phi
+  selectionl = toList $ transformableSelection phi
+  pfs = _potatoHandlerInput_pFState phi
+  lboxes = fmap (\sowl -> _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs) selectionl
+
+  -- go through each element in selection and ensure that dbox does not invert that element
+  -- DANGER you need to make sure you have sensible bounding box functions or you might put things in a non-resizeable state
+  constraineddbox = foldl' (constrainDeltaLBox 1) dbox lboxes
+
+  fmapfn sowl = makeSetLlama (rid, newselt) where
+    rid = _superOwl_id sowl
+    oldselt = superOwl_toSElt_hack sowl
+    -- TODO don't use the CBoundingBox version of that funciton, it's deprecated, write a new one.
+    newselt = modify_sElt_with_cBoundingBox True oldselt (CBoundingBox constraineddbox)
+
+  op = if Seq.null selection
+    then Nothing
+    else Just $ makeCompositionLlama . toList $ (fmap fmapfn selectionl)
 
 
 makeDragOperation :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
 makeDragOperation phi dbox = op where
   selection = transformableSelection phi
+  selectionl = toList $ transformableSelection phi
+  pfs = _potatoHandlerInput_pFState phi
+  lboxes = fmap (\sowl -> _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs) selectionl
+
+  -- go through each element in selection and ensure that dbox does not invert that element
+  -- DANGER you need to make sure you have sensible bounding box functions or you might put things in a non-resizeable state
+  constraineddbox = foldl' (constrainDeltaLBox 0) dbox lboxes
 
   makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
-      _cBoundingBox_deltaBox = dbox
+      _cBoundingBox_deltaBox = dbox -- constraineddbox
     })
 
   op = if Seq.null selection
     then Nothing
-    else Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) (toList selection))
+    else Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList (fmap (\s -> (_superOwl_id s, makeController s)) selectionl)
 
 -- TODO split this handler in two handlers
 -- one for resizing selection (including boxes)
@@ -214,6 +250,7 @@ instance Default BoxHandler where
       , _boxHandler_creation = BoxCreationType_None
       , _boxHandler_active = False
       , _boxHandler_downOnLabel = False
+      , _boxHandler_prevDeltaLBox = Nothing
       -- TODO whatever
       --, _boxHandler_wasDragged = False
     }
@@ -236,6 +273,8 @@ isMouseOnSelectionSBoxBorder cs (RelMouseDrag MouseDrag {..}) = case selectionOn
     then True
     else False
 
+minusDeltaLBox :: DeltaLBox -> DeltaLBox -> DeltaLBox
+minusDeltaLBox (DeltaLBox (V2 dx1 dy1) (V2 dw1 dh1)) (DeltaLBox (V2 dx2 dy2) (V2 dw2 dh2)) = DeltaLBox (V2 (dx1-dx2) (dy1-dy2)) (V2 (dw1-dw2) (dh1-dh2))
 
 instance PotatoHandler BoxHandler where
   pHandlerName _ = handlerName_box
@@ -308,16 +347,18 @@ instance PotatoHandler BoxHandler where
         BoxCreationType_TextArea -> "<textarea>"
         _ -> error "invalid BoxCreationType"
 
+      mdd = makeDragDeltaBox _boxHandler_handle rmd
 
       mop = case _boxHandler_creation of
         x | x == BoxCreationType_Box || x == BoxCreationType_Text -> Just $ makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemBox boxToAdd))
         BoxCreationType_TextArea -> Just $ makeAddEltLlama _potatoHandlerInput_pFState newEltPos (OwlItem (OwlInfo nameToAdd) (OwlSubItemTextArea textAreaToAdd))
-        _ -> makeDragOperation phi (makeDragDeltaBox _boxHandler_handle rmd)
+        _ -> makeDragOperationNew phi (minusDeltaLBox mdd (fromMaybe (DeltaLBox 0 0) _boxHandler_prevDeltaLBox))
 
       newbh = bh {
           _boxHandler_undoFirst = True
           -- if we drag, we are no longer in label case
           , _boxHandler_downOnLabel = False
+          , _boxHandler_prevDeltaLBox = Just mdd
         }
 
       -- NOTE, that if we did create a new box, it wil get auto selected and a new BoxHandler will be created for it
@@ -405,7 +446,7 @@ instance PotatoHandler BoxHandler where
       else case mmove of
         Nothing -> Nothing
         Just move -> Just r2 where
-          mop = makeDragOperation phi move
+          mop = makeDragOperationNew phi move
           r2 = def {
               _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler bh
               , _potatoHandlerOutput_action = case mop of
