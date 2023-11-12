@@ -195,23 +195,23 @@ instance PotatoHandler LayersHandler where
           return (downsowl, offset')
 
         mJustAboveDropSowl = do
-          lentry <- case mDropSowlWithOffset of
-            Nothing -> Seq.lookup (Seq.length lentries - 1) lentries
-            Just _  -> Seq.lookup (lepos-1) lentries
-          return $ _layerEntry_superOwl lentry
+          (lentry, offset) <- case mDropSowlWithOffset of
+            Nothing -> Seq.lookup (Seq.length lentries - 1) lentries <&> (,0)
+            Just (_, offset')  -> Seq.lookup (lepos-1) lentries <&> (,offset')
+          return $ (_layerEntry_superOwl lentry, offset)
 
 
         nparentoffset = case mDropSowlWithOffset of
           Nothing -> case mJustAboveDropSowl of
             Nothing    -> error "this should never happen"
             -- we are at the very bottom
-            Just asowl -> rawxoffset - superOwl_depth asowl
+            Just (asowl, _) -> rawxoffset - superOwl_depth asowl
 
           Just (dsowl, x) -> case mJustAboveDropSowl of
             -- we are at the very top
             Nothing    -> 0
             -- limit how deep in the hierarchy we can move based on what's below the cursor
-            Just asowl -> max x (superOwl_depth dsowl - superOwl_depth asowl)
+            Just (asowl, _) -> max x (superOwl_depth dsowl - superOwl_depth asowl)
 
         nsibling = max 0 (- (min 0 nparentoffset))
 
@@ -219,7 +219,7 @@ instance PotatoHandler LayersHandler where
         targetspot = case mJustAboveDropSowl of
           -- we are dropping at the top of our LayerEntries
           Nothing -> OwlSpot noOwl Nothing
-          Just asowl -> if nparentoffset > 0 && hasOwlItem_isFolder asowl
+          Just (asowl, offset) -> if nparentoffset > 0 && hasOwlItem_isFolder asowl && offset > 3
             -- drop inside at the top
             then OwlSpot (_superOwl_id asowl) Nothing
             else case owlTree_findSuperOwl owltree newsiblingid of

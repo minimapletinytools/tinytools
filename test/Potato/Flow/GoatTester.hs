@@ -234,7 +234,7 @@ layerMouseDownUp (x,y) = do
   layerMouseDown (x,y)
   layerMouseUp (x,y)
 
-data LayerMouseOp = LMO_Collapse | LMO_Hide | LMO_Lock | LMO_Normal deriving (Show, Eq)
+data LayerMouseOp = LMO_Collapse | LMO_Hide | LMO_Lock | LMO_Normal | LMO_NormalInFolder Int deriving (Show, Eq)
 
 layerMouseRel' :: (Monad m) => Bool -> LayerMouseOp -> Int -> Int -> GoatTesterT m ()
 layerMouseRel' isup op y' depth = do
@@ -245,6 +245,7 @@ layerMouseRel' isup op y' depth = do
       LMO_Hide     -> 1
       LMO_Lock     -> 2
       LMO_Normal -> 3
+      LMO_NormalInFolder n -> 6 + n
     y = y' - scrollPos
     x = x' + depth
   putRecord "validate y pos" (if y < 0 then Just ("y: " <> show y <> " outside of scroll position: " <> show scrollPos) else Nothing)
