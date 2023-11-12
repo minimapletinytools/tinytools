@@ -41,7 +41,18 @@ verifyMostRecentlyCreatedBoxLabelHasSize (x, y) = verifyStateObjectHasProperty "
       then Nothing
       else Just $ "got size " <> show (x', y') <> " expected " <> show (x, y)
 
-
+verifyMostRecentlyCreatedBoxHasText :: Maybe Text -> GoatTester ()
+verifyMostRecentlyCreatedBoxHasText mt = verifyStateObjectHasProperty "verifyMostRecentlyCreatedBoxHasText" fetchLatestBox checkfn where
+  checkfn sbox = r where
+    istext = sBoxType_isText (_sBox_boxType sbox)
+    r = case 
+      mt of 
+        Nothing -> if istext then Just "expected no text" else Nothing
+        Just t -> if not istext 
+          then Just "expected text" 
+          else if t == _sBoxText_text (_sBox_text sbox)
+            then Nothing 
+            else Just $ "got text " <> show (_sBox_text sbox) <> " expected " <> t
 
 initSimpleBox :: GoatTester ()
 initSimpleBox = drawCanvasBox (0, 0, 100, 100)
@@ -90,6 +101,23 @@ noinvert_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyMostRecentlyCreatedBoxLabelHasSize (1, 1)
 
   
+boxtext_test :: Spec
+boxtext_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 101, 101)
+
+  verifyMostRecentlyCreatedBoxHasText Nothing
+
+  setMarker "click in the box to convert it to a text box"
+  canvasMouseDown (50,50)
+  canvasMouseUp (50,50)
+  verifyMostRecentlyCreatedBoxHasText (Just "")
+
+  setMarker "write some text"
+  pressKeys "meow meow meow meow"
+  verifyMostRecentlyCreatedBoxHasText (Just "meow meow meow meow")
+
 
 spec :: Spec
 spec = do
@@ -98,3 +126,4 @@ spec = do
     describe "basic_cancel" $ basic_cancel_test
     describe "constrainDeltaLBox" $ constrainDeltaLBox_test
     describe "noinvert" $ noinvert_test
+    describe "boxtext" $ boxtext_test

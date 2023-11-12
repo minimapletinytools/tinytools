@@ -252,15 +252,17 @@ DONE-handlers should return preview action
   -does ordering service need to know about state/non commuting changes
     -no it doesn't, goat can just toss out failed changes
 
-::NEWEST TODO::
--YOU HAVE 2 WIP CHANGES RIGHT NOW OOPS 
-  DONE-BOX CONSTRAINTS
-    -broken because the constrainDeltaLBox function is applied to post preview state
-    -you tried to fix this by setting box size instead, but you still have the same problem
-    -you can fix by tracking pre-preview state and passing that in as well, but is there a better way?
-      -I guess you could track the previous transform operation OR mouse position and add that back?
-  -FOLDER DRAG BASED ON X POSITION (broken because you need to handale recursive depth or something like that I'm actually not sure...)
+:: RELEASE TODO ::
+-make a video
+-update tutorial file
+-hardcode the xterm text width file?
+-make a regular tutorial doc
+-remove potato references :(
+DONE-get rid of text box tool 
+  IGNORE-fix box converting to text box
+    DONE-add a UT for this...
 
+::NEWEST TODO::
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
   -currently not possible to drag the last element in folder outside of that folder if there's something below it
@@ -337,6 +339,15 @@ DONE-handlers should return preview action
   -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
+
+DONE-YOU HAVE 2 WIP CHANGES RIGHT NOW OOPS 
+  DONE-BOX CONSTRAINTS
+    -broken because the constrainDeltaLBox function is applied to post preview state
+    -you tried to fix this by setting box size instead, but you still have the same problem
+    -you can fix by tracking pre-preview state and passing that in as well, but is there a better way?
+      -I guess you could track the previous transform operation OR mouse position and add that back?
+  IGNORE-FOLDER DRAG BASED ON X POSITION (broken because you need to handale recursive depth or something like that I'm actually not sure...)
+    -see branch layerdragbyposition
 
 DONE-BUG inverting boxes is broken (anchors move wrong corners)
   -I thought you disallowed inverted boxes? You definitely did, why is this OK again?

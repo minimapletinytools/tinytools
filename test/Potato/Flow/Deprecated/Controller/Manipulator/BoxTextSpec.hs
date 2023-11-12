@@ -287,7 +287,7 @@ test_zero = constructTest "zero" emptyOwlPFState bs expected where
       , LabelCheck "exit BoxText"
       , checkHandlerNameAndState handlerName_box False
 
-      , LabelCheck "resize box to 0"
+      , LabelCheck "resize box to 1"
       , AlwaysPass
       , AlwaysPass
       , firstSuperOwlPredicate (Just "<text>") $ \sowl -> case hasOwlItem_toSElt_hack sowl of
