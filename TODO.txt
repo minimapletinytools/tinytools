@@ -254,15 +254,25 @@ DONE-handlers should return preview action
 
 :: RELEASE TODO ::
 -make a video
--update tutorial file
--hardcode the xterm text width file?
--make a regular tutorial doc
--remove potato references :(
+-update tutorial file?
+-BUG remove `checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)`
+  -repro is change canvas size and click in canvas area to confirm
+-BUG figure out why you are hiting `in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction  `
+  -repro is to rename a folder, click canvas, click back to folder 
+  -also add a UT for this..
+-make screenshot
+-BUG resize window after panning is VERY BROKEN
+  -add a UT for this
+-BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
+DONE-hardcode the xterm text width file?
+DONE-make a regular tutorial doc
+DONE-remove potato references :(
 DONE-get rid of text box tool 
   IGNORE-fix box converting to text box
     DONE-add a UT for this...
 
 ::NEWEST TODO::
+-BUG translating lines should translate midpoints too
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
   -currently not possible to drag the last element in folder outside of that folder if there's something below it
