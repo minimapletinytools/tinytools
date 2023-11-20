@@ -65,8 +65,8 @@ create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 
 
-rename_focus_test :: Spec
-rename_focus_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+rename_focus_test :: GoatFocusedArea -> Spec
+rename_focus_test gfa = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   setMarker "draw a box"
   drawCanvasBox (0, 0, 100, 100)
@@ -89,7 +89,7 @@ rename_focus_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == origname then Nothing else Just $ "expected name " <> show origname <> " got " <> show (hasOwlItem_name sowl)
   
   setMarker "change focus and ensure rename took effect"
-  setFocusArea GoatFocusedArea_Other
+  setFocusArea gfa
   verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == expectedname then Nothing else Just $ "expected name " <> show expectedname <> " got " <> show (hasOwlItem_name sowl)
 
 create_in_folder_and_collapse_test :: Spec
@@ -304,14 +304,16 @@ drag_folder2_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   -- 1<box>
   
 
+
 spec :: Spec
 spec = do
   describe "Layers" $ do
     describe "create_select_test" $ create_select_test
-    describe "rename_focus_test" $ rename_focus_test
+    describe "rename_focus_test canvas" $ rename_focus_test GoatFocusedArea_Canvas
+    describe "rename_focus_test other" $ rename_focus_test GoatFocusedArea_Other
     describe "create_in_folder_and_collapse_test" $ create_in_folder_and_collapse_test
     describe "folder_collapse_test" $ folder_collapse_test
-    describe "hide_select_test" $ lock_or_hide_select_test LMO_Hide
-    describe "lock_select_test" $ lock_or_hide_select_test LMO_Lock
+    describe "lock_or_hide_select_test hide" $ lock_or_hide_select_test LMO_Hide
+    describe "lock_or_hide_select_test lock" $ lock_or_hide_select_test LMO_Lock
     describe "drag_folder_test" $ drag_folder_test
     describe "drag_folder2_test" $ drag_folder2_test
