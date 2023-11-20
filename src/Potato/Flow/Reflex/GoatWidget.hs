@@ -124,11 +124,8 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
 
     -- new Endo folding
     endoStyle = [ 
-        -- these be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
-        fmap endoGoatCmdSetFocusedArea _goatWidgetConfig_setFocusedArea
-
-        -- the order of the rest doesn't matter
-        , fmap endoGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
+        -- the order of these ones don't matter
+        fmap endoGoatCmdSetDefaultParams _goatWidgetConfig_setPotatoDefaultParameters
         , fmap endoGoatCmdMarkSaved _goatWidgetConfig_markSaved
         , fmap endoGoatCmdSetTool _goatWidgetConfig_selectTool
         , fmap endoGoatCmdSetDebugLabel _goatWidgetConfig_setDebugLabel
@@ -136,10 +133,13 @@ holdGoatWidget GoatWidgetConfig {..} = mdo
         , fmap endoGoatCmdLoad _goatWidgetConfig_load
         , fmap (\_ -> endoGoatCmdNewFolder "folder") _goatWidgetConfig_newFolder
         , fmap endoGoatCmdWSEvent _goatWidgetConfig_bypassEvent
-        , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_paramsEvent $ \llama -> WSEApplyLlama (False, llama)
-        , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_canvasSize $ \xy -> WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy))
         , fmap endoGoatCmdMouse _goatWidgetConfig_mouse
         , fmap endoGoatCmdKeyboard _goatWidgetConfig_keyboard
+
+        -- these be run before _goatWidgetConfig_mouse because sometimes we want to set params/change focus and input a mouse at the same time (i.e. clicking away from params widget to canvas widget causing params to send an update)
+        , fmap endoGoatCmdSetFocusedArea _goatWidgetConfig_setFocusedArea
+        , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_paramsEvent $ \llama -> WSEApplyLlama (False, llama)
+        , fmap endoGoatCmdWSEvent $ ffor _goatWidgetConfig_canvasSize $ \xy -> WSEApplyLlama (False, makePFCLlama $ OwlPFCResizeCanvas (DeltaLBox 0 xy))
       ]
 
   -- DELETE
