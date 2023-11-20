@@ -255,7 +255,7 @@ DONE-handlers should return preview action
 :: RELEASE TODO ::
 -make a video
 -update tutorial file?
--BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
+DONE-BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
   -displayLinesWithAlignment does not add trailingcursor I think
 DONE-BUG remove `checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)`
   -repro is change canvas size and click in canvas area to confirm
