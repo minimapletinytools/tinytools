@@ -282,7 +282,9 @@ endoGoatCmdSetCanvasRegionDim x gs = r where
   gs_1 = gs {
       _goatState_screenRegion = x
     }
-  r = goat_setPan (_goatState_pan gs_1) gs_1
+  r = goat_rerenderAfterMove gs_1
+  
+
 
 
 endoGoatCmdWSEvent :: WSEvent -> GoatState -> GoatState
@@ -539,24 +541,31 @@ renderContextFromGoatState goatState = RenderContext {
     , _renderContext_renderedCanvasRegion = _goatState_renderedCanvas goatState
   }
 
-goat_setPan :: XY -> GoatState -> GoatState
-goat_setPan (V2 dx dy) goatState = r where
+goat_addPan :: XY -> GoatState -> GoatState
+goat_addPan (V2 dx dy) goatState = r where
   -- set the pan
   -- render move
   -- render selection
   V2 cx0 cy0 = _goatState_pan goatState
   next_pan = V2 (cx0+dx) (cy0 + dy) 
 
+  gs_1 = goatState {
+      _goatState_pan = next_pan
+    }
+  
+  r = goat_rerenderAfterMove gs_1
+
+goat_rerenderAfterMove :: GoatState -> GoatState
+goat_rerenderAfterMove goatState = r where
+  -- render move
+  -- render selection
   rc = renderContextFromGoatState goatState
-  (rc_aftermove, _) = goat_renderCanvas_move rc next_pan (_goatState_screenRegion goatState)
+  (rc_aftermove, _) = goat_renderCanvas_move rc (_goatState_pan goatState) (_goatState_screenRegion goatState)
   rc_afterselection = goat_renderCanvas_selection rc_aftermove (_goatState_selection goatState)
   r = goatState {
-      _goatState_pan = next_pan
-      , _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_aftermove
+      _goatState_renderedCanvas = _renderContext_renderedCanvasRegion rc_aftermove
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
-
-
 
 computeCanvasSelection :: (HasCallStack) => GoatState -> CanvasSelection
 computeCanvasSelection goatState = r where
@@ -637,7 +646,7 @@ goat_processHandlerOutput_noSetHandler pho goatState = r where
 
   r = case _potatoHandlerOutput_action pho of
     HOA_Select x y -> goat_setSelection x y goatState
-    HOA_Pan x -> goat_setPan x goatState
+    HOA_Pan x -> goat_addPan x goatState
     HOA_Layers x y -> goat_setLayersStateWithChangesFromToggleHide x y goatState
     HOA_Preview p -> goat_applyWSEvent WSEventType_Local_NoRefresh (WSEApplyPreview dummyShepard dummyShift p) goatState
     HOA_Nothing -> goatState

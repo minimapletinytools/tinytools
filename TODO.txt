@@ -260,8 +260,8 @@ DONE-handlers should return preview action
 -BUG figure out why you are hiting `in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction  `
   -repro is to rename a folder, click canvas, click back to folder 
   -also add a UT for this..
--make screenshot
--BUG resize window after panning is VERY BROKEN
+DONE-make screenshot
+DONE-BUG resize window after panning is VERY BROKEN
   -add a UT for this
 -BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
 DONE-hardcode the xterm text width file?
@@ -272,6 +272,8 @@ DONE-get rid of text box tool
     DONE-add a UT for this...
 
 ::NEWEST TODO::
+-CUTLINE stuff below (search for it)
+-fix PanSpec...
 -BUG translating lines should translate midpoints too
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
@@ -601,11 +603,10 @@ DONE-BUG fix line bugs
 
 
 :: CUT Line
--enable/disable widechar/grapheme cluster configs
+DONE-enable/disable widechar/grapheme cluster configs
 -charwidth needs to be passed in rather than rely on global
 -consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
 -LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
--BUG figure out what's going on with cache updated render bugs...
 -finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
 -file stuff
   -maybe highlight relevant files instead of * in file explorer
@@ -617,13 +618,6 @@ DONE-BUG fix line bugs
     DONE-waitForSecondAfterFirst (move to reflex-potatoes)
   DONE-add double click support to file explorer
     -need to hook into IO time stuff
--BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe
--fix PanSpec...
--FEATURE add line labels
-  -adding midpoints when line labels exist need to be smarter about reposition line labels
-  -add line label anchor in text edit mode so that you can easily reposition it
-  -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
-  -bonus, cache line labels
 -folder stuff
   -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
   -empty folders should not be expandable? (set to expanded by default)
@@ -636,14 +630,12 @@ DONE-BUG fix line bugs
       -can you tie this into graceful handling of bad mouse states?
   DONE-make new elts get created inside selected folder rather than above it?
 -proper configurable theme in Main.hs
--FEATURE attach point repositioning
 -TESTING check for leaks again
 -FEATURE info/statusbar/output area (right side?)
 -TESTS TO ADD
   -create box, turn to text box, add some text, turn to regular box
   -drag parent folder into a child folder and ensure it does not work
   -create folder with children, select folder, attempt to drag via children (doesn't work right now)
-  -rename in layers, change focus to canvas, ensure layers rename took effect
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
 -add mouse hover support (for when you do web port)
@@ -667,6 +659,14 @@ DONE-BUG fix line bugs
 
 
 :: DONE
+DONE-BUG figure out what's going on with cache updated render bugs...
+DONE-FEATURE attach point repositioning
+DONE-BUG render box for lines with labels might be off by 1 sometimes, if you drag you will leavea trail of letters from the line label sometimes maybe
+DONE-FEATURE add line labels
+  -adding midpoints when line labels exist need to be smarter about reposition line labels
+  -add line label anchor in text edit mode so that you can easily reposition it
+  -introduce notion of "selected midpoint/linelabel handler" so that they can be deleted
+  -bonus, cache line labels
 DONE-BUG open double cilkc not work anymore :()
 DONE-open tutorial file by defaultcd
 DONE-get rid of info box for now
