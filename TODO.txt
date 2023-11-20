@@ -71,7 +71,7 @@ stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
 
-cabal test --test-options='--match "/Potato.Flow.Controller.General/General/has_unsaved_changes_basic"'
+cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Pan"'
 
 cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Layers/Layers/drag_folder2_test"'
 
@@ -257,13 +257,16 @@ DONE-handlers should return preview action
 -update tutorial file?
 -BUG remove `checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)`
   -repro is change canvas size and click in canvas area to confirm
--BUG figure out why you are hiting `in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction  `
+
+-BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
+  -displayLinesWithAlignment does not add trailingcursor I think
+
+DONE-BUG figure out why you are hiting `in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction  `
   -repro is to rename a folder, click canvas, click back to folder 
-  -also add a UT for this..
+  DONE-also add a UT for this..
 DONE-make screenshot
 DONE-BUG resize window after panning is VERY BROKEN
-  -add a UT for this
--BUG cursor not showing at very end of canvas size text entry boxes, also happens in filename widget and justall text boxes
+  DONE-add a UT for this
 DONE-hardcode the xterm text width file?
 DONE-make a regular tutorial doc
 DONE-remove potato references :(

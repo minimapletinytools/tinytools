@@ -305,19 +305,24 @@ endoGoatCmdLoad (spf, cm) gs = r where
       -- NOTE _goatState_layersHandler gets set by goat_applyWSEvent during refresh
     }
 
-endoGoatCmdSetFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
-endoGoatCmdSetFocusedArea gfa goatState = r where
+goat_setFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
+goat_setFocusedArea gfa goatState = r where
   didchange = gfa /= _goatState_focusedArea goatState
   goatstatewithnewfocus = goatState { _goatState_focusedArea = gfa }
   noactionneeded = goatstatewithnewfocus
   potatoHandlerInput = potatoHandlerInputFromGoatState goatState
   r = if didchange && pHandlerName (_goatState_layersHandler goatState) == handlerName_layersRename
+    -- special case to force confirmation on layersRename handler which is special because it does not generate a Preview
     then let
         goatState_afterAction = case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
           Nothing -> noactionneeded
-          Just pho -> goat_processLayersHandlerOutput pho goatstatewithnewfocus
-      in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction  
+          Just pho -> traceShow "press enter" $ goat_processLayersHandlerOutput pho goatstatewithnewfocus
+      in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction
     else noactionneeded
+
+
+endoGoatCmdSetFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
+endoGoatCmdSetFocusedArea = goat_setFocusedArea
 
 
 endoGoatCmdMouse :: LMouseData -> GoatState -> GoatState
@@ -330,9 +335,9 @@ endoGoatCmdMouse mouseData goatState = r where
 
     _                        ->  continueDrag mouseData (_goatState_mouseDrag goatState)
   canvasDrag = toRelMouseDrag last_pFState (_goatState_pan goatState) mouseDrag
-  goatState_withNewMouse = goatState {
+  goatState_withFocusedArea = goat_setFocusedArea (if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas) goatState
+  goatState_withNewMouse = goatState_withFocusedArea {
       _goatState_mouseDrag = mouseDrag
-      , _goatState_focusedArea = if isLayerMouse then GoatFocusedArea_Layers else GoatFocusedArea_Canvas
     }
   noChangeOutput = goatState_withNewMouse
   -- TODO maybe split this case out to endoGoatCmdLayerMouse

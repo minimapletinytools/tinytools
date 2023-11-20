@@ -64,9 +64,36 @@ create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyFolderSelected someFolderName
 
 
+rename_focus_clickCanvas_test :: Spec
+rename_focus_clickCanvas_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
-rename_focus_test :: GoatFocusedArea -> Spec
-rename_focus_test gfa = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 100, 100)
+  verifyOwlCount 1
+
+  setMarker "select the box via layers"
+  layerMouseDownUpRel LMO_Normal 0 0
+  verifySelectionCount 1
+
+  setMarker "begin renaming the box"
+  layerMouseDownUpRel LMO_Normal 0 0
+  pressKeys "aoeu"
+
+  let
+    origname = "<box>"
+    -- NOTE, when when have multi-select, we should auto-select the previous name such that it gets deleted
+    expectedname = "aoeu<box>"
+
+  setMarker "verify the name has not been changed yet (no preview)"
+  verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == origname then Nothing else Just $ "expected name " <> show origname <> " got " <> show (hasOwlItem_name sowl)
+
+  setMarker "change focus by clicking on canvas and ensure rename took effect"
+  canvasMouseDownUp (50, 50)
+  verifyMostRecentlyCreatedOwl $ \sowl -> if hasOwlItem_name sowl == expectedname then Nothing else Just $ "expected name " <> show expectedname <> " got " <> show (hasOwlItem_name sowl)
+
+-- same as rename_focus_clickCanvas_test but calls setFocus instead
+rename_focus_setFocus_test :: GoatFocusedArea -> Spec
+rename_focus_setFocus_test gfa = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
   setMarker "draw a box"
   drawCanvasBox (0, 0, 100, 100)
@@ -309,8 +336,9 @@ spec :: Spec
 spec = do
   describe "Layers" $ do
     describe "create_select_test" $ create_select_test
-    describe "rename_focus_test canvas" $ rename_focus_test GoatFocusedArea_Canvas
-    describe "rename_focus_test other" $ rename_focus_test GoatFocusedArea_Other
+    describe "rename_focus_clickCanvas_test" $ rename_focus_clickCanvas_test 
+    describe "rename_focus_setFocus_test canvas" $ rename_focus_setFocus_test GoatFocusedArea_Canvas
+    describe "rename_focus_setFocus_test other" $ rename_focus_setFocus_test GoatFocusedArea_Other
     describe "create_in_folder_and_collapse_test" $ create_in_folder_and_collapse_test
     describe "folder_collapse_test" $ folder_collapse_test
     describe "lock_or_hide_select_test hide" $ lock_or_hide_select_test LMO_Hide
