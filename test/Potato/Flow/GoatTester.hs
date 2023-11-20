@@ -20,6 +20,10 @@ import qualified Data.Text                as T
 import           Data.Tuple.Extra
 
 
+goatTesterInitialScreenSize :: V2 Int
+goatTesterInitialScreenSize = V2 100 100
+
+
 type GoatTesterTrackingState = (Text, Int, Int) -- (marker, operations since start of test, operations since last marker)
 
 -- TODO include ref to rendered canvas and then you can render it on failure cases!!
@@ -42,7 +46,7 @@ data GoatTesterState = GoatTesterState {
 
 instance Default GoatTesterState where
   def = GoatTesterState {
-      _goatTesterState_goatState = makeGoatState (V2 100 100) (emptyOwlPFState, emptyControllerMeta)
+      _goatTesterState_goatState = makeGoatState goatTesterInitialScreenSize (emptyOwlPFState, emptyControllerMeta)
       , _goatTesterState_rawOperationCount = 0
       , _goatTesterState_marker = "__START__"
       , _goatTesterState_rawOperationCountSinceLastMarker = 0
@@ -291,9 +295,12 @@ pressUndo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'z') 
 pressRedo :: (Monad m) => GoatTesterT m ()
 pressRedo = runEndo $ endoGoatCmdKeyboard  (KeyboardData (KeyboardKey_Char 'y') [KeyModifier_Ctrl])
 
-
 markSaved :: (Monad m) => GoatTesterT m ()
 markSaved = runEndo $ endoGoatCmdMarkSaved ()
+
+resizeScreen :: (Monad m) => V2 Int -> GoatTesterT m ()
+resizeScreen (V2 w h) = runEndo $ endoGoatCmdSetCanvasRegionDim (V2 w h)
+
 
 -- verification helpers
 

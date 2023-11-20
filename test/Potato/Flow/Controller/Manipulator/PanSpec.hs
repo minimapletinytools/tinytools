@@ -25,6 +25,15 @@ verifyPan expected = verifyState "verifyPan" f where
       pan = (x,y)
 
 
+verifyScreenSize :: V2 Int -> GoatTester ()
+verifyScreenSize expected = verifyState "verifyScreenSize" f where
+  f gs = if screensize == expected
+    then Nothing
+    else Just $ "got " <> show screensize <> " expected " <> show expected
+    where
+      screensize = _goatState_screenRegion gs
+
+
 
 -- TODO broken...
 basic_test :: Spec
@@ -34,17 +43,22 @@ basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   drawCanvasBox (0, 0, 10, 10)
   -- TODO verify box position
 
-  let pan = (5, -7)
+  let 
+    pan1 = (1, 1)
+    pan2 = (5, -7)
+    -- after panning to pan1 when we pan to pan2 it's actually panning to pan2+pan1
+    pan2p1 = (6,-6)
   setMarker "pan"
   verifyPan (0,0)
   setTool Tool_Pan
   canvasMouseDown (0, 0)
-  canvasMouseDown (1, 1)
-  verifyPan (1, 1)
-  canvasMouseDown pan
-  verifyPan pan
-  canvasMouseUp pan
-  verifyPan pan
+  canvasMouseDown pan1
+  verifyPan pan1
+  canvasMouseDown pan2
+  verifyPan pan2p1
+  -- now we are at 
+  canvasMouseUp (0, 0)
+  verifyPan pan2p1
 
   setMarker "draw a box"
   drawCanvasBox (0, 0, 10, 10)
@@ -82,9 +96,45 @@ middle_button_pan_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   verifyOwlCount 1
 
 
+pan_resize_pan_test :: Spec
+pan_resize_pan_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  let
+    pan = (5, 10)
+    minuspan = (-5, -10)
+    newscreensize = V2 150 150
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 10, 10)
+  
+  setMarker "pan"
+  verifyPan (0,0)
+  setTool Tool_Pan
+  canvasMouseDown (0, 0)
+  canvasMouseUp pan
+  verifyPan pan
+
+  setMarker "resize"
+  verifyScreenSize goatTesterInitialScreenSize
+  resizeScreen newscreensize
+  verifyScreenSize newscreensize
+  
+  setMarker "pan back"
+  setTool Tool_Pan
+  canvasMouseDown (0, 0)
+  canvasMouseUp minuspan
+  verifyPan (0, 0)
+  -- TODO verify box position on screen
+
+  setMarker "resize back"
+  resizeScreen goatTesterInitialScreenSize
+  verifyScreenSize goatTesterInitialScreenSize
+  -- TODO verify something
+
 spec :: Spec
 spec = do
   describe "Pan" $ do
-    --describe "basic_test" $ basic_test
+    describe "basic_test" $ basic_test
     describe "cancel_test" $ cancel_test
     describe "middle_button_pan_test" $ middle_button_pan_test
+    describe "pan_resize_pan_test" $ pan_resize_pan_test
