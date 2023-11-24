@@ -149,7 +149,6 @@ library
     , reflex-test-host >=0.1.2
     , relude
     , semialign
-    , template-haskell
     , text
     , text-icu
     , these
@@ -266,7 +265,6 @@ test-suite tinytools-test
     , reflex-test-host >=0.1.2
     , relude
     , semialign
-    , template-haskell
     , text
     , text-icu
     , these
