@@ -144,9 +144,9 @@ library
     , pretty-simple
     , random-shuffle
     , ref-tf
-    , reflex >= 0.8 && <1
+    , reflex >= 0.9.2 && < 1
     , reflex-potatoes >=0.1
-    , reflex-test-host >=0.1.2
+    , reflex-test-host >=0.1.2.3
     , relude
     , semialign
     , text
@@ -260,9 +260,9 @@ test-suite tinytools-test
     , pretty-simple
     , random-shuffle
     , ref-tf
-    , reflex >= 0.8 && <1
+    , reflex >= 0.9.2 && < 1
     , reflex-potatoes >=0.1
-    , reflex-test-host >=0.1.2
+    , reflex-test-host >=0.1.2.3
     , relude
     , semialign
     , text
