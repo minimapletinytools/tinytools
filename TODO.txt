@@ -1,4 +1,19 @@
 
+Hi, I'm been working on my terminal based unicode diagram editor [tinytools](https://github.com/minimapletinytools/tinytools-vty) for about 4 years now 😱. It's been ready to release for some time now but I keep putting it off and adding more features instead! But no more!!
+
+I'm a complete potato when it comes to OSS release/distribution/promotion. Looking for tips/suggestions on other ways to distribute this app.
+
+At the very least, I'll put a binary on github, and upload the latest to cabal, but I'd like it to be easier for folks to use the app.
+
+I've done all my development on mac, so homebrew is a logical choice, however I'm a little concerned of the super long build times as well as the dependency on [https://hackage.haskell.org/package/text-icu](https://hackage.haskell.org/package/text-icu) which cabal often struggles to find.
+
+I haven't thought about windows and linux but I'd like to release there as well.
+And I haven't a clue on how to promote this besides making random reddit posts like this one. The software excels in its niche IMO so I expect it to ultimately promote itself for people who care, but I'd love to help push it along.
+
+Thanks in advance.
+
+
+-----
 
 pet childhood sportsteam
 
@@ -273,8 +288,9 @@ DONE-get rid of text box tool
     DONE-add a UT for this...
 
 ::NEWEST TODO::
--CUTLINE stuff below (search for it)
--fix PanSpec...
+-add --version command
+-go over nix pills
+DONE-fix PanSpec...
 -BUG translating lines should translate midpoints too
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
@@ -353,6 +369,60 @@ DONE-get rid of text box tool
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
 
+DONE-enable/disable widechar/grapheme cluster configs
+-charwidth needs to be passed in rather than rely on global
+-consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
+-LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
+-finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
+-file stuff
+  -maybe highlight relevant files instead of * in file explorer
+    -or just don't show anything that's not relevant...
+  -UTs
+    -popupSaveBeforeExit
+    -popupOpenWindow
+    -doubleClick
+    DONE-waitForSecondAfterFirst (move to reflex-potatoes)
+  DONE-add double click support to file explorer
+    -need to hook into IO time stuff
+-folder stuff
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
+  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
+    -not sure what happens when you shift select past a folder
+  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  DONE-make new elts get created inside selected folder rather than above it?
+-proper configurable theme in Main.hs
+-TESTING check for leaks again
+-FEATURE info/statusbar/output area (right side?)
+-TESTS TO ADD
+  -create box, turn to text box, add some text, turn to regular box
+  -drag parent folder into a child folder and ensure it does not work
+  -create folder with children, select folder, attempt to drag via children (doesn't work right now)
+-figure out how to change folders into groups for auto-pathing group support
+  -is it just a folder setting?
+-add mouse hover support (for when you do web port)
+-maybe make styles references instead of stored per elt
+-FEATURE options menu
+  -could you do style defaults in this menu too?
+  -like ideally following the same model you did in Params.hs....
+-FEATURE add anchor repositioning dragging
+  -add anchor positioning var first
+  -create interface for dragging anchors in line handler
+  -maybe design way to directly attach at offset position?
+    -line anchors for render could highlight the entire box and flash the center point?
+      -you probably want options to disable this stuff
+-ttvty
+  DONE/IGNORE-add box border toggle
+  -(line style) do easy disabling of start/end (stretch)
+    [x] start | [x] end    (the one being modified is highlighted)
+-insert vs overwrite option for freeform text
+  -you need some kind of options object to go along side of _setPotatoDefaultParameters_sBoxType
+
+  
 DONE-YOU HAVE 2 WIP CHANGES RIGHT NOW OOPS 
   DONE-BOX CONSTRAINTS
     -broken because the constrainDeltaLBox function is applied to post preview state
@@ -601,61 +671,6 @@ DONE-BUG fix line bugs
           ║     ║     ╚══════════════════════╝
           ╚═════╝
   IGNORE/DONE?-attach offset of 0 for AL ANY still needs to render the arrow head
-
-
-:: CUT Line
-DONE-enable/disable widechar/grapheme cluster configs
--charwidth needs to be passed in rather than rely on global
--consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
--LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
--finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
--file stuff
-  -maybe highlight relevant files instead of * in file explorer
-    -or just don't show anything that's not relevant...
-  -UTs
-    -popupSaveBeforeExit
-    -popupOpenWindow
-    -doubleClick
-    DONE-waitForSecondAfterFirst (move to reflex-potatoes)
-  DONE-add double click support to file explorer
-    -need to hook into IO time stuff
--folder stuff
-  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
-  -empty folders should not be expandable? (set to expanded by default)
-  -BUG click release on lock/hide/collapse on selected element should not deselect
-  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
-  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
-    -not sure what happens when you shift select past a folder
-  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
-    -you need some kind of click off pane reset type action to handler
-      -can you tie this into graceful handling of bad mouse states?
-  DONE-make new elts get created inside selected folder rather than above it?
--proper configurable theme in Main.hs
--TESTING check for leaks again
--FEATURE info/statusbar/output area (right side?)
--TESTS TO ADD
-  -create box, turn to text box, add some text, turn to regular box
-  -drag parent folder into a child folder and ensure it does not work
-  -create folder with children, select folder, attempt to drag via children (doesn't work right now)
--figure out how to change folders into groups for auto-pathing group support
-  -is it just a folder setting?
--add mouse hover support (for when you do web port)
--maybe make styles references instead of stored per elt
--FEATURE options menu
-  -could you do style defaults in this menu too?
-  -like ideally following the same model you did in Params.hs....
--FEATURE add anchor repositioning dragging
-  -add anchor positioning var first
-  -create interface for dragging anchors in line handler
-  -maybe design way to directly attach at offset position?
-    -line anchors for render could highlight the entire box and flash the center point?
-      -you probably want options to disable this stuff
--ttvty
-  DONE/IGNORE-add box border toggle
-  -(line style) do easy disabling of start/end (stretch)
-    [x] start | [x] end    (the one being modified is highlighted)
--insert vs overwrite option for freeform text
-  -you need some kind of options object to go along side of PotatoDefaultParameters
 
 
 
