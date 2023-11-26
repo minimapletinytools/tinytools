@@ -85,6 +85,7 @@ stack exec -- potato-flow-vty-exe mycommandlineargs
 stack test --test-arguments=' --match "LineDrawer"' --file-watch
 [![CircleCI](https://circleci.com/gh/pdlla/potato-flow.svg?style=svg)](https://circleci.com/gh/pdlla/potato-flow)
 
+cabal new-haddock --haddock-for-hackage
 
 cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Pan"'
 
