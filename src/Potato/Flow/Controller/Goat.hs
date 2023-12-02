@@ -298,12 +298,14 @@ endoGoatCmdNewFolder x gs = goat_applyWSEvent WSEventType_Local_Refresh newFolde
 
 endoGoatCmdLoad :: (SPotatoFlow, ControllerMeta) -> GoatState -> GoatState
 endoGoatCmdLoad (spf, cm) gs = r where
-  gs' = goat_applyWSEvent WSEventType_Local_Refresh (WSELoad spf) gs
-  r = gs' {
+  gs_after_load = goat_applyWSEvent WSEventType_Local_Refresh (WSELoad spf) gs
+  gs_for_move = gs_after_load {
       _goatState_pan = _controllerMeta_pan cm
-      , _goatState_layersState = makeLayersStateFromOwlPFState (goatState_pFState gs') (_controllerMeta_layers cm)
+      , _goatState_layersState = makeLayersStateFromOwlPFState (goatState_pFState gs_after_load) (_controllerMeta_layers cm)
       -- NOTE _goatState_layersHandler gets set by goat_applyWSEvent during refresh
     }
+  -- rerenderAfterMove since we may have loaded a different pan
+  r = goat_rerenderAfterMove gs_for_move
 
 goat_setFocusedArea :: GoatFocusedArea -> GoatState -> GoatState
 goat_setFocusedArea gfa goatState = r where
