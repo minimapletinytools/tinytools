@@ -268,6 +268,32 @@ DONE-handlers should return preview action
   -does ordering service need to know about state/non commuting changes
     -no it doesn't, goat can just toss out failed changes
 
+:: BUGGAROOS ::
+-hitting assert checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)
+  -repro is pan, resive canvas in params without confirming (pressing tab or cilkcing somewhere in params), and then click on canvas area
+  -you can also repro by pan, resive canvas in params, and confirm by cilkcing within params
+  -another repro is to pan ,then hit "new"
+-hitting assert updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tszIsCorrect r where
+  -repro is to go into text box, type "ee"+return and then click on layers... 
+-style input not support ' ' correctly
+  -preset style should have ' ' as default fill char, right now it's empty
+  -if you click on the style params section, it forces the fill char to be space and not empty
+-you have a perma broken tt file (see attached) 
+  -rerpo is to pan and save, and open. initial render canvas doesn't account for pan so later tries to render out of bounds inside vty
+-hide stuff
+  -moving an element into a hidden folder does not hide it right away
+  -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
+  -opening file with hidden elements does not hide stuff..
+
+-you nede to fix the folder dropping at bottom issue...
+-shift select in layers please ;__;
+-did scroll wheel in finder window stop working??
+
+
+
+
+
+
 :: RELEASE TODO ::
 -make a video
 -update tutorial file?
@@ -289,9 +315,12 @@ DONE-get rid of text box tool
     DONE-add a UT for this...
 
 ::NEWEST TODO::
--add --version command
--go over nix pills
-DONE-fix PanSpec...
+-fix return navigation in params (you disabled it because it was breaking return to rename in layers)
+-upgrading ghc somehow broke unicode test
+  -9.6 fails but 9.2 OK
+-there are still some EoL cursor bugs with unicode characters
+-right click menu support (send forward/backwards) (do this is tinytools-vty, make sure inputs get captured ug)
+-maybe creating box should take you straight to edit mode and name based on what you type in there??
 -BUG translating lines should translate midpoints too
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
@@ -369,8 +398,6 @@ DONE-fix PanSpec...
   -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
-
-DONE-enable/disable widechar/grapheme cluster configs
 -charwidth needs to be passed in rather than rely on global
 -consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
 -LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
@@ -423,7 +450,14 @@ DONE-enable/disable widechar/grapheme cluster configs
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of _setPotatoDefaultParameters_sBoxType
 
-  
+DONE-return key while renaming layers should confirm it
+DONE- more style presets please (singl eline ascii box)
+DONE-cursor dosen't show up at end of layers (probably sam eissu ewith the '' cursor tag from zippers)
+DONE-when you do new file ,you don't los ethe file reference from previous session LOL <___< fuck
+DONE-add --version command
+DONE-go over nix pills
+DONE-fix PanSpec...
+DONE-enable/disable widechar/grapheme cluster configs
 DONE-YOU HAVE 2 WIP CHANGES RIGHT NOW OOPS 
   DONE-BOX CONSTRAINTS
     -broken because the constrainDeltaLBox function is applied to post preview state
