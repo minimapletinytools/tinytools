@@ -13,6 +13,8 @@ import           Control.Monad
 import           Potato.Data.Text.Unicode
 
 
+doubleWidthChars :: String
+doubleWidthChars = "ｔｈｅｒｅ　ａｒｅ　ｎｏ　ｓｐａｃｅ　ｂｅｔｗｅｅｎ　ａｄｊａｃｅｎｔ　ｃｈａｒａｃｔｅｒｓ"
 
 spec :: Spec
 spec = describe "Unicode" $ do
@@ -36,3 +38,6 @@ spec = describe "Unicode" $ do
   it "containsGraphemeCluster" $ do
     containsGraphemeCluster "👎👎👎👎👎" `shouldBe` False
     containsGraphemeCluster "👎👎👎🏿👎👎👎" `shouldBe` True
+  forM_ doubleWidthChars $ \c -> do
+    it ("getCharWidth " <> show c) $ do
+      getCharWidth c `shouldBe` 2
