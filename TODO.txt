@@ -273,12 +273,11 @@ DONE-handlers should return preview action
   -repro is pan, resive canvas in params without confirming (pressing tab or cilkcing somewhere in params), and then click on canvas area
   -you can also repro by pan, resive canvas in params, and confirm by cilkcing within params
   -another repro is to pan ,then hit "new"
--hitting assert updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tszIsCorrect r where
-  -repro is to go into text box, type "ee"+return and then click on layers... 
 -style input not support ' ' correctly
   -preset style should have ' ' as default fill char, right now it's empty
   -if you click on the style params section, it forces the fill char to be space and not empty
--you have a perma broken tt file (see attached) 
+DONE-hitting assert  when go into text box, type "ee"+return and then click on layers... 
+DONE-you have a perma broken tt file (see attached) 
   -rerpo is to pan and save, and open. initial render canvas doesn't account for pan so later tries to render out of bounds inside vty
 -hide stuff
   -moving an element into a hidden folder does not hide it right away
@@ -288,6 +287,7 @@ DONE-handlers should return preview action
 -you nede to fix the folder dropping at bottom issue...
 -shift select in layers please ;__;
 -did scroll wheel in finder window stop working??
+  -yes it's a fcous issue ,the mouse input does'nt get sent to the scroll wheel pane, you ned to pass it in if you want to fix it...
 
 
 

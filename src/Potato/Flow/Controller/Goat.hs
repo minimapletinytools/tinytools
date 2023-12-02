@@ -130,7 +130,13 @@ makeGoatState (V2 screenx screeny) (initialstate, controllermeta) = goat where
       , _renderContext_renderedCanvasRegion = initialemptyrcr
       , _renderContext_cache = emptyRenderCache
     }
+    
+    -- TODO this is incorrect becaues it doesn't use pan or screenx/y
     initialrc = _renderContext_renderedCanvasRegion $ render initialCanvasBox initialselts initialrendercontext
+
+    -- TODO use this, except this breaks the initial render whne opening tinytools-vty for some reason (it should rerender in the endoSetCanvasSide function aftre postbuild where the screenx/y get set corrcetly but it dosen't)
+    --initialrc = _renderContext_renderedCanvasRegion $ render_new (LBox (-(_controllerMeta_pan controllermeta)) sr) (traceShowId $ initialselts) initialrendercontext
+
 
     goat = GoatState {
         _goatState_workspace      = fst $ loadOwlPFStateIntoWorkspace (initialstate) emptyWorkspace
@@ -659,8 +665,22 @@ goat_processHandlerOutput_noSetHandler pho goatState = r where
     HOA_Nothing -> goatState
 
 
+
 goat_processLayersHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
-goat_processLayersHandlerOutput pho goatState = goat_processHandlerOutput_noSetHandler pho $ goatState { _goatState_layersHandler = fromMaybe (_goatState_layersHandler goatState) (_potatoHandlerOutput_nextHandler pho) }
+goat_processLayersHandlerOutput pho goatState = r where
+  gs' = goatState { 
+      _goatState_layersHandler = fromMaybe (_goatState_layersHandler goatState) (_potatoHandlerOutput_nextHandler pho) 
+    }
+  gs'' = goat_processHandlerOutput_noSetHandler pho gs'
+
+  -- layers output may have changed our selection so update the handler
+  prevcanvasselection = _goatState_canvasSelection goatState
+  nextcanvasselection = computeCanvasSelection gs''
+  r = if prevcanvasselection == nextcanvasselection
+    then gs''
+    else gs'' { _goatState_handler = makeHandlerFromSelection nextcanvasselection }
+
+
 
 goat_processCanvasHandlerOutput :: PotatoHandlerOutput -> GoatState -> GoatState
 goat_processCanvasHandlerOutput pho goatState = r where
