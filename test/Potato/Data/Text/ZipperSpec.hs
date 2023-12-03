@@ -85,6 +85,8 @@ spec =
       dl1 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n\n\naoeu")
       dl2 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "\n\n\naoeu")
       dl3 = displayLinesWithAlignment TextAlignment_Right 10 () () (fromText "aoeu\n\n\n")
+      dl4 = displayLinesWithAlignment TextAlignment_Right 10 () () empty
+
 
     insertcharnewlinesentence `shouldBe` fromText newlineSentence
 
@@ -93,6 +95,7 @@ spec =
     _displayLines_spans dl1 `shouldBe` makespans [["aoeu"],[""],[""],["aoeu", ""]]
     _displayLines_spans dl2 `shouldBe` makespans [[""],[""],[""],["aoeu", ""]]
     _displayLines_spans dl3 `shouldBe` makespans [["aoeu"],[""],[""],[""]]
+    _displayLines_spans dl4 `shouldBe` makespans [[""]]
     
 
 

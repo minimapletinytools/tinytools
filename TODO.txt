@@ -275,6 +275,7 @@ DONE-handlers should return preview action
 -update tutorial file?
 -empty text zipper should return '' span with cursor 
   -without this, empty cells don't show the cursor...
+    -NO this is not the issue :()
 -shift select in layers please ;__;
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
