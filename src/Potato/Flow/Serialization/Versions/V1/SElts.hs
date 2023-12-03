@@ -74,7 +74,7 @@ instance Show SuperStyle where
   show = superStyle_toListFormat
 
 superStyle_fromListFormat :: [PChar] -> SuperStyle
-superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
+superStyle_fromListFormat chars = assert (l == 6 || l == 7) $ r where
   l = length chars
   r = SuperStyle {
     _superStyle_tl = Just $ chars L.!! 0
@@ -84,7 +84,7 @@ superStyle_fromListFormat chars = assert (l == 7 || l == 8) $ r where
     , _superStyle_vertical   = Just $ chars L.!! 4
     , _superStyle_horizontal = Just $ chars L.!! 5
     , _superStyle_point = Just $ chars L.!! 6
-    , _superStyle_fill = if l == 7 then FillStyle_Blank else FillStyle_Simple (chars `debugBangBang` 7)
+    , _superStyle_fill = if l == 6 then FillStyle_Blank else FillStyle_Simple (chars `debugBangBang` 6)
   }
 
 -- superStyle_fromListFormat "╔╗╚╝║═█" `shouldBe` def
