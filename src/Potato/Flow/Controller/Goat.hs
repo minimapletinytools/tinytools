@@ -758,9 +758,6 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
     then let
         layersHandler = _goatState_layersHandler goatState_afterSelection
         canvasHandler = _goatState_handler goatState_afterSelection 
-        -- TODO remove this assert, this will happen for stuff like boxtexthandler
-        -- since we don't have multi-user events, the handler should never be active when this happens
-        checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)
 
         -- safe for now, since `potatoHandlerInputFromGoatState` does not use `_goatState_handler/_goatState_layersHandler finalGoatState` which is set to `next_handler/next_layersHandler`
         next_potatoHandlerInput = potatoHandlerInputFromGoatState goatState_afterSelection
@@ -771,12 +768,13 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
         -- TODO cancel the preview
 
         
-      in checkvalid goatState_afterSelection {
+      in goatState_afterSelection {
           _goatState_handler = refreshedCanvasHandler
           , _goatState_layersHandler = refreshedLayersHandler
         }
     else goatState_afterSelection
 
+  -- TODO we may have an owl in/out of a hidden folder, we need to rererender these
   -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent (_goatState_layersState goatState_afterRefreshHandler)
   goatState_afterSetLayersState = goat_autoExpandFoldersOfSelection $ goatState_afterRefreshHandler { _goatState_layersState = next_layersState' }
