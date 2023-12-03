@@ -269,26 +269,26 @@ DONE-handlers should return preview action
     -no it doesn't, goat can just toss out failed changes
 
 :: BUGGAROOS ::
+-empty text zipper should return '' span with cursor 
+  -without this, empty cells don't show the cursor...
 -hitting assert checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)
   -repro is pan, resive canvas in params without confirming (pressing tab or cilkcing somewhere in params), and then click on canvas area
   -you can also repro by pan, resive canvas in params, and confirm by cilkcing within params
   -another repro is to pan ,then hit "new"
--style input not support ' ' correctly
-  -preset style should have ' ' as default fill char, right now it's empty
-  -if you click on the style params section, it forces the fill char to be space and not empty
-DONE-hitting assert  when go into text box, type "ee"+return and then click on layers... 
-DONE-you have a perma broken tt file (see attached) 
-  -rerpo is to pan and save, and open. initial render canvas doesn't account for pan so later tries to render out of bounds inside vty
 -hide stuff
   -moving an element into a hidden folder does not hide it right away
   -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
   -opening file with hidden elements does not hide stuff..
-
--you nede to fix the folder dropping at bottom issue...
+-you need to fix the folder dropping at bottom issue...
 -shift select in layers please ;__;
 -did scroll wheel in finder window stop working??
   -yes it's a fcous issue ,the mouse input does'nt get sent to the scroll wheel pane, you ned to pass it in if you want to fix it...
-
+DONE-style input not support ' ' correctly
+  DONE-preset style should have ' ' as default fill char, right now it's empty
+  DONE-if you click on the style params section, it forces the fill char to be space and not empty
+DONE-hitting assert  when go into text box, type "ee"+return and then click on layers... 
+DONE-you have a perma broken tt file (see attached) 
+  -rerpo is to pan and save, and open. initial render canvas doesn't account for pan so later tries to render out of bounds inside vty
 
 
 
