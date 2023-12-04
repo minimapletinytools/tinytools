@@ -259,4 +259,5 @@ test-suite tinytools-test
     , tinytools
     , vector
     , vty
+  build-tool-depends: hspec-discover:hspec-discover
   default-language: Haskell2010
