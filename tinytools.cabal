@@ -143,7 +143,7 @@ library
     , relude
     , semialign
     , text
-    , text-icu >= 0.8.0.1 && < 9
+    , text-icu
     , these
     , vector
     , vty
@@ -254,7 +254,7 @@ test-suite tinytools-test
     , relude
     , semialign
     , text
-    , text-icu >= 0.8.0.1 && < 9
+    , text-icu
     , these
     , tinytools
     , vector
