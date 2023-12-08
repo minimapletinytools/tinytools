@@ -273,7 +273,7 @@ DONE-handlers should return preview action
 -get it working on breew
 -make a video
 -update tutorial file?
--empty text zipper should return '' span with cursor 
+DONE-empty text zipper should return '' span with cursor 
   -without this, empty cells don't show the cursor...
     -NO this is not the issue :()
 -shift select in layers please ;__;

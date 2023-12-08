@@ -96,7 +96,13 @@ spec =
     _displayLines_spans dl2 `shouldBe` makespans [[""],[""],[""],["aoeu", ""]]
     _displayLines_spans dl3 `shouldBe` makespans [["aoeu"],[""],[""],[""]]
     _displayLines_spans dl4 `shouldBe` makespans [[""]]
-    
+
+  it "displayLinesWithAlignment - cursor tag" $ do 
+    let
+      dl0 = displayLinesWithAlignment TextAlignment_Right 10 0 1 (fromText "abc")
+      dl1 = displayLinesWithAlignment TextAlignment_Right 10 0 1 empty
+    _displayLines_spans dl0 `shouldBe` [[Span 0 "abc", Span 1 ""]]
+    _displayLines_spans dl1 `shouldBe` [[Span 1 ""]]
 
 
   it "displayLines - cursorPos" $ do

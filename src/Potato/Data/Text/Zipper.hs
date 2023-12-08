@@ -492,7 +492,7 @@ displayLinesWithAlignment alignment width tag cursorTag (TextZipper lb b a la) =
           else (nextacc, [Span tag t])
       ((_, ecpos_out), curlinespans) = if T.null curlinetext
         -- manually handle empty case because mapaccumlfn doesn't handle it
-        then ((0, Right (0, alignmentOffset alignment width "")), [[Span tag ""]])
+        then ((0, Right (0, alignmentOffset alignment width "")), [[Span cursorTag ""]])
         else L.mapAccumL mapaccumlfn (0, Left 0) curwrappedlines
 
       (cursorY', cursorX) = case ecpos_out of
