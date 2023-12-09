@@ -287,7 +287,7 @@ DONE-handlers should return preview action
   -moving an element into a hidden folder does not hide it right away (ignore this for release)
   -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
   -opening file with hidden elements does not hide stuff..
--BUG translating lines should translate midpoints too
+DONE/IGNORE-BUG translating lines should translate midpoints too
 DONE-text box option that auto goes into edit text box
 -should be more intuitive to get a 1 sided line
 
