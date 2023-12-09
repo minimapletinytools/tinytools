@@ -32,6 +32,20 @@ verifyLayersCount :: Int -> GoatTester ()
 verifyLayersCount n =  verifyState ("layers count is " <> show n) $ \s -> if (countentriesfn s) == n then Nothing else Just $ "expected " <> show n <> " elts, got " <> show (countentriesfn s)
   where countentriesfn = Seq.length . _layersState_entries . _goatState_layersState
 
+verifyNthEntryInLayersPropertyIs :: (Show a, Eq a) => Int -> (LayerEntry -> a) -> a -> GoatTester()
+verifyNthEntryInLayersPropertyIs n f v = verifyState (show n <> " entry in layers has property " <> show v) $ vf where
+  vf s = r where
+    lentries = _layersState_entries . _goatState_layersState $ s
+    mfirstentry = Seq.lookup n lentries
+    r = case mfirstentry of
+      Nothing -> Just $ "no " <> show n <> " entry in layers"
+      Just lentry -> if firstentry == v then Nothing else Just $ "expected " <> show v <> ", got " <> show firstentry where
+        firstentry = f lentry
+
+verifyNthEntryInLayersIs :: Int -> REltId -> GoatTester()
+verifyNthEntryInLayersIs n rid = verifyNthEntryInLayersPropertyIs n (_superOwl_id . _layerEntry_superOwl) rid
+
+{--
 verifyNthEntryInLayersIs :: Int -> REltId -> GoatTester()
 verifyNthEntryInLayersIs n rid = verifyState (show n <> " entry in layers is " <> show rid) $ vf where
   vf s = r where
@@ -41,10 +55,15 @@ verifyNthEntryInLayersIs n rid = verifyState (show n <> " entry in layers is " <
       Nothing -> Just $ "no " <> show n <> " entry in layers"
       Just lentry -> if firstentry == rid then Nothing else Just $ "expected REltId " <> show rid <> ", got " <> show firstentry where
         firstentry = _superOwl_id . _layerEntry_superOwl $ lentry
+--}
 
 verifyFirstEntryInLayersIs :: REltId -> GoatTester()
 verifyFirstEntryInLayersIs = verifyNthEntryInLayersIs 0
     
+
+verifyNthEntryInLayersHasDepth :: Int -> Int -> GoatTester()
+verifyNthEntryInLayersHasDepth n d = verifyNthEntryInLayersPropertyIs n layerEntry_depth d
+
 
 create_select_test :: Spec
 create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
@@ -332,6 +351,69 @@ drag_folder2_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   
 
 
+drag_folder_depth_test :: Spec
+drag_folder_depth_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "setup scene"
+  drawCanvasBox (0,0,10,10) -- 1
+  addFolder someFolderName -- 2
+  addFolder someFolderName -- 3
+  addFolder someFolderName -- 4
+  addFolder someFolderName -- 5
+  addFolder someFolderName -- 6
+  addFolder someFolderName -- 7
+  addFolder someFolderName -- 8
+
+  -- 2testfolder
+  --   3testfolder
+  --     4testfolder
+  --       5testfolder
+  --         6testfolder
+  --           7testfolder
+  --             8testfolder
+  -- 1<box>
+
+  setMarker "drag the box into the 8th folder"
+  layerMouseDownUpRel LMO_Normal 7 0
+  layerMouseDownRel LMO_Normal 7 0
+  -- we are outside of the last folder so we need to drag above ourselves
+  layerMouseDownUpRel (LMO_DropInFolder 0) 7 7
+  verifyNthEntryInLayersIs 7 1
+  verifyNthEntryInLayersHasDepth 7 7
+
+  -- 2testfolder
+  --   3testfolder
+  --     4testfolder
+  --       5testfolder
+  --         6testfolder
+  --           7testfolder
+  --             8testfolder
+  --               1<box>
+
+  setMarker "deselect"
+  pressEscape
+
+  setMarker "drag the box into the 5th folder"
+  layerMouseDownUpRel LMO_Normal 7 7
+  layerMouseDownRel LMO_Normal 7 7
+
+  -- we are inside the last folder, we are dragging BELOW ourselves
+  layerMouseDownUpRel (LMO_DropInFolder (-3)) 8 7
+  verifyNthEntryInLayersIs 7 1
+  verifyNthEntryInLayersHasDepth 7 4
+
+
+
+  -- 2testfolder
+  --   3testfolder
+  --     4testfolder
+  --       5testfolder
+  --         6testfolder
+  --           7testfolder
+  --             8testfolder
+  --         1<box>
+
+
 spec :: Spec
 spec = do
   describe "Layers" $ do
@@ -345,3 +427,4 @@ spec = do
     describe "lock_or_hide_select_test lock" $ lock_or_hide_select_test LMO_Lock
     describe "drag_folder_test" $ drag_folder_test
     describe "drag_folder2_test" $ drag_folder2_test
+    describe "drag_folder_depth_test" $ drag_folder_depth_test

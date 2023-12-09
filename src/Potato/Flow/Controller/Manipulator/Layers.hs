@@ -190,31 +190,32 @@ instance PotatoHandler LayersHandler where
       (MouseDragState_Dragging, LDS_Dragging) -> r where
 
         -- we will always place between dropSowl and justAboveDropSowl
-        mDropSowlWithOffset = do
-          (downsowl, _, offset') <- clickLayerNew lentries leposxy
-          return (downsowl, offset')
+        mDropSowl = do
+          (downsowl, _, _) <- clickLayerNew lentries leposxy
+          return downsowl
 
         mJustAboveDropSowl = do
-          lentry <- case mDropSowlWithOffset of
+          lentry <- case mDropSowl of
             Nothing -> Seq.lookup (Seq.length lentries - 1) lentries
             Just _  -> Seq.lookup (lepos-1) lentries
           return $ _layerEntry_superOwl lentry
 
 
-        nparentoffset = case mDropSowlWithOffset of
+        nparentoffset = case mDropSowl of
           Nothing -> case mJustAboveDropSowl of
             Nothing    -> error "this should never happen"
             -- we are at the very bottom
             Just asowl -> rawxoffset - superOwl_depth asowl
 
-          Just (dsowl, x) -> case mJustAboveDropSowl of
+          Just dsowl -> case mJustAboveDropSowl of
             -- we are at the very top
             Nothing    -> 0
             -- limit how deep in the hierarchy we can move based on what's below the cursor
-            Just asowl -> max x (superOwl_depth dsowl - superOwl_depth asowl)
+            Just asowl -> max x diff where
+              x = rawxoffset - superOwl_depth asowl
+              diff = superOwl_depth dsowl - superOwl_depth asowl
 
         nsibling = max 0 (- (min 0 nparentoffset))
-
 
         targetspot = case mJustAboveDropSowl of
           -- we are dropping at the top of our LayerEntries
@@ -412,6 +413,7 @@ instance PotatoHandler LayersHandler where
             else (False, selstack)
       newlhre = if childSelected
         then case lhre of
+          -- TODO this is wrong 
           LayersHandlerRenderEntryNormal _ mdots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected mdots renaming lentry
           x -> x
         else lhre

@@ -46,10 +46,15 @@ superOwl_isTransformable :: (HasOwlTree o) => SuperOwl -> o -> Bool
 superOwl_isTransformable sowl ot = case _owlItem_subItem (_superOwl_elt sowl) of
   OwlSubItemNone -> False
   OwlSubItemFolder _ -> False
+
+  -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED (because then thei'r endpoints jump around when the attached objects are destroyed)
+  -- TODO FIX THE ABOVE
   -- I forgot why I added this, but in any case, we definitely DO want to transform lines if all it's attached parents are also being transformed
   --OwlSubItemLine sline -> not $
   --  (fromMaybe False $ _sAutoLine_attachStart sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
   --  && (fromMaybe False $ _sAutoLine_attachEnd sline <&> (\att -> hasOwlTree_exists ot (_attachment_target att)))
+
+  
   _ -> True
 
 -- TODO you MAY want to consider adding all lines that have both attachments in the selection to the modify set 
