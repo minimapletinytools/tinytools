@@ -488,6 +488,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
                 'p' -> Just Tool_Pan
                 'b' -> Just Tool_Box
                 'l' -> Just Tool_Line
+                't' -> Just Tool_Text
                 'n' -> Just Tool_TextArea
                 _   -> Nothing
               newHandler = maybe (_goatState_handler goatState_withKeyboard) (makeHandlerFromNewTool goatState_withKeyboard) mtool

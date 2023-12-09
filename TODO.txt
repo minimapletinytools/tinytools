@@ -273,10 +273,6 @@ DONE-handlers should return preview action
 -get it working on breew
 -make a video
 -update tutorial file?
-DONE-empty text zipper should return '' span with cursor 
-  -without this, empty cells don't show the cursor...
-    -NO this is not the issue :()
--shift select in layers please ;__;
 -layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
   -currently not possible to drag the last element in folder outside of that folder if there's something below it
@@ -284,14 +280,20 @@ DONE-empty text zipper should return '' span with cursor
   -currently not possible to drag below a folder if the folder is thet last sibling :(
     -not sure if there's a way around this :(
   -DO THIS you might want to consider doing the thing where dragging to the right side of a folder puts it underneath, otherwise it's always a sibling
--fix return navigation in params (you disabled it because it was breaking return to rename in layers)
+  -shift select in layers please ;__;
+  -selecting multiple items in layers and click on on should select that one item, but right now it gose into rename mode
+  -selecting multiple items and hitting new folder should put those items in folder maybe
 -hide stuff
   -moving an element into a hidden folder does not hide it right away (ignore this for release)
   -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
   -opening file with hidden elements does not hide stuff..
+-BUG translating lines should translate midpoints too
+DONE-text box option that auto goes into edit text box
+-should be more intuitive to get a 1 sided line
 
 
 ::NEWEST TODO::
+-should be able to rename elements for you based on first entered text maybe (ugh)
 -did scroll wheel in finder window stop working??
   -yes it's a fcous issue ,the mouse input does'nt get sent to the scroll wheel pane, you ned to pass it in if you want to fix it...
 -upgrading ghc somehow broke unicode test
@@ -299,8 +301,6 @@ DONE-empty text zipper should return '' span with cursor
 -there are still some EoL cursor bugs with unicode characters
 -right click menu support (send forward/backwards) (do this is tinytools-vty, make sure inputs get captured ug)
 -maybe creating box should take you straight to edit mode and name based on what you type in there??
--BUG translating lines should translate midpoints too
-
 -undo_move is probably not very multi-user friendly, you should rewrite using do_move logic 
   -(so remove all children recursively and then add them back in)
   -(this will allow undo_move to work even if some of those childrens or parents have since been deleted I guess)
@@ -423,6 +423,12 @@ DONE-empty text zipper should return '' span with cursor
   -you need some kind of options object to go along side of _setPotatoDefaultParameters_sBoxType
 
 
+DONE-empty text zipper should return '' span with cursor 
+  -without this, empty cells don't show the cursor...
+    -NO this is not the issue :()
+DONE-clicking on params then clikcing over to layers does not cause focus to go away on params??
+DONE-fix return navigation in params (you disabled it because it was breaking return to rename in layers)
+  -you can/should probably add focusID to paramswidgetfn NBD
 DONE-hitting assert checkvalid = assert (pIsHandlerActive canvasHandler /= HAS_Active_Mouse && pIsHandlerActive layersHandler /= HAS_Active_Mouse)
   -repro is pan, resive canvas in params without confirming (pressing tab or cilkcing somewhere in params), and then click on canvas area
   -you can also repro by pan, resive canvas in params, and confirm by cilkcing within params

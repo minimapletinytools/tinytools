@@ -38,8 +38,6 @@ data UnicodeWidthFn = UnicodeWidthFn {
   }
 
 
--- TODO remove Tool_TextArea
--- TOOL
 data Tool = Tool_Select | Tool_Pan | Tool_Box | Tool_Line | Tool_Text | Tool_TextArea deriving (Eq, Show, Enum)
 
 tool_isCreate :: Tool -> Bool
