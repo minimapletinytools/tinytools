@@ -254,6 +254,7 @@ instance PotatoHandler LayersHandler where
         }
 
       (MouseDragState_Up, LDS_Selecting leposdown) -> r where
+        -- TODO do proper shift selecting
         shift = elem KeyModifier_Shift _mouseDrag_modifiers
         sowl = _layerEntry_superOwl $ Seq.index lentries leposdown
         r = Just $ def {
@@ -272,11 +273,16 @@ instance PotatoHandler LayersHandler where
             -- TODO great place for TZ.selectAll when you add selection capability into TZ
             zipper = TZ.fromText $ hasOwlItem_name downsowl
 
-            r = Just $ setHandlerOnly LayersRenameHandler {
-                _layersRenameHandler_original = resetLayersHandler lh
-                , _layersRenameHandler_renaming   = downsowl
-                , _layersRenameHandler_index = lepos
-                , _layersRenameHandler_zipper   = zipper
+            r = if Seq.length (unSuperOwlParliament selection) == 1
+              then Just $ setHandlerOnly LayersRenameHandler {
+                  _layersRenameHandler_original = resetLayersHandler lh
+                  , _layersRenameHandler_renaming   = downsowl
+                  , _layersRenameHandler_index = lepos
+                  , _layersRenameHandler_zipper   = zipper
+                }
+              else Just $ def {
+                _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler (resetLayersHandler lh)
+                , _potatoHandlerOutput_action = HOA_Select False (SuperOwlParliament $ Seq.singleton downsowl)
               }
 
 

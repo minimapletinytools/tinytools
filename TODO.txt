@@ -279,9 +279,10 @@ DONE-handlers should return preview action
     -the trick is if you drag the last element in a folder to the spot below it, you need exception case to move it outside of the folder rather than as the next sibling to itself since that doesn't do anything
   DONE-currently not possible to drag below a folder if the folder is thet last sibling :(
     -not sure if there's a way around this :(
-  DONE-DO THIS you might want to consider doing the thing where dragging to the right side of a folder puts it underneath, otherwise it's always a sibling
+  DONE-DO THIS you might want to consider doing the thing where dragging to the right side of a folder puts it underneath, otherwise it's always a SiblingPosition
+  DONE-selecting multiple items in layers and click on on should select that one item, but right now it gose into rename mode
   -shift select in layers please ;__;
-  -selecting multiple items in layers and click on on should select that one item, but right now it gose into rename mode
+  
   -selecting multiple items and hitting new folder should put those items in folder maybe
 -hide stuff
   -moving an element into a hidden folder does not hide it right away (ignore this for release)

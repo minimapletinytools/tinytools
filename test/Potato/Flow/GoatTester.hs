@@ -238,6 +238,19 @@ layerMouseDownUp (x,y) = do
   layerMouseDown (x,y)
   layerMouseUp (x,y)
 
+
+layerMouseDownWithModifier :: (Monad m) =>  (Int, Int) -> KeyModifier -> GoatTesterT m ()
+layerMouseDownWithModifier (x,y) modifier = mouse False False [modifier] MouseButton_Left (V2 x y)
+
+layerMouseUpWithModifier :: (Monad m) =>  (Int, Int) -> KeyModifier -> GoatTesterT m ()
+layerMouseUpWithModifier (x,y) modifier = mouse False True [modifier] MouseButton_Left (V2 x y)
+
+layerMouseDownUpWithModifier :: (Monad m) =>  (Int, Int) -> KeyModifier -> GoatTesterT m ()
+layerMouseDownUpWithModifier (x,y) modifier = do
+  layerMouseDownWithModifier (x,y) modifier 
+  layerMouseUpWithModifier (x,y) modifier
+
+
 data LayerMouseOp = LMO_Collapse | LMO_Hide | LMO_Lock | LMO_Normal 
   | LMO_DropInFolder Int -- desired position relative to depth
   deriving (Show, Eq)
@@ -269,6 +282,8 @@ layerMouseDownUpRel :: (Monad m) => LayerMouseOp -> Int -> Int -> GoatTesterT m 
 layerMouseDownUpRel op y depth = do
   layerMouseDownRel op y depth
   layerMouseUpRel op y depth
+
+
 
 
 pressKeyboardKey :: (Monad m) => KeyboardKey -> GoatTesterT m ()

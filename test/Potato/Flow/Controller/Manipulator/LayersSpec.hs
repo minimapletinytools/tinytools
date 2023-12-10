@@ -17,6 +17,7 @@ import           Potato.Flow.Controller.Manipulator.TestHelpers
 
 import qualified Data.List                                      as L
 import qualified Data.Sequence as Seq
+import Control.Monad (forM_)
 
 
 someFolderName :: Text
@@ -81,6 +82,35 @@ create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   setMarker "select the folder"
   layerMouseDownUp (5,0)
   verifyFolderSelected someFolderName
+
+shift_select_test :: Spec
+shift_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  let xoff = 10
+
+  setMarker "draw several boxes"
+  forM_ [0..9] $ \_ -> drawCanvasBox (0, 0, 100, 100)
+  verifyOwlCount 10
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "shift select some stuff"
+  forM_ [0..9] $ \n -> layerMouseDownUpWithModifier (xoff, n) KeyModifier_Shift
+  verifySelectionCount 10
+  
+  setMarker "shift unselect stuff"
+  layerMouseDownUpWithModifier (xoff, 5) KeyModifier_Shift
+  verifySelectionCount 9
+  layerMouseDownUpWithModifier (xoff, 8) KeyModifier_Shift
+  verifySelectionCount 8
+  
+  setMarker "regular select one already selected element"
+  layerMouseDownUp (xoff, 2)
+  verifySelectionCount 1
+  
+  setMarker "deselect everything"
+  pressEscape
+  verifySelectionCount 0
 
 
 rename_focus_clickCanvas_test :: Spec
@@ -418,6 +448,7 @@ spec :: Spec
 spec = do
   describe "Layers" $ do
     describe "create_select_test" $ create_select_test
+    describe "shift_select_test" $ shift_select_test
     describe "rename_focus_clickCanvas_test" $ rename_focus_clickCanvas_test 
     describe "rename_focus_setFocus_test canvas" $ rename_focus_setFocus_test GoatFocusedArea_Canvas
     describe "rename_focus_setFocus_test other" $ rename_focus_setFocus_test GoatFocusedArea_Other
