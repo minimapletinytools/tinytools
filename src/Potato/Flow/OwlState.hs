@@ -18,8 +18,6 @@ import qualified Data.IntMap.Strict      as IM
 import           Data.List.Ordered       (isSortedBy)
 import           Data.Maybe
 import qualified Data.Text as T
-import qualified Data.Sequence as Seq
-
 
 
 -- prob not the best place for these...
@@ -115,7 +113,7 @@ owlPFState_fromCanvasCoordinates OwlPFState {..} (V2 x y) = V2 (x+sx) (y+sy) whe
 owlPFState_to_SuperOwlParliament :: OwlPFState -> SuperOwlParliament
 owlPFState_to_SuperOwlParliament OwlPFState {..} = owlParliament_toSuperOwlParliament _owlPFState_owlTree $ OwlParliament $ _owlTree_topOwls _owlPFState_owlTree
 
-do_newElts :: (HasCallStack) => [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
+do_newElts :: [(REltId, OwlSpot, OwlItem)] -> OwlPFState -> (OwlPFState, SuperOwlChanges)
 do_newElts seltls pfs@OwlPFState {..} = r where
 
   -- notably, passing in a list here rather than SuperOwlParialment allows us to add parents with children so long as everything is sorted from left to right (such that the parent/sibling exist when the child gets added)

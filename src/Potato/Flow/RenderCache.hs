@@ -13,7 +13,6 @@ import           Potato.Flow.Methods.LineTypes
 
 
 import qualified Data.IntMap             as IM
-import qualified Data.Text.IO as T
 import qualified Data.Vector.Unboxed     as V
 import Control.Exception (assert)
 

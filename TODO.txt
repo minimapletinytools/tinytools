@@ -270,14 +270,14 @@ DONE-handlers should return preview action
 
 
 :: RELEASE TODO ::
--warning cleanup
 -get it working on breew
 -make a video
 -update tutorial file?
 -should be more intuitive to get a 1 sided line
--opening file with hidden elements does not hide stuff..
+
 
 ::NEWEST TODO::
+-opening file with hidden elements does not hide stuff..
 -layers improvements
   -shift select in layers please ;__;
   -selecting multiple items and hitting new folder should put those items in folder maybe
@@ -414,7 +414,7 @@ DONE-handlers should return preview action
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of _setPotatoDefaultParameters_sBoxType
 
-
+DONE-warning cleanup
 DONE-hide stuff
   -moving an element into a hidden folder does not hide it right away (ignore this for release)
     -this is becaues it gets added to superowlchanges

@@ -160,7 +160,7 @@ lineAnchorsForRender_reverse lafr@LineAnchorsForRender {..} = r where
   revgo acc ((cd,d,False):[]) = (flipCartDir cd,d,True):acc
   revgo _ ((_,_,True):[]) = error "unexpected subsegment starting anchor at end"
   revgo acc ((cd,d,False):xs) = revgo ((flipCartDir cd, d, False):acc) xs
-  revgo _ ((_,_,True):xs) = error "TODO this does not handle midpoint subsegment starting anchors correctly (not that it needs to right now)"
+  revgo _ ((_,_,True):_) = error "TODO this does not handle midpoint subsegment starting anchors correctly (not that it needs to right now)"
   revgostart [] = []
   revgostart ((cd,d,True):xs) = revgo [(flipCartDir cd,d,False)] xs
   revgostart _ = error "unexpected non-subsegment starting anchor at start"
@@ -674,7 +674,7 @@ internal_getSAutoLineLabelPosition_walk lar targetd = r where
   walk (x@(cd,d,_):rest) curbegin traveld = r2 where
     nextbegin = curbegin + cartDirWithDistanceToV2 x
     r2 = if traveld + d >= targetd
-      then curbegin + cartDirWithDistanceToV2 (cd, targetd - traveld, undefined)
+      then curbegin + cartDirWithDistanceToV2 (cd, targetd - traveld, undefined) -- why undefined -__- lol
       else walk rest nextbegin (traveld + d)
   r = walk (_lineAnchorsForRender_rest lar) (_lineAnchorsForRender_start lar) 0
 

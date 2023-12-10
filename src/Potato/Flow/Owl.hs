@@ -983,13 +983,13 @@ internal_owlTree_recalculateChildrenDepths_recursive ot rid = r_0 where
   sowl = owlTree_mustFindSuperOwl ot rid
   adjustdepthfn (oem, oitem) = (,oitem) $ oem { _owlItemMeta_depth = _owlItemMeta_depth (_superOwl_meta sowl) + 1 }
   r_0 = case _superOwl_elt sowl of
-    OwlItem oinfo (OwlSubItemFolder kiddos) -> r_1 where
+    OwlItem _ (OwlSubItemFolder kiddos) -> r_1 where
       -- update the depth of all its kiddos
       omwithadjusteddepth = foldr (\kid om -> IM.adjust adjustdepthfn kid om) (_owlTree_mapping ot) kiddos
       newot_0 = ot {_owlTree_mapping = omwithadjusteddepth}
       -- recurse
       r_1 = foldl (internal_owlTree_recalculateChildrenDepths_recursive) newot_0 kiddos
-    x -> ot
+    _ -> ot
 
 -- parents allowed ONLY if all the children already exist in the tree (as orphans) or it will crash
 -- returns the added element for convenience but NOT its children 

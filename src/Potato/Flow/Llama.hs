@@ -69,7 +69,7 @@ doCmdState cmd s = r where
       else Left $ ApplyLLamaError_Soft $ "Invalid canvas size operation " <> show x
 
   r = case r' of 
-    Right (newState, changes) -> assert (owlPFState_isValid newState) r'
+    Right (newState, _) -> assert (owlPFState_isValid newState) r'
     Left e -> Left e
 
 undoCmdState :: OwlPFCmd -> OwlPFState -> Either ApplyLlamaError (OwlPFState, SuperOwlChanges)
@@ -90,7 +90,7 @@ undoCmdState cmd s = r where
       else Left $ ApplyLLamaError_Soft $ "Invalid canvas size operation " <> show x
 
   r = case r' of
-    Right (newState, changes) -> assert (owlPFState_isValid newState) r'
+    Right (newState, _) -> assert (owlPFState_isValid newState) r'
     Left e                    -> Left e
 
 

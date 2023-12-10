@@ -18,18 +18,13 @@ module Potato.Flow.OwlWorkspace (
 import           Relude
 
 import           Potato.Flow.Llama
-import           Potato.Flow.Math
 import           Potato.Flow.Owl
-import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
-import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Preview
 
 import           Control.Exception    (assert)
 import qualified Data.IntMap.Strict   as IM
-import qualified Data.IntSet          as IS
-import qualified Data.Sequence        as Seq
 
 -- TODO get rid of this, now needed
 data OwlPFWorkspace = OwlPFWorkspace {
