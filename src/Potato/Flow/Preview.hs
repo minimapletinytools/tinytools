@@ -55,6 +55,7 @@ previewOperation_fromUndoFirst undoFirst = case undoFirst of
 previewOperation_toUndoFirst :: PreviewOperation -> Bool
 previewOperation_toUndoFirst po = case po of
   PO_Start -> False
+  PO_CommitAndStart -> False
   PO_Continue -> True
   PO_StartAndCommit -> False
   PO_ContinueAndCommit -> True
