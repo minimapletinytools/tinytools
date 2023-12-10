@@ -178,16 +178,6 @@ doCmdWorkspace :: OwlPFCmd -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges
 doCmdWorkspace cmd pfw = force r where
   r = doLlamaWorkspace (makePFCLlama cmd) pfw
 
-doCmdOwlPFWorkspaceUndoPermanentFirst :: (OwlPFState -> OwlPFCmd) -> OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
-doCmdOwlPFWorkspaceUndoPermanentFirst cmdFn ws = r where
-  -- undoPermanent is actually not necessary as the next action clears the redo stack anyways
-  (undoedws, undochanges) = undoPermanentWorkspace ws
-  undoedpfs = _owlPFWorkspace_owlPFState undoedws
-  cmd = cmdFn undoedpfs
-  (newpfs, changes) = doLlamaWorkspace (makePFCLlama cmd) undoedws
-  r = (newpfs, IM.union changes undochanges)
-
-
 ------ update functions via commands
 data WSEvent =
   -- TODO DELETE
@@ -205,9 +195,6 @@ data WSEvent =
 debugPrintBeforeAfterState :: (IsString a) => OwlPFState -> OwlPFState -> a
 debugPrintBeforeAfterState stateBefore stateAfter = fromString $ "BEFORE: " <> debugPrintOwlPFState stateBefore <> "\nAFTER: " <> debugPrintOwlPFState stateAfter
 
-
-noChanges :: OwlPFWorkspace -> (OwlPFWorkspace, SuperOwlChanges)
-noChanges ws = (ws, IM.empty)
 
 clearLocalPreview :: (OwlPFWorkspace, SuperOwlChanges) -> (OwlPFWorkspace, SuperOwlChanges)
 clearLocalPreview (ws, changes) = (ws { _owlPFWorkspace_localPreview = Nothing }, changes)
