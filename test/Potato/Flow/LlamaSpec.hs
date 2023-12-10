@@ -7,7 +7,7 @@ import           Relude
 
 import           Test.Hspec
 
-import Potato.Flow.Llama
+--import Potato.Flow.Llama
 
 spec :: Spec
 spec = do

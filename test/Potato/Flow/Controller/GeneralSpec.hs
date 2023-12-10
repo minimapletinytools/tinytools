@@ -15,10 +15,6 @@ import           Potato.Flow.GoatTester
 import           Potato.Flow
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 
-import qualified Data.List                                      as L
-import qualified Data.Sequence                                  as Seq
-import Data.Default
-
 verifyHasUnsavedChanges :: Bool -> GoatTester ()
 verifyHasUnsavedChanges b = do
   gs <- getGoatState

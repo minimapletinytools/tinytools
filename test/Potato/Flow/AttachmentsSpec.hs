@@ -9,8 +9,6 @@ import           Relude           hiding (empty, fromList)
 import           Test.Hspec
 
 import           Potato.Flow.Attachments
-import Potato.Flow.Methods.LineDrawer
-import Potato.Flow.Methods.LineTypes
 import           Potato.Flow.Math
 import Potato.Flow.Serialization.Snake
 

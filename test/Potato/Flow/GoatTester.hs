@@ -414,4 +414,4 @@ debugFailWithRenderedCanvas = do
   gs <- getGoatState
   let
     canvas = _goatState_renderedCanvas gs
-  putRecord "debugFailWithRenderedCanvas" (traceShow (renderedCanvas_box canvas) $ Just $ renderedCanvasToText canvas)
+  putRecord "debugFailWithRenderedCanvas" (Just $ renderedCanvasToText canvas)

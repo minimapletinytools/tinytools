@@ -16,7 +16,7 @@ drawCanvasBox (x, y, sx, sy) = do
   let
     f sowl = case _superOwl_elt sowl of
       OwlItem _ (OwlSubItemBox _) -> Nothing
-      x                           -> Just ("expected box, got " <> show x)
+      xx                           -> Just ("expected box, got " <> show xx)
   verifySelectionIsAndOnlyIs "box is selected" f
 
 

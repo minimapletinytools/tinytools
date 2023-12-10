@@ -122,6 +122,7 @@ instance HasOwlItem SuperOwl where
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
+
 instance PotatoShow SuperOwlChanges where
   potatoShow = (<>) "SuperOwlChanges:\n" . foldr (\msowl acc -> maybe "Nothing" potatoShow msowl <> "\n" <> acc) ""
 

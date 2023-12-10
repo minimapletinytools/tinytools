@@ -13,7 +13,6 @@ import           Test.Hspec
 import           Potato.Flow.GoatTester
 
 import           Potato.Flow
-import           Potato.Flow.Common
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 
 

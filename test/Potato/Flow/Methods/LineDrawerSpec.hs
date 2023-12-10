@@ -131,7 +131,7 @@ spec = do
       fmap fst3 (getSortedSAutoLineLabelPositions owlpfstate_zero someSAutoLine_withLabels) `shouldBe` [V2 0 0, V2 25 0, V2 50 0]
 
 
-  describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \pfs -> do
+  describe "Lines - rendering" $ it "autorendercase" $ forM_ generateTestCases $ \_ -> do
     --putTextLn (renderedCanvasToText (potatoRenderPFState pfs))
     True `shouldBe` True
 

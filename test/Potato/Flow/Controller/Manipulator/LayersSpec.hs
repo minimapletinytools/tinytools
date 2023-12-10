@@ -11,13 +11,11 @@ import           Relude                                         hiding (empty,
 import           Test.Hspec
 
 import           Potato.Flow.GoatTester
-
 import           Potato.Flow
 import           Potato.Flow.Controller.Manipulator.TestHelpers
 
-import qualified Data.List                                      as L
 import qualified Data.Sequence as Seq
-import Control.Monad (forM_)
+
 
 
 someFolderName :: Text
