@@ -38,7 +38,6 @@ instance PotatoHandler PanHandler where
           MouseDragState_Up -> case _panHandler_maybePrevHandler of
             Nothing -> Just $ SomePotatoHandler (def :: PanHandler)
             Just x  -> Just x
-          _ -> error "not posible"
         , _potatoHandlerOutput_action = HOA_Pan (delta - _panHandler_panDelta)
         --, _potatoHandlerOutput_pan = trace (show x <> " delta " <> show delta <> " pan " <> show _panHandler_panDelta <> " from " <> show _mouseDrag_from <> " to " <> show _mouseDrag_to) $ Just (delta - _panHandler_panDelta)
       } where delta = _mouseDrag_to - _mouseDrag_from

@@ -23,7 +23,6 @@ import           Potato.Flow.Methods.LineDrawer
 import           Potato.Flow.Owl
 import           Potato.Flow.OwlItem
 import           Potato.Flow.OwlState
-import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Serialization.Snake
 import Potato.Flow.Methods.LlamaWorks
 import Potato.Flow.Preview
@@ -457,6 +456,7 @@ instance PotatoHandler AutoLineEndPointHandler where
 
 
 -- TODO finish
+{-
 adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ::
   (HasOwlTree a)
   => a
@@ -484,7 +484,7 @@ adjustLineLabelPositionsAfterModifyingOrAddingMidpoint ot old new mempindex = r 
   -- adjust distance by the change in ratio
 
   r = undefined
-
+-}
 
 
 

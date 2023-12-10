@@ -215,7 +215,7 @@ clearLocalPreview (ws, changes) = (ws { _owlPFWorkspace_localPreview = Nothing }
 maybeCommitLocalPreviewToLlamaStackAndClear :: OwlPFWorkspace -> OwlPFWorkspace
 maybeCommitLocalPreviewToLlamaStackAndClear ws = case _owlPFWorkspace_localPreview ws of
   Nothing -> ws
-  Just (shep, shift, undollama) -> r_1 where
+  Just (_, _, undollama) -> r_1 where
     newstack = moveLlamaStackDone undollama (_owlPFWorkspace_llamaStack ws)
     r_1 = ws { 
         _owlPFWorkspace_llamaStack = newstack 

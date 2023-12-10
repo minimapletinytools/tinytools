@@ -44,7 +44,6 @@ import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import           Potato.Flow.Controller.Types
 import           Potato.Flow.Controller.OwlLayers
-import           Potato.Flow.Methods.LineTypes
 
 
 import qualified Data.IntMap             as IM
@@ -99,11 +98,6 @@ instance HasOwlTree RenderContext where
 instance OwlRenderSet RenderContext where
   findSuperOwl RenderContext {..} = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap)
   sortForRendering RenderContext {..} = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap)
-
-
-
-emptyChar :: PChar
-emptyChar = ' '
 
 
 -- TODO for selection rendering you want to make it V.Vector (Maybe PChar) or maybe you can just use a map?

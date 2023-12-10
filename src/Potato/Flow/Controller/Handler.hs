@@ -13,14 +13,12 @@ import           Potato.Flow.Math
 import           Potato.Flow.Owl
 import           Potato.Flow.Render
 import           Potato.Flow.OwlState
-import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Serialization.Snake
 import qualified Potato.Flow.Preview as Preview
 
 import qualified Potato.Data.Text.Zipper          as TZ
 
 import           Data.Default
-import qualified Data.IntMap                      as IM
 import qualified Data.Sequence                    as Seq
 import qualified Data.Text                        as T
 import qualified Text.Show

@@ -16,7 +16,6 @@ import           Potato.Flow.Controller.Manipulator.Common
 import           Potato.Flow.Llama
 import           Potato.Flow.Math
 import           Potato.Flow.Owl
-import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Preview
