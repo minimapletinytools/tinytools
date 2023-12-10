@@ -274,14 +274,13 @@ DONE-handlers should return preview action
 -get it working on breew
 -make a video
 -update tutorial file?
--hide stuff
+-should be more intuitive to get a 1 sided line
+-opening file with hidden elements does not hide stuff..
+DONE-hide stuff
   -moving an element into a hidden folder does not hide it right away (ignore this for release)
     -this is becaues it gets added to superowlchanges
   -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
     -this is becaues it gets added to superowlchanges
-  -opening file with hidden elements does not hide stuff..
-    -this is because you put everything in SuperOwlChanges
--should be more intuitive to get a 1 sided line
 DONE-layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
   DONE-currently not possible to drag the last element in folder outside of that folder if there's something below it

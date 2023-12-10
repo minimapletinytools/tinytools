@@ -327,14 +327,21 @@ updateCanvas cslmap needsupdateaabbs rctx@RenderContext {..} = case needsupdatea
     Just aabb -> r where
       rids = broadPhase_cull aabb (_broadPhaseState_bPTree _renderContext_broadPhase)
 
+      -- NOTE you could just call findSuperOwlForRendering here but you wouldn't get the error
+      getSowlFromContext :: REltId -> Maybe SuperOwl
+      getSowlFromContext rid = case findSuperOwl rctx rid of
+        Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
+        -- changes could indicate hidden, if that's the case, give a dummy object to render
+        Just (sowl, hidden) -> if hidden then Nothing else Just sowl
+
       msowls = flip fmap rids $ \rid -> case IM.lookup rid cslmap of
-        Nothing -> case findSuperOwl _renderContext_owlTree rid of
-          Nothing -> error "this should never happen, because broadPhase_cull should only give existing seltls"
-          -- changes could indicate hidden, if that's the case, give a dummy object to render
-          Just (sowl, hidden) -> if hidden then Nothing else Just sowl
+        Nothing -> getSowlFromContext rid 
         Just msowl -> case msowl of
           Nothing -> error "this should never happen, because deleted seltl would have been culled in broadPhase_cull"
-          Just sowl -> Just sowl
+          -- this way is a little more performant but doesn't cover the edge case where an element got moved into a hidden folder (you need to set msowl to Nothing outside of this function)
+          --Just sowl -> Just sowl
+          Just _ -> getSowlFromContext rid
+
       sowls = sortForRendering _renderContext_owlTree $ Seq.fromList (catMaybes msowls)
       sortedrids = fmap _superOwl_id $ toList sowls
       r = render_new aabb sortedrids rctx
