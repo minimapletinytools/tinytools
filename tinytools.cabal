@@ -1,7 +1,7 @@
 cabal-version: 1.12
 
 name:           tinytools
-version:        0.1.0.5
+version:        0.1.0.6
 description:    tinytools is a mono-space unicode diagram editor
 homepage:       https://github.com/minimapletinytools/tinytools#readme
 bug-reports:    https://github.com/minimapletinytools/tinytools/issues
