@@ -370,6 +370,26 @@ verifySelectionIsAndOnlyIs desc f = verifyState desc f' where
       then Just $ "failed, expected 1 selected 🦉, got " <> show nselection
       else (\m -> "failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
 
+
+
+verifyRenderNonEmptyCount :: (Monad m) => Int -> GoatTesterT m ()
+verifyRenderNonEmptyCount expected = verifyState "verifyRenderNonEmptyCount" f where
+  f gs = if n == expected
+    then Nothing
+    else Just $ "got " <> show n <> " non-empty chars, expected " <> show expected
+    where n =  renderedCanvasRegion_nonEmptyCount (_goatState_renderedCanvas gs)
+
+verifyCharRenderedAt :: (Monad m) => V2 Int -> Maybe Char -> GoatTesterT m ()
+verifyCharRenderedAt pos mchar = verifyState "verifyCharRenderedAt" f where
+  f gs = if mchar == mchar'
+    then Nothing
+    else Just $ "expected: " <> show mchar <> "\ngot: " <> show mchar'
+    where
+      mchar' = case renderedCanvasRegion_getAt (_goatState_renderedCanvas gs) pos of
+        (-1, _) -> Nothing
+        (_, c) -> Just c
+
+
 -- otheruseful stuff
 
 -- export as part of this module becaues it's super useful
@@ -382,3 +402,16 @@ toMaybe True  x = Just x
 alwaysFail :: (Monad m) => Text -> GoatTesterT m ()
 alwaysFail msg = GoatTesterT $ do
   unGoatTesterT $ putRecord "this test always fails" (Just msg)
+
+
+debugFailWithLayers :: (Monad m) => GoatTesterT m ()
+debugFailWithLayers = do
+  gs <- getGoatState
+  putRecord "debugFailWithLayers" (Just $ potatoShow $ _goatState_layersState gs)
+
+debugFailWithRenderedCanvas :: (Monad m) => GoatTesterT m ()
+debugFailWithRenderedCanvas = do
+  gs <- getGoatState
+  let
+    canvas = _goatState_renderedCanvas gs
+  putRecord "debugFailWithRenderedCanvas" (traceShow (renderedCanvas_box canvas) $ Just $ renderedCanvasToText canvas)

@@ -14,6 +14,9 @@ import qualified Data.Text              as T
 
 import           Potato.Flow
 import           Potato.Flow.TestStates
+import Potato.Flow.GoatTester
+import           Potato.Flow.Controller.Manipulator.TestHelpers
+
 
 testCanvas :: Int -> Int -> Int -> Int -> RenderedCanvasRegion
 testCanvas x y w h = emptyRenderedCanvasRegion (LBox (V2 x y) (V2 w h))
@@ -33,8 +36,10 @@ potatoRenderWithSEltAndEmptyOwlTreeForTest selts rcr = potatoRenderWithOwlTree e
 testsstyle :: SuperStyle
 testsstyle = def { _superStyle_fill = FillStyle_Simple '@' }
 
-spec :: Spec
-spec = do
+
+
+spec1 :: Spec
+spec1 = do
   describe "Canvas" $ do
     it "potato renders blank text" $ do
       let
@@ -164,3 +169,79 @@ spec = do
         canvas1 = _renderContext_renderedCanvasRegion rendercontext1
       -- TODO test something
       canvas1 `shouldBe` canvas1
+
+
+emptyOwlStateWithSize :: (Int, Int) -> OwlPFState
+emptyOwlStateWithSize (x, y) = OwlPFState emptyOwlTree (SCanvas (LBox 0 (V2 x y)))
+
+render_basic :: Spec
+render_basic = hSpecGoatTesterWithOwlPFState (emptyOwlStateWithSize (20,20)) $ do
+
+  setMarker "verify empty initial state"
+  verifyRenderNonEmptyCount 0
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 2, 2)
+  verifyRenderNonEmptyCount 4
+
+  setMarker "hide the box"
+  layerMouseDownUpRel LMO_Hide 0 0
+  verifyRenderNonEmptyCount 0
+
+  setMarker "unhide the box"
+  layerMouseDownUpRel LMO_Hide 0 0
+  verifyRenderNonEmptyCount 4
+
+  setMarker "delete the box"
+  pressBackspace
+  verifyRenderNonEmptyCount 0
+
+
+render_hide_basic :: Spec
+render_hide_basic = hSpecGoatTesterWithOwlPFState (emptyOwlStateWithSize (20,20)) $ do
+
+  setMarker "verify empty initial state"
+  verifyRenderNonEmptyCount 0
+
+  setMarker "make a folder"
+  addFolder "hide me"
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 2, 2)
+  verifyRenderNonEmptyCount 4
+
+  setMarker "hide the folder"
+  layerMouseDownUpRel LMO_Hide 0 0
+  verifyRenderNonEmptyCount 0
+
+  setMarker "deselect evertyhing"
+  pressEscape
+  verifySelectionCount 0
+
+  setMarker "drag the box out of the folder"
+  layerMouseDownUpRel LMO_Normal 1 1
+  verifySelectionCount 1
+  layerMouseDownRel LMO_Normal 1 1
+  layerMouseDownUpRel (LMO_DropInFolder 0) 2 0
+  verifyRenderNonEmptyCount 4
+
+  setMarker "drag the box into the folder"
+  layerMouseDownRel LMO_Normal 1 0
+  layerMouseDownUpRel (LMO_DropInFolder 0) 1 1
+  verifyRenderNonEmptyCount 0
+
+  
+
+
+spec2 :: Spec
+spec2 = do
+  describe "Render" $ do
+    describe "render_basic" $ render_basic
+    describe "render_hide_basic" $ render_hide_basic
+
+
+
+spec :: Spec
+spec = do
+  spec1
+  spec2

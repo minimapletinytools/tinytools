@@ -18,6 +18,7 @@ module Potato.Flow.Render (
   , printRenderedCanvasRegion
   , potatoRenderWithOwlTree
   , potatoRenderPFState
+  , renderedCanvasRegion_getAt
   , renderedCanvasToText
   , renderedCanvasRegionToText
 
@@ -227,6 +228,9 @@ render_new llbx rids rctx@RenderContext {..} = rctxout where
 renderedCanvasToText :: RenderedCanvasRegion -> Text
 renderedCanvasToText rcr = renderedCanvasRegionToText (_renderedCanvasRegion_box rcr) rcr
 
+
+renderedCanvasRegion_getAt :: RenderedCanvasRegion -> V2 Int -> MWidePChar
+renderedCanvasRegion_getAt rcr = (V.!) (_renderedCanvasRegion_contents rcr) . toIndex (_renderedCanvasRegion_box rcr)
 
 -- TODO this does not handle wide chars at all fack
 -- | assumes region LBox is strictly contained in _renderedCanvasRegion_box

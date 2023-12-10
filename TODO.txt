@@ -294,7 +294,7 @@ DONE-text box option that auto goes into edit text box
 
 
 ::NEWEST TODO::
--render testing utilities 
+DONE-render testing utilities 
 -layers improvements
   -shift select in layers please ;__;
   -selecting multiple items and hitting new folder should put those items in folder maybe

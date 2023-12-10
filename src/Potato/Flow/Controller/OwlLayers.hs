@@ -109,7 +109,7 @@ layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
       then if _layerEntry_isCollapsed
         then ">"
         else "v"
-      else " "
+      else "●"
     hideText = case _layerEntry_hideState of
       LHS_True              -> "▓"
       LHS_False             -> " "
