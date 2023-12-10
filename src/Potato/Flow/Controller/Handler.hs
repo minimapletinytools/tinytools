@@ -31,7 +31,6 @@ data HandlerOutputAction =
   | HOA_Pan XY 
   | HOA_Select Bool Selection
   | HOA_Layers LayersState SuperOwlChanges
-  | HOA_LayersScroll Int
   | HOA_Preview Preview.Preview 
   deriving (Show)
 

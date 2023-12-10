@@ -49,7 +49,6 @@ import           Potato.Flow.OwlState
 import           Potato.Flow.OwlWorkspace
 import           Potato.Flow.Render
 import           Potato.Flow.Methods.SEltMethods
-import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import  Potato.Flow.Preview 
 import Potato.Flow.Methods.LlamaWorks
@@ -324,7 +323,7 @@ goat_setFocusedArea gfa goatState = r where
     then let
         goatState_afterAction = case pHandleKeyboard (_goatState_layersHandler goatState) potatoHandlerInput (KeyboardData KeyboardKey_Return []) of
           Nothing -> noactionneeded
-          Just pho -> traceShow "press enter" $ goat_processLayersHandlerOutput pho goatstatewithnewfocus
+          Just pho -> goat_processLayersHandlerOutput pho goatstatewithnewfocus
       in assert (_goatState_focusedArea goatState == GoatFocusedArea_Layers) $ goatState_afterAction
     else noactionneeded
 
@@ -394,7 +393,7 @@ endoGoatCmdMouse mouseData goatState = r where
 
 
 endoGoatCmdKeyboard :: KeyboardData -> GoatState -> GoatState
-endoGoatCmdKeyboard kbd' goatState = r where
+endoGoatCmdKeyboard kbd' goatState = r_d0 where
   -- TODO you need to do reset logic for this (basically, reset it anytime there was a non-keyboard event)
   last_unbrokenInput = _goatState_unbrokenInput goatState
   next_unbrokenInput = case kbd' of
@@ -407,7 +406,7 @@ endoGoatCmdKeyboard kbd' goatState = r where
   -- TODO rename to canvasHandler
   handler = _goatState_handler goatState_withKeyboard
 
-  r = case mkbd of
+  r_d0 = case mkbd of
     Nothing -> goatState_withKeyboard
     -- special case, treat escape cancel mouse drag as a mouse input
     Just (KeyboardData KeyboardKey_Esc _) | mouseDrag_isActive (_goatState_mouseDrag goatState_withKeyboard) -> r where
@@ -506,7 +505,7 @@ goat_renderCanvas_move rc@RenderContext {..} pan sr = r where
     else (rc, False)
 
 
-goat_renderCanvas_update :: (HasCallStack) => RenderContext -> NeedsUpdateSet -> SuperOwlChanges -> RenderContext
+goat_renderCanvas_update :: RenderContext -> NeedsUpdateSet -> SuperOwlChanges -> RenderContext
 goat_renderCanvas_update rc needsupdateaabbs cslmap = r where
   r = if IM.null cslmap
     then rc
@@ -581,7 +580,7 @@ goat_rerenderAfterMove goatState = r where
       , _goatState_renderedSelection = _renderContext_renderedCanvasRegion rc_afterselection
     }
 
-computeCanvasSelection :: (HasCallStack) => GoatState -> CanvasSelection
+computeCanvasSelection :: GoatState -> CanvasSelection
 computeCanvasSelection goatState = r where
   pfs = goatState_pFState goatState
   filterHiddenOrLocked sowl = not $ layerMetaMap_isInheritHiddenOrLocked (_owlPFState_owlTree pfs) (_superOwl_id sowl) (_layersState_meta (_goatState_layersState goatState))
