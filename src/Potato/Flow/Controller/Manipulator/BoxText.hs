@@ -27,7 +27,6 @@ import           Potato.Flow.Math
 import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 import Potato.Flow.Owl
-import Potato.Flow.OwlWorkspace
 import Potato.Flow.Llama
 import           Potato.Flow.Preview
 
@@ -367,8 +366,8 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
   }
 
 
-inputBoxLabel :: TextInputState -> Bool -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
-inputBoxLabel tais undoFirst sowl kk = (newtais, mop) where
+inputBoxLabel :: TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
+inputBoxLabel tais sowl kk = (newtais, mop) where
   (changed, newtais) = inputSingleLineZipper tais kk
   newtext = TZ.value (_textInputState_zipper newtais)
   controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
@@ -428,7 +427,7 @@ instance PotatoHandler BoxLabelHandler where
 
       -- TODO decide what to do with mods
 
-      (nexttais, mllama) = inputBoxLabel _boxLabelHandler_state _boxLabelHandler_undoFirst sowl k
+      (nexttais, mllama) = inputBoxLabel _boxLabelHandler_state sowl k
       r = def {
           _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
               _boxLabelHandler_state  = nexttais

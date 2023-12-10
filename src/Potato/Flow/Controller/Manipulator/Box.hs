@@ -24,7 +24,6 @@ import           Potato.Flow.Types
 import           Potato.Flow.OwlItem
 import Potato.Flow.Owl
 import Potato.Flow.OwlState
-import Potato.Flow.OwlWorkspace
 import Potato.Flow.Methods.Types
 import Potato.Flow.Llama
 import           Potato.Flow.Methods.LlamaWorks
@@ -187,7 +186,7 @@ makeDragDeltaBox bht rmd = r where
 -- reduces the DeltaLBox such that the LBox does not invert
 -- assumes LBox is canonical and that LBox is not already smaller than the desired constrained size
 constrainDeltaLBox :: Int -> DeltaLBox -> LBox -> DeltaLBox
-constrainDeltaLBox minsize d1@(DeltaLBox (V2 dx dy) (V2 dw dh)) d2@((LBox (V2 x y) (V2 w h))) = r where
+constrainDeltaLBox minsize d1@(DeltaLBox (V2 dx dy) (V2 dw dh)) (LBox _ (V2 w h)) = r where
   optuple e = (e, -e)
 
   (ndx, ndw) = if dx /= 0 
@@ -231,12 +230,13 @@ makeDragOperation :: PotatoHandlerInput -> DeltaLBox -> Maybe Llama
 makeDragOperation phi dbox = op where
   selection = transformableSelection phi
   selectionl = toList $ transformableSelection phi
-  pfs = _potatoHandlerInput_pFState phi
-  lboxes = fmap (\sowl -> _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs) selectionl
-
+  
+  
   -- go through each element in selection and ensure that dbox does not invert that element
   -- DANGER you need to make sure you have sensible bounding box functions or you might put things in a non-resizeable state
-  constraineddbox = foldl' (constrainDeltaLBox 0) dbox lboxes
+  --pfs = _potatoHandlerInput_pFState phi
+  --lboxes = fmap (\sowl -> _sEltDrawer_box (getDrawer . hasOwlItem_toOwlSubItem $ sowl) pfs) selectionl
+  --constraineddbox = foldl' (constrainDeltaLBox 0) dbox lboxes
 
   makeController _ = cmd where
     cmd = CTagBoundingBox :=> (Identity $ CBoundingBox {
