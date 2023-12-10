@@ -72,6 +72,7 @@ instance OwlRenderSet (OwlTree, LayerMetaMap) where
     r = fmap (,hidden) $ owlTree_findSuperOwl ot rid
   sortForRendering (ot,_) sowls = sortForRendering ot sowls
 
+
 -- RenderContext is a helper container type that provides both read and write data for various render operations
 data RenderContext = RenderContext {
   _renderContext_cache :: RenderCache -- r/w
@@ -95,8 +96,8 @@ instance HasOwlTree RenderContext where
   hasOwlTree_owlTree = hasOwlTree_owlTree . _renderContext_owlTree
 
 instance OwlRenderSet RenderContext where
-  findSuperOwl RenderContext {..} rid = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap) rid
-  sortForRendering RenderContext {..} sowls = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap) sowls
+  findSuperOwl RenderContext {..} = findSuperOwl (_renderContext_owlTree, _renderContext_layerMetaMap)
+  sortForRendering RenderContext {..} = sortForRendering (_renderContext_owlTree, _renderContext_layerMetaMap)
 
 
 

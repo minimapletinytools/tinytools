@@ -27,6 +27,7 @@ import           Potato.Flow.Methods.SEltMethods
 import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Types
 
+import qualified Text.Show
 import qualified Data.IntMap.Strict        as IM
 
 type AABB = LBox
@@ -37,10 +38,13 @@ type NeedsUpdateSet = [AABB]
 data BPTree = BPTree {
   -- TODO you want something sortable too...
   _bPTree_potato_tree :: REltIdMap AABB
-} deriving (Show, Eq)
+} deriving (Eq)
 
 emptyBPTree :: BPTree
 emptyBPTree = BPTree IM.empty
+
+instance Show BPTree where
+  show BPTree {..} = "BPTree:\n" <> IM.foldrWithKey (\k v acc -> show k <> ": " <> show v <> "\n" <> acc) "" _bPTree_potato_tree
 
 -- TODO
 --bPTreeFromPFState :: PFState -> BPTree

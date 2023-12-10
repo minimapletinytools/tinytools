@@ -122,6 +122,9 @@ instance HasOwlItem SuperOwl where
 
 type SuperOwlChanges = REltIdMap (Maybe SuperOwl)
 
+instance PotatoShow SuperOwlChanges where
+  potatoShow = (<>) "SuperOwlChanges:\n" . foldr (\msowl acc -> maybe "Nothing" potatoShow msowl <> "\n" <> acc) ""
+
 -- updates AttachmeentMap with a list of SuperOwls (that may be attached to stuff)
 attachmentMap_addSuperOwls' :: (Foldable f) => (Attachment -> Bool) -> f SuperOwl -> AttachmentMap -> AttachmentMap
 attachmentMap_addSuperOwls' filterfn sowls am = r where

@@ -270,10 +270,19 @@ DONE-handlers should return preview action
 
 
 :: RELEASE TODO ::
+-warning cleanup
 -get it working on breew
 -make a video
 -update tutorial file?
--layers improvements
+-hide stuff
+  -moving an element into a hidden folder does not hide it right away (ignore this for release)
+    -this is becaues it gets added to superowlchanges
+  -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
+    -this is becaues it gets added to superowlchanges
+  -opening file with hidden elements does not hide stuff..
+    -this is because you put everything in SuperOwlChanges
+-should be more intuitive to get a 1 sided line
+DONE-layers improvements
   DONE-when dragging into a folder, the | should then L to the element being moved
   DONE-currently not possible to drag the last element in folder outside of that folder if there's something below it
     -the trick is if you drag the last element in a folder to the spot below it, you need exception case to move it outside of the folder rather than as the next sibling to itself since that doesn't do anything
@@ -281,19 +290,15 @@ DONE-handlers should return preview action
     -not sure if there's a way around this :(
   DONE-DO THIS you might want to consider doing the thing where dragging to the right side of a folder puts it underneath, otherwise it's always a SiblingPosition
   DONE-selecting multiple items in layers and click on on should select that one item, but right now it gose into rename mode
-  -shift select in layers please ;__;
-  
-  -selecting multiple items and hitting new folder should put those items in folder maybe
--hide stuff
-  -moving an element into a hidden folder does not hide it right away (ignore this for release)
-  -moving a hidden folder (in folder hierarchy) shows it (maybe cuz it's selected ,but it does'nt look selected?? and also deselecitng doesn't hide it)
-  -opening file with hidden elements does not hide stuff..
 DONE/IGNORE-BUG translating lines should translate midpoints too
 DONE-text box option that auto goes into edit text box
--should be more intuitive to get a 1 sided line
 
 
 ::NEWEST TODO::
+-render testing utilities 
+-layers improvements
+  -shift select in layers please ;__;
+  -selecting multiple items and hitting new folder should put those items in folder maybe
 -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED 
 -someway to diff 2 objects
 -LHRESS_ChildSelected broken during drag and just in general 

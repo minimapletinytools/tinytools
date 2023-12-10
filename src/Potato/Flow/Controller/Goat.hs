@@ -775,7 +775,6 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
         }
     else goatState_afterSelection
 
-  -- TODO we may have an owl in/out of a hidden folder, we need to rererender these
   -- | update LayersState based from SuperOwlChanges after applying events |
   next_layersState' = updateLayers pFState_afterEvent cslmap_afterEvent (_goatState_layersState goatState_afterRefreshHandler)
   goatState_afterSetLayersState = goat_autoExpandFoldersOfSelection $ goatState_afterRefreshHandler { _goatState_layersState = next_layersState' }
@@ -783,12 +782,11 @@ goat_applyWSEvent wsetype wse goatState = goatState_final where
   -- | set the new handler based on the new Selection and LayersState
   next_canvasSelection = computeCanvasSelection goatState_afterSetLayersState -- (TODO pretty sure this is the same as `canvasSelection = computeCanvasSelection goatState_afterSelection` above..)
 
-
   -- we check both the pIsHandlerActive and goatState_hasLocalPreview condition to see if we want to recreate the handler
   -- actually, we could only check pIsHandlerActive if all handlers properly reported their state
-
   -- TODO the issue with not (goatState_hasLocalPreview goatState_afterSetLayersState) is that we may actually want to regen the handler we just haven't commit its preview yet (i.e. box creation)
-  -- NO that's not true because in those cases you can return an explicit commit action or you return HOA_Nothing which should also commit when the handler is replaced
+  --  NO that's not true because in those cases you can return an explicit commit action or you return HOA_Nothing which should also commit when the handler is replaced
+  --  ☝🏽 pretty this TODO is not relevant anymore 🤷🏼‍♀️
   (next_handler, next_workspace) = if (not . handlerActiveState_isActive) (pIsHandlerActive (_goatState_handler goatState_afterSetLayersState)) && not (goatState_hasLocalPreview goatState_afterSetLayersState)
     -- if we replaced the handler, commit its local preview if there was one
     then (makeHandlerFromSelection next_canvasSelection, maybeCommitLocalPreviewToLlamaStackAndClear $ _goatState_workspace goatState_afterSetLayersState)
