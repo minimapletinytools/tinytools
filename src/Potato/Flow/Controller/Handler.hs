@@ -228,7 +228,6 @@ class PotatoHandler h where
   pRefreshHandler _ _ = Nothing
 
   
-  -- TODO change this to an enum so you can capture different notion of activeness
   -- active manipulators will not be overwritten by new handlers via selection from changes
   pIsHandlerActive :: h -> HandlerActiveState
   pIsHandlerActive _ = HAS_Inactive

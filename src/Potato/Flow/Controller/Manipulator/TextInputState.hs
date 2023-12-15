@@ -85,7 +85,7 @@ makeTextHandlerRenderOutput btis = r where
           _renderHandle_box = LBox (p + (V2 x y)) (V2 1 1)
           , _renderHandle_char =  case mCursorChar of
             Nothing -> Just ' '
-            x -> x
+            jc -> jc
           , _renderHandle_color = RHC_Default
         }
     return [cursorh]

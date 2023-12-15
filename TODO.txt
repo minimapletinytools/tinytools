@@ -274,25 +274,62 @@ DONE-handlers should return preview action
 -make a video
 -update tutorial file?
 -should be more intuitive to get a 1 sided line
+  -probably do [x] start | [x] end
+  -default line can be one sided maybe?
+  -make flip button more clear
 
+-upgrade xcode or something to get brew working??
+-clean unused dependencies
+  -figure out how to run dependency detector
+-add upper bounds to all packages
 
-::NEWEST TODO::
--opening file with hidden elements does not hide stuff..
+::HIGH PRIORITY::
+-BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
+  -repro is make a chain of folders, select one in the middle and lock
+-BUG textarea handler crashes
+-line labels still cropping on right side
+  -allow new lines in line labels :O
+-LHRESS_ChildSelected graphic broken during drag and just in general 
+  -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
 -layers improvements
   -shift select in layers please ;__;
   -selecting multiple items and hitting new folder should put those items in folder maybe
--fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED 
--someway to diff 2 objects
--LHRESS_ChildSelected broken during drag and just in general 
-  -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
--should be able to rename elements for you based on first entered text maybe (ugh)
--did scroll wheel in finder window stop working??
-  -yes it's a fcous issue ,the mouse input does'nt get sent to the scroll wheel pane, you ned to pass it in if you want to fix it...
+-if both target and source of line is moved, then move midpoints as well
+  -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
+-line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
+-add render handler name property so you know what the render handler is from its renderhandleroutput
+-add a visual anchor for the box label so you know you can add one easily
+
+::MID PRIORITY
+-file stuff
+  -maybe highlight relevant files instead of * in file explorer
+    -or just don't show anything that's not relevant...
+  -UTs
+    -popupSaveBeforeExit
+    -popupOpenWindow
+    -doubleClick
+    DONE-waitForSecondAfterFirst (move to reflex-potatoes)
+  DONE-add double click support to file explorer
+    -need to hook into IO time stuff
+-you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
+-move all serializable types into Snake for versioning
+-folder stuff
+  -maybe some day you want to implement folder select vs real select
+    -would be cool to have the folder select OR real select option since folder select might be too much for terminal
+  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
+  -empty folders should not be expandable? (set to expanded by default)
+  -BUG click release on lock/hide/collapse on selected element should not deselect
+  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
+  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
+    -not sure what happens when you shift select past a folder
+-proper configurable theme in Main.hs
+-rename
+  -OwlPFWorkspace -> OwlWorkspace
+  -OwlPFState -> OwlState
 -upgrading ghc somehow broke unicode test
   -9.6 fails but 9.2 OK
--there are still some EoL cursor bugs with unicode characters
--right click menu support (send forward/backwards) (do this is tinytools-vty, make sure inputs get captured ug)
--maybe creating box should take you straight to edit mode and name based on what you type in there??
+-did scroll wheel in finder window stop working??
+  -yes it's a fcous issue ,the mouse input does'nt get sent to the scroll wheel pane, you ned to pass it in if you want to fix it...
 -undo_move is probably not very multi-user friendly, you should rewrite using do_move logic 
   -(so remove all children recursively and then add them back in)
   -(this will allow undo_move to work even if some of those childrens or parents have since been deleted I guess)
@@ -304,44 +341,9 @@ DONE-handlers should return preview action
   -deal with the undofirstsituation 
     -rename to mouseACtive?
     -just get rid of it and instead check if there is an associated local preview?)
--if both target and source of line is moved, then move midpoints as well
--BUG some prelude.!! error somewher ;__;
--text-icu dependency issue
-  -pretty sure you just need to install text-icu
--line labels still cropping on right side
-  -allow new linesi n line labels :O
--line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
--move all serializable types into Snake for versioning
 -performance pass
   -https://medium.com/e-bot7-tech/improving-performance-of-your-haskell-code-with-profiteur-8d2e025b6779
--tests to add
-  -make line label + "aoeu" + backspace a bunch of times and ensure the line does not get deleted
--cancelling a creation handler takes you back to empty handler
--the border/text params dialog should show when seleting box tool
--rename
-  -OwlPFWorkspace -> OwlWorkspace
-  -OwlPFState -> OwlState
--add render handler name property so you know what the render handler is from its renderhandleroutput
--BUG return key in layers during rename will act like "tab" taking you to params, don't do this
 -REFACTOR split goat mouse intput into 2 commands, one for layer and one for canvas
--text zipper
-  -you should just rewrite text zipper and add select support..
-  -BUG wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
-  -cursor up/down should work with display lines
--add a visual anchor for the box label so you know you can add one easily
--fix
-  -- TODO this should be r' not a FIX ME why is stuff even working???
-  -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
--BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
--you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
-  -from playing around with line arrows clikcing back and forth...
--move over to minimaple account?
-
--I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
--pregenerate unicode and figure out how to distribute using nix?
--BUG selecting severals items and moving takes forever :(
-  -can't repro anymore? at least not  from opening a file, maybe it's due to a leak?
-  -also selecting via folders and moving didn't seem to cause this slowdown
 -BUG resizing unattached lines does not work
 -BUG
   -now you get stuff like this, there's no arrow when there should be one, that's because you messed with determineSeparationForAttachment to not have the extra 1 offset
@@ -350,45 +352,38 @@ DONE-handlers should return preview action
     ║            ╚╗
     ║             v
     ║╔OwlPFWor═══════════════╗
-
--Line presets sholud be for start/end
--add a visual anchor for the box label so you know you can add one easily
-  -but where to put it if there is already text?
--you should be able to select lines where there is text (this is in particular annoying when you try and move several things at once at you can't click on line label to move)
+-maybe make styles references instead of stored per elt
 -do label position adjustment when adding midpoints
--high level bugs
-  -BUG you sometimes hit this assert, need repro
-    -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
-  -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
+-text zipper
+  -you should just rewrite text zipper and add select support..
+  -BUG wrapping when single word (when word wrapping wont fit anymore) exceeds max width does not seem to handle wide chars correctly (seems to count them as 4 instead of 2?)
+  -cursor up/down should work with display lines
+-right click menu support (send forward/backwards) (do this is tinytools-vty, make sure inputs get captured ug)
+-opening file with hidden elements does not hide stuff..
+-someway to diff 2 objects for debugging
+  -you can use aeson diff I guess...
+-BUG still getting ? at double back midpoints (the real issue is you have double back midpoints)
+  -prob just ignore until you do lucid style lines?
+  -LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
+-finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
+
+
+::????? PRIORITY
+-BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O
+-BUG there are still some EoL cursor bugs with unicode characters
+-BUG some prelude.!! error somewher ;__;
+-should be able to rename elements for you based on first entered text maybe (ugh)
+-fix
+  -- TODO this should be r' not a FIX ME why is stuff even working???
+  -- TODO there is a bug in cartRotationReflection_apply/cartRotationReflection_invert_apply where we don't actually apply the rotation but somehow this only works with that bug... Maybe the rotations cancel out?
+-BUG selecting severals items and moving takes forever :(
+  -can't repro anymore? at least not  from opening a file, maybe it's due to a leak?
+  -also selecting via folders and moving didn't seem to cause this slowdown
 -charwidth needs to be passed in rather than rely on global
 -consider using LineAnchorsForRender/sAutoLine_to_lineAnchorsForRenderList  for cache instead
--LineDrawer.hs midpoint anchor rendering will double back on itself, you need to force the attach direction to change based on neighbor rather than use AL_ANY
--finish substract lbox (-- TODO crop away mleft/mright from mtop'/mbot')
--file stuff
-  -maybe highlight relevant files instead of * in file explorer
-    -or just don't show anything that's not relevant...
-  -UTs
-    -popupSaveBeforeExit
-    -popupOpenWindow
-    -doubleClick
-    DONE-waitForSecondAfterFirst (move to reflex-potatoes)
-  DONE-add double click support to file explorer
-    -need to hook into IO time stuff
--folder stuff
-  -BUG/FEATURE when you select a folder and it auto selects children, you can't click and drag the children
-  -empty folders should not be expandable? (set to expanded by default)
-  -BUG click release on lock/hide/collapse on selected element should not deselect
-  -you might want to consider disallowing selection of locked stuff from folders (directly NOT ok, via parents OK)
-  -maybe consider doing shift select and ctrl select (to replaec current shift select behavior)
-    -not sure what happens when you shift select past a folder
-  DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
-    -you need some kind of click off pane reset type action to handler
-      -can you tie this into graceful handling of bad mouse states?
-  DONE-make new elts get created inside selected folder rather than above it?
--proper configurable theme in Main.hs
--TESTING check for leaks again
+-add mouse hover support (for when you do web port)
 -FEATURE info/statusbar/output area (right side?)
 -TESTS TO ADD
   -create box, turn to text box, add some text, turn to regular box
@@ -396,8 +391,6 @@ DONE-handlers should return preview action
   -create folder with children, select folder, attempt to drag via children (doesn't work right now)
 -figure out how to change folders into groups for auto-pathing group support
   -is it just a folder setting?
--add mouse hover support (for when you do web port)
--maybe make styles references instead of stored per elt
 -FEATURE options menu
   -could you do style defaults in this menu too?
   -like ideally following the same model you did in Params.hs....
@@ -407,13 +400,31 @@ DONE-handlers should return preview action
   -maybe design way to directly attach at offset position?
     -line anchors for render could highlight the entire box and flash the center point?
       -you probably want options to disable this stuff
--ttvty
-  DONE/IGNORE-add box border toggle
-  -(line style) do easy disabling of start/end (stretch)
-    [x] start | [x] end    (the one being modified is highlighted)
 -insert vs overwrite option for freeform text
   -you need some kind of options object to go along side of _setPotatoDefaultParameters_sBoxType
 
+
+
+
+
+
+
+DONE/IGNORE-add box border toggle
+IGONRE-TESTING check for leaks again
+DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane
+    -you need some kind of click off pane reset type action to handler
+      -can you tie this into graceful handling of bad mouse states?
+  DONE-make new elts get created inside selected folder rather than above it?
+DONE-you somehow hit assert `Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where`
+  -from playing around with line arrows clikcing back and forth...
+DONE-move over to minimaple account?
+IGNORE-I tihnk it would be better for SEltDrawer to be created based on an OwlTree rather than return a function that takes an owlTree_addMiniOwlTree
+DONE/IGNORE-pregenerate unicode and figure out how to distribute using nix?
+IGNORE-Line presets sholud be for start/end
+IGNORE-BUG you sometimes hit this assert, need repro
+  -Just (False, _) -> assert (not (pIsHandlerActive next_handler')) $ (refreshedHandler,refreshedLayersHandler) where
+
+DONE-BUG return key in layers during rename will act like "tab" taking you to params, don't do this
 DONE-warning cleanup
 DONE-hide stuff
   -moving an element into a hidden folder does not hide it right away (ignore this for release)
