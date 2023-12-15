@@ -140,5 +140,4 @@ instance PotatoHandler TextAreaHandler where
       }
     r = pRenderHandler (_textAreaHandler_prevHandler tah) phi <>  HandlerRenderOutput [cursor]
 
-  -- TODO track mouse activity
-  pIsHandlerActive _ = HAS_Inactive
+  pIsHandlerActive _ = HAS_Active_Waiting

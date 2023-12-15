@@ -360,6 +360,15 @@ verifyMostRecentlyCreatedLine f = verifyMostRecentlyCreatedOwl' "verifyMostRecen
     OwlSubItemLine sline -> f sline
     x                      -> Just $ "expected SAutoLine got: " <> show x
 
+
+verifyCanvasHandler :: (Monad m) => Text -> GoatTesterT m ()
+verifyCanvasHandler hname = verifyState "verifyCanvasHandler" f where
+  f gs = r where
+    h = _goatState_handler gs
+    r = if hname == pHandlerName h
+      then Nothing
+      else Just $ "expected " <> hname <> "got handler " <> pHandlerName h 
+
 verifySelectionIsAndOnlyIs :: (Monad m) => Text -> (SuperOwl -> Maybe Text) -> GoatTesterT m ()
 verifySelectionIsAndOnlyIs desc f = verifyState desc f' where
   f' gs = r where
@@ -369,8 +378,6 @@ verifySelectionIsAndOnlyIs desc f = verifyState desc f' where
     r = if nselection /= 1
       then Just $ "failed, expected 1 selected 🦉, got " <> show nselection
       else (\m -> "failed with message: " <> m <> "\ngot:\n" <> potatoShow (_superOwl_elt sowl)) <$> f sowl
-
-
 
 verifyRenderNonEmptyCount :: (Monad m) => Int -> GoatTesterT m ()
 verifyRenderNonEmptyCount expected = verifyState "verifyRenderNonEmptyCount" f where

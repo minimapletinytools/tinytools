@@ -286,7 +286,7 @@ DONE-handlers should return preview action
 ::HIGH PRIORITY::
 -BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
   -repro is make a chain of folders, select one in the middle and lock
--BUG textarea handler crashes
+DONE-BUG textarea handler crashes
 -line labels still cropping on right side
   -allow new lines in line labels :O
 -LHRESS_ChildSelected graphic broken during drag and just in general 

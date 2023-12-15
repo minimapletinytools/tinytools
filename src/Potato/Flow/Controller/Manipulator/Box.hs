@@ -414,7 +414,11 @@ instance PotatoHandler BoxHandler where
         else if isTextArea
           && (wasNotActuallyDragging || isCreation)
           && wasNotDragSelecting
-          then textAreaHandler_pHandleMouse_onCreation (makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation) phi rmd
+          then let 
+            tah = makeTextAreaHandler (SomePotatoHandler (def :: BoxHandler)) _potatoHandlerInput_canvasSelection rmd isCreation in
+              if isCreation
+                then textAreaHandler_pHandleMouse_onCreation tah phi rmd
+                else pHandleMouse tah phi rmd
 
           -- This clears the handler and causes selection to regenerate a new handler.
           -- Why do we do it this way instead of returning a handler? Not sure, doesn't matter.

@@ -170,10 +170,6 @@ spec1 = do
       -- TODO test something
       canvas1 `shouldBe` canvas1
 
-
-emptyOwlStateWithSize :: (Int, Int) -> OwlPFState
-emptyOwlStateWithSize (x, y) = OwlPFState emptyOwlTree (SCanvas (LBox 0 (V2 x y)))
-
 render_basic :: Spec
 render_basic = hSpecGoatTesterWithOwlPFState (emptyOwlStateWithSize (20,20)) $ do
 

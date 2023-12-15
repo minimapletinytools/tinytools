@@ -57,3 +57,8 @@ composeObjectFetcherKeep f g pfs = case f pfs of
   Right o1 -> case g o1 of
     Left e -> Left e
     Right o2 -> Right (o1, o2)
+
+
+
+emptyOwlStateWithSize :: (Int, Int) -> OwlPFState
+emptyOwlStateWithSize (x, y) = OwlPFState emptyOwlTree (SCanvas (LBox 0 (V2 x y)))

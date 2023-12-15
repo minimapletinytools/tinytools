@@ -25,6 +25,7 @@ checkSTextAreaTextAt label k c = firstSuperOwlPredicate (Just label) $ \sowl -> 
   SEltTextArea (STextArea _ tm _) -> Map.lookup k tm == Just c
   _                                         -> False
 
+-- TODO DELTEE This isn't even testingh TextArea
 test_basic :: Test
 test_basic = constructTest "basic" emptyOwlPFState bs expected where
   bs = [
