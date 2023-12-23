@@ -25,7 +25,12 @@ import qualified Data.Sequence                as Seq
 import qualified Data.Text as T
 import qualified Text.Show
 
-data LockHiddenState = LHS_True | LHS_False | LHS_True_InheritTrue | LHS_False_InheritTrue deriving (Eq, Show)
+data LockHiddenState = 
+  LHS_True -- locked/hidden 
+  | LHS_False -- not locked/hidden
+  | LHS_True_InheritTrue -- locked/hidden and has locked/hidden parent
+  | LHS_False_InheritTrue -- not locked/hidden and has locked/hidden parent 
+  deriving (Eq, Show)
 
 lockHiddenStateToBool :: LockHiddenState -> Bool
 lockHiddenStateToBool = \case

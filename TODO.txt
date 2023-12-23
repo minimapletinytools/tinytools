@@ -281,11 +281,12 @@ DONE-handlers should return preview action
 -upgrade xcode or something to get brew working??
 -clean unused dependencies
   -figure out how to run dependency detector
--add upper bounds to all packages
+DONE-add upper bounds to all packages
 
 ::HIGH PRIORITY::
 -BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
   -repro is make a chain of folders, select one in the middle and lock
+  -the issue is we prevent locking/hiding if parent is locked/hidden but not if parents parent etc is
 DONE-BUG textarea handler crashes
 -line labels still cropping on right side
   -allow new lines in line labels :O
