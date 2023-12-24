@@ -22,6 +22,9 @@ import qualified Data.IntMap                  as IM
 import qualified Data.IntSet as IS
 import           Data.Sequence                ((><), (|>))
 import qualified Data.Sequence                as Seq
+import  Data.Tree (Tree)
+import qualified Data.Tree as Tree
+import qualified Data.Tree.Zipper as Tree
 import qualified Data.Text as T
 import qualified Text.Show
 
@@ -59,21 +62,23 @@ updateLockHiddenStateInChildren parentstate = \case
   LHS_False -> case parentstate of
     LHS_True  -> LHS_False_InheritTrue
     LHS_False -> LHS_False
-    _         -> invalid
+    LHS_True_InheritTrue -> LHS_False_InheritTrue
+    LHS_False_InheritTrue -> LHS_False_InheritTrue
   LHS_True -> case parentstate of
     LHS_True  -> LHS_True_InheritTrue
     LHS_False -> LHS_True
-    _         -> invalid
+    LHS_True_InheritTrue -> LHS_True_InheritTrue
+    LHS_False_InheritTrue -> LHS_True_InheritTrue
   LHS_True_InheritTrue -> case parentstate of
-    LHS_False -> LHS_True
     LHS_True  -> LHS_True_InheritTrue
-    _         -> invalid
+    LHS_False -> LHS_True
+    LHS_True_InheritTrue -> LHS_True_InheritTrue
+    LHS_False_InheritTrue -> LHS_True_InheritTrue
   LHS_False_InheritTrue -> case parentstate of
-    LHS_False -> LHS_False
     LHS_True  -> LHS_False_InheritTrue
-    _         -> invalid
-  where
-    invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"
+    LHS_False -> LHS_False
+    LHS_True_InheritTrue -> LHS_False_InheritTrue
+    LHS_False_InheritTrue -> LHS_False_InheritTrue
 
 -- TODO be careful with hidden cost of Eq SuperOwl
 -- this stores info just for what is displayed, Seq LayerEntry is uniquely generated from LayerMetaMap and PFState
@@ -103,9 +108,77 @@ layerEntry_isFolder LayerEntry {..} = mommyOwl_hasKiddos _layerEntry_superOwl
 layerEntry_rEltId :: LayerEntry -> REltId
 layerEntry_rEltId LayerEntry {..} = _superOwl_id _layerEntry_superOwl
 
--- index type into Seq LayerEntry
+-- TODO DELETE just use Int
 type LayerEntryPos = Int
+
+-- DEPRECATED
 type LayerEntries = Seq LayerEntry
+
+type LayerEntryTree = Tree LayerEntry
+
+layerEntryTree_index :: LayerEntryTree -> LayerEntryPos -> Maybe LayerEntry
+layerEntryTree_index nles lepos = fst $ foldl f (Nothing, 0) nles where
+  f (mle, acc) le = if acc == lepos
+    then (Just le, acc + 1)
+    else (mle, acc + 1)
+
+layerEntryTree_toLayerEntries :: LayerEntryTree -> LayerEntries
+layerEntryTree_toLayerEntries nles = r where
+  foldlfn acc le = acc |> le
+  r = foldl foldlfn Seq.empty nles
+
+maybeApplyNTimes :: Int -> (a -> Maybe a) -> a -> Maybe a
+maybeApplyNTimes n f val = foldl (\s e -> e s) (Just val) [f | x <- [1..n]] where
+  foldlfn acc x = case acc of
+    Nothing -> Nothing
+    Just x' -> f x'
+
+
+
+layerEntries_toLayerEntryTree :: LayerEntries -> LayerEntryTree
+layerEntries_toLayerEntryTree les = foldl foldlfn Tree.empty les where
+  foldlfn z le = r where
+    lastDepth = layerEntry_depth Tree.label z
+    depth = layerEntry_depth le
+    r = if depth == lastDepth+1
+      -- child case
+      then Tree.insert (Node le []) (Tree.children z')
+      else if depth < lastDepth
+        -- go back up case
+        then case maybeApplyNTimes (depth - lastDepth) Tree.parent z of
+          Nothing -> error "not enough parents"
+          Just z' -> Tree.insert (Node le []) (Tree.nextSpace z')
+        else error "layerEntries_toLayerEntryTree: depth > lastDepth+1"
+    
+
+
+
+maybeLeft :: Either a b -> Maybe a
+maybeLeft (Left a) = Just a
+maybeLeft _        = Nothing
+
+
+indexToZipper :: a -> Int -> Maybe (Tree.TreePos Tree.Full a)
+indexToZipper tree i = maybeLeft $ parentGo (Tree.fromTree tree) i where
+
+  childrenGo :: Maybe (Tree.TreePos Tree.Full a) -> Int -> Either (Tree.TreePos Tree.Full a) Int
+  childrenGo mz n = case mz of
+    -- if n is 0, then parentGo will handle the base case
+    Nothing -> Right n
+    Just z -> case parentGo z n of
+      -- done
+      Left z' -> Left z'
+      -- go to next child
+      Right n' -> childrenGo (Tree.next z') (n-n')
+
+
+  parentGo :: Tree.TreePos Tree.Full a -> Int -> Either (Tree.TreePos Tree.Full a) Int
+  parentGo z n' = case n' of
+    -- we're done
+    0 -> Left z
+    -- walk over chlidren
+    n -> childrenGo (firstChild z) (n-1)
+
 
 layerEntriesToPrettyText :: LayerEntries -> Text
 layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
@@ -128,11 +201,16 @@ layerEntriesToPrettyText lentries = foldr foldrfn "" lentries where
     sowl = _layerEntry_superOwl
     r = T.replicate (layerEntry_depth le) " " <> collapseText <> hideText <> lockText <> " " <> hasOwlItem_name sowl <> "\n" <> acc
 
+layerEntryTreeToPrettyText :: LayerEntryTree -> Text
+layerEntryTreeToPrettyText = layerEntriesToPrettyText . layerEntryTree_toLayerEntries 
+
+
 data LayersState = LayersState {
     -- mapping from REltId to element meta data
     _layersState_meta :: LayerMetaMap
-    -- sequence of visible folders
-    , _layersState_entries :: LayerEntries
+    -- tree of visible folders in layers
+    , _layersState_entries :: LayerEntryTree
+    -- TODO DELETE
     , _layersState_scrollPos :: Int
   } deriving (Show, Eq)
 
@@ -163,14 +241,10 @@ lookupWithDefault rid ridm = case IM.lookup rid ridm of
   Just x  -> x
 
 
-
-
-
--- TODO test
--- | assumes LayersState is after hide state of given lepos has just been toggled
+-- | assumes `LayersState` has updated hide state of `lepos`
 changesFromToggleHide :: OwlPFState -> LayersState -> LayerEntryPos -> SuperOwlChanges
 changesFromToggleHide OwlPFState {..} LayersState {..} lepos = r where
-  le = Seq.index _layersState_entries lepos
+  le = layerEntryTree_index _layersState_entries lepos
   sowl = _layerEntry_superOwl le
   lerid = _superOwl_id sowl
   lm = lookupWithDefault lerid _layersState_meta
@@ -185,45 +259,24 @@ changesFromToggleHide OwlPFState {..} LayersState {..} lepos = r where
     then IM.fromList $ (lerid, Nothing) : (fmap (over _2 (const Nothing)) unhiddenChildren)
     else IM.fromList $ (lerid,Just sowl) : (fmap (over _2 Just) unhiddenChildren)
 
--- iterates over LayerEntryPos, skipping all children of entries where skipfn evaluates to true
-doChildrenRecursive :: (LayerEntry -> Bool) -> (LayerEntry -> LayerEntry) -> Seq LayerEntry -> Seq LayerEntry
-doChildrenRecursive skipfn entryfn = snd . mapAccumL mapaccumlfn maxBound where
-  mapaccumlfn skipdepth le = (newskipdepth, newle) where
-    depth = layerEntry_depth le
-    newskipdepth
-      -- skip, so keep skipping
-      | depth >= skipdepth = skipdepth
-      -- skip all children
-      -- note, no need to check for collapsed state because we are iterating over LayerEntry which do not include children of collapsed entries
-      | skipfn le = depth + 1
-      -- either we exited a skipped folder or aren't skipping, reset skip counter (since we skip subfolders of skipped entries, maximal skip stack depth is 1 so reset is OK)
-      | otherwise = maxBound
-    newle = if depth >= skipdepth
-      then le -- no changes to skipped elts
-      else entryfn le
+
+updateChildrenRecursively :: (LayerEntry -> LockHiddenState) -> (LayerEntry -> LayerEntry) -> LayerEntryTree -> LayerEntryTree
 
 
 toggleLayerEntry :: OwlPFState -> LayersState -> LayerEntryPos -> LockHideCollapseOp -> LayersState
 toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
-  le = Seq.index _layersState_entries lepos
+
+  le = layerEntryTree_index _layersState_entries lepos
+  lezip = indexToZipper _layersState_entries lepos
   lerid = layerEntry_rEltId le
-  ledepth = layerEntry_depth le
-  childFrom nextLayerEntry = layerEntry_depth nextLayerEntry > ledepth
-  -- visible children of le
-  childles = Seq.takeWhileL childFrom . Seq.drop (lepos+1) $ _layersState_entries
-  -- everything before le
-  frontOfLe = Seq.take lepos _layersState_entries
-  -- everything after childles
-  backOfChildles = Seq.drop (lepos + 1 + Seq.length childles) _layersState_entries
 
   -- simple helper function for setting lock/hidden state
+  -- TODO do it incrementally instead of regenerating the tree
   togglefn fn setlmfn setlefn = (LayersState newlmm newlentries 0) where
     newlhsstate = toggleLockHiddenState $ fn le
     newlmm = alterWithDefault (\lm' -> setlmfn lm' (lockHiddenStateToBool newlhsstate)) lerid _layersState_meta
-    entryfn childle = setlefn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
-    newchildles = doChildrenRecursive (lockHiddenStateToBool . fn) entryfn childles
-    newle = setlefn le newlhsstate
-    newlentries = (frontOfLe |> newle) >< newchildles >< backOfChildles
+    newlentries = buildLayerEntryTree _owlPFState_owlTree newlmm
+
 
   r = case op of
     LHCO_ToggleCollapse -> (LayersState newlmm newlentries 0) where
@@ -231,10 +284,9 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
       newlmm = alterWithDefault (\le' -> le' { _layerMeta_isCollapsed = newcollapse }) lerid _layersState_meta
       newle = le { _layerEntry_isCollapsed = newcollapse }
       newchildles = buildLayerEntriesRecursive _owlPFState_owlTree _layersState_meta Seq.empty (Just newle)
-      newlentries = if newcollapse
-        then (frontOfLe |> newle) >< backOfChildles
-        else (frontOfLe |> newle) >< newchildles >< backOfChildles
-
+      newlentries = Tree.toTree $ if newcollapse
+        then Tree.modifyTree (\(Tree.Node label _) -> (Tree.Node label [])) lezip 
+        else Tree.modifyTree (\(Tree.Node label _) -> (Tree.Node label newchildles)) lezip 
     LHCO_ToggleLock -> togglefn _layerEntry_lockState (\lm' x -> lm' { _layerMeta_isLocked = x }) (\le' x -> le' { _layerEntry_lockState = x })
     LHCO_ToggleHide -> togglefn _layerEntry_hideState (\lm' x -> lm' { _layerMeta_isHidden = x }) (\le' x -> le' { _layerEntry_hideState = x })
 
@@ -280,6 +332,11 @@ updateLayers pfs changes LayersState {..} = r where
 
   r = LayersState newlmm newlentries _layersState_scrollPos
 
+
+buildLayerEntryTree :: OwlTree -> LayerMetaMap -> LayerEntryTree
+buildLayerEntryTree ot lmm = layerEntries_toLayerEntryTree $ buildLayerEntriesRecursive ot lmm Seq.empty Nothing
+
+
 buildLayerEntriesRecursive :: OwlTree -> LayerMetaMap -> Seq LayerEntry -> Maybe LayerEntry -> Seq LayerEntry
 buildLayerEntriesRecursive ot lmm acc mparent = r where
   foldlfn acclentries rid = newacclentries where
@@ -309,7 +366,8 @@ buildLayerEntriesRecursive ot lmm acc mparent = r where
     Just lentry -> mommyOwl_kiddos (_layerEntry_superOwl lentry)
 
 generateLayersNew :: OwlTree -> LayerMetaMap -> Seq LayerEntry
-generateLayersNew ot lmm = buildLayerEntriesRecursive ot lmm Seq.empty Nothing
+--generateLayersNew ot lmm = buildLayerEntriesRecursive ot lmm Seq.empty Nothing
+generateLayersNew = buildLayerEntryTreeot lmm
 
 
 layerMetaMap_isInheritHiddenOrLocked :: OwlTree -> REltId -> LayerMetaMap -> Bool
