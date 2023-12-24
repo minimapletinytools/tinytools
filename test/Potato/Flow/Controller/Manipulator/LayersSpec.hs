@@ -63,6 +63,27 @@ verifyFirstEntryInLayersIs = verifyNthEntryInLayersIs 0
 verifyNthEntryInLayersHasDepth :: Int -> Int -> GoatTester()
 verifyNthEntryInLayersHasDepth n d = verifyNthEntryInLayersPropertyIs n layerEntry_depth d
 
+{--
+verifySelectionIsOped :: LayerMouseOp -> Bool -> GoatTester ()
+verifySelectionIsOped lmo oped = r_0 where
+  verb = if oped then "" else "not"
+  operation = case lmo of
+    LMO_Hide -> "hidden"
+    LMO_Lock -> "locked"
+    _ -> error "unsupported operation"
+
+  vf s = r_1 where
+    otree = goatState_owlTree s
+    lmm = _layersState_meta . _goatState_layersState $ s
+    selection = _layersState_selection . _goatState_layersState $ s
+    r_1 = if nselection /= 1
+      then Just $ "failed, expected 1 selected 🦉, got " <> show nselection
+      else if layerMetaMap_isInheritHiddenOrLocked otree (_superOwl_id $ Seq.index selection 0) lmm == oped
+        then Nothing
+        else Just $ "failed, expected selected 🦉 to be " <> verb <> " " <> operation <> ", got " <> show (layerMetaMap_isInheritHiddenOrLocked otree (_superOwl_id $ Seq.index selection 0) lmm)
+  
+  r_0 = verifysState ("selection is " <> verb <> " " <> operation) vf
+--}
 
 create_select_test :: Spec
 create_select_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
@@ -260,6 +281,36 @@ lock_or_hide_select_test lmo = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ d
   canvasMouseDownUp (5,5)
   verifySelectionCount 1
 
+lock_or_hide_depth_test :: LayerMouseOp -> Spec
+lock_or_hide_depth_test lmo = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+  setMarker "make a chain of folders"
+  addFolder "1"
+  addFolder "2"
+  addFolder "3"
+  addFolder "4"
+  addFolder "5"
+  addFolder "6"
+  addFolder "7"
+
+  setMarker "op the top folder"
+  layerMouseDownUpRel lmo 0 0
+
+  setMarker "op the 4th folder"
+  layerMouseDownUpRel lmo 3 3
+
+  setMarker "op the top folder"
+  layerMouseDownUpRel lmo 0 0
+  -- TODO verify that the 4th folder is not oped
+  
+  setMarker "op the 4th folder"
+  layerMouseDownUpRel lmo 3 3
+  -- TODO verify thot the 4th folder is oped
+
+
+  
+
+
+
 drag_folder_test :: Spec
 drag_folder_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   setMarker "create a folder"
@@ -443,6 +494,8 @@ drag_folder_depth_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
 
 
 
+
+
 spec :: Spec
 spec = do
   describe "Layers" $ do
@@ -455,6 +508,8 @@ spec = do
     describe "folder_collapse_test" $ folder_collapse_test
     describe "lock_or_hide_select_test hide" $ lock_or_hide_select_test LMO_Hide
     describe "lock_or_hide_select_test lock" $ lock_or_hide_select_test LMO_Lock
+    describe "lock_or_hide_depth_test hide" $ lock_or_hide_depth_test LMO_Hide
+    describe "lock_or_hide_depth_test lock" $ lock_or_hide_depth_test LMO_Lock
     describe "drag_folder_test" $ drag_folder_test
     describe "drag_folder2_test" $ drag_folder2_test
     describe "drag_folder_depth_test" $ drag_folder_depth_test

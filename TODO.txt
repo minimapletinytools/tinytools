@@ -284,7 +284,7 @@ DONE-handlers should return preview action
 DONE-add upper bounds to all packages
 
 ::HIGH PRIORITY::
--BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
+DONE-BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
   -repro is make a chain of folders, select one in the middle and lock
   -the issue is we prevent locking/hiding if parent is locked/hidden but not if parents parent etc is
 DONE-BUG textarea handler crashes

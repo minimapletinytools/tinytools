@@ -57,23 +57,26 @@ setLockHiddenStateInChildren parentstate = \case
 updateLockHiddenStateInChildren :: LockHiddenState -> LockHiddenState -> LockHiddenState
 updateLockHiddenStateInChildren parentstate = \case
   LHS_False -> case parentstate of
-    LHS_True  -> LHS_False_InheritTrue
-    LHS_False -> LHS_False
-    _         -> invalid
+    LHS_True              -> LHS_False_InheritTrue
+    LHS_False             -> LHS_False
+    LHS_True_InheritTrue  -> LHS_False_InheritTrue
+    LHS_False_InheritTrue -> LHS_False_InheritTrue
   LHS_True -> case parentstate of
-    LHS_True  -> LHS_True_InheritTrue
-    LHS_False -> LHS_True
-    _         -> invalid
+    LHS_True              -> LHS_True_InheritTrue
+    LHS_False             -> LHS_True
+    LHS_True_InheritTrue  -> LHS_True_InheritTrue
+    LHS_False_InheritTrue -> LHS_True_InheritTrue
   LHS_True_InheritTrue -> case parentstate of
-    LHS_False -> LHS_True
-    LHS_True  -> LHS_True_InheritTrue
-    _         -> invalid
+    LHS_True              -> LHS_True_InheritTrue
+    LHS_False             -> LHS_True
+    LHS_True_InheritTrue  -> LHS_True_InheritTrue
+    LHS_False_InheritTrue -> LHS_True_InheritTrue
   LHS_False_InheritTrue -> case parentstate of
-    LHS_False -> LHS_False
-    LHS_True  -> LHS_False_InheritTrue
-    _         -> invalid
-  where
-    invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"
+    LHS_True              -> LHS_False_InheritTrue
+    LHS_False             -> LHS_False
+    LHS_True_InheritTrue  -> LHS_False_InheritTrue
+    LHS_False_InheritTrue -> LHS_False_InheritTrue
+
 
 -- TODO be careful with hidden cost of Eq SuperOwl
 -- this stores info just for what is displayed, Seq LayerEntry is uniquely generated from LayerMetaMap and PFState
@@ -220,10 +223,8 @@ toggleLayerEntry OwlPFState {..} LayersState {..} lepos op = r where
   togglefn fn setlmfn setlefn = (LayersState newlmm newlentries 0) where
     newlhsstate = toggleLockHiddenState $ fn le
     newlmm = alterWithDefault (\lm' -> setlmfn lm' (lockHiddenStateToBool newlhsstate)) lerid _layersState_meta
-    entryfn childle = setlefn childle $ updateLockHiddenStateInChildren newlhsstate (fn childle)
-    newchildles = doChildrenRecursive (lockHiddenStateToBool . fn) entryfn childles
-    newle = setlefn le newlhsstate
-    newlentries = (frontOfLe |> newle) >< newchildles >< backOfChildles
+    -- TODO switch this to update only what needs to be updated (well you should store layer entries as a tree instead)
+    newlentries = generateLayersNew _owlPFState_owlTree newlmm
 
   r = case op of
     LHCO_ToggleCollapse -> (LayersState newlmm newlentries 0) where
