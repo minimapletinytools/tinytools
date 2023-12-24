@@ -493,9 +493,7 @@ sAutoLine_addMidpoint mpindex pos sline = r where
   newmidpoints =  L.insertAt mpindex (SAutoLineConstraintFixed pos) (_sAutoLine_midpoints sline)
 
 
-  -- TODO update line label position
-
-
+  -- TODO update line label position (whether you adjust index will depend on the position relative to where midpoint is added, right now we always assume label is to the left)
   fmapfn ll = if _sAutoLineLabel_index ll > mpindex
     then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll + 1}
     else ll
@@ -523,8 +521,8 @@ sAutoLine_modifyMidpoint mpindex pos sline = r where
 sAutoLine_deleteMidpoint :: Int -> SAutoLine -> SAutoLine
 sAutoLine_deleteMidpoint mpindex sline = r where
   newmidpoints =  L.deleteAt mpindex (_sAutoLine_midpoints sline)
-  -- TODO update line label position
-  fmapfn ll = if _sAutoLineLabel_index ll >= mpindex
+  -- TODO update line label position (whether you adjust index will depend on the position relative to where midpoint is added, right now we always assume label is to the left)
+  fmapfn ll = if _sAutoLineLabel_index ll > mpindex
     then ll { _sAutoLineLabel_index = _sAutoLineLabel_index ll - 1}
     else ll
   newlabels = fmap fmapfn (_sAutoLine_labels sline)

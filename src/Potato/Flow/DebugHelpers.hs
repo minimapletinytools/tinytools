@@ -48,4 +48,6 @@ instance MonadPotatoLogger PotatoLogger where
 
 
 debugBangBang :: (HasCallStack) => [a] -> Int -> a
-debugBangBang l i = assert (i >=0 && i < length l) (l L.!! i)
+debugBangBang l i = if (i >=0 && i < length l)
+  then (l L.!! i)
+  else error $ "debugBangBang: index " <> show i <> " out of bounds in list of length " <> show (length l)

@@ -277,17 +277,15 @@ DONE-handlers should return preview action
   -probably do [x] start | [x] end
   -default line can be one sided maybe?
   -make flip button more clear
-
 -upgrade xcode or something to get brew working??
 -clean unused dependencies
   -figure out how to run dependency detector
-DONE-add upper bounds to all packages
+- --tutorial to open tutorial otherwise empty by default
+
 
 ::HIGH PRIORITY::
-DONE-BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
-  -repro is make a chain of folders, select one in the middle and lock
-  -the issue is we prevent locking/hiding if parent is locked/hidden but not if parents parent etc is
-DONE-BUG textarea handler crashes
+DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls`
+  -repro is to make a line label with midpoint, add text between midpoint and thene delete the midpoint in either direction
 -line labels still cropping on right side
   -allow new lines in line labels :O
 -LHRESS_ChildSelected graphic broken during drag and just in general 
@@ -409,7 +407,11 @@ DONE-BUG textarea handler crashes
 
 
 
-
+DONE-add upper bounds to all packages
+DONE-BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
+  -repro is make a chain of folders, select one in the middle and lock
+  -the issue is we prevent locking/hiding if parent is locked/hidden but not if parents parent etc is
+DONE-BUG textarea handler crashes
 DONE/IGNORE-add box border toggle
 IGONRE-TESTING check for leaks again
 DONE-BUG after renaming folder, clicking on canvas pane does not finalize the folder rename action until you click back on the layers pane

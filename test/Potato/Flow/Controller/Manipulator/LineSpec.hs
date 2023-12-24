@@ -217,6 +217,43 @@ midpoint_double_adjacent_delete_test = hSpecGoatTesterWithOwlPFState blankOwlPFS
   canvasMouseDown (50, 2)
   expectMidpointCount 3
 
+midpoint_delete_with_label_test :: Spec
+midpoint_delete_with_label_test = hSpecGoatTesterWithOwlPFState blankOwlPFState $ do
+
+  initSimpleLine
+
+  setMarker "add a midpoint"
+  canvasMouseDown (50, 0)
+  canvasMouseDown (55, 0)
+  canvasMouseUp (55, 0)
+  expectMidpointCount 1
+
+  setMarker "add a label"
+  canvasMouseDownUp (25,0)
+  pressKeys "meow"
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow"
+
+  setMarker "delete the midpoint by going left"
+  canvasMouseDown (55, 0)
+  canvasMouseDownUp (0, 0)
+  expectMidpointCount 0
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow"
+
+  setMarker "add a midpoint"
+  canvasMouseDown (50, 0)
+  canvasMouseDown (55, 0)
+  canvasMouseUp (55, 0)
+  expectMidpointCount 1
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow"
+
+  setMarker "delete the midpoint by going right"
+  canvasMouseDown (55, 0)
+  canvasMouseDownUp (100, 0)
+  expectMidpointCount 0
+  verifyMostRecentlyCreatedLinesLatestLineLabelHasText "meow"
+
+
+
 
 initUnitBox :: (Int, Int) -> GoatTester ()
 initUnitBox (x, y) = do
@@ -564,6 +601,7 @@ spec = do
     describe "basic_cancel" $ basic_cancel_test
     describe "midpoint_modify_basic" $  midpoint_modify_basic_test
     describe "midpoint_double_adjacent_delete" $  midpoint_double_adjacent_delete_test
+    describe "midpoint_delete_with_label_test" $  midpoint_delete_with_label_test
     describe "attaching_delete_test" $ attaching_delete_test
     -- TODO reenable once you fix the issue in Box.hs -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
     --describe "attaching_fully_attached_wont_move_test" $ attaching_fully_attached_wont_move_test
