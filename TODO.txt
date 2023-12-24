@@ -286,8 +286,7 @@ DONE-handlers should return preview action
 ::HIGH PRIORITY::
 DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls`
   -repro is to make a line label with midpoint, add text between midpoint and thene delete the midpoint in either direction
--line labels still cropping on right side
-  -allow new lines in line labels :O
+DONE/IGNORE?-line labels still cropping on right side  
 -LHRESS_ChildSelected graphic broken during drag and just in general 
   -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
 -layers improvements
@@ -296,7 +295,7 @@ DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition 
 -if both target and source of line is moved, then move midpoints as well
   -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
 -line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
--add render handler name property so you know what the render handler is from its renderhandleroutput
+IGNORE-add render handler name property so you know what the render handler is from its renderhandleroutput
 -add a visual anchor for the box label so you know you can add one easily
 
 ::MID PRIORITY
@@ -368,6 +367,7 @@ DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition 
 
 
 ::????? PRIORITY
+-allow new lines in line labels :O
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
     -you got it down to 2 :O

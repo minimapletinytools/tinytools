@@ -80,13 +80,6 @@ data PotatoHandlerInput = PotatoHandlerInput {
     -- superOwlParliament_convertToCanvasSelection
   }
 
-type ColorType = ()
-data SimpleBoxHandlerRenderOutput = SimpleBoxHandlerRenderOutput {
-    _simpleBoxHandlerRenderOutput_box             :: LBox
-    , _simpleBoxHandlerRenderOutput_fillText      :: Maybe PChar -- fills the entire box with the same char
-    , _simpleBoxHandlerRenderOutput_fillTextColor :: ColorType
-    , _simpleBoxHandlerRenderOutput_bgColor       :: ColorType
-  }
 
 -- TODO remove renaming and move it into LayersHandlerRenderEntry
 data LayersHandlerRenderEntrySelectedState = LHRESS_ChildSelected | LHRESS_Selected | LHRESS_InheritSelected | LHRESS_None deriving (Show, Eq)
