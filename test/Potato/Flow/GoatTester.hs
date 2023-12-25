@@ -186,6 +186,11 @@ getLayersState = GoatTesterT $ do
   gts <- get
   return $ _goatState_layersState $ _goatTesterState_goatState gts
 
+getHandlerRenderOutput :: (Monad m) => GoatTesterT m HandlerRenderOutput
+getHandlerRenderOutput = GoatTesterT $ do
+  gs <- fmap _goatTesterState_goatState get
+  return $ pRenderHandler (_goatState_handler gs) (potatoHandlerInputFromGoatState gs)
+
 -- operation helpers
 
 setTool :: (Monad m) => Tool -> GoatTesterT m ()

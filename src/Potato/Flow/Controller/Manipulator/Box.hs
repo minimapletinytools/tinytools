@@ -469,11 +469,34 @@ instance PotatoHandler BoxHandler where
 
   pRenderHandler BoxHandler {..} PotatoHandlerInput {..} = r where
     handlePoints = fmap _mouseManipulator_box . filter (\mm -> _mouseManipulator_type mm == MouseManipulatorType_Corner) $ toMouseManipulators _potatoHandlerInput_pFState _potatoHandlerInput_canvasSelection
+
+    {-- 
+    -- kind of a hack to put this here, since BoxHandler is generic, but that's how it has to be for now since BoxHandler is also kind of not generic
+    -- I guess in the future you might have more specific handlers for each type of owl in which case you can do the thing where the specific handler also has a ref to BoxHandler and you render both (you did this with the text handler already)
+    -- TODO and this is an issue becaues you don't want to show the box label handler when you are editing the box label 
+    mBoxLabelHandler = case selectionOnlySBox _potatoHandlerInput_canvasSelection of
+      Nothing -> Nothing
+      Just sbox -> if sBoxType_hasBorder (_sBox_boxType sbox)
+        then if w > 1
+          then Just $ RenderHandle {
+              _renderHandle_box = LBox (V2 (x+1) y) (V2 1 1)
+              , _renderHandle_char  = Just 'I'
+              , _renderHandle_color = RHC_Cursor
+            } 
+          else Nothing 
+        else Nothing
+        where (LBox (V2 x y) (V2 w h)) = _sBox_box sbox
+
+    mcons :: Maybe a -> [a] -> [a]
+    mcons ma as = maybe as (:as) ma
+    --}
+
     -- TODO highlight active manipulator if active
     --if (_boxHandler_active)
     r = if not _boxHandler_active && boxCreationType_isCreation _boxHandler_creation
       -- don't render anything if we are about to create a box
       then emptyHandlerRenderOutput
+      --else HandlerRenderOutput (mcons mBoxLabelHandler $ fmap defaultRenderHandle handlePoints)
       else HandlerRenderOutput (fmap defaultRenderHandle handlePoints)
       
   pIsHandlerActive bh = if _boxHandler_active bh then HAS_Active_Mouse else HAS_Inactive

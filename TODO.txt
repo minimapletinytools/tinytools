@@ -284,9 +284,6 @@ DONE-handlers should return preview action
 
 
 ::HIGH PRIORITY::
-DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls`
-  -repro is to make a line label with midpoint, add text between midpoint and thene delete the midpoint in either direction
-DONE/IGNORE?-line labels still cropping on right side  
 -LHRESS_ChildSelected graphic broken during drag and just in general 
   -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
 -layers improvements
@@ -295,8 +292,6 @@ DONE/IGNORE?-line labels still cropping on right side
 -if both target and source of line is moved, then move midpoints as well
   -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
 -line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
-IGNORE-add render handler name property so you know what the render handler is from its renderhandleroutput
--add a visual anchor for the box label so you know you can add one easily
 
 ::MID PRIORITY
 -file stuff
@@ -406,7 +401,11 @@ IGNORE-add render handler name property so you know what the render handler is f
 
 
 
-
+DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls`
+  -repro is to make a line label with midpoint, add text between midpoint and thene delete the midpoint in either direction
+DONE/IGNORE?-line labels still cropping on right side  
+IGNORE-add render handler name property so you know what the render handler is from its renderhandleroutput
+IGNORE-add a visual anchor for the box label so you know you can add one easily
 DONE-add upper bounds to all packages
 DONE-BUG `invalid = error "toggling of LHS_XXX_InheritTrue elements disallowed"`
   -repro is make a chain of folders, select one in the middle and lock

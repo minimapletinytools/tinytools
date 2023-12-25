@@ -116,7 +116,7 @@ instance Default LayersViewHandlerRenderOutput where
       _layersViewHandlerRenderOutput_entries = Seq.empty
     }
 
-data RenderHandleColor = RHC_Default | RHC_Attachment | RHC_AttachmentHighlight deriving (Show, Eq)
+data RenderHandleColor = RHC_Default | RHC_Cursor | RHC_Attachment | RHC_AttachmentHighlight deriving (Show, Eq)
 
 -- TODO come up with better name
 data RenderHandle = RenderHandle {

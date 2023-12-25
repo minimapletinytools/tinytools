@@ -53,6 +53,9 @@ verifyMostRecentlyCreatedBoxHasText mt = verifyStateObjectHasProperty "verifyMos
             then Nothing 
             else Just $ "got text " <> show (_sBox_text sbox) <> " expected " <> t
 
+
+
+
 initSimpleBox :: GoatTester ()
 initSimpleBox = drawCanvasBox (0, 0, 100, 100)
 
@@ -116,6 +119,21 @@ boxtext_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
   setMarker "write some text"
   pressKeys "meow meow meow meow"
   verifyMostRecentlyCreatedBoxHasText (Just "meow meow meow meow")
+
+
+manipulator_basic_test :: Spec
+manipulator_basic_test = hSpecGoatTesterWithOwlPFState emptyOwlPFState $ do
+
+  setMarker "draw a box"
+  drawCanvasBox (0, 0, 100, 100)
+
+  handlers <- fmap _handlerRenderOutput_temp getHandlerRenderOutput
+
+  verifyBool "has 5 handlers" (length handlers == 5)
+  verifyBool "has handler at upper left corner" (any (\(RenderHandle (LBox (V2 x y) _) _ _) -> x == (-1) && y == (-1)) handlers)
+  --verifyBool "has handler on label" (any (\(HandlerRenderOutput (LBox (V2 x y) _) _ _) -> x == 1 && y == 0) handlers)
+  verifyBool "has handler on the box area" (any (\(RenderHandle (LBox (V2 x y) (V2 w h)) _ _) -> x == 1 && y == 1 && w == 98 && h == 98) handlers)
+
 
 
 spec :: Spec
