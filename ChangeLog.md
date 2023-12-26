@@ -2,6 +2,9 @@
 
 ## [unreleased]
 
+## [0.1.0.7]
+- fix several bugs
+
 ## [0.1.0.6]
 - fix several bugs
 - remove patch dependency
