@@ -19,7 +19,7 @@ jobs:
     - uses: haskell-actions/setup@v2
       with:
         ghc-version: '9.2.5'
-        cabal-version: '3.10.2.0'
+        cabal-version: '3.2'
 
     - name: Cache
       uses: actions/cache@v3
@@ -42,6 +42,14 @@ jobs:
     - name: Run tests
       run: cabal test all --enable-tests
 
+    - name: Upload package candidate to hackage
+      uses: haskell-actions/hackage-publish@v1
+      with:
+        hackageToken: ${{ secrets.HACKAGE_AUTH_TOKEN }}
+        packagesPath: ${{ runner.temp }}/packages
+        docsPath: ${{ runner.temp }}/docs
+        publish: false
+
   parse-cabal-file:
     runs-on: ubuntu-latest
     steps:
@@ -50,16 +58,7 @@ jobs:
     - uses: haskell-actions/parse-cabal-file@v1
       id: cabal_file
       with:
-        cabal_file: my-library.cabal
+        cabal_file: tinytools.cabal
 
     - run: echo ${{ steps.cabal_file.outputs.version }}
 
-  hackage-upload-candidate:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: haskell-actions/hackage-publish@v1
-      with:
-        hackageToken: ${{ secrets.HACKAGE_AUTH_TOKEN }}
-        packagesPath: ${{ runner.temp }}/packages
-        docsPath: ${{ runner.temp }}/docs
-        publish: false
