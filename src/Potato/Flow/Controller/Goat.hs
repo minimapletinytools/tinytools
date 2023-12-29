@@ -87,7 +87,7 @@ data GoatState = GoatState {
     , _goatState_renderedSelection       :: RenderedCanvasRegion -- TODO need sparse variant
     , _goatState_handler                 :: SomePotatoHandler
     , _goatState_layersHandler           :: SomePotatoHandler
-    -- TODO consider moving into _goatState_workspace
+    -- TODO consider moving into _goatState_workspace since it needs to be used for some state update operations...
     , _goatState_attachmentMap           :: AttachmentMap -- map of targets to things attached to it. This is a cache that gets updated over time and can be regenerated from the current OwlTree
     , _goatState_renderCache             :: RenderCache
 

@@ -315,16 +315,12 @@ instance PotatoHandler AutoLineHandler where
     _                              -> Nothing
   pRenderHandler AutoLineHandler {..} phi@PotatoHandlerInput {..} = r where
     boxes = maybeRenderPoints (False, False) _autoLineHandler_offsetAttach (-1) phi
-    -- TODO render attach endpoints from currently selected line (useful in the future when attach points aren't always in the middle)
-      -- TODO don't render attachmentBoxes while dragging
     attachmentBoxes = renderAttachments phi (Nothing, Nothing)
-
     labels = renderLabels phi False
-
     r = if _autoLineHandler_isCreation
       -- creation handlers are rendered by AutoLineEndPointHandler once dragging starts
       then HandlerRenderOutput attachmentBoxes
-      else HandlerRenderOutput (attachmentBoxes <> boxes <> labels)
+      else HandlerRenderOutput (boxes <> labels)
 
   pIsHandlerActive _ = HAS_Inactive
   pHandlerTool AutoLineHandler {..} = if _autoLineHandler_isCreation

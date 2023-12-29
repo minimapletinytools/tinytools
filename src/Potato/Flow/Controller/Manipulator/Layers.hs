@@ -335,7 +335,6 @@ instance PotatoHandler LayersHandler where
   -- TODO this is incorrect, we may be in the middle of dragging elements that got deleted
   pRefreshHandler h _ = Just $ SomePotatoHandler h
 
-  -- TODO generate LHRESS_ChildSelected
   pRenderLayersHandler LayersHandler {..} PotatoHandlerInput {..} = LayersViewHandlerRenderOutput newlentries where
     selection = _potatoHandlerInput_selection
     LayersState _ lentries _ = _potatoHandlerInput_layersState
@@ -400,30 +399,9 @@ instance PotatoHandler LayersHandler where
 
     (_, newlentries3) = mapAccumR mapaccumrfn_fordots Nothing newlentries2
 
-    -- determine parents of selection
-    mapaccumrfn_forchildselected (selstack, lastdepth) lhre = ((newstack, depth), newlhre) where
-      selected = layersHandlerRenderEntry_selected lhre
-      depth = layersHandlerRenderEntry_depth lhre
-      (childSelected, newstack) = if depth > lastdepth
-        then (False, selected:selstack)
-        else if selected
-          then case selstack of
-            []   -> (False, [True]) -- this happens if on the first element that we mapAccumR on
-            _:xs -> (False, True:xs)
-          else if depth < lastdepth
-            then case selstack of
-              [] -> error "this should never happen"
-              x1:xs1 -> case xs1 of
-                []     -> (x1, [x1])
-                x2:xs2 -> (x1 && not x2, (x1 || x2) : xs2)
-            else (False, selstack)
-      newlhre = if childSelected
-        then case lhre of
-          -- TODO this is wrong 
-          LayersHandlerRenderEntryNormal _ mdots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected mdots renaming lentry
-          x -> x
-        else lhre
-    (_, newlentries) = mapAccumR mapaccumrfn_forchildselected ([], 0) newlentries3
+    -- TODO determine parents of selection and modify
+    -- LayersHandlerRenderEntryNormal _ mdots renaming lentry -> LayersHandlerRenderEntryNormal LHRESS_ChildSelected mdots renaming lentry
+    newlentries = newlentries3
 
 
 

@@ -270,30 +270,29 @@ DONE-handlers should return preview action
 
 
 :: RELEASE TODO ::
--get it working on breew
+-GHA build and release
+-do linux and windoze build
 -make a video
--update tutorial file?
+
+
+::HIGH PRIORITY::
+-clean unused dependencies
+  -figure out how to run dependency detector
 -should be more intuitive to get a 1 sided line
   -probably do [x] start | [x] end
   -default line can be one sided maybe?
   -make flip button more clear
--upgrade xcode or something to get brew working??
--clean unused dependencies
-  -figure out how to run dependency detector
-- --tutorial to open tutorial otherwise empty by default
-
-
-::HIGH PRIORITY::
--LHRESS_ChildSelected graphic broken during drag and just in general 
-  -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
 -layers improvements
   -shift select in layers please ;__;
   -selecting multiple items and hitting new folder should put those items in folder maybe
--if both target and source of line is moved, then move midpoints as well
-  -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
--line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
 
 ::MID PRIORITY
+-if both target and source of line is moved, then move midpoints as well
+  -fix (search comment) -- THE REASON YOU DID THIS IS TO PREVENT FULLY ATTACHED LINES FROM BEING MOVED
+  -in order to fix this, you need to change do_deleteElts to update position of attached lines which poses several issues:
+    -need attachmentMap to do this optimally and it's currently stored in goatState
+    -when you undo the delete, you ideally would set the line endpoint positions back to their original values (even if it's meaningless)
+    -so you probably need to move delete into a llama operation where you can cache the original values in the returned undo operaiton
 -file stuff
   -maybe highlight relevant files instead of * in file explorer
     -or just don't show anything that's not relevant...
@@ -362,6 +361,7 @@ DONE-handlers should return preview action
 
 
 ::????? PRIORITY
+-switch layers to use tree (you have a branch for this)
 -allow new lines in line labels :O
 -BUG foldgoatfn gets called 3 times for each event wtf 😭 (probably due to holdUniqDyns I guess)
     -you should fix cuz it makes debugging hard...
@@ -399,8 +399,13 @@ DONE-handlers should return preview action
 
 
 
-
-
+DONE-line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
+IGNORE LOL-get it working on breew
+IGNORE-update tutorial file?
+DONE/FAIL-upgrade xcode or something to get brew working??
+DONE- --tutorial to open tutorial otherwise empty by defaultcd
+IGNORE/FAIL/DONE-LHRESS_ChildSelected graphic broken during drag and just in general 
+  -make a deep chain of folders, then in one of the folders have several children, selecting that folder will cause the folder just above it not to be  LHRESS_ChildSelected
 DONE-BUG asserting `r = fmap (\(i, sall) -> (internal_getSAutoLineLabelPosition (larlist `debugBangBang` _sAutoLineLabel_index sall) sal sall, i, sall)) sortedlls`
   -repro is to make a line label with midpoint, add text between midpoint and thene delete the midpoint in either direction
 DONE/IGNORE?-line labels still cropping on right side  

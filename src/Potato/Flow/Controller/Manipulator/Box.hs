@@ -480,7 +480,7 @@ instance PotatoHandler BoxHandler where
         then if w > 1
           then Just $ RenderHandle {
               _renderHandle_box = LBox (V2 (x+1) y) (V2 1 1)
-              , _renderHandle_char  = Just 'I'
+              , _renderHandle_char  = Just 'T'
               , _renderHandle_color = RHC_Cursor
             } 
           else Nothing 
