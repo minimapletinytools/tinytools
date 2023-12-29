@@ -297,8 +297,8 @@ DONE-handlers should return preview action
   -maybe highlight relevant files instead of * in file explorer
     -or just don't show anything that's not relevant...
   -UTs
-    -popupSaveBeforeExit
-    -popupOpenWindow
+    DONE-popupSaveBeforeExit
+    DONE-popupOpenWindow
     -doubleClick
     DONE-waitForSecondAfterFirst (move to reflex-potatoes)
   DONE-add double click support to file explorer
