@@ -18,7 +18,7 @@ jobs:
     - uses: haskell-actions/setup@v2
       with:
         ghc-version: '9.2.5'
-        cabal-version: '3.2'
+        cabal-version: '3.6.2.0-p1'
 
     - name: Cache
       uses: actions/cache@v3
@@ -39,16 +39,19 @@ jobs:
     - name: Build
       run: cabal build all
 
-    - name: Release
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "release.tar.gz"
+    # UNTESTED STUFF BELOW HERE
+    - name: Run cabal sdist
+      run: cabal sdist --output-directory=${{ runner.temp }}/packages
+
+    #- name: Release
+    #  uses: ncipollo/release-action@v1
+    #  with:
+    #    artifacts: "release.tar.gz"
 
     - name: Upload package candidate to hackage
       uses: haskell-actions/hackage-publish@v1
       with:
         hackageToken: ${{ secrets.HACKAGE_AUTH_TOKEN }}
         packagesPath: ${{ runner.temp }}/packages
-        docsPath: ${{ runner.temp }}/docs
         publish: false
 
