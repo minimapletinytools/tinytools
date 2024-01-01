@@ -16,17 +16,11 @@ The view/controller is connected to the model using a [reflex](https://github.co
 
 # roadmap
 
-## v1
-- UNICODE wide character support (currently blocked by issues in TextZipper)
-- UNICODE glyph widget
+`tinytools`` is still actively being worked on. Here are some things to look out for in the future:
 
-## v2
+- more native shapes and custom shape support
+- glyph widget for easy emoji or ASCII art insertion
+- multi-character ASCII font support 
 - multi-document support
-- refactor to handle non-linear action do/undo operations in preparation for multi-user mode
-
-## v3
-- grapheme clusters support (blocked by terminal support which is currently extremely inconsistent or non-existent)
-- multi-user mode
-  - ordering service interface
-  - basic single client authoritative implementation of ordering service interface (for now)
-- scriptable command interface
+- multi-user support
+- web based frontend
