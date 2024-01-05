@@ -148,7 +148,7 @@ library
     , ref-tf >= 0.5.0 && < 0.6
     , text-icu >= 0.8.0 && < 0.9
     , vty>=5.28 && <6.2
-
+  pkgconfig-depends: icu-i18n, icu-uc
   default-language: Haskell2010
 
 test-suite tinytools-test
