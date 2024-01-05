@@ -1,6 +1,7 @@
 # Changelog
 
-## [unreleased]
+## [0.1.0.8]
+- remove `text-icu` dependency at the cost sof not detecting grapheme clusters correctly
 
 ## [0.1.0.7]
 - fix several bugs
