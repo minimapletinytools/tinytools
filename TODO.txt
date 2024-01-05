@@ -1,4 +1,7 @@
 
+              
+
+----
 Hi, I'm been working on my terminal based unicode diagram editor [tinytools](https://github.com/minimapletinytools/tinytools-vty) for about 4 years now 😱. It's been ready to release for some time now but I keep putting it off and adding more features instead! But no more!!
 
 I'm a complete potato when it comes to OSS release/distribution/promotion. Looking for tips/suggestions on other ways to distribute this app.
@@ -38,42 +41,9 @@ ghc options
 -drule-check = <rule name>
 
 -----
-Error: cabal: Could not resolve dependencies:
-[__0] trying: tinytools-vty-0.1.0.4 (user goal)
-[__1] trying: tinytools-0.1.0.4 (dependency of tinytools-vty)
-[__2] next goal: text-icu (dependency of tinytools)
-[__2] rejecting: text-icu-0.8.0.2, text-icu-0.8.0.1 (conflict: pkg-config
-package icu-i18n>=62.1, not found in the pkg-config database)
-[__2] rejecting: text-icu-0.8.0 (conflict: pkg-config package icu-i18n-any,
-not found in the pkg-config database)
-[__2] trying: text-icu-0.7.1.0
-[__3] trying: pretty-simple-4.1.2.0 (dependency of tinytools)
-[__4] trying: hashable-1.4.3.0 (dependency of tinytools)
-[__5] next goal: text (dependency of tinytools-vty)
-[__5] rejecting: text-2.0.1/installed-2.0.1 (conflict: text-icu =>
-text>=0.9.1.0 && <2)
-[__5] skipping: text-2.0.2, text-2.0.1, text-2.0 (has the same characteristics
-that caused the previous version to fail: excluded by constraint '>=0.9.1.0 &&
-<2' from 'text-icu')
-[__5] trying: text-1.2.5.0
-[__6] next goal: base (dependency of tinytools-vty)
-[__6] rejecting: base-4.17.0.0/installed-4.17.0.0 (conflict: text =>
-ghc-prim>=0.2 && <0.9, base => ghc-prim==0.9.0/installed-0.9.0)
-[__6] rejecting: base-4.18.0.0, base-4.17.2.0, base-4.17.1.0, base-4.17.0.0,
-base-4.16.4.0, base-4.16.3.0, base-4.16.2.0, base-4.16.1.0, base-4.16.0.0,
-base-4.15.1.0, base-4.15.0.0, base-4.14.3.0, base-4.14.2.0, base-4.14.1.0,
-base-4.14.0.0, base-4.13.0.0, base-4.12.0.0, base-4.11.1.0, base-4.11.0.0,
-base-4.10.1.0, base-4.10.0.0, base-4.9.1.0, base-4.9.0.0, base-4.8.2.0,
-base-4.8.1.0, base-4.8.0.0, base-4.7.0.2, base-4.7.0.1, base-4.7.0.0,
-base-4.6.0.1, base-4.6.0.0, base-4.5.1.0, base-4.5.0.0, base-4.4.1.0,
-base-4.4.0.0, base-4.3.1.0, base-4.3.0.0, base-4.2.0.2, base-4.2.0.1,
-base-4.2.0.0, base-4.1.0.0, base-4.0.0.0, base-3.0.3.2, base-3.0.3.1
-(constraint from non-upgradeable package requires installed instance)
-[__6] fail (backjumping, conflict set: base, text, tinytools-vty)
-After searching the rest of the dependency tree exhaustively, these were the
-goals I've had most trouble fulfilling: base, text, hashable, tinytools,
-unordered-containers, mono-traversable, text-icu, pretty-simple, tinytools-vty
-Try running with --minimize-conflict-set to improve the error message.
+
+to enable static linking:
+-optl-static -optl-pthread  
 
 ----------
 to get call stacks, first build with:
@@ -92,7 +62,10 @@ cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Pan"'
 cabal test --test-options='--match "/Potato.Flow.Controller.Manipulator.Layers/Layers/drag_folder2_test"'
 
 cabal run tinytools -- -help
- 
+
+---- 
+nix-shell --packages cabal2nix --run "cabal2nix ." > default.nix
+nix-shell --attr tinytools release.nix
 ----------
 
 normal
@@ -134,6 +107,14 @@ IGNORE-grapheme cluster
 DONE-EMOJIS
 DONE-moveable line anchors
 DONE-adjustable attachment spec
+-support more shapes
+  -diamond
+  -ellipse
+  -probably needs now styling classes, these should probably be presentsonly
+-generalize object and manipulator refactor likely
+  -generalize text area 
+  -generalize Box handler bulk maniplutaion
+  -generalize line connection points
 -swatches
 -unicode character picker
   -lives at params level

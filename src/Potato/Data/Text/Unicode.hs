@@ -6,8 +6,10 @@ import           Prelude
 import           Data.Int
 import           Data.Text               (Text)
 import qualified Data.Text               as T
-import qualified Data.Text.ICU           as ICU
+
 import qualified Potato.Data.Text.Zipper as TZ
+
+--import qualified Data.Text.ICU           as ICU
 
 
 
@@ -20,6 +22,15 @@ getCharWidth = fromIntegral . TZ.charWidth
 removeWideChars :: Text -> Text
 removeWideChars = T.filter (\c -> getCharWidth c <= 1)
 
+
+-- never detect grapheme clusters for now
+-- proper implementation removed do remove text-icu dependency
+-- TODO fix
+endsInGraphemeCluster :: Text -> Bool
+endsInGraphemeCluster _ = False
+
+
+{-
 internal_getCharacterBreaks :: Text -> [ICU.Break ()]
 internal_getCharacterBreaks input = r where
   breaker = ICU.breakCharacter ICU.Current
@@ -66,16 +77,4 @@ removeGraphemeCluster input = r where
 containsGraphemeCluster :: Text -> Bool
 containsGraphemeCluster input = removeGraphemeCluster input /= input
 
-
-
--- 🤖 isn't correct, misses emojis :()
-{-
-getCharWidth :: Char -> Int8
-getCharWidth c
-  | isControl c || c == '\t' = 0
-  | w == 0x0 || w > 0x10ffff = 1
-  | w >= 0x1100 && (w <= 0x115f || w == 0x2329 || w == 0x232a || (w >= 0x2e80 && w <= 0xa4cf && w /= 0x303f) || (w >= 0xac00 && w <= 0xd7a3) || (w >= 0xf900 && w <= 0xfaff) || (w >= 0xfe10 && w <= 0xfe19) || (w >= 0xfe30 && w <= 0xfe6f) || (w >= 0xff00 && w <= 0xff60) || (w >= 0xffe0 && w <= 0xffe6) || (w >= 0x20000 && w <= 0x2fffd) || (w >= 0x30000 && w <= 0x3fffd)) = 2
-  | otherwise = 1
-  where
-    w = ord c
 -}
