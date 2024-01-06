@@ -8,3 +8,4 @@ cabal.project.local
 *.ps
 *.prof
 serialization_test_output.json
+cabal.project.freeze
