@@ -39,6 +39,17 @@ import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 
+data BoxTextHandler = BoxTextHandler {
+    -- TODO Delete this
+    _boxTextHandler_isActive      :: Bool
+    
+    , _boxTextHandler_state       :: TextInputState
+    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
+    , _boxTextHandler_prevHandler :: SomePotatoHandler
+    , _boxTextHandler_undoFirst   :: Bool
+
+    , _boxTextHandler_commitOnMouseUp :: Bool
+  }
 
 getSBox :: CanvasSelection -> (REltId, SBox)
 getSBox selection = case superOwl_toSElt_hack sowl of
@@ -97,18 +108,6 @@ makeTextInputState = makeOwlItemTextInputState boxTextImpl
 
 inputBoxText :: TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
 inputBoxText tais sowl kk = inputOwlItem boxTextImpl tais sowl kk
-
-data BoxTextHandler = BoxTextHandler {
-    -- TODO Delete this
-    _boxTextHandler_isActive      :: Bool
-    
-    , _boxTextHandler_state       :: TextInputState
-    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
-    , _boxTextHandler_prevHandler :: SomePotatoHandler
-    , _boxTextHandler_undoFirst   :: Bool
-
-    , _boxTextHandler_commitOnMouseUp :: Bool
-  }
 
 makeBoxTextHandler :: Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
 makeBoxTextHandler commit prev selection rmd = BoxTextHandler {
@@ -250,39 +249,29 @@ lBox_to_boxLabelBox lbx = r where
   width = max 0 (w - 2)
   r = LBox (V2 (x+1) y) (V2 width 1)
 
+makeBoxLableController :: Text -> Text -> Controller
+makeBoxLableController orig new = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (if orig == "" then Nothing else Just orig, if new == "" then Nothing else Just new)))
 
-
+boxLabelImpl :: TextImpl SBox
+boxLabelImpl = TextImpl {
+    _textImpl_mustGetOwlItem = getSBox
+    , _textImpl_owlItemText = fromMaybe "" . _sBoxTitle_title . _sBox_title
+    , _textImpl_owlItemBox = canonicalLBox_from_lBox . lBox_to_boxLabelBox . _sBox_box
+    , _textImpl_owlItemAlignment = _sBoxTitle_align . _sBox_title
+    , _textImpl_inputOwlItemZipper = inputSingleLineZipper
+    , _textImpl_makeController = makeBoxLableController
+  }
 
 updateBoxLabelInputStateWithSBox :: SBox -> TextInputState -> TextInputState
-updateBoxLabelInputStateWithSBox sbox btis = r where
-  alignment = convertTextAlignToTextZipperTextAlignment . _sBoxTitle_align . _sBox_title $ sbox
-  newBox =  lBox_to_boxLabelBox $ _sBox_box sbox
-  width = maxBound :: Int -- box label text always overflows
-  r = btis {
-      _textInputState_box = newBox
-      , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)
-    }
+updateBoxLabelInputStateWithSBox = updateTextInputStateWithOwlItem boxLabelImpl
 
 makeBoxLabelInputState :: REltId -> SBox -> RelMouseDrag -> TextInputState
-makeBoxLabelInputState rid sbox rmd = r where
-  mogtext = _sBoxTitle_title . _sBox_title $ sbox
-  ogtz = TZ.fromText (fromMaybe "" mogtext)
-  r' = TextInputState {
-      _textInputState_rid = rid
-      , _textInputState_original   = mogtext
-      , _textInputState_zipper   = ogtz
-
-      -- these fields get updated in next pass
-      , _textInputState_box = error "expected to be filled"
-      , _textInputState_displayLines = error "expected to be filled"
-    }
-  r'' = updateBoxLabelInputStateWithSBox sbox r'
-  r = mouseText r'' rmd
+makeBoxLabelInputState = makeOwlItemTextInputState boxLabelImpl
 
 makeBoxLabelHandler :: SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxLabelHandler
 makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
       _boxLabelHandler_active = False
-      , _boxLabelHandler_state = uncurry makeBoxLabelInputState (getSBox selection) rmd
+      , _boxLabelHandler_state = uncurry makeBoxLabelInputState (_textImpl_mustGetOwlItem boxLabelImpl selection) rmd
       , _boxLabelHandler_prevHandler = prev
       , _boxLabelHandler_undoFirst = False
     }
@@ -290,24 +279,10 @@ makeBoxLabelHandler prev selection rmd = BoxLabelHandler {
 
 -- UNTESTED
 updateBoxLabelHandlerState :: Bool -> CanvasSelection -> BoxLabelHandler -> BoxLabelHandler
-updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzIsCorrect r where
-  (_, sbox) = getSBox selection
-
-  mNewText = _sBoxTitle_title . _sBox_title $ sbox
-
-  recomputetz = TZ.fromText (fromMaybe "" mNewText)
-  oldtz = _textInputState_zipper _boxLabelHandler_state
-  -- NOTE that recomputetz won't have the same cursor position
-  -- TODO delete this check, not very meaningful, but good for development purposes I guess
-  tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
-  nextstate = updateBoxLabelInputStateWithSBox sbox _boxLabelHandler_state
-
+updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = r where
+  nextstate = updateOwlItemTextInputState boxLabelImpl reset selection _boxLabelHandler_state
   r = tah {
-    _boxLabelHandler_state = if reset
-      then nextstate {
-          _textInputState_original = mNewText
-        }
-      else nextstate
+    _boxLabelHandler_state = nextstate
     , _boxLabelHandler_undoFirst = if reset
       then False
       else _boxLabelHandler_undoFirst
@@ -315,13 +290,7 @@ updateBoxLabelHandlerState reset selection tah@BoxLabelHandler {..} = assert tzI
 
 
 inputBoxLabel :: TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
-inputBoxLabel tais sowl kk = (newtais, mop) where
-  (changed, newtais) = inputSingleLineZipper tais kk
-  newtext = TZ.value (_textInputState_zipper newtais)
-  controller = CTagBoxLabelText :=> (Identity $ CMaybeText (DeltaMaybeText (_textInputState_original tais, if newtext == "" then Nothing else Just newtext)))
-  mop = if changed
-    then Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)]
-    else Nothing
+inputBoxLabel tais sowl kk = inputOwlItem boxLabelImpl tais sowl kk
 
 
 -- | just a helper for pHandleMouse
