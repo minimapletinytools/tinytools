@@ -101,6 +101,8 @@ makeTextInputState rid sbox rmd = r where
   r'' = updateTextInputStateWithSBox sbox r'
   r = mouseText r'' rmd
 
+
+-- TODO DELETE move to TextInputState
 -- TODO support shift selecting text someday meh
 -- | returns zipper in TextInputState after keyboard input has been applied
 -- Bool indicates if there was any real input
