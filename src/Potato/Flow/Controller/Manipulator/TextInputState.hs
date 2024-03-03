@@ -8,11 +8,18 @@ import           Potato.Flow.Math
 import           Potato.Flow.Serialization.Snake
 import           Potato.Flow.Controller.Input
 import           Potato.Flow.Controller.Handler
+import Potato.Flow.Owl
+import Potato.Flow.Llama
+import           Potato.Flow.Serialization.Snake
+import          Potato.Flow.Types
 
+
+import qualified Data.IntMap as IM
 import qualified Data.Text as T
 import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Data.Map as Map
 
+import Control.Exception (assert)
 
 data TextInputState = TextInputState {
   _textInputState_rid            :: REltId
@@ -123,20 +130,13 @@ makeTextHandlerRenderOutput btis = r where
 
 
 
-
-
----- GENERIC TEXT HANDLER STARTS HERE
-
-
-
 data TextImpl o = TextImpl {
-  _textImpl_mustGetOwlItem :: CanvasSelection -> o
+  _textImpl_mustGetOwlItem :: CanvasSelection -> (REltId, o)
   --, _textImpl_updateTextInputStateWithOwlItem :: o -> TextInputState -> TextInputState
   , _textImpl_owlItemText :: o -> Text
   , _textImpl_owlItemBox :: o -> CanonicalLBox
-  , _textImpl_owlItemAlignment :: o -> _textStyle_alignment
+  , _textImpl_owlItemAlignment :: o -> TextAlign
 
-  , _textImpl_makeTextInputState :: REltId -> o -> RelMouseDrag -> TextInputState
   , _textImpl_inputOwlItemZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
 
 
@@ -144,31 +144,6 @@ data TextImpl o = TextImpl {
   , _textImpl_makeController :: Text -> Text -> Controller
   -- TODO need something to make mouse up action generic
 }
-
-
-data OwlItemHandler o = OwlItemHandler {
-    -- TODO Delete this
-    _owlItemHandler_isActive      :: Bool
-    
-    , _owlItemHandler_state       :: TextInputState
-    -- TODO you can prob delete this now, we don't persist state between sub handlers in this case
-    , _owlItemHandler_prevHandler :: SomePotatoHandler
-    , _owlItemHandler_undoFirst   :: Bool
-
-    , _owlItemHandler_commitOnMouseUp :: Bool
-
-    , _owlItemHandler_impl :: TextImpl o
-  }
-
-makeOwlItemHandler :: TextImpl o -> Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> OwlItemHandler o
-makeOwlItemHandler impl commit prev selection rmd = OwlItemHandler {
-    _owlItemHandler_isActive = False
-    , _owlItemHandler_state = uncurry makeTextInputState (_textImpl_mustGetOwlItem impl $ selection) rmd
-    , _owlItemHandler_prevHandler = prev
-    , _owlItemHandler_undoFirst = False
-    , _owlItemHandler_commitOnMouseUp = commit
-    , _owlItemHandler_impl = impl
-  }
 
 
 updateTextInputStateWithOwlItem :: TextImpl o -> o -> TextInputState -> TextInputState
@@ -182,8 +157,8 @@ updateTextInputStateWithOwlItem impl oitem btis = r where
 
 -- TODO I think you need to pad empty lines in the zipper to fill out the box D:
 -- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
-makeTextInputState :: TextImpl o -> REltId -> o -> RelMouseDrag -> TextInputState
-makeTextInputState impl rid oitem rmd = r where
+makeOwlItemTextInputState :: TextImpl o -> REltId -> o -> RelMouseDrag -> TextInputState
+makeOwlItemTextInputState impl rid oitem rmd = r where
   ogtext = _textImpl_owlItemText impl $ oitem
   ogtz = TZ.fromText ogtext
   r' = TextInputState {
@@ -203,151 +178,33 @@ makeTextInputState impl rid oitem rmd = r where
 
 inputOwlItem :: TextImpl o -> TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
 inputOwlItem impl tais sowl kk = (newtais, mop) where
-  (changed, newtais) = (_textImpl_inputOwlItemZipper impl) tais kk
+  (changed, newtais) = _textImpl_inputOwlItemZipper impl tais kk
   origt = _textInputState_original tais
   newt = TZ.value (_textInputState_zipper newtais)
-  controller = _textImpl_makeController origt newt
+  controller = _textImpl_makeController impl (fromMaybe "" origt) newt
   mop = if changed
     then Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)]
     else Nothing
 
 
-updateOwlItemHandlerState :: TextImpl o -> Bool -> CanvasSelection -> OwlItemHandler -> OwlItemHandler
-updateOwlItemHandlerState impl reset selection tah@OwlItemHandler {..} = assert tzIsCorrect r where
+-- TODO rename to updateOwlItemTextInputStateWithSelection
+updateOwlItemTextInputState :: TextImpl o -> Bool -> CanvasSelection -> TextInputState -> TextInputState
+updateOwlItemTextInputState impl reset selection tais = assert tzIsCorrect r where
   (_, oitem) = _textImpl_mustGetOwlItem impl $ selection
 
-  newText = _textImpl_owlItemText oitem
+  newText = _textImpl_owlItemText impl oitem
 
   recomputetz = TZ.fromText newText
-  oldtz = _textInputState_zipper _owlItemHandler_state
+  oldtz = _textInputState_zipper tais
   -- NOTE that recomputetz won't have the same cursor position
   -- TODO delete this check, not very meaningful, but good for development purposes I guess
   tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
 
-  nextstate = updateTextInputStateWithOwlItem impl oitem _owlItemHandler_state
+  nextstate = updateTextInputStateWithOwlItem impl oitem tais
 
-  r = tah {
-    _owlItemHandler_state = if reset
-      then nextstate {
-          _textInputState_original = Just newText
-        }
-      else nextstate
-    , _owlItemHandler_undoFirst = if reset
-      then False
-      else _owlItemHandler_undoFirst
-  }
-
-instance PotatoHandler OwlItemHandler where
-  pHandlerName _ = handlerName_boxText
-  pHandlerDebugShow OwlItemHandler {..} = LT.toStrict $ Pretty.pShowNoColor _owlItemHandler_state
-  pHandleMouse tah' phi@PotatoHandlerInput {..} rmd@(RelMouseDrag MouseDrag {..}) = let
-      (rid, sbox) = (_textImpl_mustGetOwlItem _owlItemHandler_impl) _potatoHandlerInput_canvasSelection
-      tah@OwlItemHandler {..} = updateOwlItemHandlerState False _potatoHandlerInput_canvasSelection tah'
-    in case _mouseDrag_state of
-      MouseDragState_Down -> r where
-        clickInside = does_lBox_contains_XY (_textInputState_box _owlItemHandler_state) _mouseDrag_to
-        newState = mouseText _owlItemHandler_state rmd
-        r = if clickInside
-          then Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _owlItemHandler_isActive = True
-                  , _owlItemHandler_state = newState
-                }
-            }
-          -- pass the input on to the base handler (so that you can interact with BoxHandler mouse manipulators too)
-          else pHandleMouse _owlItemHandler_prevHandler phi rmd
-
-      -- TODO drag select text someday
-      MouseDragState_Dragging -> Just $ captureWithNoChange tah
-
-      MouseDragState_Up -> r where
-
-        -- TODO YOU STOPPED HERE NEE DTO FIGURE OUT HOW TO MAKE THIS GENERIC
-        -- I think one way to do it is to have handlers pass the call to the generic handler and then for mouse input the generic hnadler will return nothing and then the parent handler can do its specific stuff
-        -- but maybe better to not make things so generic. You should still do the impl trick, but maybe a the generic Handler instance is not necessary
-        -- you just need to update the undoFirst parameter outside of updateOwlItemHandlerState or make some awkward generic version of it
-
-        -- if box is not text box, convert to text box and set undoFirst to True
-        oldbt = _sBox_boxType $ sbox
-        istext = sBoxType_isText oldbt
-        newbt = make_sBoxType (sBoxType_hasBorder oldbt) True
-
-        -- if it's not a text box, convert it to one (remember that this gets called from pHandleMouse with MouseDragState_Up in BoxHandler)
-        r = if not istext
-          then Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _owlItemHandler_isActive = False    
-                }
-              -- TODO change this to just PO_Start
-              -- the issue here is when you undo, it becomes not a text box, so you need to make sure to convert it to a text box in the preview operation (actually to do that, there's no point in converting it here really)
-              -- NOTE if we PO_Start/_owlItemHandler_undoFirst = True we will undo the conversion to text box :(. It's fine, just permanently convert it to a text box, NBD
-              -- also NOTE that this will not undo the text box conversion if you cancel this handler, it will just permanently be a text box now.
-              -- NOTE this creates a weird undo operation that just converts from text to not text which is weird
-              , _potatoHandlerOutput_action = HOA_Preview $ Preview PO_StartAndCommit $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(rid, CTagBoxType :=> Identity (CBoxType (oldbt, newbt)))]
-
-            }
-          else Just $ def {
-              _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-                  _owlItemHandler_isActive = False
-                  , _owlItemHandler_commitOnMouseUp = False
-                }
-              , _potatoHandlerOutput_action = if _owlItemHandler_commitOnMouseUp then HOA_Preview Preview_Commit else HOA_Nothing
-            }
-      MouseDragState_Cancelled -> Just $ captureWithNoChange tah
-
-  pHandleKeyboard tah' PotatoHandlerInput {..} (KeyboardData k _) = case k of
-    KeyboardKey_Esc -> Just $ def { _potatoHandlerOutput_nextHandler = Just (_owlItemHandler_prevHandler tah') }
-    -- TODO should only capture stuff caught by inputBoxTextZipper
-
-    _ -> Just r where
-      -- this regenerates displayLines unecessarily but who cares
-      tah@OwlItemHandler {..} = updateOwlItemHandlerState False _potatoHandlerInput_canvasSelection tah'
-      sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
-
-      -- TODO decide what to do with mods
-
-      (nexttais, mllama) = inputBoxText _owlItemHandler_state sowl k
-      r = def {
-          _potatoHandlerOutput_nextHandler = Just $ SomePotatoHandler tah {
-              _owlItemHandler_state  = nexttais
-              , _owlItemHandler_undoFirst = case mllama of
-                Nothing -> _owlItemHandler_undoFirst
-                --Nothing -> False -- this variant adds new undo point each time cursoer is moved
-                Just _  -> True
-            }
-          -- TODO do a Preview_Cancel if we reverted back to original text
-          -- TODO we want to PO_Continue here, but we don't have a good place to commit right now as there's no explicit cancel for us to Preview_Commit
-          , _potatoHandlerOutput_action = maybe HOA_Nothing (HOA_Preview . Preview (previewOperation_fromUndoFirst _owlItemHandler_undoFirst)) mllama
-
-        }
-
-  -- TODO do you need to reset _owlItemHandler_prevHandler as well?
-  pRefreshHandler tah PotatoHandlerInput {..} = if Seq.null (unCanvasSelection _potatoHandlerInput_canvasSelection)
-    then Nothing -- selection was deleted or something
-    else if rid /= (_textInputState_rid $ _owlItemHandler_state tah)
-      then Nothing -- selection was change to something else
-      else case selt of
-        SEltBox sbox -> if not $ sBoxType_isText (_sBox_boxType sbox)
-          then Nothing -- SEltBox type changed to non-text
-          -- TODO this needs to merge the TextZipper if change came due to remote event
-          else Just $ SomePotatoHandler $ updateOwlItemHandlerState True _potatoHandlerInput_canvasSelection tah
-        _ -> Nothing
-      where
-        sowl = selectionToSuperOwl _potatoHandlerInput_canvasSelection
-        rid = _superOwl_id sowl
-        selt = superOwl_toSElt_hack sowl
-
-  pRenderHandler tah' phi@PotatoHandlerInput {..} = r where
-    tah = updateOwlItemHandlerState False _potatoHandlerInput_canvasSelection tah'
-    btis = _owlItemHandler_state tah
-    r = pRenderHandler (_owlItemHandler_prevHandler tah) phi <> makeTextHandlerRenderOutput btis
-
-  -- TODO set properly (_owlItemHandler_isActive checks mouse activity, but we have more subtle notions of active now)
-  pIsHandlerActive tah = if _owlItemHandler_isActive tah then HAS_Active_Mouse else HAS_Active_Keyboard
-
-
-
-
-
-
+  r = if reset
+    then nextstate {
+        _textInputState_original = Just newText
+      }
+    else nextstate
 
