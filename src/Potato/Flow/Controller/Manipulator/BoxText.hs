@@ -39,6 +39,7 @@ import qualified Potato.Data.Text.Zipper                          as TZ
 import qualified Text.Pretty.Simple as Pretty
 import qualified Data.Text.Lazy as LT
 
+
 getSBox :: CanvasSelection -> (REltId, SBox)
 getSBox selection = case superOwl_toSElt_hack sowl of
   SEltBox sbox -> (rid, sbox)
@@ -72,72 +73,30 @@ getSBoxTextBox sbox = r where
     else box'
 
 
+makeBoxTextController :: Text -> Text -> Controller
+makeBoxTextController orig new = CTagBoxText :=> (Identity $ CBoxText {
+      _cBoxText_deltaText = (orig, new)
+    })
+
+boxTextImpl :: TextImpl SBox
+boxTextImpl = TextImpl {
+    _textImpl_mustGetOwlItem = getSBox
+    --, _textImpl_updateTextInputStateWithOwlItem = updateTextInputStateWithSBox
+    , _textImpl_owlItemText = _sBoxText_text . _sBox_text
+    , _textImpl_owlItemBox = getSBoxTextBox
+    , _textImpl_owlItemAlignment = _textStyle_alignment . _sBoxText_style . _sBox_text
+    , _textImpl_inputOwlItemZipper = inputBoxTextZipper
+    , _textImpl_makeController = makeBoxTextController
+  }
+
 updateTextInputStateWithSBox :: SBox -> TextInputState -> TextInputState
-updateTextInputStateWithSBox sbox btis = r where
-  alignment = convertTextAlignToTextZipperTextAlignment . _textStyle_alignment . _sBoxText_style . _sBox_text $ sbox
-  CanonicalLBox _ _ newBox@(LBox _ (V2 width _)) = getSBoxTextBox sbox
-  r = btis {
-      _textInputState_box = newBox
-      , _textInputState_displayLines = TZ.displayLinesWithAlignment alignment width () () (_textInputState_zipper btis)
-    }
+updateTextInputStateWithSBox = updateTextInputStateWithOwlItem boxTextImpl 
 
--- TODO I think you need to pad empty lines in the zipper to fill out the box D:
--- ok, no you don't, that's only for the non-paragraph text area that we don't actually have yet
 makeTextInputState :: REltId -> SBox -> RelMouseDrag -> TextInputState
-makeTextInputState rid sbox rmd = r where
-  ogtext = _sBoxText_text . _sBox_text $ sbox
-  ogtz = TZ.fromText ogtext
-  r' = TextInputState {
-      _textInputState_rid = rid
-      , _textInputState_original   = Just ogtext
-      , _textInputState_zipper   = ogtz
-
-      -- these fields get updated in next pass
-      , _textInputState_box = error "expected to be filled"
-      , _textInputState_displayLines = error "expected to be filled"
-
-      --, _textInputState_selected = 0
-    }
-  r'' = updateTextInputStateWithSBox sbox r'
-  r = mouseText r'' rmd
-
-
--- TODO DELETE move to TextInputState
--- TODO support shift selecting text someday meh
--- | returns zipper in TextInputState after keyboard input has been applied
--- Bool indicates if there was any real input
-inputBoxTextZipper :: TextInputState -> KeyboardKey -> (Bool, TextInputState)
-inputBoxTextZipper tais kk = (changed, tais { _textInputState_zipper = newZip }) where
-
-  oldZip = _textInputState_zipper tais
-  (changed, newZip) = case kk of
-    KeyboardKey_Left    -> (False, TZ.left oldZip)
-    KeyboardKey_Right   -> (False, TZ.right oldZip)
-    KeyboardKey_Up      -> (False, TZ.up oldZip)
-    KeyboardKey_Down    -> (False, TZ.down oldZip)
-    KeyboardKey_Home    -> (False, TZ.home oldZip)
-    KeyboardKey_End -> (False, TZ.end oldZip)
-    KeyboardKey_PageUp -> (False, TZ.pageUp 5 oldZip)
-    KeyboardKey_PageDown -> (False, TZ.pageDown 5 oldZip)
-
-    KeyboardKey_Return  -> (True, TZ.insertChar '\n' oldZip)
-    KeyboardKey_Space   -> (True, TZ.insertChar ' ' oldZip)
-    KeyboardKey_Delete  -> (True, TZ.deleteRight oldZip)
-    KeyboardKey_Backspace -> (True, TZ.deleteLeft oldZip)
-    KeyboardKey_Char c  -> (True, TZ.insertChar c oldZip)
-    KeyboardKey_Paste t -> (True, TZ.insert t oldZip)
-
-    k                   -> error $ "unexpected keyboard char (event should have been handled outside of this handler)" <> show k
+makeTextInputState = makeOwlItemTextInputState boxTextImpl
 
 inputBoxText :: TextInputState -> SuperOwl -> KeyboardKey -> (TextInputState, Maybe Llama)
-inputBoxText tais sowl kk = (newtais, mop) where
-  (changed, newtais) = inputBoxTextZipper tais kk
-  controller = CTagBoxText :=> (Identity $ CBoxText {
-      _cBoxText_deltaText = (fromMaybe "" (_textInputState_original tais), TZ.value (_textInputState_zipper newtais))
-    })
-  mop = if changed
-    then Just $ makePFCLlama . OwlPFCManipulate $ IM.fromList [(_superOwl_id sowl,controller)]
-    else Nothing
+inputBoxText tais sowl kk = inputOwlItem boxTextImpl tais sowl kk
 
 data BoxTextHandler = BoxTextHandler {
     -- TODO Delete this
@@ -154,32 +113,17 @@ data BoxTextHandler = BoxTextHandler {
 makeBoxTextHandler :: Bool -> SomePotatoHandler -> CanvasSelection -> RelMouseDrag -> BoxTextHandler
 makeBoxTextHandler commit prev selection rmd = BoxTextHandler {
       _boxTextHandler_isActive = False
-      , _boxTextHandler_state = uncurry makeTextInputState (getSBox selection) rmd
+      , _boxTextHandler_state = uncurry makeTextInputState (_textImpl_mustGetOwlItem boxTextImpl $ selection) rmd
       , _boxTextHandler_prevHandler = prev
       , _boxTextHandler_undoFirst = False
       , _boxTextHandler_commitOnMouseUp = commit
     }
 
 updateBoxTextHandlerState :: Bool -> CanvasSelection -> BoxTextHandler -> BoxTextHandler
-updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = assert tzIsCorrect r where
-  (_, sbox) = getSBox selection
-
-  newText = _sBoxText_text . _sBox_text $ sbox
-
-  recomputetz = TZ.fromText newText
-  oldtz = _textInputState_zipper _boxTextHandler_state
-  -- NOTE that recomputetz won't have the same cursor position
-  -- TODO delete this check, not very meaningful, but good for development purposes I guess
-  tzIsCorrect = TZ.value oldtz == TZ.value recomputetz
-
-  nextstate = updateTextInputStateWithSBox sbox _boxTextHandler_state
-
+updateBoxTextHandlerState reset selection tah@BoxTextHandler {..} = r where
+  nextstate = updateOwlItemTextInputState boxTextImpl reset selection _boxTextHandler_state
   r = tah {
-    _boxTextHandler_state = if reset
-      then nextstate {
-          _textInputState_original = Just newText
-        }
-      else nextstate
+    _boxTextHandler_state = nextstate
     , _boxTextHandler_undoFirst = if reset
       then False
       else _boxTextHandler_undoFirst
@@ -305,6 +249,8 @@ lBox_to_boxLabelBox lbx = r where
   CanonicalLBox _ _ (LBox (V2 x y) (V2 w _)) = canonicalLBox_from_lBox lbx
   width = max 0 (w - 2)
   r = LBox (V2 (x+1) y) (V2 width 1)
+
+
 
 
 updateBoxLabelInputStateWithSBox :: SBox -> TextInputState -> TextInputState

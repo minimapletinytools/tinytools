@@ -111,11 +111,9 @@ DONE-adjustable attachment spec
   -diamond
   -ellipse
   -probably needs now styling classes, these should probably be presentsonly
--generalize object and manipulator refactor likely
-  -generalize text area 
-  -generalize Box handler bulk maniplutaion
-  -generalize line connection points
--swatches
+-straight line tool spec
+  -same as autoline (with midpoints) but has fancy line rendering straight lines
+  -line style picker
 -unicode character picker
   -lives at params level
   -must have a way to paste into text box
@@ -123,6 +121,7 @@ DONE-adjustable attachment spec
   -can choose to generate as text box or free art box
   -create link with orignal until modify?
   -format for user submitted clipart (prob just read from text file)
+-swatches
 -fancy type spec
   -property of text box, allow you to enter fancy fonts
   -other features
@@ -135,29 +134,6 @@ DONE-adjustable attachment spec
       -bonus, it seme some fonts have speical rules for renfdering where the font overlaps
     -font picker...
 -segment style multipoint line spec
--shape tool spec
-  -can we generalize box and boxtext handlers to support any shape
-    -I think you need to consider refactoring box handler whichever way
-    -parameterize the following
-      -transform box -> shape -> transform box (when resizing)
-      -shape -> Maybe text label position
-      -shape -> Maybe text area 
-      -shape -> starting attachment position
-      -shape -> attachement projection function
-  -tool for creating non box shapes, must support resizing
-    -allow snapping to only valid sizes?
-      -however, should it remember what inbetween size it's at (when resizing multiple things) or no?
-    -design generic format for doing shapes so easy to add custom shapes?
-    -e.g. shapes
-      -triangle
-      -diamond
-      -hexagon
-      -octagon
-      -circle/ellipse
-      -3d cube (this might be a different handler? requires a 3rd degree of adjustment (could use box handler for creation, and separate handler for modify))
--straight line tool spec
-  -same as autoline (with midpoints) but has fancy line rendering straight lines
-  -line style picker
 -scripting and extensions lol
 -background pattern fills
   -crop or stop at end of last repeating pattern
@@ -250,13 +226,53 @@ DONE-handlers should return preview action
     -no it doesn't, goat can just toss out failed changes
 
 
-:: RELEASE TODO ::
--GHA build and release
--do linux and windoze build
--make a video
+::NEW SHAPE STUFF
+-generalize object and manipulator refactor likely
+  -generalize text area 
+    -return text area box
+    -in the future, it could return per line widths :O
+  -generalize line connection points
+    -connection points :: [(x,y)]
+    -drag_project :: (x,y) -> Maybe (x,y)
+  -generalize Box handler bulk maniplutaion ???
+    -you need to generalize this for lines too
+  
 
+-shape tool spec
+  -can we generalize box and boxtext handlers to support any shape
+    -I think you need to consider refactoring box handler whichever way
+    -parameterize the following
+      -transform box -> shape -> transform box (when resizing)
+      -shape -> Maybe text label position
+      -shape -> Maybe text area 
+      -shape -> starting attachment position
+      -shape -> attachement projection function
+  -tool for creating non box shapes, must support resizing
+    -allow snapping to only valid sizes?
+      -however, should it remember what inbetween size it's at (when resizing multiple things) or no?
+    -design generic format for doing shapes so easy to add custom shapes?
+    -e.g. shapes
+      -triangle
+      -diamond
+      -hexagon
+      -octagon
+      -circle/ellipse
+      -3d cube (this might be a different handler? requires a 3rd degree of adjustment (could use box handler for creation, and separate handler for modify))
+-generic shape render function
+  -overlay square grid of shape paremeter
+  -compute entry/exit on each square and assume line is straight
+  -lookup closest unicode character matching the above
+-secondary tools in tools
+  -[(s)hape] selecting shows secondary list of choices
 
 ::HIGH PRIORITY::
+-BUG double: ()
+  STDERR
+  tinytools: Maybe.fromJust: Nothing
+  CallStack (from HasCallStack):
+    error, called at libraries/base/Data/Maybe.hs:150:21 in base:Data.Maybe
+    fromJust, called at src/Potato/Flow/Owl.hs:627:24 in tnytls-0.1.0.7-8994dabb:Potato.Flow.Owl
+  repro: have folder with abunhc of element, select folder, copy paste folder (into itself, which is already little weird) and then drag inner folder outside of folder
 -clean unused dependencies
   -figure out how to run dependency detector
 -should be more intuitive to get a 1 sided line
@@ -380,6 +396,9 @@ DONE-handlers should return preview action
 
 
 
+DONE/IGNORE-GHA build and release
+DONE/IGNORE-do linux and windoze build
+DONE/IGNORE-make a video
 DONE-line anchor handlers should not pop up until you start dragging (except in creation mode where they should show from the get go)
 IGNORE LOL-get it working on breew
 IGNORE-update tutorial file?
