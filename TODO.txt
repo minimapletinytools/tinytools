@@ -290,6 +290,7 @@ DONE-add UTs
   repro: have folder with abunhc of element, select folder, copy paste folder (into itself, which is already little weird) and then drag inner folder outside of folder
 -clean unused dependencies
   -figure out how to run dependency detector
+-BUG one sided line broken
 -should be more intuitive to get a 1 sided line
   -probably do [x] start | [x] end
   -default line can be one sided maybe?
