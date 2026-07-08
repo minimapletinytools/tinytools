@@ -107,8 +107,6 @@ IGNORE-grapheme cluster
 DONE-EMOJIS
 DONE-moveable line anchors
 DONE-adjustable attachment spec
-
--when selecting  a line, the handles at the end make it not possible to see the ends, so the flashing handles in general should show the endurelying glpyh if psosile
 -support more shapes
   -diamond
   -ellipse
@@ -292,7 +290,7 @@ DONE-add UTs
   repro: have folder with abunhc of element, select folder, copy paste folder (into itself, which is already little weird) and then drag inner folder outside of folder
 -clean unused dependencies
   -figure out how to run dependency detector
--BUG one sided line broken
+-BUG one sided line broken (seems to be fixed now???)
 -should be more intuitive to get a 1 sided line
   -probably do [x] start | [x] end
   -default line can be one sided maybe?
@@ -300,6 +298,7 @@ DONE-add UTs
 -layers improvements
   -shift select in layers please ;__;
   -selecting multiple items and hitting new folder should put those items in folder maybe
+-when selecting  a line, the handles at the end make it not possible to see the ends, so the flashing handles in general should show the endurelying glpyh if psosile
 
 ::MID PRIORITY
 -test/use PreRender stuff
